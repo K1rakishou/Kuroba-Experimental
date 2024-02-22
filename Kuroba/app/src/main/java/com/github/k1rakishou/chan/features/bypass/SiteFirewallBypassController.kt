@@ -2,13 +2,13 @@ package com.github.k1rakishou.chan.features.bypass
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.view.View
 import android.webkit.CookieManager
 import android.webkit.WebSettings
-import android.webkit.WebStorage
 import android.webkit.WebView
-import android.webkit.WebViewDatabase
 import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
@@ -36,6 +36,7 @@ import javax.inject.Inject
 class SiteFirewallBypassController(
   context: Context,
   val firewallType: FirewallType,
+  private val headerTitleText: String?,
   private val urlToOpen: String,
   private val onResult: (CookieResult) -> Unit
 ) : BaseFloatingController(context), ThemeEngine.ThemeChangesListener {
@@ -51,6 +52,7 @@ class SiteFirewallBypassController(
 
   private lateinit var webView: WebView
   private lateinit var closeButton: ImageView
+  private lateinit var headerTitle: TextView
 
   private var resultNotified = false
 
@@ -161,16 +163,15 @@ class SiteFirewallBypassController(
       pop()
     }
 
-    webView.stopLoading()
-    webView.clearCache(true)
-    webView.clearFormData()
-    webView.clearHistory()
-    webView.clearMatches()
+    headerTitle = view.findViewById(R.id.header_title)
+    if (headerTitleText.isNullOrBlank()) {
+      headerTitle.visibility = View.INVISIBLE
+    } else {
+      headerTitle.text = headerTitleText
+      headerTitle.visibility = View.VISIBLE
+    }
 
-    val webViewDatabase = WebViewDatabase.getInstance(context.applicationContext)
-    webViewDatabase.clearFormData()
-    webViewDatabase.clearHttpAuthUsernamePassword()
-    WebStorage.getInstance().deleteAllData()
+    webView.stopLoading()
 
     cookieManager.removeAllCookie()
     cookieManager.setAcceptCookie(true)
@@ -213,7 +214,7 @@ class SiteFirewallBypassController(
       dialogFactory.createSimpleInformationDialog(
         context = context,
         titleText = getString(R.string.firewall_check_takes_too_long_title),
-        dialogId = getString(R.string.firewall_check_takes_too_long_description)
+        descriptionText = getString(R.string.firewall_check_takes_too_long_description)
       )
     }
 

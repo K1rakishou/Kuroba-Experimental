@@ -4,10 +4,8 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.webkit.CookieManager
 import android.webkit.WebSettings
-import android.webkit.WebStorage
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import android.webkit.WebViewDatabase
 import android.widget.FrameLayout
 import android.widget.ImageView
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -106,15 +104,6 @@ class OpenUrlInWebViewController(
         }
 
         webView.stopLoading()
-        webView.clearCache(true)
-        webView.clearFormData()
-        webView.clearHistory()
-        webView.clearMatches()
-
-        val webViewDatabase = WebViewDatabase.getInstance(context.applicationContext)
-        webViewDatabase.clearFormData()
-        webViewDatabase.clearHttpAuthUsernamePassword()
-        WebStorage.getInstance().deleteAllData()
 
         cookieManager.removeAllCookie()
         cookieManager.setAcceptCookie(true)

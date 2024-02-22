@@ -631,7 +631,6 @@ open class Chan4 : SiteBase() {
         .build()
 
       val cookieManager = CookieManager.getInstance()
-      cookieManager.removeAllCookies(null)
 
       val domain = sys.scheme + "://" + sys.host + "/"
       val cookieParts = mutableListOf<String>()

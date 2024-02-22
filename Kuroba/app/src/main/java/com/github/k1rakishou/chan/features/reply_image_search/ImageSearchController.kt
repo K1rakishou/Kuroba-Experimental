@@ -60,6 +60,7 @@ import com.github.k1rakishou.chan.ui.compose.update
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.ui.view.floating_menu.HeaderFloatingListMenuItem
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.findControllerOrNull
 import com.github.k1rakishou.common.FirewallType
 import com.github.k1rakishou.common.isNotNullNorEmpty
@@ -135,6 +136,10 @@ class ImageSearchController(
             val controller = SiteFirewallBypassController(
               context = context,
               firewallType = FirewallType.YandexSmartCaptcha,
+              headerTitleText = AppModuleAndroidUtils.getString(
+                R.string.firewall_check_header_title,
+                FirewallType.YandexSmartCaptcha.name
+              ),
               urlToOpen = urlToOpen,
               onResult = { cookieResult -> continuation.resumeValueSafe(cookieResult) }
             )

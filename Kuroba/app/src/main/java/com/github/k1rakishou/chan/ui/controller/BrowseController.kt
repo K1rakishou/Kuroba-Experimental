@@ -169,15 +169,12 @@ class BrowseController(
         val siteDescriptor = showFirewallControllerInfo.siteDescriptor
         val onFinished = showFirewallControllerInfo.onFinished
 
-        try {
-          showSiteFirewallBypassController(
-            firewallType = firewallType,
-            urlToOpen = urlToOpen,
-            siteDescriptor = siteDescriptor
-          )
-        } finally {
-          onFinished.complete(Unit)
-        }
+        showSiteFirewallBypassController(
+          firewallType = firewallType,
+          urlToOpen = urlToOpen,
+          siteDescriptor = siteDescriptor,
+          onBypassControllerClosed = { success -> onFinished.complete(success) }
+        )
       }
     }
 
@@ -1143,14 +1140,19 @@ class BrowseController(
   private suspend fun showSiteFirewallBypassController(
     firewallType: FirewallType,
     urlToOpen: HttpUrl,
-    siteDescriptor: SiteDescriptor
+    siteDescriptor: SiteDescriptor,
+    onBypassControllerClosed: (Boolean) -> Unit
   ) {
     val cookieResult = suspendCancellableCoroutine<CookieResult> { continuation ->
       val controller = SiteFirewallBypassController(
         context = context,
         firewallType = firewallType,
+        headerTitleText = getString(R.string.firewall_check_header_title, firewallType.name),
         urlToOpen = urlToOpen.toString(),
-        onResult = { cookieResult -> continuation.resumeValueSafe(cookieResult) }
+        onResult = { cookieResult ->
+          continuation.resumeValueSafe(cookieResult)
+          onBypassControllerClosed(cookieResult is CookieResult.CookieValue)
+        }
       )
 
       Logger.d(TAG, "presentController SiteFirewallBypassController " +

@@ -3,7 +3,6 @@ package com.github.k1rakishou.chan.core.manager
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.common.FirewallType
-import com.github.k1rakishou.common.awaitSilently
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.rethrowCancellationException
 import com.github.k1rakishou.core_logger.Logger
@@ -15,6 +14,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import okhttp3.HttpUrl
+import java.util.concurrent.atomic.AtomicBoolean
 
 class FirewallBypassManager(
   private val appScope: CoroutineScope,
@@ -22,6 +22,8 @@ class FirewallBypassManager(
 ) {
   @GuardedBy("itself")
   private val firewallSiteInfoMap = mutableMapOf<String, FirewallSiteInfo>()
+  @GuardedBy("itself")
+  private val hostLastTimeCheck = mutableMapOf<String, Long>()
 
   private val rendezvousCoroutineExecutor = RendezvousCoroutineExecutor(appScope)
 
@@ -51,25 +53,28 @@ class FirewallBypassManager(
     val host = urlToOpen.host
 
     val showShowFirewallBypassScreen = synchronized(firewallSiteInfoMap) {
-      val isCurrentlyShowing = firewallSiteInfoMap.containsKey(host)
-
-      val firewallSiteInfo = firewallSiteInfoMap.getOrPut(
-        key = host,
-        defaultValue = { FirewallSiteInfo(onFinished) }
-      )
+      val isCurrentlyShowing = firewallSiteInfoMap.get(host)?.currentlyShowing == true
 
       if (isCurrentlyShowing) {
-        firewallSiteInfo.addWaiter(onFinished)
+        firewallSiteInfoMap.get(host)?.addWaiter(onFinished)
         return@synchronized ShowShowFirewallBypassScreen.WaitForExistingOne
       }
 
+      val firewallSiteInfo = FirewallSiteInfo(onFinished)
+      firewallSiteInfoMap[host] = firewallSiteInfo
+
       val now = System.currentTimeMillis()
-      if (now - firewallSiteInfo.lastCheckTime < FIREWALL_CHECK_TIMEOUT_MS) {
+      val lastTimeChecked = synchronized(hostLastTimeCheck) {
+        hostLastTimeCheck[host] ?: 0L
+      }
+
+      if (now - lastTimeChecked < FIREWALL_CHECK_TIMEOUT_MS) {
         Logger.verbose(TAG) {
           "onFirewallDetected(${firewallType}, ${urlToOpen}) skipping because screen was shown not long ago " +
-                  "(timeDelta: ${now - firewallSiteInfo.lastCheckTime})"
+                  "(timeDelta: ${now - lastTimeChecked})"
         }
 
+        firewallSiteInfoMap.remove(host)
         return@synchronized ShowShowFirewallBypassScreen.DoNotShow
       }
 
@@ -94,8 +99,14 @@ class FirewallBypassManager(
     }
 
     rendezvousCoroutineExecutor.post {
+      var success = false
+
       try {
-        val completableDeferred = CompletableDeferred<Unit>()
+        synchronized(firewallSiteInfoMap) {
+          firewallSiteInfoMap[host]?.onStarted()
+        }
+
+        val completableDeferred = CompletableDeferred<Boolean>()
 
         val showFirewallControllerInfo = ShowFirewallControllerInfo(
           firewallType = firewallType,
@@ -110,18 +121,15 @@ class FirewallBypassManager(
           "onFirewallDetected(${firewallType}, '${urlToOpen}') Waiting for result from SiteFirewallBypassController..."
         }
 
-        val success = completableDeferred.awaitSilently()
+        success = try {
+          completableDeferred.await()
+        } catch (error: Throwable) {
+          false
+        }
 
         Logger.debug(TAG) {
           "onFirewallDetected(${firewallType}, '${urlToOpen}') Waiting for result from " +
                   "SiteFirewallBypassController... done, success: ${success}"
-        }
-
-        synchronized(firewallSiteInfoMap) {
-          firewallSiteInfoMap.get(host)?.onFinished(
-            success = success,
-            lastCheckTime = System.currentTimeMillis()
-          )
         }
       } catch (error: Throwable) {
         Logger.error(TAG) {
@@ -129,9 +137,17 @@ class FirewallBypassManager(
                   "SiteFirewallBypassController... done, error: ${error.errorMessageOrClassName()}"
         }
 
-        onFinished.invoke(false)
-
         error.rethrowCancellationException()
+      } finally {
+        synchronized(firewallSiteInfoMap) {
+          firewallSiteInfoMap.remove(host)?.onFinished(
+            success = success
+          )
+
+          synchronized(hostLastTimeCheck) {
+            hostLastTimeCheck[host] = System.currentTimeMillis()
+          }
+        }
       }
     }
   }
@@ -146,17 +162,15 @@ class FirewallBypassManager(
     waiter: (Boolean) -> Unit
   ) {
     @GuardedBy("this")
-    private var _lastCheckTime: Long = 0L
-    @GuardedBy("this")
     private val waiters = mutableListOf<(Boolean) -> Unit>()
+
+    private val _currentlyShowing = AtomicBoolean(false)
+    val currentlyShowing: Boolean
+      get() = _currentlyShowing.get()
 
     init {
       waiters += waiter
     }
-
-    val lastCheckTime: Long
-      @Synchronized
-      get() = _lastCheckTime
 
     @Synchronized
     fun addWaiter(waiter: (Boolean) -> Unit) {
@@ -164,19 +178,24 @@ class FirewallBypassManager(
     }
 
     @Synchronized
-    fun onFinished(success: Boolean, lastCheckTime: Long) {
-      _lastCheckTime = lastCheckTime
+    fun onStarted() {
+      _currentlyShowing.set(true)
+    }
 
+    @Synchronized
+    fun onFinished(success: Boolean) {
       waiters.forEach { waiter -> waiter.invoke(success) }
       waiters.clear()
+      _currentlyShowing.set(false)
     }
+
   }
 
   class ShowFirewallControllerInfo(
     val firewallType: FirewallType,
     val siteDescriptor: SiteDescriptor,
     val urlToOpen: HttpUrl,
-    val onFinished: CompletableDeferred<Unit>
+    val onFinished: CompletableDeferred<Boolean>
   )
 
   companion object {
