@@ -22,7 +22,7 @@ import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
 import com.github.k1rakishou.chan.core.site.http.HttpCall
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.addHeaderIfNotExists
-import com.github.k1rakishou.common.appendCookieHeader
+import com.github.k1rakishou.common.addOrReplaceCookieHeader
 import com.github.k1rakishou.common.domain
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.core_logger.Logger
@@ -149,7 +149,7 @@ abstract class SiteRequestModifier<T : Site>(
       ?.get(domainOrHost)
 
     if (cookieForDomain.isNotNullNorEmpty()) {
-      requestBuilder.appendCookieHeader("${CloudFlareHandlerInterceptor.CF_CLEARANCE}=$cookieForDomain")
+      requestBuilder.addOrReplaceCookieHeader("${CloudFlareHandlerInterceptor.CF_CLEARANCE}=$cookieForDomain")
     } else {
       Logger.w(TAG, "addCloudFlareCookie() cookieForDomain '${domainOrHost}' is null or empty: '${cookieForDomain}'")
     }

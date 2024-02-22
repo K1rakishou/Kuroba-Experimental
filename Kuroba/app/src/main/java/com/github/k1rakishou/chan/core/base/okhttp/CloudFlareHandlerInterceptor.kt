@@ -5,9 +5,10 @@ import com.github.k1rakishou.chan.core.manager.FirewallBypassManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.utils.containsPattern
+import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.FirewallDetectedException
 import com.github.k1rakishou.common.FirewallType
-import com.github.k1rakishou.common.appendCookieHeader
+import com.github.k1rakishou.common.addOrReplaceCookieHeader
 import com.github.k1rakishou.common.domain
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.core_logger.Logger
@@ -15,51 +16,57 @@ import com.github.k1rakishou.prefs.MapSetting
 import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.internal.closeQuietly
 import java.nio.charset.StandardCharsets
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 
 class CloudFlareHandlerInterceptor(
   private val siteResolver: SiteResolver,
   private val firewallBypassManager: FirewallBypassManager,
-  private val verboseLogs: Boolean,
   private val okHttpType: String
 ) : Interceptor {
   @GuardedBy("this")
   private val sitesThatRequireCloudFlareCache = mutableSetOf<String>()
 
-  @GuardedBy("this")
-  private val requestsWithAddedCookie = mutableMapOf<String, Request>()
-
   override fun intercept(chain: Interceptor.Chain): Response {
+    return interceptInternal(
+      chain = chain,
+      retryingAfterCloudFlareAuthorizationFinished = false
+    )
+  }
+
+  private fun interceptInternal(
+    chain: Interceptor.Chain,
+    retryingAfterCloudFlareAuthorizationFinished: Boolean
+  ): Response {
     var request = chain.request()
-    var addedCookie = false
     val host = request.url.host
 
     if (requireCloudFlareCookie(request)) {
       val updatedRequest = addCloudFlareCookie(chain.request())
       if (updatedRequest != null) {
         request = updatedRequest
-        addedCookie = true
-
-        synchronized(this) {
-          if (!requestsWithAddedCookie.containsKey(host)) {
-            requestsWithAddedCookie[host] = request
-          }
-        }
       }
     }
 
     val response = chain.proceed(request)
 
-    if (response.code == 503 || response.code == 403) {
-      processCloudflareRejectedRequest(
+    if (response.code == 503 || response.code == 403 && !ignoreCloudFlareBotDetectionErrors(request)) {
+      val newResponse = processCloudflareRejectedRequest(
         response = response,
         host = host,
-        addedCookie = addedCookie,
         chain = chain,
-        request = request
+        request = request,
+        retrying = retryingAfterCloudFlareAuthorizationFinished
       )
-    } else {
-      synchronized(this) { requestsWithAddedCookie.remove(host) }
+
+      if (newResponse != null) {
+        return newResponse
+      }
+
+      // Fallthrough
     }
 
     return response
@@ -68,51 +75,84 @@ class CloudFlareHandlerInterceptor(
   private fun processCloudflareRejectedRequest(
     response: Response,
     host: String,
-    addedCookie: Boolean,
     chain: Interceptor.Chain,
-    request: Request
-  ) {
+    request: Request,
+    retrying: Boolean
+  ): Response? {
     if (!tryDetectCloudFlareNeedle(response)) {
-      Logger.d(TAG, "[$okHttpType] Couldn't find CloudFlare needle in the page's body")
-      return
-    }
-
-    if (verboseLogs) {
-      Logger.d(TAG, "[$okHttpType] Found CloudFlare needle in the page's body")
-    }
-
-    // To avoid race conditions which could result in us ending up in a situation where a request
-    // with an old cookie or no cookie at all causing us to remove the old cookie from the site
-    // settings.
-    val isExpectedRequestWithCookie = synchronized(this) { requestsWithAddedCookie[host] === request }
-    if (addedCookie && isExpectedRequestWithCookie) {
-      // For some reason CloudFlare still rejected our request even though we added the cookie.
-      // This may happen because of many reasons like the cookie expired or it was somehow
-      // damaged so we need to delete it and re-request again.
-
-      if (verboseLogs) {
-        Logger.d(
-          TAG,
-          "[$okHttpType] Cookie was already added and we still failed, removing the old cookie"
-        )
+      Logger.verbose(TAG) {
+        "[$okHttpType] Couldn't find CloudFlare needle in the page's body for endpoint '${request.url}'"
       }
 
-      removeSiteClearanceCookie(chain.request())
-      synchronized(this) { requestsWithAddedCookie.remove(host) }
+      return null
+    }
+
+    Logger.verbose(TAG) {
+      "[$okHttpType] Found CloudFlare needle in the page's body for endpoint '${request.url}'"
     }
 
     synchronized(this) { sitesThatRequireCloudFlareCache.add(host) }
 
-    if (siteResolver.isInitialized() && request.method.equals("GET", ignoreCase = true)) {
+    if (canShowCloudFlareBypassScreen(retrying, request)) {
       val site = siteResolver.findSiteForUrl(request.url.toString())
       if (site != null) {
         val siteDescriptor = site.siteDescriptor()
 
+        val bypassSuccess = AtomicBoolean(false)
+        val countDownLatch = CountDownLatch(1)
+
+        Logger.debug(TAG) {
+          "[$okHttpType] retryingAfterCloudFlareAuthorizationFinished: ${retrying} endpoint '${request.url}'"
+        }
+
+        Logger.debug(TAG) {
+          "[$okHttpType] firewallBypassManager.onFirewallDetected() endpoint '${request.url}'..."
+        }
+
         firewallBypassManager.onFirewallDetected(
           firewallType = FirewallType.Cloudflare,
           siteDescriptor = siteDescriptor,
-          urlToOpen = request.url
+          urlToOpen = request.url,
+          onFinished = { success ->
+            bypassSuccess.set(success)
+            countDownLatch.countDown()
+          }
         )
+
+        val startTime = System.currentTimeMillis()
+        val awaitSuccess = try {
+          countDownLatch.await(AppConstants.CLOUDFLARE_INTERCEPTOR_FIREWALL_BYPASS_MAX_WAIT_TIME_MILLIS, TimeUnit.MILLISECONDS)
+        } catch (error: Throwable) {
+          false
+        }
+
+        val deltaTime = System.currentTimeMillis() - startTime
+
+        if (awaitSuccess) {
+          if (bypassSuccess.get()) {
+            Logger.debug(TAG) {
+              "[$okHttpType] firewallBypassManager.onFirewallDetected() endpoint '${request.url}'... success. (took: ${deltaTime}ms)"
+            }
+
+            response.closeQuietly()
+
+            return interceptInternal(
+              chain = chain,
+              retryingAfterCloudFlareAuthorizationFinished = true
+            )
+          }
+
+          Logger.debug(TAG) {
+            "[$okHttpType] firewallBypassManager.onFirewallDetected() endpoint '${request.url}'... unsuccessful. (took: ${deltaTime}ms)"
+          }
+        }
+
+        Logger.debug(TAG) {
+          "[$okHttpType] firewallBypassManager.onFirewallDetected() endpoint '${request.url}'... timeout. (took: ${deltaTime}ms)"
+        }
+
+        // countDownLatch.await() reached zero which means CloudFlare bypass got stuck somewhere so we need to throw
+        // the exception
       }
     }
 
@@ -140,6 +180,10 @@ class CloudFlareHandlerInterceptor(
     val site = siteResolver.findSiteForUrl(url.toString())
 
     if (site == null) {
+      Logger.error(TAG) {
+        "[$okHttpType] requireCloudFlareCookie() siteResolver.findSiteForUrl(${url}) returned null"
+      }
+
       return false
     }
 
@@ -148,40 +192,14 @@ class CloudFlareHandlerInterceptor(
     )
 
     if (cloudFlareClearanceCookieSetting == null) {
-      Logger.e(TAG, "[$okHttpType] requireCloudFlareCookie() CloudFlareClearanceCookie setting was not found")
+      Logger.error(TAG) {
+        "[$okHttpType] requireCloudFlareCookie() CloudFlareClearanceCookie setting was not found (url: ${url}, site: ${site.name()})"
+      }
+
       return false
     }
 
     return cloudFlareClearanceCookieSetting.get(domainOrHost).isNotNullNorEmpty()
-  }
-
-  private fun removeSiteClearanceCookie(request: Request) {
-    val url = request.url
-    val site = siteResolver.findSiteForUrl(url.toString())
-
-    val domainOrHost = request.url.domain()
-      ?: request.url.host
-
-    if (site == null) {
-      return
-    }
-
-    val cloudFlareClearanceCookieSetting = site.getSettingBySettingId<MapSetting>(
-      SiteSetting.SiteSettingId.CloudFlareClearanceCookie
-    )
-
-    if (cloudFlareClearanceCookieSetting == null) {
-      Logger.e(TAG, "[$okHttpType] removeSiteClearanceCookie() CloudFlareClearanceCookie setting was not found")
-      return
-    }
-
-    val prevValue = cloudFlareClearanceCookieSetting.get(domainOrHost)
-    if (prevValue.isNullOrEmpty()) {
-      Logger.e(TAG, "[$okHttpType] removeSiteClearanceCookie() cookieValue is empty")
-      return
-    }
-
-    cloudFlareClearanceCookieSetting.remove(domainOrHost)
   }
 
   private fun addCloudFlareCookie(prevRequest: Request): Request? {
@@ -192,6 +210,7 @@ class CloudFlareHandlerInterceptor(
       ?: prevRequest.url.host
 
     if (site == null) {
+      Logger.e(TAG, "[$okHttpType] addCloudFlareCookie() siteResolver.findSiteForUrl(${url}) returned null")
       return null
     }
 
@@ -206,12 +225,12 @@ class CloudFlareHandlerInterceptor(
 
     val cookieValue = cloudFlareClearanceCookieSetting.get(domainOrHost)
     if (cookieValue.isNullOrEmpty()) {
-      Logger.e(TAG, "[$okHttpType] addCloudFlareCookie() cookieValue is empty")
+      Logger.e(TAG, "[$okHttpType] addCloudFlareCookie() cookieValue is null or empty")
       return null
     }
 
     return prevRequest.newBuilder()
-      .appendCookieHeader("$CF_CLEARANCE=$cookieValue")
+      .addOrReplaceCookieHeader("$CF_CLEARANCE=$cookieValue")
       .build()
   }
 
@@ -243,6 +262,32 @@ class CloudFlareHandlerInterceptor(
       }
     }
   }
+
+  private fun canShowCloudFlareBypassScreen(
+    retryingAfterCloudFlareAuthorizationFinished: Boolean,
+    request: Request
+  ): Boolean {
+    if (retryingAfterCloudFlareAuthorizationFinished) {
+      return false
+    }
+
+    if (!siteResolver.isInitialized()) {
+      return false
+    }
+
+    return request.method.equals("GET", ignoreCase = true)
+  }
+
+  private fun ignoreCloudFlareBotDetectionErrors(request: Request): Boolean {
+    val ignoringCloudFlareError = request.tag(IgnoreCloudFlareBotDetectionErrors::class.java) != null
+    if (ignoringCloudFlareError) {
+      Logger.debug(TAG) { "Ignoring CloudFlare bot detection errors for request '${request.url}'" }
+    }
+
+    return ignoringCloudFlareError
+  }
+
+  data object IgnoreCloudFlareBotDetectionErrors
 
   companion object {
     private const val TAG = "CloudFlareHandlerInterceptor"

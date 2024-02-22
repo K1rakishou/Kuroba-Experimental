@@ -456,7 +456,8 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
 
     val captchaResult = loadChan4CaptchaUseCase.await(
       chanDescriptor = chanDescriptor,
-      ticket = ticket
+      ticket = ticket,
+      isRefreshing = false
     ).unwrap()
 
     val captchaInfoRaw = captchaResult.captchaInfoRaw

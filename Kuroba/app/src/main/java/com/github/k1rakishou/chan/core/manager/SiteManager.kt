@@ -24,7 +24,6 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
-import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
 @DoNotStrip
@@ -51,7 +50,6 @@ open class SiteManager(
   private val siteRepository: SiteRepository
     get() = _siteRepository.get()
 
-  @OptIn(ExperimentalTime::class)
   fun initialize(allSitesDeferred: CompletableDeferred<List<ChanSiteData>>) {
     Logger.d(TAG, "SiteManager.initialize()")
 
@@ -62,7 +60,6 @@ open class SiteManager(
     }
   }
 
-  @OptIn(ExperimentalTime::class)
   private suspend fun loadSitesInternal(allSitesDeferred: CompletableDeferred<List<ChanSiteData>>) {
     try {
       val result = siteRepository.initialize(siteRegistry.SITE_CLASSES_MAP.keys)

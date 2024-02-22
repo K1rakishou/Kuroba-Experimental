@@ -9,13 +9,14 @@ import android.webkit.WebView
 import android.webkit.WebViewDatabase
 import android.widget.FrameLayout
 import android.widget.ImageView
-import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
+import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.FirewallType
 import com.github.k1rakishou.common.domain
@@ -26,8 +27,10 @@ import com.github.k1rakishou.prefs.MapSetting
 import com.github.k1rakishou.prefs.StringSetting
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
 class SiteFirewallBypassController(
@@ -43,6 +46,8 @@ class SiteFirewallBypassController(
   lateinit var siteResolver: SiteResolver
   @Inject
   lateinit var themeEngine: ThemeEngine
+  @Inject
+  lateinit var dialogFactory: DialogFactory
 
   private lateinit var webView: WebView
   private lateinit var closeButton: ImageView
@@ -196,15 +201,35 @@ class SiteFirewallBypassController(
   }
 
   private suspend fun waitAndHandleResult() {
-    val job = mainScope.launch {
-      delay(15_000L)
-      showToast(R.string.firewall_check_takes_too_long, Toast.LENGTH_LONG)
+    val informationDialogJob = mainScope.launch {
+      if (!informationDialogShown.compareAndSet(false, true)) {
+        // Dialog was already shown during this app launch
+        return@launch
+      }
+
+      delay(20_000L)
+      ensureActive()
+
+      dialogFactory.createSimpleInformationDialog(
+        context = context,
+        titleText = getString(R.string.firewall_check_takes_too_long_title),
+        dialogId = getString(R.string.firewall_check_takes_too_long_description)
+      )
+    }
+
+    val autoCloseJob = mainScope.launch {
+      delay(AppConstants.FIREWALL_SCREEN_AUTO_CLOSE_TIMEOUT_MILLIS)
+      ensureActive()
+
+      showToast(getString(R.string.firewall_check_autoclosed))
+      notifyAboutResult(CookieResult.Canceled)
     }
 
     val cookieResult = try {
       cookieResultCompletableDeferred.await()
     } finally {
-      job.cancel()
+      informationDialogJob.cancel()
+      autoCloseJob.cancel()
     }
 
     webView.stopLoading()
@@ -289,5 +314,7 @@ class SiteFirewallBypassController(
   companion object {
     private const val TAG = "SiteFirewallBypassController"
     const val MAX_PAGE_LOADS_COUNT = 10
+
+    private val informationDialogShown = AtomicBoolean(false)
   }
 }

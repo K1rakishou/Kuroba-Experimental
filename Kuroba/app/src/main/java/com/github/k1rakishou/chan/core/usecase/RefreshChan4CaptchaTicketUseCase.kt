@@ -45,7 +45,8 @@ class RefreshChan4CaptchaTicketUseCase(
 
             val captchaResult = loadChan4CaptchaUseCase.await(
                 chanDescriptor = chanDescriptor,
-                ticket = chan4CaptchaSettings.captchaTicket
+                ticket = chan4CaptchaSettings.captchaTicket,
+                isRefreshing = true
             )
             .peekError { error ->
                 Logger.error(TAG) { "loadChan4CaptchaUseCase.await() error: ${error.errorMessageOrClassName()}" }

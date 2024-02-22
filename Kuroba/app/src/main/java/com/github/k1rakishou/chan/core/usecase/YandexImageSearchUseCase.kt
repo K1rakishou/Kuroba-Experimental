@@ -8,7 +8,7 @@ import com.github.k1rakishou.common.FirewallDetectedException
 import com.github.k1rakishou.common.FirewallType
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.StringUtils
-import com.github.k1rakishou.common.appendCookieHeader
+import com.github.k1rakishou.common.addOrReplaceCookieHeader
 import com.github.k1rakishou.common.fixUrlOrNull
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.common.suspendCall
@@ -46,7 +46,7 @@ class YandexImageSearchUseCase(
       get()
 
       if (cookies.isNotNullNorEmpty()) {
-        appendCookieHeader(cookies)
+        addOrReplaceCookieHeader(cookies)
       }
 
       build()

@@ -1004,19 +1004,21 @@ suspend fun <T> CompletableDeferred<T>.awaitSilently(defaultValue: T): T {
   }
 }
 
-suspend fun Deferred<*>.awaitSilently() {
+suspend fun Deferred<*>.awaitSilently(): Boolean {
   try {
     await()
+    return true
   } catch (ignored: CancellationException) {
-    // no-op
+    return false
   }
 }
 
-suspend fun CompletableDeferred<*>.awaitSilently() {
+suspend fun CompletableDeferred<*>.awaitSilently(): Boolean {
   try {
     await()
+    return true
   } catch (ignored: CancellationException) {
-    // no-op
+    return false
   }
 }
 
@@ -1342,7 +1344,7 @@ private suspend fun <R> newScope(rethrowErrors: Boolean, block: suspend Coroutin
 
 private const val COOKIE_HEADER_NAME = "Cookie"
 
-fun Request.Builder.appendCookieHeader(newCookie: String): Request.Builder {
+fun Request.Builder.addOrReplaceCookieHeader(newCookie: String): Request.Builder {
   val request = build()
 
   val oldCookies = request.header(COOKIE_HEADER_NAME)
@@ -1360,12 +1362,18 @@ fun Request.Builder.appendCookieHeader(newCookie: String): Request.Builder {
       }
 
     if (cookieParts != null) {
-      val separateCookies = oldCookies.split("; ").map { it.trim() }
-      val key = cookieParts.get(0)
+      val separateCookies = oldCookies.split(";").map { it.trim() }
+      val key = cookieParts.get(0)?.takeIf { it.isNotBlank() }
 
-      val cookieAlreadyAdded = separateCookies.any { cookie -> cookie.startsWith("${key}=") }
-      if (cookieAlreadyAdded) {
-        return this
+      if (key != null) {
+        val cookieAlreadyAdded = separateCookies.any { cookie -> cookie.startsWith("${key}=") }
+        if (cookieAlreadyAdded) {
+          return replaceCookieValue(
+            separateCookies = separateCookies,
+            key = key,
+            newCookie = newCookie
+          )
+        }
       }
     }
   } else {
@@ -1374,6 +1382,29 @@ fun Request.Builder.appendCookieHeader(newCookie: String): Request.Builder {
 
   return removeHeader(COOKIE_HEADER_NAME)
     .header(COOKIE_HEADER_NAME, "${oldCookies}; ${newCookie}")
+}
+
+private fun Request.Builder.replaceCookieValue(
+  separateCookies: List<String>,
+  key: String,
+  newCookie: String
+): Request.Builder {
+  val updatedCookies = buildString {
+    separateCookies.forEachIndexed { index, cookieKeyValue ->
+      if (index > 0) {
+        append("; ")
+      }
+
+      if (cookieKeyValue.startsWith(key)) {
+        append(newCookie)
+      } else {
+        append(cookieKeyValue)
+      }
+    }
+  }
+
+  return removeHeader(COOKIE_HEADER_NAME)
+    .header(COOKIE_HEADER_NAME, updatedCookies)
 }
 
 fun Request.Builder.addHeaderIfNotExists(name: String, value: String): Request.Builder {

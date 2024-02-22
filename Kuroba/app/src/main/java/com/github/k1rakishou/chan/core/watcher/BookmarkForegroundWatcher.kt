@@ -115,11 +115,11 @@ class BookmarkForegroundWatcher(
     }
 
     val isInForegroundOrStartingUp = applicationVisibilityManager.isAppInForeground()
-      || applicationVisibilityManager.isMaybeAppStartingUp()
+      || applicationVisibilityManager.isAppStartingUpMaybe()
 
     if (!isInForegroundOrStartingUp) {
       val isAppInForeground = applicationVisibilityManager.isAppInForeground()
-      val isAppStartingUp = applicationVisibilityManager.isMaybeAppStartingUp()
+      val isAppStartingUp = applicationVisibilityManager.isAppStartingUpMaybe()
 
       Logger.d(TAG, "updateBookmarkForOpenedThread() isAppInForeground: ${isAppInForeground}, isAppStartingUp: ${isAppStartingUp}")
       return
@@ -168,11 +168,11 @@ class BookmarkForegroundWatcher(
 
     while (true) {
       val isInForegroundOrStartingUp = applicationVisibilityManager.isAppInForeground()
-        || applicationVisibilityManager.isMaybeAppStartingUp()
+        || applicationVisibilityManager.isAppStartingUpMaybe()
 
       if (!isInForegroundOrStartingUp) {
         val isAppInForeground = applicationVisibilityManager.isAppInForeground()
-        val isAppStartingUp = applicationVisibilityManager.isMaybeAppStartingUp()
+        val isAppStartingUp = applicationVisibilityManager.isAppStartingUpMaybe()
 
         Logger.d(TAG, "updateBookmarksWorkerLoop() isAppInForeground: ${isAppInForeground}, isAppStartingUp: ${isAppStartingUp}")
         return

@@ -40,7 +40,7 @@ import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.common.appendCookieHeader
+import com.github.k1rakishou.common.addOrReplaceCookieHeader
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.groupOrNull
 import com.github.k1rakishou.core_logger.Logger
@@ -392,7 +392,7 @@ class Dvach : CommonSite() {
       super.modifyHttpCall(httpCall, requestBuilder)
 
       if (site.actions().isLoggedIn()) {
-        requestBuilder.appendCookieHeader("passcode_auth=" + site.passCookie.get())
+        requestBuilder.addOrReplaceCookieHeader("passcode_auth=" + site.passCookie.get())
       }
 
       addAntiSpamCookie(requestBuilder)
@@ -532,13 +532,13 @@ class Dvach : CommonSite() {
         return
       }
 
-      requestBuilder.appendCookieHeader("${USER_CODE_COOKIE_KEY}=${userCodeCookie}")
+      requestBuilder.addOrReplaceCookieHeader("${USER_CODE_COOKIE_KEY}=${userCodeCookie}")
     }
 
     private fun addAntiSpamCookie(requestBuilder: Request.Builder) {
       val antiSpamCookie = site.antiSpamCookie.get()
       if (antiSpamCookie.isNotEmpty()) {
-        requestBuilder.appendCookieHeader(antiSpamCookie)
+        requestBuilder.addOrReplaceCookieHeader(antiSpamCookie)
       }
     }
 

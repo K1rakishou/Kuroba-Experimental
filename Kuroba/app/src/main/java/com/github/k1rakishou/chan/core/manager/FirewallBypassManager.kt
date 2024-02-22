@@ -4,6 +4,8 @@ import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.common.FirewallType
 import com.github.k1rakishou.common.awaitSilently
+import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.rethrowCancellationException
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.CompletableDeferred
@@ -33,69 +35,142 @@ class FirewallBypassManager(
   fun onFirewallDetected(
     firewallType: FirewallType,
     siteDescriptor: SiteDescriptor,
-    urlToOpen: HttpUrl
+    urlToOpen: HttpUrl,
+    onFinished: (success: Boolean) -> Unit
   ) {
     if (!applicationVisibilityManager.isAppInForeground()) {
       // No point to do anything here since there is most likely no activity currently alive
+      Logger.verbose(TAG) {
+        "onFirewallDetected(${firewallType}, ${urlToOpen}) skipping because the app is in background"
+      }
+
+      onFinished.invoke(false)
       return
     }
 
     val host = urlToOpen.host
 
-    val notifyListeners = synchronized(firewallSiteInfoMap) {
+    val showShowFirewallBypassScreen = synchronized(firewallSiteInfoMap) {
+      val isCurrentlyShowing = firewallSiteInfoMap.containsKey(host)
+
       val firewallSiteInfo = firewallSiteInfoMap.getOrPut(
         key = host,
-        defaultValue = { FirewallSiteInfo(lastCheckTime = 0) }
+        defaultValue = { FirewallSiteInfo(onFinished) }
       )
 
-      if (firewallSiteInfo.isCurrentlyShowing) {
-        return@synchronized false
+      if (isCurrentlyShowing) {
+        firewallSiteInfo.addWaiter(onFinished)
+        return@synchronized ShowShowFirewallBypassScreen.WaitForExistingOne
       }
 
       val now = System.currentTimeMillis()
       if (now - firewallSiteInfo.lastCheckTime < FIREWALL_CHECK_TIMEOUT_MS) {
-        return@synchronized false
+        Logger.verbose(TAG) {
+          "onFirewallDetected(${firewallType}, ${urlToOpen}) skipping because screen was shown not long ago " +
+                  "(timeDelta: ${now - firewallSiteInfo.lastCheckTime})"
+        }
+
+        return@synchronized ShowShowFirewallBypassScreen.DoNotShow
       }
 
-      return@synchronized true
+      return@synchronized ShowShowFirewallBypassScreen.Show
     }
 
-    if (!notifyListeners) {
-      return
+    when (showShowFirewallBypassScreen) {
+      ShowShowFirewallBypassScreen.WaitForExistingOne -> {
+        return
+      }
+      ShowShowFirewallBypassScreen.DoNotShow -> {
+        onFinished.invoke(false)
+        return
+      }
+      ShowShowFirewallBypassScreen.Show -> {
+        // no-op
+      }
     }
 
-    Logger.d(TAG, "Sending event to show SiteFirewallBypassController")
+    Logger.debug(TAG) {
+      "onFirewallDetected(${firewallType}, '${urlToOpen}') Sending event to show SiteFirewallBypassController"
+    }
 
     rendezvousCoroutineExecutor.post {
-      val completableDeferred = CompletableDeferred(Unit)
+      try {
+        val completableDeferred = CompletableDeferred<Unit>()
 
-      val showFirewallControllerInfo = ShowFirewallControllerInfo(
-        firewallType = firewallType,
-        siteDescriptor = siteDescriptor,
-        urlToOpen = urlToOpen,
-        onFinished = completableDeferred
-      )
-
-      _showFirewallControllerEvents.tryEmit(showFirewallControllerInfo)
-
-      completableDeferred.awaitSilently()
-
-      synchronized(firewallSiteInfoMap) {
-        val firewallSiteInfo = firewallSiteInfoMap.getOrPut(
-          key = host,
-          defaultValue = { FirewallSiteInfo(lastCheckTime = 0) }
+        val showFirewallControllerInfo = ShowFirewallControllerInfo(
+          firewallType = firewallType,
+          siteDescriptor = siteDescriptor,
+          urlToOpen = urlToOpen,
+          onFinished = completableDeferred
         )
 
-        firewallSiteInfo.lastCheckTime = System.currentTimeMillis()
-      }
+        _showFirewallControllerEvents.emit(showFirewallControllerInfo)
 
+        Logger.debug(TAG) {
+          "onFirewallDetected(${firewallType}, '${urlToOpen}') Waiting for result from SiteFirewallBypassController..."
+        }
+
+        val success = completableDeferred.awaitSilently()
+
+        Logger.debug(TAG) {
+          "onFirewallDetected(${firewallType}, '${urlToOpen}') Waiting for result from " +
+                  "SiteFirewallBypassController... done, success: ${success}"
+        }
+
+        synchronized(firewallSiteInfoMap) {
+          firewallSiteInfoMap.get(host)?.onFinished(
+            success = success,
+            lastCheckTime = System.currentTimeMillis()
+          )
+        }
+      } catch (error: Throwable) {
+        Logger.error(TAG) {
+          "onFirewallDetected(${firewallType}, '${urlToOpen}') Waiting for result from " +
+                  "SiteFirewallBypassController... done, error: ${error.errorMessageOrClassName()}"
+        }
+
+        onFinished.invoke(false)
+
+        error.rethrowCancellationException()
+      }
     }
   }
 
+  enum class ShowShowFirewallBypassScreen {
+    Show,
+    WaitForExistingOne,
+    DoNotShow
+  }
+
   class FirewallSiteInfo(
-    var lastCheckTime: Long = 0L,
-    var isCurrentlyShowing: Boolean = false
-  )
+    waiter: (Boolean) -> Unit
+  ) {
+    @GuardedBy("this")
+    private var _lastCheckTime: Long = 0L
+    @GuardedBy("this")
+    private val waiters = mutableListOf<(Boolean) -> Unit>()
+
+    init {
+      waiters += waiter
+    }
+
+    val lastCheckTime: Long
+      @Synchronized
+      get() = _lastCheckTime
+
+    @Synchronized
+    fun addWaiter(waiter: (Boolean) -> Unit) {
+      waiters += waiter
+    }
+
+    @Synchronized
+    fun onFinished(success: Boolean, lastCheckTime: Long) {
+      _lastCheckTime = lastCheckTime
+
+      waiters.forEach { waiter -> waiter.invoke(success) }
+      waiters.clear()
+    }
+  }
 
   class ShowFirewallControllerInfo(
     val firewallType: FirewallType,

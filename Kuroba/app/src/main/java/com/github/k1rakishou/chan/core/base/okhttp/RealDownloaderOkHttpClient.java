@@ -63,7 +63,6 @@ public class RealDownloaderOkHttpClient implements DownloaderOkHttpClient {
                     Interceptor interceptor = new CloudFlareHandlerInterceptor(
                             siteResolver,
                             firewallBypassManager,
-                            ChanSettings.verboseLogs.get(),
                             "Downloader"
                     );
 
@@ -72,7 +71,7 @@ public class RealDownloaderOkHttpClient implements DownloaderOkHttpClient {
                             .writeTimeout(5, SECONDS)
                             .proxySelector(kurobaProxySelector)
                             .protocols(okHttpProtocols.getProtocols())
-                            .addNetworkInterceptor(interceptor);
+                            .addInterceptor(interceptor);
 
                     HttpLoggingInterceptorInstaller.install(builder, httpLoggingInterceptorLazy);
                     OkHttpClient okHttpClient = builder.build();

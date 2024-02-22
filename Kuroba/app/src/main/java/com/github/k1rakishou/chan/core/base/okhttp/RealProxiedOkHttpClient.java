@@ -64,7 +64,6 @@ public class RealProxiedOkHttpClient implements ProxiedOkHttpClient {
                     Interceptor interceptor = new CloudFlareHandlerInterceptor(
                             siteResolver,
                             firewallBypassManager,
-                            ChanSettings.verboseLogs.get(),
                             "Generic"
                     );
 
@@ -75,7 +74,7 @@ public class RealProxiedOkHttpClient implements ProxiedOkHttpClient {
                             .writeTimeout(30, SECONDS)
                             .protocols(okHttpProtocols.getProtocols())
                             .proxySelector(kurobaProxySelector)
-                            .addNetworkInterceptor(interceptor);
+                            .addInterceptor(interceptor);
 
                     HttpLoggingInterceptorInstaller.install(builder, httpLoggingInterceptorLazy);
                     OkHttpClient okHttpClient = builder.build();

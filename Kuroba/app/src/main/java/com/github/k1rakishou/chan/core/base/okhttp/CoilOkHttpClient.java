@@ -67,14 +67,13 @@ public class CoilOkHttpClient implements CustomOkHttpClient {
                     Interceptor interceptor = new CloudFlareHandlerInterceptor(
                             siteResolver,
                             firewallBypassManager,
-                            ChanSettings.verboseLogs.get(),
                             "Coil"
                     );
 
                     OkHttpClient.Builder builder = new OkHttpClient.Builder()
                             .protocols(okHttpProtocols.getProtocols())
                             .proxySelector(kurobaProxySelector)
-                            .addNetworkInterceptor(interceptor);
+                            .addInterceptor(interceptor);
 
                     HttpLoggingInterceptorInstaller.install(builder, httpLoggingInterceptorLazy);
                     OkHttpClient okHttpClient = builder.build();

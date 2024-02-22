@@ -39,7 +39,7 @@ import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.StringUtils.formatToken
-import com.github.k1rakishou.common.appendCookieHeader
+import com.github.k1rakishou.common.addOrReplaceCookieHeader
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.core_logger.Logger
@@ -613,7 +613,7 @@ open class Chan4 : SiteBase() {
       if (httpCall is Chan4ReplyCall && httpCall.replyMode == ReplyMode.ReplyModeUsePasscode) {
         if (site.actions().isLoggedIn()) {
           val passTokenSetting = site.passToken
-          requestBuilder.appendCookieHeader("pass_id=" + passTokenSetting.get())
+          requestBuilder.addOrReplaceCookieHeader("pass_id=" + passTokenSetting.get())
         }
       }
 
@@ -675,7 +675,7 @@ open class Chan4 : SiteBase() {
 
       if (site.actions().isLoggedIn()) {
         val passTokenSetting = site.passToken
-        requestBuilder.appendCookieHeader("pass_id=" + passTokenSetting.get())
+        requestBuilder.addOrReplaceCookieHeader("pass_id=" + passTokenSetting.get())
       }
 
       addChan4CookieHeader(site, requestBuilder)
@@ -691,7 +691,7 @@ open class Chan4 : SiteBase() {
       }
 
       Logger.d(TAG, "addChan4CookieHeader(), host=${host}, captchaCookie=${formatToken(captchaCookie)}")
-      requestBuilder.appendCookieHeader("$CAPTCHA_COOKIE_KEY=${captchaCookie}")
+      requestBuilder.addOrReplaceCookieHeader("$CAPTCHA_COOKIE_KEY=${captchaCookie}")
     }
 
     private fun getCaptchaCookie(site: Chan4, host: String): String? {

@@ -3,7 +3,7 @@ package com.github.k1rakishou.chan.core.site.sites.lynxchan.engine
 import com.github.k1rakishou.chan.core.site.SiteRequestModifier
 import com.github.k1rakishou.chan.core.site.http.HttpCall
 import com.github.k1rakishou.common.AppConstants
-import com.github.k1rakishou.common.appendCookieHeader
+import com.github.k1rakishou.common.addOrReplaceCookieHeader
 import okhttp3.Request
 
 open class LynxchanRequestModifier(
@@ -41,7 +41,7 @@ open class LynxchanRequestModifier(
     }
 
     if (captchaid.isNotEmpty()) {
-      requestBuilder.appendCookieHeader(captchaid)
+      requestBuilder.addOrReplaceCookieHeader(captchaid)
     }
   }
 
