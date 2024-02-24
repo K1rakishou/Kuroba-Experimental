@@ -4,11 +4,13 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
+import com.github.k1rakishou.chan.core.di.module.viewmodel.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
@@ -41,38 +43,32 @@ import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import javax.inject.Inject
 
-class MainControllerViewModel : BaseViewModel() {
+class MainControllerViewModel(
+  private val savedStateHandle: SavedStateHandle,
+  private val historyNavigationManagerLazy: Lazy<HistoryNavigationManager>,
+  private val siteManagerLazy: Lazy<SiteManager>,
+  private val bookmarksManagerLazy: Lazy<BookmarksManager>,
+  private val pageRequestManagerLazy: Lazy<PageRequestManager>,
+  private val archivesManagerLazy: Lazy<ArchivesManager>,
+  private val chanThreadManagerLazy: Lazy<ChanThreadManager>,
+  private val compositeCatalogManagerLazy: Lazy<CompositeCatalogManager>,
+) : BaseViewModel() {
   private val isDevFlavor = isDevBuild()
 
-  @Inject
-  lateinit var _historyNavigationManager: Lazy<HistoryNavigationManager>
-  @Inject
-  lateinit var _siteManager: Lazy<SiteManager>
-  @Inject
-  lateinit var _bookmarksManager: Lazy<BookmarksManager>
-  @Inject
-  lateinit var _pageRequestManager: Lazy<PageRequestManager>
-  @Inject
-  lateinit var _archivesManager: Lazy<ArchivesManager>
-  @Inject
-  lateinit var _chanThreadManager: Lazy<ChanThreadManager>
-  @Inject
-  lateinit var _compositeCatalogManager: Lazy<CompositeCatalogManager>
-
   private val historyNavigationManager: HistoryNavigationManager
-    get() = _historyNavigationManager.get()
+    get() = historyNavigationManagerLazy.get()
   private val siteManager: SiteManager
-    get() = _siteManager.get()
+    get() = siteManagerLazy.get()
   private val bookmarksManager: BookmarksManager
-    get() = _bookmarksManager.get()
+    get() = bookmarksManagerLazy.get()
   private val pageRequestManager: PageRequestManager
-    get() = _pageRequestManager.get()
+    get() = pageRequestManagerLazy.get()
   private val archivesManager: ArchivesManager
-    get() = _archivesManager.get()
+    get() = archivesManagerLazy.get()
   private val chanThreadManager: ChanThreadManager
-    get() = _chanThreadManager.get()
+    get() = chanThreadManagerLazy.get()
   private val compositeCatalogManager: CompositeCatalogManager
-    get() = _compositeCatalogManager.get()
+    get() = compositeCatalogManagerLazy.get()
 
   private val _historyControllerState = mutableStateOf<HistoryControllerState>(HistoryControllerState.Loading)
   val historyControllerState: State<HistoryControllerState>
@@ -600,6 +596,29 @@ class MainControllerViewModel : BaseViewModel() {
     val totalUnseenPostsCount: Int,
     val hasUnreadReplies: Boolean
   )
+
+  class ViewModelFactory @Inject constructor(
+    private val historyNavigationManagerLazy: Lazy<HistoryNavigationManager>,
+    private val siteManagerLazy: Lazy<SiteManager>,
+    private val bookmarksManagerLazy: Lazy<BookmarksManager>,
+    private val pageRequestManagerLazy: Lazy<PageRequestManager>,
+    private val archivesManagerLazy: Lazy<ArchivesManager>,
+    private val chanThreadManagerLazy: Lazy<ChanThreadManager>,
+    private val compositeCatalogManagerLazy: Lazy<CompositeCatalogManager>,
+  ) : ViewModelAssistedFactory<MainControllerViewModel> {
+    override fun create(handle: SavedStateHandle): MainControllerViewModel {
+      return MainControllerViewModel(
+        savedStateHandle = handle,
+        historyNavigationManagerLazy = historyNavigationManagerLazy,
+        siteManagerLazy = siteManagerLazy,
+        bookmarksManagerLazy = bookmarksManagerLazy,
+        pageRequestManagerLazy = pageRequestManagerLazy,
+        archivesManagerLazy = archivesManagerLazy,
+        chanThreadManagerLazy = chanThreadManagerLazy,
+        compositeCatalogManagerLazy = compositeCatalogManagerLazy
+      )
+    }
+  }
 
   companion object {
     private const val TAG = "DrawerPresenter"

@@ -3,10 +3,12 @@ package com.github.k1rakishou.chan.features.media_viewer
 import android.net.Uri
 import android.util.LruCache
 import android.webkit.MimeTypeMap
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
+import com.github.k1rakishou.chan.core.di.module.viewmodel.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.repository.CurrentlyDisplayedCatalogPostsRepository
@@ -38,17 +40,13 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Inject
 
-class MediaViewerControllerViewModel : ViewModel() {
-
-  @Inject
-  lateinit var chanThreadManager: ChanThreadManager
-  @Inject
-  lateinit var filterOutHiddenImagesUseCase: FilterOutHiddenImagesUseCase
-  @Inject
-  lateinit var replyManager: ReplyManager
-  @Inject
-  lateinit var currentlyDisplayedCatalogPostsRepository: CurrentlyDisplayedCatalogPostsRepository
-
+class MediaViewerControllerViewModel(
+  private val savedStateHandle: SavedStateHandle,
+  private val chanThreadManager: ChanThreadManager,
+  private val filterOutHiddenImagesUseCase: FilterOutHiddenImagesUseCase,
+  private val replyManager: ReplyManager,
+  private val currentlyDisplayedCatalogPostsRepository: CurrentlyDisplayedCatalogPostsRepository,
+) : ViewModel() {
   private val _mediaViewerState = MutableStateFlow<MediaViewerControllerState?>(null)
   private val _transitionInfoFlow = MutableSharedFlow<ViewableMediaParcelableHolder.TransitionInfo?>(extraBufferCapacity = 1)
   private val _mediaViewerOptions = MutableStateFlow<MediaViewerOptions>(MediaViewerOptions())
@@ -576,6 +574,23 @@ class MediaViewerControllerViewModel : ViewModel() {
     val initialPagerIndex: Int = 0
   ) {
     fun isEmpty(): Boolean = loadedMedia.isEmpty()
+  }
+
+  class ViewModelFactory @Inject constructor(
+    private val chanThreadManager: ChanThreadManager,
+    private val filterOutHiddenImagesUseCase: FilterOutHiddenImagesUseCase,
+    private val replyManager: ReplyManager,
+    private val currentlyDisplayedCatalogPostsRepository: CurrentlyDisplayedCatalogPostsRepository,
+  ) : ViewModelAssistedFactory<MediaViewerControllerViewModel> {
+    override fun create(handle: SavedStateHandle): MediaViewerControllerViewModel {
+      return MediaViewerControllerViewModel(
+        savedStateHandle = handle,
+        chanThreadManager = chanThreadManager,
+        filterOutHiddenImagesUseCase = filterOutHiddenImagesUseCase,
+        replyManager = replyManager,
+        currentlyDisplayedCatalogPostsRepository = currentlyDisplayedCatalogPostsRepository
+      )
+    }
   }
 
   companion object {

@@ -62,6 +62,7 @@ import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.ui.view.floating_menu.HeaderFloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.findControllerOrNull
+import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.common.FirewallType
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.common.resumeValueSafe
@@ -82,7 +83,6 @@ class ImageSearchController(
   private val onImageSelected: (HttpUrl) -> Unit
 ) : BaseComposeController<ImageSearchControllerViewModel>(
   context = context,
-  viewModelClass = ImageSearchControllerViewModel::class.java,
   titleStringId = R.string.image_search_controller_title
 ), WindowInsetsListener {
 
@@ -93,6 +93,10 @@ class ImageSearchController(
 
   override fun injectDependencies(component: ActivityComponent) {
     component.inject(this)
+  }
+
+  override fun controllerVM(): ImageSearchControllerViewModel {
+    return requireComponentActivity().viewModelByKey<ImageSearchControllerViewModel>()
   }
 
   override fun setupNavigation() {

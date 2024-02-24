@@ -12,13 +12,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.withTranslation
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.BaseViewModel
-import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
-import com.github.k1rakishou.chan.core.manager.BoardManager
+import com.github.k1rakishou.chan.core.di.module.viewmodel.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.CaptchaImageCache
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteSetting
@@ -29,10 +29,8 @@ import com.github.k1rakishou.chan.core.usecase.RefreshChan4CaptchaTicketUseCase
 import com.github.k1rakishou.chan.features.posting.CaptchaDonation
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.prefs.GsonJsonSetting
-import com.squareup.moshi.Moshi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -49,28 +47,15 @@ import kotlinx.coroutines.withContext
 import javax.inject.Inject
 import kotlin.math.abs
 
-class Chan4CaptchaLayoutViewModel : BaseViewModel() {
-
-  @Inject
-  lateinit var proxiedOkHttpClient: RealProxiedOkHttpClient
-  @Inject
-  lateinit var siteManager: SiteManager
-  @Inject
-  lateinit var boardManager: BoardManager
-  @Inject
-  lateinit var moshi: Moshi
-  @Inject
-  lateinit var themeEngine: ThemeEngine
-  @Inject
-  lateinit var chan4CaptchaSolverHelper: Chan4CaptchaSolverHelper
-  @Inject
-  lateinit var captchaImageCache: CaptchaImageCache
-  @Inject
-  lateinit var captchaDonation: CaptchaDonation
-  @Inject
-  lateinit var loadChan4CaptchaUseCase: LoadChan4CaptchaUseCase
-  @Inject
-  lateinit var refreshChan4CaptchaTicketUseCase: RefreshChan4CaptchaTicketUseCase
+class Chan4CaptchaLayoutViewModel(
+  private val savedStateHandle: SavedStateHandle,
+  private val siteManager: SiteManager,
+  private val chan4CaptchaSolverHelper: Chan4CaptchaSolverHelper,
+  private val captchaImageCache: CaptchaImageCache,
+  private val captchaDonation: CaptchaDonation,
+  private val loadChan4CaptchaUseCase: LoadChan4CaptchaUseCase,
+  private val refreshChan4CaptchaTicketUseCase: RefreshChan4CaptchaTicketUseCase,
+) : BaseViewModel() {
 
   private var activeJob: Job? = null
   private var captchaTtlUpdateJob: Job? = null
@@ -610,6 +595,27 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
     CaptchaCooldownError
 
   class UnknownCaptchaError(message: String) : java.lang.Exception(message)
+
+  class ViewModelFactory @Inject constructor(
+    private val siteManager: SiteManager,
+    private val chan4CaptchaSolverHelper: Chan4CaptchaSolverHelper,
+    private val captchaImageCache: CaptchaImageCache,
+    private val captchaDonation: CaptchaDonation,
+    private val loadChan4CaptchaUseCase: LoadChan4CaptchaUseCase,
+    private val refreshChan4CaptchaTicketUseCase: RefreshChan4CaptchaTicketUseCase,
+  ) : ViewModelAssistedFactory<Chan4CaptchaLayoutViewModel> {
+    override fun create(handle: SavedStateHandle): Chan4CaptchaLayoutViewModel {
+      return Chan4CaptchaLayoutViewModel(
+        savedStateHandle = handle,
+        siteManager = siteManager,
+        chan4CaptchaSolverHelper = chan4CaptchaSolverHelper,
+        captchaImageCache = captchaImageCache,
+        captchaDonation = captchaDonation,
+        loadChan4CaptchaUseCase = loadChan4CaptchaUseCase,
+        refreshChan4CaptchaTicketUseCase = refreshChan4CaptchaTicketUseCase
+      )
+    }
+  }
 
   companion object {
     private const val TAG = "Chan4CaptchaLayoutViewModel"

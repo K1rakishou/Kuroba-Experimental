@@ -7,8 +7,6 @@ import android.view.View
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.activity.ComponentActivity
-import androidx.activity.viewModels
 import androidx.appcompat.widget.AppCompatImageButton
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
@@ -23,6 +21,8 @@ import com.github.k1rakishou.chan.utils.AnimationUtils.fadeOut
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.setEnabledFast
 import com.github.k1rakishou.chan.utils.setVisibilityFast
+import com.github.k1rakishou.chan.utils.viewModelByKey
+import com.github.k1rakishou.common.requireComponentActivity
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -54,7 +54,7 @@ abstract class MediaViewerActionStrip(
   private lateinit var repliesCountTextView: TextView
 
   private val scope = KurobaCoroutineScope()
-  private val controllerViewModel by (context as ComponentActivity).viewModels<MediaViewerControllerViewModel>()
+  private val controllerViewModel by lazy { context.requireComponentActivity().viewModelByKey<MediaViewerControllerViewModel>() }
 
   private var mediaViewerStripCallbacks: MediaViewerBottomActionStripCallbacks? = null
   private var chanDescriptor: ChanDescriptor? = null

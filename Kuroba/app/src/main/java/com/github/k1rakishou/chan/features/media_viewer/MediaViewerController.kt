@@ -6,8 +6,6 @@ import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.view.View
-import androidx.activity.ComponentActivity
-import androidx.activity.viewModels
 import androidx.viewpager.widget.ViewPager
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
@@ -48,6 +46,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.setVisibilityFast
+import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.StringUtils
@@ -276,7 +275,7 @@ class MediaViewerController(
     )
   }
 
-  private val viewModel by (context as ComponentActivity).viewModels<MediaViewerControllerViewModel>()
+  private val viewModel by lazy { requireComponentActivity().viewModelByKey<MediaViewerControllerViewModel>() }
 
   private val mediaViewerMenuHelper by lazy {
     MediaViewerMenuHelper(

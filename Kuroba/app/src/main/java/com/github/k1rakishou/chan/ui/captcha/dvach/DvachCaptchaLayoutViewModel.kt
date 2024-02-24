@@ -5,11 +5,13 @@ import android.graphics.BitmapFactory
 import android.util.Base64
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Offset
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
+import com.github.k1rakishou.chan.core.di.module.viewmodel.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
 import com.github.k1rakishou.common.ModularResult
@@ -25,14 +27,12 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import javax.inject.Inject
 
-class DvachCaptchaLayoutViewModel : BaseViewModel() {
-
-  @Inject
-  lateinit var proxiedOkHttpClient: RealProxiedOkHttpClient
-  @Inject
-  lateinit var siteManager: SiteManager
-  @Inject
-  lateinit var moshi: Moshi
+class DvachCaptchaLayoutViewModel(
+  private val savedStateHandle: SavedStateHandle,
+  private val proxiedOkHttpClient: RealProxiedOkHttpClient,
+  private val siteManager: SiteManager,
+  private val moshi: Moshi,
+) : BaseViewModel() {
 
   private var activeJob: Job? = null
   var captchaInfoToShow = mutableStateOf<AsyncData<CaptchaInfo>>(AsyncData.NotInitialized)
@@ -154,9 +154,7 @@ class DvachCaptchaLayoutViewModel : BaseViewModel() {
       val input: String,
       val puzzle: Bitmap,
       val type: String,
-    ) : CaptchaInfo {
-
-    }
+    ) : CaptchaInfo
 
     companion object {
       internal fun fromCaptchaInfoData(data: CaptchaInfoData): Result<CaptchaInfo> {
@@ -241,6 +239,21 @@ class DvachCaptchaLayoutViewModel : BaseViewModel() {
   enum class DvachCaptchaType {
     Text,
     Puzzle
+  }
+
+  class ViewModelFactory @Inject constructor(
+    private val proxiedOkHttpClient: RealProxiedOkHttpClient,
+    private val siteManager: SiteManager,
+    private val moshi: Moshi,
+  ) : ViewModelAssistedFactory<DvachCaptchaLayoutViewModel> {
+    override fun create(handle: SavedStateHandle): DvachCaptchaLayoutViewModel {
+      return DvachCaptchaLayoutViewModel(
+        savedStateHandle = handle,
+        proxiedOkHttpClient = proxiedOkHttpClient,
+        siteManager = siteManager,
+        moshi = moshi
+      )
+    }
   }
 
   companion object {

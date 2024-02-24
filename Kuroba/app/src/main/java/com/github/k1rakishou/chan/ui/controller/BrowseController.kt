@@ -978,8 +978,8 @@ class BrowseController(
           }
 
           splitNav.switchToController(
-            leftController = false,
-            animated = showThreadOptions.pushControllerWithAnimation
+            false,
+            showThreadOptions.pushControllerWithAnimation
           )
         }
         slideNav != null -> {
@@ -995,15 +995,15 @@ class BrowseController(
             )
 
             slideNav.setRightController(
-              rightController = viewThreadController,
-              animated = showThreadOptions.pushControllerWithAnimation
+              viewThreadController,
+              showThreadOptions.pushControllerWithAnimation
             )
           }
 
           if (showThreadOptions.switchToThreadController) {
             slideNav.switchToController(
-              leftController = false,
-              animated = showThreadOptions.pushControllerWithAnimation
+              false,
+              showThreadOptions.pushControllerWithAnimation
             )
           }
         }
@@ -1017,8 +1017,8 @@ class BrowseController(
           )
 
           navigationController!!.pushController(
-            to = viewThreadController,
-            animated = showThreadOptions.pushControllerWithAnimation
+            viewThreadController,
+            showThreadOptions.pushControllerWithAnimation
           )
         }
       }
@@ -1155,13 +1155,11 @@ class BrowseController(
         }
       )
 
-      Logger.d(TAG, "presentController SiteFirewallBypassController " +
-        "(firewallType=${firewallType}, urlToOpen=${urlToOpen}, hashcode=${controller.hashCode()})")
+      Logger.d(TAG, "presentController SiteFirewallBypassController (firewallType: ${firewallType}, urlToOpen: ${urlToOpen})")
       presentController(controller)
 
       continuation.invokeOnCancellation {
-        Logger.d(TAG, "stopPresenting SiteFirewallBypassController " +
-          "(firewallType=${firewallType}, urlToOpen=${urlToOpen}, hashcode=${controller.hashCode()})")
+        Logger.d(TAG, "stopPresenting SiteFirewallBypassController (firewallType: ${firewallType}, urlToOpen: ${urlToOpen})")
 
         if (controller.alive) {
           controller.stopPresenting()

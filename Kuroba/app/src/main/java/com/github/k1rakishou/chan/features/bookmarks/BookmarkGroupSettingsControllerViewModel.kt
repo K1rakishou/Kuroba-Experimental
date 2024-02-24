@@ -3,10 +3,11 @@ package com.github.k1rakishou.chan.features.bookmarks
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
-import com.github.k1rakishou.chan.core.manager.BookmarksManager
+import com.github.k1rakishou.chan.core.di.module.viewmodel.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.move
@@ -18,12 +19,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
-class BookmarkGroupSettingsControllerViewModel : BaseViewModel() {
-
-  @Inject
-  lateinit var threadBookmarkGroupManager: ThreadBookmarkGroupManager
-  @Inject
-  lateinit var bookmarksManager: BookmarksManager
+class BookmarkGroupSettingsControllerViewModel(
+  private val savedStateHandle: SavedStateHandle,
+  private val threadBookmarkGroupManager: ThreadBookmarkGroupManager
+) : BaseViewModel() {
 
   private var _loading = mutableStateOf(true)
   val loading: State<Boolean>
@@ -117,4 +116,16 @@ class BookmarkGroupSettingsControllerViewModel : BaseViewModel() {
   ) {
     fun isDefaultGroup(): Boolean = ThreadBookmarkGroup.isDefaultGroup(groupId)
   }
+
+  class ViewModelFactory @Inject constructor(
+    private val threadBookmarkGroupManager: ThreadBookmarkGroupManager
+  ) : ViewModelAssistedFactory<BookmarkGroupSettingsControllerViewModel> {
+    override fun create(handle: SavedStateHandle): BookmarkGroupSettingsControllerViewModel {
+      return BookmarkGroupSettingsControllerViewModel(
+        savedStateHandle = handle,
+        threadBookmarkGroupManager = threadBookmarkGroupManager
+      )
+    }
+  }
+
 }

@@ -6,10 +6,12 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.snapshots.Snapshot
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
+import com.github.k1rakishou.chan.core.di.module.viewmodel.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.site.loader.CanceledByUserException
 import com.github.k1rakishou.chan.core.site.loader.ClientException
@@ -23,7 +25,6 @@ import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.common.rethrowCancellationException
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileChooser
-import com.github.k1rakishou.fsaf.FileManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
@@ -33,19 +34,15 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import java.net.URLEncoder
-import java.util.UUID
+import java.util.*
 import javax.inject.Inject
 
-class CreateSoundMediaControllerViewModel : BaseViewModel() {
-
-    @Inject
-    lateinit var replyManager: ReplyManager
-    @Inject
-    lateinit var fileManager: FileManager
-    @Inject
-    lateinit var fileHelper: FileHelper
-    @Inject
-    lateinit var uploadFileToCatBoxUseCase: UploadFileToCatBoxUseCase
+class CreateSoundMediaControllerViewModel(
+    private val savedStateHandle: SavedStateHandle,
+    private val replyManager: ReplyManager,
+    private val fileHelper: FileHelper,
+    private val uploadFileToCatBoxUseCase: UploadFileToCatBoxUseCase,
+) : BaseViewModel() {
 
     private val _activeRequests = mutableMapOf<UUID, Job>()
 
@@ -274,6 +271,21 @@ class CreateSoundMediaControllerViewModel : BaseViewModel() {
         val imagePath: String,
         val attachmentName: String,
     )
+
+    class ViewModelFactory @Inject constructor(
+        private val replyManager: ReplyManager,
+        private val fileHelper: FileHelper,
+        private val uploadFileToCatBoxUseCase: UploadFileToCatBoxUseCase,
+    ) : ViewModelAssistedFactory<CreateSoundMediaControllerViewModel> {
+        override fun create(handle: SavedStateHandle): CreateSoundMediaControllerViewModel {
+            return CreateSoundMediaControllerViewModel(
+                savedStateHandle = handle,
+                replyManager = replyManager,
+                fileHelper = fileHelper,
+                uploadFileToCatBoxUseCase = uploadFileToCatBoxUseCase
+            )
+        }
+    }
 
     companion object {
         private const val TAG = "CreateSoundMediaControllerViewModel"

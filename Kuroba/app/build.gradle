@@ -229,6 +229,7 @@ android {
         jvmTarget = JavaVersion.VERSION_1_8.toString()
         freeCompilerArgs = ["-Xopt-in=kotlin.RequiresOptIn"]
         jvmTarget = "17"
+        languageVersion = "2.0"
     }
 
     buildFeatures {
@@ -284,6 +285,7 @@ dependencies {
     implementation "io.reactivex.rxjava2:rxjava:${versions.rxjava}"
     implementation "io.reactivex.rxjava2:rxandroid:${versions.rxandroid}"
     implementation "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin_version}"
+    implementation "org.jetbrains.kotlin:kotlin-reflect:${versions.kotlin_version}"
     implementation "joda-time:joda-time:${versions.joda_time}"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:${versions.kotlin_coroutines_version}"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:${versions.kotlin_coroutines_version}"

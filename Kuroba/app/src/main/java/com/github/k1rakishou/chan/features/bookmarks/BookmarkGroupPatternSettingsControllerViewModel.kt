@@ -3,9 +3,11 @@ package com.github.k1rakishou.chan.features.bookmarks
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
+import com.github.k1rakishou.chan.core.di.module.viewmodel.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.RegexPatternCompiler
@@ -14,10 +16,10 @@ import com.github.k1rakishou.model.data.bookmark.BookmarkGroupMatchFlag
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-class BookmarkGroupPatternSettingsControllerViewModel : BaseViewModel() {
-
-  @Inject
-  lateinit var threadBookmarkGroupManager: ThreadBookmarkGroupManager
+class BookmarkGroupPatternSettingsControllerViewModel(
+  private val savedStateHandle: SavedStateHandle,
+  private val threadBookmarkGroupManager: ThreadBookmarkGroupManager
+) : BaseViewModel() {
 
   val mutableMatcherFlags = mutableStateListOf<MatchFlagMutable>()
 
@@ -163,6 +165,17 @@ class BookmarkGroupPatternSettingsControllerViewModel : BaseViewModel() {
     return matchFlag
   }
 
+  class ViewModelFactory @Inject constructor(
+    private val threadBookmarkGroupManager: ThreadBookmarkGroupManager
+  ) : ViewModelAssistedFactory<BookmarkGroupPatternSettingsControllerViewModel> {
+    override fun create(handle: SavedStateHandle): BookmarkGroupPatternSettingsControllerViewModel {
+      return BookmarkGroupPatternSettingsControllerViewModel(
+        savedStateHandle = handle,
+        threadBookmarkGroupManager = threadBookmarkGroupManager
+      )
+    }
+  }
+
   companion object {
     private const val TAG = "BookmarkGroupPatternSettingsControllerViewModel"
 
@@ -179,8 +192,8 @@ sealed class GroupMatcherValidationResult {
     }
   }
 
-  object Ok : GroupMatcherValidationResult()
-  object Validating : GroupMatcherValidationResult()
+  data object Ok : GroupMatcherValidationResult()
+  data object Validating : GroupMatcherValidationResult()
   data class Error(val message: String) : GroupMatcherValidationResult()
 }
 

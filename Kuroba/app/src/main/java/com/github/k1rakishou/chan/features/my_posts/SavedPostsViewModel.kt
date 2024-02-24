@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.features.my_posts
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.BaseViewModel
@@ -10,6 +11,7 @@ import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.ViewModelSelectionHelper
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
+import com.github.k1rakishou.chan.core.di.module.viewmodel.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanelItem
 import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanelItemId
@@ -30,10 +32,10 @@ import org.joda.time.format.ISODateTimeFormat
 import java.util.*
 import javax.inject.Inject
 
-class SavedPostsViewModel : BaseViewModel() {
-  @Inject
-  lateinit var savedReplyManager: SavedReplyManager
-
+class SavedPostsViewModel(
+  private val savedStateHandle: SavedStateHandle,
+  private val savedReplyManager: SavedReplyManager
+) : BaseViewModel() {
   private val _myPostsViewModelState = MutableStateFlow(MyPostsViewModelState())
   private val searchQueryDebouncer = DebouncingCoroutineExecutor(viewModelScope)
   val viewModelSelectionHelper = ViewModelSelectionHelper<PostDescriptor, MenuItemClickEvent>()
@@ -282,6 +284,17 @@ class SavedPostsViewModel : BaseViewModel() {
     val comment: String,
     val dateTime: String?
   )
+
+  class ViewModelFactory @Inject constructor(
+    private val savedReplyManager: SavedReplyManager
+  ) : ViewModelAssistedFactory<SavedPostsViewModel> {
+    override fun create(handle: SavedStateHandle): SavedPostsViewModel {
+      return SavedPostsViewModel(
+        savedStateHandle = handle,
+        savedReplyManager = savedReplyManager
+      )
+    }
+  }
 
   companion object {
     private const val TAG = "SavedPostsViewModel"

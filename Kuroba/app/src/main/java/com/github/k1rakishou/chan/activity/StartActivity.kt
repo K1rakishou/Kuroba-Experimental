@@ -33,6 +33,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.ControllerHostActivity
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
+import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.activity.ActivityModule
 import com.github.k1rakishou.chan.core.helper.AppRestarter
 import com.github.k1rakishou.chan.core.helper.DialogFactory
@@ -118,6 +119,8 @@ class StartActivity : ControllerHostActivity(),
   private var browseController: BrowseController? = null
 
   private lateinit var activityComponent: ActivityComponent
+  private lateinit var viewModelComponent: ViewModelComponent
+
   private lateinit var mainRootLayoutMargins: View
   private lateinit var mainNavigationController: NavigationController
   private lateinit var mainController: MainController
@@ -145,6 +148,10 @@ class StartActivity : ControllerHostActivity(),
       .activityModule(ActivityModule())
       .build()
       .also { component -> component.inject(this) }
+
+    viewModelComponent = Chan.getComponent()
+      .viewModelComponentBuilder()
+      .build()
 
     globalWindowInsetsManager.updateDisplaySize(this)
 

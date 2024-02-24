@@ -20,13 +20,11 @@ import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
-import com.github.k1rakishou.chan.utils.viewModelByKeyWithClass
 import com.github.k1rakishou.core_themes.ThemeEngine
 import javax.inject.Inject
 
 abstract class BaseComposeController<VM : ViewModel>(
     context: Context,
-    viewModelClass: Class<VM>,
     @StringRes private val titleStringId: Int
 ) : Controller(context), WindowInsetsListener {
 
@@ -35,7 +33,7 @@ abstract class BaseComposeController<VM : ViewModel>(
     @Inject
     lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
-    protected val controllerViewModel by lazy { requireComponentActivity().viewModelByKeyWithClass<VM>(viewModelClass, null) }
+    protected val controllerViewModel by lazy { controllerVM() }
 
     protected val controllerPaddingsState = mutableStateOf(PaddingValues())
 
@@ -101,6 +99,8 @@ abstract class BaseComposeController<VM : ViewModel>(
     open fun onPrepare() {
 
     }
+
+    abstract fun controllerVM(): VM
 
     @Composable
     abstract fun BuildContent()

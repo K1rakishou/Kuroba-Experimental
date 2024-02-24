@@ -4,10 +4,12 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
+import com.github.k1rakishou.chan.core.di.module.viewmodel.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.SeenPostsManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.sites.archive.NativeArchivePost
@@ -15,35 +17,35 @@ import com.github.k1rakishou.chan.core.site.sites.archive.NativeArchivePostList
 import com.github.k1rakishou.common.BadStatusResponseException
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class BoardArchiveViewModel(
-  private val catalogDescriptor: ChanDescriptor.CatalogDescriptor
+  private val savedStateHandle: SavedStateHandle,
+  private val siteManager: SiteManager,
+  private val seenPostsManager: SeenPostsManager
 ) : BaseViewModel() {
-
-  @Inject
-  lateinit var siteManager: SiteManager
-  @Inject
-  lateinit var themeEngine: ThemeEngine
-  @Inject
-  lateinit var seenPostsManager: SeenPostsManager
-
   private var _state = mutableStateOf<AsyncData<Unit>>(AsyncData.NotInitialized)
-  private var _archiveThreads = mutableStateListOf<ArchiveThread>()
-  private var _endReached = mutableStateOf(false)
-  private var _page = mutableStateOf<Int?>(null)
-
   val state: State<AsyncData<Unit>>
     get() = _state
+
+  private var _archiveThreads = mutableStateListOf<ArchiveThread>()
   val archiveThreads: List<ArchiveThread>
     get() = _archiveThreads
+
+  private var _endReached = mutableStateOf(false)
   val endReached: State<Boolean>
     get() = _endReached
+
+  private var _page = mutableStateOf<Int?>(null)
   val page: State<Int?>
     get() = _page
+
+  private val catalogDescriptor: ChanDescriptor.CatalogDescriptor
+    get() = requireNotNull(savedStateHandle.get<ChanDescriptor.CatalogDescriptor>(CatalogDescriptorParam)) {
+      "catalog_descriptor is null!"
+    }
 
   var currentlySelectedThreadNo = mutableStateOf<Long?>(null)
 
@@ -83,7 +85,7 @@ class BoardArchiveViewModel(
     }
 
     _state.value = AsyncData.Loading
-    Logger.d(TAG, "loadPageOfArchiveThreads() page=${page.value}")
+    Logger.d(TAG, "loadPageOfArchiveThreads() catalogDescriptor: ${catalogDescriptor} page: ${page.value}")
 
     val nativeArchivePostListResult = siteManager.bySiteDescriptor(catalogDescriptor.siteDescriptor())
       ?.actions()
@@ -186,7 +188,22 @@ class BoardArchiveViewModel(
 
   class ArchiveNotSupportedException(boardCode: String) : Exception("Board '/$boardCode/' has no archive")
 
+  class ViewModelFactory @Inject constructor(
+    private val siteManager: SiteManager,
+    private val seenPostsManager: SeenPostsManager
+  ) : ViewModelAssistedFactory<BoardArchiveViewModel> {
+    override fun create(handle: SavedStateHandle): BoardArchiveViewModel {
+      return BoardArchiveViewModel(
+        savedStateHandle = handle,
+        siteManager = siteManager,
+        seenPostsManager = seenPostsManager
+      )
+    }
+  }
+
   companion object {
     private const val TAG = "BoardArchiveViewModel"
+
+    const val CatalogDescriptorParam = "catalog_descriptor"
   }
 }

@@ -4,11 +4,13 @@ import android.graphics.BitmapFactory
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
+import com.github.k1rakishou.chan.core.di.module.viewmodel.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.core.site.sites.lynxchan.engine.LynxchanSite
@@ -35,14 +37,12 @@ import org.joda.time.Period
 import org.joda.time.format.DateTimeFormat
 import javax.inject.Inject
 
-class LynxchanCaptchaLayoutViewModel : BaseViewModel() {
-
-  @Inject
-  lateinit var proxiedOkHttpClient: RealProxiedOkHttpClient
-  @Inject
-  lateinit var siteManager: SiteManager
-  @Inject
-  lateinit var moshi: Moshi
+class LynxchanCaptchaLayoutViewModel(
+  private val savedStateHandle: SavedStateHandle,
+  private val proxiedOkHttpClient: RealProxiedOkHttpClient,
+  private val siteManager: SiteManager,
+  private val moshi: Moshi,
+) : BaseViewModel() {
 
   var captchaInfoToShow = mutableStateOf<AsyncData<LynxchanCaptchaFull>>(AsyncData.NotInitialized)
   private var activeRequestCaptchaJob: Job? = null
@@ -466,6 +466,21 @@ class LynxchanCaptchaLayoutViewModel : BaseViewModel() {
     companion object {
       //                                                            Thu, 18 Nov 2021 12:02:36 GMT
       val LYNXCHAN_CAPTCHA_DATE_PARSER = DateTimeFormat.forPattern("EEE, dd MMM yyyy HH:mm:ss zzz")
+    }
+  }
+
+  class ViewModelFactory @Inject constructor(
+    private val proxiedOkHttpClient: RealProxiedOkHttpClient,
+    private val siteManager: SiteManager,
+    private val moshi: Moshi,
+  ) : ViewModelAssistedFactory<LynxchanCaptchaLayoutViewModel> {
+    override fun create(handle: SavedStateHandle): LynxchanCaptchaLayoutViewModel {
+      return LynxchanCaptchaLayoutViewModel(
+        savedStateHandle = handle,
+        proxiedOkHttpClient = proxiedOkHttpClient,
+        siteManager = siteManager,
+        moshi = moshi
+      )
     }
   }
 

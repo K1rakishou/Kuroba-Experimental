@@ -37,6 +37,7 @@ import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeProgressInd
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
+import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.fsaf.FileChooser
 import java.io.File
@@ -46,7 +47,6 @@ class CreateSoundMediaController(
     context: Context
 ) : BaseComposeController<CreateSoundMediaControllerViewModel>(
     context = context,
-    viewModelClass = CreateSoundMediaControllerViewModel::class.java,
     titleStringId = R.string.create_sound_media_controller_title
 ) {
 
@@ -59,6 +59,10 @@ class CreateSoundMediaController(
 
     override fun injectDependencies(component: ActivityComponent) {
         component.inject(this)
+    }
+
+    override fun controllerVM(): CreateSoundMediaControllerViewModel {
+        return requireComponentActivity().viewModelByKey<CreateSoundMediaControllerViewModel>()
     }
 
     @Composable

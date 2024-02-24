@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.features.setup
 
 import androidx.compose.runtime.mutableStateListOf
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
@@ -11,12 +12,11 @@ import com.github.k1rakishou.common.removeIfKt
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.catalog.CompositeCatalog
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
-class CompositeCatalogsSetupControllerViewModel : BaseViewModel() {
-
-  @Inject
-  lateinit var compositeCatalogManager: CompositeCatalogManager
+class CompositeCatalogsSetupControllerViewModel(
+  private val savedStateHandle: SavedStateHandle,
+  private val compositeCatalogManager: CompositeCatalogManager
+) : BaseViewModel() {
 
   private val _compositeCatalogs = mutableStateListOf<CompositeCatalog>()
   val compositeCatalogs: List<CompositeCatalog>

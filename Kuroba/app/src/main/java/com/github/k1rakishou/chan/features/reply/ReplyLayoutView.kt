@@ -12,7 +12,7 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.persist_state.ReplyMode
 
-class ReplyLayoutView(
+class ReplyLayoutView @JvmOverloads constructor(
     context: Context,
     attributeSet: AttributeSet? = null,
     defAttrStyle: Int = 0

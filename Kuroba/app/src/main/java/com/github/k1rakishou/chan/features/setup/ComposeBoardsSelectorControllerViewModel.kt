@@ -2,8 +2,10 @@ package com.github.k1rakishou.chan.features.setup
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.SavedStateHandle
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
+import com.github.k1rakishou.chan.core.di.module.viewmodel.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.Site
@@ -18,12 +20,11 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.site.ChanSiteData
 import javax.inject.Inject
 
-class ComposeBoardsSelectorControllerViewModel : BaseViewModel() {
-
-  @Inject
-  lateinit var siteManager: SiteManager
-  @Inject
-  lateinit var boardManager: BoardManager
+class ComposeBoardsSelectorControllerViewModel(
+  private val savedStateHandle: SavedStateHandle,
+  private val siteManager: SiteManager,
+  private val boardManager: BoardManager,
+) : BaseViewModel() {
 
   private val currentlyComposedBoards = mutableSetOf<BoardDescriptor>()
   var searchQuery = mutableStateOf("")
@@ -176,6 +177,19 @@ class ComposeBoardsSelectorControllerViewModel : BaseViewModel() {
         append(catalogCellData.boardDescriptorOrNull!!.boardCode)
         append("/")
       }
+    }
+  }
+
+  class ViewModelFactory @Inject constructor(
+    private val siteManager: SiteManager,
+    private val boardManager: BoardManager,
+  ) : ViewModelAssistedFactory<ComposeBoardsSelectorControllerViewModel> {
+    override fun create(handle: SavedStateHandle): ComposeBoardsSelectorControllerViewModel {
+      return ComposeBoardsSelectorControllerViewModel(
+        savedStateHandle = handle,
+        siteManager = siteManager,
+        boardManager = boardManager
+      )
     }
   }
 

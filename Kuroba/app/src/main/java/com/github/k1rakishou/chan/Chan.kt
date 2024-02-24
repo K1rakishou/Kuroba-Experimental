@@ -94,7 +94,7 @@ import org.joda.time.Duration
 import org.joda.time.format.PeriodFormatterBuilder
 import java.io.IOException
 import java.net.InetAddress
-import java.util.IdentityHashMap
+import java.util.*
 import javax.inject.Inject
 
 class Chan : Application(), ActivityLifecycleCallbacks {

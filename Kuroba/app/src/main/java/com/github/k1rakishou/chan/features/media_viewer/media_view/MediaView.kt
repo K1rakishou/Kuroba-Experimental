@@ -4,8 +4,6 @@ import android.content.Context
 import android.net.Uri
 import android.util.AttributeSet
 import android.view.View
-import androidx.activity.ComponentActivity
-import androidx.activity.viewModels
 import androidx.annotation.CallSuper
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
@@ -32,7 +30,9 @@ import com.github.k1rakishou.chan.ui.widget.CancellableToast
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.setVisibilityFast
+import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.common.requireComponentActivity
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.fsaf.FileManager
@@ -83,7 +83,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   @Inject
   lateinit var threadDownloadManager: ThreadDownloadManager
 
-  private val controllerViewModel by (context as ComponentActivity).viewModels<MediaViewerControllerViewModel>()
+  private val controllerViewModel by lazy { context.requireComponentActivity().viewModelByKey<MediaViewerControllerViewModel>() }
 
   private var _mediaViewToolbar: MediaViewerToolbar? = null
 

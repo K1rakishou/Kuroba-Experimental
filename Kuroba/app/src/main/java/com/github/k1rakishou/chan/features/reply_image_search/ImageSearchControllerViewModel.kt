@@ -4,11 +4,13 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.Snapshot
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
+import com.github.k1rakishou.chan.core.di.module.viewmodel.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.usecase.SearxImageSearchUseCase
 import com.github.k1rakishou.chan.core.usecase.YandexImageSearchUseCase
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
@@ -30,11 +32,11 @@ import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import javax.inject.Inject
 
-class ImageSearchControllerViewModel : BaseViewModel() {
-  @Inject
-  lateinit var searxImageSearchUseCase: SearxImageSearchUseCase
-  @Inject
-  lateinit var yandexImageSearchUseCase: YandexImageSearchUseCase
+class ImageSearchControllerViewModel(
+  private val savedStateHandle: SavedStateHandle,
+  private val searxImageSearchUseCase: SearxImageSearchUseCase,
+  private val yandexImageSearchUseCase: YandexImageSearchUseCase,
+) : BaseViewModel() {
 
   private val _lastUsedSearchInstance = mutableStateOf<ImageSearchInstanceType?>(null)
   val lastUsedSearchInstance: State<ImageSearchInstanceType?>
@@ -307,6 +309,19 @@ class ImageSearchControllerViewModel : BaseViewModel() {
       )
     }
 
+  }
+
+  class ViewModelFactory @Inject constructor(
+    private val searxImageSearchUseCase: SearxImageSearchUseCase,
+    private val yandexImageSearchUseCase: YandexImageSearchUseCase,
+  ) : ViewModelAssistedFactory<ImageSearchControllerViewModel> {
+    override fun create(handle: SavedStateHandle): ImageSearchControllerViewModel {
+      return ImageSearchControllerViewModel(
+        savedStateHandle = handle,
+        searxImageSearchUseCase = searxImageSearchUseCase,
+        yandexImageSearchUseCase = yandexImageSearchUseCase
+      )
+    }
   }
 
   companion object {

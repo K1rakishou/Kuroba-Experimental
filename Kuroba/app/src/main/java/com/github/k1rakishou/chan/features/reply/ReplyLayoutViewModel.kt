@@ -1,9 +1,11 @@
 package com.github.k1rakishou.chan.features.reply
 
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
+import com.github.k1rakishou.chan.core.di.module.viewmodel.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.PostingLimitationsInfoManager
@@ -23,11 +25,12 @@ import com.github.k1rakishou.persist_state.ReplyMode
 import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.File
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
+import javax.inject.Inject
 
 class ReplyLayoutViewModel(
+    private val savedStateHandle: SavedStateHandle,
     private val appConstantsLazy: Lazy<AppConstants>,
     private val siteManagerLazy: Lazy<SiteManager>,
     private val boardManagerLazy: Lazy<BoardManager>,
@@ -148,7 +151,7 @@ class ReplyLayoutViewModel(
     }
 
     fun cleanup() {
-        TODO("Not yet implemented")
+        // TODO("Not yet implemented")
     }
 
     private suspend fun reloadReplyManagerState() {
@@ -173,5 +176,26 @@ class ReplyLayoutViewModel(
     }
 
     class ReplyFileDoesNotExist(fileUUID: UUID): ClientException("Reply file with UUID '${fileUUID}' does not exist")
+
+    class ViewModelFactory @Inject constructor(
+        private val appConstantsLazy: Lazy<AppConstants>,
+        private val siteManagerLazy: Lazy<SiteManager>,
+        private val boardManagerLazy: Lazy<BoardManager>,
+        private val replyManagerLazy: Lazy<ReplyManager>,
+        private val postingLimitationsInfoManagerLazy: Lazy<PostingLimitationsInfoManager>,
+        private val imageLoaderV2Lazy: Lazy<ImageLoaderV2>
+    ) : ViewModelAssistedFactory<ReplyLayoutViewModel> {
+        override fun create(handle: SavedStateHandle): ReplyLayoutViewModel {
+            return ReplyLayoutViewModel(
+                savedStateHandle = handle,
+                appConstantsLazy = appConstantsLazy,
+                siteManagerLazy = siteManagerLazy,
+                boardManagerLazy = boardManagerLazy,
+                replyManagerLazy = replyManagerLazy,
+                postingLimitationsInfoManagerLazy = postingLimitationsInfoManagerLazy,
+                imageLoaderV2Lazy = imageLoaderV2Lazy
+            )
+        }
+    }
 
 }

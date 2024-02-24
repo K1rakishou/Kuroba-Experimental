@@ -46,19 +46,21 @@ import dagger.Component;
 import kotlinx.coroutines.CoroutineScope;
 
 @Singleton
-@Component(modules = {
-        AppModule.class,
-        JsonParserModule.class,
-        HelperModule.class,
-        LoaderModule.class,
-        ManagerModule.class,
-        NetModule.class,
-        ParserModule.class,
-        RepositoryModule.class,
-        RoomDatabaseModule.class,
-        SiteModule.class,
-        UseCaseModule.class
-})
+@Component(
+        modules = {
+                AppModule.class,
+                JsonParserModule.class,
+                HelperModule.class,
+                LoaderModule.class,
+                ManagerModule.class,
+                NetModule.class,
+                ParserModule.class,
+                RepositoryModule.class,
+                RoomDatabaseModule.class,
+                SiteModule.class,
+                UseCaseModule.class
+        }
+)
 public interface ApplicationComponent {
     Chan getApplication();
     ActivityComponent.Builder activityComponentBuilder();

@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.ui.compose
 
+import android.os.Bundle
 import android.text.Spanned
 import android.text.style.AbsoluteSizeSpan
 import android.text.style.BackgroundColorSpan
@@ -8,14 +9,13 @@ import android.text.style.ForegroundColorSpan
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisallowComposableCalls
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -38,7 +38,6 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.ExperimentalUnitApi
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
@@ -46,7 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.text.getSpans
 import androidx.lifecycle.ViewModel
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
-import com.github.k1rakishou.chan.utils.viewModelByKeyWithClass
+import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.common.requireComponentActivity
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_spannable.BackgroundColorIdSpan
@@ -393,11 +392,17 @@ fun FocusRequester.freeFocusSafe() {
 }
 
 @Composable
-inline fun <reified VM : ViewModel> rememberViewModel(): VM {
+inline fun <reified VM : ViewModel> rememberViewModel(
+  key: String? = null,
+  noinline defaultArgs: (@DisallowComposableCalls () -> Bundle)? = null
+): VM {
   val context = LocalContext.current
 
-  return remember(key1 = VM::class.java) {
-    context.requireComponentActivity().viewModelByKeyWithClass<VM>(VM::class.java)
+  return remember(key1 = VM::class.java, key2 = key) {
+    context.requireComponentActivity().viewModelByKey<VM>(
+      key = key,
+      defaultArgs = defaultArgs?.invoke()
+    )
   }
 }
 

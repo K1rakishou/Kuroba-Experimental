@@ -7,6 +7,8 @@ import com.github.k1rakishou.chan.activity.SharingActivity;
 import com.github.k1rakishou.chan.activity.StartActivity;
 import com.github.k1rakishou.chan.controller.ui.NavigationControllerContainerLayout;
 import com.github.k1rakishou.chan.core.di.module.activity.ActivityModule;
+import com.github.k1rakishou.chan.core.di.module.viewmodel.ViewModelFactoryModule;
+import com.github.k1rakishou.chan.core.di.module.viewmodel.ViewModelModule;
 import com.github.k1rakishou.chan.core.di.scope.PerActivity;
 import com.github.k1rakishou.chan.features.bookmarks.BookmarkGroupPatternSettingsController;
 import com.github.k1rakishou.chan.features.bookmarks.BookmarkGroupSettingsController;
@@ -205,7 +207,13 @@ import dagger.BindsInstance;
 import dagger.Subcomponent;
 
 @PerActivity
-@Subcomponent(modules = ActivityModule.class)
+@Subcomponent(
+        modules = {
+                ActivityModule.class,
+                ViewModelFactoryModule.class,
+                ViewModelModule.class
+        }
+)
 public interface ActivityComponent {
     void inject(StartActivity startActivity);
     void inject(SharingActivity sharingActivity);

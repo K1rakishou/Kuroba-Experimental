@@ -8,11 +8,13 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.base.ViewModelSelectionHelper
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
+import com.github.k1rakishou.chan.core.di.module.viewmodel.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
@@ -40,16 +42,13 @@ import javax.inject.Inject
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
-class FiltersControllerViewModel : BaseViewModel() {
-
-  @Inject
-  lateinit var chanFilterManager: ChanFilterManager
-  @Inject
-  lateinit var postFilterManager: PostFilterManager
-  @Inject
-  lateinit var boardManager: BoardManager
-  @Inject
-  lateinit var themeEngine: ThemeEngine
+class FiltersControllerViewModel(
+  private val savedStateHandle: SavedStateHandle,
+  private val chanFilterManager: ChanFilterManager,
+  private val postFilterManager: PostFilterManager,
+  private val boardManager: BoardManager,
+  private val themeEngine: ThemeEngine,
+) : BaseViewModel() {
 
   var searchQuery = mutableStateOf<String>("")
 
@@ -468,6 +467,23 @@ class FiltersControllerViewModel : BaseViewModel() {
 
   enum class MenuItemType(val id: Int) {
     Delete(0)
+  }
+
+  class ViewModelFactory @Inject constructor(
+    private val chanFilterManager: ChanFilterManager,
+    private val postFilterManager: PostFilterManager,
+    private val boardManager: BoardManager,
+    private val themeEngine: ThemeEngine,
+  ) : ViewModelAssistedFactory<FiltersControllerViewModel> {
+    override fun create(handle: SavedStateHandle): FiltersControllerViewModel {
+      return FiltersControllerViewModel(
+        savedStateHandle = handle,
+        chanFilterManager = chanFilterManager,
+        postFilterManager = postFilterManager,
+        boardManager = boardManager,
+        themeEngine = themeEngine
+      )
+    }
   }
 
   companion object {

@@ -337,7 +337,7 @@ class ExoPlayerWrapper(
     val exoPlayer: SimpleExoPlayer
   ) {
     val notUsed: Boolean
-      @get:Synchronized
+      @Synchronized
       get() = !isUsed
 
     @Synchronized

@@ -9,7 +9,6 @@ import android.view.MotionEvent
 import android.view.WindowManager
 import android.webkit.URLUtil
 import android.widget.Toast
-import androidx.activity.viewModels
 import androidx.core.os.bundleOf
 import androidx.lifecycle.lifecycleScope
 import com.github.k1rakishou.chan.BuildConfig
@@ -26,7 +25,9 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupEdgeToEdge
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupStatusAndNavBarColors
 import com.github.k1rakishou.chan.utils.startActivitySafe
+import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.requireComponentActivity
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.fsaf.FileChooser
@@ -37,7 +38,7 @@ import com.github.k1rakishou.persist_state.PersistableChanState
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import java.util.UUID
+import java.util.*
 import javax.inject.Inject
 
 class MediaViewerActivity : ControllerHostActivity(),
@@ -62,7 +63,7 @@ class MediaViewerActivity : ControllerHostActivity(),
   private lateinit var viewModelComponent: ViewModelComponent
   private lateinit var mediaViewerController: MediaViewerController
 
-  private val viewModel by viewModels<MediaViewerControllerViewModel>()
+  private val viewModel by lazy { requireComponentActivity().viewModelByKey<MediaViewerControllerViewModel>() }
 
   fun getActivityComponent(): ActivityComponent {
     return activityComponent
@@ -85,7 +86,6 @@ class MediaViewerActivity : ControllerHostActivity(),
     viewModelComponent = Chan.getComponent()
       .viewModelComponentBuilder()
       .build()
-      .also { component -> component.inject(viewModel) }
 
     contentView = findViewById(android.R.id.content)
     AndroidUtils.getWindow(this)

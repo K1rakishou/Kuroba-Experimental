@@ -6,11 +6,14 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModelProvider
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
+import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.activity.ActivityModule
+import com.github.k1rakishou.chan.core.di.module.viewmodel.IHasViewModelProviderFactory
 import com.github.k1rakishou.chan.core.helper.AppRestarter
 import com.github.k1rakishou.chan.core.manager.ApplicationCrashNotifier
 import com.github.k1rakishou.chan.core.manager.ReplyManager
@@ -29,7 +32,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
-class SharingActivity : AppCompatActivity() {
+class SharingActivity : AppCompatActivity(), IHasViewModelProviderFactory {
 
   @Inject
   lateinit var imagePickHelper: ImagePickHelper
@@ -41,10 +44,13 @@ class SharingActivity : AppCompatActivity() {
   lateinit var appRestarter: AppRestarter
   @Inject
   lateinit var applicationCrashNotifier: ApplicationCrashNotifier
+  @Inject
+  override lateinit var viewModelFactory: ViewModelProvider.Factory
 
   private val mainScope = KurobaCoroutineScope()
 
   private lateinit var activityComponent: ActivityComponent
+  private lateinit var viewModelComponent: ViewModelComponent
 
   fun getActivityComponent(): ActivityComponent {
     return activityComponent
@@ -59,6 +65,10 @@ class SharingActivity : AppCompatActivity() {
       .activityModule(ActivityModule())
       .build()
       .also { component -> component.inject(this) }
+
+    viewModelComponent = Chan.getComponent()
+      .viewModelComponentBuilder()
+      .build()
 
     appRestarter.attachActivity(this)
     imagePickHelper.onActivityCreated(this)

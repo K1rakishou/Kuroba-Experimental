@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -28,6 +29,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.os.bundleOf
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
@@ -66,12 +68,14 @@ class BoardArchiveController(
 
   private var blockClicking = false
   private var toolbarSearchQuery = mutableStateOf<String?>(null)
-  private val topPadding = mutableStateOf(0)
-  private val bottomPadding = mutableStateOf(0)
+  private val topPadding = mutableIntStateOf(0)
+  private val bottomPadding = mutableIntStateOf(0)
 
   private val viewModel by lazy {
-    val key = catalogDescriptor.serializeToString()
-    requireComponentActivity().viewModelByKey(key, { BoardArchiveViewModel(catalogDescriptor) })
+    requireComponentActivity().viewModelByKey<BoardArchiveViewModel>(
+      key = catalogDescriptor.serializeToString(),
+      defaultArgs = bundleOf(BoardArchiveViewModel.CatalogDescriptorParam to catalogDescriptor)
+    )
   }
 
   override fun injectDependencies(component: ActivityComponent) {
@@ -116,9 +120,9 @@ class BoardArchiveController(
     val toolbarHeight = requireToolbarNavController().toolbar?.toolbarHeight
       ?: getDimen(R.dimen.toolbar_height)
 
-    topPadding.value = pxToDp(toolbarHeight)
+    topPadding.intValue = pxToDp(toolbarHeight)
 
-    bottomPadding.value = when {
+    bottomPadding.intValue = when {
       ChanSettings.isSplitLayoutMode() -> 0
       globalWindowInsetsManager.isKeyboardOpened -> pxToDp(globalWindowInsetsManager.keyboardHeight)
       else -> {

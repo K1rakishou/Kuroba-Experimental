@@ -2,9 +2,11 @@ package com.github.k1rakishou.chan.features.report
 
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.SavedStateHandle
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
+import com.github.k1rakishou.chan.core.di.module.viewmodel.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.common.CommonClientException
 import com.github.k1rakishou.chan.core.site.http.report.PostReportData
@@ -19,17 +21,16 @@ import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import okhttp3.Request
 import org.jsoup.nodes.Node
-import java.util.Locale
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.regex.Pattern
 import javax.inject.Inject
 
-class Chan4ReportPostControllerViewModel : BaseViewModel() {
-
-  @Inject
-  lateinit var okHttpClient: ProxiedOkHttpClient
-  @Inject
-  lateinit var siteManager: SiteManager
+class Chan4ReportPostControllerViewModel(
+  private val savedStateHandle: SavedStateHandle,
+  private val okHttpClient: ProxiedOkHttpClient,
+  private val siteManager: SiteManager,
+) : BaseViewModel() {
 
   private val cache = ConcurrentHashMap<BoardDescriptor, List<ReportCategory>>()
 
@@ -160,6 +161,19 @@ class Chan4ReportPostControllerViewModel : BaseViewModel() {
     val id: Int,
     val description: String
   )
+
+  class ViewModelFactory @Inject constructor(
+    private val okHttpClient: ProxiedOkHttpClient,
+    private val siteManager: SiteManager,
+  ) : ViewModelAssistedFactory<Chan4ReportPostControllerViewModel> {
+    override fun create(handle: SavedStateHandle): Chan4ReportPostControllerViewModel {
+      return Chan4ReportPostControllerViewModel(
+        savedStateHandle = handle,
+        okHttpClient = okHttpClient,
+        siteManager = siteManager,
+      )
+    }
+  }
 
   companion object {
     private const val TAG = "Chan4ReportPostControllerViewModel"

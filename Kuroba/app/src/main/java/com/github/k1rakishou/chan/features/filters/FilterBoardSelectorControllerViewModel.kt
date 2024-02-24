@@ -4,8 +4,10 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.SavedStateHandle
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
+import com.github.k1rakishou.chan.core.di.module.viewmodel.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.Site
@@ -19,12 +21,11 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.site.ChanSiteData
 import javax.inject.Inject
 
-class FilterBoardSelectorControllerViewModel  : BaseViewModel() {
-
-  @Inject
-  lateinit var siteManager: SiteManager
-  @Inject
-  lateinit var boardManager: BoardManager
+class FilterBoardSelectorControllerViewModel(
+  private val savedStateHandle: SavedStateHandle,
+  private val siteManager: SiteManager,
+  private val boardManager: BoardManager,
+)  : BaseViewModel() {
 
   private var allBoardsSelected: Boolean = false
 
@@ -175,6 +176,19 @@ class FilterBoardSelectorControllerViewModel  : BaseViewModel() {
     val siteCellData: SiteCellData,
     val catalogCellData: CatalogCellData
   )
+
+  class ViewModelFactory @Inject constructor(
+    private val siteManager: SiteManager,
+    private val boardManager: BoardManager,
+  ) : ViewModelAssistedFactory<FilterBoardSelectorControllerViewModel> {
+    override fun create(handle: SavedStateHandle): FilterBoardSelectorControllerViewModel {
+      return FilterBoardSelectorControllerViewModel(
+        savedStateHandle = handle,
+        siteManager = siteManager,
+        boardManager = boardManager
+      )
+    }
+  }
 
   companion object {
     private const val TAG = "FilterBoardSelectorControllerViewModel"

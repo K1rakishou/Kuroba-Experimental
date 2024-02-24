@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.BaseViewModel
@@ -12,6 +13,7 @@ import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.ViewModelSelectionHelper
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
+import com.github.k1rakishou.chan.core.di.module.viewmodel.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.core.usecase.ExportDownloadedThreadAsHtmlUseCase
 import com.github.k1rakishou.chan.core.usecase.ExportDownloadedThreadMediaUseCase
@@ -24,7 +26,6 @@ import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.thread.ThreadDownload
-import com.github.k1rakishou.model.repository.ChanPostImageRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.util.ChanPostUtils
 import kotlinx.coroutines.Dispatchers
@@ -42,26 +43,19 @@ import org.joda.time.DateTimeZone
 import org.joda.time.format.DateTimeFormatterBuilder
 import org.joda.time.format.ISODateTimeFormat
 import java.io.File
-import java.util.TimeZone
+import java.util.*
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
 
-class LocalArchiveViewModel : BaseViewModel() {
-
-  @Inject
-  lateinit var appConstants: AppConstants
-  @Inject
-  lateinit var threadDownloadManager: ThreadDownloadManager
-  @Inject
-  lateinit var chanPostRepository: ChanPostRepository
-  @Inject
-  lateinit var chanPostImageRepository: ChanPostImageRepository
-  @Inject
-  lateinit var threadDownloadProgressNotifier: ThreadDownloadProgressNotifier
-  @Inject
-  lateinit var exportDownloadedThreadAsHtmlUseCase: ExportDownloadedThreadAsHtmlUseCase
-  @Inject
-  lateinit var exportDownloadedThreadMediaUseCase: ExportDownloadedThreadMediaUseCase
+class LocalArchiveViewModel(
+  private val savedStateHandle: SavedStateHandle,
+  private val appConstants: AppConstants,
+  private val threadDownloadManager: ThreadDownloadManager,
+  private val chanPostRepository: ChanPostRepository,
+  private val threadDownloadProgressNotifier: ThreadDownloadProgressNotifier,
+  private val exportDownloadedThreadAsHtmlUseCase: ExportDownloadedThreadAsHtmlUseCase,
+  private val exportDownloadedThreadMediaUseCase: ExportDownloadedThreadMediaUseCase,
+) : BaseViewModel() {
 
   private val recalculateAdditionalInfoExecutor = DebouncingCoroutineExecutor(viewModelScope)
   private val cachedThreadDownloadViews = mutableListWithCap<ThreadDownloadView>(32)
@@ -557,6 +551,27 @@ class LocalArchiveViewModel : BaseViewModel() {
   sealed class ThreadDownloadThumbnailLocation {
     data class Remote(val url: HttpUrl) : ThreadDownloadThumbnailLocation()
     data class Local(val file: File) : ThreadDownloadThumbnailLocation()
+  }
+
+  class ViewModelFactory @Inject constructor(
+    private val appConstants: AppConstants,
+    private val threadDownloadManager: ThreadDownloadManager,
+    private val chanPostRepository: ChanPostRepository,
+    private val threadDownloadProgressNotifier: ThreadDownloadProgressNotifier,
+    private val exportDownloadedThreadAsHtmlUseCase: ExportDownloadedThreadAsHtmlUseCase,
+    private val exportDownloadedThreadMediaUseCase: ExportDownloadedThreadMediaUseCase,
+  ) : ViewModelAssistedFactory<LocalArchiveViewModel> {
+    override fun create(handle: SavedStateHandle): LocalArchiveViewModel {
+      return LocalArchiveViewModel(
+        savedStateHandle = handle,
+        appConstants = appConstants,
+        threadDownloadManager = threadDownloadManager,
+        chanPostRepository = chanPostRepository,
+        threadDownloadProgressNotifier = threadDownloadProgressNotifier,
+        exportDownloadedThreadAsHtmlUseCase = exportDownloadedThreadAsHtmlUseCase,
+        exportDownloadedThreadMediaUseCase = exportDownloadedThreadMediaUseCase
+      )
+    }
   }
 
   companion object {

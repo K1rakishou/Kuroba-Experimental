@@ -42,10 +42,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.ViewModelProvider
 import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.activity.ActivityModule
+import com.github.k1rakishou.chan.core.di.module.viewmodel.IHasViewModelProviderFactory
 import com.github.k1rakishou.chan.core.helper.AppRestarter
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.ReportManager
@@ -89,7 +92,7 @@ import java.io.IOException
 import javax.inject.Inject
 import kotlin.system.exitProcess
 
-class CrashReportActivity : AppCompatActivity(), FSAFActivityCallbacks {
+class CrashReportActivity : AppCompatActivity(), FSAFActivityCallbacks, IHasViewModelProviderFactory {
   @Inject
   lateinit var themeEngineLazy: Lazy<ThemeEngine>
   @Inject
@@ -104,6 +107,8 @@ class CrashReportActivity : AppCompatActivity(), FSAFActivityCallbacks {
   lateinit var fileChooserLazy: Lazy<FileChooser>
   @Inject
   lateinit var fileManagerLazy: Lazy<FileManager>
+  @Inject
+  override lateinit var viewModelFactory: ViewModelProvider.Factory
 
   private val themeEngine: ThemeEngine
     get() = themeEngineLazy.get()
@@ -119,6 +124,8 @@ class CrashReportActivity : AppCompatActivity(), FSAFActivityCallbacks {
     get() = fileChooserLazy.get()
   private val fileManager: FileManager
     get() = fileManagerLazy.get()
+
+  private lateinit var viewModelComponent: ViewModelComponent
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -157,6 +164,10 @@ class CrashReportActivity : AppCompatActivity(), FSAFActivityCallbacks {
       .activityModule(ActivityModule())
       .build()
       .inject(this)
+
+    viewModelComponent = Chan.getComponent()
+      .viewModelComponentBuilder()
+      .build()
 
     fileChooser.setCallbacks(this)
     globalWindowInsetsManager.listenForWindowInsetsChanges(window, null)

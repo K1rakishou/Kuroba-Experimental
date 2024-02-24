@@ -331,6 +331,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   private var spanCount = 2
   private var prevLastPostNo = 0L
 
+  // TODO: New reply layout. Remove this flag.
   var replyOpen = false
     private set
 

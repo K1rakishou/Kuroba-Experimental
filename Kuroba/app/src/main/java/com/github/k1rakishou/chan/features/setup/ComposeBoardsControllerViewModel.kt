@@ -1,10 +1,11 @@
 package com.github.k1rakishou.chan.features.setup
 
 import androidx.compose.runtime.mutableStateListOf
+import androidx.lifecycle.SavedStateHandle
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
+import com.github.k1rakishou.chan.core.di.module.viewmodel.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.CompositeCatalogManager
-import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.ui.compose.reorder.move
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.model.data.catalog.CompositeCatalog
@@ -12,12 +13,10 @@ import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import javax.inject.Inject
 
-class ComposeBoardsControllerViewModel : BaseViewModel() {
-
-  @Inject
-  lateinit var compositeCatalogManager: CompositeCatalogManager
-  @Inject
-  lateinit var historyNavigationManager: HistoryNavigationManager
+class ComposeBoardsControllerViewModel(
+  private val savedStateHandle: SavedStateHandle,
+  private val compositeCatalogManager: CompositeCatalogManager,
+) : BaseViewModel() {
 
   private val _compositionSlots = mutableStateListOf<CatalogCompositionSlot>()
   val catalogCompositionSlots: List<CatalogCompositionSlot>
@@ -138,8 +137,19 @@ class ComposeBoardsControllerViewModel : BaseViewModel() {
   class CreateCompositeCatalogError(message: String) : Exception(message)
 
   sealed class CatalogCompositionSlot {
-    object Empty : CatalogCompositionSlot()
+    data object Empty : CatalogCompositionSlot()
     data class Occupied(val catalogDescriptor: ChanDescriptor.CatalogDescriptor) : CatalogCompositionSlot()
+  }
+
+  class ViewModelFactory @Inject constructor(
+    private val compositeCatalogManager: CompositeCatalogManager,
+  ) : ViewModelAssistedFactory<ComposeBoardsControllerViewModel> {
+    override fun create(handle: SavedStateHandle): ComposeBoardsControllerViewModel {
+      return ComposeBoardsControllerViewModel(
+        savedStateHandle = handle,
+        compositeCatalogManager = compositeCatalogManager
+      )
+    }
   }
 
   companion object {

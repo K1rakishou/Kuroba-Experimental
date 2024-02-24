@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
 import android.graphics.drawable.ColorDrawable
+import android.os.Bundle
 import android.text.TextWatcher
 import android.view.View
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
@@ -13,6 +14,7 @@ import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.view.ViewCompat
+import androidx.lifecycle.AbstractSavedStateViewModelFactory
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -24,7 +26,7 @@ import com.airbnb.epoxy.OnModelBuildFinishedListener
 import com.github.k1rakishou.chan.activity.SharingActivity
 import com.github.k1rakishou.chan.activity.StartActivity
 import com.github.k1rakishou.chan.controller.Controller
-import com.github.k1rakishou.chan.core.compose.viewModelProviderFactoryOf
+import com.github.k1rakishou.chan.core.di.module.viewmodel.IHasViewModelProviderFactory
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.common.errorMessageOrClassName
@@ -35,6 +37,11 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import kotlin.math.absoluteValue
 import kotlin.math.log10
+import kotlin.reflect.KMutableProperty
+import kotlin.reflect.KMutableProperty1
+import kotlin.reflect.full.memberProperties
+import kotlin.reflect.full.superclasses
+import kotlin.reflect.jvm.isAccessible
 
 
 private val TAG = "KotlinExts"
@@ -292,30 +299,52 @@ fun fixImageUrlIfNecessary(requestUrl: String, imageUrl: String?): String? {
   return null
 }
 
-fun <VM : ViewModel> ComponentActivity.viewModelByKeyWithClass(vmClass: Class<VM>, key: String? = null): VM {
-  if (key != null) {
-    return ViewModelProvider(this).get(key, vmClass)
-  } else {
-    return ViewModelProvider(this).get(vmClass)
-  }
-}
-
-inline fun <reified VM : ViewModel> ComponentActivity.viewModelByKey(key: String? = null): VM {
-  if (key != null) {
-    return ViewModelProvider(this).get(key, VM::class.java)
-  } else {
-    return ViewModelProvider(this).get(VM::class.java)
-  }
-}
-
 inline fun <reified VM : ViewModel> ComponentActivity.viewModelByKey(
   key: String? = null,
-  crossinline vmFactory: () -> VM
+  defaultArgs: Bundle? = null
 ): VM {
-  if (key != null) {
-    return ViewModelProvider(this, viewModelProviderFactoryOf { vmFactory() }).get(key, VM::class.java)
+  return viewModelByKey(key, defaultArgs, VM::class.java)
+}
+
+@PublishedApi
+internal fun <VM : ViewModel> ComponentActivity.viewModelByKey(
+  key: String? = null,
+  defaultArgs: Bundle? = null,
+  clazz: Class<VM>
+): VM {
+  val viewModelProviderFactory = (this as? IHasViewModelProviderFactory)
+    ?: throw IllegalStateException("The Activity is not an instance of IHasViewModelProviderFactory")
+
+  val factory = viewModelProviderFactory.viewModelFactory as? AbstractSavedStateViewModelFactory
+    ?: throw IllegalStateException("The viewModelFactory is not an instance of AbstractSavedStateViewModelFactory")
+
+  factory.updateDefaultArgs(defaultArgs)
+
+  val viewModelProvider = ViewModelProvider(viewModelStore, factory)
+  return if (key != null) {
+    viewModelProvider.get(key, clazz)
   } else {
-    return ViewModelProvider(this, viewModelProviderFactoryOf { vmFactory() }).get(VM::class.java)
+    viewModelProvider.get(clazz)
+  }
+}
+
+private fun AbstractSavedStateViewModelFactory.updateDefaultArgs(newArgs: Bundle?) {
+  val kClass = this::class
+
+  val superClass = kClass.superclasses.firstOrNull()
+    ?: throw NoSuchFieldException("Superclass not found.")
+
+  val defaultArgsField = superClass.memberProperties.firstOrNull { it.name == "defaultArgs" }
+    ?: throw NoSuchFieldException("Field 'defaultArgs' not found in superclass.")
+
+  if (defaultArgsField is KMutableProperty<*>) {
+    defaultArgsField.isAccessible = true
+
+    @Suppress("UNCHECKED_CAST")
+    val mutableDefaultArgs = defaultArgsField as KMutableProperty1<Any, Bundle?>
+    mutableDefaultArgs.set(this, newArgs)
+  } else {
+    throw IllegalAccessException("Field 'defaultArgs' is not a var or is inaccessible.")
   }
 }
 
