@@ -4,6 +4,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
@@ -35,12 +36,10 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.BehaviorProcessor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import javax.inject.Inject
-import kotlin.time.ExperimentalTime
 
 class MainControllerViewModel : BaseViewModel() {
   private val isDevFlavor = isDevBuild()
@@ -94,15 +93,14 @@ class MainControllerViewModel : BaseViewModel() {
   val drawerGridMode = mutableStateOf(ChanSettings.drawerGridMode.get())
 
   private val bookmarksBadgeStateSubject = BehaviorProcessor.createDefault(BookmarksBadgeState(0, false))
-  private val updateNavigationHistoryEntryListExecutor = SerializedCoroutineExecutor(scope = mainScope)
+  private val updateNavigationHistoryEntryListExecutor = SerializedCoroutineExecutor(scope = viewModelScope)
 
   override fun injectDependencies(component: ViewModelComponent) {
     component.inject(this)
   }
 
-  @OptIn(ExperimentalTime::class)
   override suspend fun onViewModelReady() {
-    mainScope.launch {
+    viewModelScope.launch {
       historyNavigationManager.navigationStackUpdatesFlow
         .collect { updateEvent ->
           updateNavigationHistoryEntryListExecutor.post {
@@ -111,7 +109,7 @@ class MainControllerViewModel : BaseViewModel() {
         }
     }
 
-    mainScope.launch {
+    viewModelScope.launch {
       bookmarksManager.listenForBookmarksChanges()
         .collect { bookmarkChange ->
           updateBadge()
@@ -122,7 +120,7 @@ class MainControllerViewModel : BaseViewModel() {
         }
     }
 
-    mainScope.launch {
+    viewModelScope.launch {
       compositeCatalogManager.compositeCatalogUpdateEventsFlow
         .collect { event ->
           updateNavigationHistoryEntryListExecutor.post {
@@ -133,7 +131,7 @@ class MainControllerViewModel : BaseViewModel() {
   }
 
   fun firstLoadDrawerData() {
-    mainScope.launch {
+    viewModelScope.launch {
       delay(500L)
       reloadNavigationHistory()
     }
@@ -213,7 +211,7 @@ class MainControllerViewModel : BaseViewModel() {
   }
 
   fun deleteBookmarkedNavHistoryElements() {
-    mainScope.launch {
+    viewModelScope.launch {
       ChanSettings.drawerShowBookmarkedThreads.toggle()
 
       reloadNavigationHistory()

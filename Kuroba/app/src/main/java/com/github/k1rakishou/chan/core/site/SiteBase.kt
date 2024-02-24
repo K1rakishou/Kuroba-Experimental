@@ -236,7 +236,7 @@ abstract class SiteBase : Site, CoroutineScope {
       getString(R.string.settings_concurrent_file_downloading_description),
       "concurrent_file_downloading_chunks",
       concurrentFileDownloadingChunks,
-      ChanSettings.ConcurrentFileDownloadingChunks.values().map { it.name }
+      ChanSettings.ConcurrentFileDownloadingChunks.entries.map { it.name }
     )
 
     settings += SiteSetting.SiteMapSetting(
@@ -262,6 +262,11 @@ abstract class SiteBase : Site, CoroutineScope {
     )
 
     return settings
+  }
+
+  override fun postFormatterButtons(): List<PostFormatterButton> {
+    // TODO: New reply layout. Default buttons like 'add quote'
+    return emptyList()
   }
 
   override suspend fun createBoard(boardName: String, boardCode: String): ModularResult<ChanBoard?> {

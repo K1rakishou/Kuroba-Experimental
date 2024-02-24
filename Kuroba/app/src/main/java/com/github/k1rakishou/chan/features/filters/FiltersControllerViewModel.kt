@@ -8,6 +8,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.base.ViewModelSelectionHelper
@@ -32,7 +33,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicInteger
@@ -76,7 +76,7 @@ class FiltersControllerViewModel : BaseViewModel() {
   }
 
   override suspend fun onViewModelReady() {
-    mainScope.launch {
+    viewModelScope.launch {
       chanFilterManager.listenForFiltersChanges()
         .collect { filterEvent ->
           processFilterChanges(filterEvent)

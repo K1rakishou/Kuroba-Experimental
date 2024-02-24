@@ -5,6 +5,7 @@ import android.graphics.BitmapFactory
 import android.util.Base64
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Offset
+import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.compose.AsyncData
@@ -52,7 +53,7 @@ class DvachCaptchaLayoutViewModel : BaseViewModel() {
     currentInputValue.value = ""
     currentPuzzlePieceOffsetValue.value = Offset.Unspecified
 
-    activeJob = mainScope.launch {
+    activeJob = viewModelScope.launch {
       captchaInfoToShow.value = AsyncData.Loading
 
       val result = ModularResult.Try { requestCaptchaIdInternal(captchaUrl) }

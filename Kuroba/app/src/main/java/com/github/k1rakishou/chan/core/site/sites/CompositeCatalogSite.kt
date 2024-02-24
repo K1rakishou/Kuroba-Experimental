@@ -6,6 +6,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.ChunkDownloaderSiteProperties
+import com.github.k1rakishou.chan.core.site.PostFormatterButton
 import com.github.k1rakishou.chan.core.site.ResolvedChanDescriptor
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteActions
@@ -225,6 +226,8 @@ class CompositeCatalogSite : Site {
   override fun boardFeature(boardFeature: Site.BoardFeature, board: ChanBoard): Boolean = false
 
   override fun settings(): List<SiteSetting> = emptyList()
+
+  override fun postFormatterButtons(): List<PostFormatterButton> = emptyList()
 
   override fun endpoints(): SiteEndpoints = siteEndpoints
 

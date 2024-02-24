@@ -6,6 +6,7 @@ import com.github.k1rakishou.OptionSettingItem
 import com.github.k1rakishou.Setting
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.ChunkDownloaderSiteProperties
+import com.github.k1rakishou.chan.core.site.PostFormatterButton
 import com.github.k1rakishou.chan.core.site.ResolvedChanDescriptor
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteActions
@@ -598,6 +599,11 @@ open class Chan4 : SiteBase() {
     settings.add(SiteSetting.SiteStringSetting("4chan captcha cookie", null, chan4CaptchaCookie))
 
     return settings
+  }
+
+  override fun postFormatterButtons(): List<PostFormatterButton> {
+    // TODO: New reply layout
+    return super.postFormatterButtons()
   }
 
   override fun siteGlobalSearchType(): SiteGlobalSearchType = SiteGlobalSearchType.SimpleQueryBoardSearch

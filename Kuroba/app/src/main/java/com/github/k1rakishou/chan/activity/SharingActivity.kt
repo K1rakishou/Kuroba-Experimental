@@ -119,7 +119,7 @@ class SharingActivity : AppCompatActivity() {
     showToast(this, getString(R.string.share_success_start), Toast.LENGTH_SHORT)
 
     val reloadResult = withContext(Dispatchers.IO) {
-      replyManager.get().reloadFilesFromDisk(appConstants)
+      replyManager.get().reloadReplyManagerStateFromDisk(appConstants)
         .safeUnwrap { error ->
           Logger.e(TAG, "replyManager.reloadFilesFromDisk() -> MR.Error", error)
           return@withContext false

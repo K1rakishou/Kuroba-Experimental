@@ -211,7 +211,7 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
 
     captchaInfoCache.remove(chanDescriptor)
 
-    activeJob = mainScope.launch(Dispatchers.Default) {
+    activeJob = viewModelScope.launch(Dispatchers.Default) {
       _captchaInfoToShow.value = AsyncData.Loading
       viewModelInitialized.awaitUntilInitialized()
 
@@ -296,7 +296,7 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
     captchaTtlUpdateJob?.cancel()
     captchaTtlUpdateJob = null
 
-    captchaTtlUpdateJob = mainScope.launch(Dispatchers.Main) {
+    captchaTtlUpdateJob = viewModelScope.launch(Dispatchers.Main) {
       while (isActive) {
         val captchaInfoAsyncData = _captchaInfoToShow.value
 

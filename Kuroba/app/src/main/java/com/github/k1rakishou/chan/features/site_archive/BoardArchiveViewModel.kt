@@ -4,6 +4,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
@@ -16,7 +17,6 @@ import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -64,7 +64,7 @@ class BoardArchiveViewModel(
   override suspend fun onViewModelReady() {
     alreadyVisitedThreads.clear()
 
-    mainScope.launch {
+    viewModelScope.launch {
       seenPostsManager.seenThreadUpdatesFlow.collect { seenThread ->
         alreadyVisitedThreads.put(seenThread, Unit)
       }
@@ -74,7 +74,7 @@ class BoardArchiveViewModel(
   }
 
   fun loadNextPageOfArchiveThreads() {
-    mainScope.launch { loadPageOfArchiveThreads() }
+    viewModelScope.launch { loadPageOfArchiveThreads() }
   }
 
   private suspend fun loadPageOfArchiveThreads() {

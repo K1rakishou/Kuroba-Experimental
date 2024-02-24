@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.features.setup
 
 import androidx.compose.runtime.mutableStateListOf
+import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.manager.CompositeCatalogManager
@@ -9,7 +10,6 @@ import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.removeIfKt
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.catalog.CompositeCatalog
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -27,14 +27,14 @@ class CompositeCatalogsSetupControllerViewModel : BaseViewModel() {
   }
 
   override suspend fun onViewModelReady() {
-    mainScope.launch {
+    viewModelScope.launch {
       compositeCatalogManager.compositeCatalogUpdateEventsFlow
         .collect { event -> processCompositeCatalogUpdateEvents(event) }
     }
   }
 
   fun reload() {
-    mainScope.launch { reloadInternal() }
+    viewModelScope.launch { reloadInternal() }
   }
 
   suspend fun move(fromIndex: Int, toIndex: Int): ModularResult<Unit> {

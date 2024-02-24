@@ -1418,7 +1418,7 @@ class PostingServiceDelegate(
   private suspend fun awaitUntilEverythingIsInitialized(chanDescriptor: ChanDescriptor): ModularResult<Unit> {
     return ModularResult.Try {
       withContext(Dispatchers.IO) {
-        replyManager.reloadFilesFromDisk(appConstants).unwrap()
+        replyManager.reloadReplyManagerStateFromDisk(appConstants).unwrap()
 
         if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
           savedReplyManager.preloadForThread(chanDescriptor)

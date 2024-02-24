@@ -81,6 +81,8 @@ abstract class ChanTheme {
   val bookmarkCounterHasRepliesColorCompose by lazy(LazyThreadSafetyMode.NONE) { Color(bookmarkCounterHasRepliesColor) }
   val bookmarkCounterNormalColorCompose by lazy(LazyThreadSafetyMode.NONE) { Color(bookmarkCounterNormalColor) }
   val postLinkColorCompose by lazy(LazyThreadSafetyMode.NONE) { Color(postLinkColor) }
+  val postInlineQuoteColorCompose by lazy(LazyThreadSafetyMode.NONE) { Color(postInlineQuoteColor) }
+  val postQuoteColorCompose by lazy(LazyThreadSafetyMode.NONE) { Color(postQuoteColor) }
 
   open val mainFont: Typeface = ROBOTO_MEDIUM
 

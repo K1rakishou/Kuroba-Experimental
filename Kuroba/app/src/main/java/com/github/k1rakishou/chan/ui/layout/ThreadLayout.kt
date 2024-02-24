@@ -805,7 +805,7 @@ class ThreadLayout @JvmOverloads constructor(
 
     postDelayed({
       openReplyInternal(true)
-      threadListLayout.replyPresenter.quote(post, withText)
+      threadListLayout.replyLayoutViewCallbacks.quote(post, withText)
     }, OPEN_REPLY_DELAY_MS)
   }
 
@@ -825,13 +825,11 @@ class ThreadLayout @JvmOverloads constructor(
 
     postDelayed({
       openReplyInternal(true)
-      threadListLayout.replyPresenter.quote(postDescriptor, text)
+      threadListLayout.replyLayoutViewCallbacks.quote(postDescriptor, text)
     }, OPEN_REPLY_DELAY_MS)
   }
 
-  @Suppress("MoveLambdaOutsideParentheses")
   override fun confirmPostDelete(post: ChanPost) {
-    @SuppressLint("InflateParams")
     val view = inflate(context, R.layout.dialog_post_delete, null)
     val checkBox = view.findViewById<CheckBox>(R.id.image_only)
 
@@ -1324,9 +1322,9 @@ class ThreadLayout @JvmOverloads constructor(
     callback.presentController(controller, true)
   }
 
-  override fun onImageOptionsComplete() {
+  override fun onImageOptionsApplied() {
     BackgroundUtils.ensureMainThread()
-    threadListLayout.onImageOptionsComplete()
+    threadListLayout.onImageOptionsApplied()
   }
 
   override fun pushCreateSoundMediaController(controller: CreateSoundMediaController) {
@@ -1337,7 +1335,6 @@ class ThreadLayout @JvmOverloads constructor(
     callback.presentController(controller, true)
   }
 
-  @Suppress("MoveLambdaOutsideParentheses")
   override fun showHideOrRemoveWholeChainDialog(hide: Boolean, hasReplies: Boolean, post: ChanPost) {
     val action = if (hide) {
       getString(R.string.thread_layout_hide_action)

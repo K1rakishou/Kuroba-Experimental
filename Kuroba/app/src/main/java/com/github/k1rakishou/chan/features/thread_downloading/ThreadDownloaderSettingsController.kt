@@ -25,10 +25,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeCheckbox
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextBarButton
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeCheckbox
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextBarButton
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingComposeController
 import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.common.AppConstants

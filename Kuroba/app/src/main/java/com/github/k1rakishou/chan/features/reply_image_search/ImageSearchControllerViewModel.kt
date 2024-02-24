@@ -4,6 +4,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.Snapshot
+import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.compose.AsyncData
@@ -201,9 +202,9 @@ class ImageSearchControllerViewModel : BaseViewModel() {
     activeSearchJob?.cancel()
     activeSearchJob = null
 
-    activeSearchJob = mainScope.launch {
+    activeSearchJob = viewModelScope.launch {
       if (debounce) {
-        delay(1000L)
+        delay(500L)
       }
 
       if (_solvingCaptcha.value != null) {

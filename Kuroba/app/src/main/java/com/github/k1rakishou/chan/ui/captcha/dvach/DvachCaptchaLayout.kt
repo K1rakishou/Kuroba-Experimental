@@ -60,13 +60,13 @@ import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder
 import com.github.k1rakishou.chan.ui.captcha.CaptchaSolution
 import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequest
 import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequestData
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeErrorMessage
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeImage
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeProgressIndicator
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextBarButton
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextField
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeErrorMessage
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeProgressIndicator
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextBarButton
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextField
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.viewModelByKey

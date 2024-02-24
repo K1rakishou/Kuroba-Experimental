@@ -3,7 +3,6 @@ package com.github.k1rakishou.chan.ui.captcha.lynxchan
 import android.annotation.SuppressLint
 import android.content.Context
 import android.widget.FrameLayout
-import androidx.activity.ComponentActivity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -48,13 +47,13 @@ import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutInterface
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder
 import com.github.k1rakishou.chan.ui.captcha.CaptchaSolution
 import com.github.k1rakishou.chan.ui.captcha.chan4.Chan4CaptchaLayout
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeErrorMessage
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeProgressIndicator
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextBarButton
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextField
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeErrorMessage
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeProgressIndicator
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextBarButton
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextField
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
@@ -62,6 +61,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.requireComponentActivity
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.launch
@@ -83,7 +83,7 @@ class LynxchanCaptchaLayout(
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
-  private val viewModel by lazy { (context as ComponentActivity).viewModelByKey<LynxchanCaptchaLayoutViewModel>() }
+  private val viewModel by lazy { context.requireComponentActivity().viewModelByKey<LynxchanCaptchaLayoutViewModel>() }
   private val scope = KurobaCoroutineScope()
 
   private var siteDescriptor: SiteDescriptor? = null

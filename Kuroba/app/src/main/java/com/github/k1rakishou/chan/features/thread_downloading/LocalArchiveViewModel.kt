@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
@@ -62,7 +63,7 @@ class LocalArchiveViewModel : BaseViewModel() {
   @Inject
   lateinit var exportDownloadedThreadMediaUseCase: ExportDownloadedThreadMediaUseCase
 
-  private val recalculateAdditionalInfoExecutor = DebouncingCoroutineExecutor(mainScope)
+  private val recalculateAdditionalInfoExecutor = DebouncingCoroutineExecutor(viewModelScope)
   private val cachedThreadDownloadViews = mutableListWithCap<ThreadDownloadView>(32)
   val viewModelSelectionHelper = ViewModelSelectionHelper<ChanDescriptor.ThreadDescriptor, MenuItemClickEvent>()
 
@@ -95,13 +96,13 @@ class LocalArchiveViewModel : BaseViewModel() {
   }
 
   override suspend fun onViewModelReady() {
-    mainScope.launch {
+    viewModelScope.launch {
       threadDownloadManager.threadDownloadUpdateFlow
         .debounce(1.seconds)
         .collect { refreshCacheAndReload() }
     }
 
-    mainScope.launch {
+    viewModelScope.launch {
       threadDownloadManager.threadsProcessedFlow
         .debounce(1.seconds)
         .collect { refreshCacheAndReload() }
@@ -151,7 +152,7 @@ class LocalArchiveViewModel : BaseViewModel() {
     }
 
     if (additionalThreadDownloadStats.isEmpty()) {
-      mainScope.launch {
+      viewModelScope.launch {
         recalculateAdditionalInfo(threadDownloadViews)
       }
     } else {
@@ -193,14 +194,14 @@ class LocalArchiveViewModel : BaseViewModel() {
   }
 
   fun deleteDownloads(selectedItems: List<ChanDescriptor.ThreadDescriptor>) {
-    mainScope.launch {
+    viewModelScope.launch {
       threadDownloadManager.cancelDownloads(selectedItems)
       refreshCacheAndReload()
     }
   }
 
   fun stopDownloads(selectedItems: List<ChanDescriptor.ThreadDescriptor>) {
-    mainScope.launch {
+    viewModelScope.launch {
       selectedItems.forEach { threadDescriptor ->
         threadDownloadManager.stopDownloading(threadDescriptor)
       }
@@ -210,7 +211,7 @@ class LocalArchiveViewModel : BaseViewModel() {
   }
 
   fun startDownloads(selectedItems: List<ChanDescriptor.ThreadDescriptor>) {
-    mainScope.launch {
+    viewModelScope.launch {
       selectedItems.forEach { threadDescriptor ->
         threadDownloadManager.resumeDownloading(threadDescriptor)
       }

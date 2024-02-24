@@ -367,12 +367,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
             </LinearLayout>
 
-            <com.github.k1rakishou.chan.features.reply.ReplyLayoutFilesArea
-                android:id="@+id/reply_layout_files_area"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="4dp" />
-
         </LinearLayout>
 
     </RelativeLayout>

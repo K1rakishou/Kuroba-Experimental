@@ -1,7 +1,9 @@
 package com.github.k1rakishou.chan.core.base
 
 import androidx.annotation.CallSuper
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.common.SuspendableInitializer
@@ -11,10 +13,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
-@Suppress("LeakingThis")
+@Stable
 abstract class BaseViewModel : ViewModel() {
-  protected val mainScope = KurobaCoroutineScope()
-
   protected val viewModelInitialized = SuspendableInitializer<Unit>("viewModelInitialized")
 
   init {
@@ -23,7 +23,7 @@ abstract class BaseViewModel : ViewModel() {
       .build()
       .also { component -> injectDependencies(component) }
 
-    mainScope.launch(Dispatchers.Main) {
+    viewModelScope.launch(Dispatchers.Main) {
       try {
         onViewModelReady()
         viewModelInitialized.initWithValue(Unit)
@@ -43,7 +43,7 @@ abstract class BaseViewModel : ViewModel() {
 
   @CallSuper
   override fun onCleared() {
-    mainScope.cancelChildren()
+
   }
 
   protected inline fun <T> MutableStateFlow<T>.updateState(crossinline updater: T.() -> T?) {

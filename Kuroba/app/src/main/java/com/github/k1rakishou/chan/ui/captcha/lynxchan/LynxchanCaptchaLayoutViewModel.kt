@@ -4,6 +4,7 @@ import android.graphics.BitmapFactory
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.compose.AsyncData
@@ -73,7 +74,7 @@ class LynxchanCaptchaLayoutViewModel : BaseViewModel() {
     }
 
     activeRequestCaptchaJob?.cancel()
-    activeRequestCaptchaJob = mainScope.launch {
+    activeRequestCaptchaJob = viewModelScope.launch {
       try {
         captchaInfoToShow.value = AsyncData.Loading
 

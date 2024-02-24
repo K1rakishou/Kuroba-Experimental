@@ -9,6 +9,7 @@ import com.github.k1rakishou.chan.features.filters.FilterBoardSelectorController
 import com.github.k1rakishou.chan.features.filters.FiltersControllerViewModel;
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerControllerViewModel;
 import com.github.k1rakishou.chan.features.my_posts.SavedPostsViewModel;
+import com.github.k1rakishou.chan.features.reply.ReplyLayoutViewModel;
 import com.github.k1rakishou.chan.features.reply_attach_sound.CreateSoundMediaControllerViewModel;
 import com.github.k1rakishou.chan.features.reply_image_search.ImageSearchControllerViewModel;
 import com.github.k1rakishou.chan.features.report.Chan4ReportPostControllerViewModel;
@@ -46,6 +47,7 @@ public abstract class ViewModelComponent {
     public abstract void inject(Chan4ReportPostControllerViewModel chan4ReportPostControllerViewModel);
     public abstract void inject(ImageSearchControllerViewModel imageSearchControllerViewModel);
     public abstract void inject(CreateSoundMediaControllerViewModel createSoundMediaControllerViewModel);
+    public abstract void inject(ReplyLayoutViewModel replyLayoutViewModel);
 
     @Subcomponent.Builder
     public interface Builder {

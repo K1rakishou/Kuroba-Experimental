@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -67,19 +69,17 @@ import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutCallback
 import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutInterface
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder
 import com.github.k1rakishou.chan.ui.captcha.CaptchaSolution
-import com.github.k1rakishou.chan.ui.compose.FlowMainAxisAlignment
-import com.github.k1rakishou.chan.ui.compose.FlowRow
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeCardView
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeClickableIcon
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeErrorMessage
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeProgressIndicator
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeSnappingSlider
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextBarButton
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextField
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
-import com.github.k1rakishou.chan.ui.compose.kurobaClickable
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeCardView
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeClickableIcon
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeErrorMessage
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeProgressIndicator
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeSnappingSlider
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextBarButton
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextField
+import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout
 import com.github.k1rakishou.chan.ui.view.floating_menu.CheckableFloatingListMenuItem
@@ -363,6 +363,7 @@ class Chan4CaptchaLayout(
     }
   }
 
+  @OptIn(ExperimentalLayoutApi::class)
   @Composable
   private fun CaptchaSuggestions(
     currentInputValue: String,
@@ -374,9 +375,8 @@ class Chan4CaptchaLayout(
         .fillMaxWidth()
         .wrapContentHeight()
         .padding(horizontal = 16.dp),
-      mainAxisAlignment = FlowMainAxisAlignment.Center,
-      mainAxisSpacing = 4.dp,
-      crossAxisSpacing = 4.dp
+      verticalArrangement = Arrangement.spacedBy(4.dp),
+      horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
       for (captchaSuggestion in captchaSuggestions) {
         key(captchaSuggestion) {

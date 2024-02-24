@@ -31,11 +31,11 @@ import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequest
 import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequestData
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeIcon
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeImage
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeProgressIndicator
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
-import com.github.k1rakishou.chan.ui.compose.kurobaClickable
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeIcon
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeProgressIndicator
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
+import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.fsaf.FileChooser

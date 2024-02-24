@@ -26,11 +26,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
-import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.consumeClicks
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeCardView
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeCheckbox
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextBarButton
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeCardView
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeCheckbox
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextBarButton
+import com.github.k1rakishou.chan.ui.compose.consumeClicks
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingComposeController
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable
 import com.github.k1rakishou.model.data.filter.FilterType

@@ -118,7 +118,7 @@ public class ImageOptionsHelper
     public void onImageOptionsApplied() {
         BackgroundUtils.ensureMainThread();
 
-        callbacks.onImageOptionsComplete();
+        callbacks.onImageOptionsApplied();
     }
 
     @Override
@@ -152,7 +152,7 @@ public class ImageOptionsHelper
 
     public interface ImageReencodingHelperCallback {
         void presentReencodeOptionsController(Controller controller);
-        void onImageOptionsComplete();
+        void onImageOptionsApplied();
         void pushCreateSoundMediaController(CreateSoundMediaController controller);
     }
 }

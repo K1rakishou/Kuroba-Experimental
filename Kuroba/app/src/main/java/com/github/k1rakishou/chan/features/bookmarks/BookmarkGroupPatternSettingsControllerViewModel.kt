@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.features.bookmarks
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager
@@ -27,7 +28,7 @@ class BookmarkGroupPatternSettingsControllerViewModel : BaseViewModel() {
   override suspend fun onViewModelReady() {}
 
   fun reload(bookmarkGroupId: String) {
-    mainScope.launch {
+    viewModelScope.launch {
       val prevMatchingPattern = threadBookmarkGroupManager.getMatchingPattern(bookmarkGroupId)
         ?.deepCopy()
         ?.asList()

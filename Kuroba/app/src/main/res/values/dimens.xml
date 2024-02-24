@@ -36,13 +36,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <dimen name="thread_grid_bookmark_view_max_width">256dp</dimen>
     <dimen name="search_post_thumbnail_size">100dp</dimen>
 
-    <dimen name="attach_new_file_button_width">140dp</dimen>
-    <dimen name="attach_new_file_button_height">80dp</dimen>
-    <dimen name="attach_new_file_button_vertical_margin">4dp</dimen>
-    <dimen name="attach_new_file_button_wide_height">32dp</dimen>
     <dimen name="go_to_post_button_width">32dp</dimen>
     <dimen name="cell_post_catalog_status_height">128dp</dimen>
 
     <dimen name="left_action_strip_button_size">50dp</dimen>
     <dimen name="bottom_action_strip_button_size">40dp</dimen>
+
+    <dimen name="reply_layout_container_opened_height_no_attachments">180dp</dimen>
+    <dimen name="reply_layout_container_opened_height_with_attachments">250dp</dimen>
 </resources>

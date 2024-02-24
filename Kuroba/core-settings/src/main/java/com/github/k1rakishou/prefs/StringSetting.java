@@ -19,7 +19,12 @@ package com.github.k1rakishou.prefs;
 import com.github.k1rakishou.Setting;
 import com.github.k1rakishou.SettingProvider;
 
+import io.reactivex.Flowable;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.processors.BehaviorProcessor;
+
 public class StringSetting extends Setting<String> {
+    private BehaviorProcessor<String> settingState = BehaviorProcessor.create();
     private volatile boolean hasCached = false;
     private String cached;
 
@@ -41,6 +46,7 @@ public class StringSetting extends Setting<String> {
         if (!value.equals(get())) {
             settingProvider.putString(key, value);
             cached = value;
+            settingState.onNext(value);
         }
     }
 
@@ -48,17 +54,28 @@ public class StringSetting extends Setting<String> {
         if (!value.equals(get())) {
             settingProvider.putStringSync(key, value);
             cached = value;
+            settingState.onNext(value);
         }
     }
 
     public void setSyncNoCheck(String value) {
         settingProvider.putStringSync(key, value);
         cached = value;
+        settingState.onNext(value);
     }
 
     public void remove() {
         settingProvider.removeSync(key);
         hasCached = false;
         cached = null;
+        settingState.onNext(def);
     }
+
+    public Flowable<String> listenForChanges() {
+        return settingState
+                .onBackpressureLatest()
+                .hide()
+                .observeOn(AndroidSchedulers.mainThread());
+    }
+
 }

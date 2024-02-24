@@ -5,6 +5,7 @@ import com.github.k1rakishou.Setting
 import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.ChunkDownloaderSiteProperties
+import com.github.k1rakishou.chan.core.site.PostFormatterButton
 import com.github.k1rakishou.chan.core.site.ResolvedChanDescriptor
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.Site.BoardsType
@@ -173,6 +174,11 @@ class Dvach : CommonSite() {
     settings.add(SiteSetting.SiteStringSetting("Anti-spam cookie", null, antiSpamCookie))
 
     return settings
+  }
+
+  override fun postFormatterButtons(): List<PostFormatterButton> {
+    // TODO: New reply layout
+    return super.postFormatterButtons()
   }
 
   override fun <T : Setting<*>> getSettingBySettingId(settingId: SiteSetting.SiteSettingId): T? {

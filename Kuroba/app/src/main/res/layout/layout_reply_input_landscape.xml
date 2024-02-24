@@ -323,17 +323,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
                         </androidx.constraintlayout.widget.ConstraintLayout>
 
-                        <com.github.k1rakishou.chan.features.reply.ReplyLayoutFilesArea
-                            android:id="@+id/reply_layout_files_area"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            app:layout_constraintBottom_toBottomOf="parent"
-                            app:layout_constraintEnd_toEndOf="parent"
-                            app:layout_constraintHorizontal_weight="0.5"
-                            app:layout_constraintStart_toEndOf="@+id/reply_layout_input_with_buttons_holder"
-                            app:layout_constraintTop_toTopOf="parent"
-                            app:layout_constraintVertical_bias="0" />
-
                     </androidx.constraintlayout.widget.ConstraintLayout>
 
                 </LinearLayout>

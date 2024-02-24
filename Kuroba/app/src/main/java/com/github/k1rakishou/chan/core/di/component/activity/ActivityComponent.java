@@ -57,11 +57,6 @@ import com.github.k1rakishou.chan.features.reencoding.ImageReencodeOptionsContro
 import com.github.k1rakishou.chan.features.reencoding.ImageReencodingPresenter;
 import com.github.k1rakishou.chan.features.reordering.EpoxyReorderableItemView;
 import com.github.k1rakishou.chan.features.reordering.SimpleListItemsReorderingController;
-import com.github.k1rakishou.chan.features.reply.ReplyLayout;
-import com.github.k1rakishou.chan.features.reply.ReplyLayoutFilesArea;
-import com.github.k1rakishou.chan.features.reply.epoxy.EpoxyAttachNewFileButtonView;
-import com.github.k1rakishou.chan.features.reply.epoxy.EpoxyAttachNewFileButtonWideView;
-import com.github.k1rakishou.chan.features.reply.epoxy.EpoxyReplyFileView;
 import com.github.k1rakishou.chan.features.reply_attach_sound.CreateSoundMediaController;
 import com.github.k1rakishou.chan.features.reply_image_search.ImageSearchController;
 import com.github.k1rakishou.chan.features.report.Chan4ReportPostController;
@@ -344,9 +339,6 @@ public interface ActivityComponent {
     void inject(EpoxyFloatingListMenuRow epoxyFloatingListMenuRow);
     void inject(EpoxyHeaderListMenuRow epoxyHeaderListMenuRow);
     void inject(EpoxyHistoryHeaderView epoxyHistoryHeaderView);
-    void inject(EpoxyReplyFileView epoxyReplyFileView);
-    void inject(EpoxyAttachNewFileButtonView epoxyAttachNewFileButtonView);
-    void inject(EpoxyAttachNewFileButtonWideView epoxyAttachNewFileButtonWideView);
     void inject(EpoxyTextViewWrapHeight epoxyTextViewWrapHeight);
     void inject(EpoxyPostLink epoxyPostLink);
     void inject(EpoxyBoardSelectionButtonView epoxyBoardSelectionButtonView);
@@ -359,7 +351,6 @@ public interface ActivityComponent {
     void inject(ThumbnailView thumbnailView);
     void inject(PostImageThumbnailView thumbnailView);
     void inject(ThreadLayout threadLayout);
-    void inject(ReplyLayout replyLayout);
     void inject(ThreadListLayout threadListLayout);
     void inject(ToolbarContainer toolbarContainer);
     void inject(CardPostCell cardPostCell);
@@ -393,7 +384,6 @@ public interface ActivityComponent {
     void inject(PostStubCell postStubCell);
     void inject(SearchLayout searchLayout);
     void inject(SplitNavigationControllerLayout splitNavigationControllerLayout);
-    void inject(ReplyLayoutFilesArea replyLayoutFilesArea);
     void inject(AttachNewFileButton attachNewFileButton);
     void inject(OptionalSwipeViewPager optionalSwipeViewPager);
     void inject(FastScroller fastScroller);

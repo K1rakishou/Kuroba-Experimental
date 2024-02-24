@@ -40,14 +40,12 @@ import okio.source
 import java.io.File
 import java.io.IOException
 import java.util.UUID
-import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
 /**
  * Manages replies.
  */
-@OptIn(ExperimentalTime::class)
 class ReplyManager(
   private val applicationVisibilityManager: ApplicationVisibilityManager,
   private val appConstants: AppConstants,
@@ -83,6 +81,40 @@ class ReplyManager(
     Logger.d(TAG, "ReplyManager is not ready yet, waiting...")
     val duration = measureTime { filesLoadedInitializer.awaitUntilInitialized() }
     Logger.d(TAG, "ReplyManager initialization completed, took $duration")
+  }
+
+  @Synchronized
+  fun reloadReplyManagerStateFromDisk(appConstants: AppConstants): ModularResult<Unit> {
+    if (filesLoaded) {
+      if (!filesLoadedInitializer.isInitialized()) {
+        filesLoadedInitializer.initWithValue(Unit)
+      }
+
+      return ModularResult.value(Unit)
+    }
+
+    val restoreDraftsDuration = measureTime { restoreDrafts() }
+    Logger.d(TAG, "reloadFilesFromDisk() restoreDrafts() took $restoreDraftsDuration")
+
+    val (result, reloadAllFilesFromDiskDuration) = measureTimedValue {
+      replyFilesStorage.reloadAllFilesFromDisk(
+        appConstants.attachFilesDir,
+        appConstants.attachFilesMetaDir,
+        appConstants.mediaPreviewsDir
+      )
+    }
+    Logger.d(TAG, "reloadFilesFromDisk() reloadAllFilesFromDisk() took $reloadAllFilesFromDiskDuration")
+
+    filesLoaded = true
+    filesLoadedInitializer.initWithValue(Unit)
+
+    if (result is ModularResult.Error) {
+      Logger.e(TAG, "reloadAllFilesFromDisk() error, clearing all files", result.error)
+      replyFilesStorage.deleteAllFiles()
+      return result
+    }
+
+    return ModularResult.value(Unit)
   }
 
   @Synchronized
@@ -149,40 +181,6 @@ class ReplyManager(
   fun totalFilesCount(): ModularResult<Int> {
     ensureFilesLoaded()
     return replyFilesStorage.totalFilesCount()
-  }
-
-  @Synchronized
-  fun reloadFilesFromDisk(appConstants: AppConstants): ModularResult<Unit> {
-    if (filesLoaded) {
-      if (!filesLoadedInitializer.isInitialized()) {
-        filesLoadedInitializer.initWithValue(Unit)
-      }
-
-      return ModularResult.value(Unit)
-    }
-
-    val restoreDraftsDuration = measureTime { restoreDrafts() }
-    Logger.d(TAG, "reloadFilesFromDisk() restoreDrafts() took $restoreDraftsDuration")
-
-    val (result, reloadAllFilesFromDiskDuration) = measureTimedValue {
-      replyFilesStorage.reloadAllFilesFromDisk(
-        appConstants.attachFilesDir,
-        appConstants.attachFilesMetaDir,
-        appConstants.mediaPreviewsDir
-      )
-    }
-    Logger.d(TAG, "reloadFilesFromDisk() reloadAllFilesFromDisk() took $reloadAllFilesFromDiskDuration")
-
-    filesLoaded = true
-    filesLoadedInitializer.initWithValue(Unit)
-
-    if (result is ModularResult.Error) {
-      Logger.e(TAG, "reloadAllFilesFromDisk() error, clearing all files", result.error)
-      replyFilesStorage.deleteAllFiles()
-      return result
-    }
-
-    return ModularResult.value(Unit)
   }
 
   @Synchronized

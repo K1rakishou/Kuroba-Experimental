@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.features.my_posts
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
@@ -20,7 +21,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -35,7 +35,7 @@ class SavedPostsViewModel : BaseViewModel() {
   lateinit var savedReplyManager: SavedReplyManager
 
   private val _myPostsViewModelState = MutableStateFlow(MyPostsViewModelState())
-  private val searchQueryDebouncer = DebouncingCoroutineExecutor(mainScope)
+  private val searchQueryDebouncer = DebouncingCoroutineExecutor(viewModelScope)
   val viewModelSelectionHelper = ViewModelSelectionHelper<PostDescriptor, MenuItemClickEvent>()
 
   private var _searchQuery by mutableStateOf<String?>(null)
@@ -63,7 +63,7 @@ class SavedPostsViewModel : BaseViewModel() {
   }
 
   override suspend fun onViewModelReady() {
-    mainScope.launch {
+    viewModelScope.launch {
       savedReplyManager.savedRepliesUpdateFlow
         .debounce(1_000L)
         .collect { reloadSavedReplies() }
@@ -81,7 +81,7 @@ class SavedPostsViewModel : BaseViewModel() {
   }
 
   fun deleteSavedPosts(postDescriptors: List<PostDescriptor>) {
-    mainScope.launch {
+    viewModelScope.launch {
       savedReplyManager.unsavePosts(postDescriptors)
     }
   }
@@ -228,10 +228,10 @@ class SavedPostsViewModel : BaseViewModel() {
     val itemsList = mutableListOf<BottomMenuPanelItem>()
 
     itemsList += BottomMenuPanelItem(
-      PostMenuItemId(MenuItemType.Delete),
-      R.drawable.ic_baseline_delete_outline_24,
-      R.string.bottom_menu_item_delete,
-      {
+      menuItemId = PostMenuItemId(MenuItemType.Delete),
+      iconResId = R.drawable.ic_baseline_delete_outline_24,
+      textResId = R.string.bottom_menu_item_delete,
+      onClickListener = {
         val clickEvent = MenuItemClickEvent(
           menuItemType = MenuItemType.Delete,
           items = viewModelSelectionHelper.getCurrentlySelectedItems()
@@ -246,7 +246,7 @@ class SavedPostsViewModel : BaseViewModel() {
   }
 
   fun deleteAllSavedPosts() {
-    mainScope.launch { savedReplyManager.deleteAll() }
+    viewModelScope.launch { savedReplyManager.deleteAll() }
   }
 
   class PostMenuItemId(val menuItemType: MenuItemType) :

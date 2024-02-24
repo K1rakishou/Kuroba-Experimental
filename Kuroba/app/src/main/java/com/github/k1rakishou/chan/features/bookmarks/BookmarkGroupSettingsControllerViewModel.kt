@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.features.bookmarks
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
@@ -38,7 +39,7 @@ class BookmarkGroupSettingsControllerViewModel : BaseViewModel() {
   }
 
   fun reload() {
-    mainScope.launch {
+    viewModelScope.launch {
       val newThreadBookmarkGroupItems = mutableListOf<ThreadBookmarkGroupItem>()
 
       threadBookmarkGroupManager.viewBookmarkGroupsOrdered { threadBookmarkGroup ->

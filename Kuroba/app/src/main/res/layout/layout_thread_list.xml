@@ -28,13 +28,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:clipToPadding="false"
         android:scrollbars="vertical" />
 
-    <com.github.k1rakishou.chan.features.reply.ReplyLayout
-        android:id="@+id/reply"
+    <com.github.k1rakishou.chan.features.reply.ReplyLayoutView
+        android:id="@+id/reply_layout_view"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:elevation="4dp"
-        android:visibility="gone"
-        tools:ignore="UnusedAttribute" />
+        android:layout_height="match_parent" />
 
     <com.github.k1rakishou.chan.ui.layout.SnowLayout
         android:id="@+id/snow_layout"

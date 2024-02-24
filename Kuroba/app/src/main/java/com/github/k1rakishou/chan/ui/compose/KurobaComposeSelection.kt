@@ -17,6 +17,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeCheckbox
 
 @Composable
 fun SelectableItem(

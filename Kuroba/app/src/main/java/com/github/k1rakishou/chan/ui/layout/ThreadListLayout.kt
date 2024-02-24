@@ -24,7 +24,6 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Rect
 import android.util.AttributeSet
-import android.view.Gravity
 import android.view.KeyEvent
 import android.view.View
 import android.widget.FrameLayout
@@ -49,10 +48,8 @@ import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.PostHighlightManager
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter
 import com.github.k1rakishou.chan.core.usecase.ExtractPostMapInfoHolderUseCase
-import com.github.k1rakishou.chan.features.reply.ReplyLayout
-import com.github.k1rakishou.chan.features.reply.ReplyLayout.ThreadListLayoutCallbacks
-import com.github.k1rakishou.chan.features.reply.ReplyLayoutFilesArea
-import com.github.k1rakishou.chan.features.reply.ReplyPresenter
+import com.github.k1rakishou.chan.features.reply.ReplyLayoutView
+import com.github.k1rakishou.chan.features.reply.ReplyLayoutViewCallbacks
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter.PostAdapterCallback
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
@@ -104,7 +101,6 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.math.max
 import kotlin.math.roundToInt
 import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
@@ -113,12 +109,10 @@ import kotlin.time.measureTimedValue
  */
 class ThreadListLayout(context: Context, attrs: AttributeSet?)
   : FrameLayout(context, attrs),
-  ThreadListLayoutCallbacks,
   Toolbar.ToolbarHeightUpdatesCallback,
   CoroutineScope,
   ThemeEngine.ThemeChangesListener,
-  FastScroller.ThumbDragListener,
-  ReplyLayoutFilesArea.ThreadListLayoutCallbacks {
+  FastScroller.ThumbDragListener {
 
   @Inject
   lateinit var _themeEngine: Lazy<ThemeEngine>
@@ -238,8 +232,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     }
   }
 
-  val replyPresenter: ReplyPresenter
-    get() = replyLayout.presenter
+  val replyLayoutViewCallbacks: ReplyLayoutViewCallbacks
+    get() = replyLayoutView
 
   val displayingPostDescriptors: List<PostDescriptor>
     get() = postAdapter.displayList
@@ -310,7 +304,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
   private val gridModeSpaceItemDecoration = GridModeSpaceItemDecoration()
 
-  private lateinit var replyLayout: ReplyLayout
+  private lateinit var replyLayoutView: ReplyLayoutView
   private lateinit var snowLayout: SnowLayout
   private lateinit var recyclerView: RecyclerView
   private lateinit var postAdapter: PostAdapter
@@ -340,11 +334,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   var replyOpen = false
     private set
 
-  override fun isReplyLayoutOpened(): Boolean {
-    return replyOpen
-  }
-
-  override fun getCurrentChanDescriptor(): ChanDescriptor? {
+  // TODO: New reply layout
+  fun getCurrentChanDescriptor(): ChanDescriptor? {
     return threadPresenter?.currentChanDescriptor
   }
 
@@ -383,21 +374,16 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       .inject(this)
 
     // View binding
-    replyLayout = findViewById(R.id.reply)
+    replyLayoutView = findViewById(R.id.reply_layout_view)
     recyclerView = findViewById(R.id.recycler_view)
     snowLayout = findViewById(R.id.snow_layout)
     recyclerView.hackMaxFlingVelocity()
-
-    val params = replyLayout.layoutParams as LayoutParams
-    params.gravity = Gravity.BOTTOM
-    replyLayout.layoutParams = params
 
     onThemeChanged()
   }
 
   override fun onThemeChanged() {
     setBackgroundColorFast(themeEngine.chanTheme.backColor)
-    replyLayout.setBackgroundColorFast(themeEngine.chanTheme.backColor)
   }
 
   fun onCreate(
@@ -419,8 +405,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       threadPresenter as PostCellCallback,
       threadPresenter as ThreadStatusCell.Callback
     )
-
-    replyLayout.onCreate(this, this)
 
     val pool = recyclerView.recycledViewPool
     pool.setMaxRecycledViews(PostCellData.TYPE_POST_ZERO_OR_SINGLE_THUMBNAIL_LEFT_ALIGNMENT, 10)
@@ -444,7 +428,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     job.cancelChildren()
 
     threadListLayoutCallback?.toolbar?.removeToolbarHeightUpdatesCallback(this)
-    replyLayout.onDestroy()
     runBlocking { setFastScroll(false, emptyList()) }
 
     forceRecycleAllPostViews()
@@ -598,7 +581,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     onThemeChanged()
   }
 
-  @OptIn(ExperimentalTime::class)
   suspend fun showPosts(
     recyclerViewWidth: Int,
     descriptor: ChanDescriptor,
@@ -620,7 +602,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     onThemeChanged()
 
     if (initial) {
-      replyLayout.bindChanDescriptor(descriptor)
+      replyLayoutView.bindChanDescriptor(descriptor)
 
       recyclerView.layoutManager = null
       recyclerView.layoutManager = layoutManager
@@ -749,7 +731,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
   fun onBack(): Boolean {
     return when {
-      replyLayout.onBack() -> true
+      replyLayoutView.onBack() -> true
       replyOpen -> {
         openReply(false)
         true
@@ -846,15 +828,17 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     afterPostingAttempt: Boolean,
     onFinished: ((Boolean) -> Unit)? = null
   ) {
-    replyLayout.showCaptcha(chanDescriptor, replyMode, autoReply, afterPostingAttempt, onFinished)
+    replyLayoutView.showCaptcha(chanDescriptor, replyMode, autoReply, afterPostingAttempt, onFinished)
   }
 
-  override fun currentFocusedController(): ThreadPresenter.CurrentFocusedController {
+  // TODO: New reply layout
+  fun currentFocusedController(): ThreadPresenter.CurrentFocusedController {
     return threadPresenter?.currentFocusedController()
       ?: ThreadPresenter.CurrentFocusedController.None
   }
 
-  override fun openReply(open: Boolean) {
+  // TODO: New reply layout
+  fun openReply(open: Boolean) {
     if (currentChanDescriptorOrNull() == null || replyOpen == open) {
       return
     }
@@ -875,16 +859,16 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       }
     }
 
-    val height = replyLayout.measuredHeight
-    val viewPropertyAnimator = replyLayout.animate()
+    val height = replyLayoutView.measuredHeight
+    val viewPropertyAnimator = replyLayoutView.animate()
 
     viewPropertyAnimator.setListener(null)
     viewPropertyAnimator.interpolator = FastOutSlowInInterpolator()
     viewPropertyAnimator.duration = 350
 
     if (open) {
-      replyLayout.visibility = VISIBLE
-      replyLayout.translationY = height.toFloat()
+      replyLayoutView.visibility = VISIBLE
+      replyLayoutView.translationY = height.toFloat()
 
       threadListLayoutCallback?.showReplyButton(false)
 
@@ -899,7 +883,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
         }
       })
     } else {
-      replyLayout.translationY = 0f
+      replyLayoutView.translationY = 0f
 
       viewPropertyAnimator.translationY(height.toFloat())
       viewPropertyAnimator.setListener(object : AnimatorListenerAdapter() {
@@ -909,18 +893,17 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
         override fun onAnimationEnd(animation: Animator) {
           viewPropertyAnimator.setListener(null)
-          replyLayout.visibility = GONE
+          replyLayoutView.visibility = GONE
 
           threadListLayoutCallback?.showReplyButton(true)
         }
       })
     }
 
-    replyLayout.onOpen(open)
-    replyLayout.requestWrappingModeUpdate()
+    replyLayoutView.openOrCloseReplyLayout(open)
 
     if (!open) {
-      AndroidUtils.hideKeyboard(replyLayout)
+      AndroidUtils.hideKeyboard(replyLayoutView)
     }
 
     attachToolbarScroll(!open)
@@ -931,7 +914,10 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   fun canChildScrollUp(): Boolean {
-    if (replyLayout.presenter.isExpanded) {
+    val chanDescriptor = currentChanDescriptorOrNull()
+      ?: return true
+
+    if (replyLayoutView.isExpanded(chanDescriptor)) {
       return true
     }
 
@@ -962,7 +948,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
   fun cleanup() {
     postAdapter.cleanup()
-    replyLayout.cleanup()
+    replyLayoutView.cleanup()
 
     openReply(false)
 
@@ -1027,21 +1013,25 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     }
   }
 
-  override fun highlightPosts(postDescriptors: Set<PostDescriptor>?, blink: Boolean) {
+  // TODO: New reply layout
+  fun highlightPosts(postDescriptors: Set<PostDescriptor>?, blink: Boolean) {
     postHighlightManager.highlightPosts(postAdapter.threadCellData, postDescriptors, blink)
   }
 
-  override fun showThread(threadDescriptor: ThreadDescriptor) {
+  // TODO: New reply layout
+  fun showThread(threadDescriptor: ThreadDescriptor) {
     serializedCoroutineExecutor.post {
       callback?.showThread(threadDescriptor)
     }
   }
 
-  override fun requestNewPostLoad() {
+  // TODO: New reply layout
+  fun requestNewPostLoad() {
     callback?.requestNewPostLoad()
   }
 
-  override fun showImageReencodingWindow(fileUuid: UUID, supportsReencode: Boolean) {
+  // TODO: New reply layout
+  fun showImageReencodingWindow(fileUuid: UUID, supportsReencode: Boolean) {
     threadListLayoutCallback?.showImageReencodingWindow(fileUuid, supportsReencode)
   }
 
@@ -1192,28 +1182,33 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     toolbar.collapseShow(true)
   }
 
-  override fun updateRecyclerViewPaddings() {
+  // TODO: New reply layout
+  fun updateRecyclerViewPaddings() {
     updateRecyclerPaddingsDebouncer.post({ setRecyclerViewPadding() }, 50L)
   }
 
-  override fun measureReplyLayout() {
-    replyLayout.measure(
+  // TODO: New reply layout
+  fun measureReplyLayout() {
+    replyLayoutView.measure(
       MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
       MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
     )
   }
 
-  override fun presentController(controller: Controller) {
+  // TODO: New reply layout
+  fun presentController(controller: Controller) {
     BackgroundUtils.ensureMainThread()
     threadListLayoutCallback?.presentController(controller)
   }
 
-  override fun pushController(controller: Controller) {
+  // TODO: New reply layout
+  fun pushController(controller: Controller) {
     BackgroundUtils.ensureMainThread()
     threadListLayoutCallback?.pushController(controller)
   }
 
-  override fun showLoadingView(cancellationFunc: () -> Unit, titleTextId: Int) {
+  // TODO: New reply layout
+  fun showLoadingView(cancellationFunc: () -> Unit, titleTextId: Int) {
     BackgroundUtils.ensureMainThread()
 
     val loadingViewController = LoadingViewController(
@@ -1225,7 +1220,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     threadListLayoutCallback?.presentController(loadingViewController)
   }
 
-  override fun hideLoadingView() {
+  // TODO: New reply layout
+  fun hideLoadingView() {
     BackgroundUtils.ensureMainThread()
 
     threadListLayoutCallback?.unpresentController { controller -> controller is LoadingViewController }
@@ -1251,7 +1247,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     if (replyOpen) {
       measureReplyLayout()
 
-      recyclerBottom += (replyLayout.measuredHeight - replyLayout.paddingTop)
+      recyclerBottom += (replyLayoutView.measuredHeight - replyLayoutView.paddingTop)
     } else {
       recyclerBottom += when (navigationViewContractType) {
         NavigationViewContract.Type.BottomNavView -> {
@@ -1320,11 +1316,11 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     postAdapter.resetCachedPostData(postDescriptors)
   }
 
-  fun onImageOptionsComplete() {
-    replyLayout.onImageOptionsComplete()
+  fun onImageOptionsApplied() {
+    replyLayoutView.onImageOptionsApplied()
   }
 
-  data class ShowPostsResult @OptIn(ExperimentalTime::class) constructor(
+  data class ShowPostsResult constructor(
     val result: Boolean,
     val applyFilterDuration: Duration,
     val setThreadPostsDuration: Duration
