@@ -20,6 +20,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
@@ -192,16 +193,22 @@ fun Modifier.simpleVerticalScrollbar(
 fun Modifier.verticalScrollbar(
   contentPadding: PaddingValues,
   scrollState: ScrollState,
-  thumbColor: Color
+  thumbColor: Color,
+  enabled: Boolean = true
 ): Modifier {
+  if (!enabled) {
+    return this
+  }
+
   return composed {
     val density = LocalDensity.current
 
     val scrollbarWidth = with(density) { 4.dp.toPx() }
     val scrollbarHeight = with(density) { 16.dp.toPx() }
 
-    val currentValue by remember { derivedStateOf { scrollState.value } }
-    val maxValue by remember { derivedStateOf {  scrollState.maxValue } }
+    val scrollStateUpdated by rememberUpdatedState(newValue = scrollState)
+    val currentPositionPx by remember { derivedStateOf { scrollStateUpdated.value } }
+    val maxScrollPositionPx by remember { derivedStateOf { scrollStateUpdated.maxValue } }
 
     val topPaddingPx = with(density) {
       remember(key1 = contentPadding) { contentPadding.calculateTopPadding().toPx() }
@@ -210,9 +217,9 @@ fun Modifier.verticalScrollbar(
       remember(key1 = contentPadding) { contentPadding.calculateBottomPadding().toPx() }
     }
 
-    val duration = if (scrollState.isScrollInProgress) 150 else 1000
-    val delay = if (scrollState.isScrollInProgress) 0 else 1000
-    val targetThumbAlpha = if (scrollState.isScrollInProgress) 0.8f else 0f
+    val duration = if (scrollStateUpdated.isScrollInProgress) 150 else 1000
+    val delay = if (scrollStateUpdated.isScrollInProgress) 0 else 1000
+    val targetThumbAlpha = if (scrollStateUpdated.isScrollInProgress) 0.8f else 0f
 
     val thumbAlphaAnimated by animateFloatAsState(
       targetValue = targetThumbAlpha,
@@ -225,17 +232,13 @@ fun Modifier.verticalScrollbar(
     return@composed Modifier.drawWithContent {
       drawContent()
 
-      if (maxValue == Int.MAX_VALUE || maxValue == 0) {
+      if (maxScrollPositionPx == Int.MAX_VALUE || maxScrollPositionPx == 0) {
         return@drawWithContent
       }
 
       val availableHeight = this.size.height - scrollbarHeight - topPaddingPx - bottomPaddingPx
-      if (availableHeight > maxValue) {
-        return@drawWithContent
-      }
-
-      val unit = availableHeight / maxValue.toFloat()
-      val scrollPosition = currentValue * unit
+      val unit = availableHeight / maxScrollPositionPx.toFloat()
+      val scrollPosition = currentPositionPx * unit
 
       val offsetX = this.size.width - scrollbarWidth
       val offsetY = topPaddingPx + scrollPosition

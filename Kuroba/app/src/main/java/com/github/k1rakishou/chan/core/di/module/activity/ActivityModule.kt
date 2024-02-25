@@ -29,6 +29,7 @@ import com.github.k1rakishou.chan.core.manager.ThreadFollowHistoryManager
 import com.github.k1rakishou.chan.core.manager.UpdateManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2
+import com.github.k1rakishou.chan.features.reply.data.PostFormattingButtonsFactory
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutFileEnumerator
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper
 import com.github.k1rakishou.core_logger.Logger
@@ -197,4 +198,14 @@ class ActivityModule {
       imageLoaderV2Lazy
     )
   }
+
+  @PerActivity
+  @Provides
+  fun providePostFormattingButtonsFactory(
+    boardManagerLazy: Lazy<BoardManager>,
+    themeEngineLazy: Lazy<ThemeEngine>
+  ): PostFormattingButtonsFactory {
+    return PostFormattingButtonsFactory(boardManagerLazy, themeEngineLazy)
+  }
+
 }

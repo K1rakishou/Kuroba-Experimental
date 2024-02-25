@@ -101,8 +101,8 @@ internal fun ReplyTextField(
     }
   )
 
-  val makeNewThreadHint = stringResource(id = R.string.reply_comment_board)
-  val replyInThreadHint = stringResource(id = R.string.reply_comment_thread)
+  val makeNewThreadHint = stringResource(id = R.string.reply_make_new_thread_hint)
+  val replyInThreadHint = stringResource(id = R.string.reply_reply_in_thread_hint)
 
   val labelText = remember(replyLayoutState.isCatalogMode, replyText.text.length) {
     buildString {

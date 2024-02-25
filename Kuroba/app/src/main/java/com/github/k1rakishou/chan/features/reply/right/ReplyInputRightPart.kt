@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.features.reply.right
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.DraggableState
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
@@ -20,15 +21,16 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutState
 import com.github.k1rakishou.chan.features.reply.data.SendReplyState
-import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeIcon
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeProgressIndicator
 import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
+import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 
 @Composable
 internal fun ReplyInputRightPart(
@@ -38,7 +40,11 @@ internal fun ReplyInputRightPart(
   onDragStarted: suspend () -> Unit,
   onDragStopped: suspend (velocity: Float) -> Unit,
   onCancelReplySendClicked: () -> Unit,
-  onSendReplyClicked: () -> Unit
+  onSendReplyClicked: () -> Unit,
+  onPickLocalMediaButtonClicked: () -> Unit,
+  onPickRemoteMediaButtonClicked: () -> Unit,
+  onSearchRemoteMediaButtonClicked: () -> Unit,
+  onPrefillCaptchaButtonClicked: () -> Unit
 ) {
   val chanTheme = LocalChanTheme.current
   val density = LocalDensity.current
@@ -73,22 +79,131 @@ internal fun ReplyInputRightPart(
         },
     horizontalAlignment = Alignment.CenterHorizontally,
   ) {
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    PrefillCaptchaButton(
+      iconSize = iconSize,
+      padding = 4.dp,
+      onPrefillCaptchaButtonClicked = onPrefillCaptchaButtonClicked
+    )
+
     Spacer(modifier = Modifier.height(8.dp))
 
     SendReplyButton(
       sendReplyState = sendReplyState,
       iconSize = iconSize,
+      padding = if (sendReplyState.canCancel) 10.dp else 4.dp,
       onCancelReplySendClicked = onCancelReplySendClicked,
       onSendReplyClicked = onSendReplyClicked,
       replySendProgress = replySendProgress
     )
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    PickLocalMediaButton(
+      iconSize = iconSize,
+      padding = 4.dp,
+      onPickLocalMediaButtonClicked = onPickLocalMediaButtonClicked
+    )
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    SearchRemoteMediaButton(
+      iconSize = iconSize,
+      padding = 4.dp,
+      onSearchRemoteMediaButtonClicked = onSearchRemoteMediaButtonClicked
+    )
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    PickRemoteMediaButton(
+      iconSize = iconSize,
+      padding = 4.dp,
+      onPickRemoteMediaButtonClicked = onPickRemoteMediaButtonClicked
+    )
   }
+}
+
+@Composable
+private fun PickRemoteMediaButton(
+  iconSize: Dp,
+  padding: Dp,
+  onPickRemoteMediaButtonClicked: () -> Unit
+) {
+  KurobaComposeIcon(
+    modifier = Modifier
+      .size(iconSize)
+      .padding(padding)
+      .kurobaClickable(
+        bounded = false,
+        onClick = onPickRemoteMediaButtonClicked
+      ),
+    drawableId = R.drawable.ic_baseline_cloud_download_24
+  )
+}
+
+@Composable
+private fun PickLocalMediaButton(
+  iconSize: Dp,
+  padding: Dp,
+  onPickLocalMediaButtonClicked: () -> Unit
+) {
+  KurobaComposeIcon(
+    modifier = Modifier
+      .size(iconSize)
+      .padding(padding)
+      .kurobaClickable(
+        bounded = false,
+        onClick = onPickLocalMediaButtonClicked
+      ),
+    drawableId = R.drawable.ic_baseline_attach_file_24
+  )
+}
+
+@Composable
+private fun SearchRemoteMediaButton(
+  iconSize: Dp,
+  padding: Dp,
+  onSearchRemoteMediaButtonClicked: () -> Unit
+) {
+  KurobaComposeIcon(
+    modifier = Modifier
+      .size(iconSize)
+      .padding(padding)
+      .kurobaClickable(
+        bounded = false,
+        onClick = onSearchRemoteMediaButtonClicked
+      ),
+    drawableId = R.drawable.ic_search_white_24dp
+  )
+}
+
+@Composable
+private fun PrefillCaptchaButton(
+  iconSize: Dp,
+  padding: Dp,
+  onPrefillCaptchaButtonClicked: () -> Unit
+) {
+  // TODO: New reply layout. Draw how many captchas are currently prefilled
+  Image(
+    modifier = Modifier
+      .size(iconSize)
+      .padding(padding)
+      .kurobaClickable(
+        bounded = false,
+        onClick = onPrefillCaptchaButtonClicked
+      ),
+    contentDescription = null,
+    painter = painterResource(id = R.drawable.ic_captcha_24dp)
+  )
 }
 
 @Composable
 private fun SendReplyButton(
   sendReplyState: SendReplyState,
   iconSize: Dp,
+  padding: Dp,
   onCancelReplySendClicked: () -> Unit,
   onSendReplyClicked: () -> Unit,
   replySendProgress: Float?
@@ -99,12 +214,6 @@ private fun SendReplyButton(
     } else {
       R.drawable.ic_baseline_send_24
     }
-  }
-
-  val padding = if (sendReplyState.canCancel) {
-    10.dp
-  } else {
-    4.dp
   }
 
   Box(

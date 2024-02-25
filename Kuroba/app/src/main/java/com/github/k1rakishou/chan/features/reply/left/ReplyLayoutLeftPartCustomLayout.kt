@@ -1,61 +1,30 @@
 package com.github.k1rakishou.chan.features.reply.left
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.fastSumBy
-import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
 import com.github.k1rakishou.chan.ui.compose.ensureSingleMeasurable
 import com.github.k1rakishou.common.mutableListWithCap
 
 @Composable
 internal fun ReplyLayoutLeftPartCustomLayout(
   modifier: Modifier,
-  replyLayoutVisibility: ReplyLayoutVisibility,
-  hasAttachables: Boolean,
   additionalInputsContent: @Composable () -> Unit,
   replyInputContent: @Composable () -> Unit,
   formattingButtonsContent: @Composable () -> Unit,
   replyAttachmentsContent: @Composable () -> Unit
 ) {
-  val contents = remember(replyLayoutVisibility, hasAttachables) {
-    buildList {
-      if (replyLayoutVisibility == ReplyLayoutVisibility.Expanded) {
-        add(additionalInputsContent)
-      }
-
-      add(replyInputContent)
-      add(formattingButtonsContent)
-
-      if (hasAttachables) {
-        add(replyAttachmentsContent)
-      }
-    }
-  }
-
   Layout(
-    contents = contents,
+    contents = listOf(additionalInputsContent, replyInputContent, formattingButtonsContent, replyAttachmentsContent),
     modifier = modifier,
     measurePolicy = { measurables, constraints ->
-      var measurablesIndex = 0
-
-      val additionalInputsContentMeasurables = if (replyLayoutVisibility == ReplyLayoutVisibility.Expanded) {
-        measurables[measurablesIndex++]
-      } else {
-        emptyList()
-      }
-
-      val replyInputContentMeasurable = measurables[measurablesIndex++].ensureSingleMeasurable()
-      val formattingButtonsContentMeasurable = measurables[measurablesIndex++].ensureSingleMeasurable()
-
-      val replyAttachmentsContentMeasurables = if (hasAttachables) {
-        measurables[measurablesIndex++]
-      } else {
-        emptyList()
-      }
+      val additionalInputsContentMeasurables = measurables[0]
+      val replyInputContentMeasurable = measurables[1].ensureSingleMeasurable()
+      val formattingButtonsContentMeasurable = measurables[2].ensureSingleMeasurable()
+      val replyAttachmentsContentMeasurables = measurables[3]
 
       val placeables = mutableListWithCap<Placeable>(
         additionalInputsContentMeasurables.size +

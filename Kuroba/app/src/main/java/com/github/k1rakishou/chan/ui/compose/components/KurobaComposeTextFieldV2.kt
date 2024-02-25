@@ -14,7 +14,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.foundation.text2.BasicTextField2
-import androidx.compose.foundation.text2.input.CodepointTransformation
 import androidx.compose.foundation.text2.input.InputTransformation
 import androidx.compose.foundation.text2.input.OutputTransformation
 import androidx.compose.foundation.text2.input.TextFieldLineLimits
@@ -61,7 +60,6 @@ fun KurobaComposeTextFieldV2(
   lineLimits: TextFieldLineLimits = TextFieldLineLimits.Default,
   onTextLayout: (Density.(getResult: () -> TextLayoutResult?) -> Unit)? = null,
   interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-  codepointTransformation: CodepointTransformation? = null,
   outputTransformation: OutputTransformation? = null,
   label: @Composable ((InteractionSource) -> Unit)? = null,
   scrollState: ScrollState = rememberScrollState(),
@@ -129,7 +127,6 @@ fun KurobaComposeTextFieldV2(
       onTextLayout = onTextLayout,
       interactionSource = interactionSource,
       cursorBrush = remember(cursorColor) { SolidColor(cursorColor) },
-      codepointTransformation = codepointTransformation,
       outputTransformation = outputTransformation,
       decorator = @Composable { innerTextField ->
         val labelFunc: (@Composable (() -> Unit))? = if (label == null) {
@@ -176,7 +173,6 @@ fun KurobaComposeTextFieldV2(
   lineLimits: TextFieldLineLimits = TextFieldLineLimits.Default,
   onTextLayout: (Density.(getResult: () -> TextLayoutResult?) -> Unit)? = null,
   interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-  codepointTransformation: CodepointTransformation? = null,
   outputTransformation: OutputTransformation? = null,
   label: @Composable ((InteractionSource) -> Unit)? = null,
   scrollState: ScrollState = rememberScrollState(),
@@ -243,7 +239,6 @@ fun KurobaComposeTextFieldV2(
       onTextLayout = onTextLayout,
       interactionSource = interactionSource,
       cursorBrush = remember(cursorColor) { SolidColor(cursorColor) },
-      codepointTransformation = codepointTransformation,
       outputTransformation = outputTransformation,
       decorator = @Composable { innerTextField ->
         val labelFunc: (@Composable (() -> Unit))? = if (label == null) {

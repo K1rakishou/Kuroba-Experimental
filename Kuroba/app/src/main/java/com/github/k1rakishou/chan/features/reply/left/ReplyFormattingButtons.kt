@@ -36,7 +36,7 @@ internal fun ReplyFormattingButtons(replyLayoutState: ReplyLayoutState) {
               .wrapContentWidth()
               .widthIn(min = 42.dp)
               .height(38.dp),
-          text = postFormatterButton.title.text,
+          text = postFormatterButton.title,
           fontSize = 16.sp,
           onClick = { replyLayoutState.insertTags(postFormatterButton) }
         )

@@ -55,7 +55,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl
 import java.security.SecureRandom
-import java.util.Random
+import java.util.*
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 
@@ -262,11 +262,6 @@ abstract class SiteBase : Site, CoroutineScope {
     )
 
     return settings
-  }
-
-  override fun postFormatterButtons(): List<PostFormatterButton> {
-    // TODO: New reply layout. Default buttons like 'add quote'
-    return emptyList()
   }
 
   override suspend fun createBoard(boardName: String, boardCode: String): ModularResult<ChanBoard?> {

@@ -147,7 +147,6 @@ interface Site {
   fun siteFeature(siteFeature: SiteFeature): Boolean
   fun boardFeature(boardFeature: BoardFeature, board: ChanBoard): Boolean
   fun settings(): List<SiteSetting>
-  fun postFormatterButtons(): List<PostFormatterButton>
   fun endpoints(): SiteEndpoints
   fun requestModifier(): SiteRequestModifier<Site>
   fun chanReader(): ChanReader

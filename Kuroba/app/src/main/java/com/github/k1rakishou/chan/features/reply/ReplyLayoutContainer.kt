@@ -39,7 +39,7 @@ fun ReplyLayoutContainer(
   onFlagSelectorClicked: (ChanDescriptor) -> Unit
 ) {
   val iconSize = 40.dp
-  val replyButtonsWidth = 58.dp
+  val replyInputRightPartWidth = 58.dp
   val chanTheme = LocalChanTheme.current
 
   val replyLayoutVisibility by replyLayoutState.replyLayoutVisibility
@@ -87,7 +87,7 @@ fun ReplyLayoutContainer(
 
     Box(
       modifier = Modifier
-        .width(replyButtonsWidth)
+        .width(replyInputRightPartWidth)
         .fillMaxHeight()
     ) {
       ReplyInputRightPart(
@@ -97,7 +97,11 @@ fun ReplyLayoutContainer(
         onDragStarted = onDragStarted,
         onDragStopped = onDragStopped,
         onCancelReplySendClicked = onCancelReplySendClicked,
-        onSendReplyClicked = onSendReplyClicked
+        onSendReplyClicked = onSendReplyClicked,
+        onPickLocalMediaButtonClicked = replyLayoutViewModel::onPickLocalMediaButtonClicked,
+        onPickRemoteMediaButtonClicked = replyLayoutViewModel::onPickRemoteMediaButtonClicked,
+        onSearchRemoteMediaButtonClicked = replyLayoutViewModel::onSearchRemoteMediaButtonClicked,
+        onPrefillCaptchaButtonClicked = replyLayoutViewModel::onPrefillCaptchaButtonClicked,
       )
     }
   }

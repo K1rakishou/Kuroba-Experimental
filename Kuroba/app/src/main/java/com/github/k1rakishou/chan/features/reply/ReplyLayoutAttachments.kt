@@ -51,7 +51,7 @@ private const val COIL_FAILED_TO_DECODE_FRAME_ERROR_MSG =
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun ReplyAttachments(
+internal fun ReplyAttachments(
   replyLayoutState: ReplyLayoutState,
   replyLayoutViewModel: ReplyLayoutViewModel,
   onAttachedMediaClicked: (ReplyAttachable) -> Unit,
@@ -59,6 +59,10 @@ fun ReplyAttachments(
 ) {
   val paddings = 8.dp
   val attachedMediaList = replyLayoutState.attachables
+  if (attachedMediaList.isEmpty()) {
+    return
+  }
+
   val replyLayoutVisibility by replyLayoutState.replyLayoutVisibility
 
   val additionalModifier = if (replyLayoutVisibility == ReplyLayoutVisibility.Expanded) {

@@ -23,6 +23,7 @@ class ReplyLayoutState(
   private val replyLayoutFileEnumeratorLazy: Lazy<ReplyLayoutFileEnumerator>,
   private val boardManagerLazy: Lazy<BoardManager>,
   private val replyManagerLazy: Lazy<ReplyManager>,
+  private val postFormattingButtonsFactoryLazy: Lazy<PostFormattingButtonsFactory>
 ) {
   private val _replyText = mutableStateOf<TextFieldValue>(TextFieldValue())
   val replyText: State<TextFieldValue>
@@ -70,6 +71,8 @@ class ReplyLayoutState(
     get() = boardManagerLazy.get()
   private val replyManager: ReplyManager
     get() = replyManagerLazy.get()
+  private val postFormattingButtonsFactory: PostFormattingButtonsFactory
+    get() = postFormattingButtonsFactoryLazy.get()
 
   val isCatalogMode: Boolean
     get() = chanDescriptor is ChanDescriptor.ICatalogDescriptor
@@ -77,6 +80,8 @@ class ReplyLayoutState(
   suspend fun bindChanDescriptor(chanDescriptor: ChanDescriptor) {
     replyManager.awaitUntilFilesAreLoaded()
     Logger.debug(TAG) { "bindChanDescriptor(${chanDescriptor})" }
+
+    val postFormattingButtons = postFormattingButtonsFactory.createPostFormattingButtons(chanDescriptor.boardDescriptor())
 
     replyManager.readReply(chanDescriptor) { reply ->
       _replyText.value = TextFieldValue(
@@ -101,6 +106,7 @@ class ReplyLayoutState(
 
       boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor())?.let { chanBoard ->
         _maxCommentLength.intValue = chanBoard.maxCommentChars
+        _postFormatterButtons.value = postFormattingButtons
       }
     }
 

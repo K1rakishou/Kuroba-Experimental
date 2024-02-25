@@ -10,6 +10,7 @@ import com.github.k1rakishou.chan.core.di.module.viewmodel.ViewModelAssistedFact
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.site.loader.ClientException
+import com.github.k1rakishou.chan.features.reply.data.PostFormattingButtonsFactory
 import com.github.k1rakishou.chan.features.reply.data.ReplyAttachable
 import com.github.k1rakishou.chan.features.reply.data.ReplyFile
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutFileEnumerator
@@ -36,7 +37,8 @@ class ReplyLayoutViewModel(
   private val appConstantsLazy: Lazy<AppConstants>,
   private val replyLayoutFileEnumeratorLazy: Lazy<ReplyLayoutFileEnumerator>,
   private val boardManagerLazy: Lazy<BoardManager>,
-  private val replyManagerLazy: Lazy<ReplyManager>
+  private val replyManagerLazy: Lazy<ReplyManager>,
+  private val postFormattingButtonsFactoryLazy: Lazy<PostFormattingButtonsFactory>
 ) : BaseViewModel() {
   private val _replyManagerStateLoaded = AtomicBoolean(false)
 
@@ -87,11 +89,12 @@ class ReplyLayoutViewModel(
       replyLayoutFileEnumeratorLazy = replyLayoutFileEnumeratorLazy,
       boardManagerLazy = boardManagerLazy,
       replyManagerLazy = replyManagerLazy,
+      postFormattingButtonsFactoryLazy = postFormattingButtonsFactoryLazy
     ).also { replyLayoutState -> replyLayoutState.bindChanDescriptor(chanDescriptor) }
   }
 
   fun cleanup() {
-    // TODO("Not yet implemented")
+    // TODO: New reply layout
   }
 
   fun onBack(): Boolean {
@@ -132,23 +135,23 @@ class ReplyLayoutViewModel(
   }
 
   fun sendReply(chanDescriptor: ChanDescriptor, replyLayoutState: ReplyLayoutState) {
-    TODO("Not yet implemented")
+    TODO("New reply layout")
   }
 
   fun cancelSendReply(replyLayoutState: ReplyLayoutState) {
-    TODO("Not yet implemented")
+    TODO("New reply layout")
   }
 
   fun onAttachedMediaClicked(attachedMedia: ReplyAttachable) {
-    TODO("Not yet implemented")
+    TODO("New reply layout")
   }
 
   fun removeAttachedMedia(attachedMedia: ReplyAttachable) {
-    TODO("Not yet implemented")
+    TODO("New reply layout")
   }
 
   fun onFlagSelectorClicked(chanDescriptor: ChanDescriptor) {
-    TODO("Not yet implemented")
+    TODO("New reply layout")
   }
 
   fun showCaptcha(
@@ -158,7 +161,7 @@ class ReplyLayoutViewModel(
     afterPostingAttempt: Boolean,
     onFinished: ((Boolean) -> Unit)?
   ) {
-    TODO("Not yet implemented")
+    TODO("New reply layout")
   }
 
   fun updateReplyLayoutVisibility(newReplyLayoutVisibility: ReplyLayoutVisibility) {
@@ -173,15 +176,31 @@ class ReplyLayoutViewModel(
   }
 
   fun quote(post: ChanPost, withText: Boolean) {
-    TODO("Not yet implemented")
+    TODO("New reply layout")
   }
 
   fun quote(postDescriptor: PostDescriptor, text: CharSequence) {
-    TODO("Not yet implemented")
+    TODO("New reply layout")
   }
 
   fun onImageOptionsApplied() {
-    TODO("Not yet implemented")
+    TODO("New reply layout")
+  }
+
+  fun onPickLocalMediaButtonClicked() {
+    TODO("New reply layout")
+  }
+
+  fun onPickRemoteMediaButtonClicked() {
+    TODO("New reply layout")
+  }
+
+  fun onSearchRemoteMediaButtonClicked() {
+    TODO("New reply layout")
+  }
+
+  fun onPrefillCaptchaButtonClicked() {
+    TODO("New reply layout")
   }
 
   private suspend fun reloadReplyManagerState() {
@@ -213,6 +232,7 @@ class ReplyLayoutViewModel(
     private val replyLayoutFileEnumeratorLazy: Lazy<ReplyLayoutFileEnumerator>,
     private val boardManagerLazy: Lazy<BoardManager>,
     private val replyManagerLazy: Lazy<ReplyManager>,
+    private val postFormattingButtonsFactoryLazy: Lazy<PostFormattingButtonsFactory>
   ) : ViewModelAssistedFactory<ReplyLayoutViewModel> {
     override fun create(handle: SavedStateHandle): ReplyLayoutViewModel {
       return ReplyLayoutViewModel(
@@ -220,7 +240,8 @@ class ReplyLayoutViewModel(
         appConstantsLazy = appConstantsLazy,
         replyLayoutFileEnumeratorLazy = replyLayoutFileEnumeratorLazy,
         boardManagerLazy = boardManagerLazy,
-        replyManagerLazy = replyManagerLazy
+        replyManagerLazy = replyManagerLazy,
+        postFormattingButtonsFactoryLazy = postFormattingButtonsFactoryLazy
       )
     }
   }

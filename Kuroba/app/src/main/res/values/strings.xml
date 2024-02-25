@@ -503,8 +503,8 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="reply_options">Options</string>
     <string name="reply_flag">Flag</string>
     <string name="reply_subject">Subject</string>
-    <string name="reply_comment_thread">Comment reply</string>
-    <string name="reply_comment_board">Comment new thread</string>
+    <string name="reply_make_new_thread_hint">Creating a new thread</string>
+    <string name="reply_reply_in_thread_hint">Replying in a thread</string>
     <string name="reply_submit">Submit</string>
     <string name="reply_error_message">Error posting:\n\n%s</string>
     <string name="reply_error_unknown">Unknown error while trying to post:\n\n%s</string>
