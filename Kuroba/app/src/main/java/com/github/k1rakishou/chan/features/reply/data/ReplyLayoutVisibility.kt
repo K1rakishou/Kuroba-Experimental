@@ -4,19 +4,19 @@ import androidx.compose.runtime.Immutable
 
 @Immutable
 enum class ReplyLayoutVisibility(val order: Int) {
-    Collapsed(0),
-    Opened(1),
-    Expanded(2);
+  Collapsed(0),
+  Opened(1),
+  Expanded(2);
 
-    companion object {
-        fun fromRawValue(value: Int?): ReplyLayoutVisibility {
-            if (value == null) {
-                return Collapsed
-            }
+  companion object {
+    fun fromRawValue(value: Int?): ReplyLayoutVisibility {
+      if (value == null) {
+        return Collapsed
+      }
 
-            return entries
-                .firstOrNull { rlv -> rlv.order == value }
-                ?: Collapsed
-        }
+      return entries
+        .firstOrNull { rlv -> rlv.order == value }
+        ?: Collapsed
     }
+  }
 }

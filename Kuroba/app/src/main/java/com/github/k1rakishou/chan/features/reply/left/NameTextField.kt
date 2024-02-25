@@ -20,36 +20,36 @@ import com.github.k1rakishou.chan.ui.compose.components.KurobaLabelText
 
 @Composable
 internal fun NameTextField(
-    replyLayoutState: ReplyLayoutState,
-    replyLayoutEnabled: Boolean,
-    onMoveFocus: () -> Unit
+  replyLayoutState: ReplyLayoutState,
+  replyLayoutEnabled: Boolean,
+  onMoveFocus: () -> Unit
 ) {
-    val textStyle = remember { TextStyle(fontSize = 16.sp) }
-    val labelText = stringResource(id = R.string.reply_name)
+  val textStyle = remember { TextStyle(fontSize = 16.sp) }
+  val labelText = stringResource(id = R.string.reply_name)
 
-    val name by replyLayoutState.name
+  val name by replyLayoutState.name
 
-    KurobaComposeTextField(
-        modifier = Modifier
-            .fillMaxWidth()
-            .wrapContentHeight(),
+  KurobaComposeTextField(
+    modifier = Modifier
+        .fillMaxWidth()
+        .wrapContentHeight(),
+    enabled = replyLayoutEnabled,
+    value = name,
+    singleLine = true,
+    textStyle = textStyle,
+    keyboardOptions = KeyboardOptions(
+      capitalization = KeyboardCapitalization.Sentences,
+      imeAction = ImeAction.Next
+    ),
+    keyboardActions = KeyboardActions(onNext = { onMoveFocus() }),
+    label = { interactionSource ->
+      KurobaLabelText(
         enabled = replyLayoutEnabled,
-        value = name,
-        singleLine = true,
-        textStyle = textStyle,
-        keyboardOptions = KeyboardOptions(
-            capitalization = KeyboardCapitalization.Sentences,
-            imeAction = ImeAction.Next
-        ),
-        keyboardActions = KeyboardActions(onNext = { onMoveFocus() }),
-        label = { interactionSource ->
-            KurobaLabelText(
-                enabled = replyLayoutEnabled,
-                labelText = labelText,
-                fontSize = 14.sp,
-                interactionSource = interactionSource
-            )
-        },
-        onValueChange = { newTextFieldValue -> replyLayoutState.onNameChanged(newTextFieldValue) }
-    )
+        labelText = labelText,
+        fontSize = 14.sp,
+        interactionSource = interactionSource
+      )
+    },
+    onValueChange = { newTextFieldValue -> replyLayoutState.onNameChanged(newTextFieldValue) }
+  )
 }

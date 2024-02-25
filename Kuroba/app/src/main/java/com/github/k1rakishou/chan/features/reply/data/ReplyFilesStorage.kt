@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import java.io.File
-import java.util.UUID
+import java.util.*
 
 class ReplyFilesStorage(
   private val gson: Gson,
@@ -72,14 +72,18 @@ class ReplyFilesStorage(
     }
 
     if (replyFile.fileOnDisk.name != ReplyManager.getFileName(replyFileMeta.fileUuidString)) {
-      Logger.e(TAG, "addNewReplyFile() fileOnDisk bad name " +
-              "(fileOnDisk.name='${replyFile.fileOnDisk.name}')")
+      Logger.e(
+        TAG, "addNewReplyFile() fileOnDisk bad name " +
+          "(fileOnDisk.name='${replyFile.fileOnDisk.name}')"
+      )
       return false
     }
 
     if (replyFile.fileMetaOnDisk.name != ReplyManager.getMetaFileName(replyFileMeta.fileUuidString)) {
-      Logger.e(TAG, "addNewReplyFile() fileMetaOnDisk bad name " +
-              "(fileMetaOnDisk.name='${replyFile.fileMetaOnDisk.name}')")
+      Logger.e(
+        TAG, "addNewReplyFile() fileMetaOnDisk bad name " +
+          "(fileMetaOnDisk.name='${replyFile.fileMetaOnDisk.name}')"
+      )
       return false
     }
 
@@ -91,7 +95,10 @@ class ReplyFilesStorage(
   }
 
   @Synchronized
-  fun takeSelectedFiles(chanDescriptor: ChanDescriptor, notifyListeners: Boolean = true): ModularResult<List<ReplyFile>> {
+  fun takeSelectedFiles(
+    chanDescriptor: ChanDescriptor,
+    notifyListeners: Boolean = true
+  ): ModularResult<List<ReplyFile>> {
     return Try {
       val takenFiles = mutableListOf<ReplyFile>()
 
@@ -473,8 +480,10 @@ class ReplyFilesStorage(
           ?.value
 
         if (fileMeta == null) {
-          Logger.e(TAG, "addAttachFiles() couldn't find fileMeta for fileMetaName='$fileMetaName', " +
-            "deleting files")
+          Logger.e(
+            TAG, "addAttachFiles() couldn't find fileMeta for fileMetaName='$fileMetaName', " +
+              "deleting files"
+          )
 
           attachFile.delete()
           previewFileMaybe?.delete()
@@ -518,8 +527,10 @@ class ReplyFilesStorage(
           }
 
         if (replyFileMeta.isTaken()) {
-          Logger.e(TAG, "addAttachFiles() replyFileMeta ($replyFileMeta) is taken by " +
-            "${replyFileMeta.fileTakenBy}, deleting files")
+          Logger.e(
+            TAG, "addAttachFiles() replyFileMeta ($replyFileMeta) is taken by " +
+              "${replyFileMeta.fileTakenBy}, deleting files"
+          )
 
           attachFile.delete()
           fileMeta.delete()
@@ -550,16 +561,20 @@ class ReplyFilesStorage(
             return@forEach
           }
 
-          Logger.d(TAG, "Deleting metaFile='${metaFile.absolutePath}' " +
-            "because it wasn't processed normally")
+          Logger.d(
+            TAG, "Deleting metaFile='${metaFile.absolutePath}' " +
+              "because it wasn't processed normally"
+          )
           metaFile.delete()
         }
       }
 
       if (allPreviewFiles.isNotEmpty()) {
         allPreviewFiles.entries.forEach { (previewFilePath, previewFile) ->
-          Logger.d(TAG, "Deleting previewFile='${previewFile.absolutePath}' " +
-            "because it wasn't processed normally")
+          Logger.d(
+            TAG, "Deleting previewFile='${previewFile.absolutePath}' " +
+              "because it wasn't processed normally"
+          )
           previewFile.delete()
         }
       }

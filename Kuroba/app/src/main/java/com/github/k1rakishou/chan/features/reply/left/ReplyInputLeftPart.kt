@@ -23,100 +23,101 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 
 @Composable
 internal fun ReplyInputLeftPart(
-    replyLayoutState: ReplyLayoutState,
-    replyLayoutViewModel: ReplyLayoutViewModel,
-    onAttachedMediaClicked: (ReplyAttachable) -> Unit,
-    onRemoveAttachedMediaClicked: (ReplyAttachable) -> Unit,
-    onFlagSelectorClicked: (ChanDescriptor) -> Unit
+  replyLayoutState: ReplyLayoutState,
+  replyLayoutViewModel: ReplyLayoutViewModel,
+  onAttachedMediaClicked: (ReplyAttachable) -> Unit,
+  onRemoveAttachedMediaClicked: (ReplyAttachable) -> Unit,
+  onFlagSelectorClicked: (ChanDescriptor) -> Unit
 ) {
-    val focusManager = LocalFocusManager.current
+  val focusManager = LocalFocusManager.current
 
-    val sendReplyState by replyLayoutState.sendReplyState
-    val replyLayoutVisibilityState by replyLayoutState.replyLayoutVisibility
-    val attachables = replyLayoutState.attachables
+  val sendReplyState by replyLayoutState.sendReplyState
+  val replyLayoutVisibilityState by replyLayoutState.replyLayoutVisibility
+  val attachables = replyLayoutState.attachables
 
-    val replyLayoutEnabled = when (sendReplyState) {
-        SendReplyState.Started,
-        is SendReplyState.ReplySent -> false
-        is SendReplyState.Finished -> true
+  val replyLayoutEnabled = when (sendReplyState) {
+    SendReplyState.Started,
+    is SendReplyState.ReplySent -> false
+
+    is SendReplyState.Finished -> true
+  }
+
+  LaunchedEffect(
+    key1 = replyLayoutState.chanDescriptor,
+    block = {
+      // TODO: New reply layout
+      //  replyLayoutViewModel.loadLastUsedFlag(replyLayoutState.chanDescriptor)
     }
+  )
 
-    LaunchedEffect(
-        key1 = replyLayoutState.chanDescriptor,
-        block = {
-            // TODO: New reply layout
-            //  replyLayoutViewModel.loadLastUsedFlag(replyLayoutState.chanDescriptor)
-        }
-    )
+  ReplyLayoutLeftPartCustomLayout(
+    modifier = Modifier
+        .fillMaxSize()
+        .padding(horizontal = 8.dp),
+    additionalInputsContent = {
+      if (replyLayoutVisibilityState == ReplyLayoutVisibility.Expanded) {
+        Column {
+          if (replyLayoutState.isCatalogMode) {
+            SubjectTextField(
+              replyLayoutState = replyLayoutState,
+              replyLayoutEnabled = replyLayoutEnabled,
+              onMoveFocus = { focusManager.moveFocus(FocusDirection.Down) }
+            )
 
-    ReplyLayoutLeftPartCustomLayout(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(horizontal = 8.dp),
-        additionalInputsContent = {
-            if (replyLayoutVisibilityState == ReplyLayoutVisibility.Expanded) {
-                Column {
-                    if (replyLayoutState.isCatalogMode) {
-                        SubjectTextField(
-                            replyLayoutState = replyLayoutState,
-                            replyLayoutEnabled = replyLayoutEnabled,
-                            onMoveFocus = { focusManager.moveFocus(FocusDirection.Down) }
-                        )
+            Spacer(modifier = Modifier.height(4.dp))
+          }
 
-                        Spacer(modifier = Modifier.height(4.dp))
-                    }
+          NameTextField(
+            replyLayoutState = replyLayoutState,
+            replyLayoutEnabled = replyLayoutEnabled,
+            onMoveFocus = { focusManager.moveFocus(FocusDirection.Down) }
+          )
 
-                    NameTextField(
-                        replyLayoutState = replyLayoutState,
-                        replyLayoutEnabled = replyLayoutEnabled,
-                        onMoveFocus = { focusManager.moveFocus(FocusDirection.Down) }
-                    )
+          Spacer(modifier = Modifier.height(4.dp))
 
-                    Spacer(modifier = Modifier.height(4.dp))
+          OptionsTextField(
+            replyLayoutState = replyLayoutState,
+            replyLayoutEnabled = replyLayoutEnabled,
+            onMoveFocus = { focusManager.moveFocus(FocusDirection.Down) }
+          )
 
-                    OptionsTextField(
-                        replyLayoutState = replyLayoutState,
-                        replyLayoutEnabled = replyLayoutEnabled,
-                        onMoveFocus = { focusManager.moveFocus(FocusDirection.Down) }
-                    )
-
-                    // TODO: New reply layout
+          // TODO: New reply layout
 //                    FlagSelector(
 //                        replyLayoutState = replyLayoutState,
 //                        replyLayoutEnabled = replyLayoutEnabled,
 //                        onFlagSelectorClicked = onFlagSelectorClicked
 //                    )
 
-                    Spacer(modifier = Modifier.height(4.dp))
-                }
-            }
-        },
-        replyInputContent = {
-            Column {
-                ReplyTextField(
-                    replyLayoutState = replyLayoutState,
-                    replyLayoutEnabled = replyLayoutEnabled
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-            }
-        },
-        formattingButtonsContent = {
-            Column {
-                ReplyFormattingButtons(replyLayoutState = replyLayoutState)
-
-                Spacer(modifier = Modifier.height(4.dp))
-            }
-        },
-        replyAttachmentsContent = {
-            if (attachables.isNotEmpty()) {
-                ReplyAttachments(
-                    replyLayoutState = replyLayoutState,
-                    replyLayoutViewModel = replyLayoutViewModel,
-                    onAttachedMediaClicked = onAttachedMediaClicked,
-                    onRemoveAttachedMediaClicked = onRemoveAttachedMediaClicked,
-                )
-            }
+          Spacer(modifier = Modifier.height(4.dp))
         }
-    )
+      }
+    },
+    replyInputContent = {
+      Column {
+        ReplyTextField(
+          replyLayoutState = replyLayoutState,
+          replyLayoutEnabled = replyLayoutEnabled
+        )
+
+        Spacer(modifier = Modifier.height(4.dp))
+      }
+    },
+    formattingButtonsContent = {
+      Column {
+        ReplyFormattingButtons(replyLayoutState = replyLayoutState)
+
+        Spacer(modifier = Modifier.height(4.dp))
+      }
+    },
+    replyAttachmentsContent = {
+      if (attachables.isNotEmpty()) {
+        ReplyAttachments(
+          replyLayoutState = replyLayoutState,
+          replyLayoutViewModel = replyLayoutViewModel,
+          onAttachedMediaClicked = onAttachedMediaClicked,
+          onRemoveAttachedMediaClicked = onRemoveAttachedMediaClicked,
+        )
+      }
+    }
+  )
 }

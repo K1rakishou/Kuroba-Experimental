@@ -8,14 +8,14 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 
 @Composable
 internal fun FlagSelector(
-    replyLayoutState: ReplyLayoutState,
-    replyLayoutViewModel: ReplyLayoutViewModel,
-    replyLayoutEnabled: Boolean,
-    onFlagSelectorClicked: (ChanDescriptor) -> Unit
+  replyLayoutState: ReplyLayoutState,
+  replyLayoutViewModel: ReplyLayoutViewModel,
+  replyLayoutEnabled: Boolean,
+  onFlagSelectorClicked: (ChanDescriptor) -> Unit
 ) {
-    val chanTheme = LocalChanTheme.current
+  val chanTheme = LocalChanTheme.current
 
-    // TODO: New reply layout
+  // TODO: New reply layout
 
 //    var flags by remember { mutableStateOf<List<BoardFlag>>(emptyList()) }
 //

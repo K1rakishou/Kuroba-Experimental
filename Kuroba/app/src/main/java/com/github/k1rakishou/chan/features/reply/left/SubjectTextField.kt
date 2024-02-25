@@ -20,36 +20,36 @@ import com.github.k1rakishou.chan.ui.compose.components.KurobaLabelText
 
 @Composable
 internal fun SubjectTextField(
-    replyLayoutState: ReplyLayoutState,
-    replyLayoutEnabled: Boolean,
-    onMoveFocus: () -> Unit
+  replyLayoutState: ReplyLayoutState,
+  replyLayoutEnabled: Boolean,
+  onMoveFocus: () -> Unit
 ) {
-    val textStyle = remember { TextStyle(fontSize = 16.sp) }
-    val labelText = stringResource(id = R.string.reply_subject)
+  val textStyle = remember { TextStyle(fontSize = 16.sp) }
+  val labelText = stringResource(id = R.string.reply_subject)
 
-    val subject by replyLayoutState.subject
+  val subject by replyLayoutState.subject
 
-    KurobaComposeTextField(
-        modifier = Modifier
-            .fillMaxWidth()
-            .wrapContentHeight(),
+  KurobaComposeTextField(
+    modifier = Modifier
+        .fillMaxWidth()
+        .wrapContentHeight(),
+    enabled = replyLayoutEnabled,
+    value = subject,
+    singleLine = true,
+    textStyle = textStyle,
+    keyboardOptions = KeyboardOptions(
+      capitalization = KeyboardCapitalization.Sentences,
+      imeAction = ImeAction.Next
+    ),
+    keyboardActions = KeyboardActions(onNext = { onMoveFocus() }),
+    label = { interactionSource ->
+      KurobaLabelText(
         enabled = replyLayoutEnabled,
-        value = subject,
-        singleLine = true,
-        textStyle = textStyle,
-        keyboardOptions = KeyboardOptions(
-            capitalization = KeyboardCapitalization.Sentences,
-            imeAction = ImeAction.Next
-        ),
-        keyboardActions = KeyboardActions(onNext = { onMoveFocus() }),
-        label = { interactionSource ->
-            KurobaLabelText(
-                enabled = replyLayoutEnabled,
-                labelText = labelText,
-                fontSize = 14.sp,
-                interactionSource = interactionSource
-            )
-        },
-        onValueChange = { newTextFieldValue -> replyLayoutState.onSubjectChanged(newTextFieldValue) }
-    )
+        labelText = labelText,
+        fontSize = 14.sp,
+        interactionSource = interactionSource
+      )
+    },
+    onValueChange = { newTextFieldValue -> replyLayoutState.onSubjectChanged(newTextFieldValue) }
+  )
 }

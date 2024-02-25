@@ -19,28 +19,28 @@ import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextBarButt
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun ReplyFormattingButtons(replyLayoutState: ReplyLayoutState) {
-    val postFormatterButtons by replyLayoutState.postFormatterButtons
-    if (postFormatterButtons.isEmpty()) {
-        return
-    }
+  val postFormatterButtons by replyLayoutState.postFormatterButtons
+  if (postFormatterButtons.isEmpty()) {
+    return
+  }
 
-    FlowRow(
-        modifier = Modifier
-            .fillMaxWidth()
-            .wrapContentHeight()
-    ) {
-        postFormatterButtons.forEach { postFormatterButton ->
-            key(postFormatterButton.openTag) {
-                KurobaComposeTextBarButton(
-                    modifier = Modifier
-                        .wrapContentWidth()
-                        .widthIn(min = 42.dp)
-                        .height(38.dp),
-                    text = postFormatterButton.title.text,
-                    fontSize = 16.sp,
-                    onClick = { replyLayoutState.insertTags(postFormatterButton) }
-                )
-            }
-        }
+  FlowRow(
+    modifier = Modifier
+        .fillMaxWidth()
+        .wrapContentHeight()
+  ) {
+    postFormatterButtons.forEach { postFormatterButton ->
+      key(postFormatterButton.openTag) {
+        KurobaComposeTextBarButton(
+          modifier = Modifier
+              .wrapContentWidth()
+              .widthIn(min = 42.dp)
+              .height(38.dp),
+          text = postFormatterButton.title.text,
+          fontSize = 16.sp,
+          onClick = { replyLayoutState.insertTags(postFormatterButton) }
+        )
+      }
     }
+  }
 }

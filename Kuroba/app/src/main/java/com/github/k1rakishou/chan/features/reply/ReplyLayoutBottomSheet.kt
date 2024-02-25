@@ -158,6 +158,7 @@ fun ReplyLayoutBottomSheet(
                 val targetClamped = dragRequest.target.coerceIn(minPositionY, maxPositionY)
                 dragOffsetAnimatable.animateTo(targetClamped)
               }
+
               is DragRequest.Snap -> {
                 val targetClamped = dragRequest.target.coerceIn(minPositionY, maxPositionY)
                 dragOffsetAnimatable.snapTo(targetClamped)

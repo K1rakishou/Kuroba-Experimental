@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.features.reply.left
 
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.text.KeyboardActions
@@ -21,36 +20,36 @@ import com.github.k1rakishou.chan.ui.compose.components.KurobaLabelText
 
 @Composable
 internal fun OptionsTextField(
-    replyLayoutState: ReplyLayoutState,
-    replyLayoutEnabled: Boolean,
-    onMoveFocus: () -> Unit
+  replyLayoutState: ReplyLayoutState,
+  replyLayoutEnabled: Boolean,
+  onMoveFocus: () -> Unit
 ) {
-    val textStyle = remember { TextStyle(fontSize = 16.sp) }
-    val labelText = stringResource(id = R.string.reply_options)
+  val textStyle = remember { TextStyle(fontSize = 16.sp) }
+  val labelText = stringResource(id = R.string.reply_options)
 
-    val options by replyLayoutState.options
+  val options by replyLayoutState.options
 
-    KurobaComposeTextField(
-        modifier = Modifier
-            .fillMaxWidth()
-            .wrapContentHeight(),
+  KurobaComposeTextField(
+    modifier = Modifier
+        .fillMaxWidth()
+        .wrapContentHeight(),
+    enabled = replyLayoutEnabled,
+    value = options,
+    singleLine = true,
+    textStyle = textStyle,
+    keyboardOptions = KeyboardOptions(
+      capitalization = KeyboardCapitalization.Sentences,
+      imeAction = ImeAction.Next
+    ),
+    keyboardActions = KeyboardActions(onNext = { onMoveFocus() }),
+    label = { interactionSource ->
+      KurobaLabelText(
         enabled = replyLayoutEnabled,
-        value = options,
-        singleLine = true,
-        textStyle = textStyle,
-        keyboardOptions = KeyboardOptions(
-            capitalization = KeyboardCapitalization.Sentences,
-            imeAction = ImeAction.Next
-        ),
-        keyboardActions = KeyboardActions(onNext = { onMoveFocus() }),
-        label = { interactionSource ->
-            KurobaLabelText(
-                enabled = replyLayoutEnabled,
-                labelText = labelText,
-                fontSize = 14.sp,
-                interactionSource = interactionSource
-            )
-        },
-        onValueChange = { newTextFieldValue -> replyLayoutState.onOptionsChanged(newTextFieldValue) }
-    )
+        labelText = labelText,
+        fontSize = 14.sp,
+        interactionSource = interactionSource
+      )
+    },
+    onValueChange = { newTextFieldValue -> replyLayoutState.onOptionsChanged(newTextFieldValue) }
+  )
 }

@@ -32,116 +32,116 @@ import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
 
 @Composable
 internal fun ReplyInputRightPart(
-    iconSize: Dp,
-    replyLayoutState: ReplyLayoutState,
-    draggableStateProvider: () -> DraggableState,
-    onDragStarted: suspend () -> Unit,
-    onDragStopped: suspend (velocity: Float) -> Unit,
-    onCancelReplySendClicked: () -> Unit,
-    onSendReplyClicked: () -> Unit
+  iconSize: Dp,
+  replyLayoutState: ReplyLayoutState,
+  draggableStateProvider: () -> DraggableState,
+  onDragStarted: suspend () -> Unit,
+  onDragStopped: suspend (velocity: Float) -> Unit,
+  onCancelReplySendClicked: () -> Unit,
+  onSendReplyClicked: () -> Unit
 ) {
-    val chanTheme = LocalChanTheme.current
-    val density = LocalDensity.current
+  val chanTheme = LocalChanTheme.current
+  val density = LocalDensity.current
 
-    val replySendProgressMut by replyLayoutState.replySendProgressState
-    val replySendProgress = replySendProgressMut
-    val sendReplyState by replyLayoutState.sendReplyState
+  val replySendProgressMut by replyLayoutState.replySendProgressState
+  val replySendProgress = replySendProgressMut
+  val sendReplyState by replyLayoutState.sendReplyState
 
-    val padding = with(density) { 8.dp.toPx() }
-    val cornerRadius = with(density) { remember { CornerRadius(8.dp.toPx(), 8.dp.toPx()) } }
+  val padding = with(density) { 8.dp.toPx() }
+  val cornerRadius = with(density) { remember { CornerRadius(8.dp.toPx(), 8.dp.toPx()) } }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .draggable(
-                state = draggableStateProvider(),
-                orientation = Orientation.Vertical,
-                onDragStarted = { onDragStarted() },
-                onDragStopped = { velocity -> onDragStopped(velocity) }
-            )
-            .drawBehind {
-                drawRoundRect(
-                    color = chanTheme.backColorSecondaryCompose,
-                    topLeft = Offset(x = padding, y = padding),
-                    size = Size(
-                        width = this.size.width - (padding * 2),
-                        height = this.size.height - (padding * 2)
-                    ),
-                    alpha = 0.4f,
-                    cornerRadius = cornerRadius
-                )
-            },
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Spacer(modifier = Modifier.height(8.dp))
-
-        SendReplyButton(
-            sendReplyState = sendReplyState,
-            iconSize = iconSize,
-            onCancelReplySendClicked = onCancelReplySendClicked,
-            onSendReplyClicked = onSendReplyClicked,
-            replySendProgress = replySendProgress
+  Column(
+    modifier = Modifier
+        .fillMaxSize()
+        .draggable(
+            state = draggableStateProvider(),
+            orientation = Orientation.Vertical,
+            onDragStarted = { onDragStarted() },
+            onDragStopped = { velocity -> onDragStopped(velocity) }
         )
-    }
+        .drawBehind {
+            drawRoundRect(
+                color = chanTheme.backColorSecondaryCompose,
+                topLeft = Offset(x = padding, y = padding),
+                size = Size(
+                    width = this.size.width - (padding * 2),
+                    height = this.size.height - (padding * 2)
+                ),
+                alpha = 0.4f,
+                cornerRadius = cornerRadius
+            )
+        },
+    horizontalAlignment = Alignment.CenterHorizontally,
+  ) {
+    Spacer(modifier = Modifier.height(8.dp))
+
+    SendReplyButton(
+      sendReplyState = sendReplyState,
+      iconSize = iconSize,
+      onCancelReplySendClicked = onCancelReplySendClicked,
+      onSendReplyClicked = onSendReplyClicked,
+      replySendProgress = replySendProgress
+    )
+  }
 }
 
 @Composable
 private fun SendReplyButton(
-    sendReplyState: SendReplyState,
-    iconSize: Dp,
-    onCancelReplySendClicked: () -> Unit,
-    onSendReplyClicked: () -> Unit,
-    replySendProgress: Float?
+  sendReplyState: SendReplyState,
+  iconSize: Dp,
+  onCancelReplySendClicked: () -> Unit,
+  onSendReplyClicked: () -> Unit,
+  replySendProgress: Float?
 ) {
-    val buttonDrawableId = remember(key1 = sendReplyState) {
-        if (sendReplyState.canCancel) {
-            R.drawable.ic_baseline_clear_24
-        } else {
-            R.drawable.ic_baseline_send_24
-        }
-    }
-
-    val padding = if (sendReplyState.canCancel) {
-        10.dp
+  val buttonDrawableId = remember(key1 = sendReplyState) {
+    if (sendReplyState.canCancel) {
+      R.drawable.ic_baseline_clear_24
     } else {
-        4.dp
+      R.drawable.ic_baseline_send_24
     }
+  }
 
-    Box(
-        modifier = Modifier.size(iconSize)
-    ) {
-        KurobaComposeIcon(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .kurobaClickable(
-                    bounded = false,
-                    onClick = {
-                        if (sendReplyState.canCancel) {
-                            onCancelReplySendClicked()
-                        } else {
-                            onSendReplyClicked()
-                        }
-                    }
-                ),
-            drawableId = buttonDrawableId
+  val padding = if (sendReplyState.canCancel) {
+    10.dp
+  } else {
+    4.dp
+  }
+
+  Box(
+    modifier = Modifier.size(iconSize)
+  ) {
+    KurobaComposeIcon(
+      modifier = Modifier
+          .fillMaxSize()
+          .padding(padding)
+          .kurobaClickable(
+              bounded = false,
+              onClick = {
+                  if (sendReplyState.canCancel) {
+                      onCancelReplySendClicked()
+                  } else {
+                      onSendReplyClicked()
+                  }
+              }
+          ),
+      drawableId = buttonDrawableId
+    )
+
+    if (replySendProgress != null) {
+      if (replySendProgress > 0f && replySendProgress < 1f) {
+        KurobaComposeProgressIndicator(
+          modifier = Modifier
+              .fillMaxSize()
+              .padding(4.dp),
+          progress = replySendProgress
         )
-
-        if (replySendProgress != null) {
-            if (replySendProgress > 0f && replySendProgress < 1f) {
-                KurobaComposeProgressIndicator(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(4.dp),
-                    progress = replySendProgress
-                )
-            } else if (replySendProgress >= 1f) {
-                KurobaComposeProgressIndicator(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(4.dp),
-                )
-            }
-        }
+      } else if (replySendProgress >= 1f) {
+        KurobaComposeProgressIndicator(
+          modifier = Modifier
+              .fillMaxSize()
+              .padding(4.dp),
+        )
+      }
     }
+  }
 }
