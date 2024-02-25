@@ -615,7 +615,7 @@ class ChanPostRepository(
         Logger.d(TAG, "insertOrUpdateCatalogOriginalPosts() inserting ${parsedPosts.size} posts into the DB")
         localSource.insertManyOriginalPosts(parsedPosts)
       }
-        .peekError { error -> Logger.e(TAG, "insertOrUpdateCatalogOriginalPosts() DB insert error", error) }
+        .onError { error -> Logger.e(TAG, "insertOrUpdateCatalogOriginalPosts() DB insert error", error) }
         .ignore()
     }
 

@@ -12,7 +12,7 @@ class TwoCaptchaCheckBalanceUseCase(
 
   override suspend fun execute(parameter: Unit): String {
     return ModularResult.Try { checkBalance() }
-      .peekError { error -> Logger.e(TAG, "checkBalance() error", error) }
+      .onError { error -> Logger.e(TAG, "checkBalance() error", error) }
       .mapErrorToValue { error -> error.errorMessageOrClassName() }
   }
 

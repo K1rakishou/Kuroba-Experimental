@@ -79,7 +79,7 @@ internal abstract class ExternalMediaServiceExtraInfoFetcher {
         linkInfoRequest.oldPostLinkableSpans,
         icon
       )
-    }.peekError { error ->
+    }.onError { error ->
       Logger.e(tag, "Error while processing response", error)
     }
   }

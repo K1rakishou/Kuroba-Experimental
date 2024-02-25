@@ -20,7 +20,7 @@ fun ReplyLayout(replyLayoutViewModel: ReplyLayoutViewModel) {
     return
   }
 
-  val replyLayoutStateMut = replyLayoutViewModel.replyLayoutStates[chanDescriptor]
+  val replyLayoutStateMut by replyLayoutViewModel.replyLayoutState
   val replyLayoutState = replyLayoutStateMut
 
   if (replyLayoutState == null) {

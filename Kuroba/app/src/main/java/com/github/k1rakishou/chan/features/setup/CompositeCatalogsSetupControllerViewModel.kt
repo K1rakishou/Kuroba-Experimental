@@ -43,7 +43,7 @@ class CompositeCatalogsSetupControllerViewModel(
     }
 
     val result = compositeCatalogManager.move(fromIndex, toIndex)
-      .peekError { error -> Logger.e(TAG, "move(fromIndex=$fromIndex, toIndex=$toIndex) error", error) }
+      .onError { error -> Logger.e(TAG, "move(fromIndex=$fromIndex, toIndex=$toIndex) error", error) }
 
     if (result is ModularResult.Value && fromIndex != toIndex) {
       val fromCatalog = _compositeCatalogs.getOrNull(fromIndex)
@@ -59,12 +59,12 @@ class CompositeCatalogsSetupControllerViewModel(
 
   suspend fun onMoveEnd(): ModularResult<Unit> {
     return compositeCatalogManager.persistAll()
-      .peekError { error -> Logger.e(TAG, "persistAll() error", error) }
+      .onError { error -> Logger.e(TAG, "persistAll() error", error) }
   }
 
   suspend fun delete(compositeCatalog: CompositeCatalog): ModularResult<Unit> {
     return compositeCatalogManager.delete(compositeCatalog)
-      .peekError { error -> Logger.e(TAG, "delete($compositeCatalog) error", error) }
+      .onError { error -> Logger.e(TAG, "delete($compositeCatalog) error", error) }
   }
 
   private suspend fun reloadInternal() {

@@ -55,7 +55,7 @@ class CompositeCatalogManager(
           compositeCatalog = compositeCatalog,
           order = getOrder(compositeCatalog.compositeCatalogDescriptor)
         )
-          .peekError { error -> Logger.e(TAG, "create($compositeCatalog) error", error) }
+          .onError { error -> Logger.e(TAG, "create($compositeCatalog) error", error) }
           .unwrap()
 
         compositeCatalogs.add(compositeCatalog)
@@ -83,14 +83,14 @@ class CompositeCatalogManager(
         }
 
         compositeCatalogRepository.delete(prevCompositeCatalog)
-          .peekError { error -> Logger.e(TAG, "delete($prevCompositeCatalog) error", error) }
+          .onError { error -> Logger.e(TAG, "delete($prevCompositeCatalog) error", error) }
           .unwrap()
 
         compositeCatalogRepository.create(
           compositeCatalog = compositeCatalog,
           order = prevIndex
         )
-          .peekError { error -> Logger.e(TAG, "create($compositeCatalog) error", error) }
+          .onError { error -> Logger.e(TAG, "create($compositeCatalog) error", error) }
           .unwrap()
 
         compositeCatalogs[prevIndex] = compositeCatalog
@@ -171,7 +171,7 @@ class CompositeCatalogManager(
         }
 
         compositeCatalogRepository.delete(compositeCatalog)
-          .peekError { error -> Logger.e(TAG, "delete($compositeCatalog) error", error) }
+          .onError { error -> Logger.e(TAG, "delete($compositeCatalog) error", error) }
           .unwrap()
 
         val removed = compositeCatalogs.removeIfKt { catalog ->

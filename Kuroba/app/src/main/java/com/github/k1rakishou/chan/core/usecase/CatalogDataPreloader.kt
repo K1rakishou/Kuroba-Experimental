@@ -41,7 +41,7 @@ class CatalogDataPreloader(
 
           if (!isUnlimitedCatalog) {
             chanCatalogSnapshotRepository.preloadChanCatalogSnapshot(catalogDescriptor, isUnlimitedCatalog)
-              .peekError { error -> Logger.e(TAG, "preloadChanCatalogSnapshot($catalogDescriptor) error", error) }
+              .onError { error -> Logger.e(TAG, "preloadChanCatalogSnapshot($catalogDescriptor) error", error) }
               .ignore()
           }
 
@@ -49,7 +49,7 @@ class CatalogDataPreloader(
         }
 
         ModularResult.Try { jobs.awaitAll() }
-          .peekError { error -> Logger.e(TAG, "preloadCatalogInfo() error", error) }
+          .onError { error -> Logger.e(TAG, "preloadCatalogInfo() error", error) }
           .ignore()
       }
     }
@@ -57,7 +57,6 @@ class CatalogDataPreloader(
     Logger.d(TAG, "preloadCatalogInfo($catalogDescriptor) end, took $time")
   }
 
-  @OptIn(ExperimentalTime::class)
   suspend fun postloadCatalogInfo(catalogDescriptor: ChanDescriptor.CatalogDescriptor) {
     BackgroundUtils.ensureMainThread()
     Logger.d(TAG, "postloadCatalogInfo($catalogDescriptor) begin")
@@ -69,7 +68,7 @@ class CatalogDataPreloader(
         jobs += async(Dispatchers.IO) { seenPostsManager.get().loadForCatalog(catalogDescriptor) }
 
         ModularResult.Try { jobs.awaitAll() }
-          .peekError { error -> Logger.e(TAG, "preloadCatalogInfo() error", error) }
+          .onError { error -> Logger.e(TAG, "preloadCatalogInfo() error", error) }
           .ignore()
       }
     }

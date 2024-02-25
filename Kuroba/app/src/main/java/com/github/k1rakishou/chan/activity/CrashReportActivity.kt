@@ -657,8 +657,8 @@ class CrashReportActivity : AppCompatActivity(), FSAFActivityCallbacks, IHasView
 
     importExportRepository
       .importFrom(externalFile)
-      .peekError { error -> AppModuleAndroidUtils.showToast(context, error.errorMessageOrClassName(), Toast.LENGTH_LONG) }
-      .peekValue { AppModuleAndroidUtils.showToast(context, getString(R.string.done), Toast.LENGTH_LONG) }
+      .onError { error -> AppModuleAndroidUtils.showToast(context, error.errorMessageOrClassName(), Toast.LENGTH_LONG) }
+      .onSuccess { AppModuleAndroidUtils.showToast(context, getString(R.string.done), Toast.LENGTH_LONG) }
       .ignore()
   }
 
@@ -697,8 +697,8 @@ class CrashReportActivity : AppCompatActivity(), FSAFActivityCallbacks, IHasView
 
     importExportRepository
       .exportTo(externalFile, ExportBackupOptions(exportDownloadedThreadsMedia = false))
-      .peekError { error -> AppModuleAndroidUtils.showToast(context, error.errorMessageOrClassName(), Toast.LENGTH_LONG) }
-      .peekValue { AppModuleAndroidUtils.showToast(context, getString(R.string.done), Toast.LENGTH_LONG) }
+      .onError { error -> AppModuleAndroidUtils.showToast(context, error.errorMessageOrClassName(), Toast.LENGTH_LONG) }
+      .onSuccess { AppModuleAndroidUtils.showToast(context, getString(R.string.done), Toast.LENGTH_LONG) }
       .ignore()
   }
 

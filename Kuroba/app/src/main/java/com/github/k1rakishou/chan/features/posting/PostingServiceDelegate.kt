@@ -840,8 +840,8 @@ class PostingServiceDelegate(
 
     // Slow path. Actually check whether the post exists on the server or not.
     return site.actions().checkPostExists(chanDescriptor, responsePostDescriptor)
-      .peekError { error -> Logger.e(TAG, "checkPostActuallyExists(${responsePostDescriptor}) error: ${error.errorMessageOrClassName()}") }
-      .peekValue { postFound -> Logger.d(TAG, "checkPostActuallyExists(${responsePostDescriptor}) postFound: ${postFound}") }
+      .onError { error -> Logger.e(TAG, "checkPostActuallyExists(${responsePostDescriptor}) error: ${error.errorMessageOrClassName()}") }
+      .onSuccess { postFound -> Logger.d(TAG, "checkPostActuallyExists(${responsePostDescriptor}) postFound: ${postFound}") }
       .mapErrorToValue { true }
   }
 
@@ -1286,7 +1286,7 @@ class PostingServiceDelegate(
     )
 
     val databaseId = chanPostRepository.createEmptyThreadIfNotExists(newThreadDescriptor)
-      .peekError { error ->
+      .onError { error ->
         Logger.e(TAG, "Failed to create empty thread in the database for $newThreadDescriptor", error)
       }
       .valueOrNull() ?: -1L

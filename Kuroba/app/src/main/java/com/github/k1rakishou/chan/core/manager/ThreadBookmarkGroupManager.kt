@@ -26,7 +26,6 @@ import com.github.k1rakishou.model.repository.ThreadBookmarkGroupRepository
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
@@ -317,7 +316,7 @@ class ThreadBookmarkGroupManager(
         threadBookmarkGroup.updateMatchingPattern(ThreadBookmarkGroupMatchPattern(matchFlag))
 
         threadBookmarkGroupRepository.updateGroup(threadBookmarkGroup)
-          .peekError { error -> Logger.e(TAG, "updateGroupMatcherPattern() updateGroup(${groupId}) error", error) }
+          .onError { error -> Logger.e(TAG, "updateGroupMatcherPattern() updateGroup(${groupId}) error", error) }
           .unwrap()
 
         return@withLockNonCancellable true
@@ -352,11 +351,11 @@ class ThreadBookmarkGroupManager(
         ?: return@withLockNonCancellable
 
       threadBookmarkGroupRepository.updateGroup(group)
-        .peekError { error -> Logger.e(TAG, "updateGroup(${groupId}) error", error) }
+        .onError { error -> Logger.e(TAG, "updateGroup(${groupId}) error", error) }
         .ignore()
 
       threadBookmarkGroupRepository.updateGroupEntries(listOf(group))
-        .peekError { error -> Logger.e(TAG, "updateGroupEntries(${groupId}) error", error) }
+        .onError { error -> Logger.e(TAG, "updateGroupEntries(${groupId}) error", error) }
         .ignore()
     }
   }
@@ -371,7 +370,7 @@ class ThreadBookmarkGroupManager(
       }
 
       threadBookmarkGroupRepository.updateGroups(groups)
-        .peekError { error -> Logger.e(TAG, "updateGroups() error", error) }
+        .onError { error -> Logger.e(TAG, "updateGroups() error", error) }
         .ignore()
     }
   }
@@ -425,7 +424,7 @@ class ThreadBookmarkGroupManager(
         )
 
         threadBookmarkGroupRepository.executeCreateTransaction(createTransaction)
-          .peekError { error -> Logger.e(TAG, "Error trying to create new bookmark group", error) }
+          .onError { error -> Logger.e(TAG, "Error trying to create new bookmark group", error) }
           .unwrap()
 
         groupsByGroupIdMap[groupId] = ThreadBookmarkGroup(
@@ -956,7 +955,7 @@ class ThreadBookmarkGroupManager(
     }
 
     threadBookmarkGroupRepository.executeCreateTransaction(createTransaction)
-      .peekError { error -> Logger.e(TAG, "Error trying to create new bookmark group", error) }
+      .onError { error -> Logger.e(TAG, "Error trying to create new bookmark group", error) }
       .unwrap()
 
     createTransaction.toCreate.entries.forEach { (groupId, threadBookmarkGroupToCreate) ->

@@ -263,7 +263,7 @@ class ThreadDownloadManager(
 
     removedThreadDownloads.forEach { threadDownload ->
       chanPostRepository.deleteThread(threadDownload.threadDescriptor)
-        .peekError { error -> Logger.e(TAG, "deleteThread(${threadDownload.threadDescriptor}) error", error) }
+        .onError { error -> Logger.e(TAG, "deleteThread(${threadDownload.threadDescriptor}) error", error) }
         .ignore()
 
       val threadDownloaderCacheDir = fileManager.fromRawFile(appCostants.threadDownloaderCacheDir)
@@ -398,7 +398,7 @@ class ThreadDownloadManager(
     var success = false
 
     val databaseId = chanPostRepository.createEmptyThreadIfNotExists(threadDescriptor)
-      .peekError { error -> Logger.e(TAG, "Failed to create empty thread in the DB", error) }
+      .onError { error -> Logger.e(TAG, "Failed to create empty thread in the DB", error) }
       .valueOrNull() ?: -1L
 
     if (databaseId >= 0L) {
@@ -414,7 +414,7 @@ class ThreadDownloadManager(
       )
 
       val threadDownloadCreated = threadDownloadRepository.createThreadDownload(threadDownload)
-        .peekError { error -> Logger.e(TAG, "Failed to create thread download in the DB", error) }
+        .onError { error -> Logger.e(TAG, "Failed to create thread download in the DB", error) }
         .isValue()
 
       if (threadDownloadCreated) {

@@ -124,7 +124,7 @@ class ParsePostRepliesUseCase(
     }
 
     val threadSavedReplies = savedReplyRepository.get().preloadForThread(threadDescriptor)
-      .peekError { error -> Logger.e(TAG, "savedReplyRepository.preloadForThread($threadDescriptor) error", error) }
+      .onError { error -> Logger.e(TAG, "savedReplyRepository.preloadForThread($threadDescriptor) error", error) }
       .valueOrNull() ?: emptyList()
 
     if (threadSavedReplies.isEmpty()) {

@@ -48,7 +48,7 @@ class RefreshChan4CaptchaTicketUseCase(
                 ticket = chan4CaptchaSettings.captchaTicket,
                 isRefreshing = true
             )
-            .peekError { error ->
+            .onError { error ->
                 Logger.error(TAG) { "loadChan4CaptchaUseCase.await() error: ${error.errorMessageOrClassName()}" }
             }
             .valueOrNull()

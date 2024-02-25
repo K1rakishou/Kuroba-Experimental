@@ -14,7 +14,6 @@ import com.github.k1rakishou.model.util.ChanPostUtils
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
@@ -151,7 +150,7 @@ class SavedReplyManager(
 
   suspend fun deleteAll() {
     savedReplyRepository.unsaveAll()
-      .peekError { error -> Logger.e(TAG, "unsaveAll() error", error) }
+      .onError { error -> Logger.e(TAG, "unsaveAll() error", error) }
       .ignore()
 
     lock.write { savedReplyMap.clear() }

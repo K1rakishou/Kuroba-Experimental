@@ -373,7 +373,7 @@ open class PostHideManager(
 
     serializedCoroutineExecutor.post {
       chanPostHideRepository.deleteAll()
-        .peekError { error -> Logger.e(TAG, "chanPostHideRepository.deleteAll() error", error) }
+        .onError { error -> Logger.e(TAG, "chanPostHideRepository.deleteAll() error", error) }
         .ignore()
     }
   }

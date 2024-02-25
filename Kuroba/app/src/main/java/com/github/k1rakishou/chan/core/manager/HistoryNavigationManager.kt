@@ -87,7 +87,7 @@ class HistoryNavigationManager(
       return mutex.withLock { navigationStack.firstOrNull() }
     } else {
       return historyNavigationRepository.getFirstNavElement()
-        .peekError { error -> Logger.e(TAG, "historyNavigationRepository.getFirstNavElement() error", error) }
+        .onError { error -> Logger.e(TAG, "historyNavigationRepository.getFirstNavElement() error", error) }
         .valueOrNull()
     }
   }
@@ -107,7 +107,7 @@ class HistoryNavigationManager(
       }
     } else {
       return historyNavigationRepository.getFirstThreadNavElement()
-        .peekError { error -> Logger.e(TAG, "historyNavigationRepository.getFirstThreadNavElement() error", error) }
+        .onError { error -> Logger.e(TAG, "historyNavigationRepository.getFirstThreadNavElement() error", error) }
         .valueOrNull()
     }
   }
@@ -120,7 +120,7 @@ class HistoryNavigationManager(
       }
     } else {
       return historyNavigationRepository.getFirstCatalogNavElement()
-        .peekError { error -> Logger.e(TAG, "historyNavigationRepository.getFirstCatalogNavElement() error", error) }
+        .onError { error -> Logger.e(TAG, "historyNavigationRepository.getFirstCatalogNavElement() error", error) }
         .valueOrNull()
     }
   }

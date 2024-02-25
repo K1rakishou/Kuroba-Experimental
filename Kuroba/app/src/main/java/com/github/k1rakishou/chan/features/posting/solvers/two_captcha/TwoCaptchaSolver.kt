@@ -18,7 +18,6 @@ import kotlinx.coroutines.sync.withLock
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
-import java.util.*
 import java.util.concurrent.TimeUnit
 
 class TwoCaptchaSolver(
@@ -260,7 +259,7 @@ class TwoCaptchaSolver(
     }
 
     val balanceResponse = getAccountBalance(forced = false)
-      .peekError { error -> Logger.e(TAG, "getAccountBalance() error", error) }
+      .onError { error -> Logger.e(TAG, "getAccountBalance() error", error) }
       .valueOrNull()
 
     if (balanceResponse == null) {

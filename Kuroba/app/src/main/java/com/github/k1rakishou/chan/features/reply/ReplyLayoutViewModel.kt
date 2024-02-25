@@ -1,21 +1,18 @@
 package com.github.k1rakishou.chan.features.reply
 
 import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.viewmodel.ViewModelAssistedFactory
-import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.BoardManager
-import com.github.k1rakishou.chan.core.manager.PostingLimitationsInfoManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
-import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.loader.ClientException
 import com.github.k1rakishou.chan.features.reply.data.ReplyAttachable
 import com.github.k1rakishou.chan.features.reply.data.ReplyFile
+import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutFileEnumerator
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutState
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.ThreadControllerType
@@ -37,24 +34,21 @@ import javax.inject.Inject
 class ReplyLayoutViewModel(
   private val savedStateHandle: SavedStateHandle,
   private val appConstantsLazy: Lazy<AppConstants>,
-  private val siteManagerLazy: Lazy<SiteManager>,
+  private val replyLayoutFileEnumeratorLazy: Lazy<ReplyLayoutFileEnumerator>,
   private val boardManagerLazy: Lazy<BoardManager>,
-  private val replyManagerLazy: Lazy<ReplyManager>,
-  private val postingLimitationsInfoManagerLazy: Lazy<PostingLimitationsInfoManager>,
-  private val imageLoaderV2Lazy: Lazy<ImageLoaderV2>
+  private val replyManagerLazy: Lazy<ReplyManager>
 ) : BaseViewModel() {
   private val _replyManagerStateLoaded = AtomicBoolean(false)
-
-  private val _boundCatalogDescriptor = mutableStateOf<ChanDescriptor.ICatalogDescriptor?>(null)
-  private val _boundThreadDescriptor = mutableStateOf<ChanDescriptor.ThreadDescriptor?>(null)
 
   private val _boundChanDescriptor = mutableStateOf<ChanDescriptor?>(null)
   val boundChanDescriptor: State<ChanDescriptor?>
     get() = _boundChanDescriptor
 
-  private val _replyLayoutStates = mutableStateMapOf<ChanDescriptor, ReplyLayoutState>()
-  val replyLayoutStates: Map<ChanDescriptor, ReplyLayoutState>
-    get() = _replyLayoutStates
+  private val _replyLayoutState = mutableStateOf<ReplyLayoutState?>(null)
+  val replyLayoutState: State<ReplyLayoutState?>
+    get() = _replyLayoutState
+  private val currentReplyLayoutState: ReplyLayoutState?
+    get() = _replyLayoutState.value
 
   private val appConstants: AppConstants
     get() = appConstantsLazy.get()
@@ -82,24 +76,17 @@ class ReplyLayoutViewModel(
   suspend fun bindChanDescriptor(chanDescriptor: ChanDescriptor) {
     replyManager.awaitUntilFilesAreLoaded()
 
-    when (chanDescriptor) {
-      is ChanDescriptor.ICatalogDescriptor -> _boundCatalogDescriptor.value = chanDescriptor
-      is ChanDescriptor.ThreadDescriptor -> _boundThreadDescriptor.value = chanDescriptor
-    }
-
-    if (_replyLayoutStates.containsKey(chanDescriptor)) {
+    if (_boundChanDescriptor.value == chanDescriptor) {
       return
     }
 
-    _replyLayoutStates[chanDescriptor] = ReplyLayoutState(
+    _boundChanDescriptor.value = chanDescriptor
+    _replyLayoutState.value = ReplyLayoutState(
       chanDescriptor = chanDescriptor,
       coroutineScope = viewModelScope,
-      appConstantsLazy = appConstantsLazy,
-      siteManagerLazy = siteManagerLazy,
+      replyLayoutFileEnumeratorLazy = replyLayoutFileEnumeratorLazy,
       boardManagerLazy = boardManagerLazy,
       replyManagerLazy = replyManagerLazy,
-      postingLimitationsInfoManagerLazy = postingLimitationsInfoManagerLazy,
-      imageLoaderV2Lazy = imageLoaderV2Lazy
     ).also { replyLayoutState -> replyLayoutState.bindChanDescriptor(chanDescriptor) }
   }
 
@@ -108,10 +95,7 @@ class ReplyLayoutViewModel(
   }
 
   fun onBack(): Boolean {
-    val chanDescriptor = boundChanDescriptor.value
-      ?: return false
-
-    val replyLayoutState = replyLayoutStates[chanDescriptor]
+    val replyLayoutState = currentReplyLayoutState
       ?: return false
 
     return when (replyLayoutState.replyLayoutVisibility.value) {
@@ -141,11 +125,10 @@ class ReplyLayoutViewModel(
   }
 
   fun replyLayoutVisibility(): ReplyLayoutVisibility {
-    val chanDescriptor = boundChanDescriptor.value
+    val replyLayoutState = currentReplyLayoutState
       ?: return ReplyLayoutVisibility.Collapsed
 
-    return _replyLayoutStates[chanDescriptor]?.replyLayoutVisibility?.value
-      ?: return ReplyLayoutVisibility.Collapsed
+    return replyLayoutState.replyLayoutVisibility.value
   }
 
   fun sendReply(chanDescriptor: ChanDescriptor, replyLayoutState: ReplyLayoutState) {
@@ -179,10 +162,7 @@ class ReplyLayoutViewModel(
   }
 
   fun updateReplyLayoutVisibility(newReplyLayoutVisibility: ReplyLayoutVisibility) {
-    val chanDescriptor = boundChanDescriptor.value
-      ?: return
-
-    val replyLayoutState = _replyLayoutStates[chanDescriptor]
+    val replyLayoutState = currentReplyLayoutState
       ?: return
 
     when (newReplyLayoutVisibility) {
@@ -230,21 +210,17 @@ class ReplyLayoutViewModel(
 
   class ViewModelFactory @Inject constructor(
     private val appConstantsLazy: Lazy<AppConstants>,
-    private val siteManagerLazy: Lazy<SiteManager>,
+    private val replyLayoutFileEnumeratorLazy: Lazy<ReplyLayoutFileEnumerator>,
     private val boardManagerLazy: Lazy<BoardManager>,
     private val replyManagerLazy: Lazy<ReplyManager>,
-    private val postingLimitationsInfoManagerLazy: Lazy<PostingLimitationsInfoManager>,
-    private val imageLoaderV2Lazy: Lazy<ImageLoaderV2>
   ) : ViewModelAssistedFactory<ReplyLayoutViewModel> {
     override fun create(handle: SavedStateHandle): ReplyLayoutViewModel {
       return ReplyLayoutViewModel(
         savedStateHandle = handle,
         appConstantsLazy = appConstantsLazy,
-        siteManagerLazy = siteManagerLazy,
+        replyLayoutFileEnumeratorLazy = replyLayoutFileEnumeratorLazy,
         boardManagerLazy = boardManagerLazy,
-        replyManagerLazy = replyManagerLazy,
-        postingLimitationsInfoManagerLazy = postingLimitationsInfoManagerLazy,
-        imageLoaderV2Lazy = imageLoaderV2Lazy
+        replyManagerLazy = replyManagerLazy
       )
     }
   }

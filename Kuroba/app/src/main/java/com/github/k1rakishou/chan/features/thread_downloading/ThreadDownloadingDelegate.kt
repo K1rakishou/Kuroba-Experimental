@@ -203,7 +203,7 @@ class ThreadDownloadingDelegate(
 
     if (canProcessThreadMedia) {
       val chanPostImages = chanPostImageRepository.selectPostImagesByOwnerThreadDatabaseId(ownerThreadDatabaseId)
-        .peekError { error -> Logger.e(TAG, "Failed to select images by threadId: ${ownerThreadDatabaseId}", error) }
+        .onError { error -> Logger.e(TAG, "Failed to select images by threadId: ${ownerThreadDatabaseId}", error) }
         .mapErrorToValue { emptyList<ChanPostImage>() }
 
       processThreadMedia(

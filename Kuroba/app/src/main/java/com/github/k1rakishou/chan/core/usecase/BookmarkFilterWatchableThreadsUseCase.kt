@@ -218,7 +218,7 @@ class BookmarkFilterWatchableThreadsUseCase(
       val createdThreadBookmarks = bookmarksToCreate.mapNotNull { simpleThreadBookmark ->
         val databaseId =
           chanPostRepository.createEmptyThreadIfNotExists(simpleThreadBookmark.threadDescriptor)
-            .peekError { error ->
+            .onError { error ->
               Logger.e(TAG, "createEmptyThreadIfNotExists() " +
                   "threadDescriptor=${simpleThreadBookmark.threadDescriptor} error", error)
             }
@@ -361,7 +361,7 @@ class BookmarkFilterWatchableThreadsUseCase(
     Logger.d(TAG, "createFilterWatchGroups() ${filterWatchGroupsToCreate.size} filter watch groups")
 
     return chanFilterWatchRepository.createFilterWatchGroups(filterWatchGroupsToCreate)
-      .peekError { error -> Logger.e(TAG, "createFilterWatchGroups() error", error) }
+      .onError { error -> Logger.e(TAG, "createFilterWatchGroups() error", error) }
       .isValue()
   }
 

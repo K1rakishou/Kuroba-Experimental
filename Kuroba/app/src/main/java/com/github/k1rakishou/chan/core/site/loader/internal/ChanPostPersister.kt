@@ -63,7 +63,7 @@ internal class ChanPostPersister(
         ) as IChanCatalogSnapshot<ChanDescriptor.ICatalogDescriptor>
 
         chanCatalogSnapshotRepository.storeChanCatalogSnapshot(chanCatalogSnapshot)
-          .peekError { error -> Logger.e(TAG, "storeChanCatalogSnapshot() error", error) }
+          .onError { error -> Logger.e(TAG, "storeChanCatalogSnapshot() error", error) }
           .ignore()
 
         if (isUnlimitedOrCompositeCatalog && chanReaderProcessor.endOfUnlimitedCatalogReached) {

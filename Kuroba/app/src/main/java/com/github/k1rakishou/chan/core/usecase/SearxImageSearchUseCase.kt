@@ -35,7 +35,7 @@ class SearxImageSearchUseCase(
       request = request,
       adapter = searxSearchResultsAdapter
     )
-      .peekError { error -> Logger.e(TAG, "suspendConvertIntoJsonObjectWithAdapter error", error) }
+      .onError { error -> Logger.e(TAG, "suspendConvertIntoJsonObjectWithAdapter error", error) }
       .unwrap()
 
     if (searxSearchResults == null) {

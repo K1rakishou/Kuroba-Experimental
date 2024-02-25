@@ -46,7 +46,7 @@ class ThreadDataPreloader(
         }
 
         ModularResult.Try { jobs.awaitAll() }
-          .peekError { error -> Logger.e(TAG, "preloadThreadInfo() error", error) }
+          .onError { error -> Logger.e(TAG, "preloadThreadInfo() error", error) }
           .ignore()
       }
     }

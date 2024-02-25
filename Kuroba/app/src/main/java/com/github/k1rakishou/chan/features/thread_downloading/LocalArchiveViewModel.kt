@@ -480,7 +480,7 @@ class LocalArchiveViewModel(
   ): ModularResult<Unit> {
     val params = ExportDownloadedThreadAsHtmlUseCase.Params(outputDirUri, threadDescriptors, onUpdate)
     return exportDownloadedThreadAsHtmlUseCase.execute(params)
-      .peekError { error -> Logger.e(TAG, "exportThreadsAsHtml() error", error) }
+      .onError { error -> Logger.e(TAG, "exportThreadsAsHtml() error", error) }
   }
 
   suspend fun exportThreadsMedia(
@@ -490,7 +490,7 @@ class LocalArchiveViewModel(
   ): ModularResult<Unit> {
     val params = ExportDownloadedThreadMediaUseCase.Params(outputDirectoryUri, threadDescriptors, onUpdate)
     return exportDownloadedThreadMediaUseCase.execute(params)
-      .peekError { error -> Logger.e(TAG, "exportThreadsMedia() error", error) }
+      .onError { error -> Logger.e(TAG, "exportThreadsMedia() error", error) }
   }
 
   enum class ViewMode {

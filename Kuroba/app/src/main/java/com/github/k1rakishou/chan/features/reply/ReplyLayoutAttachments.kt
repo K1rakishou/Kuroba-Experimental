@@ -103,8 +103,22 @@ fun ReplyAttachments(
                 onRemoveAttachedMediaClicked = onRemoveAttachedMediaClicked
               )
             }
-            is ReplyAttachable.ReplyNewAttachable -> TODO()
-            is ReplyAttachable.ReplyTooManyAttachables -> TODO()
+            is ReplyAttachable.ReplyNewAttachable -> {
+              // TODO: New reply layout
+              Box(
+                modifier = Modifier
+                  .fillMaxSize()
+                  .background(Color.Red.copy(alpha = 0.5f))
+              )
+            }
+            is ReplyAttachable.ReplyTooManyAttachables -> {
+              // TODO: New reply layout
+              Box(
+                modifier = Modifier
+                  .fillMaxSize()
+                  .background(Color.Green.copy(alpha = 0.5f))
+              )
+            }
           }
         }
       }

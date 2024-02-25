@@ -177,7 +177,7 @@ class MediaViewerControllerViewModel(
   ): MediaViewerControllerState? {
     val viewableMediaList = viewableMediaParcelableHolder.replyUuidList.mapNotNull { replyUuid ->
       val replyFile = replyManager.getReplyFileByFileUuid(replyUuid)
-        .peekError { error -> Logger.e(TAG, "Failed to access reply file with UUID: $replyUuid", error) }
+        .onError { error -> Logger.e(TAG, "Failed to access reply file with UUID: $replyUuid", error) }
         .valueOrNull()
 
       if (replyFile == null) {
@@ -185,7 +185,7 @@ class MediaViewerControllerViewModel(
       }
 
       val originalFileName = replyFile.getReplyFileMeta()
-        .peekError { error -> Logger.e(TAG, "Failed to read meta of file with UUID: $replyUuid", error) }
+        .onError { error -> Logger.e(TAG, "Failed to read meta of file with UUID: $replyUuid", error) }
         .valueOrNull()
         ?.originalFileName
 

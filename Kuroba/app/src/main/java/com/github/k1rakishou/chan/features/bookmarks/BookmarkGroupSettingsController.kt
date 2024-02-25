@@ -295,7 +295,7 @@ class BookmarkGroupSettingsController(
 
           viewModel.createBookmarkGroup(groupName)
             .toastOnError(longToast = true)
-            .peekValue { showToast(R.string.bookmark_groups_group_will_become_visible_after) }
+            .onSuccess { showToast(R.string.bookmark_groups_group_will_become_visible_after) }
             .ignore()
 
           viewModel.reload()

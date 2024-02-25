@@ -234,11 +234,11 @@ class MainControllerViewModel(
       _navigationHistoryEntryList.clear()
       _navigationHistoryEntryList.addAll(navigationHistoryList)
     }
-      .peekError { error ->
+      .onError { error ->
         Logger.e(TAG, "loadNavigationHistoryInitial() error", error)
         _historyControllerState.value = HistoryControllerState.Error(error.errorMessageOrClassName())
       }
-      .peekValue {
+      .onSuccess {
         Logger.d(TAG, "loadNavigationHistoryInitial() success")
         _historyControllerState.value = HistoryControllerState.Data
       }

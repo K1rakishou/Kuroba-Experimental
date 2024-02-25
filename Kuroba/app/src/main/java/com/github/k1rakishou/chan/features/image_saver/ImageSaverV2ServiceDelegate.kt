@@ -120,7 +120,7 @@ class ImageSaverV2ServiceDelegate(
     )
 
     imageDownloadRequestRepository.deleteByUniqueId(uniqueId)
-      .peekError { error -> Logger.e(TAG, "imageDownloadRequestRepository.deleteByUniqueId($uniqueId) error", error) }
+      .onError { error -> Logger.e(TAG, "imageDownloadRequestRepository.deleteByUniqueId($uniqueId) error", error) }
       .ignore()
 
     mutex.withLock {
@@ -289,7 +289,7 @@ class ImageSaverV2ServiceDelegate(
             }.awaitAll()
 
             imageDownloadRequestRepository.completeMany(updatedImageDownloadRequestBatch)
-              .peekError { error -> Logger.e(TAG, "imageDownloadRequestRepository.updateMany() error", error) }
+              .onError { error -> Logger.e(TAG, "imageDownloadRequestRepository.updateMany() error", error) }
               .ignore()
 
             val canceledNow = (getDownloadContext(imageDownloadInputData)?.isCanceled() ?: true)

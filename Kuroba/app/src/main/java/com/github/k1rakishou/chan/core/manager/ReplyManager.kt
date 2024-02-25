@@ -39,7 +39,7 @@ import okio.buffer
 import okio.source
 import java.io.File
 import java.io.IOException
-import java.util.UUID
+import java.util.*
 import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
@@ -267,7 +267,7 @@ class ReplyManager(
 
     readReply(chanDescriptor) { reply ->
       val fileUuids = reply.cleanupFiles()
-        .peekError { error -> Logger.e(TAG, "reply.cleanupFiles() error", error) }
+        .onError { error -> Logger.e(TAG, "reply.cleanupFiles() error", error) }
         .valueOrNull()
 
       if (fileUuids == null || fileUuids.isEmpty()) {
@@ -275,7 +275,7 @@ class ReplyManager(
       }
 
       replyFilesStorage.deleteFiles(fileUuids, notifyListeners)
-        .peekError { error -> Logger.e(TAG, "replyFilesStorage.deleteFiles($fileUuids) error", error) }
+        .onError { error -> Logger.e(TAG, "replyFilesStorage.deleteFiles($fileUuids) error", error) }
         .ignore()
     }
   }

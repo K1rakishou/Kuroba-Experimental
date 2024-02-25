@@ -1,7 +1,7 @@
 package com.github.k1rakishou.common
 
 import com.github.k1rakishou.core_logger.Logger
-import java.util.Locale
+import java.util.*
 import java.util.concurrent.Callable
 import javax.annotation.CheckReturnValue
 
@@ -11,7 +11,7 @@ sealed class ModularResult<V : Any?> {
   data class Error<V : Any?>(val error: Throwable) : ModularResult<V>()
 
   @CheckReturnValue
-  fun peekError(func: (Throwable) -> Unit): ModularResult<V> {
+  fun onError(func: (Throwable) -> Unit): ModularResult<V> {
     return when (this) {
       is Value -> this
       is Error -> {
@@ -22,7 +22,7 @@ sealed class ModularResult<V : Any?> {
   }
 
   @CheckReturnValue
-  fun peekValue(func: (V) -> Unit): ModularResult<V> {
+  fun onSuccess(func: (V) -> Unit): ModularResult<V> {
     return when (this) {
       is Value -> {
         func(this.value)
@@ -48,7 +48,7 @@ sealed class ModularResult<V : Any?> {
       return value
     }
 
-    kotlin.error("Expected value but actual is error")
+    error("Expected value but actual is error")
   }
 
   fun errorOrNull(): Throwable? {
@@ -64,7 +64,7 @@ sealed class ModularResult<V : Any?> {
       return error
     }
 
-    kotlin.error("Expected error but actual is value")
+    error("Expected error but actual is value")
   }
 
   /**

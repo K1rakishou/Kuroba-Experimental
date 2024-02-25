@@ -258,7 +258,7 @@ class ImageReencodingPresenter(
           ?: replyManager.getNewImageName(oldFileName, ReencodeType.AS_IS)
 
         replyManager.updateFileName(fileUuid, fileName, false)
-          .peekError { error ->
+          .onError { error ->
             Logger.e(TAG, "updateFileName() old='$oldFileName', new='$newFileName' error", error)
           }.ignore()
       }

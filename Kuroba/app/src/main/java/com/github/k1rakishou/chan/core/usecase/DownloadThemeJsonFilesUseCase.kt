@@ -14,7 +14,6 @@ import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
 import okhttp3.Request
-import java.util.*
 
 class DownloadThemeJsonFilesUseCase(
   private val proxiedOkHttpClient: RealProxiedOkHttpClient,
@@ -24,7 +23,7 @@ class DownloadThemeJsonFilesUseCase(
 
   override suspend fun execute(parameter: Unit): List<ChanTheme> {
     return ModularResult.Try { downloadThemeJsonFilesInternal() }
-      .peekError { error -> Logger.e(TAG, "downloadThemeJsonFilesInternal() error: ${error}") }
+      .onError { error -> Logger.e(TAG, "downloadThemeJsonFilesInternal() error: ${error}") }
       .mapErrorToValue { emptyList() }
   }
 

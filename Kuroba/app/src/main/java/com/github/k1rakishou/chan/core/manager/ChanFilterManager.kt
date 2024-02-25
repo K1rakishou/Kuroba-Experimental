@@ -202,7 +202,7 @@ class ChanFilterManager(
     val allFilters = lock.write { filters.toList() }
 
     chanFilterRepository.updateAllFilters(allFilters)
-      .peekError { error -> Logger.e(TAG, "Failed to update filters in database", error) }
+      .onError { error -> Logger.e(TAG, "Failed to update filters in database", error) }
       .ignore()
   }
 
@@ -243,7 +243,7 @@ class ChanFilterManager(
         filterWatchGroupResultMap[chanFilter.getDatabaseId()] = filterWatchGroupResult
 
         val success = chanFilterRepository.deleteFilter(chanFilter)
-          .peekError { error -> Logger.e(TAG, "chanFilterRepository.deleteFilter() error", error) }
+          .onError { error -> Logger.e(TAG, "chanFilterRepository.deleteFilter() error", error) }
           .mapErrorToValue { false }
 
         if (!success) {
@@ -262,7 +262,7 @@ class ChanFilterManager(
       val allFilters = lock.read { filters.map { filter -> filter.copy() } }
 
       chanFilterRepository.updateAllFilters(allFilters)
-        .peekError { error -> Logger.e(TAG, "Failed to update filters in database", error) }
+        .onError { error -> Logger.e(TAG, "Failed to update filters in database", error) }
         .ignore()
 
       clearFiltersAndPostHashes()
@@ -345,7 +345,7 @@ class ChanFilterManager(
       val allFilters = lock.read { this.filters.map { filter -> filter.copy() } }
 
       chanFilterRepository.updateAllFilters(allFilters)
-        .peekError { error -> Logger.e(TAG, "Failed to update filters in database", error) }
+        .onError { error -> Logger.e(TAG, "Failed to update filters in database", error) }
         .ignore()
 
       clearFiltersAndPostHashes()
@@ -431,7 +431,7 @@ class ChanFilterManager(
     }
 
     chanFilterWatchRepository.clearFilterWatchGroups()
-      .peekError { error -> Logger.e(TAG, "clearFilterWatchGroups() error", error) }
+      .onError { error -> Logger.e(TAG, "clearFilterWatchGroups() error", error) }
       .ignore()
   }
 
@@ -449,7 +449,7 @@ class ChanFilterManager(
       }
 
       val databaseId = chanFilterRepository.createFilter(chanFilter, index)
-        .peekError { error -> Logger.e(TAG, "chanFilterRepository.createFilter() error", error) }
+        .onError { error -> Logger.e(TAG, "chanFilterRepository.createFilter() error", error) }
         .mapErrorToValue { -1L }
 
       if (databaseId <= 0L) {
@@ -515,7 +515,7 @@ class ChanFilterManager(
     val allFilters = lock.read { filters.map { filter -> filter.copy() } }
 
     val updatedInDatabase = chanFilterRepository.updateAllFilters(allFilters)
-      .peekError { error -> Logger.e(TAG, "Failed to update filter in database", error) }
+      .onError { error -> Logger.e(TAG, "Failed to update filter in database", error) }
       .mapErrorToValue { false }
 
     if (!updatedInDatabase) {

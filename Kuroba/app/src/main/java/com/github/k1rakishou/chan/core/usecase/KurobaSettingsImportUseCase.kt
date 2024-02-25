@@ -6,7 +6,7 @@ import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.chan.core.manager.PostHideManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.Site
-import com.github.k1rakishou.chan.core.site.sites.*
+import com.github.k1rakishou.chan.core.site.sites.Sushichan
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
 import com.github.k1rakishou.chan.core.site.sites.chan420.Chan420
 import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
@@ -72,7 +72,7 @@ class KurobaSettingsImportUseCase(
         }
       }
 
-    }.peekError { error -> Logger.e(TAG, "KurobaSettingsImportUseCase failure", error) }
+    }.onError { error -> Logger.e(TAG, "KurobaSettingsImportUseCase failure", error) }
   }
 
   private fun readSiteIdMap(parameter: ExternalFile): Map<Int, Int> {
@@ -201,7 +201,7 @@ class KurobaSettingsImportUseCase(
       Logger.d(TAG, "Creating empty thread entity in the database for bookmark ${simpleBookmark}")
 
       chanPostRepository.createEmptyThreadIfNotExists(simpleBookmark.threadDescriptor)
-        .peekError { error ->
+        .onError { error ->
           Logger.e(TAG, "createEmptyThreadIfNotExists() " +
             "threadDescriptor=${simpleBookmark.threadDescriptor} error", error)
         }

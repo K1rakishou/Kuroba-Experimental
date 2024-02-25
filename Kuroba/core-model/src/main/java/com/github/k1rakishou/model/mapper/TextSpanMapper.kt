@@ -55,7 +55,7 @@ object TextSpanMapper {
     val textSpanEntity = filteredTextSpanEntityList.first()
 
     val parcelableSpans = textSpanEntity.spanInfoBytes.unmarshall(ParcelableSpans.CREATOR)
-      .peekError { error -> Logger.e(TAG, "fromEntity() error: ${error.errorMessageOrClassName()}") }
+      .onError { error -> Logger.e(TAG, "fromEntity() error: ${error.errorMessageOrClassName()}") }
       .valueOrNull()
       ?: ParcelableSpans()
 

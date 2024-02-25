@@ -26,7 +26,7 @@ class ThreadDownloadingWorker(
       .inject(this)
 
     threadDownloadingDelegate.doWork()
-      .peekError { error -> Logger.e(TAG, "threadDownloadingDelegate.doWork() unhandled error", error) }
+      .onError { error -> Logger.e(TAG, "threadDownloadingDelegate.doWork() unhandled error", error) }
       .ignore()
 
     val hasActiveThreads = threadDownloadManager.hasActiveThreads()
