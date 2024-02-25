@@ -39,180 +39,180 @@ import kotlin.math.roundToInt
 
 @Composable
 fun KurobaComposeSnappingSlider(
-    modifier: Modifier = Modifier,
-    slideOffsetState: MutableState<Float>,
-    onValueChange: (Float) -> Unit,
-    backgroundColor: Color,
-    slideSteps: Int? = null,
-    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() }
+  modifier: Modifier = Modifier,
+  slideOffsetState: MutableState<Float>,
+  onValueChange: (Float) -> Unit,
+  backgroundColor: Color,
+  slideSteps: Int? = null,
+  interactionSource: MutableInteractionSource = remember { MutableInteractionSource() }
 ) {
-    val chanTheme = LocalChanTheme.current
-    val density = LocalDensity.current
-    val thumbRadiusNormal = with(density) { 12.dp.toPx() }
-    val thumbRadiusPressed = with(density) { 16.dp.toPx() }
-    val trackWidth = with(density) { 3.dp.toPx() }
-    val slideOffset by slideOffsetState
+  val chanTheme = LocalChanTheme.current
+  val density = LocalDensity.current
+  val thumbRadiusNormal = with(density) { 12.dp.toPx() }
+  val thumbRadiusPressed = with(density) { 16.dp.toPx() }
+  val trackWidth = with(density) { 3.dp.toPx() }
+  val slideOffset by slideOffsetState
 
-    BoxWithConstraints(
-        modifier = modifier
-            .then(
-                Modifier
-                    .widthIn(min = 144.dp)
-                    .height(32.dp)
-            )
-    ) {
-        val trackColor = chanTheme.accentColorCompose
-        val thumbColorNormal = remember(key1 = backgroundColor) {
-            if (ThemeEngine.isDarkColor(trackColor)) {
-                Color.LightGray
-            } else {
-                Color.DarkGray
-            }
-        }
-
-        val thumbColorPressed = remember(key1 = thumbColorNormal) {
-            if (ThemeEngine.isDarkColor(thumbColorNormal)) {
-                ThemeEngine.manipulateColor(thumbColorNormal, 1.2f)
-            } else {
-                ThemeEngine.manipulateColor(thumbColorNormal, 0.8f)
-            }
-        }
-
-        val maxWidthPx = constraints.maxWidth.toFloat()
-        val rawOffsetState = remember { mutableStateOf(0f) }
-        var rawOffsetInPx by rawOffsetState
-
-        fun rawOffsetToUserValue(rawOffsetPx: Float, maxWidthPx: Float): Float {
-            if (slideSteps != null) {
-                val slideStepPx = (maxWidthPx / slideSteps.coerceAtLeast(1).toFloat()).coerceIn(1f, maxWidthPx)
-                val userValue = ((rawOffsetPx / slideStepPx).roundToInt() * slideStepPx.roundToInt()).toFloat() / maxWidthPx
-
-                return userValue.coerceIn(0f, 1f)
-            }
-
-            return rawOffsetPx / maxWidthPx
-        }
-
-        val draggableState = rememberDraggableState(
-            onDelta = { delta ->
-                rawOffsetInPx = (rawOffsetInPx + delta).coerceIn(0f, maxWidthPx)
-                slideOffsetState.value = rawOffsetToUserValue(rawOffsetInPx, maxWidthPx)
-                onValueChange(slideOffset)
-            }
-        )
-
-        val gestureEndAction = rememberUpdatedState<(Float) -> Unit> {
-            slideOffsetState.value = rawOffsetToUserValue(rawOffsetInPx, maxWidthPx)
-            onValueChange(slideOffset)
-        }
-
-        val interactions = remember { mutableStateListOf<Interaction>() }
-        LaunchedEffect(interactionSource) {
-            interactionSource.interactions.collect { interaction ->
-                when (interaction) {
-                    is PressInteraction.Press -> interactions.add(interaction)
-                    is PressInteraction.Release -> interactions.remove(interaction.press)
-                    is PressInteraction.Cancel -> interactions.remove(interaction.press)
-                    is DragInteraction.Start -> interactions.add(interaction)
-                    is DragInteraction.Stop -> interactions.remove(interaction.start)
-                    is DragInteraction.Cancel -> interactions.remove(interaction.start)
-                }
-            }
-        }
-
-        val thumbRadius = if (interactions.isNotEmpty()) {
-            thumbRadiusPressed
-        } else {
-            thumbRadiusNormal
-        }
-
-        val thumbColor = if (interactions.isNotEmpty()) {
-            thumbColorNormal
-        } else {
-            thumbColorPressed
-        }
-
-        Canvas(
-            modifier = Modifier
-                .sliderPressModifier(
-                    draggableState = draggableState,
-                    interactionSource = interactionSource,
-                    maxPx = maxWidthPx,
-                    isRtl = false,
-                    rawOffset = rawOffsetState,
-                    gestureEndAction = gestureEndAction,
-                    enabled = true
-                )
-                .draggable(
-                    state = draggableState,
-                    orientation = Orientation.Horizontal,
-                    interactionSource = interactionSource,
-                    onDragStopped = { velocity -> gestureEndAction.value.invoke(velocity) }
-                )
-                .then(Modifier.fillMaxSize()),
-            onDraw = {
-                val centerY = size.height / 2f
-                val thumbCenterY = (size.height + trackWidth) / 2f
-                val halfRadius = thumbRadiusNormal / 2
-
-                drawRect(
-                    color = trackColor,
-                    topLeft = Offset(0f, centerY),
-                    size = Size(size.width, trackWidth)
-                )
-
-                val positionX = (slideOffset * size.width)
-                    .coerceIn(halfRadius, size.width - halfRadius)
-
-                drawCircle(
-                    color = thumbColor,
-                    radius = thumbRadius,
-                    center = Offset(x = positionX, y = thumbCenterY)
-                )
-            }
-        )
+  BoxWithConstraints(
+    modifier = modifier
+      .then(
+        Modifier
+          .widthIn(min = 144.dp)
+          .height(32.dp)
+      )
+  ) {
+    val trackColor = chanTheme.accentColorCompose
+    val thumbColorNormal = remember(key1 = backgroundColor) {
+      if (ThemeEngine.isDarkColor(trackColor)) {
+        Color.LightGray
+      } else {
+        Color.DarkGray
+      }
     }
+
+    val thumbColorPressed = remember(key1 = thumbColorNormal) {
+      if (ThemeEngine.isDarkColor(thumbColorNormal)) {
+        ThemeEngine.manipulateColor(thumbColorNormal, 1.2f)
+      } else {
+        ThemeEngine.manipulateColor(thumbColorNormal, 0.8f)
+      }
+    }
+
+    val maxWidthPx = constraints.maxWidth.toFloat()
+    val rawOffsetState = remember { mutableStateOf(0f) }
+    var rawOffsetInPx by rawOffsetState
+
+    fun rawOffsetToUserValue(rawOffsetPx: Float, maxWidthPx: Float): Float {
+      if (slideSteps != null) {
+        val slideStepPx = (maxWidthPx / slideSteps.coerceAtLeast(1).toFloat()).coerceIn(1f, maxWidthPx)
+        val userValue = ((rawOffsetPx / slideStepPx).roundToInt() * slideStepPx.roundToInt()).toFloat() / maxWidthPx
+
+        return userValue.coerceIn(0f, 1f)
+      }
+
+      return rawOffsetPx / maxWidthPx
+    }
+
+    val draggableState = rememberDraggableState(
+      onDelta = { delta ->
+        rawOffsetInPx = (rawOffsetInPx + delta).coerceIn(0f, maxWidthPx)
+        slideOffsetState.value = rawOffsetToUserValue(rawOffsetInPx, maxWidthPx)
+        onValueChange(slideOffset)
+      }
+    )
+
+    val gestureEndAction = rememberUpdatedState<(Float) -> Unit> {
+      slideOffsetState.value = rawOffsetToUserValue(rawOffsetInPx, maxWidthPx)
+      onValueChange(slideOffset)
+    }
+
+    val interactions = remember { mutableStateListOf<Interaction>() }
+    LaunchedEffect(interactionSource) {
+      interactionSource.interactions.collect { interaction ->
+        when (interaction) {
+          is PressInteraction.Press -> interactions.add(interaction)
+          is PressInteraction.Release -> interactions.remove(interaction.press)
+          is PressInteraction.Cancel -> interactions.remove(interaction.press)
+          is DragInteraction.Start -> interactions.add(interaction)
+          is DragInteraction.Stop -> interactions.remove(interaction.start)
+          is DragInteraction.Cancel -> interactions.remove(interaction.start)
+        }
+      }
+    }
+
+    val thumbRadius = if (interactions.isNotEmpty()) {
+      thumbRadiusPressed
+    } else {
+      thumbRadiusNormal
+    }
+
+    val thumbColor = if (interactions.isNotEmpty()) {
+      thumbColorNormal
+    } else {
+      thumbColorPressed
+    }
+
+    Canvas(
+      modifier = Modifier
+        .sliderPressModifier(
+          draggableState = draggableState,
+          interactionSource = interactionSource,
+          maxPx = maxWidthPx,
+          isRtl = false,
+          rawOffset = rawOffsetState,
+          gestureEndAction = gestureEndAction,
+          enabled = true
+        )
+        .draggable(
+          state = draggableState,
+          orientation = Orientation.Horizontal,
+          interactionSource = interactionSource,
+          onDragStopped = { velocity -> gestureEndAction.value.invoke(velocity) }
+        )
+        .then(Modifier.fillMaxSize()),
+      onDraw = {
+        val centerY = size.height / 2f
+        val thumbCenterY = (size.height + trackWidth) / 2f
+        val halfRadius = thumbRadiusNormal / 2
+
+        drawRect(
+          color = trackColor,
+          topLeft = Offset(0f, centerY),
+          size = Size(size.width, trackWidth)
+        )
+
+        val positionX = (slideOffset * size.width)
+          .coerceIn(halfRadius, size.width - halfRadius)
+
+        drawCircle(
+          color = thumbColor,
+          radius = thumbRadius,
+          center = Offset(x = positionX, y = thumbCenterY)
+        )
+      }
+    )
+  }
 }
 
 private fun Modifier.sliderPressModifier(
-    draggableState: DraggableState,
-    interactionSource: MutableInteractionSource,
-    maxPx: Float,
-    isRtl: Boolean,
-    rawOffset: State<Float>,
-    gestureEndAction: State<(Float) -> Unit>,
-    enabled: Boolean
+  draggableState: DraggableState,
+  interactionSource: MutableInteractionSource,
+  maxPx: Float,
+  isRtl: Boolean,
+  rawOffset: State<Float>,
+  gestureEndAction: State<(Float) -> Unit>,
+  enabled: Boolean
 ): Modifier {
-    if (!enabled) {
-        return this
-    }
+  if (!enabled) {
+    return this
+  }
 
-    return pointerInput(draggableState, interactionSource, maxPx, isRtl) {
-        detectTapGestures(
-            onPress = { pos ->
-                draggableState.drag(MutatePriority.UserInput) {
-                    val to = if (isRtl) maxPx - pos.x else pos.x
-                    dragBy(to - rawOffset.value)
-                }
+  return pointerInput(draggableState, interactionSource, maxPx, isRtl) {
+    detectTapGestures(
+      onPress = { pos ->
+        draggableState.drag(MutatePriority.UserInput) {
+          val to = if (isRtl) maxPx - pos.x else pos.x
+          dragBy(to - rawOffset.value)
+        }
 
-                val interaction = PressInteraction.Press(pos)
-                interactionSource.emit(interaction)
+        val interaction = PressInteraction.Press(pos)
+        interactionSource.emit(interaction)
 
-                val finishInteraction = try {
-                    val success = tryAwaitRelease()
-                    gestureEndAction.value.invoke(0f)
+        val finishInteraction = try {
+          val success = tryAwaitRelease()
+          gestureEndAction.value.invoke(0f)
 
-                    if (success) {
-                        PressInteraction.Release(interaction)
-                    } else {
-                        PressInteraction.Cancel(interaction)
-                    }
-                } catch (c: CancellationException) {
-                    PressInteraction.Cancel(interaction)
-                }
+          if (success) {
+            PressInteraction.Release(interaction)
+          } else {
+            PressInteraction.Cancel(interaction)
+          }
+        } catch (c: CancellationException) {
+          PressInteraction.Cancel(interaction)
+        }
 
-                interactionSource.emit(finishInteraction)
-            }
-        )
-    }
+        interactionSource.emit(finishInteraction)
+      }
+    )
+  }
 }

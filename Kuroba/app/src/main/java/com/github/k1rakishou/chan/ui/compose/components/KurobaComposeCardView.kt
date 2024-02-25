@@ -11,18 +11,18 @@ import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 
 @Composable
 fun KurobaComposeCardView(
-    modifier: Modifier = Modifier,
-    backgroundColor: Color? = null,
-    shape: Shape = RoundedCornerShape(2.dp),
-    content: @Composable () -> Unit
+  modifier: Modifier = Modifier,
+  backgroundColor: Color? = null,
+  shape: Shape = RoundedCornerShape(2.dp),
+  content: @Composable () -> Unit
 ) {
-    val chanTheme = LocalChanTheme.current
+  val chanTheme = LocalChanTheme.current
 
-    Card(
-        modifier = modifier,
-        shape = shape,
-        backgroundColor = backgroundColor ?: chanTheme.backColorCompose
-    ) {
-        content()
-    }
+  Card(
+    modifier = modifier,
+    shape = shape,
+    backgroundColor = backgroundColor ?: chanTheme.backColorCompose
+  ) {
+    content()
+  }
 }

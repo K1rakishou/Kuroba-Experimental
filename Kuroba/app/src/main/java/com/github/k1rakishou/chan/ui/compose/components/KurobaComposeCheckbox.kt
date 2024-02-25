@@ -19,55 +19,55 @@ import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 
 @Composable
 fun KurobaComposeCheckbox(
-    currentlyChecked: Boolean,
-    onCheckChanged: (Boolean) -> Unit,
-    modifier: Modifier = Modifier,
-    text: String? = null,
-    enabled: Boolean = true
+  currentlyChecked: Boolean,
+  onCheckChanged: (Boolean) -> Unit,
+  modifier: Modifier = Modifier,
+  text: String? = null,
+  enabled: Boolean = true
 ) {
-    val chanTheme = LocalChanTheme.current
-    var isChecked by remember(key1 = currentlyChecked) { mutableStateOf(currentlyChecked) }
+  val chanTheme = LocalChanTheme.current
+  var isChecked by remember(key1 = currentlyChecked) { mutableStateOf(currentlyChecked) }
 
-    val color = remember(key1 = chanTheme) {
-        if (chanTheme.isLightTheme) {
-            Color(0x40000000)
-        } else {
-            Color(0x40ffffff)
-        }
+  val color = remember(key1 = chanTheme) {
+    if (chanTheme.isLightTheme) {
+      Color(0x40000000)
+    } else {
+      Color(0x40ffffff)
     }
+  }
 
-    Row(
-        modifier = Modifier
-            .clickable(
-                enabled = enabled,
-                interactionSource = remember { MutableInteractionSource() },
-                indication = rememberKurobaRipple(bounded = true, color = color),
-                onClick = {
-                    isChecked = isChecked.not()
-                    onCheckChanged(isChecked)
-                }
-            )
-            .then(modifier)
-    ) {
-        Checkbox(
-            modifier = Modifier.align(Alignment.CenterVertically),
-            checked = isChecked,
+  Row(
+    modifier = Modifier
+        .clickable(
             enabled = enabled,
-            onCheckedChange = { checked ->
-                isChecked = checked
+            interactionSource = remember { MutableInteractionSource() },
+            indication = rememberKurobaRipple(bounded = true, color = color),
+            onClick = {
+                isChecked = isChecked.not()
                 onCheckChanged(isChecked)
-            },
-            colors = chanTheme.checkBoxColors()
+            }
         )
+        .then(modifier)
+  ) {
+    Checkbox(
+      modifier = Modifier.align(Alignment.CenterVertically),
+      checked = isChecked,
+      enabled = enabled,
+      onCheckedChange = { checked ->
+        isChecked = checked
+        onCheckChanged(isChecked)
+      },
+      colors = chanTheme.checkBoxColors()
+    )
 
-        if (text != null) {
-            Spacer(modifier = Modifier.width(8.dp))
+    if (text != null) {
+      Spacer(modifier = Modifier.width(8.dp))
 
-            KurobaComposeText(
-                modifier = Modifier.align(Alignment.CenterVertically),
-                text = text,
-                enabled = enabled
-            )
-        }
+      KurobaComposeText(
+        modifier = Modifier.align(Alignment.CenterVertically),
+        text = text,
+        enabled = enabled
+      )
     }
+  }
 }

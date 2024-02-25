@@ -16,46 +16,46 @@ import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 
 @Composable
 fun KurobaLabelText(
-    enabled: Boolean = true,
-    labelText: String?,
-    fontSize: TextUnit = 13.sp,
-    interactionSource: InteractionSource
+  enabled: Boolean = true,
+  labelText: String?,
+  fontSize: TextUnit = 13.sp,
+  interactionSource: InteractionSource
 ) {
-    if (labelText == null) {
-        return
+  if (labelText == null) {
+    return
+  }
+
+  val chanTheme = LocalChanTheme.current
+  val isFocused by interactionSource.collectIsFocusedAsState()
+
+  AnimatedVisibility(
+    visible = true,
+    enter = fadeIn(),
+    exit = fadeOut()
+  ) {
+    val alpha = if (enabled) {
+      ContentAlpha.high
+    } else {
+      ContentAlpha.disabled
     }
 
-    val chanTheme = LocalChanTheme.current
-    val isFocused by interactionSource.collectIsFocusedAsState()
+    val hintColor = remember(alpha, isFocused) {
+      if (isFocused && enabled) {
+        return@remember chanTheme.accentColorCompose.copy(alpha = alpha)
+      }
 
-    AnimatedVisibility(
-        visible = true,
-        enter = fadeIn(),
-        exit = fadeOut()
-    ) {
-        val alpha = if (enabled) {
-            ContentAlpha.high
-        } else {
-            ContentAlpha.disabled
-        }
-
-        val hintColor = remember(alpha, isFocused) {
-            if (isFocused && enabled) {
-                return@remember chanTheme.accentColorCompose.copy(alpha = alpha)
-            }
-
-            return@remember chanTheme.textColorHintCompose.copy(alpha = alpha)
-        }
-
-        val hintColorAnimated by animateColorAsState(
-            targetValue = hintColor,
-            label = "Hint text color animated"
-        )
-
-        KurobaComposeText(
-            text = labelText,
-            fontSize = fontSize,
-            color = hintColorAnimated
-        )
+      return@remember chanTheme.textColorHintCompose.copy(alpha = alpha)
     }
+
+    val hintColorAnimated by animateColorAsState(
+      targetValue = hintColor,
+      label = "Hint text color animated"
+    )
+
+    KurobaComposeText(
+      text = labelText,
+      fontSize = fontSize,
+      color = hintColorAnimated
+    )
+  }
 }

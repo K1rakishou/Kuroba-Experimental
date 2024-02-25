@@ -17,54 +17,54 @@ import com.github.k1rakishou.chan.ui.compose.providers.LocalWindowInsets
 
 @Composable
 fun KurobaComposeProgressIndicator(
-    modifier: Modifier = DefaultFillMaxSizeModifier,
-    overrideColor: Color? = null
+  modifier: Modifier = DefaultFillMaxSizeModifier,
+  overrideColor: Color? = null
 ) {
-    val windowInsets = LocalWindowInsets.current
+  val windowInsets = LocalWindowInsets.current
 
-    Box(
-        modifier = modifier.then(
-            Modifier
-                .padding(bottom = windowInsets.bottom)
-        )
-    ) {
-        val color = if (overrideColor == null) {
-            val chanTheme = LocalChanTheme.current
-            remember(key1 = chanTheme.accentColor) { Color(chanTheme.accentColor) }
-        } else {
-            overrideColor
-        }
-
-        CircularProgressIndicator(
-            color = color,
-            modifier = Modifier
-                .align(Alignment.Center)
-                .size(42.dp, 42.dp)
-        )
+  Box(
+    modifier = modifier.then(
+      Modifier
+        .padding(bottom = windowInsets.bottom)
+    )
+  ) {
+    val color = if (overrideColor == null) {
+      val chanTheme = LocalChanTheme.current
+      remember(key1 = chanTheme.accentColor) { Color(chanTheme.accentColor) }
+    } else {
+      overrideColor
     }
+
+    CircularProgressIndicator(
+      color = color,
+      modifier = Modifier
+        .align(Alignment.Center)
+        .size(42.dp, 42.dp)
+    )
+  }
 }
 
 @Composable
 fun KurobaComposeProgressIndicator(
-    modifier: Modifier = DefaultFillMaxSizeModifier,
-    @FloatRange(from = 0.0, to = 1.0) progress: Float,
-    overrideColor: Color? = null,
-    indicatorSize: Dp = 42.dp
+  modifier: Modifier = DefaultFillMaxSizeModifier,
+  @FloatRange(from = 0.0, to = 1.0) progress: Float,
+  overrideColor: Color? = null,
+  indicatorSize: Dp = 42.dp
 ) {
-    Box(modifier = modifier) {
-        val color = if (overrideColor == null) {
-            val chanTheme = LocalChanTheme.current
-            chanTheme.accentColorCompose
-        } else {
-            overrideColor
-        }
-
-        CircularProgressIndicator(
-            progress = progress,
-            color = color,
-            modifier = Modifier
-                .align(Alignment.Center)
-                .size(indicatorSize, indicatorSize)
-        )
+  Box(modifier = modifier) {
+    val color = if (overrideColor == null) {
+      val chanTheme = LocalChanTheme.current
+      chanTheme.accentColorCompose
+    } else {
+      overrideColor
     }
+
+    CircularProgressIndicator(
+      progress = progress,
+      color = color,
+      modifier = Modifier
+        .align(Alignment.Center)
+        .size(indicatorSize, indicatorSize)
+    )
+  }
 }

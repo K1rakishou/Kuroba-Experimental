@@ -11,26 +11,26 @@ import com.github.k1rakishou.common.errorMessageOrClassName
 
 @Composable
 fun KurobaComposeErrorMessage(error: Throwable, modifier: Modifier = DefaultFillMaxSizeModifier) {
-    val errorMessage = remember(key1 = error) { error.errorMessageOrClassName() }
+  val errorMessage = remember(key1 = error) { error.errorMessageOrClassName() }
 
-    KurobaComposeErrorMessage(
-        errorMessage = errorMessage,
-        modifier = modifier
-    )
+  KurobaComposeErrorMessage(
+    errorMessage = errorMessage,
+    modifier = modifier
+  )
 }
 
 @Composable
 fun KurobaComposeErrorMessage(errorMessage: String, modifier: Modifier = DefaultFillMaxSizeModifier) {
-    val windowInsets = LocalWindowInsets.current
+  val windowInsets = LocalWindowInsets.current
 
-    Box(
-        modifier = Modifier
-            .padding(bottom = windowInsets.bottom)
-            .then(modifier)
-    ) {
-        KurobaComposeText(
-            modifier = Modifier.align(Alignment.Center),
-            text = errorMessage
-        )
-    }
+  Box(
+    modifier = Modifier
+        .padding(bottom = windowInsets.bottom)
+        .then(modifier)
+  ) {
+    KurobaComposeText(
+      modifier = Modifier.align(Alignment.Center),
+      text = errorMessage
+    )
+  }
 }

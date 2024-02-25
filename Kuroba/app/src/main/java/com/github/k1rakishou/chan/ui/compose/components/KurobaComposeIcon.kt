@@ -13,23 +13,21 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 
 @Composable
 fun KurobaComposeIcon(
-    modifier: Modifier = Modifier,
-    @DrawableRes drawableId: Int,
-    colorBehindIcon: Color? = null
+  modifier: Modifier = Modifier, @DrawableRes drawableId: Int, colorBehindIcon: Color? = null
 ) {
-    val chanTheme = LocalChanTheme.current
-    val tintColor = remember(key1 = chanTheme) {
-        if (colorBehindIcon == null) {
-            Color(ThemeEngine.resolveDrawableTintColor(chanTheme))
-        } else {
-            Color(ThemeEngine.resolveDrawableTintColor(ThemeEngine.isDarkColor(colorBehindIcon.value)))
-        }
+  val chanTheme = LocalChanTheme.current
+  val tintColor = remember(key1 = chanTheme) {
+    if (colorBehindIcon == null) {
+      Color(ThemeEngine.resolveDrawableTintColor(chanTheme))
+    } else {
+      Color(ThemeEngine.resolveDrawableTintColor(ThemeEngine.isDarkColor(colorBehindIcon.value)))
     }
+  }
 
-    Image(
-        modifier = modifier,
-        painter = painterResource(id = drawableId),
-        colorFilter = ColorFilter.tint(tintColor),
-        contentDescription = null
-    )
+  Image(
+    modifier = modifier,
+    painter = painterResource(id = drawableId),
+    colorFilter = ColorFilter.tint(tintColor),
+    contentDescription = null
+  )
 }

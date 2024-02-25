@@ -7,21 +7,21 @@ import androidx.compose.ui.text.style.TextAlign
 
 @Composable
 fun KurobaComposeTextButton(
-    onClick: () -> Unit,
-    text: String,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
+  onClick: () -> Unit,
+  text: String,
+  modifier: Modifier = Modifier,
+  enabled: Boolean = true,
 ) {
-    KurobaComposeButton(
-        onClick = onClick,
-        enabled = enabled,
-        modifier = modifier,
-        buttonContent = {
-            ComposeText(
-                text = text,
-                modifier = Modifier.fillMaxSize(),
-                textAlign = TextAlign.Center
-            )
-        }
-    )
+  KurobaComposeButton(
+    onClick = onClick,
+    enabled = enabled,
+    modifier = modifier,
+    buttonContent = {
+      ComposeText(
+        text = text,
+        modifier = Modifier.fillMaxSize(),
+        textAlign = TextAlign.Center
+      )
+    }
+  )
 }

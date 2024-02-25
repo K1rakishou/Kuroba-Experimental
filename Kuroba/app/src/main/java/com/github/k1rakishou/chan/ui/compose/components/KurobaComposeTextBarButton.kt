@@ -15,40 +15,40 @@ import java.util.*
 
 @Composable
 fun KurobaComposeTextBarButton(
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    customTextColor: Color? = null,
-    fontSize: TextUnit = 14.sp,
-    onClick: () -> Unit,
-    text: String,
+  modifier: Modifier = Modifier,
+  enabled: Boolean = true,
+  customTextColor: Color? = null,
+  fontSize: TextUnit = 14.sp,
+  onClick: () -> Unit,
+  text: String,
 ) {
-    val chanTheme = LocalChanTheme.current
+  val chanTheme = LocalChanTheme.current
 
-    Button(
-        onClick = onClick,
-        enabled = enabled,
-        modifier = modifier,
-        content = {
-            val textColor = customTextColor
-                ?: chanTheme.textColorPrimaryCompose
+  Button(
+    onClick = onClick,
+    enabled = enabled,
+    modifier = modifier,
+    content = {
+      val textColor = customTextColor
+        ?: chanTheme.textColorPrimaryCompose
 
-            val modifiedTextColor = if (enabled) {
-                textColor
-            } else {
-                textColor.copy(alpha = ContentAlpha.disabled)
-            }
+      val modifiedTextColor = if (enabled) {
+        textColor
+      } else {
+        textColor.copy(alpha = ContentAlpha.disabled)
+      }
 
-            KurobaComposeText(
-                modifier = Modifier
-                    .wrapContentSize()
-                    .align(Alignment.CenterVertically),
-                text = text.uppercase(Locale.ENGLISH),
-                color = modifiedTextColor,
-                fontSize = fontSize,
-                textAlign = TextAlign.Center
-            )
-        },
-        elevation = null,
-        colors = chanTheme.barButtonColors()
-    )
+      KurobaComposeText(
+        modifier = Modifier
+          .wrapContentSize()
+          .align(Alignment.CenterVertically),
+        text = text.uppercase(Locale.ENGLISH),
+        color = modifiedTextColor,
+        fontSize = fontSize,
+        textAlign = TextAlign.Center
+      )
+    },
+    elevation = null,
+    colors = chanTheme.barButtonColors()
+  )
 }

@@ -15,73 +15,73 @@ import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 
 @Composable
 fun KurobaComposeText(
-    text: String,
-    modifier: Modifier = Modifier,
-    color: Color? = null,
-    fontSize: TextUnit = TextUnit.Unspecified,
-    fontWeight: FontWeight? = null,
-    maxLines: Int = Int.MAX_VALUE,
-    overflow: TextOverflow = TextOverflow.Clip,
-    softWrap: Boolean = true,
-    enabled: Boolean = true,
-    textAlign: TextAlign? = null,
-    inlineContent: Map<String, InlineTextContent> = mapOf()
+  text: String,
+  modifier: Modifier = Modifier,
+  color: Color? = null,
+  fontSize: TextUnit = TextUnit.Unspecified,
+  fontWeight: FontWeight? = null,
+  maxLines: Int = Int.MAX_VALUE,
+  overflow: TextOverflow = TextOverflow.Clip,
+  softWrap: Boolean = true,
+  enabled: Boolean = true,
+  textAlign: TextAlign? = null,
+  inlineContent: Map<String, InlineTextContent> = mapOf()
 ) {
-    KurobaComposeText(
-        text = AnnotatedString(text),
-        modifier = modifier,
-        color = color,
-        fontSize = fontSize,
-        fontWeight = fontWeight,
-        maxLines = maxLines,
-        overflow = overflow,
-        softWrap = softWrap,
-        enabled = enabled,
-        textAlign = textAlign,
-        inlineContent = inlineContent
-    )
+  KurobaComposeText(
+    text = AnnotatedString(text),
+    modifier = modifier,
+    color = color,
+    fontSize = fontSize,
+    fontWeight = fontWeight,
+    maxLines = maxLines,
+    overflow = overflow,
+    softWrap = softWrap,
+    enabled = enabled,
+    textAlign = textAlign,
+    inlineContent = inlineContent
+  )
 }
 
 @Composable
 fun KurobaComposeText(
-    text: AnnotatedString,
-    modifier: Modifier = Modifier,
-    color: Color? = null,
-    fontSize: TextUnit = TextUnit.Unspecified,
-    fontWeight: FontWeight? = null,
-    maxLines: Int = Int.MAX_VALUE,
-    overflow: TextOverflow = TextOverflow.Clip,
-    softWrap: Boolean = true,
-    enabled: Boolean = true,
-    textAlign: TextAlign? = null,
-    inlineContent: Map<String, InlineTextContent> = mapOf()
+  text: AnnotatedString,
+  modifier: Modifier = Modifier,
+  color: Color? = null,
+  fontSize: TextUnit = TextUnit.Unspecified,
+  fontWeight: FontWeight? = null,
+  maxLines: Int = Int.MAX_VALUE,
+  overflow: TextOverflow = TextOverflow.Clip,
+  softWrap: Boolean = true,
+  enabled: Boolean = true,
+  textAlign: TextAlign? = null,
+  inlineContent: Map<String, InlineTextContent> = mapOf()
 ) {
-    val chanTheme = LocalChanTheme.current
+  val chanTheme = LocalChanTheme.current
 
-    val textColorPrimary = if (color == null) {
-        remember(key1 = chanTheme.textColorPrimary) {
-            Color(chanTheme.textColorPrimary)
-        }
-    } else {
-        color
+  val textColorPrimary = if (color == null) {
+    remember(key1 = chanTheme.textColorPrimary) {
+      Color(chanTheme.textColorPrimary)
     }
+  } else {
+    color
+  }
 
-    val actualTextColorPrimary = if (enabled) {
-        textColorPrimary
-    } else {
-        textColorPrimary.copy(alpha = ContentAlpha.disabled)
-    }
+  val actualTextColorPrimary = if (enabled) {
+    textColorPrimary
+  } else {
+    textColorPrimary.copy(alpha = ContentAlpha.disabled)
+  }
 
-    ComposeText(
-        modifier = modifier,
-        color = actualTextColorPrimary,
-        text = text,
-        fontSize = fontSize,
-        maxLines = maxLines,
-        overflow = overflow,
-        softWrap = softWrap,
-        textAlign = textAlign,
-        fontWeight = fontWeight,
-        inlineContent = inlineContent
-    )
+  ComposeText(
+    modifier = modifier,
+    color = actualTextColorPrimary,
+    text = text,
+    fontSize = fontSize,
+    maxLines = maxLines,
+    overflow = overflow,
+    softWrap = softWrap,
+    textAlign = textAlign,
+    fontWeight = fontWeight,
+    inlineContent = inlineContent
+  )
 }

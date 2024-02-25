@@ -7,18 +7,18 @@ import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 
 @Composable
 fun KurobaComposeSlider(
-    value: Float,
-    onValueChange: (Float) -> Unit,
-    modifier: Modifier = Modifier,
-    steps: Int = 0
+  value: Float,
+  onValueChange: (Float) -> Unit,
+  modifier: Modifier = Modifier,
+  steps: Int = 0
 ) {
-    val chanTheme = LocalChanTheme.current
+  val chanTheme = LocalChanTheme.current
 
-    Slider(
-        value = value,
-        modifier = modifier,
-        steps = steps,
-        onValueChange = onValueChange,
-        colors = chanTheme.sliderColors()
-    )
+  Slider(
+    value = value,
+    modifier = modifier,
+    steps = steps,
+    onValueChange = onValueChange,
+    colors = chanTheme.sliderColors()
+  )
 }

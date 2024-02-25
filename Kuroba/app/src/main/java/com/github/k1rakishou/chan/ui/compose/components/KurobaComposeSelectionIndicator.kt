@@ -21,50 +21,50 @@ import com.github.k1rakishou.chan.R
 
 @Composable
 fun KurobaComposeSelectionIndicator(
-    size: Dp = 24.dp,
-    currentlySelected: Boolean,
-    onSelectionChanged: (Boolean) -> Unit
+  size: Dp = 24.dp,
+  currentlySelected: Boolean,
+  onSelectionChanged: (Boolean) -> Unit
 ) {
-    val checkmark = painterResource(id = R.drawable.ic_blue_checkmark_24dp)
-    val circleWidth = with(LocalDensity.current) { 2.dp.toPx() }
-    val circleSize = with(LocalDensity.current) {
-        remember(key1 = size) { Size(size.toPx(), size.toPx()) }
-    }
-    val imageSize = remember(key1 = circleSize) {
-        Size(circleSize.width + circleWidth, circleSize.height + circleWidth)
-    }
-    val style = remember(key1 = circleWidth) {
-        Stroke(width = circleWidth)
-    }
+  val checkmark = painterResource(id = R.drawable.ic_blue_checkmark_24dp)
+  val circleWidth = with(LocalDensity.current) { 2.dp.toPx() }
+  val circleSize = with(LocalDensity.current) {
+    remember(key1 = size) { Size(size.toPx(), size.toPx()) }
+  }
+  val imageSize = remember(key1 = circleSize) {
+    Size(circleSize.width + circleWidth, circleSize.height + circleWidth)
+  }
+  val style = remember(key1 = circleWidth) {
+    Stroke(width = circleWidth)
+  }
 
-    var selected by remember(key1 = currentlySelected) { mutableStateOf(currentlySelected) }
+  var selected by remember(key1 = currentlySelected) { mutableStateOf(currentlySelected) }
 
-    Canvas(
-        modifier = Modifier
-            .size(size)
-            .clickable {
-                selected = !selected
-                onSelectionChanged(selected)
-            },
-        onDraw = {
-            drawArc(
-                color = Color.White,
-                size = circleSize,
-                startAngle = 0f,
-                sweepAngle = 360f,
-                useCenter = false,
-                alpha = 1f,
-                style = style
-            )
+  Canvas(
+    modifier = Modifier
+      .size(size)
+      .clickable {
+        selected = !selected
+        onSelectionChanged(selected)
+      },
+    onDraw = {
+      drawArc(
+        color = Color.White,
+        size = circleSize,
+        startAngle = 0f,
+        sweepAngle = 360f,
+        useCenter = false,
+        alpha = 1f,
+        style = style
+      )
 
-            if (selected) {
-                translate(left = -(circleWidth / 2), top = -(circleWidth / 2)) {
-                    with(checkmark) {
-                        draw(size = imageSize, alpha = 1f, colorFilter = null)
-                    }
-                }
-            }
+      if (selected) {
+        translate(left = -(circleWidth / 2), top = -(circleWidth / 2)) {
+          with(checkmark) {
+            draw(size = imageSize, alpha = 1f, colorFilter = null)
+          }
         }
-    )
+      }
+    }
+  )
 }
 

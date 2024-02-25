@@ -17,66 +17,66 @@ import androidx.compose.ui.unit.TextUnit
 
 @Composable
 internal fun ComposeText(
-    text: String,
-    modifier: Modifier = Modifier,
-    color: Color = Color.Unspecified,
-    fontSize: TextUnit = TextUnit.Unspecified,
-    maxLines: Int = Int.MAX_VALUE,
-    overflow: TextOverflow = TextOverflow.Clip,
-    softWrap: Boolean = true,
-    textAlign: TextAlign? = null,
-    fontWeight: FontWeight? = null,
-    onTextLayout: (TextLayoutResult) -> Unit = {},
-    style: TextStyle = LocalTextStyle.current
+  text: String,
+  modifier: Modifier = Modifier,
+  color: Color = Color.Unspecified,
+  fontSize: TextUnit = TextUnit.Unspecified,
+  maxLines: Int = Int.MAX_VALUE,
+  overflow: TextOverflow = TextOverflow.Clip,
+  softWrap: Boolean = true,
+  textAlign: TextAlign? = null,
+  fontWeight: FontWeight? = null,
+  onTextLayout: (TextLayoutResult) -> Unit = {},
+  style: TextStyle = LocalTextStyle.current
 ) {
-    Text(
-        modifier = modifier,
-        color = color,
-        text = text,
-        fontSize = fontSize,
-        maxLines = maxLines,
-        overflow = overflow,
-        softWrap = softWrap,
-        textAlign = textAlign,
-        fontWeight = fontWeight,
-        onTextLayout = onTextLayout,
-        style = remember(style) { kurobaTextStyle(style) }
-    )
+  Text(
+    modifier = modifier,
+    color = color,
+    text = text,
+    fontSize = fontSize,
+    maxLines = maxLines,
+    overflow = overflow,
+    softWrap = softWrap,
+    textAlign = textAlign,
+    fontWeight = fontWeight,
+    onTextLayout = onTextLayout,
+    style = remember(style) { kurobaTextStyle(style) }
+  )
 }
 
 @Composable
 internal fun ComposeText(
-    text: AnnotatedString,
-    modifier: Modifier = Modifier,
-    color: Color = Color.Unspecified,
-    fontSize: TextUnit = TextUnit.Unspecified,
-    maxLines: Int = Int.MAX_VALUE,
-    overflow: TextOverflow = TextOverflow.Clip,
-    softWrap: Boolean = true,
-    textAlign: TextAlign? = null,
-    fontWeight: FontWeight? = null,
-    inlineContent: Map<String, InlineTextContent> = mapOf(),
-    onTextLayout: (TextLayoutResult) -> Unit = {},
-    style: TextStyle = LocalTextStyle.current
+  text: AnnotatedString,
+  modifier: Modifier = Modifier,
+  color: Color = Color.Unspecified,
+  fontSize: TextUnit = TextUnit.Unspecified,
+  maxLines: Int = Int.MAX_VALUE,
+  overflow: TextOverflow = TextOverflow.Clip,
+  softWrap: Boolean = true,
+  textAlign: TextAlign? = null,
+  fontWeight: FontWeight? = null,
+  inlineContent: Map<String, InlineTextContent> = mapOf(),
+  onTextLayout: (TextLayoutResult) -> Unit = {},
+  style: TextStyle = LocalTextStyle.current
 ) {
-    Text(
-        modifier = modifier,
-        color = color,
-        text = text,
-        fontSize = fontSize,
-        maxLines = maxLines,
-        overflow = overflow,
-        softWrap = softWrap,
-        textAlign = textAlign,
-        fontWeight = fontWeight,
-        inlineContent = inlineContent,
-        onTextLayout = onTextLayout,
-        style = remember(style) { kurobaTextStyle(style) }
-    )
+  Text(
+    modifier = modifier,
+    color = color,
+    text = text,
+    fontSize = fontSize,
+    maxLines = maxLines,
+    overflow = overflow,
+    softWrap = softWrap,
+    textAlign = textAlign,
+    fontWeight = fontWeight,
+    inlineContent = inlineContent,
+    onTextLayout = onTextLayout,
+    style = remember(style) { kurobaTextStyle(style) }
+  )
 }
 
 private fun kurobaTextStyle(style: TextStyle): TextStyle {
-    return style.copy(
-        lineHeight = style.lineHeight * 0.7f
-    )
+  return style.copy(
+    lineHeight = style.lineHeight * 0.7f
+  )
 }

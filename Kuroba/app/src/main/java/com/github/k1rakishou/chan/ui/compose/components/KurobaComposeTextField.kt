@@ -38,157 +38,157 @@ import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 
 @Composable
 fun KurobaComposeTextField(
-    value: String,
-    modifier: Modifier = Modifier,
-    onValueChange: (String) -> Unit,
-    fontSize: KurobaTextUnit = KurobaTextUnit(16.sp),
-    maxLines: Int = Int.MAX_VALUE,
-    singleLine: Boolean = false,
-    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
-    keyboardActions: KeyboardActions = KeyboardActions(),
-    textStyle: TextStyle = LocalTextStyle.current,
-    visualTransformation: VisualTransformation = VisualTransformation.None,
-    enabled: Boolean = true,
-    readOnly: Boolean = false,
-    isError: Boolean = false,
-    shape: Shape = TextFieldDefaults.TextFieldShape,
-    label: @Composable ((InteractionSource) -> Unit)? = null,
-    placeholder: @Composable (() -> Unit)? = null,
-    leadingIcon: @Composable (() -> Unit)? = null,
-    trailingIcon: @Composable (() -> Unit)? = null,
-    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+  value: String,
+  modifier: Modifier = Modifier,
+  onValueChange: (String) -> Unit,
+  fontSize: KurobaTextUnit = KurobaTextUnit(16.sp),
+  maxLines: Int = Int.MAX_VALUE,
+  singleLine: Boolean = false,
+  keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+  keyboardActions: KeyboardActions = KeyboardActions(),
+  textStyle: TextStyle = LocalTextStyle.current,
+  visualTransformation: VisualTransformation = VisualTransformation.None,
+  enabled: Boolean = true,
+  readOnly: Boolean = false,
+  isError: Boolean = false,
+  shape: Shape = TextFieldDefaults.TextFieldShape,
+  label: @Composable ((InteractionSource) -> Unit)? = null,
+  placeholder: @Composable (() -> Unit)? = null,
+  leadingIcon: @Composable (() -> Unit)? = null,
+  trailingIcon: @Composable (() -> Unit)? = null,
+  interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
-    val prevTextFieldValue by remember { mutableStateOf<TextFieldValue>(TextFieldValue(value)) }
+  val prevTextFieldValue by remember { mutableStateOf<TextFieldValue>(TextFieldValue(value)) }
 
-    KurobaComposeTextField(
-        value = prevTextFieldValue,
-        modifier = modifier,
-        onValueChange = { tfv: TextFieldValue -> onValueChange(tfv.text) },
-        fontSize = fontSize,
-        maxLines = maxLines,
-        singleLine = singleLine,
-        keyboardOptions = keyboardOptions,
-        keyboardActions = keyboardActions,
-        textStyle = textStyle,
-        visualTransformation = visualTransformation,
-        enabled = enabled,
-        readOnly = readOnly,
-        isError = isError,
-        shape = shape,
-        label = label,
-        placeholder = placeholder,
-        leadingIcon = leadingIcon,
-        trailingIcon = trailingIcon,
-        interactionSource = interactionSource
-    )
+  KurobaComposeTextField(
+    value = prevTextFieldValue,
+    modifier = modifier,
+    onValueChange = { tfv: TextFieldValue -> onValueChange(tfv.text) },
+    fontSize = fontSize,
+    maxLines = maxLines,
+    singleLine = singleLine,
+    keyboardOptions = keyboardOptions,
+    keyboardActions = keyboardActions,
+    textStyle = textStyle,
+    visualTransformation = visualTransformation,
+    enabled = enabled,
+    readOnly = readOnly,
+    isError = isError,
+    shape = shape,
+    label = label,
+    placeholder = placeholder,
+    leadingIcon = leadingIcon,
+    trailingIcon = trailingIcon,
+    interactionSource = interactionSource
+  )
 }
 
 @Composable
 fun KurobaComposeTextField(
-    value: TextFieldValue,
-    modifier: Modifier = Modifier,
-    onValueChange: (TextFieldValue) -> Unit,
-    fontSize: KurobaTextUnit = KurobaTextUnit(16.sp),
-    maxLines: Int = Int.MAX_VALUE,
-    singleLine: Boolean = false,
-    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
-    keyboardActions: KeyboardActions = KeyboardActions(),
-    textStyle: TextStyle = LocalTextStyle.current,
-    visualTransformation: VisualTransformation = VisualTransformation.None,
-    enabled: Boolean = true,
-    readOnly: Boolean = false,
-    isError: Boolean = false,
-    shape: Shape = TextFieldDefaults.TextFieldShape,
-    label: @Composable ((InteractionSource) -> Unit)? = null,
-    placeholder: @Composable (() -> Unit)? = null,
-    leadingIcon: @Composable (() -> Unit)? = null,
-    trailingIcon: @Composable (() -> Unit)? = null,
-    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+  value: TextFieldValue,
+  modifier: Modifier = Modifier,
+  onValueChange: (TextFieldValue) -> Unit,
+  fontSize: KurobaTextUnit = KurobaTextUnit(16.sp),
+  maxLines: Int = Int.MAX_VALUE,
+  singleLine: Boolean = false,
+  keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+  keyboardActions: KeyboardActions = KeyboardActions(),
+  textStyle: TextStyle = LocalTextStyle.current,
+  visualTransformation: VisualTransformation = VisualTransformation.None,
+  enabled: Boolean = true,
+  readOnly: Boolean = false,
+  isError: Boolean = false,
+  shape: Shape = TextFieldDefaults.TextFieldShape,
+  label: @Composable ((InteractionSource) -> Unit)? = null,
+  placeholder: @Composable (() -> Unit)? = null,
+  leadingIcon: @Composable (() -> Unit)? = null,
+  trailingIcon: @Composable (() -> Unit)? = null,
+  interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
 ) {
-    val chanTheme = LocalChanTheme.current
-    val view = LocalView.current
+  val chanTheme = LocalChanTheme.current
+  val view = LocalView.current
 
-    DisposableEffect(
-        key1 = view,
-        effect = {
-            if (view.isAttachedToWindow) {
-                view.requestApplyInsets()
-            }
+  DisposableEffect(
+    key1 = view,
+    effect = {
+      if (view.isAttachedToWindow) {
+        view.requestApplyInsets()
+      }
 
-            onDispose {
-                if (view.isAttachedToWindow) {
-                    view.requestApplyInsets()
-                }
-            }
+      onDispose {
+        if (view.isAttachedToWindow) {
+          view.requestApplyInsets()
         }
+      }
+    }
+  )
+
+  val textSelectionColors = remember(key1 = chanTheme.accentColor) {
+    TextSelectionColors(
+      handleColor = Color.Transparent,
+      backgroundColor = chanTheme.accentColorCompose.copy(alpha = 0.4f)
     )
+  }
 
-    val textSelectionColors = remember(key1 = chanTheme.accentColor) {
-        TextSelectionColors(
-            handleColor = Color.Transparent,
-            backgroundColor = chanTheme.accentColorCompose.copy(alpha = 0.4f)
+  CompositionLocalProvider(LocalTextSelectionColors provides textSelectionColors) {
+    val textFontSize = collectTextFontSize(defaultFontSize = fontSize)
+    val colors = chanTheme.textFieldColors()
+
+    // If color is not provided via the text style, use content color as a default
+    val textColor = textStyle.color.takeOrElse { colors.textColor(enabled).value }
+    val mergedTextStyle = textStyle.merge(TextStyle(color = textColor, fontSize = textFontSize))
+
+    val isFocused by interactionSource.collectIsFocusedAsState()
+
+    @OptIn(ExperimentalMaterialApi::class)
+    BasicTextField(
+      value = value,
+      modifier = modifier
+        .background(colors.backgroundColor(enabled).value, shape)
+        .animatedHorizontalLine(
+          enabled = enabled,
+          isError = isError,
+          isFocused = isFocused,
+          lineWidth = 2.dp
         )
-    }
+        .defaultMinSize(
+          minWidth = TextFieldDefaults.MinWidth,
+          minHeight = TextFieldDefaults.MinHeight
+        ),
+      onValueChange = onValueChange,
+      enabled = enabled,
+      readOnly = readOnly,
+      textStyle = mergedTextStyle,
+      cursorBrush = SolidColor(colors.cursorColor(isError).value),
+      visualTransformation = visualTransformation,
+      keyboardOptions = keyboardOptions,
+      keyboardActions = keyboardActions,
+      interactionSource = interactionSource,
+      singleLine = singleLine,
+      maxLines = maxLines,
+      decorationBox = @Composable { innerTextField ->
+        val labelFunc: (@Composable (() -> Unit))? = if (label == null) {
+          null
+        } else {
+          { label(interactionSource) }
+        }
 
-    CompositionLocalProvider(LocalTextSelectionColors provides textSelectionColors) {
-        val textFontSize = collectTextFontSize(defaultFontSize = fontSize)
-        val colors = chanTheme.textFieldColors()
-
-        // If color is not provided via the text style, use content color as a default
-        val textColor = textStyle.color.takeOrElse { colors.textColor(enabled).value }
-        val mergedTextStyle = textStyle.merge(TextStyle(color = textColor, fontSize = textFontSize))
-
-        val isFocused by interactionSource.collectIsFocusedAsState()
-
-        @OptIn(ExperimentalMaterialApi::class)
-        BasicTextField(
-            value = value,
-            modifier = modifier
-                .background(colors.backgroundColor(enabled).value, shape)
-                .animatedHorizontalLine(
-                    enabled = enabled,
-                    isError = isError,
-                    isFocused = isFocused,
-                    lineWidth = 2.dp
-                )
-                .defaultMinSize(
-                    minWidth = TextFieldDefaults.MinWidth,
-                    minHeight = TextFieldDefaults.MinHeight
-                ),
-            onValueChange = onValueChange,
-            enabled = enabled,
-            readOnly = readOnly,
-            textStyle = mergedTextStyle,
-            cursorBrush = SolidColor(colors.cursorColor(isError).value),
-            visualTransformation = visualTransformation,
-            keyboardOptions = keyboardOptions,
-            keyboardActions = keyboardActions,
-            interactionSource = interactionSource,
-            singleLine = singleLine,
-            maxLines = maxLines,
-            decorationBox = @Composable { innerTextField ->
-                val labelFunc: (@Composable (() -> Unit))? = if (label == null) {
-                    null
-                } else {
-                    { label(interactionSource) }
-                }
-
-                TextFieldDefaults.TextFieldDecorationBox(
-                    value = value.text,
-                    visualTransformation = visualTransformation,
-                    innerTextField = innerTextField,
-                    placeholder = placeholder,
-                    label = labelFunc,
-                    leadingIcon = leadingIcon,
-                    trailingIcon = trailingIcon,
-                    singleLine = singleLine,
-                    enabled = enabled,
-                    isError = isError,
-                    interactionSource = interactionSource,
-                    colors = colors,
-                    contentPadding = remember { PaddingValues(4.dp) }
-                )
-            }
+        TextFieldDefaults.TextFieldDecorationBox(
+          value = value.text,
+          visualTransformation = visualTransformation,
+          innerTextField = innerTextField,
+          placeholder = placeholder,
+          label = labelFunc,
+          leadingIcon = leadingIcon,
+          trailingIcon = trailingIcon,
+          singleLine = singleLine,
+          enabled = enabled,
+          isError = isError,
+          interactionSource = interactionSource,
+          colors = colors,
+          contentPadding = remember { PaddingValues(4.dp) }
         )
-    }
+      }
+    )
+  }
 }

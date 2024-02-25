@@ -11,21 +11,21 @@ import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 
 @Composable
 fun KurobaComposeButton(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    buttonContent: @Composable RowScope.() -> Unit
+  onClick: () -> Unit,
+  modifier: Modifier = Modifier,
+  enabled: Boolean = true,
+  buttonContent: @Composable RowScope.() -> Unit
 ) {
-    val chanTheme = LocalChanTheme.current
+  val chanTheme = LocalChanTheme.current
 
-    Button(
-        onClick = onClick,
-        enabled = enabled,
-        modifier = Modifier
-            .wrapContentWidth()
-            .height(36.dp)
-            .then(modifier),
-        content = buttonContent,
-        colors = chanTheme.buttonColors()
-    )
+  Button(
+    onClick = onClick,
+    enabled = enabled,
+    modifier = Modifier
+        .wrapContentWidth()
+        .height(36.dp)
+        .then(modifier),
+    content = buttonContent,
+    colors = chanTheme.buttonColors()
+  )
 }

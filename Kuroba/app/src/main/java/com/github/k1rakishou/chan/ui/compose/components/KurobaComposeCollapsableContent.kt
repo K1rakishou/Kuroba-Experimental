@@ -19,56 +19,56 @@ import com.github.k1rakishou.chan.R
 
 @Composable
 fun KurobaComposeCollapsableContent(
-    title: String,
-    collapsed: Boolean = true,
-    onCollapsedStateChanged: (Boolean) -> Unit,
-    content: @Composable ColumnScope.() -> Unit
+  title: String,
+  collapsed: Boolean = true,
+  onCollapsedStateChanged: (Boolean) -> Unit,
+  content: @Composable ColumnScope.() -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .wrapContentHeight()
-            .animateContentSize()
+  Column(
+    modifier = Modifier
+        .fillMaxWidth()
+        .wrapContentHeight()
+        .animateContentSize()
+  ) {
+    Row(
+      modifier = Modifier
+          .fillMaxWidth()
+          .wrapContentHeight()
+          .kurobaClickable(
+              bounded = true,
+              onClick = { onCollapsedStateChanged(!collapsed) }
+          ),
+      verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight()
-                .kurobaClickable(
-                    bounded = true,
-                    onClick = { onCollapsedStateChanged(!collapsed) }
-                ),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            KurobaComposeIcon(
-                modifier = Modifier
-                    .graphicsLayer { rotationZ = if (collapsed) 0f else 90f },
-                drawableId = R.drawable.ic_baseline_arrow_right_24
-            )
+      KurobaComposeIcon(
+        modifier = Modifier
+          .graphicsLayer { rotationZ = if (collapsed) 0f else 90f },
+        drawableId = R.drawable.ic_baseline_arrow_right_24
+      )
 
-            Spacer(modifier = Modifier.width(4.dp))
+      Spacer(modifier = Modifier.width(4.dp))
 
-            KurobaComposeText(text = title)
+      KurobaComposeText(text = title)
 
-            Spacer(modifier = Modifier.width(4.dp))
+      Spacer(modifier = Modifier.width(4.dp))
 
-            KurobaComposeDivider(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(1.dp)
-            )
-        }
-
-        if (!collapsed) {
-            Column(
-                modifier = Modifier
-                    .padding(
-                        horizontal = 4.dp,
-                        vertical = 2.dp
-                    )
-            ) {
-                content()
-            }
-        }
+      KurobaComposeDivider(
+        modifier = Modifier
+            .weight(1f)
+            .height(1.dp)
+      )
     }
+
+    if (!collapsed) {
+      Column(
+        modifier = Modifier
+          .padding(
+            horizontal = 4.dp,
+            vertical = 2.dp
+          )
+      ) {
+        content()
+      }
+    }
+  }
 }

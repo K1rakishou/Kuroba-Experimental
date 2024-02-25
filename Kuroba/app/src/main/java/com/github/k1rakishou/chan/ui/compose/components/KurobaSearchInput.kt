@@ -26,71 +26,72 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 
 @Composable
 fun KurobaSearchInput(
-    modifier: Modifier = Modifier,
-    chanTheme: ChanTheme,
-    onBackgroundColor: Color,
-    searchQueryState: MutableState<String>,
-    onSearchQueryChanged: (String) -> Unit,
-    labelText: String = stringResource(id = R.string.search_hint)
+  modifier: Modifier = Modifier,
+  chanTheme: ChanTheme,
+  onBackgroundColor: Color,
+  searchQueryState: MutableState<String>,
+  onSearchQueryChanged: (String) -> Unit,
+  labelText: String = stringResource(id = R.string.search_hint)
 ) {
-    var localQuery by remember { searchQueryState }
+  var localQuery by remember { searchQueryState }
 
-    Row(modifier = modifier) {
-        Row(modifier = Modifier.wrapContentHeight()) {
-            Box(modifier = Modifier
-                .wrapContentHeight()
-                .weight(1f)
-                .align(Alignment.CenterVertically)
-                .padding(horizontal = 4.dp)
-            ) {
-                val interactionSource = remember { MutableInteractionSource() }
+  Row(modifier = modifier) {
+    Row(modifier = Modifier.wrapContentHeight()) {
+      Box(
+        modifier = Modifier
+          .wrapContentHeight()
+          .weight(1f)
+          .align(Alignment.CenterVertically)
+          .padding(horizontal = 4.dp)
+      ) {
+        val interactionSource = remember { MutableInteractionSource() }
 
-                val textColor = remember(key1 = onBackgroundColor) {
-                    if (ThemeEngine.isDarkColor(onBackgroundColor)) {
-                        Color.White
-                    } else {
-                        Color.Black
-                    }
-                }
-
-                KurobaComposeCustomTextField(
-                    modifier = Modifier
-                        .wrapContentHeight()
-                        .fillMaxWidth(),
-                    textColor = textColor,
-                    parentBackgroundColor = onBackgroundColor,
-                    fontSize = 16.sp,
-                    singleLine = true,
-                    maxLines = 1,
-                    value = localQuery,
-                    labelText = labelText,
-                    onValueChange = { newValue ->
-                        localQuery = newValue
-                        onSearchQueryChanged(newValue)
-                    },
-                    interactionSource = interactionSource
-                )
-            }
-
-            AnimatedVisibility(
-                visible = localQuery.isNotEmpty(),
-                enter = fadeIn(),
-                exit = fadeOut()
-            ) {
-                KurobaComposeIcon(
-                    modifier = Modifier
-                        .align(Alignment.CenterVertically)
-                        .kurobaClickable(
-                            bounded = false,
-                            onClick = {
-                                localQuery = ""
-                                onSearchQueryChanged("")
-                            }
-                        ),
-                    drawableId = R.drawable.ic_clear_white_24dp,
-                    colorBehindIcon = chanTheme.primaryColorCompose
-                )
-            }
+        val textColor = remember(key1 = onBackgroundColor) {
+          if (ThemeEngine.isDarkColor(onBackgroundColor)) {
+            Color.White
+          } else {
+            Color.Black
+          }
         }
+
+        KurobaComposeCustomTextField(
+          modifier = Modifier
+            .wrapContentHeight()
+            .fillMaxWidth(),
+          textColor = textColor,
+          parentBackgroundColor = onBackgroundColor,
+          fontSize = 16.sp,
+          singleLine = true,
+          maxLines = 1,
+          value = localQuery,
+          labelText = labelText,
+          onValueChange = { newValue ->
+            localQuery = newValue
+            onSearchQueryChanged(newValue)
+          },
+          interactionSource = interactionSource
+        )
+      }
+
+      AnimatedVisibility(
+        visible = localQuery.isNotEmpty(),
+        enter = fadeIn(),
+        exit = fadeOut()
+      ) {
+        KurobaComposeIcon(
+          modifier = Modifier
+            .align(Alignment.CenterVertically)
+            .kurobaClickable(
+              bounded = false,
+              onClick = {
+                localQuery = ""
+                onSearchQueryChanged("")
+              }
+            ),
+          drawableId = R.drawable.ic_clear_white_24dp,
+          colorBehindIcon = chanTheme.primaryColorCompose
+        )
+      }
     }
+  }
 }

@@ -21,62 +21,62 @@ import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 
 @Composable
 fun KurobaComposeClickableText(
-    text: AnnotatedString,
-    modifier: Modifier = Modifier,
-    color: Color? = null,
-    fontSize: TextUnit = TextUnit.Unspecified,
-    fontWeight: FontWeight? = null,
-    maxLines: Int = Int.MAX_VALUE,
-    overflow: TextOverflow = TextOverflow.Clip,
-    softWrap: Boolean = true,
-    textAlign: TextAlign? = null,
-    inlineContent: Map<String, InlineTextContent> = mapOf(),
-    onTextClicked: (TextLayoutResult, Int) -> Boolean
+  text: AnnotatedString,
+  modifier: Modifier = Modifier,
+  color: Color? = null,
+  fontSize: TextUnit = TextUnit.Unspecified,
+  fontWeight: FontWeight? = null,
+  maxLines: Int = Int.MAX_VALUE,
+  overflow: TextOverflow = TextOverflow.Clip,
+  softWrap: Boolean = true,
+  textAlign: TextAlign? = null,
+  inlineContent: Map<String, InlineTextContent> = mapOf(),
+  onTextClicked: (TextLayoutResult, Int) -> Boolean
 ) {
-    val textColorPrimary = if (color == null) {
-        val chanTheme = LocalChanTheme.current
+  val textColorPrimary = if (color == null) {
+    val chanTheme = LocalChanTheme.current
 
-        remember(key1 = chanTheme.textColorPrimary) {
-            Color(chanTheme.textColorPrimary)
-        }
-    } else {
-        color
+    remember(key1 = chanTheme.textColorPrimary) {
+      Color(chanTheme.textColorPrimary)
     }
+  } else {
+    color
+  }
 
-    val layoutResult = remember { mutableStateOf<TextLayoutResult?>(null) }
+  val layoutResult = remember { mutableStateOf<TextLayoutResult?>(null) }
 
-    val pressIndicatorModifier = Modifier.pointerInput(key1 = onTextClicked) {
-        forEachGesture {
-            awaitPointerEventScope {
-                val downPointerInputChange = awaitFirstDown()
+  val pressIndicatorModifier = Modifier.pointerInput(key1 = onTextClicked) {
+    forEachGesture {
+      awaitPointerEventScope {
+        val downPointerInputChange = awaitFirstDown()
 
-                val upOrCancelPointerInputChange = waitForUpOrCancellation()
-                    ?: return@awaitPointerEventScope
+        val upOrCancelPointerInputChange = waitForUpOrCancellation()
+          ?: return@awaitPointerEventScope
 
-                val result = layoutResult.value
-                    ?: return@awaitPointerEventScope
+        val result = layoutResult.value
+          ?: return@awaitPointerEventScope
 
-                val offset = result.getOffsetForPosition(upOrCancelPointerInputChange.position)
+        val offset = result.getOffsetForPosition(upOrCancelPointerInputChange.position)
 
-                if (onTextClicked.invoke(result, offset)) {
-                    downPointerInputChange.consumeAllChanges()
-                    upOrCancelPointerInputChange.consumeAllChanges()
-                }
-            }
+        if (onTextClicked.invoke(result, offset)) {
+          downPointerInputChange.consumeAllChanges()
+          upOrCancelPointerInputChange.consumeAllChanges()
         }
+      }
     }
+  }
 
-    ComposeText(
-        color = textColorPrimary,
-        text = text,
-        fontSize = fontSize,
-        maxLines = maxLines,
-        overflow = overflow,
-        softWrap = softWrap,
-        textAlign = textAlign,
-        fontWeight = fontWeight,
-        inlineContent = inlineContent,
-        modifier = modifier.then(pressIndicatorModifier),
-        onTextLayout = { textLayoutResult -> layoutResult.value = textLayoutResult }
-    )
+  ComposeText(
+    color = textColorPrimary,
+    text = text,
+    fontSize = fontSize,
+    maxLines = maxLines,
+    overflow = overflow,
+    softWrap = softWrap,
+    textAlign = textAlign,
+    fontWeight = fontWeight,
+    inlineContent = inlineContent,
+    modifier = modifier.then(pressIndicatorModifier),
+    onTextLayout = { textLayoutResult -> layoutResult.value = textLayoutResult }
+  )
 }

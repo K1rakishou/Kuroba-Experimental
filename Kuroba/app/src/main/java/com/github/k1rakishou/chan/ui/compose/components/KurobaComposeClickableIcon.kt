@@ -15,37 +15,37 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 
 @Composable
 fun KurobaComposeClickableIcon(
-    @DrawableRes drawableId: Int,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    colorBehindIcon: Color? = null,
-    onClick: () -> Unit
+  @DrawableRes drawableId: Int,
+  modifier: Modifier = Modifier,
+  enabled: Boolean = true,
+  colorBehindIcon: Color? = null,
+  onClick: () -> Unit
 ) {
-    val chanTheme = LocalChanTheme.current
-    val tintColor = remember(key1 = chanTheme) {
-        if (colorBehindIcon == null) {
-            Color(ThemeEngine.resolveDrawableTintColor(chanTheme))
-        } else {
-            Color(ThemeEngine.resolveDrawableTintColor(ThemeEngine.isDarkColor(colorBehindIcon.value)))
-        }
-    }
-
-    val alpha = if (enabled) DefaultAlpha else ContentAlpha.disabled
-
-    val clickModifier = if (enabled) {
-        Modifier.kurobaClickable(
-            bounded = false,
-            onClick = { onClick() }
-        )
+  val chanTheme = LocalChanTheme.current
+  val tintColor = remember(key1 = chanTheme) {
+    if (colorBehindIcon == null) {
+      Color(ThemeEngine.resolveDrawableTintColor(chanTheme))
     } else {
-        Modifier
+      Color(ThemeEngine.resolveDrawableTintColor(ThemeEngine.isDarkColor(colorBehindIcon.value)))
     }
+  }
 
-    Image(
-        modifier = clickModifier.then(modifier),
-        painter = painterResource(id = drawableId),
-        colorFilter = ColorFilter.tint(tintColor),
-        alpha = alpha,
-        contentDescription = null
+  val alpha = if (enabled) DefaultAlpha else ContentAlpha.disabled
+
+  val clickModifier = if (enabled) {
+    Modifier.kurobaClickable(
+      bounded = false,
+      onClick = { onClick() }
     )
+  } else {
+    Modifier
+  }
+
+  Image(
+    modifier = clickModifier.then(modifier),
+    painter = painterResource(id = drawableId),
+    colorFilter = ColorFilter.tint(tintColor),
+    alpha = alpha,
+    contentDescription = null
+  )
 }
