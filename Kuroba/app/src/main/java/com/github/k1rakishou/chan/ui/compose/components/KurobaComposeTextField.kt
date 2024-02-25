@@ -85,18 +85,21 @@ fun KurobaComposeTextField(
   CompositionLocalProvider(LocalTextSelectionColors provides textSelectionColors) {
     val textFontSize = collectTextFontSize(defaultFontSize = fontSize)
     val colors = chanTheme.textFieldColors()
-
-    // If color is not provided via the text style, use content color as a default
     val textColor = textStyle.color.takeOrElse { colors.textColor(enabled).value }
-    val mergedTextStyle = textStyle.merge(TextStyle(color = textColor, fontSize = textFontSize))
+
+    val mergedTextStyle = remember(textStyle, textColor, textFontSize) {
+      textStyle.merge(TextStyle(color = textColor, fontSize = textFontSize))
+    }
 
     val isFocused by interactionSource.collectIsFocusedAsState()
+    val backgroundColor by colors.backgroundColor(enabled)
+    val cursorColor by colors.cursorColor(isError)
 
     @OptIn(ExperimentalMaterialApi::class)
     BasicTextField(
       value = value,
       modifier = modifier
-        .background(colors.backgroundColor(enabled).value, shape)
+        .background(backgroundColor, shape)
         .animatedHorizontalLine(
           enabled = enabled,
           isError = isError,
@@ -104,14 +107,14 @@ fun KurobaComposeTextField(
           lineWidth = 2.dp
         )
         .defaultMinSize(
-          minWidth = TextFieldDefaults.MinWidth,
-          minHeight = TextFieldDefaults.MinHeight
+          minWidth = KurobaComposeDefaults.TextFieldMinWidth,
+          minHeight = KurobaComposeDefaults.TextFieldMinHeight
         ),
       onValueChange = onValueChange,
       enabled = enabled,
       readOnly = readOnly,
       textStyle = mergedTextStyle,
-      cursorBrush = SolidColor(colors.cursorColor(isError).value),
+      cursorBrush = remember(cursorColor) { SolidColor(cursorColor) },
       visualTransformation = visualTransformation,
       keyboardOptions = keyboardOptions,
       keyboardActions = keyboardActions,
@@ -195,18 +198,21 @@ fun KurobaComposeTextField(
   CompositionLocalProvider(LocalTextSelectionColors provides textSelectionColors) {
     val textFontSize = collectTextFontSize(defaultFontSize = fontSize)
     val colors = chanTheme.textFieldColors()
-
-    // If color is not provided via the text style, use content color as a default
     val textColor = textStyle.color.takeOrElse { colors.textColor(enabled).value }
-    val mergedTextStyle = textStyle.merge(TextStyle(color = textColor, fontSize = textFontSize))
+
+    val mergedTextStyle = remember(textStyle, textColor, textFontSize) {
+      textStyle.merge(TextStyle(color = textColor, fontSize = textFontSize))
+    }
 
     val isFocused by interactionSource.collectIsFocusedAsState()
+    val backgroundColor by colors.backgroundColor(enabled)
+    val cursorColor by colors.cursorColor(isError)
 
     @OptIn(ExperimentalMaterialApi::class)
     BasicTextField(
       value = value,
       modifier = modifier
-        .background(colors.backgroundColor(enabled).value, shape)
+        .background(backgroundColor, shape)
         .animatedHorizontalLine(
           enabled = enabled,
           isError = isError,
@@ -214,14 +220,14 @@ fun KurobaComposeTextField(
           lineWidth = 2.dp
         )
         .defaultMinSize(
-          minWidth = TextFieldDefaults.MinWidth,
-          minHeight = TextFieldDefaults.MinHeight
+          minWidth = KurobaComposeDefaults.TextFieldMinWidth,
+          minHeight = KurobaComposeDefaults.TextFieldMinHeight
         ),
       onValueChange = onValueChange,
       enabled = enabled,
       readOnly = readOnly,
       textStyle = mergedTextStyle,
-      cursorBrush = SolidColor(colors.cursorColor(isError).value),
+      cursorBrush = remember(cursorColor) { SolidColor(cursorColor) },
       visualTransformation = visualTransformation,
       keyboardOptions = keyboardOptions,
       keyboardActions = keyboardActions,

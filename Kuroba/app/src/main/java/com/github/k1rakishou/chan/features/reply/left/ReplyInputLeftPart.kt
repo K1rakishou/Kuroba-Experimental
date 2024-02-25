@@ -37,7 +37,6 @@ internal fun ReplyInputLeftPart(
   val replyLayoutEnabled = when (sendReplyState) {
     SendReplyState.Started,
     is SendReplyState.ReplySent -> false
-
     is SendReplyState.Finished -> true
   }
 

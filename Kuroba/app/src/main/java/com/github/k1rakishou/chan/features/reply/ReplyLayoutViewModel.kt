@@ -18,8 +18,10 @@ import com.github.k1rakishou.chan.features.reply.data.ReplyAttachable
 import com.github.k1rakishou.chan.features.reply.data.ReplyFile
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutState
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
+import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.ThreadControllerType
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
@@ -43,6 +45,9 @@ class ReplyLayoutViewModel(
 ) : BaseViewModel() {
   private val _replyManagerStateLoaded = AtomicBoolean(false)
 
+  private val _boundCatalogDescriptor = mutableStateOf<ChanDescriptor.ICatalogDescriptor?>(null)
+  private val _boundThreadDescriptor = mutableStateOf<ChanDescriptor.ThreadDescriptor?>(null)
+
   private val _boundChanDescriptor = mutableStateOf<ChanDescriptor?>(null)
   val boundChanDescriptor: State<ChanDescriptor?>
     get() = _boundChanDescriptor
@@ -56,20 +61,31 @@ class ReplyLayoutViewModel(
   private val replyManager: ReplyManager
     get() = replyManagerLazy.get()
 
+  private val threadControllerType by lazy {
+    requireNotNull(savedStateHandle.get<ThreadControllerType>(ThreadControllerTypeParam)) {
+      "'${ThreadControllerTypeParam}' was not passed as a parameter of this ViewModel"
+    }
+  }
+
   override fun injectDependencies(component: ViewModelComponent) {
     component.inject(this)
   }
 
   override suspend fun onViewModelReady() {
+    Logger.debug(TAG) {
+      "onViewModelReady() threadControllerType: ${threadControllerType}, instance: ${this.hashCode()}"
+    }
+
     viewModelScope.launch { reloadReplyManagerState() }
   }
 
   suspend fun bindChanDescriptor(chanDescriptor: ChanDescriptor) {
     replyManager.awaitUntilFilesAreLoaded()
 
-    _replyLayoutStates[chanDescriptor]
-      ?.unbindChanDescriptor(chanDescriptor)
-    _boundChanDescriptor.value = chanDescriptor
+    when (chanDescriptor) {
+      is ChanDescriptor.ICatalogDescriptor -> _boundCatalogDescriptor.value = chanDescriptor
+      is ChanDescriptor.ThreadDescriptor -> _boundThreadDescriptor.value = chanDescriptor
+    }
 
     if (_replyLayoutStates.containsKey(chanDescriptor)) {
       return
@@ -231,6 +247,11 @@ class ReplyLayoutViewModel(
         imageLoaderV2Lazy = imageLoaderV2Lazy
       )
     }
+  }
+
+  companion object {
+    private const val TAG = "ReplyLayoutViewModel"
+    const val ThreadControllerTypeParam = "thread_controller_type"
   }
 
 }

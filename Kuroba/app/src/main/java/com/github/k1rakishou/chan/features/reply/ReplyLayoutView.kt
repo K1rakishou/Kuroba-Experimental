@@ -4,9 +4,13 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.ComposeView
+import androidx.core.os.bundleOf
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
 import com.github.k1rakishou.chan.ui.compose.providers.ProvideEverythingForCompose
+import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
 import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.common.requireComponentActivity
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -21,9 +25,8 @@ class ReplyLayoutView @JvmOverloads constructor(
 ) : FrameLayout(context, attributeSet, defAttrStyle), ReplyLayoutViewCallbacks {
   private val composeView: ComposeView
 
-  private val replyLayoutViewModel by lazy(LazyThreadSafetyMode.NONE) {
-    context.requireComponentActivity().viewModelByKey<ReplyLayoutViewModel>()
-  }
+  private val _readyState = mutableStateOf(false)
+  private lateinit var replyLayoutViewModel: ReplyLayoutViewModel
 
   init {
     removeAllViews()
@@ -38,9 +41,22 @@ class ReplyLayoutView @JvmOverloads constructor(
 
     composeView.setContent {
       ProvideEverythingForCompose {
-        ReplyLayout()
+        val ready by _readyState
+        if (!ready) {
+          return@ProvideEverythingForCompose
+        }
+
+        ReplyLayout(replyLayoutViewModel)
       }
     }
+  }
+
+  fun onCreate(threadControllerType: ThreadSlideController.ThreadControllerType) {
+    replyLayoutViewModel = context.requireComponentActivity().viewModelByKey<ReplyLayoutViewModel>(
+      key = threadControllerType.name,
+      defaultArgs = bundleOf(ReplyLayoutViewModel.ThreadControllerTypeParam to threadControllerType)
+    )
+    _readyState.value = true
   }
 
   override suspend fun bindChanDescriptor(descriptor: ChanDescriptor) {

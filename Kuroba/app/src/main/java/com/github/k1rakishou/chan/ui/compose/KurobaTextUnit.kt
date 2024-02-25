@@ -49,21 +49,15 @@ fun collectTextFontSize(defaultFontSize: KurobaTextUnit): TextUnit {
   }
 
   val coroutineScope = rememberCoroutineScope()
-
-  var globalFontSizeMultiplier by remember {
-    val fontSizeMultiplier = calculateFontSizeMultiplier()
-
-    mutableFloatStateOf(fontSizeMultiplier / 100f)
-  }
+  var globalFontSizeMultiplier by remember { mutableFloatStateOf(calculateFontSizeMultiplier()) }
 
   LaunchedEffect(
     key1 = Unit,
     block = {
       coroutineScope.launch {
         ChanSettings.fontSize.listenForChanges().asFlow()
-          .collectLatest { value ->
-            val fontSizeMultiplier = calculateFontSizeMultiplier()
-            globalFontSizeMultiplier = fontSizeMultiplier / 100f
+          .collectLatest {
+            globalFontSizeMultiplier = calculateFontSizeMultiplier()
           }
       }
     }

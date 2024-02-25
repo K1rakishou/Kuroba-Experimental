@@ -67,7 +67,7 @@ public class StringSetting extends Setting<String> {
     public void remove() {
         settingProvider.removeSync(key);
         hasCached = false;
-        cached = null;
+        cached = def;
         settingState.onNext(def);
     }
 

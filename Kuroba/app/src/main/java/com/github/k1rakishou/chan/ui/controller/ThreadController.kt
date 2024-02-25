@@ -154,7 +154,7 @@ abstract class ThreadController(
   override val toolbar: Toolbar?
     get() = (navigationController as? ToolbarNavigationController)?.toolbar
 
-  abstract val threadControllerType: ThreadSlideController.ThreadControllerType
+  abstract override val threadControllerType: ThreadSlideController.ThreadControllerType
 
   override fun onCreate() {
     super.onCreate()

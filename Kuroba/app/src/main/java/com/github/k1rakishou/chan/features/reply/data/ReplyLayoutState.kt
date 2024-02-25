@@ -101,10 +101,6 @@ class ReplyLayoutState(
     }
   }
 
-  suspend fun unbindChanDescriptor(chanDescriptor: ChanDescriptor) {
-
-  }
-
   fun collapseReplyLayout() {
     if (_replyLayoutVisibility.value != ReplyLayoutVisibility.Collapsed) {
       _replyLayoutVisibility.value = ReplyLayoutVisibility.Collapsed

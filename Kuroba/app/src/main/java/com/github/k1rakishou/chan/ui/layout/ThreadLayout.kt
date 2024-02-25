@@ -280,7 +280,7 @@ class ThreadLayout @JvmOverloads constructor(
 
     // View setup
     presenter.create(context, this)
-    threadListLayout.onCreate(presenter, this, navigationViewContractType)
+    threadListLayout.onCreate(presenter, this, navigationViewContractType, threadControllerType)
     postPopupHelper = PostPopupHelper(context, presenter, _chanThreadManager, this)
     imageReencodingHelper = ImageOptionsHelper(context, this)
     removedPostsHelper = RemovedPostsHelper(context, presenter, this)
@@ -1470,6 +1470,7 @@ class ThreadLayout @JvmOverloads constructor(
 
   interface ThreadLayoutCallback {
     val toolbar: Toolbar?
+    val threadControllerType: ThreadSlideController.ThreadControllerType
 
     suspend fun showThread(descriptor: ChanDescriptor.ThreadDescriptor, animated: Boolean)
     suspend fun showThreadWithoutFocusing(descriptor: ChanDescriptor.ThreadDescriptor, animated: Boolean)

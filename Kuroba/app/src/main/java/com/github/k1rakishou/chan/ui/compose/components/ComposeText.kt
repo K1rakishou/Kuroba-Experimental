@@ -14,13 +14,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
+import com.github.k1rakishou.chan.ui.compose.collectTextFontSize
 
 @Composable
 internal fun ComposeText(
   text: String,
   modifier: Modifier = Modifier,
   color: Color = Color.Unspecified,
-  fontSize: TextUnit = TextUnit.Unspecified,
+  fontSize: TextUnit,
   maxLines: Int = Int.MAX_VALUE,
   overflow: TextOverflow = TextOverflow.Clip,
   softWrap: Boolean = true,
@@ -29,11 +30,13 @@ internal fun ComposeText(
   onTextLayout: (TextLayoutResult) -> Unit = {},
   style: TextStyle = LocalTextStyle.current
 ) {
+  val textFontSize = collectTextFontSize(defaultFontSize = fontSize)
+
   Text(
     modifier = modifier,
     color = color,
     text = text,
-    fontSize = fontSize,
+    fontSize = textFontSize,
     maxLines = maxLines,
     overflow = overflow,
     softWrap = softWrap,
@@ -49,7 +52,7 @@ internal fun ComposeText(
   text: AnnotatedString,
   modifier: Modifier = Modifier,
   color: Color = Color.Unspecified,
-  fontSize: TextUnit = TextUnit.Unspecified,
+  fontSize: TextUnit,
   maxLines: Int = Int.MAX_VALUE,
   overflow: TextOverflow = TextOverflow.Clip,
   softWrap: Boolean = true,
@@ -59,11 +62,13 @@ internal fun ComposeText(
   onTextLayout: (TextLayoutResult) -> Unit = {},
   style: TextStyle = LocalTextStyle.current
 ) {
+  val textFontSize = collectTextFontSize(defaultFontSize = fontSize)
+
   Text(
     modifier = modifier,
     color = color,
     text = text,
-    fontSize = fontSize,
+    fontSize = textFontSize,
     maxLines = maxLines,
     overflow = overflow,
     softWrap = softWrap,

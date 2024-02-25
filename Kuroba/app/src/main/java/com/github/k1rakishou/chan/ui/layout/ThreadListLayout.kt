@@ -58,6 +58,7 @@ import com.github.k1rakishou.chan.ui.cell.PreviousThreadScrollPositionData
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
+import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.ThreadControllerType
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.view.FastScroller
 import com.github.k1rakishou.chan.ui.view.FastScrollerHelper
@@ -384,7 +385,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   fun onCreate(
     threadPresenter: ThreadPresenter,
     threadListLayoutCallback: ThreadListLayoutCallback,
-    navigationViewContractType: NavigationViewContract.Type
+    navigationViewContractType: NavigationViewContract.Type,
+    threadControllerType: ThreadControllerType
   ) {
     this.callback = threadPresenter
     this.threadPresenter = threadPresenter
@@ -393,6 +395,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
     listScrollToBottomExecutor = RendezvousCoroutineExecutor(this)
     serializedCoroutineExecutor = SerializedCoroutineExecutor(this)
+
+    replyLayoutView.onCreate(threadControllerType)
 
     postAdapter = PostAdapter(
       recyclerView,
