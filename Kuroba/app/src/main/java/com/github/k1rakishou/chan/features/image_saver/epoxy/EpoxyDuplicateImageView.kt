@@ -23,10 +23,6 @@ import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.image.GrayscaleTransformation
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.image.InputFile
-import com.github.k1rakishou.chan.features.image_saver.DupImage
-import com.github.k1rakishou.chan.features.image_saver.IDuplicateImage
-import com.github.k1rakishou.chan.features.image_saver.LocalImage
-import com.github.k1rakishou.chan.features.image_saver.ServerImage
 import com.github.k1rakishou.chan.ui.view.SelectionCheckView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
@@ -39,7 +35,7 @@ import okhttp3.HttpUrl
 import javax.inject.Inject
 
 @ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT)
-internal class EpoxyDuplicateImageView  @JvmOverloads constructor(
+class EpoxyDuplicateImageView  @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0

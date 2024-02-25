@@ -360,7 +360,12 @@ class ThreadLayout @JvmOverloads constructor(
       return false
     }
 
-    threadListLayout.openReply(openReplyLayout)
+    if (openReplyLayout) {
+      threadListLayout.openReplyLayout()
+    } else {
+      threadListLayout.closeReplyLayout()
+    }
+
     return true
   }
 
@@ -1207,7 +1212,7 @@ class ThreadLayout @JvmOverloads constructor(
     }
   }
 
-  fun isReplyLayoutOpen(): Boolean = threadListLayout.replyOpen
+  fun isReplyLayoutOpen(): Boolean = threadListLayout.isReplyLayoutOpened()
 
   fun getThumbnail(postImage: ChanPostImage?): ThumbnailView? {
     return if (postPopupHelper.isOpen) {

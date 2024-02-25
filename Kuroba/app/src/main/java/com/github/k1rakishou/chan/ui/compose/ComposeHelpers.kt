@@ -24,6 +24,7 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -387,7 +388,16 @@ fun FocusRequester.freeFocusSafe() {
     // Sometimes crashes
     freeFocus()
   } catch (ignored: Throwable) {
+    // no-op
+  }
+}
 
+fun FocusManager.clearFocusSafe(force: Boolean = false) {
+  try {
+    // Sometimes crashes
+    clearFocus(force)
+  } catch (ignored: Throwable) {
+    // no-op
   }
 }
 

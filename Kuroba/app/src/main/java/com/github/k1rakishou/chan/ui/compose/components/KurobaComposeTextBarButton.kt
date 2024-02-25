@@ -10,8 +10,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
-import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
-import java.util.Locale
+import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
+import java.util.*
 
 @Composable
 fun KurobaComposeTextBarButton(

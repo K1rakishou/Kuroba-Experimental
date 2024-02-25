@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.Checkbox
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -16,7 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
+import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 
 @Composable
 fun KurobaComposeCheckbox(
@@ -42,7 +41,7 @@ fun KurobaComposeCheckbox(
             .clickable(
                 enabled = enabled,
                 interactionSource = remember { MutableInteractionSource() },
-                indication = rememberRipple(bounded = true, color = color),
+                indication = rememberKurobaRipple(bounded = true, color = color),
                 onClick = {
                     isChecked = isChecked.not()
                     onCheckChanged(isChecked)

@@ -112,8 +112,8 @@ import com.github.k1rakishou.chan.features.thread_downloading.LocalArchiveContro
 import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequest
 import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequestData
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeImage
-import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
-import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
+import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
+import com.github.k1rakishou.chan.ui.compose.providers.ProvideEverythingForCompose
 import com.github.k1rakishou.chan.ui.compose.bottom_panel.KurobaComposeIconPanel
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeErrorMessage
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeIcon
@@ -401,7 +401,7 @@ class MainController(
 
     val drawerComposeView = view.findViewById<ComposeView>(R.id.drawer_compose_view)
     drawerComposeView.setContent {
-      ProvideChanTheme(themeEngine, globalWindowInsetsManager) {
+      ProvideEverythingForCompose {
         val chanTheme = LocalChanTheme.current
         val bgColor = chanTheme.backColorCompose
 

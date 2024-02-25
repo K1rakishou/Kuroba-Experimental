@@ -46,10 +46,10 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
-import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
-import com.github.k1rakishou.chan.ui.compose.LocalWindowInsets
-import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
+import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
+import com.github.k1rakishou.chan.ui.compose.providers.LocalWindowInsets
+import com.github.k1rakishou.chan.ui.compose.providers.ProvideEverythingForCompose
 import com.github.k1rakishou.chan.ui.compose.verticalScrollbar
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem
@@ -104,7 +104,7 @@ class LogsController(context: Context) : Controller(context) {
     view = ComposeView(context)
       .also { composeView ->
         composeView.setContent {
-          ProvideChanTheme(themeEngine, globalWindowInsetsManager) {
+          ProvideEverythingForCompose {
             ControllerContent()
           }
         }

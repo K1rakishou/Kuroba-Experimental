@@ -13,6 +13,7 @@ import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.activity.ActivityModule
+import com.github.k1rakishou.chan.core.di.module.activity.IHasActivityComponent
 import com.github.k1rakishou.chan.core.di.module.viewmodel.IHasViewModelProviderFactory
 import com.github.k1rakishou.chan.core.helper.AppRestarter
 import com.github.k1rakishou.chan.core.manager.ApplicationCrashNotifier
@@ -32,7 +33,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
-class SharingActivity : AppCompatActivity(), IHasViewModelProviderFactory {
+class SharingActivity : AppCompatActivity(), IHasViewModelProviderFactory, IHasActivityComponent {
 
   @Inject
   lateinit var imagePickHelper: ImagePickHelper
@@ -49,12 +50,8 @@ class SharingActivity : AppCompatActivity(), IHasViewModelProviderFactory {
 
   private val mainScope = KurobaCoroutineScope()
 
-  private lateinit var activityComponent: ActivityComponent
+  override lateinit var activityComponent: ActivityComponent
   private lateinit var viewModelComponent: ViewModelComponent
-
-  fun getActivityComponent(): ActivityComponent {
-    return activityComponent
-  }
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)

@@ -61,7 +61,7 @@ internal class SearchPostInfo(
 
 }
 
-internal data class ThumbnailInfo(
+data class ThumbnailInfo(
   val thumbnailUrl: HttpUrl
 )
 

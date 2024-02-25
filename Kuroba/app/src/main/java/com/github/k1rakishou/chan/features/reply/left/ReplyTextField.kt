@@ -35,7 +35,8 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.site.parser.CommentParserHelper
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutState
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
-import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
+import com.github.k1rakishou.chan.ui.compose.clearFocusSafe
+import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextField
 import com.github.k1rakishou.chan.ui.compose.components.KurobaLabelText
 import com.github.k1rakishou.chan.ui.compose.freeFocusSafe
@@ -100,7 +101,7 @@ internal fun ReplyTextField(
         replyLayoutVisibility == ReplyLayoutVisibility.Expanded
       ) {
         focusRequester.freeFocusSafe()
-        focusManager.clearFocus()
+        focusManager.clearFocusSafe()
       }
 
       prevReplyLayoutVisibility = replyLayoutVisibility

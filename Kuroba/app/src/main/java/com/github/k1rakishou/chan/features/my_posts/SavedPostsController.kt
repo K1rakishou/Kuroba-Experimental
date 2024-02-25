@@ -40,8 +40,8 @@ import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
-import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
-import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
+import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
+import com.github.k1rakishou.chan.ui.compose.providers.ProvideEverythingForCompose
 import com.github.k1rakishou.chan.ui.compose.SelectableItem
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeErrorMessage
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeProgressIndicator
@@ -152,7 +152,7 @@ class SavedPostsController(
 
     view = ComposeView(context).apply {
       setContent {
-        ProvideChanTheme(themeEngine, globalWindowInsetsManager) {
+        ProvideEverythingForCompose {
           Box(modifier = Modifier.fillMaxSize()) {
             BuildContent()
           }

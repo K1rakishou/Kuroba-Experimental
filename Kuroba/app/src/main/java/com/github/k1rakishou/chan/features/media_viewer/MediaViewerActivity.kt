@@ -59,19 +59,11 @@ class MediaViewerActivity : ControllerHostActivity(),
   @Inject
   lateinit var applicationCrashNotifier: ApplicationCrashNotifier
 
-  private lateinit var activityComponent: ActivityComponent
+  override lateinit var activityComponent: ActivityComponent
   private lateinit var viewModelComponent: ViewModelComponent
   private lateinit var mediaViewerController: MediaViewerController
 
   private val viewModel by lazy { requireComponentActivity().viewModelByKey<MediaViewerControllerViewModel>() }
-
-  fun getActivityComponent(): ActivityComponent {
-    return activityComponent
-  }
-
-  fun getViewModelComponent(): ViewModelComponent {
-    return viewModelComponent
-  }
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)

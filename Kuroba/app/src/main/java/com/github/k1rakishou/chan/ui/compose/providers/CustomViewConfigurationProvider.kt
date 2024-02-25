@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.ui.compose
+package com.github.k1rakishou.chan.ui.compose.providers
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider

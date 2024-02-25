@@ -72,8 +72,6 @@ import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.core.usecase.ExportFiltersUseCase
 import com.github.k1rakishou.chan.core.usecase.ImportFiltersUseCase
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
-import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
-import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
 import com.github.k1rakishou.chan.ui.compose.SelectableItem
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeClickableText
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeIcon
@@ -81,6 +79,8 @@ import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeProgressInd
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeSwitch
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
+import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
+import com.github.k1rakishou.chan.ui.compose.providers.ProvideEverythingForCompose
 import com.github.k1rakishou.chan.ui.compose.reorder.ReorderableState
 import com.github.k1rakishou.chan.ui.compose.reorder.detectReorder
 import com.github.k1rakishou.chan.ui.compose.reorder.draggedItem
@@ -216,7 +216,7 @@ class FiltersController(
 
     view = ComposeView(context).apply {
       setContent {
-        ProvideChanTheme(themeEngine, globalWindowInsetsManager) {
+        ProvideEverythingForCompose {
           val chanTheme = LocalChanTheme.current
 
           Box(

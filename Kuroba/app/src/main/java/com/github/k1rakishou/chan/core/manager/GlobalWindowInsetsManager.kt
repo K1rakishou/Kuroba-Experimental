@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.OnApplyWindowInsetsListener
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import com.github.k1rakishou.chan.ui.compose.KurobaWindowInsets
+import com.github.k1rakishou.chan.ui.compose.providers.KurobaWindowInsets
 import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBias
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.pxToDp
 import com.github.k1rakishou.common.AndroidUtils

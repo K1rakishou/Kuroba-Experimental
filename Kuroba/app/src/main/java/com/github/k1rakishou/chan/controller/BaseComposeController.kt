@@ -17,8 +17,8 @@ import androidx.lifecycle.ViewModel
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
-import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
-import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
+import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
+import com.github.k1rakishou.chan.ui.compose.providers.ProvideEverythingForCompose
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.core_themes.ThemeEngine
 import javax.inject.Inject
@@ -48,7 +48,7 @@ abstract class BaseComposeController<VM : ViewModel>(
 
         view = ComposeView(context).apply {
             setContent {
-                ProvideChanTheme(themeEngine, globalWindowInsetsManager) {
+                ProvideEverythingForCompose {
                     val chanTheme = LocalChanTheme.current
 
                     Box(

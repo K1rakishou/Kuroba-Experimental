@@ -8,16 +8,24 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
-import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
+import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeDivider
 import com.github.k1rakishou.chan.ui.compose.rememberViewModel
-import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 
 @Composable
-fun ReplyLayout(chanDescriptor: ChanDescriptor) {
+fun ReplyLayout() {
   val replyLayoutViewModel = rememberViewModel<ReplyLayoutViewModel>()
 
-  val replyLayoutState = replyLayoutViewModel.replyLayoutStates.get(chanDescriptor)
+  val chanDescriptorMut by replyLayoutViewModel.boundChanDescriptor
+  val chanDescriptor = chanDescriptorMut
+
+  if (chanDescriptor == null) {
+    return
+  }
+
+  val replyLayoutStateMut = replyLayoutViewModel.replyLayoutStates[chanDescriptor]
+  val replyLayoutState = replyLayoutStateMut
+
   if (replyLayoutState == null) {
     return
   }

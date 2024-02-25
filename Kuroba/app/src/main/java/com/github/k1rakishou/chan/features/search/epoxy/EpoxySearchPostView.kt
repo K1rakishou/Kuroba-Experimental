@@ -20,8 +20,7 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.google.android.material.textview.MaterialTextView
 import javax.inject.Inject
 
-@ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT)
-internal class EpoxySearchPostView @JvmOverloads constructor(
+@ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT) class EpoxySearchPostView @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0

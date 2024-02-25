@@ -3,7 +3,7 @@ package com.github.k1rakishou.chan.features.reply.left
 import androidx.compose.runtime.Composable
 import com.github.k1rakishou.chan.features.reply.ReplyLayoutViewModel
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutState
-import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
+import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 
 @Composable

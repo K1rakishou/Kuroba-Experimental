@@ -10,6 +10,10 @@ import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
+import com.github.k1rakishou.chan.features.image_saver.epoxy.DupImage
+import com.github.k1rakishou.chan.features.image_saver.epoxy.LocalImage
+import com.github.k1rakishou.chan.features.image_saver.epoxy.ResolveDuplicateImagesState
+import com.github.k1rakishou.chan.features.image_saver.epoxy.ServerImage
 import com.github.k1rakishou.chan.features.image_saver.epoxy.epoxyDuplicateImageView
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity
@@ -33,7 +37,6 @@ import com.github.k1rakishou.persist_state.ImageSaverV2Options
 import com.github.k1rakishou.persist_state.IndexAndTop
 import com.google.gson.Gson
 import dagger.Lazy
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 

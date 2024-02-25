@@ -8,7 +8,6 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.KurobaDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.ObsoleteCoroutinesApi
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -17,7 +16,6 @@ import java.util.concurrent.Executors
 abstract class AbstractRepository(
   private val database: KurobaDatabase
 ) {
-  @OptIn(ObsoleteCoroutinesApi::class)
   private val dbDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
 
   protected suspend fun <T> tryWithTransaction(func: suspend () -> T): ModularResult<T> {
@@ -37,7 +35,8 @@ abstract class AbstractRepository(
   protected suspend fun CoroutineScope.dbCallAsync(
     func: suspend () -> Unit
   ) {
-    launch(dbDispatcher) { func() }
+    val scope = this
+    scope.launch(dbDispatcher) { func() }
   }
 
   /**

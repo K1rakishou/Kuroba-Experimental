@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isSpecified
+import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 
 
 fun Modifier.animatedHorizontalLine(

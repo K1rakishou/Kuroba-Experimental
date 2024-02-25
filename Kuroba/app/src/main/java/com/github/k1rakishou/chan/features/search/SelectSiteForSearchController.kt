@@ -13,7 +13,7 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import javax.inject.Inject
 
-internal class SelectSiteForSearchController(
+class SelectSiteForSearchController(
   context: Context,
   private val selectedSite: SiteDescriptor,
   private val onSiteSelected: (SiteDescriptor) -> Unit

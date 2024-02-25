@@ -4,7 +4,6 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
@@ -15,7 +14,7 @@ import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isSpecified
-import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
+import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 
 internal val DefaultFillMaxSizeModifier: Modifier = Modifier.fillMaxSize()
 
@@ -74,7 +73,7 @@ fun Modifier.kurobaClickable(
     return@composed then(
       Modifier.combinedClickable(
         enabled = enabled,
-        indication = rememberRipple(bounded = bounded, color = color),
+        indication = rememberKurobaRipple(bounded = bounded, color = color),
         interactionSource = remember { MutableInteractionSource() },
         onLongClick = onLongClick,
         onClick = onClick ?: defaultNoopClickCallback

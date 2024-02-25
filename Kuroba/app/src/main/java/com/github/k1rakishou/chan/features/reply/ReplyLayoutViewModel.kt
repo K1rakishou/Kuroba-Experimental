@@ -1,6 +1,8 @@
 package com.github.k1rakishou.chan.features.reply
 
+import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.core.base.BaseViewModel
@@ -40,6 +42,10 @@ class ReplyLayoutViewModel(
 ) : BaseViewModel() {
   private val _replyManagerStateLoaded = AtomicBoolean(false)
 
+  private val _boundChanDescriptor = mutableStateOf<ChanDescriptor?>(null)
+  val boundChanDescriptor: State<ChanDescriptor?>
+    get() = _boundChanDescriptor
+
   private val _replyLayoutStates = mutableStateMapOf<ChanDescriptor, ReplyLayoutState>()
   val replyLayoutStates: Map<ChanDescriptor, ReplyLayoutState>
     get() = _replyLayoutStates
@@ -58,6 +64,11 @@ class ReplyLayoutViewModel(
   }
 
   suspend fun bindChanDescriptor(chanDescriptor: ChanDescriptor) {
+    _replyLayoutStates[chanDescriptor]
+      ?.unbindChanDescriptor(chanDescriptor)
+
+    _boundChanDescriptor.value = chanDescriptor
+
     reloadReplyManagerState()
 
     if (_replyLayoutStates.containsKey(chanDescriptor)) {
@@ -76,8 +87,28 @@ class ReplyLayoutViewModel(
     ).also { replyLayoutState -> replyLayoutState.bindChanDescriptor(chanDescriptor) }
   }
 
-  suspend fun unbindChanDescriptor(chanDescriptor: ChanDescriptor) {
-    _replyLayoutStates[chanDescriptor]?.unbindChanDescriptor(chanDescriptor)
+  fun cleanup() {
+    // TODO("Not yet implemented")
+  }
+
+  fun onBack(): Boolean {
+    val chanDescriptor = boundChanDescriptor.value
+      ?: return false
+
+    val replyLayoutState = replyLayoutStates[chanDescriptor]
+      ?: return false
+
+    return when (replyLayoutState.replyLayoutVisibility.value) {
+      ReplyLayoutVisibility.Collapsed -> false
+      ReplyLayoutVisibility.Opened -> {
+        replyLayoutState.collapseReplyLayout()
+        return true
+      }
+      ReplyLayoutVisibility.Expanded -> {
+        replyLayoutState.openReplyLayout()
+        return true
+      }
+    }
   }
 
   suspend fun getReplyFileByUuid(fileUUID: UUID): ModularResult<ReplyFile> {
@@ -93,15 +124,12 @@ class ReplyLayoutViewModel(
     }
   }
 
-  fun onBack(): Boolean {
-    TODO("Not yet implemented")
-  }
+  fun replyLayoutVisibility(): ReplyLayoutVisibility {
+    val chanDescriptor = boundChanDescriptor.value
+      ?: return ReplyLayoutVisibility.Collapsed
 
-  fun isExpanded(chanDescriptor: ChanDescriptor): Boolean {
-    val replyLayoutVisibility = _replyLayoutStates[chanDescriptor]?.replyLayoutVisibility?.value
-      ?: return false
-
-    return replyLayoutVisibility == ReplyLayoutVisibility.Expanded
+    return _replyLayoutStates[chanDescriptor]?.replyLayoutVisibility?.value
+      ?: return ReplyLayoutVisibility.Collapsed
   }
 
   fun sendReply(chanDescriptor: ChanDescriptor, replyLayoutState: ReplyLayoutState) {
@@ -134,8 +162,18 @@ class ReplyLayoutViewModel(
     TODO("Not yet implemented")
   }
 
-  fun openOrCloseReplyLayout(open: Boolean) {
-    TODO("Not yet implemented")
+  fun updateReplyLayoutVisibility(newReplyLayoutVisibility: ReplyLayoutVisibility) {
+    val chanDescriptor = boundChanDescriptor.value
+      ?: return
+
+    val replyLayoutState = _replyLayoutStates[chanDescriptor]
+      ?: return
+
+    when (newReplyLayoutVisibility) {
+      ReplyLayoutVisibility.Collapsed -> replyLayoutState.collapseReplyLayout()
+      ReplyLayoutVisibility.Opened -> replyLayoutState.openReplyLayout()
+      ReplyLayoutVisibility.Expanded -> replyLayoutState.expandReplyLayout()
+    }
   }
 
   fun quote(post: ChanPost, withText: Boolean) {
@@ -148,10 +186,6 @@ class ReplyLayoutViewModel(
 
   fun onImageOptionsApplied() {
     TODO("Not yet implemented")
-  }
-
-  fun cleanup() {
-    // TODO("Not yet implemented")
   }
 
   private suspend fun reloadReplyManagerState() {

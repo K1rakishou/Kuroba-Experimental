@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
-import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
+import com.github.k1rakishou.chan.ui.compose.providers.ProvideEverythingForCompose
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.core_themes.ThemeEngine
 import javax.inject.Inject
@@ -44,7 +44,7 @@ abstract class BaseFloatingComposeController(
 
     view = ComposeView(context).apply {
       setContent {
-        ProvideChanTheme(themeEngine, globalWindowInsetsManager) {
+        ProvideEverythingForCompose {
           val currentPaddings by globalWindowInsetsManager.currentInsetsCompose
           val backgroundColor = remember { Color(red = 0f, green = 0f, blue = 0f, alpha = 0.6f) }
 

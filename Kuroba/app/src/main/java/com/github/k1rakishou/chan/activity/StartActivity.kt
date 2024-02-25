@@ -118,16 +118,12 @@ class StartActivity : ControllerHostActivity(),
   private var intentMismatchWorkaroundActive = false
   private var browseController: BrowseController? = null
 
-  private lateinit var activityComponent: ActivityComponent
+  override lateinit var activityComponent: ActivityComponent
   private lateinit var viewModelComponent: ViewModelComponent
 
   private lateinit var mainRootLayoutMargins: View
   private lateinit var mainNavigationController: NavigationController
   private lateinit var mainController: MainController
-
-  fun getActivityComponent(): ActivityComponent {
-    return activityComponent
-  }
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)

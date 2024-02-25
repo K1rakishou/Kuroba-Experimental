@@ -46,8 +46,10 @@ import androidx.lifecycle.ViewModelProvider
 import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.activity.ActivityModule
+import com.github.k1rakishou.chan.core.di.module.activity.IHasActivityComponent
 import com.github.k1rakishou.chan.core.di.module.viewmodel.IHasViewModelProviderFactory
 import com.github.k1rakishou.chan.core.helper.AppRestarter
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
@@ -55,13 +57,13 @@ import com.github.k1rakishou.chan.core.manager.ReportManager
 import com.github.k1rakishou.chan.core.repository.ImportExportRepository
 import com.github.k1rakishou.chan.features.settings.screens.delegate.ExportBackupOptions
 import com.github.k1rakishou.chan.ui.compose.InsetsAwareBox
-import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
-import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeCheckbox
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeCollapsableContent
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeDivider
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextButton
+import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
+import com.github.k1rakishou.chan.ui.compose.providers.ProvideEverythingForCompose
 import com.github.k1rakishou.chan.ui.compose.verticalScrollbar
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink
@@ -92,7 +94,7 @@ import java.io.IOException
 import javax.inject.Inject
 import kotlin.system.exitProcess
 
-class CrashReportActivity : AppCompatActivity(), FSAFActivityCallbacks, IHasViewModelProviderFactory {
+class CrashReportActivity : AppCompatActivity(), FSAFActivityCallbacks, IHasViewModelProviderFactory, IHasActivityComponent {
   @Inject
   lateinit var themeEngineLazy: Lazy<ThemeEngine>
   @Inject
@@ -125,6 +127,7 @@ class CrashReportActivity : AppCompatActivity(), FSAFActivityCallbacks, IHasView
   private val fileManager: FileManager
     get() = fileManagerLazy.get()
 
+  override lateinit var activityComponent: ActivityComponent
   private lateinit var viewModelComponent: ViewModelComponent
 
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -158,12 +161,12 @@ class CrashReportActivity : AppCompatActivity(), FSAFActivityCallbacks, IHasView
       return
     }
 
-    Chan.getComponent()
+    activityComponent = Chan.getComponent()
       .activityComponentBuilder()
       .activity(this)
       .activityModule(ActivityModule())
       .build()
-      .inject(this)
+      .also { activityComponent -> activityComponent.inject(this) }
 
     viewModelComponent = Chan.getComponent()
       .viewModelComponentBuilder()
@@ -179,7 +182,7 @@ class CrashReportActivity : AppCompatActivity(), FSAFActivityCallbacks, IHasView
     window.setupStatusAndNavBarColors(themeEngine.chanTheme)
 
     setContent {
-      ProvideChanTheme(themeEngine, globalWindowInsetsManager) {
+      ProvideEverythingForCompose {
         Content(
           className = className,
           message = message,

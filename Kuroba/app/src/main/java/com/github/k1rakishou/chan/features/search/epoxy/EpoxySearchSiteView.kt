@@ -20,8 +20,7 @@ import com.google.android.material.textview.MaterialTextView
 import java.lang.ref.WeakReference
 import javax.inject.Inject
 
-@ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT)
-internal class EpoxySearchSiteView @JvmOverloads constructor(
+@ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT) class EpoxySearchSiteView @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0

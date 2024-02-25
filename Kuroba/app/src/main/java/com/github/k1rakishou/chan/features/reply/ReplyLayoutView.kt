@@ -5,6 +5,8 @@ import android.util.AttributeSet
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.compose.ui.platform.ComposeView
+import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
+import com.github.k1rakishou.chan.ui.compose.providers.ProvideEverythingForCompose
 import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.common.requireComponentActivity
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -33,16 +35,36 @@ class ReplyLayoutView @JvmOverloads constructor(
     )
 
     addView(composeView)
-  }
 
-  override fun bindChanDescriptor(descriptor: ChanDescriptor) {
     composeView.setContent {
-      ReplyLayout(descriptor)
+      ProvideEverythingForCompose {
+        ReplyLayout()
+      }
     }
   }
 
-  override fun isExpanded(chanDescriptor: ChanDescriptor): Boolean {
-    return replyLayoutViewModel.isExpanded(chanDescriptor)
+  override suspend fun bindChanDescriptor(descriptor: ChanDescriptor) {
+    replyLayoutViewModel.bindChanDescriptor(descriptor)
+  }
+
+  override fun replyLayoutVisibility(): ReplyLayoutVisibility {
+    return replyLayoutViewModel.replyLayoutVisibility()
+  }
+
+  override fun isExpanded(): Boolean {
+    return replyLayoutViewModel.replyLayoutVisibility() == ReplyLayoutVisibility.Expanded
+  }
+
+  override fun isOpened(): Boolean {
+    return replyLayoutViewModel.replyLayoutVisibility() == ReplyLayoutVisibility.Opened
+  }
+
+  override fun isCollapsed(): Boolean {
+    return replyLayoutViewModel.replyLayoutVisibility() == ReplyLayoutVisibility.Collapsed
+  }
+
+  override fun updateReplyLayoutVisibility(newReplyLayoutVisibility: ReplyLayoutVisibility) {
+    replyLayoutViewModel.updateReplyLayoutVisibility(newReplyLayoutVisibility)
   }
 
   override fun showCaptcha(
@@ -59,10 +81,6 @@ class ReplyLayoutView @JvmOverloads constructor(
       afterPostingAttempt = afterPostingAttempt,
       onFinished = onFinished
     )
-  }
-
-  override fun openOrCloseReplyLayout(open: Boolean) {
-    replyLayoutViewModel.openOrCloseReplyLayout(open)
   }
 
   override fun quote(post: ChanPost, withText: Boolean) {

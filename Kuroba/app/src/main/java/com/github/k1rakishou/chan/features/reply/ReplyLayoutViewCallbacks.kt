@@ -1,14 +1,20 @@
 package com.github.k1rakishou.chan.features.reply
 
+import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.persist_state.ReplyMode
 
 interface ReplyLayoutViewCallbacks {
-  fun bindChanDescriptor(descriptor: ChanDescriptor)
+  suspend fun bindChanDescriptor(descriptor: ChanDescriptor)
 
-  fun isExpanded(chanDescriptor: ChanDescriptor): Boolean
+  fun replyLayoutVisibility(): ReplyLayoutVisibility
+  fun isExpanded(): Boolean
+  fun isOpened(): Boolean
+  fun isCollapsed(): Boolean
+  fun updateReplyLayoutVisibility(newReplyLayoutVisibility: ReplyLayoutVisibility)
+
   fun showCaptcha(
     chanDescriptor: ChanDescriptor,
     replyMode: ReplyMode,
@@ -17,7 +23,6 @@ interface ReplyLayoutViewCallbacks {
     onFinished: ((Boolean) -> Unit)?
   )
 
-  fun openOrCloseReplyLayout(open: Boolean)
   fun cleanup()
   fun onImageOptionsApplied()
   fun onBack(): Boolean

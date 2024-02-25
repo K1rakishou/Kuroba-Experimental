@@ -16,8 +16,6 @@
  */
 package com.github.k1rakishou.chan.ui.layout
 
-import android.animation.Animator
-import android.animation.AnimatorListenerAdapter
 import android.content.Context
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
@@ -27,7 +25,6 @@ import android.util.AttributeSet
 import android.view.KeyEvent
 import android.view.View
 import android.widget.FrameLayout
-import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ItemDecoration
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
@@ -50,6 +47,7 @@ import com.github.k1rakishou.chan.core.presenter.ThreadPresenter
 import com.github.k1rakishou.chan.core.usecase.ExtractPostMapInfoHolderUseCase
 import com.github.k1rakishou.chan.features.reply.ReplyLayoutView
 import com.github.k1rakishou.chan.features.reply.ReplyLayoutViewCallbacks
+import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter.PostAdapterCallback
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
@@ -330,10 +328,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   private var boardPostViewMode: BoardPostViewMode? = null
   private var spanCount = 2
   private var prevLastPostNo = 0L
-
-  // TODO: New reply layout. Remove this flag.
-  var replyOpen = false
-    private set
 
   // TODO: New reply layout
   fun getCurrentChanDescriptor(): ChanDescriptor? {
@@ -733,10 +727,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   fun onBack(): Boolean {
     return when {
       replyLayoutView.onBack() -> true
-      replyOpen -> {
-        openReply(false)
-        true
-      }
       else -> threadListLayoutCallback!!.threadBackPressed()
     }
   }
@@ -838,70 +828,37 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       ?: ThreadPresenter.CurrentFocusedController.None
   }
 
-  // TODO: New reply layout
-  fun openReply(open: Boolean) {
-    if (currentChanDescriptorOrNull() == null || replyOpen == open) {
+  fun isReplyLayoutOpened(): Boolean {
+    return replyLayoutView.isOpened()
+  }
+
+  fun openReplyLayout() {
+    openOrCloseReplyLayout(open = true)
+  }
+
+  fun closeReplyLayout() {
+    openOrCloseReplyLayout(open = false)
+  }
+
+  private fun openOrCloseReplyLayout(open: Boolean) {
+    val chanDescriptor = currentChanDescriptorOrNull()
+
+    if (chanDescriptor == null || replyLayoutView.isOpened() == open) {
       return
     }
 
-    Logger.d(TAG, "openReply() open: ${open}")
-
-    val chanDescriptor = currentChanDescriptorOrNull()
-    replyOpen = open
-
-    measureReplyLayout()
-
-    fun notifyBottomNavBarVisibilityStateManager() {
-      if (chanDescriptor != null) {
-        bottomNavBarVisibilityStateManager.replyViewStateChanged(
-          chanDescriptor.isCatalogDescriptor(),
-          open
-        )
-      }
-    }
-
-    val height = replyLayoutView.measuredHeight
-    val viewPropertyAnimator = replyLayoutView.animate()
-
-    viewPropertyAnimator.setListener(null)
-    viewPropertyAnimator.interpolator = FastOutSlowInInterpolator()
-    viewPropertyAnimator.duration = 350
+    Logger.d(TAG, "openOrCloseReplyLayout() open: ${open}")
 
     if (open) {
-      replyLayoutView.visibility = VISIBLE
-      replyLayoutView.translationY = height.toFloat()
-
-      threadListLayoutCallback?.showReplyButton(false)
-
-      viewPropertyAnimator.translationY(0f)
-      viewPropertyAnimator.setListener(object : AnimatorListenerAdapter() {
-        override fun onAnimationStart(animation: Animator) {
-          notifyBottomNavBarVisibilityStateManager()
-        }
-
-        override fun onAnimationEnd(animation: Animator) {
-          viewPropertyAnimator.setListener(null)
-        }
-      })
+      replyLayoutView.updateReplyLayoutVisibility(ReplyLayoutVisibility.Opened)
     } else {
-      replyLayoutView.translationY = 0f
-
-      viewPropertyAnimator.translationY(height.toFloat())
-      viewPropertyAnimator.setListener(object : AnimatorListenerAdapter() {
-        override fun onAnimationStart(animation: Animator) {
-          notifyBottomNavBarVisibilityStateManager()
-        }
-
-        override fun onAnimationEnd(animation: Animator) {
-          viewPropertyAnimator.setListener(null)
-          replyLayoutView.visibility = GONE
-
-          threadListLayoutCallback?.showReplyButton(true)
-        }
-      })
+      replyLayoutView.updateReplyLayoutVisibility(ReplyLayoutVisibility.Collapsed)
     }
 
-    replyLayoutView.openOrCloseReplyLayout(open)
+    bottomNavBarVisibilityStateManager.replyViewStateChanged(
+      chanDescriptor.isCatalogDescriptor(),
+      replyLayoutView.isOpened()
+    )
 
     if (!open) {
       AndroidUtils.hideKeyboard(replyLayoutView)
@@ -915,10 +872,10 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   fun canChildScrollUp(): Boolean {
-    val chanDescriptor = currentChanDescriptorOrNull()
+    currentChanDescriptorOrNull()
       ?: return true
 
-    if (replyLayoutView.isExpanded(chanDescriptor)) {
+    if (replyLayoutView.isExpanded()) {
       return true
     }
 
@@ -950,8 +907,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   fun cleanup() {
     postAdapter.cleanup()
     replyLayoutView.cleanup()
-
-    openReply(false)
+    closeReplyLayout()
 
     prevLastPostNo = 0
     noParty()
@@ -1049,7 +1005,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     val toolbar = threadListLayoutCallback?.toolbar
       ?: return
 
-    if (attach && !replyOpen) {
+    if (attach && !replyLayoutView.isOpened()) {
       toolbar.attachRecyclerViewScrollStateListener(recyclerView)
     } else {
       toolbar.detachRecyclerViewScrollStateListener(recyclerView)
@@ -1069,7 +1025,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     val toolbar = threadListLayoutCallback?.toolbar
       ?: return
 
-    if (replyOpen) {
+    if (replyLayoutView.isOpened()) {
       // force toolbar to show
       toolbar.collapseShow(true)
     } else {
@@ -1156,7 +1112,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   override fun onDragStarted() {
-    if (!canToolbarCollapse() || replyOpen) {
+    if (!canToolbarCollapse() || replyLayoutView.isOpened()) {
       return
     }
 
@@ -1172,7 +1128,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     //  manually after we are down scrolling via Fast scroller.
     onRecyclerViewScrolled()
 
-    if (!canToolbarCollapse() || replyOpen) {
+    if (!canToolbarCollapse() || replyLayoutView.isOpened()) {
       return
     }
 
@@ -1186,14 +1142,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   // TODO: New reply layout
   fun updateRecyclerViewPaddings() {
     updateRecyclerPaddingsDebouncer.post({ setRecyclerViewPadding() }, 50L)
-  }
-
-  // TODO: New reply layout
-  fun measureReplyLayout() {
-    replyLayoutView.measure(
-      MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
-      MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
-    )
   }
 
   // TODO: New reply layout
@@ -1245,8 +1193,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     var recyclerBottom = defaultPadding
 
     // measurements
-    if (replyOpen) {
-      measureReplyLayout()
+    if (replyLayoutView.isOpened()) {
+//      measureReplyLayout()
 
       recyclerBottom += (replyLayoutView.measuredHeight - replyLayoutView.paddingTop)
     } else {

@@ -3,7 +3,7 @@ package com.github.k1rakishou.chan.ui.compose.components
 import androidx.compose.material.Slider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
+import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 
 @Composable
 fun KurobaComposeSlider(

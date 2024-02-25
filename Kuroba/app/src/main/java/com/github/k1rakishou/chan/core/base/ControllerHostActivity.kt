@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
+import com.github.k1rakishou.chan.core.di.module.activity.IHasActivityComponent
 import com.github.k1rakishou.chan.core.di.module.viewmodel.IHasViewModelProviderFactory
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper
 import com.github.k1rakishou.common.AndroidUtils
@@ -17,7 +18,7 @@ import com.github.k1rakishou.core_themes.ChanTheme
 import java.util.*
 import javax.inject.Inject
 
-abstract class ControllerHostActivity : AppCompatActivity(), IHasViewModelProviderFactory {
+abstract class ControllerHostActivity : AppCompatActivity(), IHasViewModelProviderFactory, IHasActivityComponent {
   lateinit var contentView: ViewGroup
 
   @Inject
@@ -25,7 +26,7 @@ abstract class ControllerHostActivity : AppCompatActivity(), IHasViewModelProvid
   @Inject
   override lateinit var viewModelFactory: ViewModelProvider.Factory
 
-  protected val stack = Stack<Controller>()
+  private val stack = Stack<Controller>()
 
   override fun onDestroy() {
     while (!stack.isEmpty()) {
