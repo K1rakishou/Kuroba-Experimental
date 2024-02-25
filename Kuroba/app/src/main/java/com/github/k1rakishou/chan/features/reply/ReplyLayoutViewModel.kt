@@ -26,6 +26,7 @@ import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.persist_state.ReplyMode
 import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
@@ -60,16 +61,15 @@ class ReplyLayoutViewModel(
   }
 
   override suspend fun onViewModelReady() {
-
+    viewModelScope.launch { reloadReplyManagerState() }
   }
 
   suspend fun bindChanDescriptor(chanDescriptor: ChanDescriptor) {
+    replyManager.awaitUntilFilesAreLoaded()
+
     _replyLayoutStates[chanDescriptor]
       ?.unbindChanDescriptor(chanDescriptor)
-
     _boundChanDescriptor.value = chanDescriptor
-
-    reloadReplyManagerState()
 
     if (_replyLayoutStates.containsKey(chanDescriptor)) {
       return
@@ -197,6 +197,7 @@ class ReplyLayoutViewModel(
       replyManager.reloadReplyManagerStateFromDisk(appConstants)
         .unwrap()
 
+      // TODO: New reply layout. Do we really need to do this? Seems pointless.
       replyManager.iterateFilesOrdered { _, _, replyFileMeta ->
         if (replyFileMeta.selected) {
           replyManager.updateFileSelection(

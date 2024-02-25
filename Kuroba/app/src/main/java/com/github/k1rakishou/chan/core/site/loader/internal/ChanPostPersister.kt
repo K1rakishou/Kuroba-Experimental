@@ -34,7 +34,6 @@ internal class ChanPostPersister(
   private val chanCatalogSnapshotCache: ChanCatalogSnapshotCache
 ) : AbstractPostLoader() {
 
-  @OptIn(ExperimentalTime::class)
   suspend fun persistPosts(
     compositeCatalogDescriptor: ChanDescriptor.CompositeCatalogDescriptor?,
     chanDescriptor: ChanDescriptor,

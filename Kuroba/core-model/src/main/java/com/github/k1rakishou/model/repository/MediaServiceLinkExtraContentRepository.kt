@@ -5,6 +5,7 @@ import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.data.media.GenericVideoId
 import com.github.k1rakishou.model.data.video_service.MediaServiceLinkExtraContent
 import com.github.k1rakishou.model.data.video_service.MediaServiceType
+import com.github.k1rakishou.model.repository.helpers.RepoGenericGetAction
 import com.github.k1rakishou.model.source.cache.GenericSuspendableCacheSource
 import com.github.k1rakishou.model.source.local.MediaServiceLinkExtraContentLocalSource
 import com.github.k1rakishou.model.source.remote.MediaServiceLinkExtraContentRemoteSource
@@ -31,7 +32,8 @@ class MediaServiceLinkExtraContentRepository(
     val mediaServiceKey = MediaServiceKey(videoId, mediaServiceType)
 
     return applicationScope.dbCall {
-      return@dbCall repoGenericGetAction(
+      return@dbCall RepoGenericGetAction.perform(
+        tag = TAG,
         fileUrl = requestUrl,
         cleanupFunc = { mediaServiceLinkExtraContentRepositoryCleanup().ignore() },
         getFromCacheFunc = { cache.get(mediaServiceKey) },
@@ -68,8 +70,7 @@ class MediaServiceLinkExtraContentRepository(
           } else {
             ModularResult.value(Unit)
           }
-        },
-        tag = TAG
+        }
       )
     }
   }

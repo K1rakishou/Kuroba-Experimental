@@ -94,6 +94,8 @@ class ReplyLayoutState(
     get() = chanDescriptor is ChanDescriptor.ICatalogDescriptor
 
   suspend fun bindChanDescriptor(chanDescriptor: ChanDescriptor) {
+    replyManager.awaitUntilFilesAreLoaded()
+
     replyManager.readReply(chanDescriptor) { reply ->
       // TODO: New reply layout. Read all the stuff into the state
     }
@@ -122,23 +124,23 @@ class ReplyLayoutState(
   }
 
   fun onReplyTextChanged(replyText: TextFieldValue) {
-    TODO("Not yet implemented")
+    _replyText.value = replyText
   }
 
   fun onSubjectChanged(subject: TextFieldValue) {
-    TODO("Not yet implemented")
+    _subject.value = subject
   }
 
   fun onNameChanged(name: TextFieldValue) {
-    TODO("Not yet implemented")
+    _name.value = name
   }
 
   fun onOptionsChanged(options: TextFieldValue) {
-    TODO("Not yet implemented")
+    _options.value = options
   }
 
   fun insertTags(postFormatterButton: PostFormatterButton) {
-    TODO("Not yet implemented")
+    // TODO: New reply layout.
   }
 
   private suspend fun enumerateReplyAttachables(
