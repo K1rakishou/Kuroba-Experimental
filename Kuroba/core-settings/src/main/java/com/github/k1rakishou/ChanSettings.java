@@ -792,11 +792,7 @@ public class ChanSettings {
     }
 
     public static int defaultFontSize() {
-        if (chanSettingsInfo.isTablet()) {
-            return 16;
-        } else {
-            return 14;
-        }
+        return 16;
     }
 
     private static int cleanupPercentsGetMin() {

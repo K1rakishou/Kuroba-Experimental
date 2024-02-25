@@ -16,7 +16,6 @@ import com.github.k1rakishou.chan.features.reply.ReplyAttachments
 import com.github.k1rakishou.chan.features.reply.ReplyLayoutViewModel
 import com.github.k1rakishou.chan.features.reply.data.ReplyAttachable
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutState
-import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
 import com.github.k1rakishou.chan.features.reply.data.SendReplyState
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 
@@ -32,7 +31,7 @@ internal fun ReplyInputLeftPart(
   val focusManager = LocalFocusManager.current
 
   val sendReplyState by replyLayoutState.sendReplyState
-  val replyLayoutVisibilityState by replyLayoutState.replyLayoutVisibility
+  val replyLayoutVisibility by replyLayoutState.replyLayoutVisibility
   val attachables = replyLayoutState.attachables
 
   val replyLayoutEnabled = when (sendReplyState) {
@@ -54,42 +53,42 @@ internal fun ReplyInputLeftPart(
     modifier = Modifier
         .fillMaxSize()
         .padding(horizontal = 8.dp),
+    replyLayoutVisibility = replyLayoutVisibility,
+    hasAttachables = attachables.isNotEmpty(),
     additionalInputsContent = {
-      if (replyLayoutVisibilityState == ReplyLayoutVisibility.Expanded) {
-        Column {
-          if (replyLayoutState.isCatalogMode) {
-            SubjectTextField(
-              replyLayoutState = replyLayoutState,
-              replyLayoutEnabled = replyLayoutEnabled,
-              onMoveFocus = { focusManager.moveFocus(FocusDirection.Down) }
-            )
-
-            Spacer(modifier = Modifier.height(4.dp))
-          }
-
-          NameTextField(
+      Column {
+        if (replyLayoutState.isCatalogMode) {
+          SubjectTextField(
             replyLayoutState = replyLayoutState,
             replyLayoutEnabled = replyLayoutEnabled,
             onMoveFocus = { focusManager.moveFocus(FocusDirection.Down) }
           )
 
           Spacer(modifier = Modifier.height(4.dp))
+        }
 
-          OptionsTextField(
-            replyLayoutState = replyLayoutState,
-            replyLayoutEnabled = replyLayoutEnabled,
-            onMoveFocus = { focusManager.moveFocus(FocusDirection.Down) }
-          )
+        NameTextField(
+          replyLayoutState = replyLayoutState,
+          replyLayoutEnabled = replyLayoutEnabled,
+          onMoveFocus = { focusManager.moveFocus(FocusDirection.Down) }
+        )
 
-          // TODO: New reply layout
+        Spacer(modifier = Modifier.height(4.dp))
+
+        OptionsTextField(
+          replyLayoutState = replyLayoutState,
+          replyLayoutEnabled = replyLayoutEnabled,
+          onMoveFocus = { focusManager.moveFocus(FocusDirection.Down) }
+        )
+
+        // TODO: New reply layout
 //                    FlagSelector(
 //                        replyLayoutState = replyLayoutState,
 //                        replyLayoutEnabled = replyLayoutEnabled,
 //                        onFlagSelectorClicked = onFlagSelectorClicked
 //                    )
 
-          Spacer(modifier = Modifier.height(4.dp))
-        }
+        Spacer(modifier = Modifier.height(4.dp))
       }
     },
     replyInputContent = {
@@ -110,14 +109,12 @@ internal fun ReplyInputLeftPart(
       }
     },
     replyAttachmentsContent = {
-      if (attachables.isNotEmpty()) {
-        ReplyAttachments(
-          replyLayoutState = replyLayoutState,
-          replyLayoutViewModel = replyLayoutViewModel,
-          onAttachedMediaClicked = onAttachedMediaClicked,
-          onRemoveAttachedMediaClicked = onRemoveAttachedMediaClicked,
-        )
-      }
+      ReplyAttachments(
+        replyLayoutState = replyLayoutState,
+        replyLayoutViewModel = replyLayoutViewModel,
+        onAttachedMediaClicked = onAttachedMediaClicked,
+        onRemoveAttachedMediaClicked = onRemoveAttachedMediaClicked,
+      )
     }
   )
 }

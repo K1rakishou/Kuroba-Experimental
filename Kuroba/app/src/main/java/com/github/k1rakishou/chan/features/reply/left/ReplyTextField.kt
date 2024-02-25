@@ -36,10 +36,11 @@ import com.github.k1rakishou.chan.core.site.parser.CommentParserHelper
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutState
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
 import com.github.k1rakishou.chan.ui.compose.clearFocusSafe
-import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextField
 import com.github.k1rakishou.chan.ui.compose.components.KurobaLabelText
 import com.github.k1rakishou.chan.ui.compose.freeFocusSafe
+import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
+import com.github.k1rakishou.chan.ui.compose.requestFocusSafe
 import com.github.k1rakishou.core_themes.ChanTheme
 import java.util.regex.Pattern
 
@@ -84,7 +85,7 @@ internal fun ReplyTextField(
         prevReplyLayoutVisibility == ReplyLayoutVisibility.Collapsed &&
         replyLayoutVisibility == ReplyLayoutVisibility.Opened
       ) {
-        focusRequester.freeFocusSafe()
+        focusRequester.requestFocusSafe()
         localSoftwareKeyboardController?.show()
       } else if (
         prevReplyLayoutVisibility != ReplyLayoutVisibility.Collapsed &&

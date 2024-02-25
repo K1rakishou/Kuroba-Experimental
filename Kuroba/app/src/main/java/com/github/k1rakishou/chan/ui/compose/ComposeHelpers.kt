@@ -383,6 +383,15 @@ fun PaddingValues.update(
   )
 }
 
+fun FocusRequester.requestFocusSafe() {
+  try {
+    // Sometimes crashes
+    requestFocus()
+  } catch (ignored: Throwable) {
+    // no-op
+  }
+}
+
 fun FocusRequester.freeFocusSafe() {
   try {
     // Sometimes crashes
