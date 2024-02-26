@@ -25,7 +25,6 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
-import com.github.k1rakishou.persist_state.ReplyMode
 import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -157,16 +156,6 @@ class ReplyLayoutViewModel(
   }
 
   fun onFlagSelectorClicked(chanDescriptor: ChanDescriptor) {
-    TODO("New reply layout")
-  }
-
-  fun showCaptcha(
-    chanDescriptor: ChanDescriptor,
-    replyMode: ReplyMode,
-    autoReply: Boolean,
-    afterPostingAttempt: Boolean,
-    onFinished: ((Boolean) -> Unit)?
-  ) {
     TODO("New reply layout")
   }
 

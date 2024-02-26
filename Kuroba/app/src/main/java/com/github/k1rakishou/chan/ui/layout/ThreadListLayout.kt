@@ -823,7 +823,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     afterPostingAttempt: Boolean,
     onFinished: ((Boolean) -> Unit)? = null
   ) {
-    replyLayoutView.showCaptcha(chanDescriptor, replyMode, autoReply, afterPostingAttempt, onFinished)
+    // TODO: New reply layout. Why replyLayoutView?
+//    replyLayoutView.showCaptcha(chanDescriptor, replyMode, autoReply, afterPostingAttempt, onFinished)
   }
 
   // TODO: New reply layout
@@ -855,14 +856,21 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
     if (open) {
       replyLayoutView.updateReplyLayoutVisibility(ReplyLayoutVisibility.Opened)
+      threadListLayoutCallback?.showReplyButton(false)
+
+      bottomNavBarVisibilityStateManager.replyViewStateChanged(
+        isCatalogReplyView = chanDescriptor.isCatalogDescriptor(),
+        isVisible = true
+      )
     } else {
       replyLayoutView.updateReplyLayoutVisibility(ReplyLayoutVisibility.Collapsed)
-    }
+      threadListLayoutCallback?.showReplyButton(true)
 
-    bottomNavBarVisibilityStateManager.replyViewStateChanged(
-      chanDescriptor.isCatalogDescriptor(),
-      replyLayoutView.isOpened()
-    )
+      bottomNavBarVisibilityStateManager.replyViewStateChanged(
+        isCatalogReplyView = chanDescriptor.isCatalogDescriptor(),
+        isVisible = false
+      )
+    }
 
     if (!open) {
       AndroidUtils.hideKeyboard(replyLayoutView)

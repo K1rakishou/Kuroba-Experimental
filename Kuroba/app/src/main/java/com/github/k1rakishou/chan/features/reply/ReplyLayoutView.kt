@@ -16,7 +16,6 @@ import com.github.k1rakishou.common.requireComponentActivity
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
-import com.github.k1rakishou.persist_state.ReplyMode
 
 class ReplyLayoutView @JvmOverloads constructor(
   context: Context,
@@ -81,22 +80,6 @@ class ReplyLayoutView @JvmOverloads constructor(
 
   override fun updateReplyLayoutVisibility(newReplyLayoutVisibility: ReplyLayoutVisibility) {
     replyLayoutViewModel.updateReplyLayoutVisibility(newReplyLayoutVisibility)
-  }
-
-  override fun showCaptcha(
-    chanDescriptor: ChanDescriptor,
-    replyMode: ReplyMode,
-    autoReply: Boolean,
-    afterPostingAttempt: Boolean,
-    onFinished: ((Boolean) -> Unit)?
-  ) {
-    replyLayoutViewModel.showCaptcha(
-      chanDescriptor = chanDescriptor,
-      replyMode = replyMode,
-      autoReply = autoReply,
-      afterPostingAttempt = afterPostingAttempt,
-      onFinished = onFinished
-    )
   }
 
   override fun quote(post: ChanPost, withText: Boolean) {

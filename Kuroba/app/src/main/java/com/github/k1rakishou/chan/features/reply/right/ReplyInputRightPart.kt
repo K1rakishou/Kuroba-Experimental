@@ -48,28 +48,27 @@ internal fun ReplyInputRightPart(
 
   Column(
     modifier = Modifier
-        .fillMaxSize()
-        .draggable(
-            state = draggableStateProvider(),
-            orientation = Orientation.Vertical,
-            onDragStarted = { onDragStarted() },
-            onDragStopped = { velocity -> onDragStopped(velocity) }
+      .fillMaxSize()
+      .draggable(
+        state = draggableStateProvider(),
+        orientation = Orientation.Vertical,
+        onDragStarted = { onDragStarted() },
+        onDragStopped = { velocity -> onDragStopped(velocity) }
+      )
+      .drawBehind {
+        drawRoundRect(
+          color = chanTheme.backColorSecondaryCompose,
+          topLeft = Offset(x = padding, y = padding),
+          size = Size(
+            width = this.size.width - (padding * 2),
+            height = this.size.height - (padding * 2)
+          ),
+          alpha = 0.6f,
+          cornerRadius = cornerRadius
         )
-        .drawBehind {
-            drawRoundRect(
-                color = chanTheme.backColorSecondaryCompose,
-                topLeft = Offset(x = padding, y = padding),
-                size = Size(
-                    width = this.size.width - (padding * 2),
-                    height = this.size.height - (padding * 2)
-                ),
-                alpha = 0.6f,
-                cornerRadius = cornerRadius
-            )
-        },
+      },
     horizontalAlignment = Alignment.CenterHorizontally,
   ) {
-
     Spacer(modifier = Modifier.height(6.dp))
 
     PrefillCaptchaButton(
@@ -89,7 +88,7 @@ internal fun ReplyInputRightPart(
       replySendProgress = replySendProgress
     )
 
-    Spacer(modifier = Modifier.height(6.dp))
+    Spacer(modifier = Modifier.height(12.dp))
 
     PickLocalMediaButton(
       iconSize = iconSize,
