@@ -38,8 +38,8 @@ import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutState
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
-import com.github.k1rakishou.chan.ui.compose.providers.LocalWindowInsets
 import com.github.k1rakishou.chan.ui.compose.consumeClicks
+import com.github.k1rakishou.chan.ui.compose.providers.LocalWindowInsets
 import com.github.k1rakishou.common.quantize
 import com.github.k1rakishou.core_themes.ChanTheme
 import kotlinx.coroutines.CancellationException
@@ -62,9 +62,9 @@ fun ReplyLayoutBottomSheet(
   val threshold = remember { FixedThreshold(1.dp) }
 
   val toolbarHeight = dimensionResource(id = R.dimen.toolbar_height)
-  val attachedMediaList = replyLayoutState.attachables
+  val replyAttachables by replyLayoutState.attachables
 
-  val defaultOpenedHeightDp = if (attachedMediaList.isEmpty()) {
+  val defaultOpenedHeightDp = if (replyAttachables.attachables.isEmpty()) {
     dimensionResource(id = R.dimen.reply_layout_container_opened_height_no_attachments)
   } else {
     dimensionResource(id = R.dimen.reply_layout_container_opened_height_with_attachments)

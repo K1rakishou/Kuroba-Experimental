@@ -17,7 +17,9 @@ fun ProvideEverythingForCompose(
   ProvideChanTheme(appComponent.themeEngine) {
     ProvideKurobaViewConfiguration {
       ProvideWindowInsets(activityComponent.globalWindowInsetsManager) {
-        content()
+        ProvideLocalMinimumInteractiveComponentEnforcement {
+          content()
+        }
       }
     }
   }

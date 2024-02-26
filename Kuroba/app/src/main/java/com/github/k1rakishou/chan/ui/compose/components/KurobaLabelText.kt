@@ -10,6 +10,9 @@ import androidx.compose.material.ContentAlpha
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
@@ -56,6 +59,35 @@ fun KurobaLabelText(
       text = labelText,
       fontSize = fontSize,
       color = hintColorAnimated
+    )
+  }
+}
+
+@Composable
+fun KurobaLabelText(
+  enabled: Boolean = true,
+  labelText: AnnotatedString?,
+  fontSize: TextUnit = 13.sp
+) {
+  if (labelText == null) {
+    return
+  }
+
+  AnimatedVisibility(
+    visible = true,
+    enter = fadeIn(),
+    exit = fadeOut()
+  ) {
+    val textAlpha = if (enabled) {
+      ContentAlpha.high
+    } else {
+      ContentAlpha.disabled
+    }
+
+    KurobaComposeText(
+      modifier = Modifier.graphicsLayer { alpha = textAlpha },
+      text = labelText,
+      fontSize = fontSize
     )
   }
 }

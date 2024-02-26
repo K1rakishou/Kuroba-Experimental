@@ -6,25 +6,16 @@ import androidx.compose.runtime.Immutable
 import java.util.*
 
 @Immutable
+data class ReplyAttachables(
+  val maxAllowedAttachablesPerPost: Int = 0,
+  val attachables: List<ReplyAttachable> = emptyList()
+)
+
+@Immutable
 sealed interface ReplyAttachable {
   val key: String
   val contentType: String
   fun span(totalItemsCount: Int, scope: LazyGridItemSpanScope): GridItemSpan
-
-  data object ReplyNewAttachable : ReplyAttachable {
-    override val key: String
-      get() = "ReplyNewAttachable"
-    override val contentType: String
-      get() = "ReplyNewAttachable"
-
-    override fun span(totalItemsCount: Int, scope: LazyGridItemSpanScope): GridItemSpan {
-      if (totalItemsCount <= 1) {
-        return GridItemSpan(1)
-      }
-
-      return GridItemSpan(scope.maxLineSpan)
-    }
-  }
 
   data class ReplyTooManyAttachables(val attachablesTotal: Int) : ReplyAttachable {
     override val key: String

@@ -17,9 +17,11 @@ import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutFileEnumerator
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutState
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.ThreadControllerType
+import com.github.k1rakishou.chan.ui.helper.AppResources
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
@@ -34,11 +36,13 @@ import javax.inject.Inject
 
 class ReplyLayoutViewModel(
   private val savedStateHandle: SavedStateHandle,
+  private val appResourcesLazy: Lazy<AppResources>,
   private val appConstantsLazy: Lazy<AppConstants>,
   private val replyLayoutFileEnumeratorLazy: Lazy<ReplyLayoutFileEnumerator>,
   private val boardManagerLazy: Lazy<BoardManager>,
   private val replyManagerLazy: Lazy<ReplyManager>,
-  private val postFormattingButtonsFactoryLazy: Lazy<PostFormattingButtonsFactory>
+  private val postFormattingButtonsFactoryLazy: Lazy<PostFormattingButtonsFactory>,
+  private val themeEngineLazy: Lazy<ThemeEngine>
 ) : BaseViewModel() {
   private val _replyManagerStateLoaded = AtomicBoolean(false)
 
@@ -86,10 +90,12 @@ class ReplyLayoutViewModel(
     _replyLayoutState.value = ReplyLayoutState(
       chanDescriptor = chanDescriptor,
       coroutineScope = viewModelScope,
+      appResourcesLazy = appResourcesLazy,
       replyLayoutFileEnumeratorLazy = replyLayoutFileEnumeratorLazy,
       boardManagerLazy = boardManagerLazy,
       replyManagerLazy = replyManagerLazy,
-      postFormattingButtonsFactoryLazy = postFormattingButtonsFactoryLazy
+      postFormattingButtonsFactoryLazy = postFormattingButtonsFactoryLazy,
+      themeEngineLazy = themeEngineLazy
     ).also { replyLayoutState -> replyLayoutState.bindChanDescriptor(chanDescriptor) }
   }
 
@@ -228,20 +234,24 @@ class ReplyLayoutViewModel(
   class ReplyFileDoesNotExist(fileUUID: UUID) : ClientException("Reply file with UUID '${fileUUID}' does not exist")
 
   class ViewModelFactory @Inject constructor(
+    private val appResourcesLazy: Lazy<AppResources>,
     private val appConstantsLazy: Lazy<AppConstants>,
     private val replyLayoutFileEnumeratorLazy: Lazy<ReplyLayoutFileEnumerator>,
     private val boardManagerLazy: Lazy<BoardManager>,
     private val replyManagerLazy: Lazy<ReplyManager>,
-    private val postFormattingButtonsFactoryLazy: Lazy<PostFormattingButtonsFactory>
+    private val postFormattingButtonsFactoryLazy: Lazy<PostFormattingButtonsFactory>,
+    private val themeEngineLazy: Lazy<ThemeEngine>
   ) : ViewModelAssistedFactory<ReplyLayoutViewModel> {
     override fun create(handle: SavedStateHandle): ReplyLayoutViewModel {
       return ReplyLayoutViewModel(
         savedStateHandle = handle,
+        appResourcesLazy = appResourcesLazy,
         appConstantsLazy = appConstantsLazy,
         replyLayoutFileEnumeratorLazy = replyLayoutFileEnumeratorLazy,
         boardManagerLazy = boardManagerLazy,
         replyManagerLazy = replyManagerLazy,
-        postFormattingButtonsFactoryLazy = postFormattingButtonsFactoryLazy
+        postFormattingButtonsFactoryLazy = postFormattingButtonsFactoryLazy,
+        themeEngineLazy = themeEngineLazy
       )
     }
   }

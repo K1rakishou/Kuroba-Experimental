@@ -107,8 +107,8 @@ fun KurobaComposeTextField(
           lineWidth = 2.dp
         )
         .defaultMinSize(
-          minWidth = KurobaComposeDefaults.TextFieldMinWidth,
-          minHeight = KurobaComposeDefaults.TextFieldMinHeight
+          minWidth = KurobaComposeDefaults.TextField.MinWidth,
+          minHeight = KurobaComposeDefaults.TextField.MinHeight
         ),
       onValueChange = onValueChange,
       enabled = enabled,
@@ -220,8 +220,8 @@ fun KurobaComposeTextField(
           lineWidth = 2.dp
         )
         .defaultMinSize(
-          minWidth = KurobaComposeDefaults.TextFieldMinWidth,
-          minHeight = KurobaComposeDefaults.TextFieldMinHeight
+          minWidth = KurobaComposeDefaults.TextField.MinWidth,
+          minHeight = KurobaComposeDefaults.TextField.MinHeight
         ),
       onValueChange = onValueChange,
       enabled = enabled,

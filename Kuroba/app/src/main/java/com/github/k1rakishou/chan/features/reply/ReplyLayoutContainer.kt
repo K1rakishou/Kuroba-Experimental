@@ -38,7 +38,6 @@ fun ReplyLayoutContainer(
   onRemoveAttachedMediaClicked: (ReplyAttachable) -> Unit,
   onFlagSelectorClicked: (ChanDescriptor) -> Unit
 ) {
-  val iconSize = 40.dp
   val replyInputRightPartWidth = 58.dp
   val chanTheme = LocalChanTheme.current
 
@@ -91,7 +90,7 @@ fun ReplyLayoutContainer(
         .fillMaxHeight()
     ) {
       ReplyInputRightPart(
-        iconSize = iconSize,
+        iconSize = 36.dp,
         replyLayoutState = replyLayoutState,
         draggableStateProvider = draggableStateProvider,
         onDragStarted = onDragStarted,

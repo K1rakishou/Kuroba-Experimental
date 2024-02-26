@@ -1,7 +1,6 @@
 package com.github.k1rakishou.chan.ui.compose.components
 
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.material.Button
 import androidx.compose.material.ContentAlpha
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -24,11 +23,11 @@ fun KurobaComposeTextBarButton(
 ) {
   val chanTheme = LocalChanTheme.current
 
-  Button(
+  KurobaComposeButton(
     onClick = onClick,
     enabled = enabled,
     modifier = modifier,
-    content = {
+    buttonContent = {
       val textColor = customTextColor
         ?: chanTheme.textColorPrimaryCompose
 
@@ -64,11 +63,11 @@ fun KurobaComposeTextBarButton(
 ) {
   val chanTheme = LocalChanTheme.current
 
-  Button(
+  KurobaComposeButton(
     onClick = onClick,
     enabled = enabled,
     modifier = modifier,
-    content = {
+    buttonContent = {
       val textColor = customTextColor
         ?: chanTheme.textColorPrimaryCompose
 

@@ -26,6 +26,7 @@ import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerOpenTh
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
 import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadProgressNotifier
 import com.github.k1rakishou.chan.ui.captcha.chan4.Chan4CaptchaSolverHelper
+import com.github.k1rakishou.chan.ui.helper.AppResources
 import com.github.k1rakishou.chan.ui.helper.AppSettingsUpdateAppRefreshHelper
 import com.github.k1rakishou.chan.ui.helper.FileHelper
 import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
@@ -252,6 +253,12 @@ class HelperModule {
   fun provideFileHelper(appContext: Context): FileHelper {
     Logger.deps("FileHelper");
     return FileHelper(appContext)
+  }
+
+  @Provides
+  @Singleton
+  fun provideAppResources(appContext: Context): AppResources {
+    return AppResources(appContext)
   }
 
 }

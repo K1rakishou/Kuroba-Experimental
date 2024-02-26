@@ -36,9 +36,9 @@ class ReplyLayoutFileEnumerator(
 
   suspend fun enumerate(
     chanDescriptor: ChanDescriptor
-  ): ModularResult<List<ReplyAttachable>> {
+  ): ModularResult<ReplyAttachables> {
     if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
-      return ModularResult.value(listOf())
+      return ModularResult.value(ReplyAttachables())
     }
 
     return withContext(Dispatchers.IO) {
@@ -133,15 +133,14 @@ class ReplyLayoutFileEnumerator(
           newAttachFiles.addAll(replyFileAttachables)
         }
 
-        if (attachableCounter != MAX_VISIBLE_ATTACHABLES_COUNT) {
-          if (attachableCounter > MAX_VISIBLE_ATTACHABLES_COUNT) {
-            newAttachFiles.add(ReplyAttachable.ReplyTooManyAttachables(attachableCounter))
-          } else {
-            newAttachFiles.add(0, ReplyAttachable.ReplyNewAttachable)
-          }
+        if (attachableCounter > MAX_VISIBLE_ATTACHABLES_COUNT) {
+          newAttachFiles.add(ReplyAttachable.ReplyTooManyAttachables(attachableCounter))
         }
 
-        return@Try newAttachFiles
+        return@Try ReplyAttachables(
+          maxAllowedAttachablesPerPost = maxAllowedFilesPerPost ?: 0,
+          attachables = newAttachFiles
+        )
       }
     }
   }

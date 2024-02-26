@@ -58,8 +58,8 @@ internal fun ReplyAttachments(
   onRemoveAttachedMediaClicked: (ReplyAttachable) -> Unit
 ) {
   val paddings = 8.dp
-  val attachedMediaList = replyLayoutState.attachables
-  if (attachedMediaList.isEmpty()) {
+  val attachedMediaList by replyLayoutState.attachables
+  if (attachedMediaList.attachables.isEmpty()) {
     return
   }
 
@@ -93,7 +93,7 @@ internal fun ReplyAttachments(
       horizontalArrangement = Arrangement.spacedBy(2.dp),
       verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
-      attachedMediaList.forEach { attachedMedia ->
+      attachedMediaList.attachables.forEach { attachedMedia ->
         key(attachedMedia.key) {
           when (attachedMedia) {
             is ReplyAttachable.ReplyFileAttachable -> {
@@ -105,14 +105,6 @@ internal fun ReplyAttachments(
                 paddings = paddings,
                 onAttachedMediaClicked = onAttachedMediaClicked,
                 onRemoveAttachedMediaClicked = onRemoveAttachedMediaClicked
-              )
-            }
-            is ReplyAttachable.ReplyNewAttachable -> {
-              // TODO: New reply layout
-              Box(
-                modifier = Modifier
-                  .fillMaxSize()
-                  .background(Color.Red.copy(alpha = 0.5f))
               )
             }
             is ReplyAttachable.ReplyTooManyAttachables -> {
