@@ -27,16 +27,21 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 
 @Composable
 fun ReplyLayoutContainer(
+  chanDescriptor: ChanDescriptor,
   replyLayoutState: ReplyLayoutState,
   replyLayoutViewModel: ReplyLayoutViewModel,
   draggableStateProvider: () -> DraggableState,
   onDragStarted: suspend () -> Unit,
   onDragStopped: suspend (velocity: Float) -> Unit,
-  onCancelReplySendClicked: () -> Unit,
-  onSendReplyClicked: () -> Unit,
+  onCancelReplySendClicked: (ReplyLayoutState) -> Unit,
+  onSendReplyClicked: (ChanDescriptor, ReplyLayoutState) -> Unit,
   onAttachedMediaClicked: (ReplyAttachable) -> Unit,
   onRemoveAttachedMediaClicked: (ReplyAttachable) -> Unit,
-  onFlagSelectorClicked: (ChanDescriptor) -> Unit
+  onFlagSelectorClicked: (ChanDescriptor) -> Unit,
+  onPickLocalMediaButtonClicked: () -> Unit,
+  onPickRemoteMediaButtonClicked: () -> Unit,
+  onSearchRemoteMediaButtonClicked: () -> Unit,
+  onPrefillCaptchaButtonClicked: () -> Unit
 ) {
   val replyInputRightPartWidth = 58.dp
   val chanTheme = LocalChanTheme.current
@@ -91,16 +96,17 @@ fun ReplyLayoutContainer(
     ) {
       ReplyInputRightPart(
         iconSize = 36.dp,
+        chanDescriptor = chanDescriptor,
         replyLayoutState = replyLayoutState,
         draggableStateProvider = draggableStateProvider,
         onDragStarted = onDragStarted,
         onDragStopped = onDragStopped,
         onCancelReplySendClicked = onCancelReplySendClicked,
         onSendReplyClicked = onSendReplyClicked,
-        onPickLocalMediaButtonClicked = replyLayoutViewModel::onPickLocalMediaButtonClicked,
-        onPickRemoteMediaButtonClicked = replyLayoutViewModel::onPickRemoteMediaButtonClicked,
-        onSearchRemoteMediaButtonClicked = replyLayoutViewModel::onSearchRemoteMediaButtonClicked,
-        onPrefillCaptchaButtonClicked = replyLayoutViewModel::onPrefillCaptchaButtonClicked,
+        onPickLocalMediaButtonClicked = onPickLocalMediaButtonClicked,
+        onPickRemoteMediaButtonClicked = onPickRemoteMediaButtonClicked,
+        onSearchRemoteMediaButtonClicked = onSearchRemoteMediaButtonClicked,
+        onPrefillCaptchaButtonClicked = onPrefillCaptchaButtonClicked,
       )
     }
   }

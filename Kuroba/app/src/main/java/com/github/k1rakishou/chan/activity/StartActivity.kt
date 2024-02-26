@@ -48,6 +48,7 @@ import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar
 import com.github.k1rakishou.chan.features.drawer.MainController
 import com.github.k1rakishou.chan.ui.controller.AlbumViewController
 import com.github.k1rakishou.chan.ui.controller.BrowseController
+import com.github.k1rakishou.chan.ui.controller.ThreadControllerType
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
 import com.github.k1rakishou.chan.ui.controller.ViewThreadController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
@@ -434,7 +435,7 @@ class StartActivity : ControllerHostActivity(),
       mainNavigationController.pushController(browseController!!, false)
     }
 
-    browseController!!.onGainedFocus(ThreadSlideController.ThreadControllerType.Catalog)
+    browseController!!.onGainedFocus(ThreadControllerType.Catalog)
   }
 
   override fun dispatchKeyEvent(event: KeyEvent): Boolean {

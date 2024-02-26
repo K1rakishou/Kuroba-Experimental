@@ -124,8 +124,8 @@ class BrowseController(
   private var menuBuiltOnce = false
   private var updateCompositeCatalogNavigationSubtitleJob: Job? = null
 
-  override val threadControllerType: ThreadSlideController.ThreadControllerType
-    get() = ThreadSlideController.ThreadControllerType.Catalog
+  override val threadControllerType: ThreadControllerType
+    get() = ThreadControllerType.Catalog
 
   override fun injectDependencies(component: ActivityComponent) {
     component.inject(this)
@@ -966,14 +966,14 @@ class BrowseController(
             val viewThreadController = navigationController.top as ViewThreadController
             viewThreadController.loadThread(descriptor)
             viewThreadController.onShow()
-            viewThreadController.onGainedFocus(ThreadSlideController.ThreadControllerType.Thread)
+            viewThreadController.onGainedFocus(ThreadControllerType.Thread)
           }
         } else {
           val navigationController = StyledToolbarNavigationController(context)
           splitNav.setRightController(navigationController, showThreadOptions.pushControllerWithAnimation)
           val viewThreadController = ViewThreadController(context, mainControllerCallbacks, descriptor)
           navigationController.pushController(viewThreadController, false)
-          viewThreadController.onGainedFocus(ThreadSlideController.ThreadControllerType.Thread)
+          viewThreadController.onGainedFocus(ThreadControllerType.Thread)
         }
 
         splitNav.switchToController(
@@ -1102,12 +1102,12 @@ class BrowseController(
     }
   }
 
-  override fun onLostFocus(wasFocused: ThreadSlideController.ThreadControllerType) {
+  override fun onLostFocus(wasFocused: ThreadControllerType) {
     super.onLostFocus(wasFocused)
     check(wasFocused == threadControllerType) { "Unexpected controllerType: $wasFocused" }
   }
 
-  override fun onGainedFocus(nowFocused: ThreadSlideController.ThreadControllerType) {
+  override fun onGainedFocus(nowFocused: ThreadControllerType) {
     super.onGainedFocus(nowFocused)
     check(nowFocused == threadControllerType) { "Unexpected controllerType: $nowFocused" }
 

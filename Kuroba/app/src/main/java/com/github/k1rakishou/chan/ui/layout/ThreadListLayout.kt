@@ -59,8 +59,7 @@ import com.github.k1rakishou.chan.ui.cell.PreviousThreadScrollPositionData
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
 import com.github.k1rakishou.chan.ui.controller.CaptchaContainerController
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
-import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
-import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.ThreadControllerType
+import com.github.k1rakishou.chan.ui.controller.ThreadControllerType
 import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
 import com.github.k1rakishou.chan.ui.helper.AppResources
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
@@ -836,13 +835,13 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     return false
   }
 
-  fun lostFocus(wasFocused: ThreadSlideController.ThreadControllerType) {
+  fun lostFocus(wasFocused: ThreadControllerType) {
     threadPresenter?.lostFocus(wasFocused)
     snowLayout.lostFocus()
   }
 
   fun gainedFocus(
-    nowFocused: ThreadSlideController.ThreadControllerType,
+    nowFocused: ThreadControllerType,
     isThreadVisible: Boolean
   ) {
     threadPresenter?.gainedFocus(nowFocused)
@@ -853,15 +852,15 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     }
   }
 
-  fun onShown(nowFocused: ThreadSlideController.ThreadControllerType, isThreadVisible: Boolean) {
-    if (nowFocused == ThreadSlideController.ThreadControllerType.Thread && isThreadVisible) {
+  fun onShown(nowFocused: ThreadControllerType, isThreadVisible: Boolean) {
+    if (nowFocused == ThreadControllerType.Thread && isThreadVisible) {
       threadPresenter?.handleMarkedPost()
     }
 
     snowLayout.onShown()
   }
 
-  fun onHidden(nowFocused: ThreadSlideController.ThreadControllerType, isThreadVisible: Boolean) {
+  fun onHidden(nowFocused: ThreadControllerType, isThreadVisible: Boolean) {
     snowLayout.onHidden()
   }
 

@@ -1,14 +1,14 @@
 package com.github.k1rakishou.chan.features.reply
 
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
-import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
+import com.github.k1rakishou.chan.ui.controller.ThreadControllerType
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.persist_state.ReplyMode
 
 interface ReplyLayoutViewCallbacks {
-  suspend fun bindChanDescriptor(descriptor: ChanDescriptor, threadControllerType: ThreadSlideController.ThreadControllerType)
+  suspend fun bindChanDescriptor(descriptor: ChanDescriptor, threadControllerType: ThreadControllerType)
 
   fun replyLayoutVisibility(): ReplyLayoutVisibility
   fun isCatalogMode(): Boolean?

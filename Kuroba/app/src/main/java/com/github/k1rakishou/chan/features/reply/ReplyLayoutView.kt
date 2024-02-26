@@ -10,8 +10,7 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.core.os.bundleOf
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
 import com.github.k1rakishou.chan.ui.compose.providers.ProvideEverythingForCompose
-import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
-import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.ThreadControllerType
+import com.github.k1rakishou.chan.ui.controller.ThreadControllerType
 import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.requireComponentActivity
@@ -53,7 +52,7 @@ class ReplyLayoutView @JvmOverloads constructor(
     }
   }
 
-  fun onCreate(threadControllerType: ThreadSlideController.ThreadControllerType) {
+  fun onCreate(threadControllerType: ThreadControllerType) {
     replyLayoutViewModel = context.requireComponentActivity().viewModelByKey<ReplyLayoutViewModel>(
       key = threadControllerType.name,
       defaultArgs = bundleOf(ReplyLayoutViewModel.ThreadControllerTypeParam to threadControllerType)

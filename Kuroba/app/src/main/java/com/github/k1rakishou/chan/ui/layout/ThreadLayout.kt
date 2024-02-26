@@ -56,7 +56,7 @@ import com.github.k1rakishou.chan.features.reply_attach_sound.CreateSoundMediaCo
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.cell.PostCellData
 import com.github.k1rakishou.chan.ui.controller.PostLinksController
-import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
+import com.github.k1rakishou.chan.ui.controller.ThreadControllerType
 import com.github.k1rakishou.chan.ui.helper.PostPopupHelper
 import com.github.k1rakishou.chan.ui.helper.PostPopupHelper.PostPopupHelperCallback
 import com.github.k1rakishou.chan.ui.helper.RemovedPostsHelper
@@ -194,7 +194,7 @@ class ThreadLayout @JvmOverloads constructor(
   private lateinit var removedPostsHelper: RemovedPostsHelper
   private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
 
-  var threadControllerType: ThreadSlideController.ThreadControllerType? = null
+  var threadControllerType: ThreadControllerType? = null
     private set
   private var drawerCallbacks: MainControllerCallbacks? = null
   private var newPostsNotification: SnackbarWrapper? = null
@@ -251,7 +251,7 @@ class ThreadLayout @JvmOverloads constructor(
 
   fun create(
     callback: ThreadLayoutCallback,
-    threadControllerType: ThreadSlideController.ThreadControllerType,
+    threadControllerType: ThreadControllerType,
     navigationViewContractType: NavigationViewContract.Type
   ) {
     this.callback = callback
@@ -413,21 +413,21 @@ class ThreadLayout @JvmOverloads constructor(
     )
   }
 
-  fun lostFocus(wasFocused: ThreadSlideController.ThreadControllerType) {
+  fun lostFocus(wasFocused: ThreadControllerType) {
     replyButton.lostFocus(wasFocused)
     threadListLayout.lostFocus(wasFocused)
   }
 
-  fun gainedFocus(nowFocused: ThreadSlideController.ThreadControllerType) {
+  fun gainedFocus(nowFocused: ThreadControllerType) {
     replyButton.gainedFocus(nowFocused)
     threadListLayout.gainedFocus(nowFocused, visible == Visible.THREAD)
   }
 
-  fun onShown(nowFocused: ThreadSlideController.ThreadControllerType) {
+  fun onShown(nowFocused: ThreadControllerType) {
     threadListLayout.onShown(nowFocused, visible == Visible.THREAD)
   }
 
-  fun onHidden(nowFocused: ThreadSlideController.ThreadControllerType) {
+  fun onHidden(nowFocused: ThreadControllerType) {
     threadListLayout.onHidden(nowFocused, visible == Visible.THREAD)
   }
 
@@ -1470,7 +1470,7 @@ class ThreadLayout @JvmOverloads constructor(
 
   interface ThreadLayoutCallback {
     val toolbar: Toolbar?
-    val threadControllerType: ThreadSlideController.ThreadControllerType
+    val threadControllerType: ThreadControllerType
 
     suspend fun showThread(descriptor: ChanDescriptor.ThreadDescriptor, animated: Boolean)
     suspend fun showThreadWithoutFocusing(descriptor: ChanDescriptor.ThreadDescriptor, animated: Boolean)

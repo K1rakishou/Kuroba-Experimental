@@ -45,16 +45,21 @@ fun ReplyLayout(replyLayoutViewModel: ReplyLayoutViewModel) {
           .height(targetHeight)
       ) {
         ReplyLayoutContainer(
+          chanDescriptor = chanDescriptor,
           replyLayoutState = replyLayoutState,
           replyLayoutViewModel = replyLayoutViewModel,
           draggableStateProvider = { draggableState },
           onDragStarted = onDragStarted,
           onDragStopped = onDragStopped,
-          onCancelReplySendClicked = { replyLayoutViewModel.cancelSendReply(replyLayoutState) },
-          onSendReplyClicked = { replyLayoutViewModel.sendReply(chanDescriptor, replyLayoutState) },
-          onAttachedMediaClicked = { attachedMedia -> replyLayoutViewModel.onAttachedMediaClicked(attachedMedia) },
-          onRemoveAttachedMediaClicked = { attachedMedia -> replyLayoutViewModel.removeAttachedMedia(attachedMedia) },
-          onFlagSelectorClicked = { chanDescriptor -> replyLayoutViewModel.onFlagSelectorClicked(chanDescriptor) }
+          onCancelReplySendClicked = replyLayoutViewModel::cancelSendReply,
+          onSendReplyClicked = replyLayoutViewModel::sendReply,
+          onAttachedMediaClicked = replyLayoutViewModel::onAttachedMediaClicked,
+          onRemoveAttachedMediaClicked = replyLayoutViewModel::removeAttachedMedia,
+          onFlagSelectorClicked = replyLayoutViewModel::onFlagSelectorClicked,
+          onPickLocalMediaButtonClicked = replyLayoutViewModel::onPickLocalMediaButtonClicked,
+          onPickRemoteMediaButtonClicked = replyLayoutViewModel::onPickRemoteMediaButtonClicked,
+          onSearchRemoteMediaButtonClicked = replyLayoutViewModel::onSearchRemoteMediaButtonClicked,
+          onPrefillCaptchaButtonClicked = replyLayoutViewModel::onPrefillCaptchaButtonClicked,
         )
       }
     }

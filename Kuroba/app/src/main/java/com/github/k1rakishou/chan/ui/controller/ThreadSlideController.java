@@ -383,9 +383,4 @@ public class ThreadSlideController
         void onGainedFocus(@NonNull ThreadControllerType controllerType);
         void onLostFocus(@NonNull ThreadControllerType controllerType);
     }
-
-    public enum ThreadControllerType {
-        Catalog,
-        Thread
-    }
 }

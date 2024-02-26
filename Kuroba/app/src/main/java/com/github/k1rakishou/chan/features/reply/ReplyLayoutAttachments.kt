@@ -149,7 +149,7 @@ private fun AttachedMediaThumbnail(
     ) {
       when (val replyFileResult = replyLayoutViewModel.getReplyFileByUuid(replyFileAttachable.fileUuid)) {
         is ModularResult.Error -> {
-          // TODO: New reply layout
+          // TODO: New reply layout.
           TODO("Handle error case")
         }
         is ModularResult.Value -> {

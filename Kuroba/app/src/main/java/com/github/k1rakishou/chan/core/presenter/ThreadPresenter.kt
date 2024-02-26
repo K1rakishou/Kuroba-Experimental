@@ -73,7 +73,7 @@ import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.controller.PostOmittedImagesController
-import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
+import com.github.k1rakishou.chan.ui.controller.ThreadControllerType
 import com.github.k1rakishou.chan.ui.helper.PostLinkableClickHelper
 import com.github.k1rakishou.chan.ui.helper.PostPopupHelper
 import com.github.k1rakishou.chan.ui.layout.ThreadListLayout.ThreadListLayoutPresenterCallback
@@ -2840,7 +2840,7 @@ class ThreadPresenter @Inject constructor(
     threadPresenterCallback?.onRestoreRemovedPostsClicked(currentChanDescriptor!!, selectedPosts)
   }
 
-  fun lostFocus(wasFocused: ThreadSlideController.ThreadControllerType) {
+  fun lostFocus(wasFocused: ThreadControllerType) {
     if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
       // If we are not in SLIDE/PHONE layout mode, then we don't need to check the state of SlidingPaneLayout
       currentFocusedController = CurrentFocusedController.None
@@ -2848,12 +2848,12 @@ class ThreadPresenter @Inject constructor(
     }
 
     currentFocusedController = when (wasFocused) {
-      ThreadSlideController.ThreadControllerType.Catalog -> CurrentFocusedController.Thread
-      ThreadSlideController.ThreadControllerType.Thread -> CurrentFocusedController.Catalog
+      ThreadControllerType.Catalog -> CurrentFocusedController.Thread
+      ThreadControllerType.Thread -> CurrentFocusedController.Catalog
     }
   }
 
-  fun gainedFocus(nowFocused: ThreadSlideController.ThreadControllerType) {
+  fun gainedFocus(nowFocused: ThreadControllerType) {
     if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
       // If we are not in SLIDE/PHONE layout mode, then we don't need to check the state of SlidingPaneLayout
       currentFocusedController = CurrentFocusedController.None
@@ -2861,8 +2861,8 @@ class ThreadPresenter @Inject constructor(
     }
 
     currentFocusedController = when (nowFocused) {
-      ThreadSlideController.ThreadControllerType.Catalog -> CurrentFocusedController.Catalog
-      ThreadSlideController.ThreadControllerType.Thread -> CurrentFocusedController.Thread
+      ThreadControllerType.Catalog -> CurrentFocusedController.Catalog
+      ThreadControllerType.Thread -> CurrentFocusedController.Thread
     }
   }
 

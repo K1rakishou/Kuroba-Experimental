@@ -42,7 +42,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.ui.animation.cancelAnimations
-import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
+import com.github.k1rakishou.chan.ui.controller.ThreadControllerType
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar.ToolbarCollapseCallback
@@ -73,7 +73,7 @@ class HidingFloatingActionButton
   private var focused = false
   private var isThreadMode = false
   private var currentFabAnimation = CurrentFabAnimation.None
-  private var threadControllerType: ThreadSlideController.ThreadControllerType? = null
+  private var threadControllerType: ThreadControllerType? = null
   private var animatorSet: AnimatorSet? = null
 
   private val padding = dp(12f)
@@ -170,7 +170,7 @@ class HidingFloatingActionButton
     }
   }
 
-  fun setThreadControllerType(threadControllerType: ThreadSlideController.ThreadControllerType) {
+  fun setThreadControllerType(threadControllerType: ThreadControllerType) {
     this.threadControllerType = threadControllerType
   }
 
@@ -178,11 +178,11 @@ class HidingFloatingActionButton
     this.isThreadMode = isThreadMode
   }
 
-  fun gainedFocus(threadControllerType: ThreadSlideController.ThreadControllerType) {
+  fun gainedFocus(threadControllerType: ThreadControllerType) {
     focused = threadControllerType == this.threadControllerType
   }
 
-  fun lostFocus(threadControllerType: ThreadSlideController.ThreadControllerType) {
+  fun lostFocus(threadControllerType: ThreadControllerType) {
     if (ChanSettings.neverHideToolbar.get()) {
       return
     }
@@ -459,7 +459,7 @@ class HidingFloatingActionButton
     return false
   }
 
-  private fun findThreadLayout(controllerType: ThreadSlideController.ThreadControllerType): ThreadLayout? {
+  private fun findThreadLayout(controllerType: ThreadControllerType): ThreadLayout? {
     var parent = this.parent
 
     while (parent != null && parent !is ThreadLayout) {

@@ -7,17 +7,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutState
 import com.github.k1rakishou.chan.features.reply.data.SendReplyState
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeIcon
 import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 
 @Composable
 internal fun SendReplyButton(
+  chanDescriptor: ChanDescriptor,
+  replyLayoutState: ReplyLayoutState,
   sendReplyState: SendReplyState,
   iconSize: Dp,
   padding: Dp,
-  onCancelReplySendClicked: () -> Unit,
-  onSendReplyClicked: () -> Unit,
+  onCancelReplySendClicked: (ReplyLayoutState) -> Unit,
+  onSendReplyClicked: (ChanDescriptor, ReplyLayoutState) -> Unit,
   replySendProgress: Float?
 ) {
   val buttonDrawableId = remember(key1 = sendReplyState) {
@@ -36,9 +40,9 @@ internal fun SendReplyButton(
         bounded = false,
         onClick = {
           if (sendReplyState.canCancel) {
-            onCancelReplySendClicked()
+            onCancelReplySendClicked(replyLayoutState)
           } else {
-            onSendReplyClicked()
+            onSendReplyClicked(chanDescriptor, replyLayoutState)
           }
         }
       ),

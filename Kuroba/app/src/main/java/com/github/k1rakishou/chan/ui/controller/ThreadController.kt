@@ -154,7 +154,7 @@ abstract class ThreadController(
   override val toolbar: Toolbar?
     get() = (navigationController as? ToolbarNavigationController)?.toolbar
 
-  abstract override val threadControllerType: ThreadSlideController.ThreadControllerType
+  abstract override val threadControllerType: ThreadControllerType
 
   override fun onCreate() {
     super.onCreate()
@@ -499,7 +499,7 @@ abstract class ThreadController(
     requireStartActivity().setSettingsMenuItemSelected()
   }
 
-  override fun onLostFocus(wasFocused: ThreadSlideController.ThreadControllerType) {
+  override fun onLostFocus(wasFocused: ThreadControllerType) {
     if (isDevBuild()) {
       check(wasFocused == threadControllerType) {
         "ThreadControllerTypes do not match! wasFocused=$wasFocused, current=$threadControllerType"
@@ -510,7 +510,7 @@ abstract class ThreadController(
     controllerNavigationManager.onControllerSwipedFrom(this)
   }
 
-  override fun onGainedFocus(nowFocused: ThreadSlideController.ThreadControllerType) {
+  override fun onGainedFocus(nowFocused: ThreadControllerType) {
     if (isDevBuild()) {
       check(nowFocused == threadControllerType) {
         "ThreadControllerTypes do not match! nowFocused=$nowFocused, current=$threadControllerType"

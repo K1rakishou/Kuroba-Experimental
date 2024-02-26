@@ -21,16 +21,18 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutState
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 
 @Composable
 internal fun ReplyInputRightPart(
   iconSize: Dp,
+  chanDescriptor: ChanDescriptor,
   replyLayoutState: ReplyLayoutState,
   draggableStateProvider: () -> DraggableState,
   onDragStarted: suspend () -> Unit,
   onDragStopped: suspend (velocity: Float) -> Unit,
-  onCancelReplySendClicked: () -> Unit,
-  onSendReplyClicked: () -> Unit,
+  onCancelReplySendClicked: (ReplyLayoutState) -> Unit,
+  onSendReplyClicked: (ChanDescriptor, ReplyLayoutState) -> Unit,
   onPickLocalMediaButtonClicked: () -> Unit,
   onPickRemoteMediaButtonClicked: () -> Unit,
   onSearchRemoteMediaButtonClicked: () -> Unit,
@@ -80,6 +82,8 @@ internal fun ReplyInputRightPart(
     Spacer(modifier = Modifier.height(6.dp))
 
     SendReplyButton(
+      chanDescriptor = chanDescriptor,
+      replyLayoutState = replyLayoutState,
       sendReplyState = sendReplyState,
       iconSize = iconSize,
       padding = 4.dp,

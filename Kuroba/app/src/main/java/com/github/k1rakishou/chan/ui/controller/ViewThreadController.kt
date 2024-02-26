@@ -91,8 +91,8 @@ open class ViewThreadController(
   private var pinItemPinned = false
   private var threadDescriptor: ThreadDescriptor = startingThreadDescriptor
 
-  override val threadControllerType: ThreadSlideController.ThreadControllerType
-    get() = ThreadSlideController.ThreadControllerType.Thread
+  override val threadControllerType: ThreadControllerType
+    get() = ThreadControllerType.Thread
 
   override fun injectDependencies(component: ActivityComponent) {
     component.inject(this)
@@ -788,12 +788,12 @@ open class ViewThreadController(
     // no-op
   }
 
-  override fun onLostFocus(wasFocused: ThreadSlideController.ThreadControllerType) {
+  override fun onLostFocus(wasFocused: ThreadControllerType) {
     super.onLostFocus(wasFocused)
     check(wasFocused == threadControllerType) { "Unexpected controllerType: $wasFocused" }
   }
 
-  override fun onGainedFocus(nowFocused: ThreadSlideController.ThreadControllerType) {
+  override fun onGainedFocus(nowFocused: ThreadControllerType) {
     super.onGainedFocus(nowFocused)
     check(nowFocused == threadControllerType) { "Unexpected controllerType: $nowFocused" }
 

@@ -6,7 +6,7 @@ import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.GlobalViewStateManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
-import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
+import com.github.k1rakishou.chan.ui.controller.ThreadControllerType
 import com.github.k1rakishou.chan.ui.layout.DrawerWidthAdjustingLayout
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout
 import com.github.k1rakishou.chan.ui.view.HidingFloatingActionButton
@@ -50,7 +50,7 @@ class SnackbarWrapper private constructor(
     snackbar?.setAction(actionTextId) { onClickListener.invoke() }
   }
 
-  fun show(threadControllerType: ThreadSlideController.ThreadControllerType) {
+  fun show(threadControllerType: ThreadControllerType) {
     val isReplyLayoutOpened = globalViewStateManager.isReplyLayoutOpened(threadControllerType)
     if (isReplyLayoutOpened) {
       // Do not show the snackbar when the reply layout is opened
