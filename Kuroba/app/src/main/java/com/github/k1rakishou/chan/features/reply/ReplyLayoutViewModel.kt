@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.features.reply
 
+import android.content.Context
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
@@ -10,6 +11,7 @@ import com.github.k1rakishou.chan.core.di.module.viewmodel.ViewModelAssistedFact
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.site.loader.ClientException
+import com.github.k1rakishou.chan.features.posting.PostingService
 import com.github.k1rakishou.chan.features.reply.data.PostFormattingButtonsFactory
 import com.github.k1rakishou.chan.features.reply.data.ReplyAttachable
 import com.github.k1rakishou.chan.features.reply.data.ReplyFile
@@ -17,6 +19,7 @@ import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutFileEnumerator
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutState
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.ThreadControllerType
+import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
 import com.github.k1rakishou.chan.ui.helper.AppResources
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
@@ -25,6 +28,7 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
+import com.github.k1rakishou.persist_state.ReplyMode
 import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -41,7 +45,8 @@ class ReplyLayoutViewModel(
   private val boardManagerLazy: Lazy<BoardManager>,
   private val replyManagerLazy: Lazy<ReplyManager>,
   private val postFormattingButtonsFactoryLazy: Lazy<PostFormattingButtonsFactory>,
-  private val themeEngineLazy: Lazy<ThemeEngine>
+  private val themeEngineLazy: Lazy<ThemeEngine>,
+  private val globalUiStateHolderLazy: Lazy<GlobalUiStateHolder>
 ) : BaseViewModel() {
   private val _replyManagerStateLoaded = AtomicBoolean(false)
 
@@ -78,7 +83,7 @@ class ReplyLayoutViewModel(
     viewModelScope.launch { reloadReplyManagerState() }
   }
 
-  suspend fun bindChanDescriptor(chanDescriptor: ChanDescriptor) {
+  suspend fun bindChanDescriptor(chanDescriptor: ChanDescriptor, threadControllerType: ThreadControllerType) {
     replyManager.awaitUntilFilesAreLoaded()
 
     if (_boundChanDescriptor.value == chanDescriptor) {
@@ -86,15 +91,18 @@ class ReplyLayoutViewModel(
     }
 
     _boundChanDescriptor.value = chanDescriptor
+
     _replyLayoutState.value = ReplyLayoutState(
       chanDescriptor = chanDescriptor,
+      threadControllerType = threadControllerType,
       coroutineScope = viewModelScope,
       appResourcesLazy = appResourcesLazy,
       replyLayoutFileEnumeratorLazy = replyLayoutFileEnumeratorLazy,
       boardManagerLazy = boardManagerLazy,
       replyManagerLazy = replyManagerLazy,
       postFormattingButtonsFactoryLazy = postFormattingButtonsFactoryLazy,
-      themeEngineLazy = themeEngineLazy
+      themeEngineLazy = themeEngineLazy,
+      globalUiStateHolderLazy = globalUiStateHolderLazy
     ).also { replyLayoutState -> replyLayoutState.bindChanDescriptor(chanDescriptor) }
   }
 
@@ -130,6 +138,10 @@ class ReplyLayoutViewModel(
           return@mapValue replyFile
         }
     }
+  }
+
+  fun isCatalogMode(): Boolean? {
+    return _boundChanDescriptor.value?.isCatalogDescriptor()
   }
 
   fun replyLayoutVisibility(): ReplyLayoutVisibility {
@@ -220,6 +232,32 @@ class ReplyLayoutViewModel(
     }
   }
 
+  fun makeSubmitCall(
+    appContext: Context,
+    chanDescriptor: ChanDescriptor,
+    replyMode: ReplyMode,
+    retrying: Boolean
+  ) {
+    closeAll()
+    PostingService.enqueueReplyChanDescriptor(appContext, chanDescriptor, replyMode, retrying)
+  }
+
+  private fun closeAll() {
+    // TODO: New reply layout.
+//    isExpanded = false
+//    previewOpen = false
+//
+//    commentEditingHistory.clear()
+//
+//    callback.highlightPosts(emptySet())
+//    callback.dialogMessage(null)
+//    callback.setExpanded(expanded = false, isCleaningUp = true)
+//    callback.openSubject(false)
+//    callback.hideFlag()
+//    callback.openNameOptions(false)
+//    callback.updateRevertChangeButtonVisibility(isBufferEmpty = true)
+  }
+
   class ReplyFileDoesNotExist(fileUUID: UUID) : ClientException("Reply file with UUID '${fileUUID}' does not exist")
 
   class ViewModelFactory @Inject constructor(
@@ -229,7 +267,8 @@ class ReplyLayoutViewModel(
     private val boardManagerLazy: Lazy<BoardManager>,
     private val replyManagerLazy: Lazy<ReplyManager>,
     private val postFormattingButtonsFactoryLazy: Lazy<PostFormattingButtonsFactory>,
-    private val themeEngineLazy: Lazy<ThemeEngine>
+    private val themeEngineLazy: Lazy<ThemeEngine>,
+    private val globalUiStateHolderLazy: Lazy<GlobalUiStateHolder>
   ) : ViewModelAssistedFactory<ReplyLayoutViewModel> {
     override fun create(handle: SavedStateHandle): ReplyLayoutViewModel {
       return ReplyLayoutViewModel(
@@ -240,7 +279,8 @@ class ReplyLayoutViewModel(
         boardManagerLazy = boardManagerLazy,
         replyManagerLazy = replyManagerLazy,
         postFormattingButtonsFactoryLazy = postFormattingButtonsFactoryLazy,
-        themeEngineLazy = themeEngineLazy
+        themeEngineLazy = themeEngineLazy,
+        globalUiStateHolderLazy = globalUiStateHolderLazy
       )
     }
   }

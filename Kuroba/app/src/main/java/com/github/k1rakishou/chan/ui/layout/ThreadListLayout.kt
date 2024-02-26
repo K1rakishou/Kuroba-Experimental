@@ -25,6 +25,7 @@ import android.util.AttributeSet
 import android.view.KeyEvent
 import android.view.View
 import android.widget.FrameLayout
+import androidx.compose.runtime.snapshotFlow
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ItemDecoration
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
@@ -32,11 +33,11 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.ChanSettings.BoardPostViewMode
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
-import com.github.k1rakishou.chan.core.base.Debouncer
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.helper.ChanLoadProgressEvent
 import com.github.k1rakishou.chan.core.helper.ChanLoadProgressNotifier
+import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.helper.LastViewedPostNoInfoHolder
 import com.github.k1rakishou.chan.core.manager.BottomNavBarVisibilityStateManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
@@ -56,9 +57,12 @@ import com.github.k1rakishou.chan.ui.cell.PostCellData
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.cell.PreviousThreadScrollPositionData
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
+import com.github.k1rakishou.chan.ui.controller.CaptchaContainerController
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.ThreadControllerType
+import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
+import com.github.k1rakishou.chan.ui.helper.AppResources
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.view.FastScroller
 import com.github.k1rakishou.chan.ui.view.FastScrollerHelper
@@ -74,6 +78,7 @@ import com.github.k1rakishou.chan.utils.TimeUtils
 import com.github.k1rakishou.chan.utils.ViewUtils.hackMaxFlingVelocity
 import com.github.k1rakishou.chan.utils.setBackgroundColorFast
 import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -93,10 +98,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.util.*
 import javax.inject.Inject
-import kotlin.coroutines.CoroutineContext
 import kotlin.math.max
 import kotlin.math.roundToInt
 import kotlin.time.Duration
@@ -109,9 +116,15 @@ import kotlin.time.measureTimedValue
 class ThreadListLayout(context: Context, attrs: AttributeSet?)
   : FrameLayout(context, attrs),
   Toolbar.ToolbarHeightUpdatesCallback,
-  CoroutineScope,
   ThemeEngine.ThemeChangesListener,
   FastScroller.ThumbDragListener {
+
+  @Inject
+  lateinit var dialogFactory: DialogFactory
+  @Inject
+  lateinit var appResources: AppResources
+  @Inject
+  lateinit var globalUiStateHolder: GlobalUiStateHolder
 
   @Inject
   lateinit var _themeEngine: Lazy<ThemeEngine>
@@ -310,25 +323,26 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
   private val compositeDisposable = CompositeDisposable()
   private val job = SupervisorJob()
-  private val updateRecyclerPaddingsDebouncer = Debouncer(false)
+  private val coroutineScope = CoroutineScope(job + Dispatchers.Main + CoroutineName("ThreadListLayout"))
 
   private lateinit var listScrollToBottomExecutor: RendezvousCoroutineExecutor
   private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
 
-  override val coroutineContext: CoroutineContext
-    get() = job + Dispatchers.Main + CoroutineName("ThreadListLayout")
-
   private var threadPresenter: ThreadPresenter? = null
-
   private var layoutManager: RecyclerView.LayoutManager? = null
   private var fastScroller: FastScroller? = null
   private var postInfoMapItemDecoration: PostInfoMapItemDecoration? = null
   private var callback: ThreadListLayoutPresenterCallback? = null
   private var navigationViewContractType: NavigationViewContract.Type = NavigationViewContract.Type.BottomNavView
+  private var currentThreadControllerType: ThreadControllerType? = null
   private var threadListLayoutCallback: ThreadListLayoutCallback? = null
   private var boardPostViewMode: BoardPostViewMode? = null
   private var spanCount = 2
   private var prevLastPostNo = 0L
+
+  private fun requireThreadControllerType(): ThreadControllerType {
+    return requireNotNull(currentThreadControllerType) { "currentThreadControllerType is null!" }
+  }
 
   // TODO: New reply layout
   fun getCurrentChanDescriptor(): ChanDescriptor? {
@@ -392,9 +406,10 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     this.threadPresenter = threadPresenter
     this.threadListLayoutCallback = threadListLayoutCallback
     this.navigationViewContractType = navigationViewContractType
+    this.currentThreadControllerType = threadControllerType
 
-    listScrollToBottomExecutor = RendezvousCoroutineExecutor(this)
-    serializedCoroutineExecutor = SerializedCoroutineExecutor(this)
+    listScrollToBottomExecutor = RendezvousCoroutineExecutor(coroutineScope)
+    serializedCoroutineExecutor = SerializedCoroutineExecutor(coroutineScope)
 
     replyLayoutView.onCreate(threadControllerType)
 
@@ -420,6 +435,40 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     attachToolbarScroll(true)
 
     threadListLayoutCallback.toolbar?.addToolbarHeightUpdatesCallback(this)
+
+    coroutineScope.launch {
+      snapshotFlow { globalUiStateHolder.uiState.replyLayout.state(threadControllerType).height.intValue }
+        .collectLatest { setRecyclerViewPadding() }
+    }
+
+    coroutineScope.launch {
+      snapshotFlow { globalUiStateHolder.uiState.replyLayout.state(threadControllerType).layoutVisibility.value }
+        .collectLatest { replyLayoutVisibility ->
+          val isCatalogReplyView = threadControllerType == ThreadControllerType.Catalog
+
+          when (replyLayoutVisibility) {
+            ReplyLayoutVisibility.Collapsed -> {
+              threadListLayoutCallback.showReplyButton(true)
+
+              bottomNavBarVisibilityStateManager.replyViewStateChanged(
+                isCatalogReplyView = isCatalogReplyView,
+                isVisible = false
+              )
+            }
+            ReplyLayoutVisibility.Opened -> {
+              threadListLayoutCallback.showReplyButton(false)
+
+              bottomNavBarVisibilityStateManager.replyViewStateChanged(
+                isCatalogReplyView = isCatalogReplyView,
+                isVisible = true
+              )
+            }
+            ReplyLayoutVisibility.Expanded -> {
+              // no-op
+            }
+          }
+        }
+    }
   }
 
   fun onDestroy() {
@@ -601,7 +650,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     onThemeChanged()
 
     if (initial) {
-      replyLayoutView.bindChanDescriptor(descriptor)
+      replyLayoutView.bindChanDescriptor(descriptor, requireThreadControllerType())
 
       recyclerView.layoutManager = null
       recyclerView.layoutManager = layoutManager
@@ -823,8 +872,50 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     afterPostingAttempt: Boolean,
     onFinished: ((Boolean) -> Unit)? = null
   ) {
-    // TODO: New reply layout. Why replyLayoutView?
-//    replyLayoutView.showCaptcha(chanDescriptor, replyMode, autoReply, afterPostingAttempt, onFinished)
+    val controller = CaptchaContainerController(
+      context = context,
+      afterPostingAttempt = afterPostingAttempt,
+      chanDescriptor = chanDescriptor
+    ) { authenticationResult ->
+      when (authenticationResult) {
+        is CaptchaContainerController.AuthenticationResult.Failure -> {
+          Logger.e(TAG, "CaptchaContainerController failure, ${authenticationResult.throwable}")
+
+          dialogFactory.createSimpleInformationDialog(
+            context = context,
+            titleText = appResources.string(R.string.reply_captcha_failure),
+            descriptionText = authenticationResult.throwable.errorMessageOrClassName(),
+            onDismissListener = {
+              if (!autoReply) {
+                onFinished?.invoke(false)
+              }
+            }
+          )
+        }
+        is CaptchaContainerController.AuthenticationResult.Success -> {
+          Logger.d(TAG, "CaptchaContainerController success")
+
+          if (autoReply) {
+            replyLayoutView.makeSubmitCall(
+              chanDescriptor = chanDescriptor,
+              replyMode = replyMode,
+              retrying = false
+            )
+          } else {
+            onFinished?.invoke(true)
+          }
+        }
+      }
+    }
+
+    replyLayoutView.hideKeyboard()
+
+    coroutineScope.launch {
+      // Wait a little bit for the keyboard to get hidden
+      delay(100)
+
+      threadListLayoutCallback?.presentController(controller)
+    }
   }
 
   // TODO: New reply layout
@@ -856,20 +947,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
     if (open) {
       replyLayoutView.updateReplyLayoutVisibility(ReplyLayoutVisibility.Opened)
-      threadListLayoutCallback?.showReplyButton(false)
-
-      bottomNavBarVisibilityStateManager.replyViewStateChanged(
-        isCatalogReplyView = chanDescriptor.isCatalogDescriptor(),
-        isVisible = true
-      )
     } else {
       replyLayoutView.updateReplyLayoutVisibility(ReplyLayoutVisibility.Collapsed)
-      threadListLayoutCallback?.showReplyButton(true)
-
-      bottomNavBarVisibilityStateManager.replyViewStateChanged(
-        isCatalogReplyView = chanDescriptor.isCatalogDescriptor(),
-        isVisible = false
-      )
     }
 
     if (!open) {
@@ -1152,11 +1231,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   // TODO: New reply layout
-  fun updateRecyclerViewPaddings() {
-    updateRecyclerPaddingsDebouncer.post({ setRecyclerViewPadding() }, 50L)
-  }
-
-  // TODO: New reply layout
   fun presentController(controller: Controller) {
     BackgroundUtils.ensureMainThread()
     threadListLayoutCallback?.presentController(controller)
@@ -1189,6 +1263,9 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   private fun setRecyclerViewPadding() {
+    val threadControllerType = currentThreadControllerType
+      ?: return
+
     val defaultPadding = if (boardPostViewMode == BoardPostViewMode.GRID || boardPostViewMode == BoardPostViewMode.STAGGER) {
       dp(1f)
     } else {
@@ -1204,11 +1281,9 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     val recyclerTop = defaultPadding + toolbarHeight()
     var recyclerBottom = defaultPadding
 
-    // measurements
     if (replyLayoutView.isOpened()) {
-//      measureReplyLayout()
-
-      recyclerBottom += (replyLayoutView.measuredHeight - replyLayoutView.paddingTop)
+      val replyLayoutViewHeight = globalUiStateHolder.uiState.replyLayout.state(threadControllerType).height.intValue
+      recyclerBottom += replyLayoutViewHeight
     } else {
       recyclerBottom += when (navigationViewContractType) {
         NavigationViewContract.Type.BottomNavView -> {
@@ -1321,6 +1396,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     fun showImageReencodingWindow(fileUuid: UUID, supportsReencode: Boolean)
     fun threadBackPressed(): Boolean
     fun threadBackLongPressed()
+
     fun presentController(controller: Controller)
     fun pushController(controller: Controller)
     fun unpresentController(predicate: (Controller) -> Boolean)

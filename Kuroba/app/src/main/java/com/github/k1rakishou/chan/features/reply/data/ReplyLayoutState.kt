@@ -14,6 +14,8 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.site.PostFormatterButton
+import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.ThreadControllerType
+import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
 import com.github.k1rakishou.chan.ui.helper.AppResources
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
@@ -25,13 +27,15 @@ import kotlinx.coroutines.CoroutineScope
 @Stable
 class ReplyLayoutState(
   val chanDescriptor: ChanDescriptor,
+  val threadControllerType: ThreadControllerType,
   private val coroutineScope: CoroutineScope,
   private val appResourcesLazy: Lazy<AppResources>,
   private val replyLayoutFileEnumeratorLazy: Lazy<ReplyLayoutFileEnumerator>,
   private val boardManagerLazy: Lazy<BoardManager>,
   private val replyManagerLazy: Lazy<ReplyManager>,
   private val postFormattingButtonsFactoryLazy: Lazy<PostFormattingButtonsFactory>,
-  private val themeEngineLazy: Lazy<ThemeEngine>
+  private val themeEngineLazy: Lazy<ThemeEngine>,
+  private val globalUiStateHolderLazy: Lazy<GlobalUiStateHolder>
 ) {
   private val appResources: AppResources
     get() = appResourcesLazy.get()
@@ -45,6 +49,8 @@ class ReplyLayoutState(
     get() = postFormattingButtonsFactoryLazy.get()
   private val themeEngine: ThemeEngine
     get() = themeEngineLazy.get()
+  private val globalUiStateHolder: GlobalUiStateHolder
+    get() = globalUiStateHolderLazy.get()
 
   private val _replyText = mutableStateOf<TextFieldValue>(TextFieldValue())
   val replyText: State<TextFieldValue>
@@ -95,7 +101,7 @@ class ReplyLayoutState(
     get() = _replySendProgressState
 
   val isCatalogMode: Boolean
-    get() = chanDescriptor is ChanDescriptor.ICatalogDescriptor
+    get() = threadControllerType == ThreadControllerType.Catalog
 
   suspend fun bindChanDescriptor(chanDescriptor: ChanDescriptor) {
     replyManager.awaitUntilFilesAreLoaded()
@@ -146,21 +152,28 @@ class ReplyLayoutState(
     updateReplyFieldHintText()
   }
 
+  fun onHeightChanged(newHeight: Int) {
+    onHeightChangedInternal(newHeight)
+  }
+
   fun collapseReplyLayout() {
     if (_replyLayoutVisibility.value != ReplyLayoutVisibility.Collapsed) {
       _replyLayoutVisibility.value = ReplyLayoutVisibility.Collapsed
+      onReplyLayoutVisibilityChangedInternal(ReplyLayoutVisibility.Collapsed)
     }
   }
 
   fun openReplyLayout() {
     if (_replyLayoutVisibility.value != ReplyLayoutVisibility.Opened) {
       _replyLayoutVisibility.value = ReplyLayoutVisibility.Opened
+      onReplyLayoutVisibilityChangedInternal(ReplyLayoutVisibility.Opened)
     }
   }
 
   fun expandReplyLayout() {
     if (_replyLayoutVisibility.value != ReplyLayoutVisibility.Expanded) {
       _replyLayoutVisibility.value = ReplyLayoutVisibility.Expanded
+      onReplyLayoutVisibilityChangedInternal(ReplyLayoutVisibility.Expanded)
     }
   }
 
@@ -186,10 +199,28 @@ class ReplyLayoutState(
     _options.value = options
   }
 
+  private fun onHeightChangedInternal(
+    newHeight: Int
+  ) {
+    globalUiStateHolder.updateReplyLayoutGlobalState { replyLayoutGlobalState ->
+      replyLayoutGlobalState.update(threadControllerType) { individualReplyLayoutGlobalState ->
+        individualReplyLayoutGlobalState.updateCurrentReplyLayoutHeight(newHeight)
+      }
+    }
+  }
+
+  private fun onReplyLayoutVisibilityChangedInternal(replyLayoutVisibility: ReplyLayoutVisibility) {
+    globalUiStateHolder.updateReplyLayoutGlobalState { replyLayoutGlobalState ->
+      replyLayoutGlobalState.update(threadControllerType) { individualReplyLayoutGlobalState ->
+        individualReplyLayoutGlobalState.updateReplyLayoutVisibility(replyLayoutVisibility)
+      }
+    }
+  }
+
   private fun updateReplyFieldHintText() {
     _replyFieldHintText.value = formatLabelText(
       replyAttachables = _attachables.value,
-      isCatalogMode = isCatalogMode,
+      threadControllerType = threadControllerType,
       makeNewThreadHint = appResources.string(R.string.reply_make_new_thread_hint),
       replyInThreadHint = appResources.string(R.string.reply_reply_in_thread_hint),
       replyText = _replyText.value,
@@ -200,7 +231,7 @@ class ReplyLayoutState(
   @Suppress("ConvertTwoComparisonsToRangeCheck")
   private fun formatLabelText(
     replyAttachables: ReplyAttachables,
-    isCatalogMode: Boolean,
+    threadControllerType: ThreadControllerType,
     makeNewThreadHint: String,
     replyInThreadHint: String,
     replyText: TextFieldValue,
@@ -210,10 +241,9 @@ class ReplyLayoutState(
       .filterIsInstance<ReplyAttachable.ReplyFileAttachable>()
 
     return buildAnnotatedString {
-      val commentLabelText = if (isCatalogMode) {
-        makeNewThreadHint
-      } else {
-        replyInThreadHint
+      val commentLabelText = when (threadControllerType) {
+        ThreadControllerType.Catalog -> makeNewThreadHint
+        ThreadControllerType.Thread -> replyInThreadHint
       }
 
       append(commentLabelText)

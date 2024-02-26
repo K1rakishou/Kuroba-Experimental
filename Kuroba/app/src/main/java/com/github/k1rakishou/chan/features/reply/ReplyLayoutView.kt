@@ -11,11 +11,14 @@ import androidx.core.os.bundleOf
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
 import com.github.k1rakishou.chan.ui.compose.providers.ProvideEverythingForCompose
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
+import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.ThreadControllerType
 import com.github.k1rakishou.chan.utils.viewModelByKey
+import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.requireComponentActivity
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
+import com.github.k1rakishou.persist_state.ReplyMode
 
 class ReplyLayoutView @JvmOverloads constructor(
   context: Context,
@@ -58,12 +61,16 @@ class ReplyLayoutView @JvmOverloads constructor(
     _readyState.value = true
   }
 
-  override suspend fun bindChanDescriptor(descriptor: ChanDescriptor) {
-    replyLayoutViewModel.bindChanDescriptor(descriptor)
+  override suspend fun bindChanDescriptor(descriptor: ChanDescriptor, threadControllerType: ThreadControllerType) {
+    replyLayoutViewModel.bindChanDescriptor(descriptor, threadControllerType)
   }
 
   override fun replyLayoutVisibility(): ReplyLayoutVisibility {
     return replyLayoutViewModel.replyLayoutVisibility()
+  }
+
+  override fun isCatalogMode(): Boolean? {
+    return replyLayoutViewModel.isCatalogMode()
   }
 
   override fun isExpanded(): Boolean {
@@ -90,8 +97,16 @@ class ReplyLayoutView @JvmOverloads constructor(
     replyLayoutViewModel.quote(postDescriptor, text)
   }
 
+  override fun makeSubmitCall(chanDescriptor: ChanDescriptor, replyMode: ReplyMode, retrying: Boolean) {
+    replyLayoutViewModel.makeSubmitCall(context.applicationContext, chanDescriptor, replyMode, retrying)
+  }
+
   override fun onImageOptionsApplied() {
     replyLayoutViewModel.onImageOptionsApplied()
+  }
+
+  override fun hideKeyboard() {
+    AndroidUtils.hideKeyboard(this)
   }
 
   override fun cleanup() {

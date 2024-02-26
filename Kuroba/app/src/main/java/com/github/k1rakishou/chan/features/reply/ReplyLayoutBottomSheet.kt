@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -53,9 +54,16 @@ import kotlin.math.roundToInt
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun ReplyLayoutBottomSheet(
+  modifier: Modifier = Modifier,
   replyLayoutState: ReplyLayoutState,
   chanTheme: ChanTheme,
-  content: @Composable ColumnScope.(Dp, DraggableState, suspend () -> Unit, suspend (Float) -> Unit) -> Unit
+  onHeightSettled: (Int) -> Unit,
+  content: @Composable ColumnScope.(
+    targetHeight: Dp,
+    draggableState: DraggableState,
+    onDragStarted: suspend () -> Unit,
+    onDragStopped: suspend (Float) -> Unit
+  ) -> Unit
 ) {
   val density = LocalDensity.current
   val windowInsets = LocalWindowInsets.current
@@ -72,7 +80,7 @@ fun ReplyLayoutBottomSheet(
   val defaultOpenedHeightPx = with(density) { defaultOpenedHeightDp.roundToPx() }
 
   BoxWithConstraints(
-    modifier = Modifier.fillMaxSize(),
+    modifier = modifier,
     contentAlignment = Alignment.BottomCenter
   ) {
     val replyLayoutVisibility by replyLayoutState.replyLayoutVisibility
@@ -91,8 +99,8 @@ fun ReplyLayoutBottomSheet(
     val anchorsUpdated = rememberUpdatedState(newValue = anchors)
 
     var currentReplyLayoutVisibility by remember { mutableStateOf<ReplyLayoutVisibility>(replyLayoutVisibility) }
-    var dragStartPositionY by remember { mutableStateOf(0) }
-    var lastDragPosition by remember { mutableStateOf(0) }
+    var dragStartPositionY by remember { mutableIntStateOf(0) }
+    var lastDragPosition by remember { mutableIntStateOf(0) }
 
     val dragOffsetAnimatable = remember {
       Animatable(
@@ -149,7 +157,8 @@ fun ReplyLayoutBottomSheet(
     )
 
     LaunchedEffect(
-      key1 = Unit,
+      key1 = minPositionY,
+      key2 = maxPositionY,
       block = {
         dragRequests.collectLatest { dragRequest ->
           try {
@@ -157,6 +166,7 @@ fun ReplyLayoutBottomSheet(
               is DragRequest.Animate -> {
                 val targetClamped = dragRequest.target.coerceIn(minPositionY, maxPositionY)
                 dragOffsetAnimatable.animateTo(targetClamped)
+                onHeightSettled(maxPositionY - targetClamped)
               }
 
               is DragRequest.Snap -> {
@@ -211,9 +221,8 @@ fun ReplyLayoutBottomSheet(
               draggableState = draggableState,
               velocity = velocity,
               updateDragStartPositionY = { dragStartPositionY = 0 },
-              updateReplyLayoutVisibility = { newReplyLayoutVisibility ->
-                currentReplyLayoutVisibility = newReplyLayoutVisibility
-              }
+              updateReplyLayoutVisibility = { newVisibility -> currentReplyLayoutVisibility = newVisibility },
+              onAnimationFinished = { target -> onHeightSettled(maxPositionY - target) }
             )
           }
         )
@@ -235,7 +244,8 @@ private suspend fun performFling(
   draggableState: DraggableState,
   velocity: Float,
   updateDragStartPositionY: () -> Unit,
-  updateReplyLayoutVisibility: (ReplyLayoutVisibility) -> Unit
+  updateReplyLayoutVisibility: (ReplyLayoutVisibility) -> Unit,
+  onAnimationFinished: (Int) -> Unit
 ) {
   val newReplyLayoutVisibility = keyByPosition(
     density = density,
@@ -258,8 +268,9 @@ private suspend fun performFling(
     ReplyLayoutVisibility.Expanded -> replyLayoutState.expandReplyLayout()
   }
 
+  val target = anchors[newReplyLayoutVisibility]!!
+
   try {
-    val target = anchors[newReplyLayoutVisibility]!!
     var prevValue = lastDragPosition
 
     draggableState.drag {
@@ -274,6 +285,8 @@ private suspend fun performFling(
     }
   } catch (ignored: CancellationException) {
     // no-op
+  } finally {
+    onAnimationFinished(target)
   }
 }
 
