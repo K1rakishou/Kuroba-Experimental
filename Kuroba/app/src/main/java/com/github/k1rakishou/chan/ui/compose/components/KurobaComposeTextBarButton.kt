@@ -48,7 +48,7 @@ fun KurobaComposeTextBarButton(
       )
     },
     elevation = null,
-    colors = chanTheme.barButtonColors()
+    buttonColors = chanTheme.barButtonColors()
   )
 }
 
@@ -88,6 +88,6 @@ fun KurobaComposeTextBarButton(
       )
     },
     elevation = null,
-    colors = chanTheme.barButtonColors()
+    buttonColors = chanTheme.barButtonColors()
   )
 }

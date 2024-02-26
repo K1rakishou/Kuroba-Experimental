@@ -27,6 +27,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -38,12 +39,15 @@ fun KurobaComposeButton(
   elevation: ButtonElevation? = ButtonDefaults.elevation(),
   shape: Shape = MaterialTheme.shapes.small,
   border: BorderStroke? = null,
-  colors: ButtonColors = ButtonDefaults.buttonColors(),
+  buttonColors: ButtonColors? = null,
   contentPadding: PaddingValues = ButtonDefaults.ContentPadding,
   buttonContent: @Composable RowScope.() -> Unit
 ) {
+  val chanTheme = LocalChanTheme.current
+
   @Suppress("NAME_SHADOWING")
   val interactionSource = interactionSource ?: remember { MutableInteractionSource() }
+  val colors = buttonColors ?: chanTheme.buttonColors()
   val contentColor by colors.contentColor(enabled)
 
   Surface(
