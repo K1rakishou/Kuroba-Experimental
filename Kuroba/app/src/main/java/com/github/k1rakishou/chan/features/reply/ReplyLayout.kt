@@ -12,7 +12,10 @@ import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeDivider
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 
 @Composable
-fun ReplyLayout(replyLayoutViewModel: ReplyLayoutViewModel) {
+fun ReplyLayout(
+  replyLayoutViewModel: ReplyLayoutViewModel,
+  onPresolveCaptchaButtonClicked: () -> Unit
+) {
   val chanDescriptorMut by replyLayoutViewModel.boundChanDescriptor
   val chanDescriptor = chanDescriptorMut
 
@@ -59,7 +62,7 @@ fun ReplyLayout(replyLayoutViewModel: ReplyLayoutViewModel) {
           onPickLocalMediaButtonClicked = replyLayoutViewModel::onPickLocalMediaButtonClicked,
           onPickRemoteMediaButtonClicked = replyLayoutViewModel::onPickRemoteMediaButtonClicked,
           onSearchRemoteMediaButtonClicked = replyLayoutViewModel::onSearchRemoteMediaButtonClicked,
-          onPrefillCaptchaButtonClicked = replyLayoutViewModel::onPrefillCaptchaButtonClicked,
+          onPresolveCaptchaButtonClicked = onPresolveCaptchaButtonClicked
         )
       }
     }

@@ -1,64 +1,50 @@
 package com.github.k1rakishou.chan.features.reply.right
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutState
-import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeIcon
+import com.github.k1rakishou.chan.features.reply.ReplyLayoutViewModel
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
-import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 
 @Composable
-internal fun SendReplyButton(
-  chanDescriptor: ChanDescriptor,
-  replyLayoutState: ReplyLayoutState,
+internal fun PresolveCaptchaButton(
   iconSize: Dp,
   padding: Dp,
-  onCancelReplySendClicked: (ReplyLayoutState) -> Unit,
-  onSendReplyClicked: (ChanDescriptor, ReplyLayoutState) -> Unit
+  replyLayoutViewModel: ReplyLayoutViewModel,
+  onPresolveCaptchaButtonClicked: () -> Unit
 ) {
-  val replySendProgressMut by replyLayoutState.replySendProgressInPercentsState
-  val replySendProgress = replySendProgressMut
-  val sendReplyState by replyLayoutState.sendReplyState
-
-  val buttonDrawableId = if (sendReplyState.canCancel) {
-    R.drawable.ic_baseline_clear_24
-  } else {
-    R.drawable.ic_baseline_send_24
-  }
+  val captchaCounter by replyLayoutViewModel.captchaHolderCaptchaCounterUpdatesFlow.collectAsState(initial = 0)
 
   Box {
-    KurobaComposeIcon(
+    Image(
       modifier = Modifier
         .size(iconSize)
         .padding(padding)
         .kurobaClickable(
           bounded = false,
-          onClick = {
-            if (sendReplyState.canCancel) {
-              onCancelReplySendClicked(replyLayoutState)
-            } else {
-              onSendReplyClicked(chanDescriptor, replyLayoutState)
-            }
-          }
+          onClick = onPresolveCaptchaButtonClicked
         ),
-      drawableId = buttonDrawableId
+      contentDescription = null,
+      painter = painterResource(id = R.drawable.ic_captcha_24dp)
     )
 
-    if (replySendProgress >= 0) {
+    if (captchaCounter > 0) {
       Box(
         modifier = Modifier
           .wrapContentSize()
@@ -72,9 +58,9 @@ internal fun SendReplyButton(
           .padding(horizontal = 4.dp)
       ) {
         KurobaComposeText(
-          text = "${replySendProgress}%",
+          text = captchaCounter.toString(),
           color = Color.White,
-          fontSize = 10.sp
+          fontSize = 11.sp
         )
       }
     }

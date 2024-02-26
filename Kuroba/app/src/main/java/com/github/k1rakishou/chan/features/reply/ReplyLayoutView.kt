@@ -27,7 +27,9 @@ class ReplyLayoutView @JvmOverloads constructor(
   private val composeView: ComposeView
 
   private val _readyState = mutableStateOf(false)
+
   private lateinit var replyLayoutViewModel: ReplyLayoutViewModel
+  private lateinit var replyLayoutCallbacks: ReplyLayoutCallbacks
 
   init {
     removeAllViews()
@@ -47,12 +49,16 @@ class ReplyLayoutView @JvmOverloads constructor(
           return@ProvideEverythingForCompose
         }
 
-        ReplyLayout(replyLayoutViewModel)
+        ReplyLayout(
+          replyLayoutViewModel = replyLayoutViewModel,
+          onPresolveCaptchaButtonClicked = replyLayoutCallbacks::onPresolveCaptchaButtonClicked
+        )
       }
     }
   }
 
-  fun onCreate(threadControllerType: ThreadControllerType) {
+  fun onCreate(threadControllerType: ThreadControllerType, callbacks: ReplyLayoutCallbacks) {
+    replyLayoutCallbacks = callbacks
     replyLayoutViewModel = context.requireComponentActivity().viewModelByKey<ReplyLayoutViewModel>(
       key = threadControllerType.name,
       defaultArgs = bundleOf(ReplyLayoutViewModel.ThreadControllerTypeParam to threadControllerType)

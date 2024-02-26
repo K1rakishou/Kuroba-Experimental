@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.features.reply.data
 
+import androidx.compose.runtime.IntState
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableIntStateOf
@@ -96,9 +97,9 @@ class ReplyLayoutState(
   val sendReplyState: State<SendReplyState>
     get() = _sendReplyState
 
-  private val _replySendProgressState = mutableStateOf<Float?>(null)
-  val replySendProgressState: State<Float?>
-    get() = _replySendProgressState
+  private val _replySendProgressInPercentsState = mutableIntStateOf(-1)
+  val replySendProgressInPercentsState: IntState
+    get() = _replySendProgressInPercentsState
 
   val isCatalogMode: Boolean
     get() = threadControllerType == ThreadControllerType.Catalog

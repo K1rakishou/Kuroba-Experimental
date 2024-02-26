@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -19,6 +18,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.github.k1rakishou.chan.features.reply.ReplyLayoutViewModel
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutState
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -28,6 +28,7 @@ internal fun ReplyInputRightPart(
   iconSize: Dp,
   chanDescriptor: ChanDescriptor,
   replyLayoutState: ReplyLayoutState,
+  replyLayoutViewModel: ReplyLayoutViewModel,
   draggableStateProvider: () -> DraggableState,
   onDragStarted: suspend () -> Unit,
   onDragStopped: suspend (velocity: Float) -> Unit,
@@ -36,14 +37,10 @@ internal fun ReplyInputRightPart(
   onPickLocalMediaButtonClicked: () -> Unit,
   onPickRemoteMediaButtonClicked: () -> Unit,
   onSearchRemoteMediaButtonClicked: () -> Unit,
-  onPrefillCaptchaButtonClicked: () -> Unit
+  onPresolveCaptchaButtonClicked: () -> Unit
 ) {
   val chanTheme = LocalChanTheme.current
   val density = LocalDensity.current
-
-  val replySendProgressMut by replyLayoutState.replySendProgressState
-  val replySendProgress = replySendProgressMut
-  val sendReplyState by replyLayoutState.sendReplyState
 
   val padding = with(density) { 8.dp.toPx() }
   val cornerRadius = with(density) { remember { CornerRadius(8.dp.toPx(), 8.dp.toPx()) } }
@@ -73,10 +70,11 @@ internal fun ReplyInputRightPart(
   ) {
     Spacer(modifier = Modifier.height(6.dp))
 
-    PrefillCaptchaButton(
+    PresolveCaptchaButton(
       iconSize = iconSize,
       padding = 4.dp,
-      onPrefillCaptchaButtonClicked = onPrefillCaptchaButtonClicked
+      replyLayoutViewModel = replyLayoutViewModel,
+      onPresolveCaptchaButtonClicked = onPresolveCaptchaButtonClicked
     )
 
     Spacer(modifier = Modifier.height(6.dp))
@@ -84,12 +82,10 @@ internal fun ReplyInputRightPart(
     SendReplyButton(
       chanDescriptor = chanDescriptor,
       replyLayoutState = replyLayoutState,
-      sendReplyState = sendReplyState,
       iconSize = iconSize,
       padding = 4.dp,
       onCancelReplySendClicked = onCancelReplySendClicked,
       onSendReplyClicked = onSendReplyClicked,
-      replySendProgress = replySendProgress
     )
 
     Spacer(modifier = Modifier.height(12.dp))

@@ -1,44 +1,34 @@
 package com.github.k1rakishou.chan.ui.captcha
 
-import android.os.Handler
-import android.os.Looper
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.ui.captcha.chan4.Chan4CaptchaLayoutViewModel
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.unreachable
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
 
-class CaptchaHolder {
-  private val running = AtomicBoolean(false)
-  private val mainThreadHandler = Handler(Looper.getMainLooper())
-  private var timer: Timer? = null
-  private var catalogCaptchaValidationListener: CaptchaValidationListener? = null
-  private var threadCaptchaValidationListener: CaptchaValidationListener? = null
+class CaptchaHolder(
+  private val appScope: CoroutineScope
+) {
+  private val _captchaUpdatesFlow = MutableSharedFlow<Int>(extraBufferCapacity = Channel.UNLIMITED)
 
   @GuardedBy("itself")
   private val captchaQueue: MutableList<CaptchaInfo> = ArrayList()
 
-  fun setListener(descriptor: ChanDescriptor, listener: CaptchaValidationListener?) {
-    BackgroundUtils.ensureMainThread()
+  private var timerJob: Job? = null
 
-    if (descriptor.isCatalogDescriptor()) {
-      catalogCaptchaValidationListener = listener
-    } else {
-      threadCaptchaValidationListener = listener
-    }
-
-    notifyListener()
-  }
-
-  fun clearCallbacks() {
-    BackgroundUtils.ensureMainThread()
-    catalogCaptchaValidationListener = null
-    threadCaptchaValidationListener = null
+  fun listenForCaptchaUpdates(): Flow<Int> {
+    return _captchaUpdatesFlow
   }
 
   @JvmOverloads
@@ -121,18 +111,22 @@ class CaptchaHolder {
   }
 
   private fun startTimer() {
-    if (running.compareAndSet(false, true)) {
-      timer = Timer()
-      timer!!.scheduleAtFixedRate(CheckCaptchaFreshnessTask(), INTERVAL, INTERVAL)
+    if (timerJob == null || timerJob?.isActive != true) {
+      timerJob = appScope.launch {
+        while (isActive) {
+          removeNotValidTokens()
+          delay(1000)
+        }
+      }
 
       Logger.d(TAG, "Timer started")
     }
   }
 
   private fun stopTimer() {
-    if (running.compareAndSet(true, false)) {
-      timer!!.cancel()
-      timer!!.purge()
+    if (timerJob != null) {
+      timerJob?.cancel()
+      timerJob = null
 
       Logger.d(TAG, "Timer stopped")
     }
@@ -169,33 +163,12 @@ class CaptchaHolder {
   }
 
   private fun notifyListener() {
-    mainThreadHandler.post {
-      var count = 0
-
-      synchronized(captchaQueue) { count = captchaQueue.size }
-      if (catalogCaptchaValidationListener != null) {
-        catalogCaptchaValidationListener!!.onCaptchaCountChanged(count)
-      }
-
-      if (threadCaptchaValidationListener != null) {
-        threadCaptchaValidationListener!!.onCaptchaCountChanged(count)
-      }
-    }
-  }
-
-  private inner class CheckCaptchaFreshnessTask : TimerTask() {
-    override fun run() {
-      removeNotValidTokens()
-    }
-  }
-
-  interface CaptchaValidationListener {
-    fun onCaptchaCountChanged(validCaptchaCount: Int)
+    val count = synchronized(captchaQueue) { captchaQueue.size }
+    _captchaUpdatesFlow.tryEmit(count)
   }
 
   companion object {
     private const val TAG = "CaptchaHolder"
-    private const val INTERVAL: Long = 5000
 
     val RECAPTCHA_TOKEN_LIVE_TIME = TimeUnit.MINUTES.toMillis(2)
   }

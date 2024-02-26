@@ -46,6 +46,7 @@ import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.PostHighlightManager
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter
 import com.github.k1rakishou.chan.core.usecase.ExtractPostMapInfoHolderUseCase
+import com.github.k1rakishou.chan.features.reply.ReplyLayoutCallbacks
 import com.github.k1rakishou.chan.features.reply.ReplyLayoutView
 import com.github.k1rakishou.chan.features.reply.ReplyLayoutViewCallbacks
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
@@ -112,11 +113,11 @@ import kotlin.time.measureTimedValue
 /**
  * A layout that wraps around a [RecyclerView] and a [ReplyLayout] to manage showing and replying to posts.
  */
-class ThreadListLayout(context: Context, attrs: AttributeSet?)
-  : FrameLayout(context, attrs),
+class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(context, attrs),
   Toolbar.ToolbarHeightUpdatesCallback,
   ThemeEngine.ThemeChangesListener,
-  FastScroller.ThumbDragListener {
+  FastScroller.ThumbDragListener,
+  ReplyLayoutCallbacks {
 
   @Inject
   lateinit var dialogFactory: DialogFactory
@@ -339,29 +340,9 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   private var spanCount = 2
   private var prevLastPostNo = 0L
 
-  private fun requireThreadControllerType(): ThreadControllerType {
-    return requireNotNull(currentThreadControllerType) { "currentThreadControllerType is null!" }
-  }
-
   // TODO: New reply layout
   fun getCurrentChanDescriptor(): ChanDescriptor? {
     return threadPresenter?.currentChanDescriptor
-  }
-
-  private fun currentThreadDescriptorOrNull(): ThreadDescriptor? {
-    return getCurrentChanDescriptor()?.threadDescriptorOrNull()
-  }
-
-  private fun currentChanDescriptorOrNull(): ChanDescriptor? {
-    return getCurrentChanDescriptor()
-  }
-
-  private fun forceRecycleAllPostViews() {
-    val adapter = recyclerView.adapter
-    if (adapter is PostAdapter) {
-      recyclerView.recycledViewPool.clear()
-      adapter.cleanup()
-    }
   }
 
   override fun onAttachedToWindow() {
@@ -395,6 +376,72 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     setBackgroundColorFast(themeEngine.chanTheme.backColor)
   }
 
+  override fun onToolbarHeightKnown(heightChanged: Boolean) {
+    setRecyclerViewPadding()
+  }
+
+  override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+    super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+
+    val cardWidth = getDimen(R.dimen.grid_card_width)
+    val gridCountSetting = ChanSettings.catalogSpanCount.get()
+
+    if (gridCountSetting > 0) {
+      spanCount = gridCountSetting
+    } else {
+      spanCount = max(1, (measuredWidth.toFloat() / cardWidth).roundToInt())
+    }
+
+    if (boardPostViewMode == BoardPostViewMode.GRID
+      || boardPostViewMode == BoardPostViewMode.STAGGER) {
+      (layoutManager as StaggeredGridLayoutManager).spanCount = spanCount
+    }
+  }
+
+  override fun onDragStarted() {
+    if (!canToolbarCollapse() || replyLayoutView.isOpened()) {
+      return
+    }
+
+    val toolbar = threadListLayoutCallback?.toolbar
+      ?: return
+
+    toolbar.detachRecyclerViewScrollStateListener(recyclerView)
+    toolbar.collapseHide(true)
+  }
+
+  override fun onDragEnded() {
+    // Fast scroller does not trigger RecyclerView's onScrollStateChanged() so we need to call it
+    //  manually after we are down scrolling via Fast scroller.
+    onRecyclerViewScrolled()
+
+    if (!canToolbarCollapse() || replyLayoutView.isOpened()) {
+      return
+    }
+
+    val toolbar = threadListLayoutCallback?.toolbar
+      ?: return
+
+    toolbar.attachRecyclerViewScrollStateListener(recyclerView)
+    toolbar.collapseShow(true)
+  }
+
+  override fun onPresolveCaptchaButtonClicked() {
+    val chanDescriptor = currentChanDescriptorOrNull()
+      ?: return
+
+    val replyMode = threadPresenter?.replyModeForChanDescriptor(chanDescriptor)
+      ?: return
+
+    showCaptcha(
+      chanDescriptor = chanDescriptor,
+      replyMode = replyMode,
+      autoReply = false,
+      afterPostingAttempt = false,
+      onFinished = null
+    )
+  }
+
   fun onCreate(
     threadPresenter: ThreadPresenter,
     threadListLayoutCallback: ThreadListLayoutCallback,
@@ -410,7 +457,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     listScrollToBottomExecutor = RendezvousCoroutineExecutor(coroutineScope)
     serializedCoroutineExecutor = SerializedCoroutineExecutor(coroutineScope)
 
-    replyLayoutView.onCreate(threadControllerType)
+    replyLayoutView.onCreate(threadControllerType, this)
 
     postAdapter = PostAdapter(
       recyclerView,
@@ -483,149 +530,11 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     threadPresenter = null
   }
 
-  override fun onToolbarHeightKnown(heightChanged: Boolean) {
-    setRecyclerViewPadding()
-  }
-
-  private fun onRecyclerViewScrolled() {
-    recyclerView.post {
-      // onScrolled can be called after cleanup()
-      if (getCurrentChanDescriptor() == null) {
-        return@post
-      }
-
-      val chanThreadLoadingState = threadPresenter?.chanThreadLoadingState
-        ?: ThreadPresenter.ChanThreadLoadingState.Uninitialized
-
-      if (chanThreadLoadingState != ThreadPresenter.ChanThreadLoadingState.Loaded) {
-        // When reloading a thread, this callback will be called immediately which will result in
-        //  "indexAndTop" being zeroes which will overwrite the old scroll position with incorrect
-        //  values.
-        return@post
-      }
-
-      val chanDescriptor = currentChanDescriptorOrNull()
-        ?: return@post
-      val indexTop = indexAndTop
-        ?: return@post
-
-      chanThreadViewableInfoManager.update(chanDescriptor) { chanThreadViewableInfo ->
-        chanThreadViewableInfo.listViewIndex = indexTop.index
-        chanThreadViewableInfo.listViewTop = indexTop.top
-      }
-
-      val currentLastPostNo = postAdapter.lastPostNo
-
-      val lastVisibleItemPosition = completeBottomAdapterPosition
-      if (lastVisibleItemPosition >= 0) {
-        updateLastViewedPostNo(lastVisibleItemPosition)
-      }
-
-      if (lastVisibleItemPosition == postAdapter.itemCount - 1 && currentLastPostNo > prevLastPostNo) {
-        prevLastPostNo = currentLastPostNo
-
-        // As requested by the RecyclerView, make sure that the adapter isn't changed
-        // while in a layout pass. Postpone to the next frame.
-        listScrollToBottomExecutor.post { callback?.onListScrolledToBottom() }
-      }
-
-      if (lastVisibleItemPosition == postAdapter.itemCount - 1) {
-        val isDragging = fastScroller?.isDragging ?: false
-        if (!isDragging) {
-          threadListLayoutCallback?.showToolbar()
-        }
-      }
+  fun onBack(): Boolean {
+    return when {
+      replyLayoutView.onBack() -> true
+      else -> threadListLayoutCallback!!.threadBackPressed()
     }
-  }
-
-  private fun updateLastViewedPostNo(last: Int) {
-    if (last < 0) {
-      return
-    }
-
-    val threadDescriptor = currentThreadDescriptorOrNull()
-    if (threadDescriptor != null) {
-      val postNo = postAdapter.getPostNo(last)
-      if (postNo >= 0L) {
-        lastViewedPostNoInfoHolder.setLastViewedPostNo(threadDescriptor, postNo)
-      }
-    }
-  }
-
-  override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-    super.onMeasure(widthMeasureSpec, heightMeasureSpec)
-
-    val cardWidth = getDimen(R.dimen.grid_card_width)
-    val gridCountSetting = ChanSettings.catalogSpanCount.get()
-
-    if (gridCountSetting > 0) {
-      spanCount = gridCountSetting
-    } else {
-      spanCount = max(1, (measuredWidth.toFloat() / cardWidth).roundToInt())
-    }
-
-    if (boardPostViewMode == BoardPostViewMode.GRID
-      || boardPostViewMode == BoardPostViewMode.STAGGER) {
-      (layoutManager as StaggeredGridLayoutManager).spanCount = spanCount
-    }
-  }
-
-  fun setBoardPostViewMode(boardPostViewMode: BoardPostViewMode) {
-    if (this.boardPostViewMode == boardPostViewMode) {
-      return
-    }
-
-    this.boardPostViewMode = boardPostViewMode
-    layoutManager = null
-
-    when (boardPostViewMode) {
-      BoardPostViewMode.LIST -> {
-        val linearLayoutManager = object : FixedLinearLayoutManager(recyclerView) {
-          override fun requestChildRectangleOnScreen(
-            parent: RecyclerView,
-            child: View,
-            rect: Rect,
-            immediate: Boolean,
-            focusedChildVisible: Boolean
-          ): Boolean {
-            return false
-          }
-        }
-
-        setRecyclerViewPadding()
-
-        recyclerView.layoutManager = linearLayoutManager
-        layoutManager = linearLayoutManager
-      }
-      BoardPostViewMode.GRID,
-      BoardPostViewMode.STAGGER -> {
-        val staggerLayoutManager = object : StaggeredGridLayoutManager(
-          spanCount,
-          StaggeredGridLayoutManager.VERTICAL,
-        ) {
-          override fun requestChildRectangleOnScreen(
-            parent: RecyclerView,
-            child: View,
-            rect: Rect,
-            immediate: Boolean,
-            focusedChildVisible: Boolean
-          ): Boolean {
-            return false
-          }
-        }
-
-        setRecyclerViewPadding()
-
-        recyclerView.layoutManager = staggerLayoutManager
-        layoutManager = staggerLayoutManager
-      }
-    }
-
-    recyclerView.recycledViewPool.clear()
-    postAdapter.setBoardPostViewMode(boardPostViewMode)
-
-    // Trigger theme update because some colors depend on postViewMode
-    onThemeChanged()
   }
 
   suspend fun showPosts(
@@ -700,87 +609,62 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     )
   }
 
-  private fun getPrevScrollPosition(chanDescriptor: ChanDescriptor?, initial: Boolean): PreviousThreadScrollPositionData? {
-    if (chanDescriptor == null) {
-      return null
-    }
-
-    if (initial) {
-      val markedPostNo = chanThreadViewableInfoManager.getMarkedPostNo(chanDescriptor)
-      if (markedPostNo != null) {
-        return PreviousThreadScrollPositionData(
-          prevVisibleItemIndex = null,
-          prevVisiblePostNo = markedPostNo
-        )
-      }
-
-      val prevVisibleItemIndex = chanThreadViewableInfoManager.view(chanDescriptor) { (_, index, _) -> index }
-      if (prevVisibleItemIndex != null) {
-        return PreviousThreadScrollPositionData(
-          prevVisibleItemIndex = prevVisibleItemIndex,
-          prevVisiblePostNo = null
-        )
-      }
-    } else {
-      val currentIndexAndTop = indexAndTop
-      if (currentIndexAndTop != null) {
-        return PreviousThreadScrollPositionData(
-          prevVisibleItemIndex = currentIndexAndTop.index,
-          prevVisiblePostNo = null
-        )
-      }
-    }
-
-    return null
-  }
-
-  private fun restorePrevScrollPosition(
-    chanDescriptor: ChanDescriptor,
-    initial: Boolean
-  ) {
-    if (!initial) {
+  fun setBoardPostViewMode(boardPostViewMode: BoardPostViewMode) {
+    if (this.boardPostViewMode == boardPostViewMode) {
       return
     }
 
-    val markedPostNo = chanThreadViewableInfoManager.getMarkedPostNo(chanDescriptor)
-    val markedPost = if (markedPostNo != null) {
-      chanThreadManager.findPostByPostNo(chanDescriptor, markedPostNo)
-    } else {
-      null
-    }
+    this.boardPostViewMode = boardPostViewMode
+    layoutManager = null
 
-    if (markedPost != null) {
-      Logger.e(TAG, "restorePrevScrollPosition($chanDescriptor) markedPost != null")
-      return
-    }
+    when (boardPostViewMode) {
+      BoardPostViewMode.LIST -> {
+        val linearLayoutManager = object : FixedLinearLayoutManager(recyclerView) {
+          override fun requestChildRectangleOnScreen(
+            parent: RecyclerView,
+            child: View,
+            rect: Rect,
+            immediate: Boolean,
+            focusedChildVisible: Boolean
+          ): Boolean {
+            return false
+          }
+        }
 
-    val lm = layoutManager
-    if (lm == null) {
-      Logger.e(TAG, "restorePrevScrollPosition($chanDescriptor) layoutManager == null")
-      return
-    }
+        setRecyclerViewPadding()
 
-    chanThreadViewableInfoManager.view(chanDescriptor) { (_, index, top) ->
-      when (boardPostViewMode) {
-        BoardPostViewMode.LIST -> {
-          (lm as FixedLinearLayoutManager).scrollToPositionWithOffset(index, top)
+        recyclerView.layoutManager = linearLayoutManager
+        layoutManager = linearLayoutManager
+      }
+      BoardPostViewMode.GRID,
+      BoardPostViewMode.STAGGER -> {
+        val staggerLayoutManager = object : StaggeredGridLayoutManager(
+          spanCount,
+          StaggeredGridLayoutManager.VERTICAL,
+        ) {
+          override fun requestChildRectangleOnScreen(
+            parent: RecyclerView,
+            child: View,
+            rect: Rect,
+            immediate: Boolean,
+            focusedChildVisible: Boolean
+          ): Boolean {
+            return false
+          }
         }
-        BoardPostViewMode.GRID,
-        BoardPostViewMode.STAGGER -> {
-          (lm as StaggeredGridLayoutManager).scrollToPositionWithOffset(index, top)
-        }
-        null -> {
-          // no-op
-        }
+
+        setRecyclerViewPadding()
+
+        recyclerView.layoutManager = staggerLayoutManager
+        layoutManager = staggerLayoutManager
       }
     }
-  }
 
-  fun onBack(): Boolean {
-    return when {
-      replyLayoutView.onBack() -> true
-      else -> threadListLayoutCallback!!.threadBackPressed()
-    }
+    recyclerView.recycledViewPool.clear()
+    postAdapter.setBoardPostViewMode(boardPostViewMode)
+
+    // Trigger theme update because some colors depend on postViewMode
+    onThemeChanged()
   }
 
   fun sendKeyEvent(event: KeyEvent): Boolean {
@@ -935,28 +819,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     openOrCloseReplyLayout(open = false)
   }
 
-  private fun openOrCloseReplyLayout(open: Boolean) {
-    val chanDescriptor = currentChanDescriptorOrNull()
-
-    if (chanDescriptor == null || replyLayoutView.isOpened() == open) {
-      return
-    }
-
-    Logger.d(TAG, "openOrCloseReplyLayout() open: ${open}")
-
-    if (open) {
-      replyLayoutView.updateReplyLayoutVisibility(ReplyLayoutVisibility.Opened)
-    } else {
-      replyLayoutView.updateReplyLayoutVisibility(ReplyLayoutVisibility.Collapsed)
-    }
-
-    if (!open) {
-      AndroidUtils.hideKeyboard(replyLayoutView)
-    }
-
-    attachToolbarScroll(!open)
-  }
-
   fun showError(error: String?) {
     postAdapter.showError(error)
   }
@@ -1038,20 +900,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     }
   }
 
-  private fun scrollToInternal(scrollPosition: Int) {
-    if (layoutManager is StaggeredGridLayoutManager) {
-      (layoutManager as StaggeredGridLayoutManager).scrollToPositionWithOffset(scrollPosition, 0)
-      return
-    }
-
-    if (layoutManager is FixedLinearLayoutManager) {
-      (layoutManager as FixedLinearLayoutManager).scrollToPositionWithOffset(scrollPosition, 0)
-      return
-    }
-
-    recyclerView.scrollToPosition(scrollPosition)
-  }
-
   fun highlightPost(postDescriptor: PostDescriptor?, blink: Boolean) {
     if (postDescriptor == null) {
       highlightPosts(null, blink)
@@ -1080,6 +928,146 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   // TODO: New reply layout
   fun showImageReencodingWindow(fileUuid: UUID, supportsReencode: Boolean) {
     threadListLayoutCallback?.showImageReencodingWindow(fileUuid, supportsReencode)
+  }
+
+  // TODO: New reply layout
+  fun presentController(controller: Controller) {
+    BackgroundUtils.ensureMainThread()
+    threadListLayoutCallback?.presentController(controller)
+  }
+
+  // TODO: New reply layout
+  fun pushController(controller: Controller) {
+    BackgroundUtils.ensureMainThread()
+    threadListLayoutCallback?.pushController(controller)
+  }
+
+  // TODO: New reply layout
+  fun showLoadingView(cancellationFunc: () -> Unit, titleTextId: Int) {
+    BackgroundUtils.ensureMainThread()
+
+    val loadingViewController = LoadingViewController(
+      context,
+      true,
+      context.getString(titleTextId)
+    ).apply { enableCancellation(cancellationFunc) }
+
+    threadListLayoutCallback?.presentController(loadingViewController)
+  }
+
+  // TODO: New reply layout
+  fun hideLoadingView() {
+    BackgroundUtils.ensureMainThread()
+
+    threadListLayoutCallback?.unpresentController { controller -> controller is LoadingViewController }
+  }
+
+  fun toolbarHeight(): Int {
+    return threadListLayoutCallback?.toolbar?.toolbarHeight ?: 0
+  }
+
+  suspend fun onPostsWithDescriptorsUpdated(updatedPostDescriptors: Collection<PostDescriptor>) {
+    BackgroundUtils.ensureMainThread()
+
+    val updatedPosts = chanThreadManager.getPosts(updatedPostDescriptors)
+    if (updatedPosts.isEmpty()) {
+      return
+    }
+
+    postAdapter.updatePosts(updatedPosts)
+  }
+
+  suspend fun onPostsUpdated(updatedPosts: List<ChanPost>) {
+    BackgroundUtils.ensureMainThread()
+    postAdapter.updatePosts(updatedPosts)
+  }
+
+  fun isErrorShown(): Boolean {
+    BackgroundUtils.ensureMainThread()
+    return postAdapter.isErrorShown
+  }
+
+  fun resetCachedPostData(postDescriptor: PostDescriptor) {
+    resetCachedPostData(listOf(postDescriptor))
+  }
+
+  fun resetCachedPostData(postDescriptors: Collection<PostDescriptor>) {
+    postAdapter.resetCachedPostData(postDescriptors)
+  }
+
+  fun onImageOptionsApplied() {
+    replyLayoutView.onImageOptionsApplied()
+  }
+
+  private fun setRecyclerViewPadding() {
+    val threadControllerType = currentThreadControllerType
+      ?: return
+
+    val defaultPadding = if (boardPostViewMode == BoardPostViewMode.GRID || boardPostViewMode == BoardPostViewMode.STAGGER) {
+      dp(1f)
+    } else {
+      0
+    }
+
+    val recyclerRight = if (ChanSettings.draggableScrollbars.get().isEnabled) {
+      defaultPadding + FastScrollerHelper.FAST_SCROLLER_WIDTH
+    } else {
+      defaultPadding
+    }
+
+    val recyclerTop = defaultPadding + toolbarHeight()
+    var recyclerBottom = defaultPadding
+
+    if (replyLayoutView.isOpened()) {
+      val replyLayoutViewHeight = globalUiStateHolder.uiState.replyLayout.state(threadControllerType).height.intValue
+      recyclerBottom += replyLayoutViewHeight
+    } else {
+      recyclerBottom += when (navigationViewContractType) {
+        NavigationViewContract.Type.BottomNavView -> {
+          if (ChanSettings.isNavigationViewEnabled()) {
+            globalWindowInsetsManager.bottom() + getDimen(R.dimen.navigation_view_size)
+          } else {
+            globalWindowInsetsManager.bottom()
+          }
+        }
+        NavigationViewContract.Type.SideNavView -> {
+          globalWindowInsetsManager.bottom()
+        }
+      }
+    }
+
+    recyclerView.setPadding(defaultPadding, recyclerTop, recyclerRight, recyclerBottom)
+  }
+
+  private fun party() {
+    val chanDescriptor = getCurrentChanDescriptor()
+      ?: return
+
+    if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+      return
+    }
+
+    if (chanDescriptor.siteDescriptor().is4chan() && TimeUtils.is4chanBirthdayToday()) {
+      recyclerView.addItemDecoration(chan4BirthdayDecoration)
+    }
+  }
+
+  private fun noParty() {
+    recyclerView.removeItemDecoration(chan4BirthdayDecoration)
+  }
+
+  private fun scrollToInternal(scrollPosition: Int) {
+    if (layoutManager is StaggeredGridLayoutManager) {
+      (layoutManager as StaggeredGridLayoutManager).scrollToPositionWithOffset(scrollPosition, 0)
+      return
+    }
+
+    if (layoutManager is FixedLinearLayoutManager) {
+      (layoutManager as FixedLinearLayoutManager).scrollToPositionWithOffset(scrollPosition, 0)
+      return
+    }
+
+    recyclerView.scrollToPosition(scrollPosition)
   }
 
   private fun canToolbarCollapse(): Boolean {
@@ -1201,158 +1189,187 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     }
   }
 
-  override fun onDragStarted() {
-    if (!canToolbarCollapse() || replyLayoutView.isOpened()) {
+  private fun openOrCloseReplyLayout(open: Boolean) {
+    val chanDescriptor = currentChanDescriptorOrNull()
+
+    if (chanDescriptor == null || replyLayoutView.isOpened() == open) {
       return
     }
 
-    val toolbar = threadListLayoutCallback?.toolbar
-      ?: return
+    Logger.d(TAG, "openOrCloseReplyLayout() open: ${open}")
 
-    toolbar.detachRecyclerViewScrollStateListener(recyclerView)
-    toolbar.collapseHide(true)
-  }
-
-  override fun onDragEnded() {
-    // Fast scroller does not trigger RecyclerView's onScrollStateChanged() so we need to call it
-    //  manually after we are down scrolling via Fast scroller.
-    onRecyclerViewScrolled()
-
-    if (!canToolbarCollapse() || replyLayoutView.isOpened()) {
-      return
+    if (open) {
+      replyLayoutView.updateReplyLayoutVisibility(ReplyLayoutVisibility.Opened)
+    } else {
+      replyLayoutView.updateReplyLayoutVisibility(ReplyLayoutVisibility.Collapsed)
     }
 
-    val toolbar = threadListLayoutCallback?.toolbar
-      ?: return
-
-    toolbar.attachRecyclerViewScrollStateListener(recyclerView)
-    toolbar.collapseShow(true)
-  }
-
-  // TODO: New reply layout
-  fun presentController(controller: Controller) {
-    BackgroundUtils.ensureMainThread()
-    threadListLayoutCallback?.presentController(controller)
-  }
-
-  // TODO: New reply layout
-  fun pushController(controller: Controller) {
-    BackgroundUtils.ensureMainThread()
-    threadListLayoutCallback?.pushController(controller)
-  }
-
-  // TODO: New reply layout
-  fun showLoadingView(cancellationFunc: () -> Unit, titleTextId: Int) {
-    BackgroundUtils.ensureMainThread()
-
-    val loadingViewController = LoadingViewController(
-      context,
-      true,
-      context.getString(titleTextId)
-    ).apply { enableCancellation(cancellationFunc) }
-
-    threadListLayoutCallback?.presentController(loadingViewController)
-  }
-
-  // TODO: New reply layout
-  fun hideLoadingView() {
-    BackgroundUtils.ensureMainThread()
-
-    threadListLayoutCallback?.unpresentController { controller -> controller is LoadingViewController }
-  }
-
-  private fun setRecyclerViewPadding() {
-    val threadControllerType = currentThreadControllerType
-      ?: return
-
-    val defaultPadding = if (boardPostViewMode == BoardPostViewMode.GRID || boardPostViewMode == BoardPostViewMode.STAGGER) {
-      dp(1f)
-    } else {
-      0
+    if (!open) {
+      AndroidUtils.hideKeyboard(replyLayoutView)
     }
 
-    val recyclerRight = if (ChanSettings.draggableScrollbars.get().isEnabled) {
-      defaultPadding + FastScrollerHelper.FAST_SCROLLER_WIDTH
-    } else {
-      defaultPadding
+    attachToolbarScroll(!open)
+  }
+
+  private fun requireThreadControllerType(): ThreadControllerType {
+    return requireNotNull(currentThreadControllerType) { "currentThreadControllerType is null!" }
+  }
+
+  private fun currentThreadDescriptorOrNull(): ThreadDescriptor? {
+    return getCurrentChanDescriptor()?.threadDescriptorOrNull()
+  }
+
+  private fun currentChanDescriptorOrNull(): ChanDescriptor? {
+    return getCurrentChanDescriptor()
+  }
+
+  private fun forceRecycleAllPostViews() {
+    val adapter = recyclerView.adapter
+    if (adapter is PostAdapter) {
+      recyclerView.recycledViewPool.clear()
+      adapter.cleanup()
     }
+  }
 
-    val recyclerTop = defaultPadding + toolbarHeight()
-    var recyclerBottom = defaultPadding
+  private fun onRecyclerViewScrolled() {
+    recyclerView.post {
+      // onScrolled can be called after cleanup()
+      if (getCurrentChanDescriptor() == null) {
+        return@post
+      }
 
-    if (replyLayoutView.isOpened()) {
-      val replyLayoutViewHeight = globalUiStateHolder.uiState.replyLayout.state(threadControllerType).height.intValue
-      recyclerBottom += replyLayoutViewHeight
-    } else {
-      recyclerBottom += when (navigationViewContractType) {
-        NavigationViewContract.Type.BottomNavView -> {
-          if (ChanSettings.isNavigationViewEnabled()) {
-            globalWindowInsetsManager.bottom() + getDimen(R.dimen.navigation_view_size)
-          } else {
-            globalWindowInsetsManager.bottom()
-          }
-        }
-        NavigationViewContract.Type.SideNavView -> {
-          globalWindowInsetsManager.bottom()
+      val chanThreadLoadingState = threadPresenter?.chanThreadLoadingState
+        ?: ThreadPresenter.ChanThreadLoadingState.Uninitialized
+
+      if (chanThreadLoadingState != ThreadPresenter.ChanThreadLoadingState.Loaded) {
+        // When reloading a thread, this callback will be called immediately which will result in
+        //  "indexAndTop" being zeroes which will overwrite the old scroll position with incorrect
+        //  values.
+        return@post
+      }
+
+      val chanDescriptor = currentChanDescriptorOrNull()
+        ?: return@post
+      val indexTop = indexAndTop
+        ?: return@post
+
+      chanThreadViewableInfoManager.update(chanDescriptor) { chanThreadViewableInfo ->
+        chanThreadViewableInfo.listViewIndex = indexTop.index
+        chanThreadViewableInfo.listViewTop = indexTop.top
+      }
+
+      val currentLastPostNo = postAdapter.lastPostNo
+
+      val lastVisibleItemPosition = completeBottomAdapterPosition
+      if (lastVisibleItemPosition >= 0) {
+        updateLastViewedPostNo(lastVisibleItemPosition)
+      }
+
+      if (lastVisibleItemPosition == postAdapter.itemCount - 1 && currentLastPostNo > prevLastPostNo) {
+        prevLastPostNo = currentLastPostNo
+
+        // As requested by the RecyclerView, make sure that the adapter isn't changed
+        // while in a layout pass. Postpone to the next frame.
+        listScrollToBottomExecutor.post { callback?.onListScrolledToBottom() }
+      }
+
+      if (lastVisibleItemPosition == postAdapter.itemCount - 1) {
+        val isDragging = fastScroller?.isDragging ?: false
+        if (!isDragging) {
+          threadListLayoutCallback?.showToolbar()
         }
       }
     }
-
-    recyclerView.setPadding(defaultPadding, recyclerTop, recyclerRight, recyclerBottom)
   }
 
-  fun toolbarHeight(): Int {
-    return threadListLayoutCallback?.toolbar?.toolbarHeight ?: 0
-  }
-
-  private fun party() {
-    val chanDescriptor = getCurrentChanDescriptor()
-      ?: return
-
-    if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+  private fun updateLastViewedPostNo(last: Int) {
+    if (last < 0) {
       return
     }
 
-    if (chanDescriptor.siteDescriptor().is4chan() && TimeUtils.is4chanBirthdayToday()) {
-      recyclerView.addItemDecoration(chan4BirthdayDecoration)
+    val threadDescriptor = currentThreadDescriptorOrNull()
+    if (threadDescriptor != null) {
+      val postNo = postAdapter.getPostNo(last)
+      if (postNo >= 0L) {
+        lastViewedPostNoInfoHolder.setLastViewedPostNo(threadDescriptor, postNo)
+      }
     }
   }
 
-  private fun noParty() {
-    recyclerView.removeItemDecoration(chan4BirthdayDecoration)
+  private fun getPrevScrollPosition(chanDescriptor: ChanDescriptor?, initial: Boolean): PreviousThreadScrollPositionData? {
+    if (chanDescriptor == null) {
+      return null
+    }
+
+    if (initial) {
+      val markedPostNo = chanThreadViewableInfoManager.getMarkedPostNo(chanDescriptor)
+      if (markedPostNo != null) {
+        return PreviousThreadScrollPositionData(
+          prevVisibleItemIndex = null,
+          prevVisiblePostNo = markedPostNo
+        )
+      }
+
+      val prevVisibleItemIndex = chanThreadViewableInfoManager.view(chanDescriptor) { (_, index, _) -> index }
+      if (prevVisibleItemIndex != null) {
+        return PreviousThreadScrollPositionData(
+          prevVisibleItemIndex = prevVisibleItemIndex,
+          prevVisiblePostNo = null
+        )
+      }
+    } else {
+      val currentIndexAndTop = indexAndTop
+      if (currentIndexAndTop != null) {
+        return PreviousThreadScrollPositionData(
+          prevVisibleItemIndex = currentIndexAndTop.index,
+          prevVisiblePostNo = null
+        )
+      }
+    }
+
+    return null
   }
 
-  suspend fun onPostsWithDescriptorsUpdated(updatedPostDescriptors: Collection<PostDescriptor>) {
-    BackgroundUtils.ensureMainThread()
-
-    val updatedPosts = chanThreadManager.getPosts(updatedPostDescriptors)
-    if (updatedPosts.isEmpty()) {
+  private fun restorePrevScrollPosition(
+    chanDescriptor: ChanDescriptor,
+    initial: Boolean
+  ) {
+    if (!initial) {
       return
     }
 
-    postAdapter.updatePosts(updatedPosts)
-  }
+    val markedPostNo = chanThreadViewableInfoManager.getMarkedPostNo(chanDescriptor)
+    val markedPost = if (markedPostNo != null) {
+      chanThreadManager.findPostByPostNo(chanDescriptor, markedPostNo)
+    } else {
+      null
+    }
 
-  suspend fun onPostsUpdated(updatedPosts: List<ChanPost>) {
-    BackgroundUtils.ensureMainThread()
-    postAdapter.updatePosts(updatedPosts)
-  }
+    if (markedPost != null) {
+      Logger.e(TAG, "restorePrevScrollPosition($chanDescriptor) markedPost != null")
+      return
+    }
 
-  fun isErrorShown(): Boolean {
-    BackgroundUtils.ensureMainThread()
-    return postAdapter.isErrorShown
-  }
+    val lm = layoutManager
+    if (lm == null) {
+      Logger.e(TAG, "restorePrevScrollPosition($chanDescriptor) layoutManager == null")
+      return
+    }
 
-  fun resetCachedPostData(postDescriptor: PostDescriptor) {
-    resetCachedPostData(listOf(postDescriptor))
-  }
-
-  fun resetCachedPostData(postDescriptors: Collection<PostDescriptor>) {
-    postAdapter.resetCachedPostData(postDescriptors)
-  }
-
-  fun onImageOptionsApplied() {
-    replyLayoutView.onImageOptionsApplied()
+    chanThreadViewableInfoManager.view(chanDescriptor) { (_, index, top) ->
+      when (boardPostViewMode) {
+        BoardPostViewMode.LIST -> {
+          (lm as FixedLinearLayoutManager).scrollToPositionWithOffset(index, top)
+        }
+        BoardPostViewMode.GRID,
+        BoardPostViewMode.STAGGER -> {
+          (lm as StaggeredGridLayoutManager).scrollToPositionWithOffset(index, top)
+        }
+        null -> {
+          // no-op
+        }
+      }
+    }
   }
 
   data class ShowPostsResult constructor(

@@ -41,7 +41,7 @@ fun ReplyLayoutContainer(
   onPickLocalMediaButtonClicked: () -> Unit,
   onPickRemoteMediaButtonClicked: () -> Unit,
   onSearchRemoteMediaButtonClicked: () -> Unit,
-  onPrefillCaptchaButtonClicked: () -> Unit
+  onPresolveCaptchaButtonClicked: () -> Unit
 ) {
   val replyInputRightPartWidth = 58.dp
   val chanTheme = LocalChanTheme.current
@@ -98,6 +98,7 @@ fun ReplyLayoutContainer(
         iconSize = 36.dp,
         chanDescriptor = chanDescriptor,
         replyLayoutState = replyLayoutState,
+        replyLayoutViewModel = replyLayoutViewModel,
         draggableStateProvider = draggableStateProvider,
         onDragStarted = onDragStarted,
         onDragStopped = onDragStopped,
@@ -106,7 +107,7 @@ fun ReplyLayoutContainer(
         onPickLocalMediaButtonClicked = onPickLocalMediaButtonClicked,
         onPickRemoteMediaButtonClicked = onPickRemoteMediaButtonClicked,
         onSearchRemoteMediaButtonClicked = onSearchRemoteMediaButtonClicked,
-        onPrefillCaptchaButtonClicked = onPrefillCaptchaButtonClicked,
+        onPresolveCaptchaButtonClicked = onPresolveCaptchaButtonClicked,
       )
     }
   }

@@ -54,6 +54,7 @@ import com.github.k1rakishou.chan.core.manager.SeenPostsManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteActions
+import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.http.DeleteRequest
 import com.github.k1rakishou.chan.core.site.http.report.PostReportData
 import com.github.k1rakishou.chan.core.site.http.report.PostReportResult
@@ -114,6 +115,7 @@ import com.github.k1rakishou.model.util.ChanPostUtils
 import com.github.k1rakishou.model.util.ChanPostUtils.getReadableFileSize
 import com.github.k1rakishou.persist_state.IndexAndTop
 import com.github.k1rakishou.persist_state.ReplyMode
+import com.github.k1rakishou.prefs.OptionsSetting
 import dagger.Lazy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -2914,6 +2916,12 @@ class ThreadPresenter @Inject constructor(
         }
       }
     }
+  }
+
+  fun replyModeForChanDescriptor(chanDescriptor: ChanDescriptor): ReplyMode? {
+    return siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+      ?.getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
+      ?.get()
   }
 
   enum class CurrentFocusedController {

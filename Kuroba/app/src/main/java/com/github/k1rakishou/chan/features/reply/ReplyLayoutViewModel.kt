@@ -18,6 +18,7 @@ import com.github.k1rakishou.chan.features.reply.data.ReplyFile
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutFileEnumerator
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutState
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
+import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder
 import com.github.k1rakishou.chan.ui.controller.ThreadControllerType
 import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
 import com.github.k1rakishou.chan.ui.helper.AppResources
@@ -31,6 +32,7 @@ import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.persist_state.ReplyMode
 import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.*
@@ -46,7 +48,8 @@ class ReplyLayoutViewModel(
   private val replyManagerLazy: Lazy<ReplyManager>,
   private val postFormattingButtonsFactoryLazy: Lazy<PostFormattingButtonsFactory>,
   private val themeEngineLazy: Lazy<ThemeEngine>,
-  private val globalUiStateHolderLazy: Lazy<GlobalUiStateHolder>
+  private val globalUiStateHolderLazy: Lazy<GlobalUiStateHolder>,
+  private val captchaHolderLazy: Lazy<CaptchaHolder>
 ) : BaseViewModel() {
   private val _replyManagerStateLoaded = AtomicBoolean(false)
 
@@ -64,12 +67,17 @@ class ReplyLayoutViewModel(
     get() = appConstantsLazy.get()
   private val replyManager: ReplyManager
     get() = replyManagerLazy.get()
+  private val captchaHolder: CaptchaHolder
+    get() = captchaHolderLazy.get()
 
   private val threadControllerType by lazy {
     requireNotNull(savedStateHandle.get<ThreadControllerType>(ThreadControllerTypeParam)) {
       "'${ThreadControllerTypeParam}' was not passed as a parameter of this ViewModel"
     }
   }
+
+  val captchaHolderCaptchaCounterUpdatesFlow: Flow<Int>
+    get() = captchaHolder.listenForCaptchaUpdates()
 
   override fun injectDependencies(component: ViewModelComponent) {
     component.inject(this)
@@ -206,10 +214,6 @@ class ReplyLayoutViewModel(
     TODO("New reply layout")
   }
 
-  fun onPrefillCaptchaButtonClicked() {
-    TODO("New reply layout")
-  }
-
   private suspend fun reloadReplyManagerState() {
     if (!_replyManagerStateLoaded.compareAndSet(false, true)) {
       return
@@ -268,7 +272,8 @@ class ReplyLayoutViewModel(
     private val replyManagerLazy: Lazy<ReplyManager>,
     private val postFormattingButtonsFactoryLazy: Lazy<PostFormattingButtonsFactory>,
     private val themeEngineLazy: Lazy<ThemeEngine>,
-    private val globalUiStateHolderLazy: Lazy<GlobalUiStateHolder>
+    private val globalUiStateHolderLazy: Lazy<GlobalUiStateHolder>,
+    private val captchaHolderLazy: Lazy<CaptchaHolder>
   ) : ViewModelAssistedFactory<ReplyLayoutViewModel> {
     override fun create(handle: SavedStateHandle): ReplyLayoutViewModel {
       return ReplyLayoutViewModel(
@@ -280,7 +285,8 @@ class ReplyLayoutViewModel(
         replyManagerLazy = replyManagerLazy,
         postFormattingButtonsFactoryLazy = postFormattingButtonsFactoryLazy,
         themeEngineLazy = themeEngineLazy,
-        globalUiStateHolderLazy = globalUiStateHolderLazy
+        globalUiStateHolderLazy = globalUiStateHolderLazy,
+        captchaHolderLazy = captchaHolderLazy
       )
     }
   }
