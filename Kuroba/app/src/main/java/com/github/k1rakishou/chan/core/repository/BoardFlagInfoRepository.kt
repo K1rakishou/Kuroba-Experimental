@@ -1,32 +1,27 @@
 package com.github.k1rakishou.chan.core.repository
 
-import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteSetting
-import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.common.groupOrNull
-import com.github.k1rakishou.common.suspendConvertIntoJsoupDocument
+import com.github.k1rakishou.chan.core.usecase.LoadBoardFlagsUseCase
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.prefs.StringSetting
-import okhttp3.Request
-import org.jsoup.nodes.Element
 import java.util.concurrent.ConcurrentHashMap
-import java.util.regex.Pattern
 
 class BoardFlagInfoRepository(
   private val siteManager: SiteManager,
   private val boardManager: BoardManager,
-  private val proxiedOkHttpClient: ProxiedOkHttpClient
+  private val loadBoardFlagsUseCase: LoadBoardFlagsUseCase
 ) {
-  private val cachedFlagInfoMap = ConcurrentHashMap<BoardDescriptor, List<FlagInfo>>()
-  private val defaultFlagInfoMap = ConcurrentHashMap<BoardDescriptor, FlagInfo>()
+  private val cachedFlagInfoMap = ConcurrentHashMap<BoardDescriptor, List<LoadBoardFlagsUseCase.FlagInfo>>()
+  private val defaultFlagInfoMap = ConcurrentHashMap<BoardDescriptor, LoadBoardFlagsUseCase.FlagInfo>()
 
   suspend fun cached(boardDescriptor: BoardDescriptor): Boolean {
     return cachedFlagInfoMap[boardDescriptor]?.isNotEmpty() == true
   }
 
-  suspend fun getFlagInfoList(boardDescriptor: BoardDescriptor): List<FlagInfo> {
+  suspend fun getFlagInfoList(boardDescriptor: BoardDescriptor): List<LoadBoardFlagsUseCase.FlagInfo> {
     if (cachedFlagInfoMap[boardDescriptor].isNullOrEmpty()) {
       boardManager.awaitUntilInitialized()
 
@@ -43,7 +38,7 @@ class BoardFlagInfoRepository(
 
   fun storeLastUsedFlag(
     lastUsedCountryFlagPerBoardSetting: StringSetting,
-    selectedFlagInfo: FlagInfo,
+    selectedFlagInfo: LoadBoardFlagsUseCase.FlagInfo,
     currentBoardCode: String
   ) {
     // board_code:flag_code;board_code:flag_code;board_code:flag_code;etc...
@@ -117,7 +112,7 @@ class BoardFlagInfoRepository(
     )
   }
 
-  fun getLastUsedFlagInfo(boardDescriptor: BoardDescriptor): FlagInfo? {
+  fun getLastUsedFlagInfo(boardDescriptor: BoardDescriptor): LoadBoardFlagsUseCase.FlagInfo? {
     val lastUsedCountryFlagPerBoardSetting = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
       ?.getSettingBySettingId<StringSetting>(SiteSetting.SiteSettingId.LastUsedCountryFlagPerBoard)
       ?: return null
@@ -137,52 +132,11 @@ class BoardFlagInfoRepository(
   }
 
   private suspend fun loadFlags(boardDescriptor: BoardDescriptor): Boolean {
-    val url = "https://boards.4chan.org/${boardDescriptor.boardCode}/"
+    val flags = loadBoardFlagsUseCase.await(boardDescriptor)
+      .onError { error -> Logger.error(TAG) { "loadFlags(${boardDescriptor}) error: ${error}" } }
+      .valueOrNull()
 
-    val request = Request.Builder()
-      .get()
-      .url(url)
-      .build()
-
-    val result = proxiedOkHttpClient.okHttpClient().suspendConvertIntoJsoupDocument(request)
-
-    val document = if (result is ModularResult.Error) {
-      return false
-    } else {
-      (result as ModularResult.Value).value
-    }
-
-    val flagSelector = document.selectFirst("select[class=flagSelector]")
-    if (flagSelector == null) {
-      return false
-    }
-
-    val flags = mutableListOf<FlagInfo>()
-
-    flagSelector.childNodes().forEach { node ->
-      if (node !is Element) {
-        return@forEach
-      }
-
-      if (!node.tagName().equals("option", ignoreCase = true)) {
-        return@forEach
-      }
-
-      val matcher = FLAG_PATTERN.matcher(node.toString())
-      if (!matcher.find()) {
-        return@forEach
-      }
-
-      val flagKey = matcher.groupOrNull(1) ?: return@forEach
-      val flagDescription = matcher.groupOrNull(2) ?: return@forEach
-
-      flags += FlagInfo(
-        flagKey = flagKey,
-        flagDescription = flagDescription
-      )
-    }
-
-    if (flags.isEmpty()) {
+    if (flags.isNullOrEmpty()) {
       return false
     }
 
@@ -193,7 +147,7 @@ class BoardFlagInfoRepository(
         .firstOrNull { flagInfo -> flagInfo.flagKey == "0" }
 
       if (defaultFlag == null) {
-        defaultFlag = FlagInfo("0", "No flag")
+        defaultFlag = LoadBoardFlagsUseCase.FlagInfo("0", "No flag")
       }
 
       defaultFlagInfoMap[boardDescriptor] = defaultFlag
@@ -205,7 +159,7 @@ class BoardFlagInfoRepository(
   private fun getFlagInfoByFlagKeyOrNull(
     lastUsedCountryFlagPerBoard: String,
     boardDescriptor: BoardDescriptor
-  ): FlagInfo? {
+  ): LoadBoardFlagsUseCase.FlagInfo? {
     val flagKey = extractFlagCodeOrDefault(lastUsedCountryFlagPerBoard, boardDescriptor.boardCode)
 
     val flagInfoList = cachedFlagInfoMap[boardDescriptor]
@@ -214,17 +168,12 @@ class BoardFlagInfoRepository(
     return flagInfoList.firstOrNull { flagInfo -> flagInfo.flagKey == flagKey }
   }
 
-  private fun getDefaultFlagInfo(boardDescriptor: BoardDescriptor): FlagInfo? {
+  private fun getDefaultFlagInfo(boardDescriptor: BoardDescriptor): LoadBoardFlagsUseCase.FlagInfo? {
     return defaultFlagInfoMap[boardDescriptor]
   }
 
-  data class FlagInfo(
-    val flagKey: String,
-    val flagDescription: String
-  )
-
   companion object {
-    private val FLAG_PATTERN = Pattern.compile("<option value=\"(.*)\">(.*)<\\/option>")
+    private const val TAG = "BoardFlagInfoRepository"
   }
 
 }

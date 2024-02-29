@@ -3,11 +3,13 @@ package com.github.k1rakishou.chan.ui.compose.components
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.ContentAlpha
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
@@ -41,7 +43,7 @@ fun KurobaComposeTextBarButton(
         modifier = Modifier
           .wrapContentSize()
           .align(Alignment.CenterVertically),
-        text = text,
+        text = remember(key1 = text) { text.uppercase() },
         color = modifiedTextColor,
         fontSize = fontSize,
         textAlign = TextAlign.Center
@@ -81,7 +83,7 @@ fun KurobaComposeTextBarButton(
         modifier = Modifier
           .wrapContentSize()
           .align(Alignment.CenterVertically),
-        text = text,
+        text = remember(key1 = text) { text.toUpperCase() },
         color = modifiedTextColor,
         fontSize = fontSize,
         textAlign = TextAlign.Center

@@ -59,6 +59,7 @@ import com.github.k1rakishou.chan.features.reencoding.ImageReencodeOptionsContro
 import com.github.k1rakishou.chan.features.reencoding.ImageReencodingPresenter
 import com.github.k1rakishou.chan.features.reordering.EpoxyReorderableItemView
 import com.github.k1rakishou.chan.features.reordering.SimpleListItemsReorderingController
+import com.github.k1rakishou.chan.features.reply.ReplyLayoutView
 import com.github.k1rakishou.chan.features.reply_attach_sound.CreateSoundMediaController
 import com.github.k1rakishou.chan.features.reply_image_search.ImageSearchController
 import com.github.k1rakishou.chan.features.report.Chan4ReportPostController
@@ -414,6 +415,7 @@ interface ActivityComponent : ActivityDependencies {
   fun inject(arrowMenuDrawable: ArrowMenuDrawable)
   fun inject(postPopupContainer: PostPopupContainer)
   fun inject(insetAwareLinearLayout: InsetAwareLinearLayout)
+  fun inject(replyLayoutView: ReplyLayoutView)
 
   @Subcomponent.Builder
   interface Builder {

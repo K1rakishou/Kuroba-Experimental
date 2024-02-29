@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.features.reply
 
 import android.content.Context
+import android.text.Spannable
 import android.util.AttributeSet
 import android.view.ViewGroup
 import android.widget.FrameLayout
@@ -8,30 +9,58 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.ComposeView
 import androidx.core.os.bundleOf
+import androidx.core.text.getSpans
+import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
+import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
+import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
 import com.github.k1rakishou.chan.ui.compose.providers.ProvideEverythingForCompose
+import com.github.k1rakishou.chan.ui.controller.OpenUrlInWebViewController
 import com.github.k1rakishou.chan.ui.controller.ThreadControllerType
+import com.github.k1rakishou.chan.ui.layout.ThreadListLayout
+import com.github.k1rakishou.chan.ui.widget.dialog.KurobaAlertDialog
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.WebViewLink
+import com.github.k1rakishou.chan.utils.WebViewLinkMovementMethod
 import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.requireComponentActivity
+import com.github.k1rakishou.common.resumeValueSafe
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.persist_state.ReplyMode
+import kotlinx.coroutines.suspendCancellableCoroutine
+import java.util.concurrent.atomic.AtomicReference
+import javax.inject.Inject
 
 class ReplyLayoutView @JvmOverloads constructor(
   context: Context,
   attributeSet: AttributeSet? = null,
   defAttrStyle: Int = 0
-) : FrameLayout(context, attributeSet, defAttrStyle), ReplyLayoutViewCallbacks {
-  private val composeView: ComposeView
+) : FrameLayout(context, attributeSet, defAttrStyle),
+  ReplyLayoutViewModel.ReplyLayoutViewCallbacks,
+  ThreadListLayout.ReplyLayoutViewCallbacks,
+  WebViewLinkMovementMethod.ClickListener {
 
-  private val _readyState = mutableStateOf(false)
+  @Inject
+  lateinit var dialogFactory: DialogFactory
 
   private lateinit var replyLayoutViewModel: ReplyLayoutViewModel
-  private lateinit var replyLayoutCallbacks: ReplyLayoutCallbacks
+  private lateinit var replyLayoutCallbacks: ReplyLayoutViewModel.ThreadListLayoutCallbacks
+
+  private val composeView: ComposeView
+
+  private val coroutineScope = KurobaCoroutineScope()
+  private val readyState = mutableStateOf(false)
+  private val dialogHandle = AtomicReference<KurobaAlertDialog.AlertDialogHandle?>(null)
+  private val showPostingDialogExecutor = SerializedCoroutineExecutor(coroutineScope)
 
   init {
+    AppModuleAndroidUtils.extractActivityComponent(context)
+      .inject(this)
+
     removeAllViews()
 
     composeView = ComposeView(context)
@@ -44,7 +73,7 @@ class ReplyLayoutView @JvmOverloads constructor(
 
     composeView.setContent {
       ProvideEverythingForCompose {
-        val ready by _readyState
+        val ready by readyState
         if (!ready) {
           return@ProvideEverythingForCompose
         }
@@ -57,17 +86,34 @@ class ReplyLayoutView @JvmOverloads constructor(
     }
   }
 
-  fun onCreate(threadControllerType: ThreadControllerType, callbacks: ReplyLayoutCallbacks) {
+  override fun onCreate(threadControllerType: ThreadControllerType, callbacks: ReplyLayoutViewModel.ThreadListLayoutCallbacks) {
     replyLayoutCallbacks = callbacks
+
     replyLayoutViewModel = context.requireComponentActivity().viewModelByKey<ReplyLayoutViewModel>(
       key = threadControllerType.name,
       defaultArgs = bundleOf(ReplyLayoutViewModel.ThreadControllerTypeParam to threadControllerType)
     )
-    _readyState.value = true
+    replyLayoutViewModel.bindThreadListLayoutCallbacks(callbacks)
+    replyLayoutViewModel.bindReplyLayoutViewCallbacks(this)
+
+    readyState.value = true
+  }
+
+  override fun onDestroy() {
+    replyLayoutViewModel.unbindCallbacks()
+    coroutineScope.cancelChildren()
   }
 
   override suspend fun bindChanDescriptor(descriptor: ChanDescriptor, threadControllerType: ThreadControllerType) {
     replyLayoutViewModel.bindChanDescriptor(descriptor, threadControllerType)
+  }
+
+  override fun quote(post: ChanPost, withText: Boolean) {
+    replyLayoutViewModel.quote(post, withText)
+  }
+
+  override fun quote(postDescriptor: PostDescriptor, text: CharSequence) {
+    replyLayoutViewModel.quote(postDescriptor, text)
   }
 
   override fun replyLayoutVisibility(): ReplyLayoutVisibility {
@@ -94,16 +140,8 @@ class ReplyLayoutView @JvmOverloads constructor(
     replyLayoutViewModel.updateReplyLayoutVisibility(newReplyLayoutVisibility)
   }
 
-  override fun quote(post: ChanPost, withText: Boolean) {
-    replyLayoutViewModel.quote(post, withText)
-  }
-
-  override fun quote(postDescriptor: PostDescriptor, text: CharSequence) {
-    replyLayoutViewModel.quote(postDescriptor, text)
-  }
-
-  override fun makeSubmitCall(chanDescriptor: ChanDescriptor, replyMode: ReplyMode, retrying: Boolean) {
-    replyLayoutViewModel.makeSubmitCall(context.applicationContext, chanDescriptor, replyMode, retrying)
+  override fun enqueueReply(chanDescriptor: ChanDescriptor, replyMode: ReplyMode, retrying: Boolean) {
+    replyLayoutViewModel.enqueueReply(chanDescriptor, replyMode, retrying)
   }
 
   override fun onImageOptionsApplied() {
@@ -120,6 +158,71 @@ class ReplyLayoutView @JvmOverloads constructor(
 
   override fun onBack(): Boolean {
     return replyLayoutViewModel.onBack()
+  }
+
+  override fun onWebViewLinkClick(type: WebViewLink.Type, link: String) {
+    Logger.d(TAG, "onWebViewLinkClick type: ${type}, link: ${link}")
+
+    when (type) {
+      WebViewLink.Type.BanMessage -> {
+        replyLayoutCallbacks.presentController(OpenUrlInWebViewController(context, link))
+      }
+    }
+  }
+
+  override fun dialogMessage(title: String, message: CharSequence?, onDismissListener: (() -> Unit)?) {
+    if (message == null) {
+      dialogHandle.getAndSet(null)
+        ?.dismiss()
+
+      return
+    }
+
+    showPostingDialogExecutor.post {
+      val linkMovementMethod = if (hasWebViewLinks(message)) {
+        WebViewLinkMovementMethod(webViewLinkClickListener = this)
+      } else {
+        null
+      }
+
+      val dialogId = "ReplyPresenterPostingErrorDialog"
+
+      try {
+        suspendCancellableCoroutine<Unit> { continuation ->
+          continuation.invokeOnCancellation { dialogHandle.getAndSet(null)?.dismiss() }
+
+          dialogFactory.dismissDialogById(dialogId)
+
+          val handle = dialogFactory.createSimpleInformationDialog(
+            context = context,
+            dialogId = dialogId,
+            titleText = title,
+            descriptionText = message,
+            customLinkMovementMethod = linkMovementMethod,
+            onDismissListener = { continuation.resumeValueSafe(Unit) }
+          )
+
+          dialogHandle.getAndSet(handle)
+            ?.dismiss()
+        }
+      } finally {
+        onDismissListener?.invoke()
+      }
+    }
+  }
+
+  private fun hasWebViewLinks(message: CharSequence): Boolean {
+    var hasWebViewLinks = false
+
+    if (message is Spannable) {
+      hasWebViewLinks = message.getSpans<WebViewLink>().isNotEmpty()
+    }
+
+    return hasWebViewLinks
+  }
+
+  companion object {
+    private const val TAG = "ReplyLayoutView"
   }
 
 }

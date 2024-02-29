@@ -201,7 +201,7 @@ object Logger {
             val msg = message()
 
             Log.e(time + tagPrefix + tag, msg, throwable)
-            logStorage.persistLog(LogStorage.LogLevel.Error, tag, msg)
+            logStorage.persistLog(LogStorage.LogLevel.Error, tag, msg, throwable)
         }
     }
 
@@ -211,7 +211,7 @@ object Logger {
             val actualTag = (tag ?: outerClassName())
 
             Log.e(time + tagPrefix + actualTag, msg, throwable)
-            logStorage.persistLog(LogStorage.LogLevel.Error, actualTag, msg)
+            logStorage.persistLog(LogStorage.LogLevel.Error, actualTag, msg, throwable)
         }
     }
 

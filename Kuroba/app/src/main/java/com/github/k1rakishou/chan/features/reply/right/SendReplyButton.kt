@@ -27,8 +27,8 @@ internal fun SendReplyButton(
   replyLayoutState: ReplyLayoutState,
   iconSize: Dp,
   padding: Dp,
-  onCancelReplySendClicked: (ReplyLayoutState) -> Unit,
-  onSendReplyClicked: (ChanDescriptor, ReplyLayoutState) -> Unit
+  onCancelReplySendClicked: () -> Unit,
+  onSendReplyClicked: (ChanDescriptor) -> Unit
 ) {
   val replySendProgressMut by replyLayoutState.replySendProgressInPercentsState
   val replySendProgress = replySendProgressMut
@@ -49,9 +49,9 @@ internal fun SendReplyButton(
           bounded = false,
           onClick = {
             if (sendReplyState.canCancel) {
-              onCancelReplySendClicked(replyLayoutState)
+              onCancelReplySendClicked()
             } else {
-              onSendReplyClicked(chanDescriptor, replyLayoutState)
+              onSendReplyClicked(chanDescriptor)
             }
           }
         ),

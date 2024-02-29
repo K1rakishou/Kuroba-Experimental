@@ -10,29 +10,40 @@ import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.viewmodel.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
+import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.repository.BoardFlagInfoRepository
+import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.loader.ClientException
 import com.github.k1rakishou.chan.features.posting.PostingService
+import com.github.k1rakishou.chan.features.posting.PostingServiceDelegate
 import com.github.k1rakishou.chan.features.reply.data.PostFormattingButtonsFactory
 import com.github.k1rakishou.chan.features.reply.data.ReplyAttachable
 import com.github.k1rakishou.chan.features.reply.data.ReplyFile
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutFileEnumerator
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutState
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
+import com.github.k1rakishou.chan.features.reply.data.SendReplyState
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder
+import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
 import com.github.k1rakishou.chan.ui.controller.ThreadControllerType
 import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
 import com.github.k1rakishou.chan.ui.helper.AppResources
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.rethrowCancellationException
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.persist_state.ReplyMode
+import com.github.k1rakishou.prefs.OptionsSetting
 import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.*
@@ -41,16 +52,20 @@ import javax.inject.Inject
 
 class ReplyLayoutViewModel(
   private val savedStateHandle: SavedStateHandle,
+  private val appContext: Context,
   private val appResourcesLazy: Lazy<AppResources>,
   private val appConstantsLazy: Lazy<AppConstants>,
+  private val siteManagerLazy: Lazy<SiteManager>,
   private val replyLayoutFileEnumeratorLazy: Lazy<ReplyLayoutFileEnumerator>,
   private val boardManagerLazy: Lazy<BoardManager>,
   private val replyManagerLazy: Lazy<ReplyManager>,
   private val postFormattingButtonsFactoryLazy: Lazy<PostFormattingButtonsFactory>,
   private val themeEngineLazy: Lazy<ThemeEngine>,
   private val globalUiStateHolderLazy: Lazy<GlobalUiStateHolder>,
-  private val captchaHolderLazy: Lazy<CaptchaHolder>
-) : BaseViewModel() {
+  private val captchaHolderLazy: Lazy<CaptchaHolder>,
+  private val postingServiceDelegateLazy: Lazy<PostingServiceDelegate>,
+  private val boardFlagInfoRepositoryLazy: Lazy<BoardFlagInfoRepository>
+) : BaseViewModel(), ReplyLayoutState.Callbacks {
   private val _replyManagerStateLoaded = AtomicBoolean(false)
 
   private val _boundChanDescriptor = mutableStateOf<ChanDescriptor?>(null)
@@ -65,10 +80,16 @@ class ReplyLayoutViewModel(
 
   private val appConstants: AppConstants
     get() = appConstantsLazy.get()
+  private val siteManager: SiteManager
+    get() = siteManagerLazy.get()
   private val replyManager: ReplyManager
     get() = replyManagerLazy.get()
   private val captchaHolder: CaptchaHolder
     get() = captchaHolderLazy.get()
+  private val postingServiceDelegate: PostingServiceDelegate
+    get() = postingServiceDelegateLazy.get()
+  private val boardFlagInfoRepository: BoardFlagInfoRepository
+    get() = boardFlagInfoRepositoryLazy.get()
 
   private val threadControllerType by lazy {
     requireNotNull(savedStateHandle.get<ThreadControllerType>(ThreadControllerTypeParam)) {
@@ -78,6 +99,11 @@ class ReplyLayoutViewModel(
 
   val captchaHolderCaptchaCounterUpdatesFlow: Flow<Int>
     get() = captchaHolder.listenForCaptchaUpdates()
+
+  private var sendReplyJob: Job? = null
+  private var listenForPostingStatusUpdatesJob: Job? = null
+  private var threadListLayoutCallbacks: ThreadListLayoutCallbacks? = null
+  private var replyLayoutViewCallbacks: ReplyLayoutViewCallbacks? = null
 
   override fun injectDependencies(component: ViewModelComponent) {
     component.inject(this)
@@ -91,6 +117,43 @@ class ReplyLayoutViewModel(
     viewModelScope.launch { reloadReplyManagerState() }
   }
 
+  fun bindThreadListLayoutCallbacks(callbacks: ThreadListLayoutCallbacks) {
+    threadListLayoutCallbacks = callbacks
+  }
+
+  fun bindReplyLayoutViewCallbacks(callbacks: ReplyLayoutViewCallbacks) {
+    replyLayoutViewCallbacks = callbacks
+  }
+
+  fun unbindCallbacks() {
+    threadListLayoutCallbacks = null
+    replyLayoutViewCallbacks = null
+  }
+
+  override fun showCaptcha(
+    chanDescriptor: ChanDescriptor,
+    replyMode: ReplyMode,
+    autoReply: Boolean,
+    afterPostingAttempt: Boolean
+  ) {
+    threadListLayoutCallbacks?.showCaptcha(chanDescriptor, replyMode, autoReply, afterPostingAttempt)
+  }
+
+  override fun dialogMessage(
+    title: String,
+    message: CharSequence,
+    onDismissListener: (() -> Unit)?
+  ) {
+    replyLayoutViewCallbacks?.dialogMessage(title, message, onDismissListener)
+  }
+
+  override suspend fun onPostedSuccessfully(
+    prevChanDescriptor: ChanDescriptor,
+    newThreadDescriptor: ChanDescriptor.ThreadDescriptor
+  ) {
+    threadListLayoutCallbacks?.onPostedSuccessfully(prevChanDescriptor, newThreadDescriptor)
+  }
+
   suspend fun bindChanDescriptor(chanDescriptor: ChanDescriptor, threadControllerType: ThreadControllerType) {
     replyManager.awaitUntilFilesAreLoaded()
 
@@ -100,22 +163,42 @@ class ReplyLayoutViewModel(
 
     _boundChanDescriptor.value = chanDescriptor
 
-    _replyLayoutState.value = ReplyLayoutState(
+    listenForPostingStatusUpdatesJob?.cancel()
+    listenForPostingStatusUpdatesJob = viewModelScope.launch {
+      postingServiceDelegate.listenForPostingStatusUpdates(chanDescriptor)
+        .onEach { postingStatus -> replyLayoutState.value?.onPostingStatusEvent(postingStatus) }
+        .collect()
+    }
+
+    val replyLayoutState = ReplyLayoutState(
       chanDescriptor = chanDescriptor,
       threadControllerType = threadControllerType,
+      callbacks = this,
       coroutineScope = viewModelScope,
       appResourcesLazy = appResourcesLazy,
       replyLayoutFileEnumeratorLazy = replyLayoutFileEnumeratorLazy,
+      siteManagerLazy = siteManagerLazy,
       boardManagerLazy = boardManagerLazy,
       replyManagerLazy = replyManagerLazy,
       postFormattingButtonsFactoryLazy = postFormattingButtonsFactoryLazy,
       themeEngineLazy = themeEngineLazy,
-      globalUiStateHolderLazy = globalUiStateHolderLazy
-    ).also { replyLayoutState -> replyLayoutState.bindChanDescriptor(chanDescriptor) }
+      globalUiStateHolderLazy = globalUiStateHolderLazy,
+      postingServiceDelegateLazy = postingServiceDelegateLazy,
+      boardFlagInfoRepositoryLazy = boardFlagInfoRepositoryLazy
+    )
+
+    replyLayoutState.bindChanDescriptor(chanDescriptor)
+
+    _replyLayoutState.value = replyLayoutState
   }
 
   fun cleanup() {
     // TODO: New reply layout
+    sendReplyJob?.cancel()
+    sendReplyJob = null
+
+    listenForPostingStatusUpdatesJob?.cancel()
+    listenForPostingStatusUpdatesJob = null
   }
 
   fun onBack(): Boolean {
@@ -159,43 +242,141 @@ class ReplyLayoutViewModel(
     return replyLayoutState.replyLayoutVisibility.value
   }
 
-  fun sendReply(chanDescriptor: ChanDescriptor, replyLayoutState: ReplyLayoutState) {
-    TODO("New reply layout")
+  fun enqueueReply(chanDescriptor: ChanDescriptor, replyMode: ReplyMode? = null, retrying: Boolean = false) {
+    withReplyLayoutState {
+      if (sendReplyJob?.isActive == true) {
+        return@withReplyLayoutState
+      }
+
+      sendReplyJob = viewModelScope.launch {
+        var success = false
+        val replyLayoutState = replyLayoutState.value
+
+        try {
+          if (threadListLayoutCallbacks == null || replyLayoutViewCallbacks == null) {
+            Logger.debug(TAG) { "enqueueReply(${chanDescriptor}) callbacks are null" }
+            return@launch
+          }
+
+          if (replyLayoutState == null) {
+            Logger.debug(TAG) { "enqueueReply(${chanDescriptor}) replyLayoutState is null" }
+            return@launch
+          }
+
+          if (!isReplyLayoutEnabled()) {
+            Logger.debug(TAG) {
+              "enqueueReply(${chanDescriptor}) Canceling posting attempt for ${chanDescriptor} because cancel button was clicked"
+            }
+
+            postingServiceDelegate.cancel(chanDescriptor)
+            return@launch
+          }
+
+          if (replyLayoutState.sendReplyState.value != SendReplyState.Finished) {
+            val sendReplyState = replyLayoutState.sendReplyState.value
+            Logger.debug(TAG) {
+              "enqueueReply(${chanDescriptor}) sendReplyState is not SendReplyState.Finished (sendReplyState: ${sendReplyState})"
+            }
+
+            return@launch
+          }
+
+          replyLayoutState.onSendReplyStart()
+
+          Logger.debug(TAG) { "enqueueReply(${chanDescriptor}) start" }
+
+          var actualReplyMode = replyMode
+          if (actualReplyMode == null) {
+            actualReplyMode = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+              ?.getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
+              ?.get()
+              ?: ReplyMode.Unknown
+          }
+
+          success = enqueueNewReply(
+            chanDescriptor = chanDescriptor,
+            replyLayoutState = replyLayoutState,
+            replyMode = actualReplyMode,
+            retrying = retrying
+          )
+
+          if (success) {
+            Logger.debug(TAG) { "enqueueReply(${chanDescriptor}) reply enqueued" }
+            replyLayoutState.onReplyEnqueued()
+          } else {
+            Logger.debug(TAG) { "enqueueReply(${chanDescriptor}) failed to enqueue reply" }
+          }
+
+          Logger.debug(TAG) { "enqueueReply(${chanDescriptor}) end" }
+        } catch (error: Throwable) {
+          Logger.error(TAG) { "enqueueReply(${chanDescriptor}) unhandled error: ${error}" }
+
+          error.rethrowCancellationException()
+        } finally {
+          if (!success) {
+            replyLayoutState?.onSendReplyEnd()
+          }
+
+          sendReplyJob = null
+        }
+      }
+    }
   }
 
-  fun cancelSendReply(replyLayoutState: ReplyLayoutState) {
-    TODO("New reply layout")
+  fun cancelSendReply() {
+    withReplyLayoutState {
+      sendReplyJob?.cancel()
+      sendReplyJob = viewModelScope.launch {
+        try {
+          val chanDescriptor = boundChanDescriptor.value
+            ?: return@launch
+
+          postingServiceDelegate.cancel(chanDescriptor)
+        } finally {
+          sendReplyJob = null
+        }
+      }
+    }
   }
 
   fun onAttachedMediaClicked(attachedMedia: ReplyAttachable) {
-    TODO("New reply layout")
+    withReplyLayoutState { replyLayoutState ->
+      TODO("New reply layout")
+    }
   }
 
   fun removeAttachedMedia(attachedMedia: ReplyAttachable) {
-    TODO("New reply layout")
+    withReplyLayoutState { replyLayoutState ->
+      TODO("New reply layout")
+    }
   }
 
   fun onFlagSelectorClicked(chanDescriptor: ChanDescriptor) {
-    TODO("New reply layout")
+    withReplyLayoutState { replyLayoutState ->
+      TODO("New reply layout")
+    }
   }
 
   fun updateReplyLayoutVisibility(newReplyLayoutVisibility: ReplyLayoutVisibility) {
-    val replyLayoutState = currentReplyLayoutState
-      ?: return
-
-    when (newReplyLayoutVisibility) {
-      ReplyLayoutVisibility.Collapsed -> replyLayoutState.collapseReplyLayout()
-      ReplyLayoutVisibility.Opened -> replyLayoutState.openReplyLayout()
-      ReplyLayoutVisibility.Expanded -> replyLayoutState.expandReplyLayout()
+    withReplyLayoutState { replyLayoutState ->
+      when (newReplyLayoutVisibility) {
+        ReplyLayoutVisibility.Collapsed -> replyLayoutState.collapseReplyLayout()
+        ReplyLayoutVisibility.Opened -> replyLayoutState.openReplyLayout()
+        ReplyLayoutVisibility.Expanded -> replyLayoutState.expandReplyLayout()
+      }
     }
   }
 
   fun quote(post: ChanPost, withText: Boolean) {
-    TODO("New reply layout")
+    withReplyLayoutState { replyLayoutState ->
+      TODO("New reply layout")
+    }
   }
 
   fun quote(postDescriptor: PostDescriptor, text: CharSequence) {
-    TODO("New reply layout")
+    withReplyLayoutState { replyLayoutState ->
+      TODO("New reply layout")
+    }
   }
 
   fun onImageOptionsApplied() {
@@ -212,6 +393,97 @@ class ReplyLayoutViewModel(
 
   fun onSearchRemoteMediaButtonClicked() {
     TODO("New reply layout")
+  }
+
+  private suspend fun enqueueNewReply(
+    chanDescriptor: ChanDescriptor,
+    replyLayoutState: ReplyLayoutState,
+    replyMode: ReplyMode,
+    retrying: Boolean
+  ): Boolean {
+    Logger.debug(TAG) { "enqueueNewReply(${chanDescriptor}) replyMode: ${replyMode}, retrying: ${retrying}" }
+
+    // TODO: New reply layout. Move to reply layout options (which are not implemented yet)
+//    if (longClicked || prevReplyMode == ReplyMode.Unknown) {
+//      showReplyOptions(chanDescriptor, prevReplyMode)
+//      return
+//    }
+
+    if (!onPrepareToEnqueue(chanDescriptor, replyLayoutState)) {
+      Logger.debug(TAG) { "enqueueNewReply(${chanDescriptor}) onPrepareToSubmit() -> false" }
+      return false
+    }
+
+    if (replyMode == ReplyMode.ReplyModeSolveCaptchaManually && !captchaHolder.hasSolution()) {
+      Logger.debug(TAG) { "enqueueNewReply(${chanDescriptor}) no captcha solution, showing captcha" }
+
+      threadListLayoutCallbacks?.showCaptcha(
+        chanDescriptor = chanDescriptor,
+        replyMode = replyMode,
+        autoReply = true,
+        afterPostingAttempt = false
+      )
+
+      return false
+    }
+
+    PostingService.enqueueReplyChanDescriptor(
+      context = appContext,
+      chanDescriptor = chanDescriptor,
+      replyMode = replyMode,
+      retrying = retrying
+    )
+
+    Logger.debug(TAG) { "enqueueNewReply(${chanDescriptor}) success" }
+    return true
+  }
+
+  private suspend fun onPrepareToEnqueue(
+    chanDescriptor: ChanDescriptor,
+    replyLayoutState: ReplyLayoutState
+  ): Boolean {
+    val hasSelectedFiles = replyManager.hasSelectedFiles()
+      .onError { error ->
+        Logger.error(TAG, error) {
+          "onPrepareToEnqueue(${chanDescriptor}) replyManager.hasSelectedFiles() -> error"
+        }
+      }
+      .valueOrNull()
+
+    if (hasSelectedFiles == null) {
+      Logger.debug(TAG) { "onPrepareToEnqueue(${chanDescriptor}) hasSelectedFiles == null" }
+      // TODO: New reply layout. error toast
+//      callback.dialogMessage(getString(R.string.reply_failed_to_prepare_reply))
+      return false
+    }
+
+    if (!replyLayoutState.loadViewsIntoDraft(chanDescriptor)) {
+      Logger.debug(TAG) { "onPrepareToEnqueue(${chanDescriptor}) loadViewsIntoDraft() -> false" }
+
+      // TODO: New reply layout. error toast
+      return false
+    }
+
+    return replyManager.readReply(chanDescriptor) { reply ->
+      if (!hasSelectedFiles && reply.isCommentEmpty()) {
+        Logger.debug(TAG) { "onPrepareToEnqueue(${chanDescriptor}) reply is empty" }
+        // TODO: New reply layout.
+//        callback.dialogMessage(getString(R.string.reply_comment_empty))
+        return@readReply false
+      }
+
+      reply.resetCaptcha()
+      Logger.debug(TAG) { "onPrepareToEnqueue(${chanDescriptor}) success" }
+
+      return@readReply true
+    }
+  }
+
+  private suspend fun isReplyLayoutEnabled(): Boolean {
+    val descriptor = boundChanDescriptor.value
+      ?: return true
+
+    return postingServiceDelegate.isReplyCurrentlyInProgress(descriptor)
   }
 
   private suspend fun reloadReplyManagerState() {
@@ -236,57 +508,80 @@ class ReplyLayoutViewModel(
     }
   }
 
-  fun makeSubmitCall(
-    appContext: Context,
-    chanDescriptor: ChanDescriptor,
-    replyMode: ReplyMode,
-    retrying: Boolean
-  ) {
-    closeAll()
-    PostingService.enqueueReplyChanDescriptor(appContext, chanDescriptor, replyMode, retrying)
+  private fun withReplyLayoutState(block: (ReplyLayoutState) -> Unit) {
+    val replyLayoutState = currentReplyLayoutState
+      ?: return
+
+    val chanDescriptor = boundChanDescriptor.value
+    if (chanDescriptor == null) {
+      replyLayoutState.collapseReplyLayout()
+      return
+    }
+
+    if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+      replyLayoutState.collapseReplyLayout()
+      return
+    }
+
+    block(replyLayoutState)
   }
 
-  private fun closeAll() {
-    // TODO: New reply layout.
-//    isExpanded = false
-//    previewOpen = false
-//
-//    commentEditingHistory.clear()
-//
-//    callback.highlightPosts(emptySet())
-//    callback.dialogMessage(null)
-//    callback.setExpanded(expanded = false, isCleaningUp = true)
-//    callback.openSubject(false)
-//    callback.hideFlag()
-//    callback.openNameOptions(false)
-//    callback.updateRevertChangeButtonVisibility(isBufferEmpty = true)
+  interface ThreadListLayoutCallbacks {
+    fun onPresolveCaptchaButtonClicked()
+
+    fun showCaptcha(
+      chanDescriptor: ChanDescriptor,
+      replyMode: ReplyMode,
+      autoReply: Boolean,
+      afterPostingAttempt: Boolean,
+      onFinished: ((Boolean) -> Unit)? = null
+    )
+
+    suspend fun onPostedSuccessfully(
+      prevChanDescriptor: ChanDescriptor,
+      newThreadDescriptor: ChanDescriptor.ThreadDescriptor
+    )
+
+    fun presentController(controller: BaseFloatingController)
+  }
+
+  interface ReplyLayoutViewCallbacks {
+    fun dialogMessage(title: String, message: CharSequence?, onDismissListener: (() -> Unit)?)
   }
 
   class ReplyFileDoesNotExist(fileUUID: UUID) : ClientException("Reply file with UUID '${fileUUID}' does not exist")
 
   class ViewModelFactory @Inject constructor(
     private val appResourcesLazy: Lazy<AppResources>,
+    private val appContext: Context,
     private val appConstantsLazy: Lazy<AppConstants>,
+    private val siteManagerLazy: Lazy<SiteManager>,
     private val replyLayoutFileEnumeratorLazy: Lazy<ReplyLayoutFileEnumerator>,
     private val boardManagerLazy: Lazy<BoardManager>,
     private val replyManagerLazy: Lazy<ReplyManager>,
     private val postFormattingButtonsFactoryLazy: Lazy<PostFormattingButtonsFactory>,
     private val themeEngineLazy: Lazy<ThemeEngine>,
     private val globalUiStateHolderLazy: Lazy<GlobalUiStateHolder>,
-    private val captchaHolderLazy: Lazy<CaptchaHolder>
+    private val captchaHolderLazy: Lazy<CaptchaHolder>,
+    private val postingServiceDelegateLazy: Lazy<PostingServiceDelegate>,
+    private val boardFlagInfoRepositoryLazy: Lazy<BoardFlagInfoRepository>
   ) : ViewModelAssistedFactory<ReplyLayoutViewModel> {
     override fun create(handle: SavedStateHandle): ReplyLayoutViewModel {
       return ReplyLayoutViewModel(
         savedStateHandle = handle,
+        appContext = appContext,
         appResourcesLazy = appResourcesLazy,
         appConstantsLazy = appConstantsLazy,
+        siteManagerLazy = siteManagerLazy,
         replyLayoutFileEnumeratorLazy = replyLayoutFileEnumeratorLazy,
         boardManagerLazy = boardManagerLazy,
         replyManagerLazy = replyManagerLazy,
         postFormattingButtonsFactoryLazy = postFormattingButtonsFactoryLazy,
         themeEngineLazy = themeEngineLazy,
         globalUiStateHolderLazy = globalUiStateHolderLazy,
-        captchaHolderLazy = captchaHolderLazy
+        captchaHolderLazy = captchaHolderLazy,
+        postingServiceDelegateLazy = postingServiceDelegateLazy,
+        boardFlagInfoRepositoryLazy = boardFlagInfoRepositoryLazy
       )
     }
   }

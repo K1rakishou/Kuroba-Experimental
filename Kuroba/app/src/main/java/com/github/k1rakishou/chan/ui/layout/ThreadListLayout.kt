@@ -46,9 +46,8 @@ import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.PostHighlightManager
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter
 import com.github.k1rakishou.chan.core.usecase.ExtractPostMapInfoHolderUseCase
-import com.github.k1rakishou.chan.features.reply.ReplyLayoutCallbacks
 import com.github.k1rakishou.chan.features.reply.ReplyLayoutView
-import com.github.k1rakishou.chan.features.reply.ReplyLayoutViewCallbacks
+import com.github.k1rakishou.chan.features.reply.ReplyLayoutViewModel
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter.PostAdapterCallback
@@ -58,6 +57,7 @@ import com.github.k1rakishou.chan.ui.cell.PostCellData
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.cell.PreviousThreadScrollPositionData
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
+import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
 import com.github.k1rakishou.chan.ui.controller.CaptchaContainerController
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.controller.ThreadControllerType
@@ -110,14 +110,11 @@ import kotlin.time.Duration
 import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
-/**
- * A layout that wraps around a [RecyclerView] and a [ReplyLayout] to manage showing and replying to posts.
- */
 class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(context, attrs),
   Toolbar.ToolbarHeightUpdatesCallback,
   ThemeEngine.ThemeChangesListener,
   FastScroller.ThumbDragListener,
-  ReplyLayoutCallbacks {
+  ReplyLayoutViewModel.ThreadListLayoutCallbacks {
 
   @Inject
   lateinit var dialogFactory: DialogFactory
@@ -244,7 +241,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(con
     }
   }
 
-  val replyLayoutViewCallbacks: ReplyLayoutViewCallbacks
+  val replyLayoutViewCallbacks: ThreadListLayout.ReplyLayoutViewCallbacks
     get() = replyLayoutView
 
   val displayingPostDescriptors: List<PostDescriptor>
@@ -442,6 +439,21 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(con
     )
   }
 
+  override suspend fun onPostedSuccessfully(
+    prevChanDescriptor: ChanDescriptor,
+    newThreadDescriptor: ThreadDescriptor
+  ) {
+    threadPresenter?.requestNewPostLoad()
+
+    if (prevChanDescriptor.isCatalogDescriptor()) {
+      callback?.showThread(newThreadDescriptor)
+    }
+  }
+
+  override fun presentController(controller: BaseFloatingController) {
+    threadListLayoutCallback?.presentController(controller)
+  }
+
   fun onCreate(
     threadPresenter: ThreadPresenter,
     threadListLayoutCallback: ThreadListLayoutCallback,
@@ -525,6 +537,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(con
     runBlocking { setFastScroll(false, emptyList()) }
 
     forceRecycleAllPostViews()
+    replyLayoutView.onDestroy()
     recyclerView.removeItemDecoration(gridModeSpaceItemDecoration)
     recyclerView.swapAdapter(null, true)
     threadPresenter = null
@@ -748,12 +761,12 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(con
     snowLayout.onHidden()
   }
 
-  fun showCaptcha(
+  override fun showCaptcha(
     chanDescriptor: ChanDescriptor,
     replyMode: ReplyMode,
     autoReply: Boolean,
     afterPostingAttempt: Boolean,
-    onFinished: ((Boolean) -> Unit)? = null
+    onFinished: ((Boolean) -> Unit)?
   ) {
     val controller = CaptchaContainerController(
       context = context,
@@ -779,7 +792,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(con
           Logger.d(TAG, "CaptchaContainerController success")
 
           if (autoReply) {
-            replyLayoutView.makeSubmitCall(
+            replyLayoutView.enqueueReply(
               chanDescriptor = chanDescriptor,
               replyMode = replyMode,
               retrying = false
@@ -1394,6 +1407,27 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(con
         outRect.bottom = margins
       }
     }
+  }
+
+  interface ReplyLayoutViewCallbacks {
+    fun onCreate(threadControllerType: ThreadControllerType, callbacks: ReplyLayoutViewModel.ThreadListLayoutCallbacks)
+    fun onDestroy()
+
+    suspend fun bindChanDescriptor(descriptor: ChanDescriptor, threadControllerType: ThreadControllerType)
+
+    fun quote(post: ChanPost, withText: Boolean)
+    fun quote(postDescriptor: PostDescriptor, text: CharSequence)
+    fun replyLayoutVisibility(): ReplyLayoutVisibility
+    fun isCatalogMode(): Boolean?
+    fun isExpanded(): Boolean
+    fun isOpened(): Boolean
+    fun isCollapsed(): Boolean
+    fun updateReplyLayoutVisibility(newReplyLayoutVisibility: ReplyLayoutVisibility)
+    fun enqueueReply(chanDescriptor: ChanDescriptor, replyMode: ReplyMode, retrying: Boolean)
+    fun onImageOptionsApplied()
+    fun hideKeyboard()
+    fun cleanup()
+    fun onBack(): Boolean
   }
 
   interface ThreadListLayoutPresenterCallback {

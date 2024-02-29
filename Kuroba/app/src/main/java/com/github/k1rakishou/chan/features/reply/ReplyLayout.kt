@@ -55,7 +55,7 @@ fun ReplyLayout(
           onDragStarted = onDragStarted,
           onDragStopped = onDragStopped,
           onCancelReplySendClicked = replyLayoutViewModel::cancelSendReply,
-          onSendReplyClicked = replyLayoutViewModel::sendReply,
+          onSendReplyClicked = replyLayoutViewModel::enqueueReply,
           onAttachedMediaClicked = replyLayoutViewModel::onAttachedMediaClicked,
           onRemoveAttachedMediaClicked = replyLayoutViewModel::removeAttachedMedia,
           onFlagSelectorClicked = replyLayoutViewModel::onFlagSelectorClicked,
