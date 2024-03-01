@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.ContentAlpha
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -52,6 +53,7 @@ private const val COIL_FAILED_TO_DECODE_FRAME_ERROR_MSG =
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun ReplyAttachments(
+  replyLayoutEnabled: Boolean,
   replyLayoutState: ReplyLayoutState,
   replyLayoutViewModel: ReplyLayoutViewModel,
   onAttachedMediaClicked: (ReplyAttachable) -> Unit,
@@ -99,6 +101,7 @@ internal fun ReplyAttachments(
             is ReplyAttachable.ReplyFileAttachable -> {
               AttachedMediaThumbnail(
                 replyLayoutViewModel = replyLayoutViewModel,
+                replyLayoutEnabled = replyLayoutEnabled,
                 replyFileAttachable = attachedMedia,
                 mediaWidth = mediaWidth,
                 mediaHeight = mediaHeight,
@@ -125,6 +128,7 @@ internal fun ReplyAttachments(
 @Composable
 private fun AttachedMediaThumbnail(
   replyLayoutViewModel: ReplyLayoutViewModel,
+  replyLayoutEnabled: Boolean,
   replyFileAttachable: ReplyAttachable.ReplyFileAttachable,
   mediaWidth: Dp,
   mediaHeight: Dp,
@@ -136,6 +140,7 @@ private fun AttachedMediaThumbnail(
   val density = LocalDensity.current
 
   val mediaHeightPx = with(density) { mediaHeight.roundToPx() - 8.dp.roundToPx() }
+  val alpha = if (replyLayoutEnabled) ContentAlpha.high else ContentAlpha.disabled
 
   Box(
     modifier = Modifier
@@ -171,10 +176,15 @@ private fun AttachedMediaThumbnail(
         modifier = Modifier
           .fillMaxSize()
           .padding(horizontal = paddings / 2, vertical = paddings / 2)
-          .kurobaClickable(bounded = true, onClick = { onAttachedMediaClicked(replyFileAttachable) }),
+          .kurobaClickable(
+            enabled = replyLayoutEnabled,
+            bounded = true,
+            onClick = { onAttachedMediaClicked(replyFileAttachable) }
+          ),
         model = imageRequest,
         contentDescription = "Attached media",
         contentScale = ContentScale.Crop,
+        alpha = alpha,
         onState = { state -> imageStateMut = state }
       )
 
@@ -218,9 +228,11 @@ private fun AttachedMediaThumbnail(
             shape = CircleShape
           )
           .kurobaClickable(
+            enabled = replyLayoutEnabled,
             bounded = false,
             onClick = { onRemoveAttachedMediaClicked(replyFileAttachable) }
           ),
+        enabled = replyLayoutEnabled,
         drawableId = R.drawable.ic_baseline_clear_24
       )
     }

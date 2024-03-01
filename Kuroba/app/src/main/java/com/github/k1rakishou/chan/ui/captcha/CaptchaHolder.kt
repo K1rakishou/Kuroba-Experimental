@@ -76,27 +76,26 @@ class CaptchaHolder(
     return true
   }
 
-  val solution: CaptchaSolution?
-    get() {
-      BackgroundUtils.ensureMainThread()
-      removeNotValidTokens()
+  fun consumeCaptchaSolution(): CaptchaSolution? {
+    BackgroundUtils.ensureMainThread()
+    removeNotValidTokens()
 
-      synchronized(captchaQueue) {
-        if (captchaQueue.isEmpty()) {
-          stopTimer()
-          return null
-        }
-
-        val lastIndex = captchaQueue.size - 1
-        val solution = captchaQueue[lastIndex].solution
-
-        captchaQueue.removeAt(lastIndex)
-        Logger.d(TAG, "getToken() solution=${solution}")
-
-        notifyListener()
-        return solution
+    synchronized(captchaQueue) {
+      if (captchaQueue.isEmpty()) {
+        stopTimer()
+        return null
       }
+
+      val lastIndex = captchaQueue.size - 1
+      val solution = captchaQueue[lastIndex].solution
+
+      captchaQueue.removeAt(lastIndex)
+      Logger.d(TAG, "consumeCaptchaSolution() solution=${solution}")
+
+      notifyListener()
+      return solution
     }
+  }
 
   fun generateCaptchaUuid(): String {
     while (true) {

@@ -15,7 +15,10 @@ import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextBarButt
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-internal fun ReplyFormattingButtons(replyLayoutState: ReplyLayoutState) {
+internal fun ReplyFormattingButtons(
+  replyLayoutEnabled: Boolean,
+  replyLayoutState: ReplyLayoutState
+) {
   val postFormatterButtons by replyLayoutState.postFormatterButtons
   if (postFormatterButtons.isEmpty()) {
     return
@@ -32,6 +35,7 @@ internal fun ReplyFormattingButtons(replyLayoutState: ReplyLayoutState) {
           modifier = Modifier
             .wrapContentHeight()
             .wrapContentWidth(),
+          enabled = replyLayoutEnabled,
           text = postFormatterButton.title,
           fontSize = 14.sp,
           onClick = { replyLayoutState.insertTags(postFormatterButton) }

@@ -19,7 +19,6 @@ import com.github.k1rakishou.chan.core.repository.BoardFlagInfoRepository
 import com.github.k1rakishou.chan.core.site.PostFormatterButton
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
 import com.github.k1rakishou.chan.features.posting.PostResult
-import com.github.k1rakishou.chan.features.posting.PostingCancellationException
 import com.github.k1rakishou.chan.features.posting.PostingServiceDelegate
 import com.github.k1rakishou.chan.features.posting.PostingStatus
 import com.github.k1rakishou.chan.ui.controller.ThreadControllerType
@@ -38,7 +37,6 @@ import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlin.coroutines.cancellation.CancellationException
 
 @Stable
 class ReplyLayoutState(
@@ -146,36 +144,39 @@ class ReplyLayoutState(
 
       when (status) {
         is PostingStatus.Attached -> {
-          Logger.d(TAG, "processPostingStatusUpdates($chanDescriptor) -> ${status.javaClass.simpleName}")
+          Logger.d(TAG, "processPostingStatusUpdates(${status.chanDescriptor}) -> ${status.javaClass.simpleName}")
         }
         is PostingStatus.Enqueued,
         is PostingStatus.WaitingForSiteRateLimitToPass,
         is PostingStatus.WaitingForAdditionalService,
         is PostingStatus.BeforePosting -> {
-          Logger.d(TAG, "processPostingStatusUpdates($chanDescriptor) -> ${status.javaClass.simpleName}")
+          Logger.d(TAG, "processPostingStatusUpdates(${status.chanDescriptor}) -> ${status.javaClass.simpleName}")
         }
         is PostingStatus.UploadingProgress,
         is PostingStatus.Uploaded -> {
           // no-op
         }
         is PostingStatus.AfterPosting -> {
-          Logger.d(TAG, "processPostingStatusUpdates($chanDescriptor) -> " +
-            "${status.javaClass.simpleName}, status.postResult=${status.postResult}")
+          Logger.d(TAG, "processPostingStatusUpdates(${status.chanDescriptor}) -> " +
+            "${status.javaClass.simpleName}, status.postResult: ${status.postResult}")
 
           onSendReplyEnd()
 
           when (val postResult = status.postResult) {
             PostResult.Canceled -> {
-              onPostError(PostingCancellationException(chanDescriptor))
+              onPostSendCanceled(chanDescriptor = status.chanDescriptor)
             }
             is PostResult.Error -> {
-              onPostError(postResult.throwable)
+              onPostSendError(
+                chanDescriptor = status.chanDescriptor,
+                exception = postResult.throwable
+              )
             }
             is PostResult.Banned -> {
-              onPostErrorBanned(postResult.banMessage, postResult.banInfo)
+              onPostSendErrorBanned(postResult.banMessage, postResult.banInfo)
             }
             is PostResult.Success -> {
-              onPostComplete(
+              onPostSendComplete(
                 chanDescriptor = status.chanDescriptor,
                 replyResponse = postResult.replyResponse,
                 replyMode = postResult.replyMode,
@@ -299,10 +300,11 @@ class ReplyLayoutState(
 
     val replyAttachables = replyLayoutFileEnumerator.enumerate(chanDescriptor)
       .onError { error ->
-        // TODO: error toast?
         Logger.error(TAG) {
           "Failed to enumerate reply files for ${chanDescriptor}, error: ${error.errorMessageOrClassName()}"
         }
+
+        callbacks.showToast("Error while enumerating files: ${error.errorMessageOrClassName()}")
       }
       .valueOrNull()
 
@@ -357,6 +359,8 @@ class ReplyLayoutState(
       replyText = _replyText.value,
       maxCommentLength = _maxCommentLength.intValue
     )
+
+    // TODO: New reply layout. Highlight posts with quotes from reply text.
   }
 
   @Suppress("ConvertTwoComparisonsToRangeCheck")
@@ -424,21 +428,21 @@ class ReplyLayoutState(
     }
   }
 
-  private fun onPostError(exception: Throwable) {
-    BackgroundUtils.ensureMainThread()
-
-    if (exception is CancellationException) {
-      Logger.e(TAG, "onPostError: Canceled")
-    } else {
-      Logger.e(TAG, "onPostError", exception)
-    }
-
-    // TODO: New reply layout.
-//    val errorMessage = getString(R.string.reply_error_message, exception.errorMessageOrClassName())
-//    callback.dialogMessage(errorMessage)
+  private fun onPostSendCanceled(chanDescriptor: ChanDescriptor) {
+    Logger.debug(TAG) { "onPostSendCanceled(${chanDescriptor})" }
+    callbacks.showToast(appResources.string(R.string.reply_send_canceled_by_user))
   }
 
-  private fun onPostErrorBanned(banMessage: CharSequence?, banInfo: ReplyResponse.BanInfo) {
+  private fun onPostSendError(chanDescriptor: ChanDescriptor, exception: Throwable) {
+    BackgroundUtils.ensureMainThread()
+    Logger.e(TAG, "onPostSendError(${chanDescriptor})", exception)
+
+    showDialog(
+      message = appResources.string(R.string.reply_error_message, exception.errorMessageOrClassName())
+    )
+  }
+
+  private fun onPostSendErrorBanned(banMessage: CharSequence?, banInfo: ReplyResponse.BanInfo) {
     val title = when (banInfo) {
       ReplyResponse.BanInfo.Banned -> appResources.string(R.string.reply_layout_info_title_ban_info)
       ReplyResponse.BanInfo.Warned -> appResources.string(R.string.reply_layout_info_title_warning_info)
@@ -453,10 +457,10 @@ class ReplyLayoutState(
       }
     }
 
-    dialogMessage(title, message)
+    showDialog(title, message)
   }
 
-  private suspend fun onPostComplete(
+  private suspend fun onPostSendComplete(
     chanDescriptor: ChanDescriptor,
     replyResponse: ReplyResponse,
     replyMode: ReplyMode,
@@ -466,12 +470,16 @@ class ReplyLayoutState(
 
     when {
       replyResponse.posted -> {
-        Logger.d(TAG, "onPostComplete() posted==true replyResponse=$replyResponse")
-        onPostedSuccessfully(prevChanDescriptor = chanDescriptor, replyResponse = replyResponse)
+        Logger.d(TAG, "onPostSendComplete(${chanDescriptor}) posted is true replyResponse: $replyResponse")
+        onPostedSuccessfully(
+          prevChanDescriptor = chanDescriptor,
+          replyResponse = replyResponse
+        )
       }
       replyResponse.requireAuthentication -> {
-        Logger.d(TAG, "onPostComplete() requireAuthentication==true replyResponse=$replyResponse")
+        Logger.d(TAG, "onPostSendComplete(${chanDescriptor}) requireAuthentication os true replyResponse: $replyResponse")
         onPostCompleteUnsuccessful(
+          chanDescriptor = chanDescriptor,
           replyResponse = replyResponse,
           additionalErrorMessage = null,
           onDismissListener = {
@@ -485,17 +493,26 @@ class ReplyLayoutState(
         )
       }
       else -> {
-        Logger.d(TAG, "onPostComplete() else branch replyResponse=$replyResponse, retrying=$retrying")
+        Logger.d(TAG, "onPostSendComplete(${chanDescriptor}) else branch replyResponse: $replyResponse, retrying: $retrying")
 
         if (retrying) {
           // To avoid infinite cycles
-          onPostCompleteUnsuccessful(replyResponse, additionalErrorMessage = null)
+          onPostCompleteUnsuccessful(
+            chanDescriptor = chanDescriptor,
+            replyResponse = replyResponse,
+            additionalErrorMessage = null
+          )
+
           return
         }
 
         when (replyResponse.additionalResponseData) {
           ReplyResponse.AdditionalResponseData.NoOp -> {
-            onPostCompleteUnsuccessful(replyResponse, additionalErrorMessage = null)
+            onPostCompleteUnsuccessful(
+              chanDescriptor = chanDescriptor,
+              replyResponse = replyResponse,
+              additionalErrorMessage = null
+            )
           }
         }
       }
@@ -503,6 +520,7 @@ class ReplyLayoutState(
   }
 
   private fun onPostCompleteUnsuccessful(
+    chanDescriptor: ChanDescriptor,
     replyResponse: ReplyResponse,
     additionalErrorMessage: String? = null,
     onDismissListener: (() -> Unit)? = null
@@ -526,10 +544,9 @@ class ReplyLayoutState(
       else -> appResources.string(R.string.reply_error_unknown, replyResponse.asFormattedText())
     }
 
-    Logger.e(TAG, "onPostCompleteUnsuccessful() error: $errorMessage")
+    Logger.e(TAG, "onPostCompleteUnsuccessful(${chanDescriptor}) error: $errorMessage")
 
-    callbacks.showDialog(
-      title = appResources.string(R.string.reply_layout_dialog_title),
+    showDialog(
       message = errorMessage,
       onDismissListener = onDismissListener
     )
@@ -602,11 +619,13 @@ class ReplyLayoutState(
     }
   }
 
-  private fun dialogMessage(title: String?, message: CharSequence) {
-    val actualTitle = title?.takeIf { it.isNotNullNorBlank() }
-      ?: appResources.string(R.string.reply_layout_dialog_title)
+  private fun showDialog(message: CharSequence, onDismissListener: (() -> Unit)? = null) {
+    val title = appResources.string(R.string.reply_layout_dialog_title)
+    showDialog(title, message, onDismissListener)
+  }
 
-    callbacks.showDialog(actualTitle, message)
+  private fun showDialog(title: String, message: CharSequence, onDismissListener: (() -> Unit)? = null) {
+    callbacks.showDialog(title, message, onDismissListener)
   }
 
   interface Callbacks {
@@ -625,10 +644,13 @@ class ReplyLayoutState(
 
     fun hideDialog()
 
+    fun showToast(message: String)
+
     suspend fun onPostedSuccessfully(
       prevChanDescriptor: ChanDescriptor,
       newThreadDescriptor: ChanDescriptor.ThreadDescriptor
     )
+
   }
 
   companion object {

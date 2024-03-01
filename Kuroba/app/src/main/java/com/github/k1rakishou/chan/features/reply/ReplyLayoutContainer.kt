@@ -19,7 +19,6 @@ import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.features.reply.data.ReplyAttachable
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutState
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
-import com.github.k1rakishou.chan.features.reply.data.SendReplyState
 import com.github.k1rakishou.chan.features.reply.left.ReplyInputLeftPart
 import com.github.k1rakishou.chan.features.reply.right.ReplyInputRightPart
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
@@ -52,14 +51,11 @@ fun ReplyLayoutContainer(
 
   val replyLayoutVisibility by replyLayoutState.replyLayoutVisibility
   val sendReplyState by replyLayoutState.sendReplyState
+  val replyLayoutEnabled = sendReplyState.replyLayoutEnabled
 
   val scrollState = rememberScrollState()
   val emptyPaddings = remember { PaddingValues() }
 
-  val replyLayoutEnabled = when (sendReplyState) {
-    SendReplyState.Started,
-    is SendReplyState.Finished -> true
-  }
 
   val scrollModifier = if (replyLayoutVisibility == ReplyLayoutVisibility.Expanded) {
     Modifier

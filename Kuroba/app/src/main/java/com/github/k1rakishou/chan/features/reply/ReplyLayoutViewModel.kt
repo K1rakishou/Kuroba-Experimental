@@ -152,6 +152,10 @@ class ReplyLayoutViewModel(
     replyLayoutViewCallbacks?.hideDialog()
   }
 
+  override fun showToast(message: String) {
+    replyLayoutViewCallbacks?.showToast(message)
+  }
+
   override suspend fun onPostedSuccessfully(
     prevChanDescriptor: ChanDescriptor,
     newThreadDescriptor: ChanDescriptor.ThreadDescriptor
@@ -565,6 +569,7 @@ class ReplyLayoutViewModel(
   interface ReplyLayoutViewCallbacks {
     fun showDialog(title: String, message: CharSequence?, onDismissListener: (() -> Unit)? = null)
     fun hideDialog()
+    fun showToast(message: String)
   }
 
   class ReplyFileDoesNotExist(fileUUID: UUID) : ClientException("Reply file with UUID '${fileUUID}' does not exist")

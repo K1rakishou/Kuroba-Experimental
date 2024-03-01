@@ -550,6 +550,7 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="reply_comment_empty">Reply is empty (no comment body, no files attached)</string>
     <string name="reply_failed_to_prepare_reply">Failed to prepare reply</string>
     <string name="reply_failed_to_load_drafts_data_into_reply">Failed to load data into reply</string>
+    <string name="reply_send_canceled_by_user">Canceled by user</string>
 
     <string name="delete_confirm">Delete your post?</string>
     <string name="delete_wait">Deleting post…</string>

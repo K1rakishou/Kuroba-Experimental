@@ -95,13 +95,17 @@ internal fun ReplyInputLeftPart(
     },
     formattingButtonsContent = {
       Column {
-        ReplyFormattingButtons(replyLayoutState = replyLayoutState)
+        ReplyFormattingButtons(
+          replyLayoutEnabled = replyLayoutEnabled,
+          replyLayoutState = replyLayoutState
+        )
 
         Spacer(modifier = Modifier.height(4.dp))
       }
     },
     replyAttachmentsContent = {
       ReplyAttachments(
+        replyLayoutEnabled = replyLayoutEnabled,
         replyLayoutState = replyLayoutState,
         replyLayoutViewModel = replyLayoutViewModel,
         onAttachedMediaClicked = onAttachedMediaClicked,
