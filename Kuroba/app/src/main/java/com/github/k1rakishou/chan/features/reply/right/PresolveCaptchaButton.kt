@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.features.reply.right
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -13,12 +12,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.features.reply.ReplyLayoutViewModel
+import com.github.k1rakishou.chan.ui.compose.components.IconTint
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeIcon
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
 
@@ -32,7 +32,7 @@ internal fun PresolveCaptchaButton(
   val captchaCounter by replyLayoutViewModel.captchaHolderCaptchaCounterUpdatesFlow.collectAsState(initial = 0)
 
   Box {
-    Image(
+    KurobaComposeIcon(
       modifier = Modifier
         .size(iconSize)
         .padding(padding)
@@ -40,8 +40,8 @@ internal fun PresolveCaptchaButton(
           bounded = false,
           onClick = onPresolveCaptchaButtonClicked
         ),
-      contentDescription = null,
-      painter = painterResource(id = R.drawable.ic_captcha_24dp)
+      drawableId = R.drawable.ic_captcha_24dp,
+      colorTint = IconTint.DoNotTint
     )
 
     if (captchaCounter > 0) {

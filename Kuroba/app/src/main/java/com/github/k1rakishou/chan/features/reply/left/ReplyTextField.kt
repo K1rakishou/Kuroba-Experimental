@@ -126,7 +126,8 @@ internal fun ReplyTextField(
       KurobaLabelText(
         enabled = replyLayoutEnabled,
         labelText = replyFieldHintText,
-        fontSize = 14.sp
+        fontSize = 12.sp,
+        color = chanTheme.textColorHintCompose
       )
     },
     onValueChange = { newTextFieldValue -> replyLayoutState.onReplyTextChanged(newTextFieldValue) },

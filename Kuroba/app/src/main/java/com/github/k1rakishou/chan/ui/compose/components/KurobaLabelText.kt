@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.TextUnit
@@ -67,6 +68,7 @@ fun KurobaLabelText(
 fun KurobaLabelText(
   enabled: Boolean = true,
   labelText: AnnotatedString?,
+  color: Color? = null,
   fontSize: TextUnit = 13.sp
 ) {
   if (labelText == null) {
@@ -87,7 +89,8 @@ fun KurobaLabelText(
     KurobaComposeText(
       modifier = Modifier.graphicsLayer { alpha = textAlpha },
       text = labelText,
-      fontSize = fontSize
+      fontSize = fontSize,
+      color = color
     )
   }
 }

@@ -32,6 +32,7 @@ import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequest
 import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequestData
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeImage
+import com.github.k1rakishou.chan.ui.compose.components.IconTint
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeIcon
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeProgressIndicator
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
@@ -222,7 +223,7 @@ class CreateSoundMediaController(
                                 .size(42.dp)
                                 .align(Alignment.Center),
                             drawableId = R.drawable.ic_refresh_white_24dp,
-                            colorBehindIcon = bgColor
+                            colorTint = IconTint.TintWithColor(bgColor)
                         )
                     }
                 }

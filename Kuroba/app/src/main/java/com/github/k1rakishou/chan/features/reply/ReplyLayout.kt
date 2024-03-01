@@ -62,7 +62,8 @@ fun ReplyLayout(
           onPickLocalMediaButtonClicked = replyLayoutViewModel::onPickLocalMediaButtonClicked,
           onPickRemoteMediaButtonClicked = replyLayoutViewModel::onPickRemoteMediaButtonClicked,
           onSearchRemoteMediaButtonClicked = replyLayoutViewModel::onSearchRemoteMediaButtonClicked,
-          onPresolveCaptchaButtonClicked = onPresolveCaptchaButtonClicked
+          onPresolveCaptchaButtonClicked = onPresolveCaptchaButtonClicked,
+          onReplyLayoutOptionsButtonClicked = replyLayoutViewModel::onReplyLayoutOptionsButtonClicked
         )
       }
     }

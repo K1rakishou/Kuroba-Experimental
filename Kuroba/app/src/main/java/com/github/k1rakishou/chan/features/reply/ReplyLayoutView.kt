@@ -170,11 +170,9 @@ class ReplyLayoutView @JvmOverloads constructor(
     }
   }
 
-  override fun dialogMessage(title: String, message: CharSequence?, onDismissListener: (() -> Unit)?) {
-    if (message == null) {
-      dialogHandle.getAndSet(null)
-        ?.dismiss()
-
+  override fun showDialog(title: String, message: CharSequence?, onDismissListener: (() -> Unit)?) {
+    if (title.isBlank() && message.isNullOrBlank()) {
+      hideDialog()
       return
     }
 
@@ -211,7 +209,12 @@ class ReplyLayoutView @JvmOverloads constructor(
     }
   }
 
-  private fun hasWebViewLinks(message: CharSequence): Boolean {
+  override fun hideDialog() {
+    dialogHandle.getAndSet(null)
+      ?.dismiss()
+  }
+
+  private fun hasWebViewLinks(message: CharSequence?): Boolean {
     var hasWebViewLinks = false
 
     if (message is Spannable) {

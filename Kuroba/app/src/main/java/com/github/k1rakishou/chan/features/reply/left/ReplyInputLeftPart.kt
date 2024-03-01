@@ -17,12 +17,12 @@ import com.github.k1rakishou.chan.features.reply.ReplyLayoutViewModel
 import com.github.k1rakishou.chan.features.reply.data.ReplyAttachable
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutState
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
-import com.github.k1rakishou.chan.features.reply.data.SendReplyState
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 
 
 @Composable
 internal fun ReplyInputLeftPart(
+  replyLayoutEnabled: Boolean,
   replyLayoutState: ReplyLayoutState,
   replyLayoutViewModel: ReplyLayoutViewModel,
   onAttachedMediaClicked: (ReplyAttachable) -> Unit,
@@ -31,14 +31,7 @@ internal fun ReplyInputLeftPart(
 ) {
   val focusManager = LocalFocusManager.current
 
-  val sendReplyState by replyLayoutState.sendReplyState
   val replyLayoutVisibility by replyLayoutState.replyLayoutVisibility
-
-  val replyLayoutEnabled = when (sendReplyState) {
-    SendReplyState.Started,
-    is SendReplyState.ReplySent -> false
-    is SendReplyState.Finished -> true
-  }
 
   LaunchedEffect(
     key1 = replyLayoutState.chanDescriptor,

@@ -112,9 +112,8 @@ import com.github.k1rakishou.chan.features.thread_downloading.LocalArchiveContro
 import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequest
 import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequestData
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeImage
-import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
-import com.github.k1rakishou.chan.ui.compose.providers.ProvideEverythingForCompose
 import com.github.k1rakishou.chan.ui.compose.bottom_panel.KurobaComposeIconPanel
+import com.github.k1rakishou.chan.ui.compose.components.IconTint
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeErrorMessage
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeIcon
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeProgressIndicator
@@ -122,6 +121,8 @@ import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeSelectionIn
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.KurobaSearchInput
 import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
+import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
+import com.github.k1rakishou.chan.ui.compose.providers.ProvideEverythingForCompose
 import com.github.k1rakishou.chan.ui.compose.search.SimpleSearchState
 import com.github.k1rakishou.chan.ui.compose.search.rememberSimpleSearchState
 import com.github.k1rakishou.chan.ui.compose.simpleVerticalScrollbar
@@ -1121,7 +1122,7 @@ class MainController(
             modifier = Modifier
               .align(Alignment.CenterVertically)
               .kurobaClickable(onClick = onSwitchDayNightThemeIconClick),
-            colorBehindIcon = backgroundColor
+            colorTint = IconTint.TintWithColor(backgroundColor)
           )
 
           Spacer(modifier = Modifier.width(16.dp))
@@ -1131,7 +1132,7 @@ class MainController(
             modifier = Modifier
               .align(Alignment.CenterVertically)
               .kurobaClickable(onClick = onShowDrawerOptionsIconClick),
-            colorBehindIcon = backgroundColor
+            colorTint = IconTint.TintWithColor(backgroundColor)
           )
         }
       }

@@ -23,10 +23,10 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 
 @Composable
 internal fun SendReplyButton(
-  chanDescriptor: ChanDescriptor,
-  replyLayoutState: ReplyLayoutState,
   iconSize: Dp,
   padding: Dp,
+  chanDescriptor: ChanDescriptor,
+  replyLayoutState: ReplyLayoutState,
   onCancelReplySendClicked: () -> Unit,
   onSendReplyClicked: (ChanDescriptor) -> Unit
 ) {

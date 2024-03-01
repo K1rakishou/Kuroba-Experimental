@@ -547,6 +547,9 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="reply_layout_comment_change_history_cleared">Comment change history cleared</string>
     <string name="reply_layout_loading_flags">Loading flags…</string>
     <string name="reply_layout_dialog_title">Reply layout</string>
+    <string name="reply_comment_empty">Reply is empty (no comment body, no files attached)</string>
+    <string name="reply_failed_to_prepare_reply">Failed to prepare reply</string>
+    <string name="reply_failed_to_load_drafts_data_into_reply">Failed to load data into reply</string>
 
     <string name="delete_confirm">Delete your post?</string>
     <string name="delete_wait">Deleting post…</string>
@@ -1171,11 +1174,7 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="image_file_hash_copied_to_clipboard">File hash copied to clipboard</string>
     <string name="link_text_copied_to_clipboard">Link text copied to clipboard</string>
     <string name="link_value_copied_to_clipboard">Link value copied to clipboard</string>
-
-    <string name="reply_comment_empty">Reply is empty (no comment body, no files attached).</string>
-    <string name="reply_failed_to_prepare_reply">Failed to prepare reply.</string>
     <string name="image_reencode_format_error">Something is wrong with this file</string>
-
     <string name="view_thread_controller_enter_post_id">Enter post id to scroll to</string>
 
     <string name="drawer_controller_navigation_history_is_empty">Navigation history is empty.\n\nOpen a board or a thread to add it here (Additionally, check drawer settings)</string>

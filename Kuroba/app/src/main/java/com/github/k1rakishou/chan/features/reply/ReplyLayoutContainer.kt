@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.features.reply.data.ReplyAttachable
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutState
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
+import com.github.k1rakishou.chan.features.reply.data.SendReplyState
 import com.github.k1rakishou.chan.features.reply.left.ReplyInputLeftPart
 import com.github.k1rakishou.chan.features.reply.right.ReplyInputRightPart
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
@@ -41,15 +42,24 @@ fun ReplyLayoutContainer(
   onPickLocalMediaButtonClicked: () -> Unit,
   onPickRemoteMediaButtonClicked: () -> Unit,
   onSearchRemoteMediaButtonClicked: () -> Unit,
-  onPresolveCaptchaButtonClicked: () -> Unit
+  onPresolveCaptchaButtonClicked: () -> Unit,
+  onReplyLayoutOptionsButtonClicked: () -> Unit,
 ) {
   val replyInputRightPartWidth = 58.dp
+  val iconSize = 36.dp
+
   val chanTheme = LocalChanTheme.current
 
   val replyLayoutVisibility by replyLayoutState.replyLayoutVisibility
+  val sendReplyState by replyLayoutState.sendReplyState
 
   val scrollState = rememberScrollState()
   val emptyPaddings = remember { PaddingValues() }
+
+  val replyLayoutEnabled = when (sendReplyState) {
+    SendReplyState.Started,
+    is SendReplyState.Finished -> true
+  }
 
   val scrollModifier = if (replyLayoutVisibility == ReplyLayoutVisibility.Expanded) {
     Modifier
@@ -81,6 +91,7 @@ fun ReplyLayoutContainer(
         .then(scrollModifier)
     ) {
       ReplyInputLeftPart(
+        replyLayoutEnabled = replyLayoutEnabled,
         replyLayoutState = replyLayoutState,
         replyLayoutViewModel = replyLayoutViewModel,
         onAttachedMediaClicked = onAttachedMediaClicked,
@@ -95,7 +106,7 @@ fun ReplyLayoutContainer(
         .fillMaxHeight()
     ) {
       ReplyInputRightPart(
-        iconSize = 36.dp,
+        iconSize = iconSize,
         chanDescriptor = chanDescriptor,
         replyLayoutState = replyLayoutState,
         replyLayoutViewModel = replyLayoutViewModel,
@@ -108,6 +119,7 @@ fun ReplyLayoutContainer(
         onPickRemoteMediaButtonClicked = onPickRemoteMediaButtonClicked,
         onSearchRemoteMediaButtonClicked = onSearchRemoteMediaButtonClicked,
         onPresolveCaptchaButtonClicked = onPresolveCaptchaButtonClicked,
+        onReplyLayoutOptionsButtonClicked = onReplyLayoutOptionsButtonClicked
       )
     }
   }

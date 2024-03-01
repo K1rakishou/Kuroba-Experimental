@@ -153,11 +153,6 @@ class ReplyLayoutState(
         is PostingStatus.WaitingForAdditionalService,
         is PostingStatus.BeforePosting -> {
           Logger.d(TAG, "processPostingStatusUpdates($chanDescriptor) -> ${status.javaClass.simpleName}")
-
-          // TODO: New reply layout. This is probably not needed anymore?
-//          if (::callback.isInitialized) {
-//            callback.enableOrDisableReplyLayout()
-//          }
         }
         is PostingStatus.UploadingProgress,
         is PostingStatus.Uploaded -> {
@@ -167,10 +162,7 @@ class ReplyLayoutState(
           Logger.d(TAG, "processPostingStatusUpdates($chanDescriptor) -> " +
             "${status.javaClass.simpleName}, status.postResult=${status.postResult}")
 
-          // TODO: New reply layout
-//          if (::callback.isInitialized) {
-//            callback.enableOrDisableReplyLayout()
-//          }
+          onSendReplyEnd()
 
           when (val postResult = status.postResult) {
             PostResult.Canceled -> {
@@ -201,6 +193,10 @@ class ReplyLayoutState(
 
   fun onHeightChanged(newHeight: Int) {
     onHeightChangedInternal(newHeight)
+  }
+
+  fun isReplyLayoutExpanded(): Boolean {
+    return _replyLayoutVisibility.value == ReplyLayoutVisibility.Expanded
   }
 
   fun collapseReplyLayout() {
@@ -254,24 +250,11 @@ class ReplyLayoutState(
   fun onReplyEnqueued() {
     Logger.debug(TAG) { "onReplyEnqueued(${chanDescriptor})" }
 
-    // TODO: New reply layout.
-//    isExpanded = false
-//    previewOpen = false
-//
-//    commentEditingHistory.clear()
-//
-//    callback.highlightPosts(emptySet())
-//    callback.dialogMessage(null)
-//    callback.setExpanded(expanded = false, isCleaningUp = true)
-//    callback.openSubject(false)
-//    callback.hideFlag()
-//    callback.openNameOptions(false)
-//    callback.updateRevertChangeButtonVisibility(isBufferEmpty = true)
-  }
+    if (isReplyLayoutExpanded()) {
+      openReplyLayout()
+    }
 
-  fun onReplySent() {
-    Logger.debug(TAG) { "onReplySent(${chanDescriptor})" }
-    _sendReplyState.value = SendReplyState.ReplySent
+    callbacks.hideDialog()
   }
 
   fun onSendReplyEnd() {
@@ -545,7 +528,7 @@ class ReplyLayoutState(
 
     Logger.e(TAG, "onPostCompleteUnsuccessful() error: $errorMessage")
 
-    callbacks.dialogMessage(
+    callbacks.showDialog(
       title = appResources.string(R.string.reply_layout_dialog_title),
       message = errorMessage,
       onDismissListener = onDismissListener
@@ -608,8 +591,8 @@ class ReplyLayoutState(
       threadNo = threadNo
     )
 
-    closeAll()
-    highlightQuotes()
+    callbacks.hideDialog()
+    collapseReplyLayout()
     loadDraftIntoViews(newThreadDescriptor)
 
     callbacks.onPostedSuccessfully(prevChanDescriptor, newThreadDescriptor)
@@ -619,19 +602,11 @@ class ReplyLayoutState(
     }
   }
 
-  private fun closeAll() {
-    // TODO: New reply layout.
-  }
-
-  private fun highlightQuotes() {
-    // TODO: New reply layout.
-  }
-
   private fun dialogMessage(title: String?, message: CharSequence) {
     val actualTitle = title?.takeIf { it.isNotNullNorBlank() }
       ?: appResources.string(R.string.reply_layout_dialog_title)
 
-    callbacks.dialogMessage(actualTitle, message)
+    callbacks.showDialog(actualTitle, message)
   }
 
   interface Callbacks {
@@ -642,11 +617,13 @@ class ReplyLayoutState(
       afterPostingAttempt: Boolean
     )
 
-    fun dialogMessage(
+    fun showDialog(
       title: String,
       message: CharSequence,
       onDismissListener: (() -> Unit)? = null
     )
+
+    fun hideDialog()
 
     suspend fun onPostedSuccessfully(
       prevChanDescriptor: ChanDescriptor,

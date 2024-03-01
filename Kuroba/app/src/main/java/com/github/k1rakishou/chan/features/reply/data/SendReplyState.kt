@@ -4,14 +4,11 @@ sealed class SendReplyState {
   val canCancel: Boolean
     get() {
       return when (this) {
-        is ReplySent,
         is Finished -> false
-
-        Started -> true
+        is Started -> true
       }
     }
 
   data object Started : SendReplyState()
-  data object ReplySent : SendReplyState()
   data object Finished : SendReplyState()
 }

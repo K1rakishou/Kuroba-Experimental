@@ -37,7 +37,8 @@ internal fun ReplyInputRightPart(
   onPickLocalMediaButtonClicked: () -> Unit,
   onPickRemoteMediaButtonClicked: () -> Unit,
   onSearchRemoteMediaButtonClicked: () -> Unit,
-  onPresolveCaptchaButtonClicked: () -> Unit
+  onPresolveCaptchaButtonClicked: () -> Unit,
+  onReplyLayoutOptionsButtonClicked: () -> Unit,
 ) {
   val chanTheme = LocalChanTheme.current
   val density = LocalDensity.current
@@ -80,15 +81,15 @@ internal fun ReplyInputRightPart(
     Spacer(modifier = Modifier.height(6.dp))
 
     SendReplyButton(
-      chanDescriptor = chanDescriptor,
-      replyLayoutState = replyLayoutState,
       iconSize = iconSize,
       padding = 4.dp,
+      chanDescriptor = chanDescriptor,
+      replyLayoutState = replyLayoutState,
       onCancelReplySendClicked = onCancelReplySendClicked,
       onSendReplyClicked = onSendReplyClicked,
     )
 
-    Spacer(modifier = Modifier.height(12.dp))
+    Spacer(modifier = Modifier.height(6.dp))
 
     PickLocalMediaButton(
       iconSize = iconSize,
@@ -110,6 +111,14 @@ internal fun ReplyInputRightPart(
       iconSize = iconSize,
       padding = 4.dp,
       onPickRemoteMediaButtonClicked = onPickRemoteMediaButtonClicked
+    )
+
+    Spacer(modifier = Modifier.height(6.dp))
+
+    ReplyLayoutOptionsButton(
+      iconSize = iconSize,
+      padding = 4.dp,
+      onReplyLayoutOptionsButtonClicked = onReplyLayoutOptionsButtonClicked
     )
   }
 }

@@ -5,6 +5,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
+import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.viewmodel.ViewModelAssistedFactory
@@ -88,8 +89,8 @@ class ReplyLayoutViewModel(
     get() = captchaHolderLazy.get()
   private val postingServiceDelegate: PostingServiceDelegate
     get() = postingServiceDelegateLazy.get()
-  private val boardFlagInfoRepository: BoardFlagInfoRepository
-    get() = boardFlagInfoRepositoryLazy.get()
+  private val appResources: AppResources
+    get() = appResourcesLazy.get()
 
   private val threadControllerType by lazy {
     requireNotNull(savedStateHandle.get<ThreadControllerType>(ThreadControllerTypeParam)) {
@@ -139,12 +140,16 @@ class ReplyLayoutViewModel(
     threadListLayoutCallbacks?.showCaptcha(chanDescriptor, replyMode, autoReply, afterPostingAttempt)
   }
 
-  override fun dialogMessage(
+  override fun showDialog(
     title: String,
     message: CharSequence,
     onDismissListener: (() -> Unit)?
   ) {
-    replyLayoutViewCallbacks?.dialogMessage(title, message, onDismissListener)
+    replyLayoutViewCallbacks?.showDialog(title, message, onDismissListener)
+  }
+
+  override fun hideDialog() {
+    replyLayoutViewCallbacks?.hideDialog()
   }
 
   override suspend fun onPostedSuccessfully(
@@ -395,6 +400,10 @@ class ReplyLayoutViewModel(
     TODO("New reply layout")
   }
 
+  fun onReplyLayoutOptionsButtonClicked() {
+    TODO("New reply layout")
+  }
+
   private suspend fun enqueueNewReply(
     chanDescriptor: ChanDescriptor,
     replyLayoutState: ReplyLayoutState,
@@ -403,11 +412,10 @@ class ReplyLayoutViewModel(
   ): Boolean {
     Logger.debug(TAG) { "enqueueNewReply(${chanDescriptor}) replyMode: ${replyMode}, retrying: ${retrying}" }
 
-    // TODO: New reply layout. Move to reply layout options (which are not implemented yet)
-//    if (longClicked || prevReplyMode == ReplyMode.Unknown) {
-//      showReplyOptions(chanDescriptor, prevReplyMode)
-//      return
-//    }
+    if (replyMode == ReplyMode.Unknown) {
+      onReplyLayoutOptionsButtonClicked()
+      return false
+    }
 
     if (!onPrepareToEnqueue(chanDescriptor, replyLayoutState)) {
       Logger.debug(TAG) { "enqueueNewReply(${chanDescriptor}) onPrepareToSubmit() -> false" }
@@ -452,23 +460,32 @@ class ReplyLayoutViewModel(
 
     if (hasSelectedFiles == null) {
       Logger.debug(TAG) { "onPrepareToEnqueue(${chanDescriptor}) hasSelectedFiles == null" }
-      // TODO: New reply layout. error toast
-//      callback.dialogMessage(getString(R.string.reply_failed_to_prepare_reply))
+      replyLayoutViewCallbacks?.showDialog(
+        appResources.string(R.string.reply_layout_dialog_title),
+        appResources.string(R.string.reply_failed_to_prepare_reply)
+      )
+
       return false
     }
 
     if (!replyLayoutState.loadViewsIntoDraft(chanDescriptor)) {
       Logger.debug(TAG) { "onPrepareToEnqueue(${chanDescriptor}) loadViewsIntoDraft() -> false" }
+      replyLayoutViewCallbacks?.showDialog(
+        appResources.string(R.string.reply_layout_dialog_title),
+        appResources.string(R.string.reply_failed_to_load_drafts_data_into_reply)
+      )
 
-      // TODO: New reply layout. error toast
       return false
     }
 
     return replyManager.readReply(chanDescriptor) { reply ->
       if (!hasSelectedFiles && reply.isCommentEmpty()) {
         Logger.debug(TAG) { "onPrepareToEnqueue(${chanDescriptor}) reply is empty" }
-        // TODO: New reply layout.
-//        callback.dialogMessage(getString(R.string.reply_comment_empty))
+        replyLayoutViewCallbacks?.showDialog(
+          appResources.string(R.string.reply_layout_dialog_title),
+          appResources.string(R.string.reply_comment_empty)
+        )
+
         return@readReply false
       }
 
@@ -546,7 +563,8 @@ class ReplyLayoutViewModel(
   }
 
   interface ReplyLayoutViewCallbacks {
-    fun dialogMessage(title: String, message: CharSequence?, onDismissListener: (() -> Unit)?)
+    fun showDialog(title: String, message: CharSequence?, onDismissListener: (() -> Unit)? = null)
+    fun hideDialog()
   }
 
   class ReplyFileDoesNotExist(fileUUID: UUID) : ClientException("Reply file with UUID '${fileUUID}' does not exist")
