@@ -134,6 +134,7 @@ import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
 import com.github.k1rakishou.chan.ui.controller.ViewThreadController
 import com.github.k1rakishou.chan.ui.controller.WebViewReportController
 import com.github.k1rakishou.chan.ui.controller.dialog.KurobaAlertDialogHostController
+import com.github.k1rakishou.chan.ui.controller.dialog.KurobaComposeDialogController
 import com.github.k1rakishou.chan.ui.controller.navigation.BottomNavBarAwareNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigationController
@@ -294,6 +295,7 @@ interface ActivityComponent : ActivityDependencies {
   fun inject(editMpvConfController: EditMpvConfController)
   fun inject(openUrlInWebViewController: OpenUrlInWebViewController)
   fun inject(createSoundMediaController: CreateSoundMediaController)
+  fun inject(kurobaComposeDialogController: KurobaComposeDialogController)
 
   fun inject(colorizableBarButton: ColorizableBarButton)
   fun inject(colorizableButton: ColorizableButton)

@@ -8,7 +8,9 @@ import android.text.style.CharacterStyle
 import android.text.style.ForegroundColorSpan
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
@@ -30,7 +32,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.platform.LocalContext
@@ -72,12 +73,18 @@ inline fun LogCompositions(tag: String) {
   }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 fun Modifier.consumeClicks(enabled: Boolean = true): Modifier {
   if (!enabled) {
     return this
   }
 
-  return pointerInput(key1 = Unit) { }
+  return combinedClickable(
+    interactionSource = null,
+    indication = null,
+    enabled = true,
+    onClick = {}
+  )
 }
 
 @OptIn(ExperimentalComposeUiApi::class)

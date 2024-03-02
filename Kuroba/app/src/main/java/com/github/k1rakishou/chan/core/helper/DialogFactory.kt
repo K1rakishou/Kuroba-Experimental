@@ -22,6 +22,7 @@ import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
 import com.github.k1rakishou.chan.core.site.parser.CommentParserHelper
 import com.github.k1rakishou.chan.ui.controller.dialog.KurobaAlertDialogHostController
 import com.github.k1rakishou.chan.ui.controller.dialog.KurobaAlertDialogHostControllerCallbacks
+import com.github.k1rakishou.chan.ui.controller.dialog.KurobaComposeDialogController
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
 import com.github.k1rakishou.chan.ui.widget.dialog.KurobaAlertDialog
 import com.github.k1rakishou.chan.ui.widget.dialog.KurobaAlertDialog.AlertDialogHandle
@@ -44,12 +45,54 @@ class DialogFactory(
     get() = _themeEngine.get()
 
   private val visibleDialogs = mutableMapOf<String, AlertDialogHandle>()
+  private val visibleComposeDialogs = mutableMapOf<String, KurobaComposeDialogController.KurobaComposeDialogHandle>()
 
   lateinit var containerController: Controller
 
   fun dismissDialogById(dialogId: String) {
-    visibleDialogs.remove(dialogId)
-      ?.dismiss()
+    visibleDialogs.remove(dialogId)?.dismiss()
+    visibleComposeDialogs.remove(dialogId)?.dismiss()
+  }
+
+  @JvmOverloads
+  fun dialog(
+    context: Context,
+    params: KurobaComposeDialogController.Params,
+    dialogId: String? = null,
+    cancelable: Boolean = true,
+    checkAppVisibility: Boolean = true,
+    onAppearListener: (() -> Unit)? = null,
+    onDismissListener: (() -> Unit)? = null,
+  ): KurobaComposeDialogController.KurobaComposeDialogHandle? {
+    if (checkAppVisibility && !applicationVisibilityManager.isAppInForeground()) {
+      return null
+    }
+
+    val kurobaComposeDialogHandle = KurobaComposeDialogController.KurobaComposeDialogHandle()
+
+    // TODO: clickable links
+    containerController.presentController(
+      KurobaComposeDialogController(
+        context = context,
+        canDismissByClickingOutside = cancelable,
+        params = params,
+        kurobaComposeDialogHandle = kurobaComposeDialogHandle,
+        onAppeared = onAppearListener,
+        onDismissed = {
+          if (dialogId != null) {
+            visibleComposeDialogs.remove(dialogId)
+          }
+
+          onDismissListener?.invoke()
+        },
+      )
+    )
+
+    if (dialogId != null) {
+      visibleComposeDialogs[dialogId] = kurobaComposeDialogHandle
+    }
+
+    return kurobaComposeDialogHandle
   }
 
   @JvmOverloads

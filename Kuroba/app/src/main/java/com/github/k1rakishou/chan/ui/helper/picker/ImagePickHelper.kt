@@ -143,11 +143,12 @@ class ImagePickHelper(
       return result
     }
 
-    withContext(Dispatchers.Main) { filePickerInput.showLoadingView() }
+    val replyFiles = (pickedFile as PickedFile.Result).replyFiles
+    val replyFilePaths = replyFiles.map { replyFile -> replyFile.fileOnDisk.absolutePath }
+    val toEmit = mutableListOf<UUID>()
 
     try {
-      val replyFiles = (pickedFile as PickedFile.Result).replyFiles
-      val toEmit = mutableListOf<UUID>()
+      withContext(Dispatchers.Main) { filePickerInput.decodingStarted(replyFilePaths) }
 
       for (replyFile in replyFiles) {
         val replyFileMeta = replyFile.getReplyFileMeta().safeUnwrap { error ->
@@ -188,7 +189,7 @@ class ImagePickHelper(
         toEmit.forEach { fileUuid -> pickedFilesUpdatesState.emit(fileUuid) }
       }
     } finally {
-      withContext(Dispatchers.Main) { filePickerInput.hideLoadingView() }
+      withContext(Dispatchers.Main) { filePickerInput.decodingEnded(replyFilePaths) }
     }
 
     return result

@@ -55,7 +55,7 @@ abstract class BaseFloatingComposeController(
               .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
-                onClick = { pop() }
+                onClick = { onOutsideOfDialogClicked() }
               ),
             contentAlignment = Alignment.Center
           ) {
@@ -107,6 +107,10 @@ abstract class BaseFloatingComposeController(
     }
 
     return super.onBack()
+  }
+
+  protected open fun onOutsideOfDialogClicked() {
+    pop()
   }
 
   protected open fun pop(): Boolean {

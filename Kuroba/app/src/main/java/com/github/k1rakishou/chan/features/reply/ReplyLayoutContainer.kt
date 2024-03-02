@@ -16,7 +16,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.github.k1rakishou.chan.features.reply.data.ReplyAttachable
+import com.github.k1rakishou.chan.features.reply.data.ReplyFileAttachable
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutState
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
 import com.github.k1rakishou.chan.features.reply.left.ReplyInputLeftPart
@@ -35,8 +35,11 @@ fun ReplyLayoutContainer(
   onDragStopped: suspend (velocity: Float) -> Unit,
   onCancelReplySendClicked: () -> Unit,
   onSendReplyClicked: (ChanDescriptor) -> Unit,
-  onAttachedMediaClicked: (ReplyAttachable) -> Unit,
-  onRemoveAttachedMediaClicked: (ReplyAttachable) -> Unit,
+  onAttachedMediaClicked: (ReplyFileAttachable) -> Unit,
+  onAttachedMediaLongClicked: (ReplyFileAttachable) -> Unit,
+  onRemoveAttachedMediaClicked: (ReplyFileAttachable) -> Unit,
+  onAttachableSelectionChanged: (ReplyFileAttachable, Boolean) -> Unit,
+  onAttachableStatusIconButtonClicked: (ReplyFileAttachable) -> Unit,
   onFlagSelectorClicked: (ChanDescriptor) -> Unit,
   onPickLocalMediaButtonClicked: () -> Unit,
   onPickRemoteMediaButtonClicked: () -> Unit,
@@ -91,7 +94,10 @@ fun ReplyLayoutContainer(
         replyLayoutState = replyLayoutState,
         replyLayoutViewModel = replyLayoutViewModel,
         onAttachedMediaClicked = onAttachedMediaClicked,
+        onAttachedMediaLongClicked = onAttachedMediaLongClicked,
         onRemoveAttachedMediaClicked = onRemoveAttachedMediaClicked,
+        onAttachableSelectionChanged = onAttachableSelectionChanged,
+        onAttachableStatusIconButtonClicked = onAttachableStatusIconButtonClicked,
         onFlagSelectorClicked = onFlagSelectorClicked
       )
     }

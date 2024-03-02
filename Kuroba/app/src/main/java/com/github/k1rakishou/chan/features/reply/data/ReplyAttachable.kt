@@ -8,71 +8,56 @@ import java.util.*
 @Immutable
 data class ReplyAttachables(
   val maxAllowedAttachablesPerPost: Int = 0,
-  val attachables: List<ReplyAttachable> = emptyList()
+  val attachables: List<ReplyFileAttachable> = emptyList()
 )
 
 @Immutable
-sealed interface ReplyAttachable {
+data class ReplyFileAttachable(
+  val fileUuid: UUID,
+  val fileName: String,
+  val spoilerInfo: SpoilerInfo?,
+  val selected: Boolean,
+  val fileSize: Long,
+  val imageDimensions: ImageDimensions?,
+  val attachAdditionalInfo: AttachAdditionalInfo,
+  val maxAttachedFilesCountExceeded: Boolean
+) {
+
   val key: String
+    get() = "ReplyFileAttachable_${fileUuid}"
   val contentType: String
-  fun span(totalItemsCount: Int, scope: LazyGridItemSpanScope): GridItemSpan
+    get() = "ReplyFileAttachable"
 
-  data class ReplyTooManyAttachables(val attachablesTotal: Int) : ReplyAttachable {
-    override val key: String
-      get() = "TooManyAttachables"
-    override val contentType: String
-      get() = "TooManyAttachables"
+  fun span(totalItemsCount: Int, scope: LazyGridItemSpanScope): GridItemSpan = GridItemSpan(1)
 
-    override fun span(totalItemsCount: Int, scope: LazyGridItemSpanScope): GridItemSpan = GridItemSpan(1)
-  }
+  data class ImageDimensions(val width: Int, val height: Int)
 
-  data class ReplyFileAttachable(
-    val fileUuid: UUID,
-    val fileName: String,
-    val spoilerInfo: SpoilerInfo?,
-    val selected: Boolean,
-    val fileSize: Long,
-    val imageDimensions: ImageDimensions?,
-    val attachAdditionalInfo: AttachAdditionalInfo,
-    val maxAttachedFilesCountExceeded: Boolean
-  ) : ReplyAttachable {
+  data class SpoilerInfo(
+    val markedAsSpoiler: Boolean,
+    val boardSupportsSpoilers: Boolean
+  )
 
-    override val key: String
-      get() = "ReplyFileAttachable_${fileUuid}"
-    override val contentType: String
-      get() = "ReplyFileAttachable"
+  data class AttachAdditionalInfo(
+    val fileExifStatus: Set<FileExifInfoStatus>,
+    val totalFileSizeExceeded: Boolean,
+    val fileMaxSizeExceeded: Boolean,
+    val markedAsSpoilerOnNonSpoilerBoard: Boolean
+  ) {
 
-    override fun span(totalItemsCount: Int, scope: LazyGridItemSpanScope): GridItemSpan = GridItemSpan(1)
-
-    data class ImageDimensions(val width: Int, val height: Int)
-
-    data class SpoilerInfo(
-      val markedAsSpoiler: Boolean,
-      val boardSupportsSpoilers: Boolean
-    )
-
-    data class AttachAdditionalInfo(
-      val fileExifStatus: Set<FileExifInfoStatus>,
-      val totalFileSizeExceeded: Boolean,
-      val fileMaxSizeExceeded: Boolean,
-      val markedAsSpoilerOnNonSpoilerBoard: Boolean
-    ) {
-
-      fun getGspExifDataOrNull(): FileExifInfoStatus.GpsExifFound? {
-        return fileExifStatus.firstOrNull { status ->
-          status is FileExifInfoStatus.GpsExifFound
-        } as? FileExifInfoStatus.GpsExifFound
-      }
-
-      fun getOrientationExifData(): FileExifInfoStatus.OrientationExifFound? {
-        return fileExifStatus.firstOrNull { status ->
-          status is FileExifInfoStatus.OrientationExifFound
-        } as? FileExifInfoStatus.OrientationExifFound
-      }
-
-      fun hasGspExifData(): Boolean = getGspExifDataOrNull() != null
-      fun hasOrientationExifData(): Boolean = getOrientationExifData() != null
+    fun getGspExifDataOrNull(): FileExifInfoStatus.GpsExifFound? {
+      return fileExifStatus.firstOrNull { status ->
+        status is FileExifInfoStatus.GpsExifFound
+      } as? FileExifInfoStatus.GpsExifFound
     }
+
+    fun getOrientationExifData(): FileExifInfoStatus.OrientationExifFound? {
+      return fileExifStatus.firstOrNull { status ->
+        status is FileExifInfoStatus.OrientationExifFound
+      } as? FileExifInfoStatus.OrientationExifFound
+    }
+
+    fun hasGspExifData(): Boolean = getGspExifDataOrNull() != null
+    fun hasOrientationExifData(): Boolean = getOrientationExifData() != null
   }
 }
 

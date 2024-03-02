@@ -31,17 +31,11 @@ class PostingLimitationsInfoManager(
       return ModularResult.value(false)
     }
 
-    when (getPasscodeInfoResult) {
+    return when (getPasscodeInfoResult) {
       is SiteActions.GetPasscodeInfoResult.NotAllowedToRefreshFromNetwork,
-      is SiteActions.GetPasscodeInfoResult.NotLoggedIn -> {
-        return ModularResult.value(false)
-      }
-      is SiteActions.GetPasscodeInfoResult.Success -> {
-        return ModularResult.value(true)
-      }
-      is SiteActions.GetPasscodeInfoResult.Failure -> {
-        return ModularResult.error(getPasscodeInfoResult.error)
-      }
+      is SiteActions.GetPasscodeInfoResult.NotLoggedIn -> ModularResult.value(false)
+      is SiteActions.GetPasscodeInfoResult.Success -> ModularResult.value(true)
+      is SiteActions.GetPasscodeInfoResult.Failure -> ModularResult.error(getPasscodeInfoResult.error)
     }
   }
 

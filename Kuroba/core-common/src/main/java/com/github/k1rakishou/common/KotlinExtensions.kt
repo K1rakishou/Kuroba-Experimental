@@ -81,7 +81,7 @@ import kotlin.math.ceil
 import kotlin.math.floor
 
 private const val TAG = "KotlinExntesions"
-val ELLIPSIZE_SYMBOL: CharSequence = "…"
+val ELLIPSIS_SYMBOL: CharSequence = "…"
 
 suspend fun OkHttpClient.suspendCall(request: Request): Response {
   return suspendCancellableCoroutine { continuation ->
@@ -941,9 +941,9 @@ fun String.ellipsizeMiddle(maxLength: Int): String {
     return this
   }
 
-  val resultLength = maxLength - ELLIPSIZE_SYMBOL.length
+  val resultLength = maxLength - ELLIPSIS_SYMBOL.length
 
-  return this.take(resultLength / 2) + ELLIPSIZE_SYMBOL + this.takeLast(resultLength / 2)
+  return this.take(resultLength / 2) + ELLIPSIS_SYMBOL + this.takeLast(resultLength / 2)
 }
 
 fun String.ellipsizeEnd(maxLength: Int): String {
@@ -957,7 +957,7 @@ fun String.ellipsizeEnd(maxLength: Int): String {
     return this
   }
 
-  return this.take(maxLength - ELLIPSIZE_SYMBOL.length) + ELLIPSIZE_SYMBOL
+  return this.take(maxLength - ELLIPSIS_SYMBOL.length) + ELLIPSIS_SYMBOL
 }
 
 fun CharSequence.ellipsizeEnd(maxLength: Int): CharSequence {
@@ -972,9 +972,9 @@ fun CharSequence.ellipsizeEnd(maxLength: Int): CharSequence {
   }
 
   val spannableString = SpannableString.valueOf(this)
-  val cutString = subSequence(0, (maxLength - ELLIPSIZE_SYMBOL.length).coerceAtMost(spannableString.length))
+  val cutString = subSequence(0, (maxLength - ELLIPSIS_SYMBOL.length).coerceAtMost(spannableString.length))
 
-  return TextUtils.concat(cutString, ELLIPSIZE_SYMBOL)
+  return TextUtils.concat(cutString, ELLIPSIS_SYMBOL)
 }
 
 @Suppress("ReplaceSizeCheckWithIsNotEmpty", "NOTHING_TO_INLINE")

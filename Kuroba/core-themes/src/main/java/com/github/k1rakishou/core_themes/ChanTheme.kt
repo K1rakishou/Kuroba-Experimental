@@ -84,6 +84,19 @@ abstract class ChanTheme {
   val postInlineQuoteColorCompose by lazy(LazyThreadSafetyMode.NONE) { Color(postInlineQuoteColor) }
   val postQuoteColorCompose by lazy(LazyThreadSafetyMode.NONE) { Color(postQuoteColor) }
 
+  val selectedOnBackColor: Color
+    get() {
+      return if (ThemeEngine.isDarkColor(backColor)) {
+        Color(0xff909090)
+      } else {
+        Color(0xff855a5a)
+      }
+    }
+
+  val colorError = Color.Red
+  val colorWarning = Color(0xFFFFA500L)
+  val colorInfo = Color.White
+
   open val mainFont: Typeface = ROBOTO_MEDIUM
 
   val defaultColors by lazy { loadDefaultColors() }
@@ -246,6 +259,30 @@ abstract class ChanTheme {
         .copy(alpha = ContentAlpha.disabled)
         .compositeOver(uncheckedThumbColor)
     )
+  }
+
+  fun calculateTextColor(
+    text: String
+  ): Color {
+    // Stolen from the 4chan extension
+    val hash: Int = text.hashCode()
+
+    val r = hash shr 24 and 0xff
+    val g = hash shr 16 and 0xff
+    val b = hash shr 8 and 0xff
+    val textColor = (0xff shl 24) + (r shl 16) + (g shl 8) + b
+
+    val textColorHSL = ThemeEngine.colorToHsl(textColor)
+
+    // Make the posterId text color darker if it's too light and the current theme's back color is
+    // also light and vice versa
+    if (isBackColorDark && textColorHSL.lightness < 0.5) {
+      textColorHSL.lightness = .7f
+    } else if (isBackColorLight && textColorHSL.lightness > 0.5) {
+      textColorHSL.lightness = .3f
+    }
+
+    return Color(ThemeEngine.hslToColor(textColorHSL))
   }
 
   data class DefaultColors(

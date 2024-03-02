@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.features.reply.data
 
+import android.Manifest
 import androidx.compose.runtime.IntState
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
@@ -12,6 +13,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.withStyle
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
@@ -24,10 +26,13 @@ import com.github.k1rakishou.chan.features.posting.PostingStatus
 import com.github.k1rakishou.chan.ui.controller.ThreadControllerType
 import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
 import com.github.k1rakishou.chan.ui.helper.AppResources
+import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.common.isNotNullNorEmpty
+import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
@@ -36,6 +41,12 @@ import com.github.k1rakishou.persist_state.ReplyMode
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 
 @Stable
@@ -45,7 +56,7 @@ class ReplyLayoutState(
   private val callbacks: Callbacks,
   private val coroutineScope: CoroutineScope,
   private val appResourcesLazy: Lazy<AppResources>,
-  private val replyLayoutFileEnumeratorLazy: Lazy<ReplyLayoutFileEnumerator>,
+  private val replyLayoutReplyFileHelperLazy: Lazy<ReplyLayoutReplyFileHelper>,
   private val siteManagerLazy: Lazy<SiteManager>,
   private val boardManagerLazy: Lazy<BoardManager>,
   private val replyManagerLazy: Lazy<ReplyManager>,
@@ -53,12 +64,13 @@ class ReplyLayoutState(
   private val themeEngineLazy: Lazy<ThemeEngine>,
   private val globalUiStateHolderLazy: Lazy<GlobalUiStateHolder>,
   private val postingServiceDelegateLazy: Lazy<PostingServiceDelegate>,
-  private val boardFlagInfoRepositoryLazy: Lazy<BoardFlagInfoRepository>
+  private val boardFlagInfoRepositoryLazy: Lazy<BoardFlagInfoRepository>,
+  private val runtimePermissionsHelperLazy: Lazy<RuntimePermissionsHelper>
 ) {
   private val appResources: AppResources
     get() = appResourcesLazy.get()
-  private val replyLayoutFileEnumerator: ReplyLayoutFileEnumerator
-    get() = replyLayoutFileEnumeratorLazy.get()
+  private val replyLayoutReplyFileHelper: ReplyLayoutReplyFileHelper
+    get() = replyLayoutReplyFileHelperLazy.get()
   private val siteManager: SiteManager
     get() = siteManagerLazy.get()
   private val boardManager: BoardManager
@@ -75,6 +87,8 @@ class ReplyLayoutState(
     get() = postingServiceDelegateLazy.get()
   private val boardFlagInfoRepository: BoardFlagInfoRepository
     get() = boardFlagInfoRepositoryLazy.get()
+  private val runtimePermissionsHelper: RuntimePermissionsHelper
+    get() = runtimePermissionsHelperLazy.get()
 
   private val _replyText = mutableStateOf<TextFieldValue>(TextFieldValue())
   val replyText: State<TextFieldValue>
@@ -96,6 +110,10 @@ class ReplyLayoutState(
   val options: State<TextFieldValue>
     get() = _options
 
+  private val _attachables = mutableStateOf<ReplyAttachables>(ReplyAttachables())
+  val attachables: State<ReplyAttachables>
+    get() = _attachables
+
   private val _postFormatterButtons = mutableStateOf<List<PostFormatterButton>>(emptyList())
   val postFormatterButtons: State<List<PostFormatterButton>>
     get() = _postFormatterButtons
@@ -103,10 +121,6 @@ class ReplyLayoutState(
   private val _maxCommentLength = mutableIntStateOf(0)
   val maxCommentLength: State<Int>
     get() = _maxCommentLength
-
-  private val _attachables = mutableStateOf<ReplyAttachables>(ReplyAttachables())
-  val attachables: State<ReplyAttachables>
-    get() = _attachables
 
   private val _replyLayoutAnimationState = mutableStateOf<ReplyLayoutAnimationState>(ReplyLayoutAnimationState.Collapsed)
   val replyLayoutAnimationState: State<ReplyLayoutAnimationState>
@@ -127,11 +141,30 @@ class ReplyLayoutState(
   val isCatalogMode: Boolean
     get() = threadControllerType == ThreadControllerType.Catalog
 
+  private val filePickerExecutor = RendezvousCoroutineExecutor(coroutineScope)
+
+  private var persistInReplyManagerJob: Job? = null
+  private var listenForReplyManagerUpdatesJob: Job? = null
+
   suspend fun bindChanDescriptor(chanDescriptor: ChanDescriptor) {
     replyManager.awaitUntilFilesAreLoaded()
     Logger.debug(TAG) { "bindChanDescriptor(${chanDescriptor})" }
 
     loadDraftIntoViews(chanDescriptor)
+
+    listenForReplyManagerUpdatesJob = coroutineScope.launch {
+      replyManager.listenForReplyFilesUpdates()
+        .onEach { updateAttachables() }
+        .collect()
+    }
+  }
+
+  fun unbindChanDescriptor() {
+    persistInReplyManagerJob?.cancel()
+    persistInReplyManagerJob = null
+
+    listenForReplyManagerUpdatesJob?.cancel()
+    listenForReplyManagerUpdatesJob = null
   }
 
   suspend fun onPostingStatusEvent(status: PostingStatus) {
@@ -224,23 +257,60 @@ class ReplyLayoutState(
   fun onReplyTextChanged(replyText: TextFieldValue) {
     _replyText.value = replyText
     updateReplyFieldHintText()
+    persistInReplyManager()
   }
 
   fun insertTags(postFormatterButton: PostFormatterButton) {
     // TODO: New reply layout.
     updateReplyFieldHintText()
+    persistInReplyManager()
   }
 
   fun onSubjectChanged(subject: TextFieldValue) {
     _subject.value = subject
+    persistInReplyManager()
   }
 
   fun onNameChanged(name: TextFieldValue) {
     _name.value = name
+    persistInReplyManager()
   }
 
   fun onOptionsChanged(options: TextFieldValue) {
     _options.value = options
+    persistInReplyManager()
+  }
+
+  fun removeAttachedMedia(attachedMedia: ReplyFileAttachable) {
+    replyManager.deleteFile(
+      fileUuid = attachedMedia.fileUuid,
+      notifyListeners = true
+    ).onError { error ->
+      Logger.error(TAG) { "removeAttachedMedia(${attachedMedia.fileUuid}) error: ${error.errorMessageOrClassName()}" }
+    }.ignore()
+  }
+
+  fun onAttachableSelectionChanged(attachedMedia: ReplyFileAttachable, selected: Boolean) {
+    replyManager.updateFileSelection(
+      fileUuid = attachedMedia.fileUuid,
+      selected = selected,
+      notifyListeners = true
+    ).onError { error ->
+      Logger.error(TAG) { "onAttachableSelectionChanged(${attachedMedia.fileUuid}, ${selected}) " +
+        "error: ${error.errorMessageOrClassName()}" }
+    }.ignore()
+  }
+
+  fun onPickLocalMediaButtonClicked() {
+    filePickerExecutor.post {
+      if (!requestPermissionIfNeededSuspend()) {
+        // TODO: New reply layout
+        callbacks.showToast("READ_EXTERNAL_STORAGE permission is required for this action!")
+        return@post
+      }
+
+//      replyLayoutFilePickerHelper.onPickLocalMediaButtonClicked(chanDescriptor)
+    }
   }
 
   fun onSendReplyStart() {
@@ -299,24 +369,11 @@ class ReplyLayoutState(
       _postFormatterButtons.value = postFormattingButtons
     }
 
-    val replyAttachables = replyLayoutFileEnumerator.enumerate(chanDescriptor)
-      .onError { error ->
-        Logger.error(TAG) {
-          "Failed to enumerate reply files for ${chanDescriptor}, error: ${error.errorMessageOrClassName()}"
-        }
-
-        callbacks.showToast("Error while enumerating files: ${error.errorMessageOrClassName()}")
-      }
-      .valueOrNull()
-
-    if (replyAttachables != null) {
-      _attachables.value = replyAttachables
-    }
-
+    updateAttachables()
     updateReplyFieldHintText()
   }
 
-  suspend fun loadViewsIntoDraft(chanDescriptor: ChanDescriptor): Boolean {
+  suspend fun loadViewsIntoDraft(): Boolean {
     val lastUsedFlagKey = boardFlagInfoRepository.getLastUsedFlagKey(chanDescriptor.boardDescriptor())
 
     replyManager.readReply(chanDescriptor) { reply ->
@@ -331,6 +388,49 @@ class ReplyLayoutState(
     }
 
     return true
+  }
+
+  private suspend fun requestPermissionIfNeededSuspend(): Boolean {
+    if (AndroidUtils.isAndroid13()) {
+      // Can't request READ_EXTERNAL_STORAGE on API 33+
+      return true
+    }
+
+    val permission = Manifest.permission.READ_EXTERNAL_STORAGE
+
+    if (runtimePermissionsHelper.hasPermission(permission)) {
+      return true
+    }
+
+    return suspendCancellableCoroutine<Boolean> { cancellableContinuation ->
+      runtimePermissionsHelper.requestPermission(permission) { granted ->
+        cancellableContinuation.resumeValueSafe(granted)
+      }
+    }
+  }
+
+  private suspend fun updateAttachables() {
+    val replyAttachables = replyLayoutReplyFileHelper.enumerate(chanDescriptor)
+      .onError { error ->
+        Logger.error(TAG) {
+          "updateAttachables() Failed to enumerate reply files for ${chanDescriptor}, error: ${error.errorMessageOrClassName()}"
+        }
+
+        callbacks.showToast("Error while enumerating files: ${error.errorMessageOrClassName()}")
+      }
+      .valueOrNull()
+
+    if (replyAttachables != null) {
+      _attachables.value = replyAttachables
+    }
+  }
+
+  private fun persistInReplyManager() {
+    persistInReplyManagerJob?.cancel()
+    persistInReplyManagerJob = coroutineScope.launch(Dispatchers.Default) {
+      delay(100)
+      loadViewsIntoDraft()
+    }
   }
 
   private fun onHeightChangedInternal(
@@ -373,9 +473,6 @@ class ReplyLayoutState(
     replyText: TextFieldValue,
     maxCommentLength: Int
   ): AnnotatedString {
-    val replyFileAttachables = replyAttachables.attachables
-      .filterIsInstance<ReplyAttachable.ReplyFileAttachable>()
-
     return buildAnnotatedString {
       val commentLabelText = when (threadControllerType) {
         ThreadControllerType.Catalog -> makeNewThreadHint
@@ -401,11 +498,11 @@ class ReplyLayoutState(
         append(maxCommentLength.toString())
       }
 
-      if (replyFileAttachables.isNotEmpty()) {
+      if (replyAttachables.attachables.isNotEmpty()) {
         append("  ")
 
-        val totalAttachablesCount = replyFileAttachables.size
-        val selectedAttachablesCount = replyFileAttachables.count { replyFileAttachable -> replyFileAttachable.selected }
+        val totalAttachablesCount = replyAttachables.attachables.size
+        val selectedAttachablesCount = replyAttachables.attachables.count { replyFileAttachable -> replyFileAttachable.selected }
         val maxAllowedAttachablesPerPost = replyAttachables.maxAllowedAttachablesPerPost
 
         if (maxAllowedAttachablesPerPost > 0 && selectedAttachablesCount > maxAllowedAttachablesPerPost) {
@@ -627,6 +724,14 @@ class ReplyLayoutState(
 
   private fun showDialog(title: String, message: CharSequence, onDismissListener: (() -> Unit)? = null) {
     callbacks.showDialog(title, message, onDismissListener)
+  }
+
+  suspend fun attachableFileStatus(replyFileAttachable: ReplyFileAttachable): AnnotatedString {
+    return replyLayoutReplyFileHelper.attachableFileStatus(
+      chanDescriptor = chanDescriptor,
+      chanTheme = themeEngine.chanTheme,
+      clickedFile = replyFileAttachable
+    )
   }
 
   interface Callbacks {

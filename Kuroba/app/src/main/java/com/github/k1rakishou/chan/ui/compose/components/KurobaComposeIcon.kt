@@ -30,7 +30,7 @@ fun KurobaComposeIcon(
         ColorFilter.tint(tintColor)
       }
       is IconTint.TintWithColor -> {
-        val tintColor = Color(ThemeEngine.resolveDrawableTintColor(ThemeEngine.isDarkColor(colorTint.color)))
+        val tintColor = colorTint.color
         ColorFilter.tint(tintColor)
       }
     }

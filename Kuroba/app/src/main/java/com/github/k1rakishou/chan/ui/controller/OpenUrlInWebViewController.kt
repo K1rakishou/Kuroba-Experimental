@@ -19,118 +19,121 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class OpenUrlInWebViewController(
-    context: Context,
-    val urlToOpen: String
+  context: Context,
+  val urlToOpen: String
 ) : BaseFloatingController(context), ThemeEngine.ThemeChangesListener {
 
-    @Inject
-    lateinit var appConstants: AppConstants
-    @Inject
-    lateinit var siteResolver: SiteResolver
-    @Inject
-    lateinit var themeEngine: ThemeEngine
+  @Inject
+  lateinit var appConstants: AppConstants
 
-    private lateinit var webView: WebView
-    private lateinit var closeButton: ImageView
+  @Inject
+  lateinit var siteResolver: SiteResolver
 
-    private val cookieManager by lazy { CookieManager.getInstance() }
-    private val webViewClient by lazy { WebViewClient() }
+  @Inject
+  lateinit var themeEngine: ThemeEngine
 
-    override fun injectDependencies(component: ActivityComponent) {
-        component.inject(this)
+  private lateinit var webView: WebView
+  private lateinit var closeButton: ImageView
+
+  private val cookieManager by lazy { CookieManager.getInstance() }
+  private val webViewClient by lazy { WebViewClient() }
+
+  override fun injectDependencies(component: ActivityComponent) {
+    component.inject(this)
+  }
+
+  override fun getLayoutId(): Int = R.layout.controller_firewall_bypass
+
+  override fun onCreate() {
+    super.onCreate()
+
+    // Add a frame delay for the navigation stuff to completely load
+    mainScope.launch {
+      try {
+        // Some users may have no WebView installed
+        onCreateInternal()
+      } catch (error: Throwable) {
+        Logger.e(TAG, "Error when trying to create the view", error)
+        pop()
+      }
     }
-    override fun getLayoutId(): Int = R.layout.controller_firewall_bypass
+  }
 
-    override fun onCreate() {
-        super.onCreate()
+  override fun onDestroy() {
+    super.onDestroy()
 
-        // Add a frame delay for the navigation stuff to completely load
-        mainScope.launch {
-            try {
-                // Some users may have no WebView installed
-                onCreateInternal()
-            } catch (error: Throwable) {
-                Logger.e(TAG, "Error when trying to create the view", error)
-                pop()
-            }
-        }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-
-        if (::webView.isInitialized) {
-            webView.stopLoading()
-        }
-
-        if (::themeEngine.isInitialized) {
-            themeEngine.removeListener(this)
-        }
+    if (::webView.isInitialized) {
+      webView.stopLoading()
     }
 
-    override fun onThemeChanged() {
-        val tintedDrawable = themeEngine.tintDrawable(
-            drawable = closeButton.drawable,
-            isCurrentColorDark = ThemeEngine.isDarkColor(themeEngine.chanTheme.backColor)
-        )
+    if (::themeEngine.isInitialized) {
+      themeEngine.removeListener(this)
+    }
+  }
 
-        closeButton.setImageDrawable(tintedDrawable)
+  override fun onThemeChanged() {
+    val tintedDrawable = themeEngine.tintDrawable(
+      drawable = closeButton.drawable,
+      isCurrentColorDark = ThemeEngine.isDarkColor(themeEngine.chanTheme.backColor)
+    )
+
+    closeButton.setImageDrawable(tintedDrawable)
+  }
+
+  @SuppressLint("SetJavaScriptEnabled")
+  private fun onCreateInternal() {
+    val webViewContainer = view.findViewById<FrameLayout>(R.id.web_view_container)
+
+    themeEngine.addListener(this)
+
+    webView = WebView(context, null, android.R.attr.webViewStyle).apply {
+      layoutParams = FrameLayout.LayoutParams(
+        FrameLayout.LayoutParams.MATCH_PARENT,
+        FrameLayout.LayoutParams.MATCH_PARENT
+      )
+
+      isClickable = false
+      isFocusable = false
     }
 
-    @SuppressLint("SetJavaScriptEnabled")
-    private fun onCreateInternal() {
-        val webViewContainer = view.findViewById<FrameLayout>(R.id.web_view_container)
+    webViewContainer.addView(webView)
 
-        themeEngine.addListener(this)
+    val clickableArea = view.findViewById<ConstraintLayout>(R.id.clickable_area)
+    clickableArea.setOnClickListener { pop() }
 
-        webView = WebView(context, null, android.R.attr.webViewStyle).apply {
-            layoutParams = FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.MATCH_PARENT
-            )
-
-            isClickable = false
-            isFocusable = false
-        }
-
-        webViewContainer.addView(webView)
-
-        val clickableArea = view.findViewById<ConstraintLayout>(R.id.clickable_area)
-        clickableArea.setOnClickListener { pop() }
-
-        closeButton = view.findViewById(R.id.close_button)
-        closeButton.setOnClickListener {
-            pop()
-        }
-
-        webView.stopLoading()
-
-        cookieManager.removeAllCookie()
-        cookieManager.setAcceptCookie(true)
-        cookieManager.setAcceptThirdPartyCookies(webView, true)
-
-        val webSettings: WebSettings = webView.settings
-        webSettings.javaScriptEnabled = true
-        webSettings.domStorageEnabled = true
-        webSettings.databaseEnabled = true
-        webSettings.useWideViewPort = true
-        webSettings.loadWithOverviewMode = true
-        webSettings.cacheMode = WebSettings.LOAD_DEFAULT
-        webSettings.userAgentString = appConstants.userAgent
-
-        val siteRequestModifier = siteResolver.findSiteForUrl(urlToOpen)?.requestModifier()
-        if (siteRequestModifier != null) {
-            siteRequestModifier.modifyWebView(webView)
-        }
-
-        webView.webViewClient = webViewClient
-        webView.loadUrl(urlToOpen)
-
-        onThemeChanged()
+    closeButton = view.findViewById(R.id.close_button)
+    closeButton.setOnClickListener {
+      pop()
     }
 
-    companion object {
-        private const val TAG = "OpenUrlInWebViewController"
+    webView.stopLoading()
+
+    cookieManager.removeAllCookie()
+    cookieManager.setAcceptCookie(true)
+    cookieManager.setAcceptThirdPartyCookies(webView, true)
+
+    val webSettings: WebSettings = webView.settings
+    webSettings.javaScriptEnabled = true
+    webSettings.domStorageEnabled = true
+    webSettings.databaseEnabled = true
+    webSettings.useWideViewPort = true
+    webSettings.loadWithOverviewMode = true
+    webSettings.cacheMode = WebSettings.LOAD_DEFAULT
+    webSettings.userAgentString = appConstants.userAgent
+
+    val siteRequestModifier = siteResolver.findSiteForUrl(urlToOpen)?.requestModifier()
+    if (siteRequestModifier != null) {
+      siteRequestModifier.modifyWebView(webView)
     }
+
+    webView.webViewClient = webViewClient
+    webView.loadUrl(urlToOpen)
+
+    onThemeChanged()
+  }
+
+  companion object {
+    private const val TAG = "OpenUrlInWebViewController"
+  }
 
 }

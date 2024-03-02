@@ -7,6 +7,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -25,7 +26,8 @@ fun KurobaComposeText(
   softWrap: Boolean = true,
   enabled: Boolean = true,
   textAlign: TextAlign? = null,
-  inlineContent: Map<String, InlineTextContent> = mapOf()
+  inlineContent: Map<String, InlineTextContent> = mapOf(),
+  onTextLayout: (TextLayoutResult) -> Unit = {},
 ) {
   KurobaComposeText(
     text = AnnotatedString(text),
@@ -38,7 +40,8 @@ fun KurobaComposeText(
     softWrap = softWrap,
     enabled = enabled,
     textAlign = textAlign,
-    inlineContent = inlineContent
+    inlineContent = inlineContent,
+    onTextLayout = onTextLayout
   )
 }
 
@@ -54,7 +57,8 @@ fun KurobaComposeText(
   softWrap: Boolean = true,
   enabled: Boolean = true,
   textAlign: TextAlign? = null,
-  inlineContent: Map<String, InlineTextContent> = mapOf()
+  inlineContent: Map<String, InlineTextContent> = mapOf(),
+  onTextLayout: (TextLayoutResult) -> Unit = {},
 ) {
   val chanTheme = LocalChanTheme.current
 
@@ -82,6 +86,7 @@ fun KurobaComposeText(
     softWrap = softWrap,
     textAlign = textAlign,
     fontWeight = fontWeight,
-    inlineContent = inlineContent
+    inlineContent = inlineContent,
+    onTextLayout = onTextLayout
   )
 }

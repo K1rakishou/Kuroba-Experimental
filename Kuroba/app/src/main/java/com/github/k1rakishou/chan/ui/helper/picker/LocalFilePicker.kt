@@ -288,8 +288,8 @@ class LocalFilePicker(
     val notifyListeners: Boolean,
     val replyChanDescriptor: ChanDescriptor,
     val clearLastRememberedFilePicker: Boolean = false,
-    val showLoadingView: suspend () -> Unit,
-    val hideLoadingView: suspend () -> Unit
+    val decodingStarted: (List<String>) -> Unit,
+    val decodingEnded: (List<String>) -> Unit
   )
 
   private data class EnqueuedRequest(

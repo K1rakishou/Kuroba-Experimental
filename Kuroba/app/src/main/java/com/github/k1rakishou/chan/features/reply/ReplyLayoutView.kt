@@ -9,15 +9,18 @@ import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.text.AnnotatedString
 import androidx.core.os.bundleOf
 import androidx.core.text.getSpans
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.helper.DialogFactory
+import com.github.k1rakishou.chan.features.reply.data.ReplyFileAttachable
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
 import com.github.k1rakishou.chan.ui.compose.providers.ProvideEverythingForCompose
 import com.github.k1rakishou.chan.ui.controller.OpenUrlInWebViewController
 import com.github.k1rakishou.chan.ui.controller.ThreadControllerType
+import com.github.k1rakishou.chan.ui.controller.dialog.KurobaComposeDialogController
 import com.github.k1rakishou.chan.ui.layout.ThreadListLayout
 import com.github.k1rakishou.chan.ui.widget.dialog.KurobaAlertDialog
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -175,22 +178,33 @@ class ReplyLayoutView @JvmOverloads constructor(
     }
   }
 
+  override suspend fun showDialogSuspend(title: String, message: CharSequence?) {
+    suspendCancellableCoroutine<Unit> { cancellableContinuation ->
+      showDialog(
+        title = title,
+        message = message,
+        onDismissListener = { cancellableContinuation.resumeValueSafe(Unit) }
+      )
+    }
+  }
+
   override fun showDialog(title: String, message: CharSequence?, onDismissListener: (() -> Unit)?) {
     if (title.isBlank() && message.isNullOrBlank()) {
       hideDialog()
+      onDismissListener?.invoke()
       return
     }
 
     showPostingDialogExecutor.post {
-      val linkMovementMethod = if (hasWebViewLinks(message)) {
-        WebViewLinkMovementMethod(webViewLinkClickListener = this)
-      } else {
-        null
-      }
-
-      val dialogId = "ReplyPresenterPostingErrorDialog"
-
       try {
+        val linkMovementMethod = if (hasWebViewLinks(message)) {
+          WebViewLinkMovementMethod(webViewLinkClickListener = this)
+        } else {
+          null
+        }
+
+        val dialogId = "ReplyPresenterPostingErrorDialog"
+
         suspendCancellableCoroutine<Unit> { continuation ->
           continuation.invokeOnCancellation { dialogHandle.getAndSet(null)?.dismiss() }
 
@@ -225,6 +239,36 @@ class ReplyLayoutView @JvmOverloads constructor(
 
     prevToast = Toast.makeText(context, message, Toast.LENGTH_LONG)
       .also { toast -> toast.show() }
+  }
+
+  override fun onPickRemoteMediaButtonClicked() {
+    TODO("Not yet implemented")
+  }
+
+  override fun onSearchRemoteMediaButtonClicked() {
+    TODO("Not yet implemented")
+  }
+
+  override fun onReplyLayoutOptionsButtonClicked() {
+    TODO("Not yet implemented")
+  }
+
+  override fun onAttachedMediaClicked(attachedMedia: ReplyFileAttachable) {
+    TODO("Not yet implemented")
+  }
+
+  override fun onAttachedMediaLongClicked(attachedMedia: ReplyFileAttachable) {
+    TODO("Not yet implemented")
+  }
+
+  override fun showFileStatusDialog(attachableFileStatus: AnnotatedString) {
+    dialogFactory.dialog(
+      context = context,
+      params = KurobaComposeDialogController.informationDialog(
+        title = KurobaComposeDialogController.Text.String("File status"),
+        description = KurobaComposeDialogController.Text.AnnotatedString(attachableFileStatus)
+      )
+    )
   }
 
   private fun hasWebViewLinks(message: CharSequence?): Boolean {

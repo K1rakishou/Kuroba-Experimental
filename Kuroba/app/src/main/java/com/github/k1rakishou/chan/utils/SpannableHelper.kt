@@ -23,7 +23,7 @@ import androidx.core.text.getSpans
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.common.AndroidUtils
-import com.github.k1rakishou.common.ELLIPSIZE_SYMBOL
+import com.github.k1rakishou.common.ELLIPSIS_SYMBOL
 import com.github.k1rakishou.common.setSpanSafe
 import com.github.k1rakishou.core_spannable.BackgroundColorSpanHashed
 import com.github.k1rakishou.core_spannable.ForegroundColorSpanHashed
@@ -182,10 +182,10 @@ object SpannableHelper {
     // It is assumed that the original, uncut, text has this query somewhere where we can't see it now.
     if (bgColor != 0
       && !addedAtLeastOneSpan
-      && spannableString.endsWith(ELLIPSIZE_SYMBOL)
-      && spannableString.length >= ELLIPSIZE_SYMBOL.length
+      && spannableString.endsWith(ELLIPSIS_SYMBOL)
+      && spannableString.length >= ELLIPSIS_SYMBOL.length
     ) {
-      val start = spannableString.length - ELLIPSIZE_SYMBOL.length
+      val start = spannableString.length - ELLIPSIS_SYMBOL.length
       val end = spannableString.length
 
       val textColor = if (ThemeEngine.isDarkColor(bgColor)) {
