@@ -25,11 +25,7 @@ class BoardBuilder(
   var workSafe: Boolean = false
   var spoilers: Boolean = false
   var userIds: Boolean = false
-  var codeTags: Boolean = false
-  var preuploadCaptcha: Boolean = false
   var countryFlags: Boolean = false
-  var mathTags: Boolean = false
-  var archive: Boolean = false
   var isUnlimitedCatalog: Boolean = false
 
   fun hasMissingInfo(): Boolean {
@@ -45,8 +41,6 @@ class BoardBuilder(
     return ChanBoard(
       boardDescriptor = boardDescriptor(),
       active = active,
-      // We don't persist synthetic boards so we assume all boards coming from the DB are not synthetic
-      synthetic = false,
       order = order,
       name = name,
       perPage = perPage,
@@ -64,11 +58,7 @@ class BoardBuilder(
       workSafe = workSafe,
       spoilers = spoilers,
       userIds = userIds,
-      codeTags = codeTags,
-      preuploadCaptcha = preuploadCaptcha,
       countryFlags = countryFlags,
-      mathTags = mathTags,
-      archive = archive,
       isUnlimitedCatalog = isUnlimitedCatalog,
     )
   }

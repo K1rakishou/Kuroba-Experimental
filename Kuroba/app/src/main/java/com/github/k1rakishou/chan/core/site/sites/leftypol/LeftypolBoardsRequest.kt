@@ -71,7 +71,6 @@ class LeftypolBoardsRequest(
   private fun readBoardEntry(reader: JsonReader): ChanBoard? {
     return reader.jsonObject {
       val board = BoardBuilder(siteDescriptor)
-      board.codeTags = true
       board.spoilers = true
       board.pages = 36
       board.perPage = 10

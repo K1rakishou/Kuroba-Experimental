@@ -5,7 +5,6 @@ import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 class ChanBoard(
   val boardDescriptor: BoardDescriptor,
   var active: Boolean = false,
-  var synthetic: Boolean = false,
   val order: Int? = null,
   val name: String? = null,
   val perPage: Int = 15,
@@ -23,20 +22,13 @@ class ChanBoard(
   val workSafe: Boolean = false,
   val spoilers: Boolean = false,
   val userIds: Boolean = false,
-  val codeTags: Boolean = false,
-  @Deprecated("delete me")
-  val preuploadCaptcha: Boolean = false,
   val countryFlags: Boolean = false,
-  val mathTags: Boolean = false,
-  @Deprecated("delete me")
-  val archive: Boolean = false,
   val isUnlimitedCatalog: Boolean = false
 ) {
 
   fun copy(
     boardDescriptor: BoardDescriptor? = null,
     active: Boolean? = null,
-    synthetic: Boolean? = null,
     order: Int? = null,
     name: String? = null,
     perPage: Int? = null,
@@ -54,18 +46,13 @@ class ChanBoard(
     workSafe: Boolean? = null,
     spoilers: Boolean? = null,
     userIds: Boolean? = null,
-    codeTags: Boolean? = null,
-    preuploadCaptcha: Boolean? = null,
     countryFlags: Boolean? = null,
-    mathTags: Boolean? = null,
-    archive: Boolean? = null,
     isUnlimitedCatalog: Boolean? = null,
     chanBoardMeta: ChanBoardMeta? = null
   ): ChanBoard {
     return ChanBoard(
       boardDescriptor ?: this.boardDescriptor,
       active ?: this.active,
-      synthetic ?: this.synthetic,
       order ?: this.order,
       name ?: this.name,
       perPage ?: this.perPage,
@@ -83,11 +70,7 @@ class ChanBoard(
       workSafe ?: this.workSafe,
       spoilers ?: this.spoilers,
       userIds ?: this.userIds,
-      codeTags ?: this.codeTags,
-      preuploadCaptcha ?: this.preuploadCaptcha,
       countryFlags ?: this.countryFlags,
-      mathTags ?: this.mathTags,
-      archive ?: this.archive,
       isUnlimitedCatalog ?: this.isUnlimitedCatalog,
     ).also { newChanBoard -> newChanBoard.updateChanBoardMeta<ChanBoardMeta> { chanBoardMeta ?: this.chanBoardMeta } }
   }
@@ -116,7 +99,6 @@ class ChanBoard(
 
     if (boardDescriptor != other.boardDescriptor) return false
     if (active != other.active) return false
-    if (synthetic != other.synthetic) return false
     if (order != other.order) return false
     if (name != other.name) return false
     if (perPage != other.perPage) return false
@@ -134,11 +116,7 @@ class ChanBoard(
     if (workSafe != other.workSafe) return false
     if (spoilers != other.spoilers) return false
     if (userIds != other.userIds) return false
-    if (codeTags != other.codeTags) return false
-    if (preuploadCaptcha != other.preuploadCaptcha) return false
     if (countryFlags != other.countryFlags) return false
-    if (mathTags != other.mathTags) return false
-    if (archive != other.archive) return false
     if (isUnlimitedCatalog != other.isUnlimitedCatalog) return false
     if (chanBoardMeta != other.chanBoardMeta) return false
 
@@ -148,7 +126,6 @@ class ChanBoard(
   override fun hashCode(): Int {
     var result = boardDescriptor.hashCode()
     result = 31 * result + active.hashCode()
-    result = 31 * result + synthetic.hashCode()
     result = 31 * result + (order?.hashCode() ?: 0)
     result = 31 * result + (name?.hashCode() ?: 0)
     result = 31 * result + perPage
@@ -166,11 +143,7 @@ class ChanBoard(
     result = 31 * result + workSafe.hashCode()
     result = 31 * result + spoilers.hashCode()
     result = 31 * result + userIds.hashCode()
-    result = 31 * result + codeTags.hashCode()
-    result = 31 * result + preuploadCaptcha.hashCode()
     result = 31 * result + countryFlags.hashCode()
-    result = 31 * result + mathTags.hashCode()
-    result = 31 * result + archive.hashCode()
     result = 31 * result + isUnlimitedCatalog.hashCode()
     result = 31 * result + (chanBoardMeta?.hashCode() ?: 0)
 
@@ -178,13 +151,12 @@ class ChanBoard(
   }
 
   override fun toString(): String {
-    return "ChanBoard(boardDescriptor=$boardDescriptor, active=$active, synthetic=$synthetic, order=$order, name=$name, " +
+    return "ChanBoard(boardDescriptor=$boardDescriptor, active=$active, order=$order, name=$name, " +
       "perPage=$perPage, pages=$pages, maxFileSize=$maxFileSize, maxWebmSize=$maxWebmSize, " +
       "maxCommentChars=$maxCommentChars, bumpLimit=$bumpLimit, imageLimit=$imageLimit, " +
       "cooldownThreads=$cooldownThreads, cooldownReplies=$cooldownReplies, cooldownImages=$cooldownImages, " +
       "customSpoilers=$customSpoilers, description='$description', workSafe=$workSafe, " +
-      "spoilers=$spoilers, userIds=$userIds, codeTags=$codeTags, preuploadCaptcha=$preuploadCaptcha, " +
-      "countryFlags=$countryFlags, mathTags=$mathTags, archive=$archive, isUnlimitedCatalog=$isUnlimitedCatalog, " +
+      "spoilers=$spoilers, userIds=$userIds, countryFlags=$countryFlags, isUnlimitedCatalog=$isUnlimitedCatalog, " +
       "chanBoardMeta=$chanBoardMeta)"
   }
 

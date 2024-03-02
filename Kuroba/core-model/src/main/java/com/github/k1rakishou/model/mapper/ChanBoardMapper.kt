@@ -26,8 +26,6 @@ object ChanBoardMapper {
     return ChanBoard(
       boardDescriptor = boardDescriptor,
       active = chanBoardFull.chanBoardEntity.active,
-      // We don't persist synthetic boards so we assume all boards coming from the DB are not synthetic
-      synthetic = false,
       order = boardOrder,
       name = chanBoardFull.chanBoardEntity.name,
       perPage = chanBoardFull.chanBoardEntity.perPage,
@@ -45,18 +43,12 @@ object ChanBoardMapper {
       workSafe = chanBoardFull.chanBoardEntity.workSafe,
       spoilers = chanBoardFull.chanBoardEntity.spoilers,
       userIds = chanBoardFull.chanBoardEntity.userIds,
-      codeTags = chanBoardFull.chanBoardEntity.codeTags,
-      preuploadCaptcha = chanBoardFull.chanBoardEntity.preuploadCaptcha,
       countryFlags = chanBoardFull.chanBoardEntity.countryFlags,
-      mathTags = chanBoardFull.chanBoardEntity.mathTags,
-      archive = chanBoardFull.chanBoardEntity.archive,
       isUnlimitedCatalog = chanBoardFull.chanBoardEntity.isUnlimitedCatalog,
     )
   }
 
   fun toChanBoardEntity(boardDatabaseId: Long, order: Int?, board: ChanBoard): ChanBoardEntity {
-    require(!board.synthetic) { "Cannot persist synthetic boards! board: ${board}" }
-
     val boardOrder = (order ?: board.order) ?: -1
 
     return ChanBoardEntity(
@@ -79,11 +71,7 @@ object ChanBoardMapper {
       workSafe = board.workSafe,
       spoilers = board.spoilers,
       userIds = board.userIds,
-      codeTags = board.codeTags,
-      preuploadCaptcha = board.preuploadCaptcha,
       countryFlags = board.countryFlags,
-      mathTags = board.mathTags,
-      archive = board.archive,
       isUnlimitedCatalog = board.isUnlimitedCatalog,
     )
   }
@@ -112,11 +100,7 @@ object ChanBoardMapper {
       workSafe = board.workSafe,
       spoilers = board.spoilers,
       userIds = board.userIds,
-      codeTags = board.codeTags,
-      preuploadCaptcha = board.preuploadCaptcha,
       countryFlags = board.countryFlags,
-      mathTags = board.mathTags,
-      archive = board.archive,
       isUnlimitedCatalog = board.isUnlimitedCatalog,
     )
   }

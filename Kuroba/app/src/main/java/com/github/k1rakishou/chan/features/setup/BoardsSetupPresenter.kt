@@ -42,12 +42,8 @@ class BoardsSetupPresenter(
       val siteIsSynthetic = siteManager.bySiteDescriptor(siteDescriptor)?.isSynthetic
         ?: false
 
-      val notSyntheticBoardsCount = boardManager.boardsCount(
-        siteDescriptor = siteDescriptor,
-        counter = { chanBoard -> !chanBoard.synthetic }
-      )
-
-      if (siteIsSynthetic || notSyntheticBoardsCount > 0) {
+      val boardsCount = boardManager.boardsCount(siteDescriptor)
+      if (siteIsSynthetic || boardsCount > 0) {
         displayActiveBoardsInternal()
       } else {
         updateBoardsFromServerAndDisplayActive()

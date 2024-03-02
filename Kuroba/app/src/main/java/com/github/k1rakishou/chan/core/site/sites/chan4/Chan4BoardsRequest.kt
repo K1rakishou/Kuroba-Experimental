@@ -88,15 +88,12 @@ class Chan4BoardsRequest(
           "spoilers" -> board.spoilers = nextInt() == 1
           "custom_spoilers" -> board.customSpoilers = nextInt()
           "user_ids" -> board.userIds = nextInt() == 1
-          "code_tags" -> board.codeTags = nextInt() == 1
           "country_flags" -> board.countryFlags = nextInt() == 1
           "board_flags" -> {
             board.countryFlags = true
             skipValue()
           }
-          "math_tags" -> board.mathTags = nextInt() == 1
           "meta_description" -> board.description = nextString()
-          "is_archived" -> board.archive = nextInt() == 1
           else -> skipValue()
         }
       }

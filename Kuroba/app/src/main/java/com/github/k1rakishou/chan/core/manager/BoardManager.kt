@@ -235,10 +235,6 @@ class BoardManager(
         }
 
         board.active = activate
-        if (board.synthetic) {
-          board.synthetic = false
-        }
-
         changed = true
       }
 
@@ -401,28 +397,7 @@ class BoardManager(
   fun byBoardDescriptor(boardDescriptor: BoardDescriptor): ChanBoard? {
     check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
 
-    return lock.write {
-      val board = boardsMap[boardDescriptor.siteDescriptor]?.get(boardDescriptor)
-      if (board != null) {
-        return@write board
-      }
-
-      val syntheticBoard = ChanBoard(
-        boardDescriptor = boardDescriptor,
-        active = false,
-        synthetic = true,
-        order = null
-      )
-
-      val innerMap = boardsMap.getOrPut(
-        key = boardDescriptor.siteDescriptor,
-        defaultValue = { linkedMapWithCap(64) }
-      )
-
-      innerMap[boardDescriptor] = syntheticBoard
-
-      return@write syntheticBoard
-    }
+    return lock.read { boardsMap[boardDescriptor.siteDescriptor]?.get(boardDescriptor) }
   }
 
   fun activeBoardsCount(siteDescriptor: SiteDescriptor): Int {
@@ -599,11 +574,6 @@ class BoardManager(
           val board = boardsMap[siteDescriptor]?.get(boardDescriptor)
             ?: return@forEach
 
-          // Do not persist synthetic boards
-          if (board.synthetic) {
-            return@forEach
-          }
-
           resultMap[siteDescriptor]!!.add(board)
         }
       }
@@ -620,7 +590,6 @@ class BoardManager(
     return ChanBoard(
       boardDescriptor = prevBoard.boardDescriptor,
       active = prevBoard.active,
-      synthetic = newBoard.synthetic,
       order = prevBoard.order,
       name = newBoard.name,
       perPage = newBoard.perPage,
@@ -638,11 +607,7 @@ class BoardManager(
       workSafe = newBoard.workSafe,
       spoilers = newBoard.spoilers,
       userIds = newBoard.userIds,
-      codeTags = newBoard.codeTags,
-      preuploadCaptcha = newBoard.preuploadCaptcha,
       countryFlags = newBoard.countryFlags,
-      mathTags = newBoard.mathTags,
-      archive = newBoard.archive,
       isUnlimitedCatalog = newBoard.isUnlimitedCatalog,
     ).also { chanBoard -> chanBoard.updateChanBoardMeta<ChanBoardMeta> { newBoard.chanBoardMeta } }
   }

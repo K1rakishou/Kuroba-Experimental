@@ -130,10 +130,6 @@ class FilterBoardSelectorControllerViewModel(
     val boardCellDataList = mutableListOf<CatalogCellData>()
 
     val iteratorFunc = iteratorFunc@ { chanBoard: ChanBoard ->
-      if (chanBoard.synthetic) {
-        return@iteratorFunc
-      }
-
       val boardDescriptor = chanBoard.boardDescriptor
 
       if (!chanBoard.active && !_currentlySelectedBoards.containsKey(boardDescriptor)) {

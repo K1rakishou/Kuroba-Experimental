@@ -57,16 +57,8 @@ data class ChanBoardEntity(
   val spoilers: Boolean = false,
   @ColumnInfo(name = USER_IDS_COLUMN_NAME)
   val userIds: Boolean = false,
-  @ColumnInfo(name = CODE_TAGS_COLUMN_NAME)
-  val codeTags: Boolean = false,
-  @ColumnInfo(name = PREUPLOAD_CAPTCHA_COLUMN_NAME)
-  val preuploadCaptcha: Boolean = false,
   @ColumnInfo(name = COUNTRY_FLAGS_COLUMN_NAME)
   val countryFlags: Boolean = false,
-  @ColumnInfo(name = MATH_TAGS_COLUMN_NAME)
-  val mathTags: Boolean = false,
-  @ColumnInfo(name = ARCHIVE_COLUMN_NAME)
-  val archive: Boolean = false,
   @ColumnInfo(name = IS_UNLIMITED_CATALOG_COLUMN_NAME)
   val isUnlimitedCatalog: Boolean = false
 ) {
@@ -93,11 +85,7 @@ data class ChanBoardEntity(
     const val WORK_SAFE_COLUMN_NAME = "work_safe"
     const val SPOILERS_COLUMN_NAME = "spoilers"
     const val USER_IDS_COLUMN_NAME = "user_ids"
-    const val CODE_TAGS_COLUMN_NAME = "code_tags"
-    const val PREUPLOAD_CAPTCHA_COLUMN_NAME = "preupload_captcha"
     const val COUNTRY_FLAGS_COLUMN_NAME = "country_flags"
-    const val MATH_TAGS_COLUMN_NAME = "math_tags"
-    const val ARCHIVE_COLUMN_NAME = "archive"
     const val IS_UNLIMITED_CATALOG_COLUMN_NAME = "is_unlimited_catalog"
   }
 
