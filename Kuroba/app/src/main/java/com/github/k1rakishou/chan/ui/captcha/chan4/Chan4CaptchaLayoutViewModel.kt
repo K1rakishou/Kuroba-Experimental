@@ -198,7 +198,6 @@ class Chan4CaptchaLayoutViewModel(
 
     activeJob = viewModelScope.launch(Dispatchers.Default) {
       _captchaInfoToShow.value = AsyncData.Loading
-      viewModelInitialized.awaitUntilInitialized()
 
       if (chan4CaptchaSettingsJson.get().useCaptchaSolver) {
         val chan4CaptchaSolverInfo = chan4CaptchaSolverHelper.checkCaptchaSolverInstalled(appContext)

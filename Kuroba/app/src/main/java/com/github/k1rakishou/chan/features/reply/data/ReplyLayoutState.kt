@@ -294,8 +294,9 @@ class ReplyLayoutState(
 
       boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor())?.let { chanBoard ->
         _maxCommentLength.intValue = chanBoard.maxCommentChars
-        _postFormatterButtons.value = postFormattingButtons
       }
+
+      _postFormatterButtons.value = postFormattingButtons
     }
 
     val replyAttachables = replyLayoutFileEnumerator.enumerate(chanDescriptor)

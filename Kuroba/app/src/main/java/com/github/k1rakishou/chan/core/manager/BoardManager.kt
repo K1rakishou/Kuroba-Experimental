@@ -563,7 +563,7 @@ class BoardManager(
       return
     }
 
-    val result = boardRepository.persist(getBoardsOrdered())
+    val result = boardRepository.persist(getBoardsOrderedForPersistence())
     if (result is ModularResult.Error) {
       Logger.e(TAG, "boardRepository.persist() error", result.error)
       return
@@ -586,7 +586,7 @@ class BoardManager(
     return resultMap
   }
 
-  private fun getBoardsOrdered(): Map<SiteDescriptor, List<ChanBoard>> {
+  private fun getBoardsOrderedForPersistence(): Map<SiteDescriptor, List<ChanBoard>> {
     val resultMap = mutableMapOf<SiteDescriptor, MutableList<ChanBoard>>()
 
     lock.read {
