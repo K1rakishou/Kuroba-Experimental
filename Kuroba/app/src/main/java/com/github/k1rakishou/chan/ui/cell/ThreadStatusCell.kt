@@ -29,7 +29,7 @@ import android.widget.TextView
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
-import com.github.k1rakishou.chan.core.base.ThrottlingCoroutineExecutor
+import com.github.k1rakishou.chan.core.base.ThrottleFirstCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
@@ -77,7 +77,7 @@ class ThreadStatusCell(
   private val job = SupervisorJob()
   private val scope = CoroutineScope(job + Dispatchers.Main)
   private val rendezvousCoroutineExecutor = RendezvousCoroutineExecutor(scope)
-  private val clickThrottler = ThrottlingCoroutineExecutor(scope)
+  private val clickThrottler = ThrottleFirstCoroutineExecutor(scope)
 
   private var updateJob: Job? = null
 
@@ -140,15 +140,18 @@ class ThreadStatusCell(
   }
 
   override fun onClick(v: View) {
-    clickThrottler.post(1_000L, {
-      error = null
+    clickThrottler.post(
+      timeout = 1_000L,
+      func = {
+        error = null
 
-      if (callback?.currentChanDescriptor != null) {
-        callback?.onListStatusClicked()
+        if (callback?.currentChanDescriptor != null) {
+          callback?.onListStatusClicked()
+        }
+
+        update()
       }
-
-      update()
-    })
+    )
   }
 
   fun setCallback(callback: Callback?) {
@@ -205,7 +208,7 @@ class ThreadStatusCell(
       // Since we update ThreadStatusCell every second there might be times when the ChanThread object
       // is being updated with new posts and there are a lot of posts so it may hold the lock for
       // quite some time. So to avoid freezing the whole app because of that we need to first check
-      // whether the ChanThread lock is locked and skip this updated if it's locked.
+      // whether the ChanThread lock is locked and skip this update if it's locked.
       return
     }
 

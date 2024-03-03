@@ -1201,13 +1201,7 @@ class ThreadLayout @JvmOverloads constructor(
     chanDescriptor: ChanDescriptor,
     supportsReencode: Boolean
   ) {
-    if (this.focusedChild != null) {
-      val currentFocus = this.focusedChild
-      AndroidUtils.hideKeyboard(currentFocus)
-      currentFocus.clearFocus()
-    }
-
-    globalWindowInsetsManager.runWhenKeyboardIsHidden {
+    globalWindowInsetsManager.runWhenKeyboardIsHidden(focusedChild) {
       imageReencodingHelper.showController(fileUuid, chanDescriptor, supportsReencode)
     }
   }

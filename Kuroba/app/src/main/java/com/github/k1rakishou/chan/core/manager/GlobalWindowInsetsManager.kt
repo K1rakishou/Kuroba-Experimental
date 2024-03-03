@@ -205,7 +205,12 @@ class GlobalWindowInsetsManager {
     insetsUpdatesListeners.forEach { listener -> listener.onInsetsChanged() }
   }
 
-  fun runWhenKeyboardIsHidden(func: Runnable) {
+  fun runWhenKeyboardIsHidden(focusedChild: View?, func: Runnable) {
+    if (focusedChild != null) {
+      AndroidUtils.hideKeyboard(focusedChild)
+      focusedChild.clearFocus()
+    }
+
     if (!isKeyboardOpened) {
       func.run()
       return

@@ -84,6 +84,11 @@ class ReplyManager(
     Logger.d(TAG, "ReplyManager initialization completed, took $duration")
   }
 
+  fun notifyReplyFilesChanged() {
+    ensureFilesLoaded()
+    replyFilesStorage.notifyReplyFilesChanged()
+  }
+
   @Synchronized
   fun reloadReplyManagerStateFromDisk(appConstants: AppConstants): ModularResult<Unit> {
     if (filesLoaded) {

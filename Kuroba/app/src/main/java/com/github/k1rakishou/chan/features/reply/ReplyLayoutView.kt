@@ -263,8 +263,8 @@ class ReplyLayoutView @JvmOverloads constructor(
     TODO("Not yet implemented")
   }
 
-  override fun onAttachedMediaClicked(attachedMedia: ReplyFileAttachable) {
-    // TODO("Not yet implemented")
+  override fun onAttachedMediaClicked(attachedMedia: ReplyFileAttachable, isFileSupportedForReencoding: Boolean) {
+    replyLayoutCallbacks.showMediaReencodingController(attachedMedia, isFileSupportedForReencoding)
   }
 
   override fun onAttachedMediaLongClicked(attachedMedia: ReplyFileAttachable) {

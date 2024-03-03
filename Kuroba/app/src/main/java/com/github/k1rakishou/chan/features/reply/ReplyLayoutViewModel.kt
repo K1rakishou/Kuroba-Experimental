@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.BaseViewModel
+import com.github.k1rakishou.chan.core.base.ThrottleFirstCoroutineExecutor
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.viewmodel.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.BoardManager
@@ -33,6 +34,7 @@ import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
 import com.github.k1rakishou.chan.ui.helper.AppResources
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper
 import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
+import com.github.k1rakishou.chan.utils.MediaUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.rethrowCancellationException
@@ -107,6 +109,8 @@ class ReplyLayoutViewModel(
 
   val captchaHolderCaptchaCounterUpdatesFlow: Flow<Int>
     get() = captchaHolder.listenForCaptchaUpdates()
+
+  private val attachableMediaClickExecutor = ThrottleFirstCoroutineExecutor(viewModelScope)
 
   private var sendReplyJob: Job? = null
   private var listenForPostingStatusUpdatesJob: Job? = null
@@ -362,7 +366,11 @@ class ReplyLayoutViewModel(
 
   fun onAttachedMediaClicked(attachedMedia: ReplyFileAttachable) {
     withReplyLayoutState {
-      replyLayoutViewCallbacks?.onAttachedMediaClicked(attachedMedia)
+      attachableMediaClickExecutor.post(timeout = 500) {
+        val isFileSupportedForReencoding = isFileSupportedForReencoding(attachedMedia.fileUuid)
+
+        replyLayoutViewCallbacks?.onAttachedMediaClicked(attachedMedia, isFileSupportedForReencoding)
+      }
     }
   }
 
@@ -422,7 +430,7 @@ class ReplyLayoutViewModel(
   }
 
   fun onImageOptionsApplied() {
-    // no-op
+    withReplyLayoutState { replyLayoutState -> replyLayoutState.onImageOptionsApplied() }
   }
 
   fun onPickLocalMediaButtonClicked() {
@@ -457,6 +465,15 @@ class ReplyLayoutViewModel(
 
   fun onReplyLayoutOptionsButtonClicked() {
     replyLayoutViewCallbacks?.onReplyLayoutOptionsButtonClicked()
+  }
+
+  private suspend fun isFileSupportedForReencoding(clickedFileUuid: UUID): Boolean {
+    return withContext(Dispatchers.IO) {
+      val replyFile = replyManager.getReplyFileByFileUuid(clickedFileUuid).valueOrNull()
+        ?: return@withContext false
+
+      return@withContext MediaUtils.isFileSupportedForReencoding(replyFile.fileOnDisk)
+    }
   }
 
   private suspend fun enqueueNewReply(
@@ -616,6 +633,7 @@ class ReplyLayoutViewModel(
 
     fun presentController(controller: BaseFloatingController)
     fun pushController(controller: Controller)
+    fun showMediaReencodingController(attachedMedia: ReplyFileAttachable, fileSupportedForReencoding: Boolean)
   }
 
   interface ReplyLayoutViewCallbacks {
@@ -626,7 +644,7 @@ class ReplyLayoutViewModel(
 
     fun onSearchRemoteMediaButtonClicked()
     fun onReplyLayoutOptionsButtonClicked()
-    fun onAttachedMediaClicked(attachedMedia: ReplyFileAttachable)
+    fun onAttachedMediaClicked(attachedMedia: ReplyFileAttachable, isFileSupportedForReencoding: Boolean)
     fun onAttachedMediaLongClicked(attachedMedia: ReplyFileAttachable)
     fun showFileStatusDialog(attachableFileStatus: AnnotatedString)
   }

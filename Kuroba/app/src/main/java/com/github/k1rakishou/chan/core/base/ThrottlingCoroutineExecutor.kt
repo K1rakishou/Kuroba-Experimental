@@ -1,8 +1,57 @@
 package com.github.k1rakishou.chan.core.base
 
-import kotlinx.coroutines.*
+import androidx.annotation.GuardedBy
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
-class ThrottlingCoroutineExecutor(
+class ThrottleFirstCoroutineExecutor(
+  private val scope: CoroutineScope,
+  private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate
+) {
+  private val executor = ThrottlingCoroutineExecutor(
+    scope = scope,
+    mode = ThrottlingCoroutineExecutor.Mode.ThrottleFirst,
+    dispatcher = dispatcher
+  )
+
+  fun post(timeout: Long, func: suspend () -> Unit) {
+    executor.post(timeout, func)
+  }
+
+  fun stop() {
+    executor.stop()
+  }
+
+}
+
+class ThrottleLastCoroutineExecutor(
+  private val scope: CoroutineScope,
+  private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate
+) {
+
+  private val executor = ThrottlingCoroutineExecutor(
+    scope = scope,
+    mode = ThrottlingCoroutineExecutor.Mode.ThrottleLast,
+    dispatcher = dispatcher
+  )
+
+  fun post(timeout: Long, func: suspend () -> Unit) {
+    executor.post(timeout, func)
+  }
+
+  fun stop() {
+    executor.stop()
+  }
+
+}
+
+private class ThrottlingCoroutineExecutor(
   private val scope: CoroutineScope,
   private val mode: Mode = Mode.ThrottleFirst,
   private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate
@@ -11,10 +60,15 @@ class ThrottlingCoroutineExecutor(
     throw RuntimeException(throwable)
   }
 
+  private val lock = Any()
+
   @Volatile
-  private var func: (suspend () -> Unit)? = null
+  @GuardedBy("lock")
+
+  private var storedFunc: (suspend () -> Unit)? = null
   @Volatile
-  private var job: Job? = null
+  @GuardedBy("lock")
+  private var storedJob: Job? = null
 
   fun post(timeout: Long, func: suspend () -> Unit) {
     when (mode) {
@@ -24,73 +78,73 @@ class ThrottlingCoroutineExecutor(
   }
 
   fun stop() {
-    synchronized(this) {
-      this.func = null
-      this.job?.cancel()
-      this.job = null
+    synchronized(lock) {
+      storedFunc = null
+      storedJob?.cancel()
+      storedJob = null
     }
   }
 
-  // TODO(KurobaEx): throttleFirst has an unpleasant side-effect that occurs when trying to post
-  //  a new function when the previous one has already been executed but it's job hasn't been nulled
-  //  out yet so in this case the new function won't be executed (but it should be because the data
-  //  becomes stale in this case).
   private fun throttleFirst(timeout: Long, func: suspend () -> Unit) {
-    val alreadyEnqueued = synchronized(this) { job != null }
+    val alreadyEnqueued = synchronized(lock) { storedJob?.isActive == true }
     if (alreadyEnqueued) {
       return
     }
 
     val newJob = scope.launch(start = CoroutineStart.LAZY, context = dispatcher + coroutineExceptionHandler) {
-      this@ThrottlingCoroutineExecutor.func?.invoke()
-      this@ThrottlingCoroutineExecutor.func = null
-
-      delay(timeout)
-
-      synchronized(this@ThrottlingCoroutineExecutor) {
-        this@ThrottlingCoroutineExecutor.job = null
+      try {
+        consumeStoredFunc()?.invoke()
+        delay(timeout)
+      } finally {
+        synchronized(lock) { storedJob = null }
       }
     }
 
-    synchronized(this) {
-      if (this.job != null) {
+    synchronized(lock) {
+      if (storedJob?.isActive == true) {
         newJob.cancel()
         return@synchronized
       }
 
-      this@ThrottlingCoroutineExecutor.func = func
-      this.job = newJob
-      this.job!!.start()
+      storedFunc = func
+      storedJob = newJob
+      newJob.start()
     }
   }
 
   private fun throttleLast(timeout: Long, func: suspend () -> Unit) {
-    this.func = func
+    synchronized(lock) { storedFunc = func }
 
-    val alreadyEnqueued = synchronized(this) { job != null }
+    val alreadyEnqueued = synchronized(lock) { storedJob?.isActive == true }
     if (alreadyEnqueued) {
       return
     }
 
     val newJob = scope.launch(start = CoroutineStart.LAZY, context = dispatcher + coroutineExceptionHandler) {
-      delay(timeout)
-
-      this@ThrottlingCoroutineExecutor.func?.invoke()
-      this@ThrottlingCoroutineExecutor.func = null
-
-      synchronized(this@ThrottlingCoroutineExecutor) {
-        this@ThrottlingCoroutineExecutor.job = null
+      try {
+        delay(timeout)
+        consumeStoredFunc()?.invoke()
+      } finally {
+        synchronized(lock) { storedJob = null }
       }
     }
 
-    synchronized(this) {
-      if (this.job != null) {
+    synchronized(lock) {
+      if (storedJob?.isActive == true) {
         newJob.cancel()
         return@synchronized
       }
 
-      this.job = newJob
-      this.job!!.start()
+      storedJob = newJob
+      newJob.start()
+    }
+  }
+
+  private fun consumeStoredFunc(): (suspend () -> Unit)? {
+    return synchronized(lock) {
+      val f = storedFunc
+      storedFunc = null
+      return@synchronized f
     }
   }
 

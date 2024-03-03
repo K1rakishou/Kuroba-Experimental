@@ -520,6 +520,18 @@ class ReplyLayoutState(
     return true
   }
 
+  suspend fun attachableFileStatus(replyFileAttachable: ReplyFileAttachable): AnnotatedString {
+    return replyLayoutHelper.attachableFileStatus(
+      chanDescriptor = chanDescriptor,
+      chanTheme = themeEngine.chanTheme,
+      clickedFile = replyFileAttachable
+    )
+  }
+
+  fun onImageOptionsApplied() {
+    replyManager.notifyReplyFilesChanged()
+  }
+
   private fun canAutoSelectFile(maxAllowedFilesPerPost: Int): ModularResult<Boolean> {
     return Try { replyManager.selectedFilesCount().unwrap() < maxAllowedFilesPerPost }
   }
@@ -861,14 +873,6 @@ class ReplyLayoutState(
 
   private fun showDialog(title: String, message: CharSequence, onDismissListener: (() -> Unit)? = null) {
     callbacks.showDialog(title, message, onDismissListener)
-  }
-
-  suspend fun attachableFileStatus(replyFileAttachable: ReplyFileAttachable): AnnotatedString {
-    return replyLayoutHelper.attachableFileStatus(
-      chanDescriptor = chanDescriptor,
-      chanTheme = themeEngine.chanTheme,
-      clickedFile = replyFileAttachable
-    )
   }
 
   interface Callbacks {

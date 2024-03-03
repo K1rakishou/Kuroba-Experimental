@@ -37,6 +37,10 @@ class ReplyFilesStorage(
     replyFilesUpdates.tryEmit(Unit)
   }
 
+  fun notifyReplyFilesChanged() {
+    onReplyFilesChanged()
+  }
+
   @Synchronized
   fun addNewReplyFile(replyFile: ReplyFile, notifyListeners: Boolean): Boolean {
     try {

@@ -48,6 +48,7 @@ import com.github.k1rakishou.chan.core.presenter.ThreadPresenter
 import com.github.k1rakishou.chan.core.usecase.ExtractPostMapInfoHolderUseCase
 import com.github.k1rakishou.chan.features.reply.ReplyLayoutView
 import com.github.k1rakishou.chan.features.reply.ReplyLayoutViewModel
+import com.github.k1rakishou.chan.features.reply.data.ReplyFileAttachable
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter.PostAdapterCallback
@@ -451,6 +452,10 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(con
 
   override fun presentController(controller: BaseFloatingController) {
     threadListLayoutCallback?.presentController(controller)
+  }
+
+  override fun showMediaReencodingController(attachedMedia: ReplyFileAttachable, fileSupportedForReencoding: Boolean) {
+    threadListLayoutCallback?.showImageReencodingWindow(attachedMedia.fileUuid, fileSupportedForReencoding)
   }
 
   fun onCreate(
@@ -935,11 +940,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(con
   // TODO: New reply layout
   fun requestNewPostLoad() {
     callback?.requestNewPostLoad()
-  }
-
-  // TODO: New reply layout
-  fun showImageReencodingWindow(fileUuid: UUID, supportsReencode: Boolean) {
-    threadListLayoutCallback?.showImageReencodingWindow(fileUuid, supportsReencode)
   }
 
   fun presentController(controller: Controller) {
