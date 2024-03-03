@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.ui.view
 
-import android.view.MotionEvent
 import android.view.ViewGroup
 import com.github.k1rakishou.chan.ui.compose.bottom_panel.KurobaComposeIconPanel
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
@@ -14,8 +13,6 @@ interface NavigationViewContract {
   val type: Type
 
   fun setOnNavigationItemSelectedListener(listener: (Int) -> Boolean)
-  fun setOnOuterInterceptTouchEventListener(listener: (MotionEvent) -> Boolean)
-  fun setOnOuterTouchEventListener(listener: (MotionEvent) -> Boolean)
 
   fun updatePaddings(leftPadding: Int?, bottomPadding: Int?)
   fun setToolbar(toolbar: Toolbar)

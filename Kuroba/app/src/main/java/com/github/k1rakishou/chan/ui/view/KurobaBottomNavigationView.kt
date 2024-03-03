@@ -36,8 +36,6 @@ class KurobaBottomNavigationView @JvmOverloads constructor(
   private var isCollapseLocked = false
   private var isBottomNavViewEnabled = ChanSettings.isNavigationViewEnabled()
 
-  private var interceptTouchEventListener: ((MotionEvent) -> Boolean)? = null
-  private var touchEventListener: ((MotionEvent) -> Boolean)? = null
   private var menuItemClickListener: ((Int) -> Boolean)? = null
 
   private val kurobaComposeIconPanel by lazy {
@@ -173,13 +171,6 @@ class KurobaBottomNavigationView @JvmOverloads constructor(
       return true
     }
 
-    if (ev != null) {
-      val result = interceptTouchEventListener?.invoke(ev)
-      if (result == true) {
-        return true
-      }
-    }
-
     return super.onInterceptTouchEvent(ev)
   }
 
@@ -189,22 +180,7 @@ class KurobaBottomNavigationView @JvmOverloads constructor(
       return false
     }
 
-    if (event != null) {
-      val result = touchEventListener?.invoke(event)
-      if (result == true) {
-        return true
-      }
-    }
-
     return super.onTouchEvent(event)
-  }
-
-  override fun setOnOuterInterceptTouchEventListener(listener: (MotionEvent) -> Boolean) {
-    this.interceptTouchEventListener = listener
-  }
-
-  override fun setOnOuterTouchEventListener(listener: (MotionEvent) -> Boolean) {
-    this.touchEventListener = listener
   }
 
   override fun onAttachedToWindow() {

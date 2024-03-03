@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.ui.view
 
 import android.content.Context
 import android.util.AttributeSet
-import android.view.MotionEvent
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.compose.runtime.Composable
@@ -80,14 +79,6 @@ class KurobaNavigationRailView @JvmOverloads constructor(
 
   override fun setOnNavigationItemSelectedListener(listener: (Int) -> Boolean) {
     this.menuItemClickListener = listener
-  }
-
-  override fun setOnOuterInterceptTouchEventListener(listener: (MotionEvent) -> Boolean) {
-    // no-op
-  }
-
-  override fun setOnOuterTouchEventListener(listener: (MotionEvent) -> Boolean) {
-    // no-op
   }
 
   override fun setToolbar(toolbar: Toolbar) {

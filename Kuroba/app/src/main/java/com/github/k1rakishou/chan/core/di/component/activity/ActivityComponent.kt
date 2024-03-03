@@ -194,7 +194,6 @@ import com.github.k1rakishou.chan.ui.view.FloatingMenu
 import com.github.k1rakishou.chan.ui.view.HidingFloatingActionButton
 import com.github.k1rakishou.chan.ui.view.InsetAwareLinearLayout
 import com.github.k1rakishou.chan.ui.view.OptionalSwipeViewPager
-import com.github.k1rakishou.chan.ui.view.ReplyInputEditText
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.view.attach.AttachNewFileButton
 import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanel
@@ -316,7 +315,6 @@ interface ActivityComponent : ActivityDependencies {
   fun inject(colorizableSwitchMaterial: ColorizableSwitchMaterial)
   fun inject(colorizableTextInputLayout: ColorizableTextInputLayout)
   fun inject(colorizableTextView: ColorizableTextView)
-  fun inject(replyInputEditText: ReplyInputEditText)
   fun inject(colorizableTabLayout: ColorizableTabLayout)
   fun inject(colorizableToolbarSearchLayoutEditText: ColorizableToolbarSearchLayoutEditText)
 

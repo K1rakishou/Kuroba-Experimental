@@ -255,14 +255,6 @@ class BehaviourSettingsScreen(
 
         group += BooleanSettingV2.createBuilder(
           context = context,
-          identifier = BehaviorScreen.GeneralGroup.ReplyLayoutOpenCloseGestures,
-          topDescriptionIdFunc = { R.string.setting_controller_reply_layout_gestures },
-          bottomDescriptionIdFunc = { R.string.setting_controller_reply_layout_gestures_description },
-          setting = ChanSettings.replyLayoutOpenCloseGestures
-        )
-
-        group += BooleanSettingV2.createBuilder(
-          context = context,
           identifier = BehaviorScreen.GeneralGroup.OpenLinkConfirmation,
           topDescriptionIdFunc = { R.string.setting_open_link_confirmation },
           setting = ChanSettings.openLinkConfirmation

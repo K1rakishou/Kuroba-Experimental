@@ -258,16 +258,6 @@ class MainController(
   private val startActivityCallback: StartActivityStartupHandlerHelper.StartActivityCallbacks
     get() = (context as StartActivityStartupHandlerHelper.StartActivityCallbacks)
 
-  private val bottomNavViewGestureDetector by lazy {
-    return@lazy BottomNavViewLongTapSwipeUpGestureDetector(
-      context = context,
-      navigationViewContract = navigationViewContract,
-      onSwipedUpAfterLongPress = {
-        globalViewStateManager.onBottomNavViewSwipeUpGestureTriggered()
-      }
-    )
-  }
-
   private val bottomPadding = mutableStateOf(0)
   private val drawerOpenedState = mutableStateOf(false)
 
@@ -376,30 +366,6 @@ class MainController(
       return@setOnNavigationItemSelectedListener true
     }
 
-    navigationViewContract.setOnOuterInterceptTouchEventListener { event ->
-      if (!ChanSettings.replyLayoutOpenCloseGestures.get()) {
-        return@setOnOuterInterceptTouchEventListener false
-      }
-
-      if (navigationViewContract.selectedMenuItemId == R.id.action_browse) {
-        return@setOnOuterInterceptTouchEventListener bottomNavViewGestureDetector.onInterceptTouchEvent(event)
-      }
-
-      return@setOnOuterInterceptTouchEventListener false
-    }
-
-    navigationViewContract.setOnOuterTouchEventListener { event ->
-      if (!ChanSettings.replyLayoutOpenCloseGestures.get()) {
-        return@setOnOuterTouchEventListener false
-      }
-
-      if (navigationViewContract.selectedMenuItemId == R.id.action_browse) {
-        return@setOnOuterTouchEventListener bottomNavViewGestureDetector.onTouchEvent(event)
-      }
-
-      return@setOnOuterTouchEventListener false
-    }
-
     val drawerComposeView = view.findViewById<ComposeView>(R.id.drawer_compose_view)
     drawerComposeView.setContent {
       ProvideEverythingForCompose {
@@ -471,7 +437,6 @@ class MainController(
     themeEngine.removeListener(this)
     globalWindowInsetsManager.removeInsetsUpdatesListener(this)
     compositeDisposable.clear()
-    bottomNavViewGestureDetector.cleanup()
   }
 
   override fun onInsetsChanged() {

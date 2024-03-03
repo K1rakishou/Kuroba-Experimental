@@ -775,8 +775,6 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="setting_controller_swipeable_description">Works on screens like board archive/album/etc. Does not work on the thread screen! Use the other setting for the thread screen.</string>
     <string name="setting_view_thread_controller_swipeable">Allow the thread screen to be swiped away</string>
     <string name="setting_view_thread_controller_swipeable_description">When disabled you will be able to open the drawer by doing the drag to right gesture from any point of the screen (while in a thread) similar to how you can open the drawer when in catalog. Only works in PHONE/SLIDE layout mode.</string>
-    <string name="setting_controller_reply_layout_gestures">Allow Reply Layout gesture control</string>
-    <string name="setting_controller_reply_layout_gestures_description">This setting enables the following gestures: \n1. Longtap bottom navigation view + swipe up to open Reply Layout. \n2. Swipe up Reply Layout to expand it. \n3. Swipe down expanded Reply Layout to collapse it or if it is already collapsed to close it. \n\nBasically allows you to control Reply Layout with only gestures (You can even hide the reply button completely). Some gestures (Longtap + swipe up) do not work with SPLIT layout.</string>
     <string name="setting_open_link_confirmation">Ask before opening links</string>
     <string name="setting_captcha_setup">Captcha Settings</string>
     <string name="setting_captcha_setup_description">Captcha settings are per-site configurable. Tap for site setup.</string>
