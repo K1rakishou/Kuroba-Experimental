@@ -18,6 +18,7 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.repository.BoardFlagInfoRepository
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.loader.ClientException
+import com.github.k1rakishou.chan.core.usecase.LoadBoardFlagsUseCase
 import com.github.k1rakishou.chan.features.posting.PostingService
 import com.github.k1rakishou.chan.features.posting.PostingServiceDelegate
 import com.github.k1rakishou.chan.features.reply.data.PostFormattingButtonsFactory
@@ -41,11 +42,13 @@ import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.rethrowCancellationException
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.persist_state.ReplyMode
 import com.github.k1rakishou.prefs.OptionsSetting
+import com.github.k1rakishou.prefs.StringSetting
 import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -82,12 +85,16 @@ class ReplyLayoutViewModel(
     get() = appConstantsLazy.get()
   private val siteManager: SiteManager
     get() = siteManagerLazy.get()
+  private val boardManager: BoardManager
+    get() = boardManagerLazy.get()
   private val replyManager: ReplyManager
     get() = replyManagerLazy.get()
   private val captchaHolder: CaptchaHolder
     get() = captchaHolderLazy.get()
   private val postingServiceDelegate: PostingServiceDelegate
     get() = postingServiceDelegateLazy.get()
+  private val boardFlagInfoRepository: BoardFlagInfoRepository
+    get() = boardFlagInfoRepositoryLazy.get()
   private val appResources: AppResources
     get() = appResourcesLazy.get()
   private val globalUiStateHolder: GlobalUiStateHolder
@@ -115,6 +122,7 @@ class ReplyLayoutViewModel(
 
   private val attachableMediaClickExecutor = ThrottleFirstCoroutineExecutor(viewModelScope)
   private val promptUserForMediaUrlExecutor = ThrottleFirstCoroutineExecutor(viewModelScope)
+  private val flagSelectorClickExecutor = ThrottleFirstCoroutineExecutor(viewModelScope)
 
   private var sendReplyJob: Job? = null
   private var listenForPostingStatusUpdatesJob: Job? = null
@@ -412,7 +420,23 @@ class ReplyLayoutViewModel(
 
   fun onFlagSelectorClicked(chanDescriptor: ChanDescriptor) {
     withReplyLayoutState { replyLayoutState ->
-      TODO("New reply layout")
+      flagSelectorClickExecutor.post(500) {
+        val lastUsedCountryFlagPerBoardSetting = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+          ?.getSettingBySettingId<StringSetting>(SiteSetting.SiteSettingId.LastUsedCountryFlagPerBoard)
+
+        val selectedFlag = replyLayoutViewCallbacks?.promptUserToSelectFlag(chanDescriptor)
+        if (lastUsedCountryFlagPerBoardSetting == null || selectedFlag == null) {
+          return@post
+        }
+
+        boardFlagInfoRepository.storeLastUsedFlag(
+          lastUsedCountryFlagPerBoardSetting = lastUsedCountryFlagPerBoardSetting,
+          selectedFlagInfo = selectedFlag,
+          currentBoardCode = chanDescriptor.boardCode()
+        )
+
+        replyLayoutState.onFlagSelected(selectedFlag)
+      }
     }
   }
 
@@ -436,6 +460,10 @@ class ReplyLayoutViewModel(
     withReplyLayoutState { replyLayoutState ->
       TODO("New reply layout")
     }
+  }
+
+  suspend fun getFlagInfoList(boardDescriptor: BoardDescriptor): List<LoadBoardFlagsUseCase.FlagInfo> {
+    return boardFlagInfoRepository.getFlagInfoList(boardDescriptor)
   }
 
   fun onImageOptionsApplied() {
@@ -654,6 +682,7 @@ class ReplyLayoutViewModel(
   interface ReplyLayoutViewCallbacks {
     suspend fun showDialogSuspend(title: String, message: CharSequence?)
     suspend fun promptUserForMediaUrl(): String?
+    suspend fun promptUserToSelectFlag(chanDescriptor: ChanDescriptor): LoadBoardFlagsUseCase.FlagInfo?
 
     fun showDialog(title: String, message: CharSequence?, onDismissListener: (() -> Unit)? = null)
     fun hideDialog()

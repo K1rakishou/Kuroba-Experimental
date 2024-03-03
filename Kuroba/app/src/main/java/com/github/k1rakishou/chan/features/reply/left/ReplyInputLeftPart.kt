@@ -74,12 +74,14 @@ internal fun ReplyInputLeftPart(
             onMoveFocus = { focusManager.moveFocus(FocusDirection.Down) }
           )
 
-          // TODO: New reply layout
-//                    FlagSelector(
-//                        replyLayoutState = replyLayoutState,
-//                        replyLayoutEnabled = replyLayoutEnabled,
-//                        onFlagSelectorClicked = onFlagSelectorClicked
-//                    )
+          Spacer(modifier = Modifier.height(4.dp))
+
+          FlagSelector(
+            replyLayoutEnabled = replyLayoutEnabled,
+            replyLayoutState = replyLayoutState,
+            replyLayoutViewModel = replyLayoutViewModel,
+            onFlagSelectorClicked = onFlagSelectorClicked
+          )
 
           Spacer(modifier = Modifier.height(4.dp))
         }

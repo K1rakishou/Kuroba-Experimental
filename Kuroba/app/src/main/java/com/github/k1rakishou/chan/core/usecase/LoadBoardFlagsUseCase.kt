@@ -71,7 +71,13 @@ class LoadBoardFlagsUseCase(
   data class FlagInfo(
     val flagKey: String,
     val flagDescription: String
-  )
+  ) {
+
+    fun asUserReadableString(): String {
+      return "[${flagKey}] ${flagDescription}"
+    }
+
+  }
 
   companion object {
     private val FLAG_PATTERN = Pattern.compile("<option value=\"(.*)\">(.*)<\\/option>")

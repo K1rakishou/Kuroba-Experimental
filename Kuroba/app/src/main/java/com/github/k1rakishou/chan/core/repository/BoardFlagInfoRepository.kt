@@ -14,23 +14,22 @@ class BoardFlagInfoRepository(
   private val boardManager: BoardManager,
   private val loadBoardFlagsUseCase: LoadBoardFlagsUseCase
 ) {
-  private val cachedFlagInfoMap = ConcurrentHashMap<BoardDescriptor, List<LoadBoardFlagsUseCase.FlagInfo>>()
-  private val defaultFlagInfoMap = ConcurrentHashMap<BoardDescriptor, LoadBoardFlagsUseCase.FlagInfo>()
-
-  suspend fun cached(boardDescriptor: BoardDescriptor): Boolean {
-    return cachedFlagInfoMap[boardDescriptor]?.isNotEmpty() == true
-  }
+  private val cachedFlagInfoMap = ConcurrentHashMap<BoardDescriptor, List<LoadBoardFlagsUseCase.FlagInfo>>(64)
+  private val defaultFlagInfoMap = ConcurrentHashMap<BoardDescriptor, LoadBoardFlagsUseCase.FlagInfo>(64)
+  private val alreadyCheckedBoards = ConcurrentHashMap<BoardDescriptor, Unit>(64)
 
   suspend fun getFlagInfoList(boardDescriptor: BoardDescriptor): List<LoadBoardFlagsUseCase.FlagInfo> {
-    if (cachedFlagInfoMap[boardDescriptor].isNullOrEmpty()) {
+    if (cachedFlagInfoMap[boardDescriptor].isNullOrEmpty() && !alreadyCheckedBoards.contains(boardDescriptor)) {
       boardManager.awaitUntilInitialized()
 
       val supportsFlags = boardManager.byBoardDescriptor(boardDescriptor)?.countryFlags ?: false
       if (!supportsFlags) {
+        alreadyCheckedBoards.put(boardDescriptor, Unit)
         return emptyList()
       }
 
       loadFlags(boardDescriptor)
+      alreadyCheckedBoards.put(boardDescriptor, Unit)
     }
 
     return cachedFlagInfoMap[boardDescriptor]?.toList() ?: emptyList()

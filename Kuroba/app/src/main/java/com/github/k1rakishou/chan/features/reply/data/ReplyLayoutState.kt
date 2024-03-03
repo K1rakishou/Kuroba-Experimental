@@ -22,6 +22,7 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.repository.BoardFlagInfoRepository
 import com.github.k1rakishou.chan.core.site.PostFormatterButton
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
+import com.github.k1rakishou.chan.core.usecase.LoadBoardFlagsUseCase
 import com.github.k1rakishou.chan.features.posting.PostResult
 import com.github.k1rakishou.chan.features.posting.PostingServiceDelegate
 import com.github.k1rakishou.chan.features.posting.PostingStatus
@@ -141,6 +142,14 @@ class ReplyLayoutState(
   val maxCommentLength: State<Int>
     get() = _maxCommentLength
 
+  private val _hasFlagsToShow = mutableStateOf<Boolean>(false)
+  val hasFlagsToShow: State<Boolean>
+    get() = _hasFlagsToShow
+
+  private val _flag = mutableStateOf<LoadBoardFlagsUseCase.FlagInfo?>(null)
+  val flag: State<LoadBoardFlagsUseCase.FlagInfo?>
+    get() = _flag
+
   private val _replyLayoutAnimationState = mutableStateOf<ReplyLayoutAnimationState>(ReplyLayoutAnimationState.Collapsed)
   val replyLayoutAnimationState: State<ReplyLayoutAnimationState>
     get() = _replyLayoutAnimationState
@@ -153,6 +162,7 @@ class ReplyLayoutState(
   val sendReplyState: State<SendReplyState>
     get() = _sendReplyState
 
+  // TODO: New reply layout
   private val _replySendProgressInPercentsState = mutableIntStateOf(-1)
   val replySendProgressInPercentsState: IntState
     get() = _replySendProgressInPercentsState
@@ -162,6 +172,7 @@ class ReplyLayoutState(
 
   private val filePickerExecutor = RendezvousCoroutineExecutor(coroutineScope)
   private val highlightQuotesExecutor = DebouncingCoroutineExecutor(coroutineScope)
+  private val flagLoaderExecutor = RendezvousCoroutineExecutor(coroutineScope)
 
   private var persistInReplyManagerJob: Job? = null
   private var listenForReplyManagerUpdatesJob: Job? = null
@@ -476,8 +487,6 @@ class ReplyLayoutState(
       return
     }
 
-    val postFormattingButtons = postFormattingButtonsFactory.createPostFormattingButtons(chanDescriptor.boardDescriptor())
-
     replyManager.readReply(chanDescriptor) { reply ->
       _replyText.value = TextFieldValue(
         text = reply.comment,
@@ -502,8 +511,14 @@ class ReplyLayoutState(
       boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor())?.let { chanBoard ->
         _maxCommentLength.intValue = chanBoard.maxCommentChars
       }
+    }
 
-      _postFormatterButtons.value = postFormattingButtons
+    val postFormattingButtons = postFormattingButtonsFactory.createPostFormattingButtons(chanDescriptor.boardDescriptor())
+    _postFormatterButtons.value = postFormattingButtons
+
+    flagLoaderExecutor.post {
+      _hasFlagsToShow.value = boardFlagInfoRepository.getFlagInfoList(chanDescriptor.boardDescriptor()).isNotEmpty()
+      _flag.value = boardFlagInfoRepository.getLastUsedFlagInfo(chanDescriptor.boardDescriptor())
     }
 
     updateAttachables()
@@ -536,6 +551,10 @@ class ReplyLayoutState(
 
   fun onImageOptionsApplied() {
     replyManager.notifyReplyFilesChanged()
+  }
+
+  suspend fun onFlagSelected(selectedFlag: LoadBoardFlagsUseCase.FlagInfo) {
+    _flag.value = selectedFlag
   }
 
   private fun canAutoSelectFile(maxAllowedFilesPerPost: Int): ModularResult<Boolean> {

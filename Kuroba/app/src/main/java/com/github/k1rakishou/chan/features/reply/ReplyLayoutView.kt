@@ -16,15 +16,19 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.helper.DialogFactory
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
+import com.github.k1rakishou.chan.core.usecase.LoadBoardFlagsUseCase
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileAttachable
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
 import com.github.k1rakishou.chan.features.reply_image_search.ImageSearchController
 import com.github.k1rakishou.chan.ui.compose.providers.ProvideEverythingForCompose
+import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.OpenUrlInWebViewController
 import com.github.k1rakishou.chan.ui.controller.ThreadControllerType
 import com.github.k1rakishou.chan.ui.controller.dialog.KurobaComposeDialogController
 import com.github.k1rakishou.chan.ui.helper.AppResources
 import com.github.k1rakishou.chan.ui.layout.ThreadListLayout
+import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.ui.widget.dialog.KurobaAlertDialog
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.WebViewLink
@@ -55,6 +59,8 @@ class ReplyLayoutView @JvmOverloads constructor(
   lateinit var dialogFactory: DialogFactory
   @Inject
   lateinit var appResources: AppResources
+  @Inject
+  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   private lateinit var replyLayoutViewModel: ReplyLayoutViewModel
   private lateinit var replyLayoutCallbacks: ReplyLayoutViewModel.ThreadListLayoutCallbacks
@@ -305,6 +311,46 @@ class ReplyLayoutView @JvmOverloads constructor(
         description = KurobaComposeDialogController.Text.AnnotatedString(attachableFileStatus)
       )
     )
+  }
+
+  override suspend fun promptUserToSelectFlag(chanDescriptor: ChanDescriptor): LoadBoardFlagsUseCase.FlagInfo? {
+    val flagInfoList = replyLayoutViewModel.getFlagInfoList(chanDescriptor.boardDescriptor())
+    if (flagInfoList.isEmpty()) {
+      return null
+    }
+
+    val floatingMenuItems = mutableListOf<FloatingListMenuItem>()
+
+    flagInfoList.forEach { boardFlag ->
+      floatingMenuItems += FloatingListMenuItem(
+        key = boardFlag.flagKey,
+        name = boardFlag.asUserReadableString(),
+        value = boardFlag
+      )
+    }
+
+    if (floatingMenuItems.isEmpty()) {
+      return null
+    }
+
+    val selectedBoardFlag = suspendCancellableCoroutine<LoadBoardFlagsUseCase.FlagInfo?> { continuation ->
+      val floatingMenuScreen = FloatingListMenuController(
+        context = context,
+        constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
+        items = floatingMenuItems,
+        itemClickListener = { clickedItem ->
+          val selectedFlagInfo = clickedItem.value as? LoadBoardFlagsUseCase.FlagInfo
+          continuation.resumeValueSafe(selectedFlagInfo)
+        },
+        menuDismissListener = {
+          continuation.resumeValueSafe(null)
+        }
+      )
+
+      replyLayoutCallbacks.presentController(floatingMenuScreen)
+    }
+
+    return selectedBoardFlag
   }
 
   private fun hasWebViewLinks(message: CharSequence?): Boolean {
