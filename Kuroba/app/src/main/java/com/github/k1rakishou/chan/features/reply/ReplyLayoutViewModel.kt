@@ -7,6 +7,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.viewmodel.ViewModelAssistedFactory
@@ -50,6 +51,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.HttpUrl
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
@@ -443,12 +445,14 @@ class ReplyLayoutViewModel(
     withReplyLayoutState { replyLayoutState -> replyLayoutState.pickLocalMedia(showFilePickerChooser = true) }
   }
 
-  fun onPickRemoteMediaButtonClicked() {
-    replyLayoutViewCallbacks?.onPickRemoteMediaButtonClicked()
+  fun onRemoteImageSelected(selectedImageUrl: HttpUrl) {
+    withReplyLayoutState { replyLayoutState -> replyLayoutState.pickRemoteMedia(selectedImageUrl) }
   }
 
-  fun onSearchRemoteMediaButtonClicked() {
-    replyLayoutViewCallbacks?.onSearchRemoteMediaButtonClicked()
+  fun onPickRemoteMediaButtonClicked() {
+    withReplyLayoutState { replyLayoutState ->
+      // TODO: New reply layout
+    }
   }
 
   fun onReplyLayoutOptionsButtonClicked() {
@@ -611,6 +615,7 @@ class ReplyLayoutViewModel(
     )
 
     fun presentController(controller: BaseFloatingController)
+    fun pushController(controller: Controller)
   }
 
   interface ReplyLayoutViewCallbacks {
@@ -619,7 +624,6 @@ class ReplyLayoutViewModel(
     fun hideDialog()
     fun showToast(message: String)
 
-    fun onPickRemoteMediaButtonClicked()
     fun onSearchRemoteMediaButtonClicked()
     fun onReplyLayoutOptionsButtonClicked()
     fun onAttachedMediaClicked(attachedMedia: ReplyFileAttachable)

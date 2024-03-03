@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.features.reply.left
 
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -110,9 +109,7 @@ internal fun ReplyAttachments(
     val mediaWidth = (this.maxWidth / 2) - 4.dp
 
     FlowRow(
-      modifier = Modifier
-        .fillMaxSize()
-        .animateContentSize(),
+      modifier = Modifier.fillMaxSize(),
       horizontalArrangement = Arrangement.spacedBy(2.dp),
       verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {

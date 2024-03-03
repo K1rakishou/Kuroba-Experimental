@@ -10,11 +10,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeDivider
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 
 @Composable
 fun ReplyLayout(
   replyLayoutViewModel: ReplyLayoutViewModel,
-  onPresolveCaptchaButtonClicked: () -> Unit
+  onPresolveCaptchaButtonClicked: () -> Unit,
+  onSearchRemoteMediaButtonClicked: (ChanDescriptor) -> Unit,
 ) {
   val chanDescriptorMut by replyLayoutViewModel.boundChanDescriptor
   val chanDescriptor = chanDescriptorMut
@@ -65,7 +67,7 @@ fun ReplyLayout(
           onPickLocalMediaButtonClicked = replyLayoutViewModel::onPickLocalMediaButtonClicked,
           onPickLocalMediaButtonLongClicked = replyLayoutViewModel::onPickLocalMediaButtonLongClicked,
           onPickRemoteMediaButtonClicked = replyLayoutViewModel::onPickRemoteMediaButtonClicked,
-          onSearchRemoteMediaButtonClicked = replyLayoutViewModel::onSearchRemoteMediaButtonClicked,
+          onSearchRemoteMediaButtonClicked = { onSearchRemoteMediaButtonClicked(chanDescriptor) },
           onPresolveCaptchaButtonClicked = onPresolveCaptchaButtonClicked,
           onReplyLayoutOptionsButtonClicked = replyLayoutViewModel::onReplyLayoutOptionsButtonClicked
         )

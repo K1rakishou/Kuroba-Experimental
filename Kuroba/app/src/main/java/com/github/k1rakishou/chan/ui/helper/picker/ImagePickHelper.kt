@@ -227,51 +227,61 @@ class ImagePickHelper(
     filePickerInput: RemoteFilePicker.RemoteFilePickerInput
   ): ModularResult<PickedFile> {
     return ModularResult.Try {
-      val result = remoteFilePicker.get().pickFile(filePickerInput)
-      if (result is ModularResult.Error) {
-        Logger.e(TAG, "pickRemoteFile() error", result.error)
-        return@Try result.unwrap()
-      }
-
-      val pickedFile = (result as ModularResult.Value).value
-      if (pickedFile is PickedFile.Failure) {
-        if (pickedFile.reason is AbstractFilePicker.FilePickerError.BadResultCode) {
-          Logger.e(TAG, "pickRemoteFile() pickedFile is " +
-            "PickedFile.BadResultCode: ${pickedFile.reason.errorMessageOrClassName()}")
-        } else {
-          Logger.e(TAG, "pickRemoteFile() pickedFile is PickedFile.Failure", pickedFile.reason)
-        }
-
-        return@Try result.unwrap()
-      }
-
-      val replyFile = (pickedFile as PickedFile.Result).replyFiles.first()
-
-      val replyFileMeta = replyFile.getReplyFileMeta().safeUnwrap { error ->
-        Logger.e(TAG, "pickRemoteFile() replyFile.getReplyFileMeta() error", error)
-
-        replyFile.deleteFromDisk()
-
-        return@Try PickedFile.Failure(
-          AbstractFilePicker.FilePickerError.FailedToReadFileMeta()
+      filePickerInput.imageUrls.firstOrNull()?.let { imageUrl ->
+        emitSyntheticReplyAttachable(
+          id = SyntheticFileId.Url(imageUrl),
+          state = SyntheticReplyAttachableState.Downloading
         )
-      }
-
-      if (!replyManager.get().addNewReplyFileIntoStorage(replyFile)) {
-        Logger.e(TAG, "pickRemoteFile() addNewReplyFileIntoStorage() failure")
-
-        replyFile.deleteFromDisk()
-
-        return@Try PickedFile.Failure(
-          AbstractFilePicker.FilePickerError.FailedToAddNewReplyFileIntoStorage()
-        )
-      }
-
-      withContext(Dispatchers.Main) {
-        filePickerInput.showLoadingView(R.string.decoding_reply_file_preview)
       }
 
       try {
+        val result = remoteFilePicker.get().pickFile(filePickerInput)
+        if (result is ModularResult.Error) {
+          Logger.e(TAG, "pickRemoteFile() error", result.error)
+          return@Try result.unwrap()
+        }
+
+        val pickedFile = (result as ModularResult.Value).value
+        if (pickedFile is PickedFile.Failure) {
+          if (pickedFile.reason is AbstractFilePicker.FilePickerError.BadResultCode) {
+            Logger.e(TAG, "pickRemoteFile() pickedFile is " +
+              "PickedFile.BadResultCode: ${pickedFile.reason.errorMessageOrClassName()}")
+          } else {
+            Logger.e(TAG, "pickRemoteFile() pickedFile is PickedFile.Failure", pickedFile.reason)
+          }
+
+          return@Try result.unwrap()
+        }
+
+        val replyFile = (pickedFile as PickedFile.Result).replyFiles.first()
+
+        val replyFileMeta = replyFile.getReplyFileMeta().safeUnwrap { error ->
+          Logger.e(TAG, "pickRemoteFile() replyFile.getReplyFileMeta() error", error)
+
+          replyFile.deleteFromDisk()
+
+          return@Try PickedFile.Failure(
+            AbstractFilePicker.FilePickerError.FailedToReadFileMeta()
+          )
+        }
+
+        if (!replyManager.get().addNewReplyFileIntoStorage(replyFile)) {
+          Logger.e(TAG, "pickRemoteFile() addNewReplyFileIntoStorage() failure")
+
+          replyFile.deleteFromDisk()
+
+          return@Try PickedFile.Failure(
+            AbstractFilePicker.FilePickerError.FailedToAddNewReplyFileIntoStorage()
+          )
+        }
+
+        filePickerInput.imageUrls.firstOrNull()?.let { imageUrl ->
+          emitSyntheticReplyAttachable(
+            id = SyntheticFileId.Url(imageUrl),
+            state = SyntheticReplyAttachableState.Decoding
+          )
+        }
+
         withContext(Dispatchers.IO) {
           imageLoaderV2.get().calculateFilePreviewAndStoreOnDisk(
             appContext,
@@ -279,19 +289,22 @@ class ImagePickHelper(
             Scale.FIT
           )
         }
+
+        Logger.d(TAG, "pickRemoteFile() success! Picked new remote file with UUID='${replyFileMeta.fileUuid}'")
+
+        if (filePickerInput.notifyListeners) {
+          _pickedFilesUpdateFlow.emit(replyFileMeta.fileUuid)
+        }
+
+        return@Try result.unwrap()
       } finally {
-        withContext(Dispatchers.Main) {
-          filePickerInput.hideLoadingView()
+        filePickerInput.imageUrls.forEach { imageUrl ->
+          emitSyntheticReplyAttachable(
+            id = SyntheticFileId.Url(imageUrl),
+            state = SyntheticReplyAttachableState.Done
+          )
         }
       }
-
-      Logger.d(TAG, "pickRemoteFile() success! Picked new remote file with UUID='${replyFileMeta.fileUuid}'")
-
-      if (filePickerInput.notifyListeners) {
-        _pickedFilesUpdateFlow.emit(replyFileMeta.fileUuid)
-      }
-
-      return@Try result.unwrap()
     }
   }
 

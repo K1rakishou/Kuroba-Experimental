@@ -553,6 +553,7 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="reply_failed_to_load_drafts_data_into_reply">Failed to load data into reply</string>
     <string name="reply_send_canceled_by_user">Canceled by user</string>
     <string name="reply_file_status_dialog_title">File status</string>
+    <string name="reply_layout_pick_file_permission_required">READ_EXTERNAL_STORAGE permission is required for this action!</string>
     <string name="reply_synthetic_file_state_initializing">Initializing…</string>
     <string name="reply_synthetic_file_state_downloading">Downloading…</string>
     <string name="reply_synthetic_file_state_decoding_preview">Decoding preview…</string>

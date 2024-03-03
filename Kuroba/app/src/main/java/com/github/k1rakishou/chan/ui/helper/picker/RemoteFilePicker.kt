@@ -1,7 +1,5 @@
 package com.github.k1rakishou.chan.ui.helper.picker
 
-import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
@@ -37,7 +35,6 @@ class RemoteFilePicker(
   private val cacheHandler: CacheHandler
     get() = cacheHandlerLazy.get()
 
-  private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
   private val cacheFileType = CacheFileType.Other
 
   override suspend fun pickFile(filePickerInput: RemoteFilePickerInput): ModularResult<PickedFile> {
@@ -50,35 +47,25 @@ class RemoteFilePicker(
       var lastError: FilePickerError? = null
       var downloadedUrl: HttpUrl? = null
 
-      serializedCoroutineExecutor.post {
-        filePickerInput.showLoadingView.invoke(R.string.downloading_file)
-      }
-
-      try {
-        // Download the first image out of the provided urls because some of them may fail
-        for (imageUrlRaw in filePickerInput.imageUrls) {
-          downloadedUrl = imageUrlRaw.toHttpUrlOrNull()
-          if (downloadedUrl == null) {
-            lastError = FilePickerError.BadUrl(imageUrlRaw)
-            continue
-          }
-
-          downloadedFileMaybe = downloadFile(downloadedUrl)
-          if (downloadedFileMaybe is ModularResult.Error) {
-            lastError = FilePickerError.FailedToDownloadFile(
-              imageUrlRaw,
-              downloadedFileMaybe.error
-            )
-
-            continue
-          }
-
-          break
+      // Download the first image out of the provided urls because some of them may fail
+      for (imageUrlRaw in filePickerInput.imageUrls) {
+        downloadedUrl = imageUrlRaw.toHttpUrlOrNull()
+        if (downloadedUrl == null) {
+          lastError = FilePickerError.BadUrl(imageUrlRaw)
+          continue
         }
-      } finally {
-        serializedCoroutineExecutor.post {
-          filePickerInput.hideLoadingView.invoke()
+
+        downloadedFileMaybe = downloadFile(downloadedUrl)
+        if (downloadedFileMaybe is ModularResult.Error) {
+          lastError = FilePickerError.FailedToDownloadFile(
+            imageUrlRaw,
+            downloadedFileMaybe.error
+          )
+
+          continue
         }
+
+        break
       }
 
       if (downloadedFileMaybe is ModularResult.Error) {
@@ -186,9 +173,7 @@ class RemoteFilePicker(
   data class RemoteFilePickerInput(
     val notifyListeners: Boolean,
     val replyChanDescriptor: ChanDescriptor,
-    val imageUrls: List<String>,
-    val showLoadingView: suspend (Int) -> Unit,
-    val hideLoadingView: suspend () -> Unit
+    val imageUrls: List<String>
   )
 
 }

@@ -31,6 +31,7 @@ import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper
 import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
 import com.github.k1rakishou.chan.ui.helper.picker.LocalFilePicker
 import com.github.k1rakishou.chan.ui.helper.picker.PickedFile
+import com.github.k1rakishou.chan.ui.helper.picker.RemoteFilePicker
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.ModularResult
@@ -55,6 +56,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import okhttp3.HttpUrl
 
 @Stable
 class ReplyLayoutState(
@@ -356,8 +358,7 @@ class ReplyLayoutState(
   fun pickLocalMedia(showFilePickerChooser: Boolean) {
     filePickerExecutor.post {
       if (!requestPermissionIfNeededSuspend()) {
-        // TODO: New reply layout. strings
-        callbacks.showToast("READ_EXTERNAL_STORAGE permission is required for this action!")
+        callbacks.showToast(appResources.string(R.string.reply_layout_pick_file_permission_required))
         return@post
       }
 
@@ -391,6 +392,47 @@ class ReplyLayoutState(
         Logger.d(TAG, "pickLocalMedia() success")
       } catch (error: Throwable) {
         Logger.error(TAG) { "pickLocalMedia() error: ${error.errorMessageOrClassName()}" }
+
+        // TODO: New reply layout. Error toast.
+      }
+    }
+  }
+
+
+  fun pickRemoteMedia(selectedImageUrl: HttpUrl) {
+    filePickerExecutor.post {
+      try {
+        val selectedImageUrlString = selectedImageUrl.toString()
+
+        val input = RemoteFilePicker.RemoteFilePickerInput(
+          notifyListeners = true,
+          replyChanDescriptor = chanDescriptor,
+          imageUrls = listOf(selectedImageUrlString)
+        )
+
+        val pickedFileResult = withContext(Dispatchers.IO) { imagePickHelper.pickRemoteFile(input) }
+          .unwrap()
+
+        val replyFiles = (pickedFileResult as PickedFile.Result).replyFiles
+        replyFiles.forEach { replyFile ->
+          val replyFileMeta = replyFile.getReplyFileMeta().safeUnwrap { error ->
+            Logger.e(TAG, "pickLocalMedia() imagePickHelper.pickRemoteMedia($chanDescriptor) getReplyFileMeta() error", error)
+            return@forEach
+          }
+
+          val maxAllowedFilesPerPost = replyLayoutHelper.getMaxAllowedFilesPerPost(chanDescriptor)
+          if (maxAllowedFilesPerPost != null && canAutoSelectFile(maxAllowedFilesPerPost).unwrap()) {
+            replyManager.updateFileSelection(
+              fileUuid = replyFileMeta.fileUuid,
+              selected = true,
+              notifyListeners = true
+            )
+          }
+        }
+
+        Logger.d(TAG, "pickRemoteMedia() success")
+      } catch (error: Throwable) {
+        Logger.error(TAG) { "pickRemoteMedia() error: ${error.errorMessageOrClassName()}" }
 
         // TODO: New reply layout. Error toast.
       }

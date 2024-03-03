@@ -59,7 +59,6 @@ import com.github.k1rakishou.chan.ui.cell.PreviousThreadScrollPositionData
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
 import com.github.k1rakishou.chan.ui.controller.CaptchaContainerController
-import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.controller.ThreadControllerType
 import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
 import com.github.k1rakishou.chan.ui.helper.AppResources
@@ -943,36 +942,14 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(con
     threadListLayoutCallback?.showImageReencodingWindow(fileUuid, supportsReencode)
   }
 
-  // TODO: New reply layout
   fun presentController(controller: Controller) {
     BackgroundUtils.ensureMainThread()
     threadListLayoutCallback?.presentController(controller)
   }
 
-  // TODO: New reply layout
-  fun pushController(controller: Controller) {
+  override fun pushController(controller: Controller) {
     BackgroundUtils.ensureMainThread()
     threadListLayoutCallback?.pushController(controller)
-  }
-
-  // TODO: New reply layout
-  fun showLoadingView(cancellationFunc: () -> Unit, titleTextId: Int) {
-    BackgroundUtils.ensureMainThread()
-
-    val loadingViewController = LoadingViewController(
-      context,
-      true,
-      context.getString(titleTextId)
-    ).apply { enableCancellation(cancellationFunc) }
-
-    threadListLayoutCallback?.presentController(loadingViewController)
-  }
-
-  // TODO: New reply layout
-  fun hideLoadingView() {
-    BackgroundUtils.ensureMainThread()
-
-    threadListLayoutCallback?.unpresentController { controller -> controller is LoadingViewController }
   }
 
   fun toolbarHeight(): Int {
