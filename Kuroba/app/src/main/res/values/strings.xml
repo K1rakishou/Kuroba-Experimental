@@ -558,6 +558,10 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="reply_synthetic_file_state_downloading">Downloading…</string>
     <string name="reply_synthetic_file_state_decoding_preview">Decoding preview…</string>
     <string name="reply_synthetic_file_state_done">Done…</string>
+    <string name="reply_layout_local_file_pick_error">Failed to pick local file, error: %1$s</string>
+    <string name="reply_layout_remote_file_pick_error">Failed to pick remote file, error: %1$s</string>
+    <string name="reply_layout_local_file_pick_success">Successfully picked local file</string>
+    <string name="reply_layout_remote_file_pick_success">Successfully picked remote file</string>
 
     <string name="delete_confirm">Delete your post?</string>
     <string name="delete_wait">Deleting post…</string>

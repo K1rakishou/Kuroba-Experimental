@@ -390,10 +390,13 @@ class ReplyLayoutState(
         }
 
         Logger.d(TAG, "pickLocalMedia() success")
+        callbacks.showToast(appResources.string(R.string.reply_layout_local_file_pick_success))
       } catch (error: Throwable) {
         Logger.error(TAG) { "pickLocalMedia() error: ${error.errorMessageOrClassName()}" }
 
-        // TODO: New reply layout. Error toast.
+        callbacks.showToast(
+          appResources.string(R.string.reply_layout_local_file_pick_error, error.errorMessageOrClassName())
+        )
       }
     }
   }
@@ -431,10 +434,12 @@ class ReplyLayoutState(
         }
 
         Logger.d(TAG, "pickRemoteMedia() success")
+        callbacks.showToast(appResources.string(R.string.reply_layout_remote_file_pick_success))
       } catch (error: Throwable) {
         Logger.error(TAG) { "pickRemoteMedia() error: ${error.errorMessageOrClassName()}" }
-
-        // TODO: New reply layout. Error toast.
+        callbacks.showToast(
+          appResources.string(R.string.reply_layout_remote_file_pick_error, error.errorMessageOrClassName())
+        )
       }
     }
   }

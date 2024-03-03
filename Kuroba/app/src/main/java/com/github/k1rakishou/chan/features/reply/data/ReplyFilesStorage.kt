@@ -38,7 +38,7 @@ class ReplyFilesStorage(
   }
 
   @Synchronized
-  fun addNewReplyFile(replyFile: ReplyFile): Boolean {
+  fun addNewReplyFile(replyFile: ReplyFile, notifyListeners: Boolean): Boolean {
     try {
       if (!replyFile.fileOnDisk.exists()) {
         Logger.e(TAG, "addNewReplyFile() fileOnDisk does not exist (file='${replyFile.fileOnDisk}')")
@@ -99,7 +99,10 @@ class ReplyFilesStorage(
 
       replyFiles += replyFile
       ensureFilesSorted()
-      onReplyFilesChanged()
+
+      if (notifyListeners) {
+        onReplyFilesChanged()
+      }
 
       return true
     } catch (error: Throwable) {
@@ -107,7 +110,10 @@ class ReplyFilesStorage(
 
       replyFiles -= replyFile
       ensureFilesSorted()
-      onReplyFilesChanged()
+
+      if (notifyListeners) {
+        onReplyFilesChanged()
+      }
 
       return false
     }

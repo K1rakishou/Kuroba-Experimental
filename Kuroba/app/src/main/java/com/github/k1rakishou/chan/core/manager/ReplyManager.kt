@@ -119,9 +119,9 @@ class ReplyManager(
   }
 
   @Synchronized
-  fun addNewReplyFileIntoStorage(replyFile: ReplyFile): Boolean {
+  fun addNewReplyFileIntoStorage(replyFile: ReplyFile, notifyListeners: Boolean): Boolean {
     ensureFilesLoaded()
-    return replyFilesStorage.addNewReplyFile(replyFile)
+    return replyFilesStorage.addNewReplyFile(replyFile, notifyListeners)
   }
 
   @Synchronized

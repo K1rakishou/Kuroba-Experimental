@@ -161,7 +161,6 @@ abstract class AbstractFilePicker<T>(
     // Common errors
     class UnknownError(cause: Throwable) : FilePickerError("Unknown error: ${cause.errorMessageOrClassName()}")
     class Canceled : FilePickerError("Canceled")
-    class NotImplemented : FilePickerError("Not implemented")
     class NoReplyFound(chanDescriptor: ChanDescriptor) : FilePickerError("No reply found for chanDescriptor='$chanDescriptor'")
 
     // Local errors
@@ -174,6 +173,7 @@ abstract class AbstractFilePicker<T>(
     class FailedToCreateFileMeta : FilePickerError("Failed to create file meta information")
     class FailedToReadFileMeta : FilePickerError("Failed to read file meta information")
     class FailedToAddNewReplyFileIntoStorage : FilePickerError("Failed to add new reply file into reply storage")
+    class FailedToPickAnyFiles : FilePickerError("Failed to pick any files")
 
     // Remote errors
     class BadUrl(url: String) : FilePickerError("Bad url \"$url\"")

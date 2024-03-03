@@ -99,7 +99,7 @@ class ImagePickHelper(
             return@forEach
           }
 
-          if (!replyManager.addNewReplyFileIntoStorage(sharedFile)) {
+          if (!replyManager.addNewReplyFileIntoStorage(sharedFile, false)) {
             Logger.e(TAG, "pickFilesFromIntent() addNewReplyFileIntoStorage() failure")
             sharedFile.deleteFromDisk()
             return@forEach
@@ -183,21 +183,21 @@ class ImagePickHelper(
           )
         }
 
-        if (!replyManager.addNewReplyFileIntoStorage(replyFile)) {
-          Logger.e(TAG, "pickLocalFile() addNewReplyFileIntoStorage() failure")
-          replyFile.deleteFromDisk()
-
-          return@Try PickedFile.Failure(
-            AbstractFilePicker.FilePickerError.FailedToAddNewReplyFileIntoStorage()
-          )
-        }
-
-        emitSyntheticReplyAttachable(
-          id = SyntheticFileId.FilePath(replyFile.fileOnDisk.absolutePath),
-          state = SyntheticReplyAttachableState.Decoding
-        )
-
         try {
+          if (!replyManager.addNewReplyFileIntoStorage(replyFile, false)) {
+            Logger.e(TAG, "pickLocalFile() addNewReplyFileIntoStorage() failure")
+            replyFile.deleteFromDisk()
+
+            return@Try PickedFile.Failure(
+              AbstractFilePicker.FilePickerError.FailedToAddNewReplyFileIntoStorage()
+            )
+          }
+
+          emitSyntheticReplyAttachable(
+            id = SyntheticFileId.FilePath(replyFile.fileOnDisk.absolutePath),
+            state = SyntheticReplyAttachableState.Decoding
+          )
+
           withContext(Dispatchers.IO) {
             imageLoaderV2.calculateFilePreviewAndStoreOnDisk(
               context = appContext,
@@ -210,6 +210,15 @@ class ImagePickHelper(
             "imageLoaderV2.calculateFilePreviewAndStoreOnDisk(${replyFileMeta.fileUuid}) " +
               "unhandled error: ${error.errorMessageOrClassName()}"
           }
+
+          replyManager.deleteFile(
+            fileUuid = replyFileMeta.fileUuid,
+            notifyListeners = true
+          )
+            .onError { error ->
+              Logger.error(TAG, error) { "Failed to delete file '${replyFile.fileOnDisk.absolutePath}'" }
+            }
+            .ignore()
 
           emitSyntheticReplyAttachable(
             id = SyntheticFileId.FilePath(replyFile.fileOnDisk.absolutePath),
@@ -226,6 +235,11 @@ class ImagePickHelper(
           id = SyntheticFileId.FilePath(replyFile.fileOnDisk.absolutePath),
           state = SyntheticReplyAttachableState.Done
         )
+      }
+
+      if (toEmit.isEmpty()) {
+        Logger.error(TAG) { "pickLocalFile() failed to pick any files" }
+        throw AbstractFilePicker.FilePickerError.FailedToPickAnyFiles()
       }
 
       if (filePickerInput.notifyListeners) {
@@ -278,7 +292,7 @@ class ImagePickHelper(
           )
         }
 
-        if (!replyManager.addNewReplyFileIntoStorage(replyFile)) {
+        if (!replyManager.addNewReplyFileIntoStorage(replyFile, false)) {
           Logger.e(TAG, "pickRemoteFile() addNewReplyFileIntoStorage() failure")
 
           replyFile.deleteFromDisk()
