@@ -175,7 +175,7 @@ class ReplyLayoutView @JvmOverloads constructor(
   }
 
   override fun cleanup() {
-    replyLayoutViewModel.cleanup()
+    replyLayoutViewModel.unbindChanDescriptor()
   }
 
   override fun onBack(): Boolean {

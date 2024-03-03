@@ -337,8 +337,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(con
   private var spanCount = 2
   private var prevLastPostNo = 0L
 
-  // TODO: New reply layout
-  fun getCurrentChanDescriptor(): ChanDescriptor? {
+  private fun getCurrentChanDescriptor(): ChanDescriptor? {
     return threadPresenter?.currentChanDescriptor
   }
 
@@ -825,12 +824,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(con
     }
   }
 
-  // TODO: New reply layout
-  fun currentFocusedController(): ThreadPresenter.CurrentFocusedController {
-    return threadPresenter?.currentFocusedController()
-      ?: ThreadPresenter.CurrentFocusedController.None
-  }
-
   fun isReplyLayoutOpened(): Boolean {
     return replyLayoutView.isOpened()
   }
@@ -934,18 +927,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(con
 
   fun highlightPosts(postDescriptors: Set<PostDescriptor>?, blink: Boolean) {
     postHighlightManager.highlightPosts(postAdapter.threadCellData, postDescriptors, blink)
-  }
-
-  // TODO: New reply layout
-  fun showThread(threadDescriptor: ThreadDescriptor) {
-    serializedCoroutineExecutor.post {
-      callback?.showThread(threadDescriptor)
-    }
-  }
-
-  // TODO: New reply layout
-  fun requestNewPostLoad() {
-    callback?.requestNewPostLoad()
   }
 
   fun presentController(controller: Controller) {

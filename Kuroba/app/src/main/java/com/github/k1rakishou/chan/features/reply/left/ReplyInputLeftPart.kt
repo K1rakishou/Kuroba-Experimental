@@ -89,6 +89,7 @@ internal fun ReplyInputLeftPart(
       Column {
         ReplyTextField(
           replyLayoutState = replyLayoutState,
+          replyLayoutViewModel = replyLayoutViewModel,
           replyLayoutEnabled = replyLayoutEnabled
         )
 

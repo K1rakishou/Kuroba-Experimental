@@ -24,6 +24,7 @@ import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.github.k1rakishou.chan.features.reply.ReplyLayoutViewModel
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutState
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextField
@@ -35,6 +36,7 @@ import com.github.k1rakishou.chan.ui.compose.requestFocusSafe
 @Composable
 internal fun ReplyTextField(
   replyLayoutState: ReplyLayoutState,
+  replyLayoutViewModel: ReplyLayoutViewModel,
   replyLayoutEnabled: Boolean
 ) {
   val chanTheme = LocalChanTheme.current
@@ -75,10 +77,9 @@ internal fun ReplyTextField(
         prevReplyLayoutVisibility != ReplyLayoutVisibility.Collapsed &&
         replyLayoutVisibility == ReplyLayoutVisibility.Collapsed
       ) {
-        // TODO: New reply layout
-//                if (!globalUiInfoManager.isAnyReplyLayoutOpened()) {
-//                    localSoftwareKeyboardController?.hide()
-//                }
+        if (!replyLayoutViewModel.isAnyReplyLayoutOpened()) {
+          localSoftwareKeyboardController?.hide()
+        }
       }
 
       prevReplyLayoutVisibility = replyLayoutVisibility
@@ -91,10 +92,9 @@ internal fun ReplyTextField(
       onDispose {
         focusRequester.freeFocusSafe()
 
-        // TODO: New reply layout
-//                if (!globalUiInfoManager.isAnyReplyLayoutOpened()) {
-//                    localSoftwareKeyboardController?.hide()
-//                }
+        if (!replyLayoutViewModel.isAnyReplyLayoutOpened()) {
+          localSoftwareKeyboardController?.hide()
+        }
       }
     }
   )
@@ -109,11 +109,11 @@ internal fun ReplyTextField(
 
   KurobaComposeTextField(
     modifier = Modifier
-        .fillMaxSize()
-        .padding(vertical = 4.dp)
-        .focusable(interactionSource = mutableInteractionSource)
-        .focusRequester(focusRequester)
-        .then(minHeightModifier),
+      .fillMaxSize()
+      .padding(vertical = 4.dp)
+      .focusable(interactionSource = mutableInteractionSource)
+      .focusRequester(focusRequester)
+      .then(minHeightModifier),
     enabled = replyLayoutEnabled,
     value = replyText,
     singleLine = false,

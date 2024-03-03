@@ -90,6 +90,8 @@ class ReplyLayoutViewModel(
     get() = postingServiceDelegateLazy.get()
   private val appResources: AppResources
     get() = appResourcesLazy.get()
+  private val globalUiStateHolder: GlobalUiStateHolder
+    get() = globalUiStateHolderLazy.get()
 
   private val _replyManagerStateLoaded = AtomicBoolean(false)
 
@@ -217,16 +219,15 @@ class ReplyLayoutViewModel(
       imagePickHelperLazy = imagePickHelperLazy
     )
 
-    _replyLayoutState.value?.unbindChanDescriptor()
+    unbindChanDescriptor()
     replyLayoutState.bindChanDescriptor(chanDescriptor)
 
     _replyLayoutState.value = replyLayoutState
   }
 
-  fun cleanup() {
+  fun unbindChanDescriptor() {
     _replyLayoutState.value?.unbindChanDescriptor()
 
-    // TODO: New reply layout
     sendReplyJob?.cancel()
     sendReplyJob = null
 
@@ -485,6 +486,10 @@ class ReplyLayoutViewModel(
 
   fun onReplyLayoutOptionsButtonClicked() {
     replyLayoutViewCallbacks?.onReplyLayoutOptionsButtonClicked()
+  }
+
+  fun isAnyReplyLayoutOpened(): Boolean {
+    return globalUiStateHolder.uiState.replyLayout.isAnyReplyLayoutOpened()
   }
 
   private suspend fun isFileSupportedForReencoding(clickedFileUuid: UUID): Boolean {
