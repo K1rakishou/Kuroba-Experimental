@@ -78,18 +78,6 @@ class ReplyLayoutViewModel(
   private val runtimePermissionsHelperLazy: Lazy<RuntimePermissionsHelper>,
   private val imagePickHelperLazy: Lazy<ImagePickHelper>
 ) : BaseViewModel(), ReplyLayoutState.Callbacks {
-  private val _replyManagerStateLoaded = AtomicBoolean(false)
-
-  private val _boundChanDescriptor = mutableStateOf<ChanDescriptor?>(null)
-  val boundChanDescriptor: State<ChanDescriptor?>
-    get() = _boundChanDescriptor
-
-  private val _replyLayoutState = mutableStateOf<ReplyLayoutState?>(null)
-  val replyLayoutState: State<ReplyLayoutState?>
-    get() = _replyLayoutState
-  private val currentReplyLayoutState: ReplyLayoutState?
-    get() = _replyLayoutState.value
-
   private val appConstants: AppConstants
     get() = appConstantsLazy.get()
   private val siteManager: SiteManager
@@ -102,6 +90,17 @@ class ReplyLayoutViewModel(
     get() = postingServiceDelegateLazy.get()
   private val appResources: AppResources
     get() = appResourcesLazy.get()
+
+  private val _replyManagerStateLoaded = AtomicBoolean(false)
+
+  private val _boundChanDescriptor = mutableStateOf<ChanDescriptor?>(null)
+  val boundChanDescriptor: State<ChanDescriptor?>
+    get() = _boundChanDescriptor
+  private val _replyLayoutState = mutableStateOf<ReplyLayoutState?>(null)
+  val replyLayoutState: State<ReplyLayoutState?>
+    get() = _replyLayoutState
+  private val currentReplyLayoutState: ReplyLayoutState?
+    get() = _replyLayoutState.value
 
   private val threadControllerType by lazy {
     requireNotNull(savedStateHandle.get<ThreadControllerType>(ThreadControllerTypeParam)) {
@@ -600,17 +599,6 @@ class ReplyLayoutViewModel(
     withContext(Dispatchers.IO) {
       replyManager.reloadReplyManagerStateFromDisk(appConstants)
         .unwrap()
-
-      // TODO: New reply layout. Do we really need to do this? Seems pointless.
-      replyManager.iterateFilesOrdered { _, _, replyFileMeta ->
-        if (replyFileMeta.selected) {
-          replyManager.updateFileSelection(
-            fileUuid = replyFileMeta.fileUuid,
-            selected = true,
-            notifyListeners = false
-          )
-        }
-      }
     }
   }
 
