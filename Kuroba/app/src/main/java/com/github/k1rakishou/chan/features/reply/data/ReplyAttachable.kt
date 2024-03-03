@@ -18,7 +18,10 @@ data class ReplyFileAttachable(
   val fileSize: Long,
   val imageDimensions: ImageDimensions?,
   val attachAdditionalInfo: AttachAdditionalInfo,
-  val maxAttachedFilesCountExceeded: Boolean
+  val maxAttachedFilesCountExceeded: Boolean,
+  val fileOnDisk: String,
+  val fileMetaOnDisk: String,
+  val previewFileOnDiskPath: String?
 ) {
 
   val key: String

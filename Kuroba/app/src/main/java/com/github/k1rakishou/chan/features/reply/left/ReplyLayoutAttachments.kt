@@ -106,7 +106,8 @@ internal fun ReplyAttachments(
       100.dp
     }
 
-    val mediaWidth = (this.maxWidth / 2) - 8.dp
+    // TODO: make this number (2) dynamic so that it looks good on wider screens
+    val mediaWidth = (this.maxWidth / 2) - 4.dp
 
     FlowRow(
       modifier = Modifier

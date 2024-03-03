@@ -112,6 +112,10 @@ class ReplyLayoutHelper(
 
             val imageDimensions = getImageDimensions(replyFile)
 
+            val fileOnDisk = replyFile.fileOnDisk.absolutePath
+            val fileMetaOnDisk = replyFile.fileMetaOnDisk.absolutePath
+            val previewFileOnDiskPath = replyFile.previewFileOnDisk?.absolutePath
+
             return@map ReplyFileAttachable(
               fileUuid = replyFileMeta.fileUuid,
               fileName = replyFileMeta.fileName,
@@ -130,7 +134,10 @@ class ReplyLayoutHelper(
                 selectedFilesCount < maxAllowedFilesPerPost -> false
                 selectedFilesCount == maxAllowedFilesPerPost -> !isSelected
                 else -> true
-              }
+              },
+              fileOnDisk = fileOnDisk,
+              fileMetaOnDisk = fileMetaOnDisk,
+              previewFileOnDiskPath = previewFileOnDiskPath
             )
           }
 
