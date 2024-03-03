@@ -2,7 +2,7 @@ package com.github.k1rakishou.chan.core.loader.impl.post_comment
 
 import android.graphics.Bitmap
 
-internal class SpanUpdateBatch(
+class SpanUpdateBatch(
   val requestUrl: String,
   val extraLinkInfo: ExtraLinkInfo,
   val oldSpansForLink: List<CommentPostLinkableSpan>,

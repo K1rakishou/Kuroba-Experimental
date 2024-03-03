@@ -24,6 +24,7 @@ import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerGoToPo
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerOpenAlbumHelper
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerOpenThreadHelper
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
+import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutHelper
 import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadProgressNotifier
 import com.github.k1rakishou.chan.ui.captcha.chan4.Chan4CaptchaSolverHelper
 import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
@@ -141,27 +142,25 @@ class HelperModule {
   @Singleton
   fun provideImagePickHelper(
     appContext: Context,
-    replyManager: Lazy<ReplyManager>,
-    siteManager: Lazy<SiteManager>,
-    imageLoaderV2: Lazy<ImageLoaderV2>,
-    shareFilePicker: Lazy<ShareFilePicker>,
-    localFilePicker: Lazy<LocalFilePicker>,
-    remoteFilePicker: Lazy<RemoteFilePicker>,
-    postingLimitationsInfoManager: Lazy<PostingLimitationsInfoManager>,
-    currentOpenedDescriptorStateManager: Lazy<CurrentOpenedDescriptorStateManager>,
+    replyManagerLazy: Lazy<ReplyManager>,
+    imageLoaderV2Lazy: Lazy<ImageLoaderV2>,
+    shareFilePickerLazy: Lazy<ShareFilePicker>,
+    localFilePickerLazy: Lazy<LocalFilePicker>,
+    remoteFilePickerLazy: Lazy<RemoteFilePicker>,
+    currentOpenedDescriptorStateManagerLazy: Lazy<CurrentOpenedDescriptorStateManager>,
+    replyLayoutHelperLazy: Lazy<ReplyLayoutHelper>
   ): ImagePickHelper {
     Logger.deps("ImagePickHelper");
 
     return ImagePickHelper(
       appContext,
-      siteManager,
-      replyManager,
-      imageLoaderV2,
-      shareFilePicker,
-      localFilePicker,
-      remoteFilePicker,
-      postingLimitationsInfoManager,
-      currentOpenedDescriptorStateManager
+      replyManagerLazy,
+      imageLoaderV2Lazy,
+      shareFilePickerLazy,
+      localFilePickerLazy,
+      remoteFilePickerLazy,
+      currentOpenedDescriptorStateManagerLazy,
+      replyLayoutHelperLazy
     )
   }
 
@@ -267,6 +266,25 @@ class HelperModule {
   fun provideGlobalUiStateHolder(): GlobalUiStateHolder {
     Logger.deps("GlobalUiStateHolder");
     return GlobalUiStateHolder()
+  }
+
+  @Provides
+  @Singleton
+  fun provideReplyLayoutFileEnumerator(
+    replyManagerLazy: Lazy<ReplyManager>,
+    siteManagerLazy: Lazy<SiteManager>,
+    boardManagerLazy: Lazy<BoardManager>,
+    postingLimitationsInfoManagerLazy: Lazy<PostingLimitationsInfoManager>,
+    imageLoaderV2Lazy: Lazy<ImageLoaderV2>
+  ): ReplyLayoutHelper {
+    Logger.deps("ReplyLayoutHelper")
+    return ReplyLayoutHelper(
+      replyManagerLazy,
+      siteManagerLazy,
+      boardManagerLazy,
+      postingLimitationsInfoManagerLazy,
+      imageLoaderV2Lazy
+    )
   }
 
 }

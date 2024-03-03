@@ -22,7 +22,7 @@ import com.github.k1rakishou.model.data.post.LoaderType
 import kotlinx.coroutines.withTimeout
 import java.util.concurrent.TimeUnit
 
-internal class PostExtraContentLoader(
+class PostExtraContentLoader(
   private val chanThreadManager: ChanThreadManager,
   private val linkExtraInfoFetchers: List<ExternalMediaServiceExtraInfoFetcher>
 ) : OnDemandContentLoader(LoaderType.PostExtraContentLoader) {

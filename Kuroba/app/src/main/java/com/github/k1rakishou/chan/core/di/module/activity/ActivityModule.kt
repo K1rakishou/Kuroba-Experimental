@@ -8,7 +8,6 @@ import com.github.k1rakishou.chan.core.di.scope.PerActivity
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
 import com.github.k1rakishou.chan.core.helper.ThumbnailLongtapOptionsHelper
-import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
@@ -21,8 +20,6 @@ import com.github.k1rakishou.chan.core.manager.GlobalViewStateManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.PostHighlightManager
-import com.github.k1rakishou.chan.core.manager.PostingLimitationsInfoManager
-import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.ThreadFollowHistoryManager
@@ -30,7 +27,6 @@ import com.github.k1rakishou.chan.core.manager.UpdateManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2
 import com.github.k1rakishou.chan.features.reply.data.PostFormattingButtonsFactory
-import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutHelper
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -178,25 +174,6 @@ class ActivityModule {
   ): PostHighlightManager {
     Logger.deps("PostHighlightManager")
     return PostHighlightManager(currentOpenedDescriptorStateManager)
-  }
-
-  @PerActivity
-  @Provides
-  fun provideReplyLayoutFileEnumerator(
-    replyManagerLazy: Lazy<ReplyManager>,
-    siteManagerLazy: Lazy<SiteManager>,
-    boardManagerLazy: Lazy<BoardManager>,
-    postingLimitationsInfoManagerLazy: Lazy<PostingLimitationsInfoManager>,
-    imageLoaderV2Lazy: Lazy<ImageLoaderV2>
-  ): ReplyLayoutHelper {
-    Logger.deps("ReplyLayoutFileEnumerator")
-    return ReplyLayoutHelper(
-      replyManagerLazy,
-      siteManagerLazy,
-      boardManagerLazy,
-      postingLimitationsInfoManagerLazy,
-      imageLoaderV2Lazy
-    )
   }
 
   @PerActivity

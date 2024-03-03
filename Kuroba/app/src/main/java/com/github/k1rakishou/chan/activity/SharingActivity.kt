@@ -136,11 +136,7 @@ class SharingActivity : AppCompatActivity(), IHasViewModelProviderFactory, IHasA
     }
 
     if (!reloadResult) {
-      showToast(
-        this,
-        R.string.share_error_message,
-        Toast.LENGTH_LONG
-      )
+      showToast(this, R.string.share_error_message, Toast.LENGTH_LONG)
       return false
     }
 
@@ -160,38 +156,19 @@ class SharingActivity : AppCompatActivity(), IHasViewModelProviderFactory, IHasA
             val sharedFilesCount = pickedFile.replyFiles.size
 
             if (sharedFilesCount > 0) {
-              showToast(
-                this,
-                getString(R.string.share_success_message, sharedFilesCount),
-                Toast.LENGTH_LONG
-              )
+              showToast(this, getString(R.string.share_success_message, sharedFilesCount), Toast.LENGTH_LONG)
             } else {
-              showToast(
-                this,
-                R.string.share_error_message,
-                Toast.LENGTH_LONG
-              )
+              showToast(this, R.string.share_error_message, Toast.LENGTH_LONG)
             }
 
-            Logger.d(
-              TAG, "imagePickHelper.pickFilesFromIntent() -> PickedFile.Result, " +
-                "sharedFilesCount=$sharedFilesCount"
-            )
-
+            Logger.d(TAG, "imagePickHelper.pickFilesFromIntent() -> PickedFile.Result, sharedFilesCount=$sharedFilesCount")
             return true
           }
           is PickedFile.Failure -> {
-            Logger.e(
-              TAG, "imagePickHelper.pickFilesFromIntent() -> PickedFile.Failure",
-              pickedFile.reason
-            )
+            Logger.e(TAG, "imagePickHelper.pickFilesFromIntent() -> PickedFile.Failure", pickedFile.reason)
 
             if (!pickedFile.reason.isCanceled()) {
-              showToast(
-                this,
-                R.string.share_error_message,
-                Toast.LENGTH_LONG
-              )
+              showToast(this, R.string.share_error_message, Toast.LENGTH_LONG)
             }
 
             return false
@@ -200,12 +177,7 @@ class SharingActivity : AppCompatActivity(), IHasViewModelProviderFactory, IHasA
       }
       is ModularResult.Error -> {
         Logger.e(TAG, "imagePickHelper.pickFilesFromIntent() -> MR.Error", shareResult.error)
-
-        showToast(
-          this,
-          R.string.share_error_message,
-          Toast.LENGTH_LONG
-        )
+        showToast(this, R.string.share_error_message, Toast.LENGTH_LONG)
         return false
       }
     }

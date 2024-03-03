@@ -3,7 +3,7 @@ package com.github.k1rakishou.chan.core.loader.impl.post_comment
 import com.github.k1rakishou.model.data.video_service.MediaServiceType
 import org.joda.time.Period
 
-internal sealed class ExtraLinkInfo {
+sealed class ExtraLinkInfo {
   class Success(
     val mediaServiceType: MediaServiceType,
     val title: String?,
@@ -12,6 +12,6 @@ internal sealed class ExtraLinkInfo {
     fun isEmpty() = title.isNullOrEmpty() && duration == null
   }
 
-  object Error : ExtraLinkInfo()
-  object NotAvailable : ExtraLinkInfo()
+  data object Error : ExtraLinkInfo()
+  data object NotAvailable : ExtraLinkInfo()
 }

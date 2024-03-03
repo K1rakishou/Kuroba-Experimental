@@ -7,16 +7,14 @@ import coil.size.Scale
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManager
-import com.github.k1rakishou.chan.core.manager.PostingLimitationsInfoManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
-import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutHelper
 import com.github.k1rakishou.chan.features.reply.data.SyntheticFileId
 import com.github.k1rakishou.chan.features.reply.data.SyntheticReplyAttachable
 import com.github.k1rakishou.chan.features.reply.data.SyntheticReplyAttachableState
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -28,15 +26,29 @@ import java.util.*
 
 class ImagePickHelper(
   private val appContext: Context,
-  private val siteManager: Lazy<SiteManager>,
-  private val replyManager: Lazy<ReplyManager>,
-  private val imageLoaderV2: Lazy<ImageLoaderV2>,
-  private val shareFilePicker: Lazy<ShareFilePicker>,
-  private val localFilePicker: Lazy<LocalFilePicker>,
-  private val remoteFilePicker: Lazy<RemoteFilePicker>,
-  private val postingLimitationsInfoManager: Lazy<PostingLimitationsInfoManager>,
-  private val currentOpenedDescriptorStateManager: Lazy<CurrentOpenedDescriptorStateManager>,
+  private val replyManagerLazy: Lazy<ReplyManager>,
+  private val imageLoaderV2Lazy: Lazy<ImageLoaderV2>,
+  private val shareFilePickerLazy: Lazy<ShareFilePicker>,
+  private val localFilePickerLazy: Lazy<LocalFilePicker>,
+  private val remoteFilePickerLazy: Lazy<RemoteFilePicker>,
+  private val currentOpenedDescriptorStateManagerLazy: Lazy<CurrentOpenedDescriptorStateManager>,
+  private val replyLayoutHelperLazy: Lazy<ReplyLayoutHelper>
 ) {
+  private val replyManager: ReplyManager
+    get() = replyManagerLazy.get()
+  private val imageLoaderV2: ImageLoaderV2
+    get() = imageLoaderV2Lazy.get()
+  private val shareFilePicker: ShareFilePicker
+    get() = shareFilePickerLazy.get()
+  private val localFilePicker: LocalFilePicker
+    get() = localFilePickerLazy.get()
+  private val remoteFilePicker: RemoteFilePicker
+    get() = remoteFilePickerLazy.get()
+  private val currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager
+    get() = currentOpenedDescriptorStateManagerLazy.get()
+  private val replyLayoutHelper: ReplyLayoutHelper
+    get() = replyLayoutHelperLazy.get()
+
   private val _pickedFilesUpdateFlow = MutableSharedFlow<UUID>(extraBufferCapacity = Channel.UNLIMITED)
   val pickedFilesUpdateFlow: SharedFlow<UUID>
     get() = _pickedFilesUpdateFlow.asSharedFlow()
@@ -45,11 +57,12 @@ class ImagePickHelper(
   val syntheticFilesUpdatesFlow: SharedFlow<SyntheticReplyAttachable>
     get() = _syntheticFilesUpdatesFlow.asSharedFlow()
 
+  // TODO: New reply layout. Implement this for compose EditText once it supports this thing.
   suspend fun pickFilesFromIncomingShare(
     filePickerInput: ShareFilePicker.ShareFilePickerInput
   ): ModularResult<PickedFile> {
     return ModularResult.Try {
-      val result = shareFilePicker.get().pickFile(filePickerInput)
+      val result = shareFilePicker.pickFile(filePickerInput)
       if (result is ModularResult.Error) {
         Logger.e(TAG, "pickFilesFromIntent() error", result.error)
         return@Try result.unwrap()
@@ -86,25 +99,25 @@ class ImagePickHelper(
             return@forEach
           }
 
-          if (!replyManager.get().addNewReplyFileIntoStorage(sharedFile)) {
+          if (!replyManager.addNewReplyFileIntoStorage(sharedFile)) {
             Logger.e(TAG, "pickFilesFromIntent() addNewReplyFileIntoStorage() failure")
             sharedFile.deleteFromDisk()
             return@forEach
           }
 
           withContext(Dispatchers.IO) {
-            imageLoaderV2.get().calculateFilePreviewAndStoreOnDisk(
+            imageLoaderV2.calculateFilePreviewAndStoreOnDisk(
               appContext,
               replyFileMeta.fileUuid,
               Scale.FIT
             )
           }
 
-          val currentFocusedDescriptor = currentOpenedDescriptorStateManager.get().currentFocusedDescriptor
+          val currentFocusedDescriptor = currentOpenedDescriptorStateManager.currentFocusedDescriptor
           if (currentFocusedDescriptor != null) {
-            val maxAllowedFilesPerPost = getMaxAllowedFilesPerPost(currentFocusedDescriptor)
+            val maxAllowedFilesPerPost = replyLayoutHelper.getMaxAllowedFilesPerPost(currentFocusedDescriptor)
             if (maxAllowedFilesPerPost != null && canAutoSelectFile(maxAllowedFilesPerPost).unwrap()) {
-              replyManager.get().updateFileSelection(
+              replyManager.updateFileSelection(
                 fileUuid = replyFileMeta.fileUuid,
                 selected = true,
                 notifyListeners = false
@@ -134,7 +147,7 @@ class ImagePickHelper(
   ): ModularResult<PickedFile> {
     return ModularResult.Try {
       // We can only pick one local file at a time (for now)
-      val result = withContext(Dispatchers.Main) { localFilePicker.get().pickFile(filePickerInput) }
+      val result = withContext(Dispatchers.Main) { localFilePicker.pickFile(filePickerInput) }
       if (result is ModularResult.Error) {
         Logger.e(TAG, "pickLocalFile() error", result.error)
         return@Try result.unwrap()
@@ -170,7 +183,7 @@ class ImagePickHelper(
           )
         }
 
-        if (!replyManager.get().addNewReplyFileIntoStorage(replyFile)) {
+        if (!replyManager.addNewReplyFileIntoStorage(replyFile)) {
           Logger.e(TAG, "pickLocalFile() addNewReplyFileIntoStorage() failure")
           replyFile.deleteFromDisk()
 
@@ -186,7 +199,7 @@ class ImagePickHelper(
 
         try {
           withContext(Dispatchers.IO) {
-            imageLoaderV2.get().calculateFilePreviewAndStoreOnDisk(
+            imageLoaderV2.calculateFilePreviewAndStoreOnDisk(
               context = appContext,
               fileUuid = replyFileMeta.fileUuid,
               scale = Scale.FIT
@@ -235,7 +248,7 @@ class ImagePickHelper(
       }
 
       try {
-        val result = remoteFilePicker.get().pickFile(filePickerInput)
+        val result = remoteFilePicker.pickFile(filePickerInput)
         if (result is ModularResult.Error) {
           Logger.e(TAG, "pickRemoteFile() error", result.error)
           return@Try result.unwrap()
@@ -265,7 +278,7 @@ class ImagePickHelper(
           )
         }
 
-        if (!replyManager.get().addNewReplyFileIntoStorage(replyFile)) {
+        if (!replyManager.addNewReplyFileIntoStorage(replyFile)) {
           Logger.e(TAG, "pickRemoteFile() addNewReplyFileIntoStorage() failure")
 
           replyFile.deleteFromDisk()
@@ -283,7 +296,7 @@ class ImagePickHelper(
         }
 
         withContext(Dispatchers.IO) {
-          imageLoaderV2.get().calculateFilePreviewAndStoreOnDisk(
+          imageLoaderV2.calculateFilePreviewAndStoreOnDisk(
             appContext,
             replyFileMeta.fileUuid,
             Scale.FIT
@@ -309,19 +322,19 @@ class ImagePickHelper(
   }
 
   fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-    localFilePicker.get().onActivityResult(requestCode, resultCode, data)
+    localFilePicker.onActivityResult(requestCode, resultCode, data)
   }
 
   fun onActivityCreated(activity: AppCompatActivity) {
-    localFilePicker.get().onActivityCreated(activity)
+    localFilePicker.onActivityCreated(activity)
   }
 
   fun onActivityDestroyed(activity: AppCompatActivity) {
-    localFilePicker.get().onActivityDestroyed(activity)
+    localFilePicker.onActivityDestroyed(activity)
   }
 
   private fun canAutoSelectFile(maxAllowedFilesPerPost: Int): ModularResult<Boolean> {
-    return ModularResult.Try { replyManager.get().selectedFilesCount().unwrap() < maxAllowedFilesPerPost }
+    return ModularResult.Try { replyManager.selectedFilesCount().unwrap() < maxAllowedFilesPerPost }
   }
 
   private fun emitSyntheticReplyAttachable(
@@ -329,18 +342,6 @@ class ImagePickHelper(
     state: SyntheticReplyAttachableState
   ) {
     _syntheticFilesUpdatesFlow.tryEmit(SyntheticReplyAttachable(id, state))
-  }
-
-  private suspend fun getMaxAllowedFilesPerPost(chanDescriptor: ChanDescriptor): Int? {
-    if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
-      return null
-    }
-
-    siteManager.get().awaitUntilInitialized()
-
-    return postingLimitationsInfoManager.get().getMaxAllowedFilesPerPost(
-      chanDescriptor.boardDescriptor()
-    )
   }
 
   companion object {

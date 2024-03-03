@@ -14,7 +14,7 @@ import com.github.k1rakishou.model.repository.MediaServiceLinkExtraContentReposi
 /**
  * Base interface for link extra info fetcher.
  * */
-internal abstract class ExternalMediaServiceExtraInfoFetcher {
+abstract class ExternalMediaServiceExtraInfoFetcher {
   /**
    * Each fetcher must have it's own type
    * */
