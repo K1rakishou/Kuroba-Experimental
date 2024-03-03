@@ -317,15 +317,8 @@ class Reply(
   }
 
   data class CaptchaInfo(
-    /**
-     * Optional. `null` when ReCaptcha v2 was used or a 4pass
-     */
     @JvmField
     var captchaChallenge: String? = null,
-
-    /**
-     * Optional. `null` when a 4pass was used.
-     */
     @JvmField
     var captchaSolution: CaptchaSolution? = null
   )

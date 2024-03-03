@@ -5,7 +5,10 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
 import com.github.k1rakishou.chan.core.site.parser.CommentParserHelper
+import com.github.k1rakishou.common.substringSafe
 import com.github.k1rakishou.core_themes.ChanTheme
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import java.util.regex.Pattern
 
 object ReplyTextFieldHelpers {
@@ -79,6 +82,29 @@ object ReplyTextFieldHelpers {
         )
       }
     }
+  }
+
+  fun findAllQuotesInText(chanDescriptor: ChanDescriptor, replyTextCopy: String): Set<PostDescriptor> {
+    val foundPostDescriptors = mutableSetOf<PostDescriptor>()
+
+    val quoteMatcher = QuoteRegex.matcher(replyTextCopy)
+    while (quoteMatcher.find()) {
+      val start = quoteMatcher.start(1)
+      val end = quoteMatcher.end(1)
+
+      if (start >= end) {
+        continue
+      }
+
+      val postNo = replyTextCopy.substringSafe(start + 2, end)?.toLongOrNull()
+      if (postNo == null || postNo < 0) {
+        continue
+      }
+
+      foundPostDescriptors += PostDescriptor.create(chanDescriptor, postNo)
+    }
+
+    return foundPostDescriptors
   }
 
 }

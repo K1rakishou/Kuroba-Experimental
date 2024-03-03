@@ -458,6 +458,13 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(con
     threadListLayoutCallback?.showImageReencodingWindow(attachedMedia.fileUuid, fileSupportedForReencoding)
   }
 
+  override fun highlightQuotes(quotes: Set<PostDescriptor>) {
+    highlightPosts(
+      postDescriptors = quotes,
+      blink = false
+    )
+  }
+
   fun onCreate(
     threadPresenter: ThreadPresenter,
     threadListLayoutCallback: ThreadListLayoutCallback,
@@ -925,7 +932,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(con
     }
   }
 
-  // TODO: New reply layout
   fun highlightPosts(postDescriptors: Set<PostDescriptor>?, blink: Boolean) {
     postHighlightManager.highlightPosts(postAdapter.threadCellData, postDescriptors, blink)
   }

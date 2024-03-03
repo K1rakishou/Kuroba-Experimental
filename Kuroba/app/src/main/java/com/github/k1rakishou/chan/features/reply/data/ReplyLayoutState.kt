@@ -14,6 +14,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.withStyle
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
@@ -24,6 +25,7 @@ import com.github.k1rakishou.chan.core.site.http.ReplyResponse
 import com.github.k1rakishou.chan.features.posting.PostResult
 import com.github.k1rakishou.chan.features.posting.PostingServiceDelegate
 import com.github.k1rakishou.chan.features.posting.PostingStatus
+import com.github.k1rakishou.chan.features.reply.left.ReplyTextFieldHelpers
 import com.github.k1rakishou.chan.ui.controller.ThreadControllerType
 import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
 import com.github.k1rakishou.chan.ui.helper.AppResources
@@ -45,6 +47,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.persist_state.ReplyMode
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
@@ -158,6 +161,7 @@ class ReplyLayoutState(
     get() = threadControllerType == ThreadControllerType.Catalog
 
   private val filePickerExecutor = RendezvousCoroutineExecutor(coroutineScope)
+  private val highlightQuotesExecutor = DebouncingCoroutineExecutor(coroutineScope)
 
   private var persistInReplyManagerJob: Job? = null
   private var listenForReplyManagerUpdatesJob: Job? = null
@@ -311,12 +315,14 @@ class ReplyLayoutState(
   fun onReplyTextChanged(replyText: TextFieldValue) {
     _replyText.value = replyText
     updateReplyFieldHintText()
+    updateHighlightedPosts()
     persistInReplyManager()
   }
 
   fun insertTags(postFormatterButton: PostFormatterButton) {
     // TODO: New reply layout.
     updateReplyFieldHintText()
+    updateHighlightedPosts()
     persistInReplyManager()
   }
 
@@ -609,8 +615,18 @@ class ReplyLayoutState(
       replyText = _replyText.value,
       maxCommentLength = _maxCommentLength.intValue
     )
+  }
 
-    // TODO: New reply layout. Highlight posts with quotes from reply text.
+  private fun updateHighlightedPosts() {
+    highlightQuotesExecutor.post(300) {
+      val replyTextCopy = _replyText.value.text
+
+      val foundQuotes = withContext(Dispatchers.Default) {
+        ReplyTextFieldHelpers.findAllQuotesInText(chanDescriptor, replyTextCopy)
+      }
+
+      callbacks.highlightQuotes(foundQuotes)
+    }
   }
 
   @Suppress("ConvertTwoComparisonsToRangeCheck")
@@ -898,6 +914,7 @@ class ReplyLayoutState(
       newThreadDescriptor: ChanDescriptor.ThreadDescriptor
     )
 
+    fun highlightQuotes(quotes: Set<PostDescriptor>)
   }
 
   companion object {

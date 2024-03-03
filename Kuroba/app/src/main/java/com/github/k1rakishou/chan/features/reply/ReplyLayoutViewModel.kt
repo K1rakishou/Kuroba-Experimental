@@ -178,6 +178,10 @@ class ReplyLayoutViewModel(
     threadListLayoutCallbacks?.onPostedSuccessfully(prevChanDescriptor, newThreadDescriptor)
   }
 
+  override fun highlightQuotes(quotes: Set<PostDescriptor>) {
+    threadListLayoutCallbacks?.highlightQuotes(quotes)
+  }
+
   suspend fun bindChanDescriptor(chanDescriptor: ChanDescriptor, threadControllerType: ThreadControllerType) {
     replyManager.awaitUntilFilesAreLoaded()
 
@@ -639,6 +643,7 @@ class ReplyLayoutViewModel(
     fun presentController(controller: BaseFloatingController)
     fun pushController(controller: Controller)
     fun showMediaReencodingController(attachedMedia: ReplyFileAttachable, fileSupportedForReencoding: Boolean)
+    fun highlightQuotes(quotes: Set<PostDescriptor>)
   }
 
   interface ReplyLayoutViewCallbacks {

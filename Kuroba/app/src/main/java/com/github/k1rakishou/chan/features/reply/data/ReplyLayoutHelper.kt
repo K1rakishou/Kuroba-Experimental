@@ -300,6 +300,30 @@ class ReplyLayoutHelper(
     }
   }
 
+  suspend fun getTotalFileSizeSumPerPost(chanDescriptor: ChanDescriptor): Long? {
+    if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+      return null
+    }
+
+    // TODO: add caching
+    return postingLimitationsInfoManager.getMaxAllowedTotalFilesSizePerPost(
+      chanDescriptor.boardDescriptor()
+    )
+  }
+
+  suspend fun getMaxAllowedFilesPerPost(chanDescriptor: ChanDescriptor): Int? {
+    if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+      return null
+    }
+
+    siteManager.awaitUntilInitialized()
+
+    // TODO: add caching
+    return postingLimitationsInfoManager.getMaxAllowedFilesPerPost(
+      chanDescriptor.boardDescriptor()
+    )
+  }
+
   private fun getImageDimensions(replyFile: ReplyFile): ReplyFileAttachable.ImageDimensions? {
     val fileOnDisk = replyFile.fileOnDisk
     val key = fileOnDisk.asFileKey()
@@ -400,30 +424,6 @@ class ReplyLayoutHelper(
     return boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor())
       ?.spoilers
       ?: return false
-  }
-
-  suspend fun getTotalFileSizeSumPerPost(chanDescriptor: ChanDescriptor): Long? {
-    if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
-      return null
-    }
-
-    // TODO: add caching
-    return postingLimitationsInfoManager.getMaxAllowedTotalFilesSizePerPost(
-      chanDescriptor.boardDescriptor()
-    )
-  }
-
-  suspend fun getMaxAllowedFilesPerPost(chanDescriptor: ChanDescriptor): Int? {
-    if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
-      return null
-    }
-
-    siteManager.awaitUntilInitialized()
-
-    // TODO: add caching
-    return postingLimitationsInfoManager.getMaxAllowedFilesPerPost(
-      chanDescriptor.boardDescriptor()
-    )
   }
 
   private fun File.asFileKey(): FileKey {
