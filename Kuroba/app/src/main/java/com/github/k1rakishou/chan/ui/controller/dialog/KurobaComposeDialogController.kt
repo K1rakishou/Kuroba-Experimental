@@ -42,6 +42,8 @@ import com.github.k1rakishou.chan.ui.compose.consumeClicks
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingComposeController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
+import com.github.k1rakishou.common.awaitSilently
+import kotlinx.coroutines.CompletableDeferred
 
 class KurobaComposeDialogController(
   context: Context,
@@ -65,6 +67,12 @@ class KurobaComposeDialogController(
   override fun onDestroy() {
     super.onDestroy()
     onDismissed?.invoke()
+
+    params.inputs.forEach { input ->
+      if (input.result.isActive) {
+        input.result.complete("")
+      }
+    }
   }
 
   override fun onOutsideOfDialogClicked() {
@@ -221,8 +229,14 @@ class KurobaComposeDialogController(
       KurobaComposeTextBarButton(
         modifier = Modifier.wrapContentSize(),
         onClick = {
-          val results = inputValueStates.map { it.value.text }
-          params.positiveButton.onClick?.invoke(results)
+          inputValueStates.forEachIndexed { index, mutableState ->
+            val result = params.inputs[index].result
+            if (result.isActive) {
+              result.complete(mutableState.value.text)
+            }
+          }
+
+          params.positiveButton.onClick?.invoke()
           pop()
         },
         customTextColor = buttonTextColor,
@@ -271,18 +285,33 @@ class KurobaComposeDialogController(
     val negativeButton: DialogButton? = null,
     val neutralButton: DialogButton? = null,
     val positiveButton: PositiveDialogButton
-  )
+  ) {
+
+    suspend fun awaitInputResult(): String? {
+      return inputs
+        .map { input -> input.result.awaitSilently("") }
+        .firstOrNull { inputResult -> inputResult.isNotEmpty() }
+    }
+
+    suspend fun awaitInputResults(): List<String> {
+      return inputs.map { input -> input.result.awaitSilently("") }
+    }
+
+  }
 
   sealed class Input {
     abstract val hint: Text?
+    abstract val result: CompletableDeferred<kotlin.String>
 
     class String(
       override val hint: Text? = null,
-      val initialValue: kotlin.String? = null
+      override val result: CompletableDeferred<kotlin.String> = CompletableDeferred(),
+      val initialValue: kotlin.String? = null,
     ) : Input()
 
     class Number(
       override val hint: Text? = null,
+      override val result: CompletableDeferred<kotlin.String> = CompletableDeferred(),
       val initialValue: Int? = null
     ) : Input()
   }
@@ -320,7 +349,7 @@ class KurobaComposeDialogController(
   class PositiveDialogButton(
     @StringRes val buttonText: Int,
     val isActionDangerous: Boolean = false,
-    val onClick: ((result: List<String>) -> Unit)? = null
+    val onClick: (() -> Unit)? = null
   )
 
   class KurobaComposeDialogHandle {
@@ -358,6 +387,17 @@ class KurobaComposeDialogController(
       )
     }
 
+    fun dialogWithInput(title: Text, input: Input, description: Text? = null): Params {
+      return Params(
+        title = title,
+        description = description,
+        inputs = listOf(input),
+        negativeButton = cancelButton(),
+        neutralButton = null,
+        positiveButton = okButton()
+      )
+    }
+
     fun cancelButton(onClick: (() -> Unit)? = null): DialogButton {
       return DialogButton(buttonText = R.string.cancel, onClick = onClick)
     }
@@ -368,7 +408,7 @@ class KurobaComposeDialogController(
 
     fun okButton(
       isActionDangerous: Boolean = false,
-      onClick: ((result: List<String>) -> Unit)? = null
+      onClick: (() -> Unit)? = null
     ): PositiveDialogButton {
       return PositiveDialogButton(
         buttonText = R.string.ok,

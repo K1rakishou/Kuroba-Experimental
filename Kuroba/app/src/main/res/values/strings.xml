@@ -562,6 +562,10 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="reply_layout_remote_file_pick_error">Failed to pick remote file, error: %1$s</string>
     <string name="reply_layout_local_file_pick_success">Successfully picked local file</string>
     <string name="reply_layout_remote_file_pick_success">Successfully picked remote file</string>
+    <string name="reply_layout_remote_file_pick_enter_url_dialog_title">Enter remote media url</string>
+    <string name="reply_layout_remote_file_pick_enter_url_dialog_hint">Remote media url</string>
+    <string name="reply_layout_remote_file_pick_no_url_provided">No media url was provided</string>
+    <string name="reply_layout_remote_file_pick_url_not_url">Provided string is not a url</string>
 
     <string name="delete_confirm">Delete your post?</string>
     <string name="delete_wait">Deleting post…</string>

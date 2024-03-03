@@ -110,7 +110,7 @@ internal fun ReplyAttachments(
 
     FlowRow(
       modifier = Modifier.fillMaxSize(),
-      horizontalArrangement = Arrangement.spacedBy(2.dp),
+      horizontalArrangement = Arrangement.spacedBy(4.dp),
       verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
       attachedMediaList.attachables.forEach { attachedMedia ->

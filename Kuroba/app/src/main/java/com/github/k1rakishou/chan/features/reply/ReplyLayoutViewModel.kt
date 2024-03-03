@@ -34,6 +34,7 @@ import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
 import com.github.k1rakishou.chan.ui.helper.AppResources
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper
 import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.MediaUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
@@ -54,6 +55,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
@@ -111,6 +113,7 @@ class ReplyLayoutViewModel(
     get() = captchaHolder.listenForCaptchaUpdates()
 
   private val attachableMediaClickExecutor = ThrottleFirstCoroutineExecutor(viewModelScope)
+  private val promptUserForMediaUrlExecutor = ThrottleFirstCoroutineExecutor(viewModelScope)
 
   private var sendReplyJob: Job? = null
   private var listenForPostingStatusUpdatesJob: Job? = null
@@ -140,6 +143,8 @@ class ReplyLayoutViewModel(
   fun unbindCallbacks() {
     threadListLayoutCallbacks = null
     replyLayoutViewCallbacks = null
+    attachableMediaClickExecutor.stop()
+    promptUserForMediaUrlExecutor.stop()
   }
 
   override fun showCaptcha(
@@ -434,21 +439,19 @@ class ReplyLayoutViewModel(
   }
 
   fun onPickLocalMediaButtonClicked() {
-    // TODO: New reply layout
-//    if (AppModuleAndroidUtils.checkDontKeepActivitiesSettingEnabledForWarningDialog(context)) {
-//      withViewNormal { onDontKeepActivitiesSettingDetected() }
-//      return
-//    }
+    if (AppModuleAndroidUtils.checkDontKeepActivitiesSettingEnabledForWarningDialog(appContext)) {
+      replyLayoutViewCallbacks?.onDontKeepActivitiesSettingDetected()
+      return
+    }
 
     withReplyLayoutState { replyLayoutState -> replyLayoutState.pickLocalMedia(showFilePickerChooser = false) }
   }
 
   fun onPickLocalMediaButtonLongClicked() {
-    // TODO: New reply layout
-//    if (AppModuleAndroidUtils.checkDontKeepActivitiesSettingEnabledForWarningDialog(context)) {
-//      withViewNormal { onDontKeepActivitiesSettingDetected() }
-//      return
-//    }
+    if (AppModuleAndroidUtils.checkDontKeepActivitiesSettingEnabledForWarningDialog(appContext)) {
+      replyLayoutViewCallbacks?.onDontKeepActivitiesSettingDetected()
+      return
+    }
 
     withReplyLayoutState { replyLayoutState -> replyLayoutState.pickLocalMedia(showFilePickerChooser = true) }
   }
@@ -459,7 +462,21 @@ class ReplyLayoutViewModel(
 
   fun onPickRemoteMediaButtonClicked() {
     withReplyLayoutState { replyLayoutState ->
-      // TODO: New reply layout
+      promptUserForMediaUrlExecutor.post(500) {
+        val mediaUrl = replyLayoutViewCallbacks?.promptUserForMediaUrl()
+        if (mediaUrl.isNullOrBlank()) {
+          replyLayoutViewCallbacks?.showToast(appResources.string(R.string.reply_layout_remote_file_pick_no_url_provided))
+          return@post
+        }
+
+        val mediaHttpUrl = mediaUrl.toHttpUrlOrNull()
+        if (mediaHttpUrl == null) {
+          replyLayoutViewCallbacks?.showToast(appResources.string(R.string.reply_layout_remote_file_pick_url_not_url))
+          return@post
+        }
+
+        replyLayoutState.pickRemoteMedia(mediaHttpUrl)
+      }
     }
   }
 
@@ -638,6 +655,8 @@ class ReplyLayoutViewModel(
 
   interface ReplyLayoutViewCallbacks {
     suspend fun showDialogSuspend(title: String, message: CharSequence?)
+    suspend fun promptUserForMediaUrl(): String?
+
     fun showDialog(title: String, message: CharSequence?, onDismissListener: (() -> Unit)? = null)
     fun hideDialog()
     fun showToast(message: String)
@@ -646,6 +665,7 @@ class ReplyLayoutViewModel(
     fun onReplyLayoutOptionsButtonClicked()
     fun onAttachedMediaClicked(attachedMedia: ReplyFileAttachable, isFileSupportedForReencoding: Boolean)
     fun onAttachedMediaLongClicked(attachedMedia: ReplyFileAttachable)
+    fun onDontKeepActivitiesSettingDetected()
     fun showFileStatusDialog(attachableFileStatus: AnnotatedString)
   }
 

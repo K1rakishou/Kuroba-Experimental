@@ -202,6 +202,22 @@ class ReplyLayoutView @JvmOverloads constructor(
     }
   }
 
+  override suspend fun promptUserForMediaUrl(): String? {
+    val params = KurobaComposeDialogController.dialogWithInput(
+      title = KurobaComposeDialogController.Text.Id(R.string.reply_layout_remote_file_pick_enter_url_dialog_title),
+      input = KurobaComposeDialogController.Input.String(
+        hint = KurobaComposeDialogController.Text.Id(R.string.reply_layout_remote_file_pick_enter_url_dialog_hint)
+      )
+    )
+
+    dialogFactory.dialog(
+      context = context,
+      params = params
+    )
+
+    return params.awaitInputResult()
+  }
+
   override fun showDialog(title: String, message: CharSequence?, onDismissListener: (() -> Unit)?) {
     if (title.isBlank() && message.isNullOrBlank()) {
       hideDialog()
@@ -269,6 +285,14 @@ class ReplyLayoutView @JvmOverloads constructor(
 
   override fun onAttachedMediaLongClicked(attachedMedia: ReplyFileAttachable) {
     // TODO("Not yet implemented")
+  }
+
+  override fun onDontKeepActivitiesSettingDetected() {
+    dialogFactory.createSimpleInformationDialog(
+      context = context,
+      titleText = appResources.string(R.string.dont_keep_activities_setting_enabled),
+      descriptionText = appResources.string(R.string.dont_keep_activities_setting_enabled_description)
+    )
   }
 
   override fun showFileStatusDialog(attachableFileStatus: AnnotatedString) {
