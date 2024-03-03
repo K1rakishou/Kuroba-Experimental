@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.features.reply.left
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.ContentAlpha
@@ -40,13 +42,15 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
 import coil.request.ImageRequest
-import coil.request.videoFrameMillis
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.GrayscaleTransformation
 import com.github.k1rakishou.chan.features.reply.ReplyLayoutViewModel
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileAttachable
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutState
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
+import com.github.k1rakishou.chan.features.reply.data.SyntheticReplyAttachable
+import com.github.k1rakishou.chan.features.reply.data.SyntheticReplyAttachableState
+import com.github.k1rakishou.chan.ui.compose.Shimmer
 import com.github.k1rakishou.chan.ui.compose.components.IconTint
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeIcon
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeMiddleEllipsisText
@@ -57,10 +61,8 @@ import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.util.ChanPostUtils
-
-private const val COIL_FAILED_TO_DECODE_FRAME_ERROR_MSG =
-  "Often this means BitmapFactory could not decode the image data read from the input source"
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -75,7 +77,9 @@ internal fun ReplyAttachments(
   onAttachableStatusIconButtonClicked: (ReplyFileAttachable) -> Unit
 ) {
   val attachedMediaList by replyLayoutState.attachables
-  if (attachedMediaList.attachables.isEmpty()) {
+  val syntheticAttachables = replyLayoutState.syntheticAttachables
+
+  if (attachedMediaList.attachables.isEmpty() && syntheticAttachables.isEmpty()) {
     return
   }
 
@@ -87,7 +91,7 @@ internal fun ReplyAttachments(
     val scrollState = rememberScrollState()
 
     Modifier
-      .height(90.dp)
+      .height(110.dp)
       .verticalScroll(state = scrollState)
   }
 
@@ -96,18 +100,20 @@ internal fun ReplyAttachments(
       .fillMaxWidth()
       .then(additionalModifier)
   ) {
-    val mediaHeight = if (replyLayoutVisibility == ReplyLayoutVisibility.Expanded) 160.dp else 80.dp
-
-    val mediaWidth = if (this.maxWidth > 250.dp) {
-      this.maxWidth / 2
+    val mediaHeight = if (replyLayoutVisibility == ReplyLayoutVisibility.Expanded) {
+      160.dp
     } else {
-      this.maxWidth
+      100.dp
     }
 
+    val mediaWidth = (this.maxWidth / 2) - 8.dp
+
     FlowRow(
-      modifier = Modifier.fillMaxSize(),
+      modifier = Modifier
+        .fillMaxSize()
+        .animateContentSize(),
       horizontalArrangement = Arrangement.spacedBy(2.dp),
-      verticalArrangement = Arrangement.spacedBy(2.dp)
+      verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
       attachedMediaList.attachables.forEach { attachedMedia ->
         key(attachedMedia.key) {
@@ -125,7 +131,56 @@ internal fun ReplyAttachments(
           )
         }
       }
+
+      syntheticAttachables.forEach { syntheticReplyAttachable ->
+        key(syntheticReplyAttachable.id) {
+          SyntheticReplyAttachable(
+            syntheticReplyAttachable = syntheticReplyAttachable,
+            mediaWidth = mediaWidth,
+            mediaHeight = mediaHeight
+          )
+        }
+      }
     }
+  }
+}
+
+@Composable
+private fun SyntheticReplyAttachable(
+  syntheticReplyAttachable: SyntheticReplyAttachable,
+  mediaWidth: Dp,
+  mediaHeight: Dp,
+) {
+  val chanTheme = LocalChanTheme.current
+
+  Box(
+    modifier = Modifier
+      .width(mediaWidth)
+      .height(mediaHeight)
+  ) {
+    Shimmer(modifier = Modifier.fillMaxSize())
+
+    val text = when (syntheticReplyAttachable.state) {
+      SyntheticReplyAttachableState.Initializing -> stringResource(id = R.string.reply_synthetic_file_state_initializing)
+      SyntheticReplyAttachableState.Downloading -> stringResource(id = R.string.reply_synthetic_file_state_downloading)
+      SyntheticReplyAttachableState.Decoding -> stringResource(id = R.string.reply_synthetic_file_state_decoding_preview)
+      SyntheticReplyAttachableState.Done -> stringResource(id = R.string.reply_synthetic_file_state_done)
+    }
+
+    val textColor = if (ThemeEngine.isDarkColor(chanTheme.backColorCompose)) {
+      Color.White
+    } else {
+      Color.Black
+    }
+
+    KurobaComposeText(
+      modifier = Modifier
+        .wrapContentSize()
+        .align(Alignment.Center),
+      text = text,
+      color = textColor,
+      fontSize = 14.sp
+    )
   }
 }
 
@@ -166,16 +221,30 @@ private fun AttachedMediaThumbnail(
 
       when (val replyFileResult = replyLayoutViewModel.getReplyFileByUuid(replyFileAttachable.fileUuid)) {
         is ModularResult.Error -> {
-          // TODO: New reply layout.
-          TODO("Handle error case")
-        }
-        is ModularResult.Value -> {
+          Logger.error("AttachedMediaThumbnail", replyFileResult.error) {
+            "getReplyFileByUuid(${replyFileAttachable.fileUuid})"
+          }
+
+          // TODO: New reply layout. Some kind of other error type here instead of just passing null into data?
           value = ImageRequest.Builder(context)
-            .data(replyFileResult.value.fileOnDisk)
+            .data(null)
             .crossfade(true)
             .size(mediaHeightPx)
             .transformations(transformations)
-            .videoFrameMillis(frameMillis = 1000L)
+            .build()
+        }
+        is ModularResult.Value -> {
+          val previewFileOnDisk = replyFileResult.value.previewFileOnDisk
+          if (previewFileOnDisk == null) {
+            value = null
+            return@produceState
+          }
+
+          value = ImageRequest.Builder(context)
+            .data(previewFileOnDisk)
+            .crossfade(true)
+            .size(mediaHeightPx)
+            .transformations(transformations)
             .build()
         }
       }
@@ -185,53 +254,46 @@ private fun AttachedMediaThumbnail(
     val imageState = imageStateMut
 
     Box {
-      AsyncImage(
-        modifier = Modifier
-          .fillMaxSize()
-          .kurobaClickable(
-            enabled = replyLayoutEnabled,
-            bounded = true,
-            onClick = { onAttachedMediaClicked(replyFileAttachable) },
-            onLongClick = { onAttachedMediaLongClicked(replyFileAttachable) }
-          ),
-        model = imageRequest,
-        contentDescription = "Attached media",
-        contentScale = ContentScale.Crop,
-        alpha = alpha,
-        onState = { state -> imageStateMut = state }
-      )
+      if (imageRequest != null) {
+        AsyncImage(
+          modifier = Modifier
+            .fillMaxSize()
+            .kurobaClickable(
+              enabled = replyLayoutEnabled,
+              bounded = true,
+              onClick = { onAttachedMediaClicked(replyFileAttachable) },
+              onLongClick = { onAttachedMediaLongClicked(replyFileAttachable) }
+            ),
+          model = imageRequest,
+          contentDescription = "Attached media",
+          contentScale = ContentScale.Crop,
+          alpha = alpha,
+          onState = { state -> imageStateMut = state }
+        )
+      } else {
+        Shimmer(modifier = Modifier.fillMaxSize())
+      }
 
       if (imageState is AsyncImagePainter.State.Error) {
         Logger.error("AttachedMediaThumbnail") {
-          "AttachedMediaThumbnail() attachedMediaFilePath: ${replyFileAttachable.fileUuid}, " +
-            "error: ${imageState.result.throwable.errorMessageOrClassName()}"
-        }
-
-        val isFailedToDecodeVideoFrameError = (imageState.result.throwable as? IllegalStateException)
-          ?.message
-          ?.contains(COIL_FAILED_TO_DECODE_FRAME_ERROR_MSG)
-          ?: false
-
-        val errorMessage = if (isFailedToDecodeVideoFrameError) {
-          stringResource(id = R.string.reply_layout_failed_to_decode_video)
-        } else {
-          stringResource(id = R.string.reply_layout_failed_to_decode_media)
+          "AttachedMediaThumbnail() attachedMediaFilePath: '${replyFileAttachable.fileUuid}', " +
+            "error: '${imageState.result.throwable.errorMessageOrClassName()}'"
         }
 
         Column(
-          modifier = Modifier
-            .align(Alignment.Center)
+          modifier = Modifier.align(Alignment.Center)
         ) {
           KurobaComposeIcon(
             modifier = Modifier
-              .size(24.dp),
+              .size(24.dp)
+              .align(Alignment.CenterHorizontally),
             drawableId = R.drawable.ic_baseline_warning_24
           )
 
           Spacer(modifier = Modifier.height(8.dp))
 
           KurobaComposeText(
-            text = errorMessage,
+            text = stringResource(id = R.string.reply_layout_failed_to_decode_media),
             color = Color.White,
             fontSize = 10.sp
           )

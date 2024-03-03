@@ -15,9 +15,22 @@ class ReplyFile(
   private val gson: Gson,
   val fileOnDisk: File,
   val fileMetaOnDisk: File,
-  val previewFileOnDisk: File
+  val previewFileOnDisk: File? = null
 ) {
   private var replyFileMeta: ReplyFileMeta? = null
+
+  fun copy(
+    fileOnDisk: File = this.fileOnDisk,
+    fileMetaOnDisk: File = this.fileMetaOnDisk,
+    previewFileOnDisk: File? = this.previewFileOnDisk
+  ): ReplyFile {
+    return ReplyFile(
+      gson = gson,
+      fileOnDisk = fileOnDisk,
+      fileMetaOnDisk = fileMetaOnDisk,
+      previewFileOnDisk = previewFileOnDisk
+    )
+  }
 
   @Synchronized
   fun getReplyFileMeta(): ModularResult<ReplyFileMeta> {
@@ -178,8 +191,10 @@ class ReplyFile(
       Logger.e("ReplyFile", "Failed to delete: ${fileMetaOnDisk.absolutePath}")
     }
 
-    if (previewFileOnDisk.exists() && !previewFileOnDisk.delete()) {
-      Logger.e("ReplyFile", "Failed to delete: ${previewFileOnDisk.absolutePath}")
+    if (previewFileOnDisk != null) {
+      if (previewFileOnDisk.exists() && !previewFileOnDisk.delete()) {
+        Logger.e("ReplyFile", "Failed to delete: ${previewFileOnDisk.absolutePath}")
+      }
     }
   }
 

@@ -16,6 +16,7 @@
  */
 package com.github.k1rakishou.chan.core.manager
 
+import android.graphics.Bitmap
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.features.reencoding.ImageReencodingPresenter
 import com.github.k1rakishou.chan.features.reply.data.Reply
@@ -139,6 +140,18 @@ class ReplyManager(
   fun updateFileName(fileUuid: UUID, newFileName: String, notifyListeners: Boolean): ModularResult<Boolean> {
     ensureFilesLoaded()
     return replyFilesStorage.updateFileName(fileUuid, newFileName, notifyListeners)
+  }
+
+  @Synchronized
+  fun updatePreviewFileOnDisk(fileUuid: UUID, previewBitmap: Bitmap): ModularResult<Boolean> {
+    ensureFilesLoaded()
+    val previewFile = File(
+      appConstants.mediaPreviewsDir,
+      getPreviewFileName(fileUuid.toString())
+    )
+
+    return replyFilesStorage.updatePreviewFileOnDisk(fileUuid, previewFile, previewBitmap)
+      .onError { previewFile.delete() }
   }
 
   @Synchronized
@@ -343,11 +356,6 @@ class ReplyManager(
       uniqueFileName.fullFileMetaName
     )
 
-    val previewFile = File(
-      appConstants.mediaPreviewsDir,
-      uniqueFileName.previewFileName
-    )
-
     try {
       if (!attachFile.exists()) {
         if (!attachFile.createNewFile()) {
@@ -361,13 +369,12 @@ class ReplyManager(
         }
       }
 
-      if (!previewFile.exists()) {
-        if (!previewFile.createNewFile()) {
-          throw IOException("Failed to create preview file: " + previewFile.absolutePath)
-        }
-      }
-
-      val replyFile = ReplyFile(gson, attachFile, attachFileMeta, previewFile)
+      val replyFile = ReplyFile(
+        gson = gson,
+        fileOnDisk = attachFile,
+        fileMetaOnDisk = attachFileMeta,
+        previewFileOnDisk = null
+      )
 
       replyFile.storeFileMetaInfo(
         ReplyFileMeta(
@@ -384,7 +391,6 @@ class ReplyManager(
 
       attachFile.delete()
       attachFileMeta.delete()
-      previewFile.delete()
 
       return null
     }
@@ -564,16 +570,10 @@ class ReplyManager(
   }
 
   private fun ChanDescriptor.replyDraftFileName(): String {
-    when (this) {
-      is ChanDescriptor.CompositeCatalogDescriptor -> {
-        error("Cannot use CompositeCatalogDescriptor here")
-      }
-      is ChanDescriptor.CatalogDescriptor -> {
-        return "${siteName()}_${boardCode()}.json"
-      }
-      is ChanDescriptor.ThreadDescriptor -> {
-        return "${siteName()}_${boardCode()}_${threadNo}.json"
-      }
+    return when (this) {
+      is ChanDescriptor.CompositeCatalogDescriptor -> error("Cannot use CompositeCatalogDescriptor here")
+      is ChanDescriptor.CatalogDescriptor -> "${siteName()}_${boardCode()}.json"
+      is ChanDescriptor.ThreadDescriptor -> "${siteName()}_${boardCode()}_${threadNo}.json"
       else -> error("Unexpected descriptor type: ${javaClass.simpleName}")
     }
   }

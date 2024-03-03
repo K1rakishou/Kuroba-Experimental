@@ -25,7 +25,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
 
-class ReplyLayoutReplyFileHelper(
+class ReplyLayoutHelper(
   private val replyManagerLazy: Lazy<ReplyManager>,
   private val siteManagerLazy: Lazy<SiteManager>,
   private val boardManagerLazy: Lazy<BoardManager>,
@@ -46,7 +46,7 @@ class ReplyLayoutReplyFileHelper(
   private val imageDimensionsCache = LruCache<FileKey, ReplyFileAttachable.ImageDimensions>(1024)
   private val fileExifInfoCache = LruCache<FileKey, Set<FileExifInfoStatus>>(1024)
 
-  suspend fun enumerate(
+  suspend fun enumerateReplyFiles(
     chanDescriptor: ChanDescriptor
   ): ModularResult<ReplyAttachables> {
     if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
@@ -276,17 +276,17 @@ class ReplyLayoutReplyFileHelper(
       }
 
       val gpsExifData = attachAdditionalInfo.getGspExifDataOrNull()
-      if (gpsExifData != null) {
+      if (gpsExifData.isNotEmpty()) {
         append("GPS exif data: ")
-        append(warningText("'${gpsExifData.value}'"))
+        append(warningText("'${gpsExifData.joinToString(separator = ",", transform = { it.value })}'"))
         appendLine()
         appendLine()
       }
 
       val orientationExifData = attachAdditionalInfo.getOrientationExifData()
-      if (orientationExifData != null) {
+      if (orientationExifData.isNotEmpty()) {
         append("Orientation exif data: ")
-        append(warningText("'${orientationExifData.value}'"))
+        append(warningText("'${orientationExifData.joinToString(separator = ",", transform = { it.value })}}'"))
         appendLine()
         appendLine()
       }

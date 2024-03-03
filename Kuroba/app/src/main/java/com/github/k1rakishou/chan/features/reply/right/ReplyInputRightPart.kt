@@ -35,6 +35,7 @@ internal fun ReplyInputRightPart(
   onCancelReplySendClicked: () -> Unit,
   onSendReplyClicked: (ChanDescriptor) -> Unit,
   onPickLocalMediaButtonClicked: () -> Unit,
+  onPickLocalMediaButtonLongClicked: () -> Unit,
   onPickRemoteMediaButtonClicked: () -> Unit,
   onSearchRemoteMediaButtonClicked: () -> Unit,
   onPresolveCaptchaButtonClicked: () -> Unit,
@@ -94,7 +95,8 @@ internal fun ReplyInputRightPart(
     PickLocalMediaButton(
       iconSize = iconSize,
       padding = 4.dp,
-      onPickLocalMediaButtonClicked = onPickLocalMediaButtonClicked
+      onPickLocalMediaButtonClicked = onPickLocalMediaButtonClicked,
+      onPickLocalMediaButtonLongClicked = onPickLocalMediaButtonLongClicked
     )
 
     Spacer(modifier = Modifier.height(6.dp))

@@ -2,9 +2,11 @@ package com.github.k1rakishou.chan.ui.helper.picker
 
 import android.app.Activity
 import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.net.Uri
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
@@ -156,9 +158,9 @@ class LocalFilePicker(
 
     val copyResults = uris.map { uri ->
       copyExternalFileToReplyFileStorage(
-        attachedActivity,
-        uri,
-        System.currentTimeMillis()
+        appContext = attachedActivity,
+        externalFileUri = uri,
+        addedOn = System.currentTimeMillis()
       )
     }
 
@@ -263,10 +265,18 @@ class LocalFilePicker(
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
       )
 
-      activity.registerReceiver(
-        selectedFilePickerBroadcastReceiver,
-        IntentFilter(Intent.ACTION_GET_CONTENT)
-      )
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        activity.registerReceiver(
+          selectedFilePickerBroadcastReceiver,
+          IntentFilter(Intent.ACTION_GET_CONTENT),
+          Context.RECEIVER_NOT_EXPORTED
+        )
+      } else {
+        activity.registerReceiver(
+          selectedFilePickerBroadcastReceiver,
+          IntentFilter(Intent.ACTION_GET_CONTENT),
+        )
+      }
 
       Intent.createChooser(
         intents.last(),
@@ -287,9 +297,7 @@ class LocalFilePicker(
   data class LocalFilePickerInput(
     val notifyListeners: Boolean,
     val replyChanDescriptor: ChanDescriptor,
-    val clearLastRememberedFilePicker: Boolean = false,
-    val decodingStarted: (List<String>) -> Unit,
-    val decodingEnded: (List<String>) -> Unit
+    val clearLastRememberedFilePicker: Boolean = false
   )
 
   private data class EnqueuedRequest(

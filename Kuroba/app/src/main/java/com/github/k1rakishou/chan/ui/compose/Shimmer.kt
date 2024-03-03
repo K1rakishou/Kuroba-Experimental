@@ -78,7 +78,11 @@ fun Shimmer(
       maxHeight,
       selectedOnBackColor,
       block = {
-        shimmerState.start(maxWidth.toFloat(), maxHeight.toFloat(), selectedOnBackColor)
+        shimmerState.start(
+          maxWidth = maxWidth.toFloat(),
+          maxHeight = maxHeight.toFloat(),
+          selectedOnBackColor = selectedOnBackColor
+        )
       }
     )
 
@@ -132,6 +136,7 @@ class ShimmerState(
     if (this < 0f) {
       throw IllegalArgumentException("The shimmer's rotation must be a positive number")
     }
+
     var rotation = this % 180   // 0..179, 0
     rotation -= 90              // -90..0..89, -90
     rotation = -abs(rotation)   // -90..0..-90

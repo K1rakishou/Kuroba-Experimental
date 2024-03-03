@@ -547,12 +547,16 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="reply_layout_comment_change_history_cleared">Comment change history cleared</string>
     <string name="reply_layout_loading_flags">Loading flags…</string>
     <string name="reply_layout_dialog_title">Reply layout</string>
-    <string name="reply_layout_failed_to_decode_video">Failed to decode video preview</string>
     <string name="reply_layout_failed_to_decode_media">Failed to decode media preview</string>
     <string name="reply_comment_empty">Reply is empty (no comment body, no files attached)</string>
     <string name="reply_failed_to_prepare_reply">Failed to prepare reply</string>
     <string name="reply_failed_to_load_drafts_data_into_reply">Failed to load data into reply</string>
     <string name="reply_send_canceled_by_user">Canceled by user</string>
+    <string name="reply_file_status_dialog_title">File status</string>
+    <string name="reply_synthetic_file_state_initializing">Initializing…</string>
+    <string name="reply_synthetic_file_state_downloading">Downloading…</string>
+    <string name="reply_synthetic_file_state_decoding_preview">Decoding preview…</string>
+    <string name="reply_synthetic_file_state_done">Done…</string>
 
     <string name="delete_confirm">Delete your post?</string>
     <string name="delete_wait">Deleting post…</string>

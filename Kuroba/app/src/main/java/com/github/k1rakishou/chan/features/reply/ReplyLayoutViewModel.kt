@@ -21,7 +21,7 @@ import com.github.k1rakishou.chan.features.posting.PostingServiceDelegate
 import com.github.k1rakishou.chan.features.reply.data.PostFormattingButtonsFactory
 import com.github.k1rakishou.chan.features.reply.data.ReplyFile
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileAttachable
-import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutReplyFileHelper
+import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutHelper
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutState
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
 import com.github.k1rakishou.chan.features.reply.data.SendReplyState
@@ -31,6 +31,7 @@ import com.github.k1rakishou.chan.ui.controller.ThreadControllerType
 import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
 import com.github.k1rakishou.chan.ui.helper.AppResources
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper
+import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.rethrowCancellationException
@@ -59,7 +60,7 @@ class ReplyLayoutViewModel(
   private val appResourcesLazy: Lazy<AppResources>,
   private val appConstantsLazy: Lazy<AppConstants>,
   private val siteManagerLazy: Lazy<SiteManager>,
-  private val replyLayoutReplyFileHelperLazy: Lazy<ReplyLayoutReplyFileHelper>,
+  private val replyLayoutHelperLazy: Lazy<ReplyLayoutHelper>,
   private val boardManagerLazy: Lazy<BoardManager>,
   private val replyManagerLazy: Lazy<ReplyManager>,
   private val postFormattingButtonsFactoryLazy: Lazy<PostFormattingButtonsFactory>,
@@ -68,7 +69,8 @@ class ReplyLayoutViewModel(
   private val captchaHolderLazy: Lazy<CaptchaHolder>,
   private val postingServiceDelegateLazy: Lazy<PostingServiceDelegate>,
   private val boardFlagInfoRepositoryLazy: Lazy<BoardFlagInfoRepository>,
-  private val runtimePermissionsHelperLazy: Lazy<RuntimePermissionsHelper>
+  private val runtimePermissionsHelperLazy: Lazy<RuntimePermissionsHelper>,
+  private val imagePickHelperLazy: Lazy<ImagePickHelper>
 ) : BaseViewModel(), ReplyLayoutState.Callbacks {
   private val _replyManagerStateLoaded = AtomicBoolean(false)
 
@@ -188,7 +190,7 @@ class ReplyLayoutViewModel(
       callbacks = this,
       coroutineScope = viewModelScope,
       appResourcesLazy = appResourcesLazy,
-      replyLayoutReplyFileHelperLazy = replyLayoutReplyFileHelperLazy,
+      replyLayoutHelperLazy = replyLayoutHelperLazy,
       siteManagerLazy = siteManagerLazy,
       boardManagerLazy = boardManagerLazy,
       replyManagerLazy = replyManagerLazy,
@@ -197,7 +199,8 @@ class ReplyLayoutViewModel(
       globalUiStateHolderLazy = globalUiStateHolderLazy,
       postingServiceDelegateLazy = postingServiceDelegateLazy,
       boardFlagInfoRepositoryLazy = boardFlagInfoRepositoryLazy,
-      runtimePermissionsHelperLazy = runtimePermissionsHelperLazy
+      runtimePermissionsHelperLazy = runtimePermissionsHelperLazy,
+      imagePickHelperLazy = imagePickHelperLazy
     )
 
     _replyLayoutState.value?.unbindChanDescriptor()
@@ -427,7 +430,17 @@ class ReplyLayoutViewModel(
 //      return
 //    }
 
-    withReplyLayoutState { replyLayoutState -> replyLayoutState.onPickLocalMediaButtonClicked() }
+    withReplyLayoutState { replyLayoutState -> replyLayoutState.pickLocalMedia(showFilePickerChooser = false) }
+  }
+
+  fun onPickLocalMediaButtonLongClicked() {
+    // TODO: New reply layout
+//    if (AppModuleAndroidUtils.checkDontKeepActivitiesSettingEnabledForWarningDialog(context)) {
+//      withViewNormal { onDontKeepActivitiesSettingDetected() }
+//      return
+//    }
+
+    withReplyLayoutState { replyLayoutState -> replyLayoutState.pickLocalMedia(showFilePickerChooser = true) }
   }
 
   fun onPickRemoteMediaButtonClicked() {
@@ -621,7 +634,7 @@ class ReplyLayoutViewModel(
     private val appContext: Context,
     private val appConstantsLazy: Lazy<AppConstants>,
     private val siteManagerLazy: Lazy<SiteManager>,
-    private val replyLayoutReplyFileHelperLazy: Lazy<ReplyLayoutReplyFileHelper>,
+    private val replyLayoutHelperLazy: Lazy<ReplyLayoutHelper>,
     private val boardManagerLazy: Lazy<BoardManager>,
     private val replyManagerLazy: Lazy<ReplyManager>,
     private val postFormattingButtonsFactoryLazy: Lazy<PostFormattingButtonsFactory>,
@@ -630,7 +643,8 @@ class ReplyLayoutViewModel(
     private val captchaHolderLazy: Lazy<CaptchaHolder>,
     private val postingServiceDelegateLazy: Lazy<PostingServiceDelegate>,
     private val boardFlagInfoRepositoryLazy: Lazy<BoardFlagInfoRepository>,
-    private val runtimePermissionsHelperLazy: Lazy<RuntimePermissionsHelper>
+    private val runtimePermissionsHelperLazy: Lazy<RuntimePermissionsHelper>,
+    private val imagePickHelperLazy: Lazy<ImagePickHelper>
   ) : ViewModelAssistedFactory<ReplyLayoutViewModel> {
     override fun create(handle: SavedStateHandle): ReplyLayoutViewModel {
       return ReplyLayoutViewModel(
@@ -639,7 +653,7 @@ class ReplyLayoutViewModel(
         appResourcesLazy = appResourcesLazy,
         appConstantsLazy = appConstantsLazy,
         siteManagerLazy = siteManagerLazy,
-        replyLayoutReplyFileHelperLazy = replyLayoutReplyFileHelperLazy,
+        replyLayoutHelperLazy = replyLayoutHelperLazy,
         boardManagerLazy = boardManagerLazy,
         replyManagerLazy = replyManagerLazy,
         postFormattingButtonsFactoryLazy = postFormattingButtonsFactoryLazy,
@@ -648,7 +662,8 @@ class ReplyLayoutViewModel(
         captchaHolderLazy = captchaHolderLazy,
         postingServiceDelegateLazy = postingServiceDelegateLazy,
         boardFlagInfoRepositoryLazy = boardFlagInfoRepositoryLazy,
-        runtimePermissionsHelperLazy = runtimePermissionsHelperLazy
+        runtimePermissionsHelperLazy = runtimePermissionsHelperLazy,
+        imagePickHelperLazy = imagePickHelperLazy
       )
     }
   }

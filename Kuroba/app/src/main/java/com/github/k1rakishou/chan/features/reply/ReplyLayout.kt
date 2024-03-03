@@ -63,6 +63,7 @@ fun ReplyLayout(
           onAttachableStatusIconButtonClicked = replyLayoutViewModel::onAttachableStatusIconButtonClicked,
           onFlagSelectorClicked = replyLayoutViewModel::onFlagSelectorClicked,
           onPickLocalMediaButtonClicked = replyLayoutViewModel::onPickLocalMediaButtonClicked,
+          onPickLocalMediaButtonLongClicked = replyLayoutViewModel::onPickLocalMediaButtonLongClicked,
           onPickRemoteMediaButtonClicked = replyLayoutViewModel::onPickRemoteMediaButtonClicked,
           onSearchRemoteMediaButtonClicked = replyLayoutViewModel::onSearchRemoteMediaButtonClicked,
           onPresolveCaptchaButtonClicked = onPresolveCaptchaButtonClicked,

@@ -1,11 +1,13 @@
 package com.github.k1rakishou.chan.features.reply.data
 
+import android.graphics.Bitmap
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.ModularResult.Companion.value
+import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.google.gson.Gson
@@ -14,6 +16,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import java.io.File
+import java.io.FileOutputStream
 import java.util.*
 
 class ReplyFilesStorage(
@@ -36,62 +39,78 @@ class ReplyFilesStorage(
 
   @Synchronized
   fun addNewReplyFile(replyFile: ReplyFile): Boolean {
-    if (!replyFile.fileOnDisk.exists()) {
-      Logger.e(TAG, "addNewReplyFile() fileOnDisk does not exist (file='${replyFile.fileOnDisk}')")
+    try {
+      if (!replyFile.fileOnDisk.exists()) {
+        Logger.e(TAG, "addNewReplyFile() fileOnDisk does not exist (file='${replyFile.fileOnDisk}')")
+        return false
+      }
+
+      if (!replyFile.fileOnDisk.canRead()) {
+        Logger.e(TAG, "addNewReplyFile() fileOnDisk cannot be read (file='${replyFile.fileOnDisk}')")
+        return false
+      }
+
+      if (!replyFile.fileMetaOnDisk.exists()) {
+        Logger.e(TAG, "addNewReplyFile() fileMetaOnDisk does not exist (file='${replyFile.fileMetaOnDisk}')")
+        return false
+      }
+
+      if (!replyFile.fileMetaOnDisk.canRead()) {
+        Logger.e(TAG, "addNewReplyFile() fileMetaOnDisk cannot be read (file='${replyFile.fileMetaOnDisk}')")
+        return false
+      }
+
+      val replyFileMeta = replyFile.getReplyFileMeta().safeUnwrap { error ->
+        Logger.e(TAG, "addNewReplyFile() getReplyFileMeta() error", error)
+        return false
+      }
+
+      if (!replyFileMeta.isValidMeta()) {
+        Logger.error(TAG) {
+          "addNewReplyFile() isValidMeta() is false, meta=${replyFileMeta}"
+        }
+
+        return false
+      }
+
+      if (replyFileMeta.fileTakenBy != null) {
+        Logger.error(TAG) {
+          "addNewReplyFile() fileTakenBy != null (fileTakenBy='${replyFileMeta.fileTakenBy}')"
+        }
+
+        return false
+      }
+
+      if (replyFile.fileOnDisk.name != ReplyManager.getFileName(replyFileMeta.fileUuidString)) {
+        Logger.error(TAG) {
+          "addNewReplyFile() fileOnDisk bad name (fileOnDisk.name='${replyFile.fileOnDisk.name}')"
+        }
+
+        return false
+      }
+
+      if (replyFile.fileMetaOnDisk.name != ReplyManager.getMetaFileName(replyFileMeta.fileUuidString)) {
+        Logger.error(TAG) {
+          "addNewReplyFile() fileMetaOnDisk bad name (fileMetaOnDisk.name='${replyFile.fileMetaOnDisk.name}')"
+        }
+
+        return false
+      }
+
+      replyFiles += replyFile
+      ensureFilesSorted()
+      onReplyFilesChanged()
+
+      return true
+    } catch (error: Throwable) {
+      Logger.error(TAG) { "addNewReplyFile() unhandled error: ${error.errorMessageOrClassName()}" }
+
+      replyFiles -= replyFile
+      ensureFilesSorted()
+      onReplyFilesChanged()
+
       return false
     }
-
-    if (!replyFile.fileOnDisk.canRead()) {
-      Logger.e(TAG, "addNewReplyFile() fileOnDisk cannot be read (file='${replyFile.fileOnDisk}')")
-      return false
-    }
-
-    if (!replyFile.fileMetaOnDisk.exists()) {
-      Logger.e(TAG, "addNewReplyFile() fileMetaOnDisk does not exist (file='${replyFile.fileMetaOnDisk}')")
-      return false
-    }
-
-    if (!replyFile.fileMetaOnDisk.canRead()) {
-      Logger.e(TAG, "addNewReplyFile() fileMetaOnDisk cannot be read (file='${replyFile.fileMetaOnDisk}')")
-      return false
-    }
-
-    val replyFileMeta = replyFile.getReplyFileMeta().safeUnwrap { error ->
-      Logger.e(TAG, "addNewReplyFile() getReplyFileMeta() error", error)
-      return false
-    }
-
-    if (!replyFileMeta.isValidMeta()) {
-      Logger.e(TAG, "addNewReplyFile() isValidMeta() is false, meta=${replyFileMeta}")
-      return false
-    }
-
-    if (replyFileMeta.fileTakenBy != null) {
-      Logger.e(TAG, "addNewReplyFile() fileTakenBy != null (fileTakenBy='${replyFileMeta.fileTakenBy}')")
-      return false
-    }
-
-    if (replyFile.fileOnDisk.name != ReplyManager.getFileName(replyFileMeta.fileUuidString)) {
-      Logger.e(
-        TAG, "addNewReplyFile() fileOnDisk bad name " +
-          "(fileOnDisk.name='${replyFile.fileOnDisk.name}')"
-      )
-      return false
-    }
-
-    if (replyFile.fileMetaOnDisk.name != ReplyManager.getMetaFileName(replyFileMeta.fileUuidString)) {
-      Logger.e(
-        TAG, "addNewReplyFile() fileMetaOnDisk bad name " +
-          "(fileMetaOnDisk.name='${replyFile.fileMetaOnDisk.name}')"
-      )
-      return false
-    }
-
-    replyFiles += replyFile
-    ensureFilesSorted()
-    onReplyFilesChanged()
-
-    return true
   }
 
   @Synchronized
@@ -228,6 +247,40 @@ class ReplyFilesStorage(
       if (notifyListeners) {
         onReplyFilesChanged()
       }
+
+      return@Try true
+    }
+  }
+
+  @Synchronized
+  fun updatePreviewFileOnDisk(fileUuid: UUID, newPreviewFile: File, previewBitmap: Bitmap): ModularResult<Boolean> {
+    return Try {
+      val replyFileIndex = replyFiles
+        .indexOfFirst { replyFile -> replyFile.getReplyFileMeta().unwrap().fileUuid == fileUuid }
+
+      val replyFile = replyFiles.getOrNull(replyFileIndex)
+      if (replyFile == null) {
+        return@Try false
+      }
+
+      val oldPreviewFileOnDisk = replyFile.previewFileOnDisk
+      if (oldPreviewFileOnDisk != null) {
+        check(oldPreviewFileOnDisk.delete()) { "Failed to delete: '${oldPreviewFileOnDisk.absolutePath}'" }
+      }
+
+      val updatedReplyFile = replyFile.copy(previewFileOnDisk = newPreviewFile)
+
+      if (!newPreviewFile.exists()) {
+        check(newPreviewFile.createNewFile()) {
+          "Failed to create newPreviewFile, path: '${newPreviewFile.absolutePath}'"
+        }
+      }
+
+      FileOutputStream(newPreviewFile)
+        .use { fos -> previewBitmap.compress(Bitmap.CompressFormat.JPEG, 95, fos) }
+
+      replyFiles[replyFileIndex] = updatedReplyFile
+      onReplyFilesChanged()
 
       return@Try true
     }
@@ -421,7 +474,11 @@ class ReplyFilesStorage(
         ?: emptyMap()
 
       val newAttachFiles = try {
-        addAttachFiles(attachFiles, previewFiles, attachFileMetas).unwrap()
+        addAttachFiles(
+          attachFiles = attachFiles,
+          previewFiles = previewFiles,
+          attachFileMetas = attachFileMetas
+        ).unwrap()
       } catch (error: Throwable) {
         Logger.e(TAG, "reloadAllFilesFromDisk() failure, removing all files", error)
 

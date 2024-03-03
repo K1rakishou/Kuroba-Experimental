@@ -13,7 +13,8 @@ import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
 internal fun PickLocalMediaButton(
   iconSize: Dp,
   padding: Dp,
-  onPickLocalMediaButtonClicked: () -> Unit
+  onPickLocalMediaButtonClicked: () -> Unit,
+  onPickLocalMediaButtonLongClicked: () -> Unit,
 ) {
   KurobaComposeIcon(
     modifier = Modifier
@@ -21,7 +22,8 @@ internal fun PickLocalMediaButton(
       .padding(padding)
       .kurobaClickable(
         bounded = false,
-        onClick = onPickLocalMediaButtonClicked
+        onClick = onPickLocalMediaButtonClicked,
+        onLongClick = onPickLocalMediaButtonLongClicked
       ),
     drawableId = R.drawable.ic_baseline_attach_file_24
   )

@@ -1,7 +1,5 @@
 package com.github.k1rakishou.chan.features.reply.data
 
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyGridItemSpanScope
 import androidx.compose.runtime.Immutable
 import java.util.*
 
@@ -25,10 +23,6 @@ data class ReplyFileAttachable(
 
   val key: String
     get() = "ReplyFileAttachable_${fileUuid}"
-  val contentType: String
-    get() = "ReplyFileAttachable"
-
-  fun span(totalItemsCount: Int, scope: LazyGridItemSpanScope): GridItemSpan = GridItemSpan(1)
 
   data class ImageDimensions(val width: Int, val height: Int)
 
@@ -44,20 +38,16 @@ data class ReplyFileAttachable(
     val markedAsSpoilerOnNonSpoilerBoard: Boolean
   ) {
 
-    fun getGspExifDataOrNull(): FileExifInfoStatus.GpsExifFound? {
-      return fileExifStatus.firstOrNull { status ->
-        status is FileExifInfoStatus.GpsExifFound
-      } as? FileExifInfoStatus.GpsExifFound
+    fun getGspExifDataOrNull(): List<FileExifInfoStatus.GpsExifFound> {
+      return fileExifStatus.filterIsInstance<FileExifInfoStatus.GpsExifFound>()
     }
 
-    fun getOrientationExifData(): FileExifInfoStatus.OrientationExifFound? {
-      return fileExifStatus.firstOrNull { status ->
-        status is FileExifInfoStatus.OrientationExifFound
-      } as? FileExifInfoStatus.OrientationExifFound
+    fun getOrientationExifData(): List<FileExifInfoStatus.OrientationExifFound> {
+      return fileExifStatus.filterIsInstance<FileExifInfoStatus.OrientationExifFound>()
     }
 
-    fun hasGspExifData(): Boolean = getGspExifDataOrNull() != null
-    fun hasOrientationExifData(): Boolean = getOrientationExifData() != null
+    fun hasGspExifData(): Boolean = getGspExifDataOrNull().isNotEmpty()
+    fun hasOrientationExifData(): Boolean = getOrientationExifData().isNotEmpty()
   }
 }
 

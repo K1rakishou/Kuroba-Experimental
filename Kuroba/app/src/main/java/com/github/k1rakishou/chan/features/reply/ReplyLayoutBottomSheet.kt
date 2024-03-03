@@ -71,8 +71,9 @@ fun ReplyLayoutBottomSheet(
 
   val toolbarHeight = dimensionResource(id = R.dimen.toolbar_height)
   val replyAttachables by replyLayoutState.attachables
+  val syntheticAttachables = replyLayoutState.syntheticAttachables
 
-  val defaultOpenedHeightDp = if (replyAttachables.attachables.isEmpty()) {
+  val defaultOpenedHeightDp = if (replyAttachables.attachables.isEmpty() && syntheticAttachables.isEmpty()) {
     dimensionResource(id = R.dimen.reply_layout_container_opened_height_no_attachments)
   } else {
     dimensionResource(id = R.dimen.reply_layout_container_opened_height_with_attachments)

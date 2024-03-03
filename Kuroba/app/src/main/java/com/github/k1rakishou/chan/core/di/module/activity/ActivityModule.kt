@@ -30,8 +30,7 @@ import com.github.k1rakishou.chan.core.manager.UpdateManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2
 import com.github.k1rakishou.chan.features.reply.data.PostFormattingButtonsFactory
-import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutFilePickerHelper
-import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutReplyFileHelper
+import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutHelper
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -189,22 +188,15 @@ class ActivityModule {
     boardManagerLazy: Lazy<BoardManager>,
     postingLimitationsInfoManagerLazy: Lazy<PostingLimitationsInfoManager>,
     imageLoaderV2Lazy: Lazy<ImageLoaderV2>
-  ): ReplyLayoutReplyFileHelper {
+  ): ReplyLayoutHelper {
     Logger.deps("ReplyLayoutFileEnumerator")
-    return ReplyLayoutReplyFileHelper(
+    return ReplyLayoutHelper(
       replyManagerLazy,
       siteManagerLazy,
       boardManagerLazy,
       postingLimitationsInfoManagerLazy,
       imageLoaderV2Lazy
     )
-  }
-
-  @PerActivity
-  @Provides
-  fun provideReplyLayoutFilePickerHelper(): ReplyLayoutFilePickerHelper {
-    Logger.deps("ReplyLayoutFilePickerHelper")
-    return ReplyLayoutFilePickerHelper()
   }
 
   @PerActivity

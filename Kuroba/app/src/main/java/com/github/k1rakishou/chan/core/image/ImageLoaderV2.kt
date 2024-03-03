@@ -77,7 +77,6 @@ import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
 import java.io.File
-import java.io.FileOutputStream
 import java.io.IOException
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
@@ -963,13 +962,20 @@ class ImageLoaderV2(
         TAG, "loadRelyFilePreviewFromDisk() getReplyFileByFileUuid($fileUuid) error",
         replyFileMaybe.error
       )
+
       listener.onResponse(getImageErrorLoadingDrawable(context))
       return
     }
 
     val replyFile = (replyFileMaybe as ModularResult.Value).value
     if (replyFile == null) {
-      Logger.e(TAG, "loadRelyFilePreviewFromDisk() replyFile==null")
+      Logger.e(TAG, "loadRelyFilePreviewFromDisk() replyFile is null")
+      listener.onResponse(getImageErrorLoadingDrawable(context))
+      return
+    }
+
+    if (replyFile.previewFileOnDisk == null) {
+      Logger.e(TAG, "loadRelyFilePreviewFromDisk() replyFile.previewFileOnDisk is null")
       listener.onResponse(getImageErrorLoadingDrawable(context))
       return
     }
@@ -1009,7 +1015,6 @@ class ImageLoaderV2(
     imageLoader.enqueue(request)
   }
 
-  @Suppress("BlockingMethodInNonBlockingContext")
   suspend fun calculateFilePreviewAndStoreOnDisk(
     context: Context,
     fileUuid: UUID,
@@ -1032,8 +1037,7 @@ class ImageLoaderV2(
 
     val replyFileMetaMaybe = replyFile.getReplyFileMeta()
     if (replyFileMetaMaybe is ModularResult.Error) {
-      Logger.e(TAG, "calculateFilePreviewAndStoreOnDisk() replyFile.getReplyFileMeta() error",
-        replyFileMetaMaybe.error)
+      Logger.e(TAG, "calculateFilePreviewAndStoreOnDisk() replyFile.getReplyFileMeta() error", replyFileMetaMaybe.error)
       return
     }
 
@@ -1055,23 +1059,11 @@ class ImageLoaderV2(
       addAudioIcon = true
     ).bitmap
 
-    val previewFileOnDisk = replyFile.previewFileOnDisk
-
-    if (!previewFileOnDisk.exists()) {
-      check(previewFileOnDisk.createNewFile()) {
-        "Failed to create previewFileOnDisk, path=${previewFileOnDisk.absolutePath}"
-      }
-    }
-
-    try {
-      runInterruptible {
-        FileOutputStream(previewFileOnDisk).use { fos ->
-          previewBitmap.compress(Bitmap.CompressFormat.JPEG, 95, fos)
-        }
-      }
-    } catch (error: Throwable) {
-      previewFileOnDisk.delete()
-      throw error
+    runInterruptible {
+      replyManager.updatePreviewFileOnDisk(
+        fileUuid = replyFileMeta.fileUuid,
+        previewBitmap = previewBitmap
+      ).unwrap()
     }
   }
 

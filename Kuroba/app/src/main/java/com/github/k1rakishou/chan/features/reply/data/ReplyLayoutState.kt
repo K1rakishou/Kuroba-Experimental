@@ -5,6 +5,7 @@ import androidx.compose.runtime.IntState
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -27,11 +28,17 @@ import com.github.k1rakishou.chan.ui.controller.ThreadControllerType
 import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
 import com.github.k1rakishou.chan.ui.helper.AppResources
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper
+import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
+import com.github.k1rakishou.chan.ui.helper.picker.LocalFilePicker
+import com.github.k1rakishou.chan.ui.helper.picker.PickedFile
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.common.isNotNullNorEmpty
+import com.github.k1rakishou.common.removeIfKt
 import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -56,7 +63,7 @@ class ReplyLayoutState(
   private val callbacks: Callbacks,
   private val coroutineScope: CoroutineScope,
   private val appResourcesLazy: Lazy<AppResources>,
-  private val replyLayoutReplyFileHelperLazy: Lazy<ReplyLayoutReplyFileHelper>,
+  private val replyLayoutHelperLazy: Lazy<ReplyLayoutHelper>,
   private val siteManagerLazy: Lazy<SiteManager>,
   private val boardManagerLazy: Lazy<BoardManager>,
   private val replyManagerLazy: Lazy<ReplyManager>,
@@ -65,12 +72,13 @@ class ReplyLayoutState(
   private val globalUiStateHolderLazy: Lazy<GlobalUiStateHolder>,
   private val postingServiceDelegateLazy: Lazy<PostingServiceDelegate>,
   private val boardFlagInfoRepositoryLazy: Lazy<BoardFlagInfoRepository>,
-  private val runtimePermissionsHelperLazy: Lazy<RuntimePermissionsHelper>
+  private val runtimePermissionsHelperLazy: Lazy<RuntimePermissionsHelper>,
+  private val imagePickHelperLazy: Lazy<ImagePickHelper>
 ) {
   private val appResources: AppResources
     get() = appResourcesLazy.get()
-  private val replyLayoutReplyFileHelper: ReplyLayoutReplyFileHelper
-    get() = replyLayoutReplyFileHelperLazy.get()
+  private val replyLayoutHelper: ReplyLayoutHelper
+    get() = replyLayoutHelperLazy.get()
   private val siteManager: SiteManager
     get() = siteManagerLazy.get()
   private val boardManager: BoardManager
@@ -89,6 +97,8 @@ class ReplyLayoutState(
     get() = boardFlagInfoRepositoryLazy.get()
   private val runtimePermissionsHelper: RuntimePermissionsHelper
     get() = runtimePermissionsHelperLazy.get()
+  private val imagePickHelper: ImagePickHelper
+    get() = imagePickHelperLazy.get()
 
   private val _replyText = mutableStateOf<TextFieldValue>(TextFieldValue())
   val replyText: State<TextFieldValue>
@@ -109,6 +119,10 @@ class ReplyLayoutState(
   private val _options = mutableStateOf<TextFieldValue>(TextFieldValue())
   val options: State<TextFieldValue>
     get() = _options
+
+  private val _syntheticAttachables = mutableStateListOf<SyntheticReplyAttachable>()
+  val syntheticAttachables: List<SyntheticReplyAttachable>
+    get() = _syntheticAttachables
 
   private val _attachables = mutableStateOf<ReplyAttachables>(ReplyAttachables())
   val attachables: State<ReplyAttachables>
@@ -145,6 +159,8 @@ class ReplyLayoutState(
 
   private var persistInReplyManagerJob: Job? = null
   private var listenForReplyManagerUpdatesJob: Job? = null
+  private var listenForNewPickedFilesJob: Job? = null
+  private var listenForSyntheticFilesUpdatesJob: Job? = null
 
   suspend fun bindChanDescriptor(chanDescriptor: ChanDescriptor) {
     replyManager.awaitUntilFilesAreLoaded()
@@ -157,6 +173,36 @@ class ReplyLayoutState(
         .onEach { updateAttachables() }
         .collect()
     }
+
+    listenForNewPickedFilesJob = coroutineScope.launch {
+      imagePickHelper.pickedFilesUpdateFlow
+        .onEach { updateAttachables() }
+        .collect()
+    }
+
+    listenForSyntheticFilesUpdatesJob = coroutineScope.launch {
+      imagePickHelper.syntheticFilesUpdatesFlow
+        .onEach { syntheticReplyAttachable ->
+          when (syntheticReplyAttachable.state) {
+            SyntheticReplyAttachableState.Initializing,
+            SyntheticReplyAttachableState.Downloading,
+            SyntheticReplyAttachableState.Decoding -> {
+              val index = _syntheticAttachables
+                .indexOfFirst { attachable -> attachable.id == syntheticReplyAttachable.id }
+
+              if (index >= 0) {
+                _syntheticAttachables[index] = syntheticReplyAttachable
+              } else {
+                _syntheticAttachables.add(0, syntheticReplyAttachable)
+              }
+            }
+            SyntheticReplyAttachableState.Done -> {
+              _syntheticAttachables.removeIfKt { attachable -> attachable.id == syntheticReplyAttachable.id }
+            }
+          }
+        }
+        .collect()
+    }
   }
 
   fun unbindChanDescriptor() {
@@ -165,6 +211,12 @@ class ReplyLayoutState(
 
     listenForReplyManagerUpdatesJob?.cancel()
     listenForReplyManagerUpdatesJob = null
+
+    listenForNewPickedFilesJob?.cancel()
+    listenForNewPickedFilesJob = null
+
+    listenForSyntheticFilesUpdatesJob?.cancel()
+    listenForSyntheticFilesUpdatesJob = null
   }
 
   suspend fun onPostingStatusEvent(status: PostingStatus) {
@@ -301,15 +353,47 @@ class ReplyLayoutState(
     }.ignore()
   }
 
-  fun onPickLocalMediaButtonClicked() {
+  fun pickLocalMedia(showFilePickerChooser: Boolean) {
     filePickerExecutor.post {
       if (!requestPermissionIfNeededSuspend()) {
-        // TODO: New reply layout
+        // TODO: New reply layout. strings
         callbacks.showToast("READ_EXTERNAL_STORAGE permission is required for this action!")
         return@post
       }
 
-//      replyLayoutFilePickerHelper.onPickLocalMediaButtonClicked(chanDescriptor)
+      try {
+        val input = LocalFilePicker.LocalFilePickerInput(
+          notifyListeners = false,
+          replyChanDescriptor = chanDescriptor,
+          clearLastRememberedFilePicker = showFilePickerChooser
+        )
+
+        val pickedFileResult = withContext(Dispatchers.IO) { imagePickHelper.pickLocalFile(input) }
+          .unwrap()
+
+        val replyFiles = (pickedFileResult as PickedFile.Result).replyFiles
+        replyFiles.forEach { replyFile ->
+          val replyFileMeta = replyFile.getReplyFileMeta().safeUnwrap { error ->
+            Logger.e(TAG, "pickLocalMedia() imagePickHelper.pickLocalFile($chanDescriptor) getReplyFileMeta() error", error)
+            return@forEach
+          }
+
+          val maxAllowedFilesPerPost = replyLayoutHelper.getMaxAllowedFilesPerPost(chanDescriptor)
+          if (maxAllowedFilesPerPost != null && canAutoSelectFile(maxAllowedFilesPerPost).unwrap()) {
+            replyManager.updateFileSelection(
+              fileUuid = replyFileMeta.fileUuid,
+              selected = true,
+              notifyListeners = true
+            )
+          }
+        }
+
+        Logger.d(TAG, "pickLocalMedia() success")
+      } catch (error: Throwable) {
+        Logger.error(TAG) { "pickLocalMedia() error: ${error.errorMessageOrClassName()}" }
+
+        // TODO: New reply layout. Error toast.
+      }
     }
   }
 
@@ -370,7 +454,6 @@ class ReplyLayoutState(
     }
 
     updateAttachables()
-    updateReplyFieldHintText()
   }
 
   suspend fun loadViewsIntoDraft(): Boolean {
@@ -388,6 +471,10 @@ class ReplyLayoutState(
     }
 
     return true
+  }
+
+  private fun canAutoSelectFile(maxAllowedFilesPerPost: Int): ModularResult<Boolean> {
+    return Try { replyManager.selectedFilesCount().unwrap() < maxAllowedFilesPerPost }
   }
 
   private suspend fun requestPermissionIfNeededSuspend(): Boolean {
@@ -410,12 +497,13 @@ class ReplyLayoutState(
   }
 
   private suspend fun updateAttachables() {
-    val replyAttachables = replyLayoutReplyFileHelper.enumerate(chanDescriptor)
+    val replyAttachables = replyLayoutHelper.enumerateReplyFiles(chanDescriptor)
       .onError { error ->
         Logger.error(TAG) {
           "updateAttachables() Failed to enumerate reply files for ${chanDescriptor}, error: ${error.errorMessageOrClassName()}"
         }
 
+        // TODO: strings
         callbacks.showToast("Error while enumerating files: ${error.errorMessageOrClassName()}")
       }
       .valueOrNull()
@@ -423,6 +511,8 @@ class ReplyLayoutState(
     if (replyAttachables != null) {
       _attachables.value = replyAttachables
     }
+
+    updateReplyFieldHintText()
   }
 
   private fun persistInReplyManager() {
@@ -501,9 +591,9 @@ class ReplyLayoutState(
       if (replyAttachables.attachables.isNotEmpty()) {
         append("  ")
 
-        val totalAttachablesCount = replyAttachables.attachables.size
         val selectedAttachablesCount = replyAttachables.attachables.count { replyFileAttachable -> replyFileAttachable.selected }
         val maxAllowedAttachablesPerPost = replyAttachables.maxAllowedAttachablesPerPost
+        val totalAttachablesCount = replyAttachables.attachables.size
 
         if (maxAllowedAttachablesPerPost > 0 && selectedAttachablesCount > maxAllowedAttachablesPerPost) {
           withStyle(SpanStyle(color = themeEngine.chanTheme.errorColorCompose)) {
@@ -727,7 +817,7 @@ class ReplyLayoutState(
   }
 
   suspend fun attachableFileStatus(replyFileAttachable: ReplyFileAttachable): AnnotatedString {
-    return replyLayoutReplyFileHelper.attachableFileStatus(
+    return replyLayoutHelper.attachableFileStatus(
       chanDescriptor = chanDescriptor,
       chanTheme = themeEngine.chanTheme,
       clickedFile = replyFileAttachable

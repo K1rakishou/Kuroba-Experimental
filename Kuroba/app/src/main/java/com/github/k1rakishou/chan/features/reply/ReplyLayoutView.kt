@@ -12,6 +12,7 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.text.AnnotatedString
 import androidx.core.os.bundleOf
 import androidx.core.text.getSpans
+import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.helper.DialogFactory
@@ -21,6 +22,7 @@ import com.github.k1rakishou.chan.ui.compose.providers.ProvideEverythingForCompo
 import com.github.k1rakishou.chan.ui.controller.OpenUrlInWebViewController
 import com.github.k1rakishou.chan.ui.controller.ThreadControllerType
 import com.github.k1rakishou.chan.ui.controller.dialog.KurobaComposeDialogController
+import com.github.k1rakishou.chan.ui.helper.AppResources
 import com.github.k1rakishou.chan.ui.layout.ThreadListLayout
 import com.github.k1rakishou.chan.ui.widget.dialog.KurobaAlertDialog
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -50,6 +52,8 @@ class ReplyLayoutView @JvmOverloads constructor(
 
   @Inject
   lateinit var dialogFactory: DialogFactory
+  @Inject
+  lateinit var appResources: AppResources
 
   private lateinit var replyLayoutViewModel: ReplyLayoutViewModel
   private lateinit var replyLayoutCallbacks: ReplyLayoutViewModel.ThreadListLayoutCallbacks
@@ -254,18 +258,20 @@ class ReplyLayoutView @JvmOverloads constructor(
   }
 
   override fun onAttachedMediaClicked(attachedMedia: ReplyFileAttachable) {
-    TODO("Not yet implemented")
+    // TODO("Not yet implemented")
   }
 
   override fun onAttachedMediaLongClicked(attachedMedia: ReplyFileAttachable) {
-    TODO("Not yet implemented")
+    // TODO("Not yet implemented")
   }
 
   override fun showFileStatusDialog(attachableFileStatus: AnnotatedString) {
     dialogFactory.dialog(
       context = context,
       params = KurobaComposeDialogController.informationDialog(
-        title = KurobaComposeDialogController.Text.String("File status"),
+        title = KurobaComposeDialogController.Text.String(
+          value = appResources.string(R.string.reply_file_status_dialog_title)
+        ),
         description = KurobaComposeDialogController.Text.AnnotatedString(attachableFileStatus)
       )
     )
