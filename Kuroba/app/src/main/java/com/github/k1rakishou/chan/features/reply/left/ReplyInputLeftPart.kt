@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
@@ -35,13 +34,6 @@ internal fun ReplyInputLeftPart(
 
   val replyLayoutVisibility by replyLayoutState.replyLayoutVisibility
 
-  LaunchedEffect(
-    key1 = replyLayoutState.chanDescriptor,
-    block = {
-      // TODO: New reply layout
-      //  replyLayoutViewModel.loadLastUsedFlag(replyLayoutState.chanDescriptor)
-    }
-  )
 
   ReplyLayoutLeftPartCustomLayout(
     modifier = Modifier
