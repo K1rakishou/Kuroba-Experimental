@@ -1,11 +1,13 @@
 package com.github.k1rakishou.chan.features.reply.left
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text2.input.TextFieldLineLimits
 import androidx.compose.material.ContentAlpha
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -27,12 +29,13 @@ import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.features.reply.ReplyLayoutViewModel
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutState
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
-import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextField
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextFieldV2
 import com.github.k1rakishou.chan.ui.compose.components.KurobaLabelText
 import com.github.k1rakishou.chan.ui.compose.freeFocusSafe
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.requestFocusSafe
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun ReplyTextField(
   replyLayoutState: ReplyLayoutState,
@@ -41,9 +44,10 @@ internal fun ReplyTextField(
 ) {
   val chanTheme = LocalChanTheme.current
   val localSoftwareKeyboardController = LocalSoftwareKeyboardController.current
+  val focusRequester = remember { FocusRequester() }
 
   var prevReplyLayoutVisibility by remember { mutableStateOf<ReplyLayoutVisibility>(ReplyLayoutVisibility.Collapsed) }
-  val replyText by replyLayoutState.replyText
+  val replyTextState = replyLayoutState.replyTextState
   val replyLayoutVisibility by replyLayoutState.replyLayoutVisibility
   val replyFieldHintText by replyLayoutState.replyFieldHintText
 
@@ -62,24 +66,30 @@ internal fun ReplyTextField(
     }
   }
 
-  val focusRequester = remember { FocusRequester() }
-
   LaunchedEffect(
     key1 = replyLayoutVisibility,
+    key2 = prevReplyLayoutVisibility,
     block = {
-      if (
-        prevReplyLayoutVisibility == ReplyLayoutVisibility.Collapsed &&
-        replyLayoutVisibility == ReplyLayoutVisibility.Opened
-      ) {
+      if (prevReplyLayoutVisibility == replyLayoutVisibility) {
+        return@LaunchedEffect
+      }
+
+      fun isOpenedNow(): Boolean {
+        return prevReplyLayoutVisibility == ReplyLayoutVisibility.Collapsed &&
+          replyLayoutVisibility == ReplyLayoutVisibility.Opened
+      }
+
+      fun isCollapsedNow(): Boolean {
+        return prevReplyLayoutVisibility != ReplyLayoutVisibility.Collapsed &&
+          replyLayoutVisibility == ReplyLayoutVisibility.Collapsed
+      }
+
+      if (isOpenedNow()) {
         focusRequester.requestFocusSafe()
         localSoftwareKeyboardController?.show()
-      } else if (
-        prevReplyLayoutVisibility != ReplyLayoutVisibility.Collapsed &&
-        replyLayoutVisibility == ReplyLayoutVisibility.Collapsed
-      ) {
-        if (!replyLayoutViewModel.isAnyReplyLayoutOpened()) {
-          localSoftwareKeyboardController?.hide()
-        }
+      } else if (isCollapsedNow() && !replyLayoutViewModel.isAnyReplyLayoutOpened()) {
+        focusRequester.freeFocusSafe()
+        localSoftwareKeyboardController?.hide()
       }
 
       prevReplyLayoutVisibility = replyLayoutVisibility
@@ -107,7 +117,7 @@ internal fun ReplyTextField(
 
   val mutableInteractionSource = remember { MutableInteractionSource() }
 
-  KurobaComposeTextField(
+  KurobaComposeTextFieldV2(
     modifier = Modifier
       .fillMaxSize()
       .padding(vertical = 4.dp)
@@ -115,10 +125,10 @@ internal fun ReplyTextField(
       .focusRequester(focusRequester)
       .then(minHeightModifier),
     enabled = replyLayoutEnabled,
-    value = replyText,
-    singleLine = false,
-    maxLines = Int.MAX_VALUE,
-    visualTransformation = replyInputVisualTransformation,
+    state = replyTextState,
+    lineLimits = TextFieldLineLimits.MultiLine(),
+    // TODO: New reply layout
+//    visualTransformation = replyInputVisualTransformation,
     keyboardOptions = KeyboardOptions(
       capitalization = KeyboardCapitalization.Sentences
     ),
@@ -130,7 +140,6 @@ internal fun ReplyTextField(
         color = chanTheme.textColorHintCompose
       )
     },
-    onValueChange = { newTextFieldValue -> replyLayoutState.onReplyTextChanged(newTextFieldValue) },
     interactionSource = mutableInteractionSource
   )
 }

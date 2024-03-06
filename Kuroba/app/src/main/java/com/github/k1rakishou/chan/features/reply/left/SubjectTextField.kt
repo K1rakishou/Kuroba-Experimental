@@ -4,8 +4,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text2.input.TextFieldLineLimits
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -15,7 +15,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutState
-import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextField
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextFieldV2
 import com.github.k1rakishou.chan.ui.compose.components.KurobaLabelText
 
 @Composable
@@ -27,16 +27,16 @@ internal fun SubjectTextField(
   val textStyle = remember { TextStyle(fontSize = 16.sp) }
   val labelText = stringResource(id = R.string.reply_subject)
 
-  val subject by replyLayoutState.subject
+  val subjectState = replyLayoutState.subjectTextState
 
-  KurobaComposeTextField(
+  KurobaComposeTextFieldV2(
     modifier = Modifier
         .fillMaxWidth()
         .wrapContentHeight(),
     enabled = replyLayoutEnabled,
-    value = subject,
-    singleLine = true,
+    state = subjectState,
     textStyle = textStyle,
+    lineLimits = TextFieldLineLimits.SingleLine,
     keyboardOptions = KeyboardOptions(
       capitalization = KeyboardCapitalization.Sentences,
       imeAction = ImeAction.Next
@@ -49,7 +49,6 @@ internal fun SubjectTextField(
         fontSize = 14.sp,
         interactionSource = interactionSource
       )
-    },
-    onValueChange = { newTextFieldValue -> replyLayoutState.onSubjectChanged(newTextFieldValue) }
+    }
   )
 }

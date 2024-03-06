@@ -18,6 +18,8 @@ fun ReplyLayout(
   onPresolveCaptchaButtonClicked: () -> Unit,
   onSearchRemoteMediaButtonClicked: (ChanDescriptor) -> Unit,
 ) {
+  val chanTheme = LocalChanTheme.current
+
   val chanDescriptorMut by replyLayoutViewModel.boundChanDescriptor
   val chanDescriptor = chanDescriptorMut
 
@@ -32,11 +34,12 @@ fun ReplyLayout(
     return
   }
 
-  val chanTheme = LocalChanTheme.current
+  val replyLayoutAnimationState by replyLayoutState.replyLayoutAnimationState
 
   ReplyLayoutBottomSheet(
     modifier = Modifier.fillMaxSize(),
     replyLayoutState = replyLayoutState,
+    replyLayoutAnimationState = replyLayoutAnimationState,
     chanTheme = chanTheme,
     onHeightSettled = { height -> replyLayoutState.onHeightChanged(height) },
     content = { targetHeight, draggableState, onDragStarted, onDragStopped ->

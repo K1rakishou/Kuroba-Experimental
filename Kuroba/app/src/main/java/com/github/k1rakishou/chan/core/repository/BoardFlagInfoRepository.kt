@@ -76,30 +76,6 @@ class BoardFlagInfoRepository(
     lastUsedCountryFlagPerBoardSetting.set(resultFlags)
   }
 
-  fun extractFlagCodeOrDefault(lastUsedCountryFlagPerBoardString: String, currentBoardCode: String): String {
-    // board_code:flag_code;board_code:flag_code;board_code:flag_code;etc...
-
-    val boardCodeFlagCodePairs = lastUsedCountryFlagPerBoardString.split(';')
-    var resultFlagCode = "0"
-
-    for (boardCodeFlagCodePair in boardCodeFlagCodePairs) {
-      val splitPair = boardCodeFlagCodePair.split(':')
-      if (splitPair.size != 2) {
-        continue
-      }
-
-      val boardCode = splitPair[0]
-      val flagCode = splitPair[1]
-
-      if (boardCode.equals(currentBoardCode, ignoreCase = true)) {
-        resultFlagCode = flagCode
-        break
-      }
-    }
-
-    return resultFlagCode
-  }
-
   fun getLastUsedFlagKey(boardDescriptor: BoardDescriptor): String? {
     val lastUsedCountryFlagPerBoardSetting = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
       ?.getSettingBySettingId<StringSetting>(SiteSetting.SiteSettingId.LastUsedCountryFlagPerBoard)
@@ -128,6 +104,30 @@ class BoardFlagInfoRepository(
     }
 
     return lastUsedFlagInfo
+  }
+
+  private fun extractFlagCodeOrDefault(lastUsedCountryFlagPerBoardString: String, currentBoardCode: String): String {
+    // board_code:flag_code;board_code:flag_code;board_code:flag_code;etc...
+
+    val boardCodeFlagCodePairs = lastUsedCountryFlagPerBoardString.split(';')
+    var resultFlagCode = "0"
+
+    for (boardCodeFlagCodePair in boardCodeFlagCodePairs) {
+      val splitPair = boardCodeFlagCodePair.split(':')
+      if (splitPair.size != 2) {
+        continue
+      }
+
+      val boardCode = splitPair[0]
+      val flagCode = splitPair[1]
+
+      if (boardCode.equals(currentBoardCode, ignoreCase = true)) {
+        resultFlagCode = flagCode
+        break
+      }
+    }
+
+    return resultFlagCode
   }
 
   private suspend fun loadFlags(boardDescriptor: BoardDescriptor): Boolean {

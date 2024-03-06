@@ -34,7 +34,6 @@ internal fun ReplyInputLeftPart(
 
   val replyLayoutVisibility by replyLayoutState.replyLayoutVisibility
 
-
   ReplyLayoutLeftPartCustomLayout(
     modifier = Modifier
         .fillMaxSize()

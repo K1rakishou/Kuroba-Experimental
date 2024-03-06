@@ -1,6 +1,9 @@
 package com.github.k1rakishou.chan.features.reply.data
 
 import android.Manifest
+import androidx.compose.foundation.text2.input.TextFieldState
+import androidx.compose.foundation.text2.input.forEachTextValue
+import androidx.compose.foundation.text2.input.placeCursorAtEnd
 import androidx.compose.runtime.IntState
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
@@ -9,9 +12,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.withStyle
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
@@ -106,25 +107,14 @@ class ReplyLayoutState(
   private val imagePickHelper: ImagePickHelper
     get() = imagePickHelperLazy.get()
 
-  private val _replyText = mutableStateOf<TextFieldValue>(TextFieldValue())
-  val replyText: State<TextFieldValue>
-    get() = _replyText
-
-  private val _subject = mutableStateOf<TextFieldValue>(TextFieldValue())
-  val subject: State<TextFieldValue>
-    get() = _subject
-
-  private val _name = mutableStateOf<TextFieldValue>(TextFieldValue())
-  val name: State<TextFieldValue>
-    get() = _name
+  val replyTextState = TextFieldState()
+  val subjectTextState = TextFieldState()
+  val nameTextState = TextFieldState()
+  val optionsTextState = TextFieldState()
 
   private val _replyFieldHintText = mutableStateOf<AnnotatedString>(AnnotatedString(""))
   val replyFieldHintText: State<AnnotatedString>
     get() = _replyFieldHintText
-
-  private val _options = mutableStateOf<TextFieldValue>(TextFieldValue())
-  val options: State<TextFieldValue>
-    get() = _options
 
   private val _syntheticAttachables = mutableStateListOf<SyntheticReplyAttachable>()
   val syntheticAttachables: List<SyntheticReplyAttachable>
@@ -175,9 +165,7 @@ class ReplyLayoutState(
   private val flagLoaderExecutor = RendezvousCoroutineExecutor(coroutineScope)
 
   private var persistInReplyManagerJob: Job? = null
-  private var listenForReplyManagerUpdatesJob: Job? = null
-  private var listenForNewPickedFilesJob: Job? = null
-  private var listenForSyntheticFilesUpdatesJob: Job? = null
+  private val compositeJob = mutableListOf<Job>()
 
   suspend fun bindChanDescriptor(chanDescriptor: ChanDescriptor) {
     replyManager.awaitUntilFilesAreLoaded()
@@ -185,19 +173,19 @@ class ReplyLayoutState(
 
     loadDraftIntoViews(chanDescriptor)
 
-    listenForReplyManagerUpdatesJob = coroutineScope.launch {
+    compositeJob += coroutineScope.launch {
       replyManager.listenForReplyFilesUpdates()
         .onEach { updateAttachables() }
         .collect()
     }
 
-    listenForNewPickedFilesJob = coroutineScope.launch {
+    compositeJob += coroutineScope.launch {
       imagePickHelper.pickedFilesUpdateFlow
         .onEach { updateAttachables() }
         .collect()
     }
 
-    listenForSyntheticFilesUpdatesJob = coroutineScope.launch {
+    compositeJob += coroutineScope.launch {
       imagePickHelper.syntheticFilesUpdatesFlow
         .onEach { syntheticReplyAttachable ->
           when (syntheticReplyAttachable.state) {
@@ -220,20 +208,40 @@ class ReplyLayoutState(
         }
         .collect()
     }
+
+    compositeJob += coroutineScope.launch {
+      replyTextState.forEachTextValue {
+        updateReplyFieldHintText()
+        updateHighlightedPosts()
+        persistInReplyManager()
+      }
+    }
+
+    compositeJob += coroutineScope.launch {
+      subjectTextState.forEachTextValue {
+        persistInReplyManager()
+      }
+    }
+
+    compositeJob += coroutineScope.launch {
+      nameTextState.forEachTextValue {
+        persistInReplyManager()
+      }
+    }
+
+    compositeJob += coroutineScope.launch {
+      optionsTextState.forEachTextValue {
+        persistInReplyManager()
+      }
+    }
   }
 
   fun unbindChanDescriptor() {
     persistInReplyManagerJob?.cancel()
     persistInReplyManagerJob = null
 
-    listenForReplyManagerUpdatesJob?.cancel()
-    listenForReplyManagerUpdatesJob = null
-
-    listenForNewPickedFilesJob?.cancel()
-    listenForNewPickedFilesJob = null
-
-    listenForSyntheticFilesUpdatesJob?.cancel()
-    listenForSyntheticFilesUpdatesJob = null
+    compositeJob.forEach { job -> job.cancel() }
+    compositeJob.clear()
   }
 
   suspend fun onPostingStatusEvent(status: PostingStatus) {
@@ -302,53 +310,57 @@ class ReplyLayoutState(
     return _replyLayoutVisibility.value == ReplyLayoutVisibility.Expanded
   }
 
+  fun onAnimationFinished(animationState: ReplyLayoutAnimationState) {
+    when (animationState) {
+      ReplyLayoutAnimationState.Collapsing -> {
+        // no-op
+      }
+      ReplyLayoutAnimationState.Collapsed -> {
+        _replyLayoutAnimationState.value = ReplyLayoutAnimationState.Collapsed
+        _replyLayoutVisibility.value = ReplyLayoutVisibility.Collapsed
+        onReplyLayoutVisibilityChangedInternal(ReplyLayoutVisibility.Collapsed)
+      }
+      ReplyLayoutAnimationState.Opening -> {
+        // no-op
+      }
+      ReplyLayoutAnimationState.Opened -> {
+        _replyLayoutAnimationState.value = ReplyLayoutAnimationState.Opened
+        _replyLayoutVisibility.value = ReplyLayoutVisibility.Opened
+        onReplyLayoutVisibilityChangedInternal(ReplyLayoutVisibility.Opened)
+      }
+      ReplyLayoutAnimationState.Expanding -> {
+        // no-op
+      }
+      ReplyLayoutAnimationState.Expanded -> {
+        _replyLayoutAnimationState.value = ReplyLayoutAnimationState.Expanded
+        _replyLayoutVisibility.value = ReplyLayoutVisibility.Expanded
+        onReplyLayoutVisibilityChangedInternal(ReplyLayoutVisibility.Expanded)
+      }
+    }
+  }
+
   fun collapseReplyLayout() {
-    if (_replyLayoutVisibility.value != ReplyLayoutVisibility.Collapsed) {
-      _replyLayoutVisibility.value = ReplyLayoutVisibility.Collapsed
-      onReplyLayoutVisibilityChangedInternal(ReplyLayoutVisibility.Collapsed)
+    if (_replyLayoutAnimationState.value != ReplyLayoutAnimationState.Collapsing) {
+      _replyLayoutAnimationState.value = ReplyLayoutAnimationState.Collapsing
     }
   }
 
   fun openReplyLayout() {
-    if (_replyLayoutVisibility.value != ReplyLayoutVisibility.Opened) {
-      _replyLayoutVisibility.value = ReplyLayoutVisibility.Opened
-      onReplyLayoutVisibilityChangedInternal(ReplyLayoutVisibility.Opened)
+    if (_replyLayoutAnimationState.value != ReplyLayoutAnimationState.Opening) {
+      _replyLayoutAnimationState.value = ReplyLayoutAnimationState.Opening
     }
   }
 
   fun expandReplyLayout() {
-    if (_replyLayoutVisibility.value != ReplyLayoutVisibility.Expanded) {
-      _replyLayoutVisibility.value = ReplyLayoutVisibility.Expanded
-      onReplyLayoutVisibilityChangedInternal(ReplyLayoutVisibility.Expanded)
+    if (_replyLayoutAnimationState.value != ReplyLayoutAnimationState.Expanding) {
+      _replyLayoutAnimationState.value = ReplyLayoutAnimationState.Expanded
     }
-  }
-
-  fun onReplyTextChanged(replyText: TextFieldValue) {
-    _replyText.value = replyText
-    updateReplyFieldHintText()
-    updateHighlightedPosts()
-    persistInReplyManager()
   }
 
   fun insertTags(postFormatterButton: PostFormatterButton) {
     // TODO: New reply layout.
     updateReplyFieldHintText()
     updateHighlightedPosts()
-    persistInReplyManager()
-  }
-
-  fun onSubjectChanged(subject: TextFieldValue) {
-    _subject.value = subject
-    persistInReplyManager()
-  }
-
-  fun onNameChanged(name: TextFieldValue) {
-    _name.value = name
-    persistInReplyManager()
-  }
-
-  fun onOptionsChanged(options: TextFieldValue) {
-    _options.value = options
     persistInReplyManager()
   }
 
@@ -488,25 +500,25 @@ class ReplyLayoutState(
     }
 
     replyManager.readReply(chanDescriptor) { reply ->
-      _replyText.value = TextFieldValue(
-        text = reply.comment,
-        selection = TextRange(reply.comment.length)
-      )
+      replyTextState.edit {
+        append(reply.comment)
+        placeCursorAtEnd()
+      }
 
-      _subject.value = TextFieldValue(
-        text = reply.subject,
-        selection = TextRange(reply.subject.length)
-      )
+      subjectTextState.edit {
+        append(reply.subject)
+        placeCursorAtEnd()
+      }
 
-      _name.value = TextFieldValue(
-        text = reply.postName,
-        selection = TextRange(reply.postName.length)
-      )
+      nameTextState.edit {
+        append(reply.postName)
+        placeCursorAtEnd()
+      }
 
-      _options.value = TextFieldValue(
-        text = reply.options,
-        selection = TextRange(reply.options.length)
-      )
+      optionsTextState.edit {
+        append(reply.options)
+        placeCursorAtEnd()
+      }
 
       boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor())?.let { chanBoard ->
         _maxCommentLength.intValue = chanBoard.maxCommentChars
@@ -528,10 +540,10 @@ class ReplyLayoutState(
     val lastUsedFlagKey = boardFlagInfoRepository.getLastUsedFlagKey(chanDescriptor.boardDescriptor())
 
     replyManager.readReply(chanDescriptor) { reply ->
-      reply.comment = replyText.value.text
-      reply.postName = name.value.text
-      reply.subject = subject.value.text
-      reply.options = options.value.text
+      reply.comment = replyTextState.text.toString()
+      reply.postName = nameTextState.text.toString()
+      reply.subject = subjectTextState.text.toString()
+      reply.options = optionsTextState.text.toString()
 
       if (lastUsedFlagKey.isNotNullNorEmpty()) {
         reply.flag = lastUsedFlagKey
@@ -631,14 +643,14 @@ class ReplyLayoutState(
       threadControllerType = threadControllerType,
       makeNewThreadHint = appResources.string(R.string.reply_make_new_thread_hint),
       replyInThreadHint = appResources.string(R.string.reply_reply_in_thread_hint),
-      replyText = _replyText.value,
+      replyText = replyTextState.text,
       maxCommentLength = _maxCommentLength.intValue
     )
   }
 
   private fun updateHighlightedPosts() {
     highlightQuotesExecutor.post(300) {
-      val replyTextCopy = _replyText.value.text
+      val replyTextCopy = replyTextState.text.toString()
 
       val foundQuotes = withContext(Dispatchers.Default) {
         ReplyTextFieldHelpers.findAllQuotesInText(chanDescriptor, replyTextCopy)
@@ -654,7 +666,7 @@ class ReplyLayoutState(
     threadControllerType: ThreadControllerType,
     makeNewThreadHint: String,
     replyInThreadHint: String,
-    replyText: TextFieldValue,
+    replyText: CharSequence,
     maxCommentLength: Int
   ): AnnotatedString {
     return buildAnnotatedString {
@@ -667,7 +679,7 @@ class ReplyLayoutState(
 
       append(" ")
 
-      val commentLength = replyText.text.length
+      val commentLength = replyText.length
 
       if (maxCommentLength > 0 && commentLength > maxCommentLength) {
         withStyle(SpanStyle(color = themeEngine.chanTheme.errorColorCompose)) {

@@ -41,6 +41,7 @@ fun KurobaComposeTextField(
   modifier: Modifier = Modifier,
   onValueChange: (String) -> Unit,
   fontSize: KurobaTextUnit = KurobaTextUnit(16.sp),
+  minLines: Int = 1,
   maxLines: Int = Int.MAX_VALUE,
   singleLine: Boolean = false,
   keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
@@ -120,6 +121,7 @@ fun KurobaComposeTextField(
       keyboardActions = keyboardActions,
       interactionSource = interactionSource,
       singleLine = singleLine,
+      minLines = minLines,
       maxLines = maxLines,
       decorationBox = @Composable { innerTextField ->
         val labelFunc: (@Composable (() -> Unit))? = if (label == null) {
@@ -154,6 +156,7 @@ fun KurobaComposeTextField(
   modifier: Modifier = Modifier,
   onValueChange: (TextFieldValue) -> Unit,
   fontSize: KurobaTextUnit = KurobaTextUnit(16.sp),
+  minLines: Int = 1,
   maxLines: Int = Int.MAX_VALUE,
   singleLine: Boolean = false,
   keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
@@ -233,6 +236,7 @@ fun KurobaComposeTextField(
       keyboardActions = keyboardActions,
       interactionSource = interactionSource,
       singleLine = singleLine,
+      minLines = minLines,
       maxLines = maxLines,
       decorationBox = @Composable { innerTextField ->
         val labelFunc: (@Composable (() -> Unit))? = if (label == null) {
