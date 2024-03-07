@@ -372,7 +372,6 @@ class ManagerModule {
       applicationVisibilityManager,
       archivesManager,
       bookmarksRepository,
-      SiteRegistry,
       currentOpenedDescriptorStateManager
     )
   }

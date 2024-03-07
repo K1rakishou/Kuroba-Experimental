@@ -18,7 +18,7 @@ class ColorizableTabLayout @JvmOverloads constructor(
   private var disableableLayout: DisableableLayout? = null
 
   @Inject
-  protected lateinit var themeEngine: ThemeEngine
+  lateinit var themeEngine: ThemeEngine
 
   init {
     if (!isInEditMode) {

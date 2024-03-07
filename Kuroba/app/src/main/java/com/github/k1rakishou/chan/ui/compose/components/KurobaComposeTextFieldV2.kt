@@ -9,15 +9,15 @@ import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.InputTransformation
+import androidx.compose.foundation.text.input.OutputTransformation
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.TextSelectionColors
-import androidx.compose.foundation.text2.BasicTextField2
-import androidx.compose.foundation.text2.input.InputTransformation
-import androidx.compose.foundation.text2.input.OutputTransformation
-import androidx.compose.foundation.text2.input.TextFieldLineLimits
-import androidx.compose.foundation.text2.input.TextFieldState
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.runtime.Composable
@@ -41,120 +41,6 @@ import com.github.k1rakishou.chan.ui.compose.KurobaTextUnit
 import com.github.k1rakishou.chan.ui.compose.animatedHorizontalLine
 import com.github.k1rakishou.chan.ui.compose.collectTextFontSize
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
-
-@OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
-@Composable
-fun KurobaComposeTextFieldV2(
-  value: String,
-  onValueChange: (String) -> Unit,
-  modifier: Modifier = Modifier,
-  fontSize: KurobaTextUnit = KurobaTextUnit(16.sp),
-  enabled: Boolean = true,
-  readOnly: Boolean = false,
-  isError: Boolean = false,
-  inputTransformation: InputTransformation? = null,
-  textStyle: TextStyle = TextStyle.Default,
-  shape: Shape = TextFieldDefaults.TextFieldShape,
-  keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
-  keyboardActions: KeyboardActions = KeyboardActions.Default,
-  lineLimits: TextFieldLineLimits = TextFieldLineLimits.Default,
-  onTextLayout: (Density.(getResult: () -> TextLayoutResult?) -> Unit)? = null,
-  interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-  outputTransformation: OutputTransformation? = null,
-  label: @Composable ((InteractionSource) -> Unit)? = null,
-  scrollState: ScrollState = rememberScrollState(),
-) {
-  val chanTheme = LocalChanTheme.current
-  val view = LocalView.current
-
-  DisposableEffect(
-    key1 = view,
-    effect = {
-      if (view.isAttachedToWindow) {
-        view.requestApplyInsets()
-      }
-
-      onDispose {
-        if (view.isAttachedToWindow) {
-          view.requestApplyInsets()
-        }
-      }
-    }
-  )
-
-  val textSelectionColors = remember(key1 = chanTheme.accentColor) {
-    TextSelectionColors(
-      handleColor = Color.Transparent,
-      backgroundColor = chanTheme.accentColorCompose.copy(alpha = 0.4f)
-    )
-  }
-
-  CompositionLocalProvider(LocalTextSelectionColors provides textSelectionColors) {
-    val textFontSize = collectTextFontSize(defaultFontSize = fontSize)
-    val colors = chanTheme.textFieldColors()
-    val textColor = textStyle.color.takeOrElse { colors.textColor(enabled).value }
-
-    val mergedTextStyle = remember(textStyle, textColor, textFontSize) {
-      textStyle.merge(TextStyle(color = textColor, fontSize = textFontSize))
-    }
-
-    val isFocused by interactionSource.collectIsFocusedAsState()
-    val backgroundColor by colors.backgroundColor(enabled)
-    val cursorColor by colors.cursorColor(isError)
-
-    BasicTextField2(
-      value = value,
-      onValueChange = onValueChange,
-      modifier = modifier
-        .background(backgroundColor, shape)
-        .animatedHorizontalLine(
-          enabled = enabled,
-          isError = false,
-          isFocused = isFocused,
-          lineWidth = 2.dp
-        )
-        .defaultMinSize(
-          minWidth = KurobaComposeDefaults.TextField.MinWidth,
-          minHeight = KurobaComposeDefaults.TextField.MinHeight
-        ),
-      enabled = enabled,
-      readOnly = readOnly,
-      inputTransformation = inputTransformation,
-      textStyle = mergedTextStyle,
-      keyboardOptions = keyboardOptions,
-      keyboardActions = keyboardActions,
-      lineLimits = lineLimits,
-      onTextLayout = onTextLayout,
-      interactionSource = interactionSource,
-      cursorBrush = remember(cursorColor) { SolidColor(cursorColor) },
-      outputTransformation = outputTransformation,
-      decorator = @Composable { innerTextField ->
-        val labelFunc: (@Composable (() -> Unit))? = if (label == null) {
-          null
-        } else {
-          { label(interactionSource) }
-        }
-
-        TextFieldDefaults.TextFieldDecorationBox(
-          value = value,
-          visualTransformation = VisualTransformation.None,
-          innerTextField = innerTextField,
-          placeholder = null,
-          label = labelFunc,
-          leadingIcon = null,
-          trailingIcon = null,
-          singleLine = lineLimits is TextFieldLineLimits.SingleLine,
-          enabled = enabled,
-          isError = false,
-          interactionSource = interactionSource,
-          colors = colors,
-          contentPadding = remember { PaddingValues(4.dp) }
-        )
-      },
-      scrollState = scrollState
-    )
-  }
-}
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterialApi::class)
 @Composable
@@ -215,7 +101,7 @@ fun KurobaComposeTextFieldV2(
     val backgroundColor by colors.backgroundColor(enabled)
     val cursorColor by colors.cursorColor(isError)
 
-    BasicTextField2(
+    BasicTextField(
       state = state,
       modifier = modifier
         .background(backgroundColor, shape)

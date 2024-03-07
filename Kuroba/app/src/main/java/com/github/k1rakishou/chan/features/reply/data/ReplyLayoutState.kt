@@ -1,9 +1,9 @@
 package com.github.k1rakishou.chan.features.reply.data
 
 import android.Manifest
-import androidx.compose.foundation.text2.input.TextFieldState
-import androidx.compose.foundation.text2.input.forEachTextValue
-import androidx.compose.foundation.text2.input.placeCursorAtEnd
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.forEachTextValue
+import androidx.compose.foundation.text.input.placeCursorAtEnd
 import androidx.compose.runtime.IntState
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State

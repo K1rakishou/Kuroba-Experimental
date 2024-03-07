@@ -18,7 +18,7 @@ class ColorizableSwitchMaterial @JvmOverloads constructor(
   IColorizableWidget {
 
   @Inject
-  protected lateinit var themeEngine: ThemeEngine
+  lateinit var themeEngine: ThemeEngine
 
   init {
     if (!isInEditMode) {

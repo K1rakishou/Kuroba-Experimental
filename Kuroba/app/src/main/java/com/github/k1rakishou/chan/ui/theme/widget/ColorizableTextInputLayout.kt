@@ -18,7 +18,7 @@ class ColorizableTextInputLayout @JvmOverloads constructor(
 ) : TextInputLayout(context, attrs, defStyleAttr), IColorizableWidget {
 
   @Inject
-  protected lateinit var themeEngine: ThemeEngine
+  lateinit var themeEngine: ThemeEngine
 
   init {
     if (!isInEditMode) {

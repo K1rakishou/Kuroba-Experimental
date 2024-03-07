@@ -64,35 +64,30 @@ abstract class SiteBase : Site, CoroutineScope {
 
   @Inject
   lateinit var proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>
-    protected set
   @Inject
   lateinit var appConstants: AppConstants
-    protected set
   @Inject
   lateinit var boardManager: BoardManager
-    protected set
-
   @Inject
-  protected lateinit var httpCallManager: Lazy<HttpCallManager>
+  lateinit var httpCallManager: Lazy<HttpCallManager>
   @Inject
-  protected lateinit var moshi: Lazy<Moshi>
+  lateinit var moshi: Lazy<Moshi>
   @Inject
-  protected lateinit var siteManager: SiteManager
+  lateinit var siteManager: SiteManager
   @Inject
-  protected lateinit var imageLoaderV2: Lazy<ImageLoaderV2>
+  lateinit var imageLoaderV2: Lazy<ImageLoaderV2>
   @Inject
-  protected lateinit var archivesManager: ArchivesManager
-
+  lateinit var archivesManager: ArchivesManager
   @Inject
-  protected lateinit var postFilterManager: Lazy<PostFilterManager>
+  lateinit var postFilterManager: Lazy<PostFilterManager>
   @Inject
-  protected lateinit var replyManager: Lazy<ReplyManager>
+  lateinit var replyManager: Lazy<ReplyManager>
   @Inject
-  protected lateinit var gson: Gson
+  lateinit var gson: Gson
   @Inject
-  protected lateinit var boardFlagInfoRepository: Lazy<BoardFlagInfoRepository>
+  lateinit var boardFlagInfoRepository: Lazy<BoardFlagInfoRepository>
   @Inject
-  protected lateinit var simpleCommentParser: Lazy<SimpleCommentParser>
+  lateinit var simpleCommentParser: Lazy<SimpleCommentParser>
 
   override val coroutineContext: CoroutineContext
     get() = job + Dispatchers.Main + CoroutineName("SiteBase")
