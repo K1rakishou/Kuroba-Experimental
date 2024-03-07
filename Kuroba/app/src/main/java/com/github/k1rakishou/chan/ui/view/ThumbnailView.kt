@@ -21,7 +21,6 @@ import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.ColorStateList
-import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
@@ -51,6 +50,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import dagger.Lazy
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.io.IOException
@@ -58,32 +58,20 @@ import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Inject
 
 open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener {
-  private var requestDisposable: ImageLoaderV2.ImageLoaderRequestDisposable? = null
-  private var errorText: String? = null
-  private var foregroundCalculate = false
-  private var imageForeground: Drawable? = null
-
-  @JvmField
-  protected var _error = false
-
-  val error: Boolean
-    get() = _error
-
   private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG)
   private val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG)
   private val tmpTextRect = Rect()
   private val alphaAnimator = AnimatorSet()
   private val debouncer = Debouncer(false)
-  private var kurobaScope: KurobaCoroutineScope? = null
-  private var _thumbnailViewOptions: ThumbnailViewOptions? = null
+  private val kurobaScope: KurobaCoroutineScope = KurobaCoroutineScope()
+  private val ioErrorRetryAttempt = AtomicInteger(0)
 
-  val bitmap: Bitmap?
-    get() = (this.drawable as? BitmapDrawable)?.bitmap
+  private var _error = false
+  val error: Boolean
+    get() = _error
+  private var _thumbnailViewOptions: ThumbnailViewOptions? = null
   val thumbnailViewOptions: ThumbnailViewOptions?
     get() = _thumbnailViewOptions
-
-  private val ioErrorAttempts = AtomicInteger(0)
-  private val verboseLogs = ChanSettings.verboseLogs.get()
 
   private var _imageUrl: String? = null
   val imageUrl: String?
@@ -92,6 +80,10 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
   private var postDescriptor: PostDescriptor? = null
   private var imageSize: ImageLoaderV2.ImageSize? = null
   private var cacheFileType: CacheFileType = CacheFileType.PostMediaThumbnail
+  private var requestDisposable: ImageLoaderV2.ImageLoaderRequestDisposable? = null
+  private var errorText: String? = null
+  private var foregroundCalculate = false
+  private var imageForeground: Drawable? = null
 
   @Inject
   lateinit var imageLoaderV2: Lazy<ImageLoaderV2>
@@ -194,8 +186,8 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
         unbindImageUrl()
       }
 
-      ioErrorAttempts.set(MAX_RELOAD_ATTEMPTS)
-      kurobaScope = KurobaCoroutineScope()
+      ioErrorRetryAttempt.set(0)
+      kurobaScope.cancelChildren()
     }
 
     this._imageUrl = url
@@ -204,7 +196,7 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
     this.cacheFileType = cacheFileType
     this._thumbnailViewOptions = thumbnailViewOptions
 
-    kurobaScope!!.launch {
+    kurobaScope.launch {
       setUrlInternal(
         url = url,
         postDescriptor = postDescriptor,
@@ -219,9 +211,7 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
 
     requestDisposable?.dispose()
     requestDisposable = null
-
-    kurobaScope?.cancel()
-    kurobaScope = null
+    kurobaScope.cancelChildren()
 
     _thumbnailViewOptions = null
 
@@ -326,6 +316,13 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
     imageSize: ImageLoaderV2.ImageSize,
     thumbnailViewOptions: ThumbnailViewOptions
   ) {
+    val currentAttempt = ioErrorRetryAttempt.get()
+    Logger.verbose(TAG) { "setUrlInternal(${url}) attempt: ${currentAttempt}" }
+
+    if (currentAttempt > 0) {
+      delay(currentAttempt * 2000L)
+    }
+
     val listener = object : ImageLoaderV2.FailureAwareImageListener {
       override fun onResponse(drawable: BitmapDrawable, isImmediate: Boolean) {
         if (url != this@ThumbnailView._imageUrl) {
@@ -340,6 +337,8 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
         setImageBitmap(drawable.bitmap)
         onImageSet(isImmediate)
         invalidate()
+
+        Logger.verbose(TAG) { "setUrlInternal(${url}) attempt: ${currentAttempt}, success" }
       }
 
       override fun onNotFound() {
@@ -354,6 +353,8 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
 
         onImageSet(false)
         invalidate()
+
+        Logger.verbose(TAG) { "setUrlInternal(${url}) attempt: ${currentAttempt}, error (not found)" }
       }
 
       override fun onResponseError(error: Throwable) {
@@ -364,19 +365,26 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
         }
 
         val isIoError = error is IOException
-        val isScopeActive = kurobaScope?.isActive ?: false
+        val isScopeActive = kurobaScope.isActive
 
-        if (verboseLogs) {
-          Logger.d(TAG, "onResponseError() error: ${error.errorMessageOrClassName()}, " +
-            "isIoError=$isIoError, isScopeActive=$isScopeActive, remainingAttempts=${ioErrorAttempts.get()}")
+        Logger.verbose(TAG) {
+          "setUrlInternal(${url}) attempt: ${currentAttempt}, isIoError: $isIoError, isScopeActive: $isScopeActive"
         }
 
-        if (isIoError && ioErrorAttempts.decrementAndGet() > 0 && isScopeActive) {
-          bindImageUrl(url, cacheFileType, postDescriptor, imageSize, thumbnailViewOptions)
+        if (isIoError && ioErrorRetryAttempt.getAndIncrement() < MAX_RELOAD_ATTEMPTS && isScopeActive) {
+          kurobaScope.launch {
+            setUrlInternal(
+              url = url,
+              postDescriptor = postDescriptor,
+              imageSize = imageSize,
+              thumbnailViewOptions = thumbnailViewOptions
+            )
+          }
+
           return
         }
 
-        Logger.e(TAG, "onResponseError() error: ${error.errorMessageOrClassName()}")
+        Logger.e(TAG, "setUrlInternal(${url}) attempt: ${currentAttempt}, error (${error.errorMessageOrClassName()})")
 
         this@ThumbnailView._error = true
         this@ThumbnailView.errorText = AppModuleAndroidUtils.getString(R.string.thumbnail_load_failed_network)

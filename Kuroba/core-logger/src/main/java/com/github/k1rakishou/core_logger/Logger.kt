@@ -124,7 +124,7 @@ object Logger {
         if (canLog() && verboseLogsEnabled) {
             val msg = message()
 
-            Log.d(time + tagPrefix + tag, msg)
+            Log.v(time + tagPrefix + tag, msg)
             logStorage.persistLog(LogStorage.LogLevel.Verbose, tag, msg)
         }
     }
@@ -134,7 +134,7 @@ object Logger {
             val msg = message()
             val actualTag = (tag ?: outerClassName())
 
-            Log.d(time + tagPrefix + actualTag, msg)
+            Log.v(time + tagPrefix + actualTag, msg)
             logStorage.persistLog(LogStorage.LogLevel.Verbose, actualTag, msg)
         }
     }
