@@ -29,6 +29,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
@@ -47,6 +48,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.ChanSettings
@@ -234,7 +236,7 @@ class CreateOrUpdateFilterController(
     }
 
     if (applyToEmptyComments) {
-      chanFilterMutableState.pattern.value = null
+      chanFilterMutableState.pattern.value = TextFieldValue()
     }
 
     val filterTypes = remember(key1 = type) {
@@ -378,7 +380,9 @@ class CreateOrUpdateFilterController(
     KurobaComposeCollapsableContent(
       title = stringResource(id = R.string.filter_additional_options),
       collapsed = filtersAdditionalSectionCollapsed,
-      onCollapsedStateChanged = { nowCollapsed -> viewModel.onAdditionalFilterOptionsCollapsableSectionStateChanged(nowCollapsed) }
+      onCollapsedStateChanged = { nowCollapsed ->
+        viewModel.onAdditionalFilterOptionsCollapsableSectionStateChanged(nowCollapsed)
+      }
     ) {
       if (action == FilterAction.HIDE.id || action == FilterAction.REMOVE.id) {
         KurobaComposeCheckbox(
@@ -488,7 +492,7 @@ class CreateOrUpdateFilterController(
       enabled = !applyToEmptyComments,
       fontSize = 18.sp,
       keyboardOptions = keyboardOptions,
-      value = pattern ?: "",
+      value = pattern,
       labelText = stringResource(id = R.string.filter_enter_pattern),
       textColor = chanTheme.textColorPrimaryCompose,
       parentBackgroundColor = chanTheme.backColorCompose,
@@ -505,8 +509,8 @@ class CreateOrUpdateFilterController(
         this.value = CreateOrUpdateFilterControllerHelper.checkFilterMatchesTestText(
           filterEngine = filterEngine,
           chanFilterMutable = chanFilterMutableState.asChanFilterMutable(),
-          text = testText,
-          pattern = pattern
+          text = testText.text,
+          pattern = pattern.text
         )
       }
     )
@@ -566,7 +570,7 @@ class CreateOrUpdateFilterController(
         .padding(vertical = 4.dp),
       fontSize = 18.sp,
       keyboardOptions = keyboardOptions,
-      value = note ?: "",
+      value = note,
       labelText = stringResource(id = R.string.filter_note),
       textColor = chanTheme.textColorPrimaryCompose,
       parentBackgroundColor = chanTheme.backColorCompose,
@@ -786,20 +790,19 @@ class CreateOrUpdateFilterController(
   private data class ChanFilterMutableState(
     val databaseId: Long?,
     val enabled: MutableState<Boolean> = mutableStateOf(true),
-    val type: MutableState<Int> = mutableStateOf(FilterType.SUBJECT.flag or FilterType.COMMENT.flag),
-    val pattern: MutableState<String?> = mutableStateOf(null),
+    val type: MutableState<Int> = mutableIntStateOf(FilterType.SUBJECT.flag or FilterType.COMMENT.flag),
+    val pattern: MutableState<TextFieldValue> = mutableStateOf(TextFieldValue()),
     val allBoards: MutableState<Boolean> = mutableStateOf(false),
-    val boards: MutableState<MutableSet<BoardDescriptor>> = mutableStateOf(mutableSetOf()),
-    val action: MutableState<Int> = mutableStateOf(0),
-    val color: MutableState<Int> = mutableStateOf(defaultFilterHighlightColor),
-    val note: MutableState<String?> = mutableStateOf(null),
+    val boards: MutableState<Set<BoardDescriptor>> = mutableStateOf(emptySet()),
+    val action: MutableState<Int> = mutableIntStateOf(0),
+    val color: MutableState<Int> = mutableIntStateOf(defaultFilterHighlightColor),
+    val note: MutableState<TextFieldValue> = mutableStateOf(TextFieldValue()),
     val applyToReplies: MutableState<Boolean> = mutableStateOf(false),
     val onlyOnOP: MutableState<Boolean> = mutableStateOf(false),
     val applyToSaved: MutableState<Boolean> = mutableStateOf(false),
     val applyToEmptyComments: MutableState<Boolean> = mutableStateOf(false),
     val filterWatchNotify: MutableState<Boolean> = mutableStateOf(false),
-
-    val testPattern: MutableState<String> = mutableStateOf(""),
+    val testPattern: MutableState<TextFieldValue> = mutableStateOf(TextFieldValue()),
     val filterValidationResult: MutableState<FilterValidationResult> = mutableStateOf(FilterValidationResult.Undefined)
   ) {
 
@@ -808,12 +811,12 @@ class CreateOrUpdateFilterController(
         databaseId = databaseId ?: 0L,
         enabled = enabled.value,
         type = type.value,
-        pattern = pattern.value,
+        pattern = pattern.value.text,
         allBoardsSelected = allBoards.value,
-        boards = boards.value,
+        boards = boards.value.toMutableSet(),
         action = action.value,
         color = color.value,
-        note = note.value,
+        note = note.value.text,
         applyToReplies = applyToReplies.value,
         onlyOnOP = onlyOnOP.value,
         applyToSaved = applyToSaved.value,
@@ -829,11 +832,11 @@ class CreateOrUpdateFilterController(
         if (chanFilterMutable != null) {
           chanFilterMutableState.enabled.value = chanFilterMutable.enabled
           chanFilterMutableState.type.value = chanFilterMutable.type
-          chanFilterMutableState.pattern.value = chanFilterMutable.pattern
+          chanFilterMutableState.pattern.value = TextFieldValue(chanFilterMutable.pattern ?: "")
           chanFilterMutableState.boards.value = chanFilterMutable.boards
           chanFilterMutableState.allBoards.value = chanFilterMutable.allBoards()
           chanFilterMutableState.action.value = chanFilterMutable.action
-          chanFilterMutableState.note.value = chanFilterMutable.note
+          chanFilterMutableState.note.value = TextFieldValue(chanFilterMutable.note ?: "")
           chanFilterMutableState.applyToReplies.value = chanFilterMutable.applyToReplies
           chanFilterMutableState.onlyOnOP.value = chanFilterMutable.onlyOnOP
           chanFilterMutableState.applyToSaved.value = chanFilterMutable.applyToSaved
@@ -846,7 +849,7 @@ class CreateOrUpdateFilterController(
             defaultFilterHighlightColor
           }
 
-          chanFilterMutableState.testPattern.value = ""
+          chanFilterMutableState.testPattern.value = TextFieldValue()
           chanFilterMutableState.filterValidationResult.value = FilterValidationResult.Undefined
         }
 

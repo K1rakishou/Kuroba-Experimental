@@ -45,9 +45,7 @@ class BookmarkWatcherCoordinator(
         // Pass the filter if we have at least one bookmark change that we actually want
         .filter { bookmarkChange -> isWantedBookmarkChange(bookmarkChange) }
         .collect { bookmarkChange ->
-          if (verboseLogsEnabled) {
-            Logger.d(TAG, "Calling onBookmarksChanged() because bookmarks have actually changed")
-          }
+          Logger.d(TAG, "Calling onBookmarksChanged() because bookmarks have actually changed")
 
           onBookmarksChanged(
             hasCreateBookmarkChange = bookmarkChange is BookmarksManager.BookmarkChange.BookmarksCreated
@@ -102,14 +100,12 @@ class BookmarkWatcherCoordinator(
 
   private suspend fun onBookmarksChanged(hasCreateBookmarkChange: Boolean = false) {
     val alreadyRunning = running.compareAndSet(false, true).not()
-
-    if (verboseLogsEnabled) {
-      Logger.d(TAG, "onBookmarksChanged() start hasCreateBookmarkChange: $hasCreateBookmarkChange, alreadyRunning: $alreadyRunning")
-    }
-
     if (alreadyRunning) {
+      Logger.d(TAG, "onBookmarksChanged() alreadyRunning is true. Exiting.")
       return
     }
+
+    Logger.d(TAG, "onBookmarksChanged() hasCreateBookmarkChange: $hasCreateBookmarkChange")
 
     appScope.launch {
       if (!bookmarksManager.isReady()) {
@@ -155,10 +151,7 @@ class BookmarkWatcherCoordinator(
         Logger.e(TAG, "onBookmarksChanged() canceled")
       } finally {
         running.set(false)
-
-        if (verboseLogsEnabled) {
-          Logger.d(TAG, "onBookmarksChanged() end")
-        }
+        Logger.d(TAG, "onBookmarksChanged() end")
       }
     }
   }

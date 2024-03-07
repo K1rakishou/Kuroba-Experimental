@@ -201,6 +201,10 @@ open class PostHideManager(
     return chanPostHideRepository.getTotalCount()
   }
 
+  fun contains(postDescriptor: PostDescriptor): Boolean {
+    return lock.read { postHideMap[postDescriptor.descriptor]?.containsKey(postDescriptor) == true }
+  }
+
   fun remove(postDescriptor: PostDescriptor) {
     removeManyChanPostHides(listOf(postDescriptor))
   }

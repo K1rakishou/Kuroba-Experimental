@@ -2,11 +2,18 @@ package com.github.k1rakishou.chan.core.manager
 
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.core_logger.Logger
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.time.measureTime
 
 class ApplicationVisibilityManager {
   private val listeners = CopyOnWriteArrayList<ApplicationVisibilityListener>()
+
+  private val _applicationVisibilityUpdatesFlow = MutableStateFlow<ApplicationVisibility>(ApplicationVisibility.Background)
+  val applicationVisibilityUpdatesFlow: StateFlow<ApplicationVisibility>
+    get() = _applicationVisibilityUpdatesFlow.asStateFlow()
 
   @Volatile
   private var currentApplicationVisibility: ApplicationVisibility = ApplicationVisibility.Background
@@ -29,6 +36,7 @@ class ApplicationVisibilityManager {
 
     _switchedToForegroundAt = System.currentTimeMillis()
     currentApplicationVisibility = ApplicationVisibility.Foreground
+    _applicationVisibilityUpdatesFlow.tryEmit(ApplicationVisibility.Foreground)
 
     val time = measureTime {
       listeners.forEach { listener ->
@@ -44,6 +52,7 @@ class ApplicationVisibilityManager {
     BackgroundUtils.ensureMainThread()
 
     currentApplicationVisibility = ApplicationVisibility.Background
+    _applicationVisibilityUpdatesFlow.tryEmit(ApplicationVisibility.Background)
 
     val time = measureTime {
       listeners.forEach { listener ->

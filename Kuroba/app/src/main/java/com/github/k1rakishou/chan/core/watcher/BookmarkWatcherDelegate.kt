@@ -52,10 +52,8 @@ class BookmarkWatcherDelegate(
   ) {
     BackgroundUtils.ensureBackgroundThread()
 
-    if (verboseLogsEnabled) {
-      Logger.d(TAG, "BookmarkWatcherDelegate.doWork(isCalledFromForeground: $isCalledFromForeground, " +
-        "updateCurrentlyOpenedThread: $updateCurrentlyOpenedThread)")
-    }
+    Logger.d(TAG, "BookmarkWatcherDelegate.doWork(isCalledFromForeground: $isCalledFromForeground, " +
+      "updateCurrentlyOpenedThread: $updateCurrentlyOpenedThread)")
 
     if (isDevFlavor) {
       if (isCalledFromForeground) {
@@ -83,7 +81,6 @@ class BookmarkWatcherDelegate(
     }
   }
 
-  @OptIn(ExperimentalTime::class)
   private suspend fun doWorkInternal(
     isCalledFromForeground: Boolean,
     updateCurrentlyOpenedThread: Boolean,
