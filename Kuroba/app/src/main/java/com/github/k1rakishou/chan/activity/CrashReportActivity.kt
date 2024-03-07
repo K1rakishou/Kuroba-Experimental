@@ -397,7 +397,10 @@ class CrashReportActivity : AppCompatActivity(), FSAFActivityCallbacks, IHasView
                 key(logLevel) {
                   Row(verticalAlignment = Alignment.CenterVertically) {
                     KurobaComposeCheckbox(
-                      modifier = Modifier.wrapContentSize(),
+                      modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight()
+                        .padding(vertical = 4.dp),
                       currentlyChecked = checkedStates[logLevel] ?: false,
                       text = "Display ${logLevel.logLevelName} logs",
                       onCheckChanged = { nowChecked ->
@@ -409,6 +412,8 @@ class CrashReportActivity : AppCompatActivity(), FSAFActivityCallbacks, IHasView
                 }
               }
             }
+
+            Spacer(modifier = Modifier.height(8.dp))
 
             SelectionContainer {
               KurobaComposeText(
