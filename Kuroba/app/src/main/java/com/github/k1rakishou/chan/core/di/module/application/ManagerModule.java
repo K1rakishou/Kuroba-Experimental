@@ -382,7 +382,6 @@ public class ManagerModule {
                 applicationVisibilityManager,
                 archivesManager,
                 bookmarksRepository,
-                SiteRegistry.INSTANCE,
                 currentOpenedDescriptorStateManager
         );
     }

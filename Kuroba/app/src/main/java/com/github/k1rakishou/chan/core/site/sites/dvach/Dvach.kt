@@ -523,6 +523,13 @@ class Dvach : CommonSite() {
       addUserCodeCookie(site, requestBuilder)
     }
 
+    override fun modifyBoardsGetRequest(requestBuilder: Request.Builder) {
+      super.modifyBoardsGetRequest(requestBuilder)
+
+      addAntiSpamCookie(requestBuilder)
+      addUserCodeCookie(site, requestBuilder)
+    }
+
     private fun addUserCodeCookie(
       site: Dvach,
       requestBuilder: Request.Builder

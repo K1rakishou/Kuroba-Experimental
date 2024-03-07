@@ -141,6 +141,12 @@ abstract class SiteRequestModifier<T : Site>(
     addCloudFlareCookie(requestBuilder)
   }
 
+  @CallSuper
+  open fun modifyBoardsGetRequest(requestBuilder: Request.Builder) {
+    requestBuilder.addDefaultHeaders(appConstants)
+    addCloudFlareCookie(requestBuilder)
+  }
+
   private fun addCloudFlareCookie(requestBuilder: Request.Builder) {
     val domainOrHost = requestBuilder.build().url.let { url -> url.domain() ?: url.host }
 
