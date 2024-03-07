@@ -3,7 +3,6 @@ package com.github.k1rakishou.chan.core.manager
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
-import com.github.k1rakishou.chan.core.site.SiteRegistry
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.SuspendableInitializer
@@ -27,7 +26,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl
 import org.joda.time.DateTime
-import java.util.*
+import java.util.BitSet
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
@@ -38,11 +37,10 @@ class BookmarksManager(
   private val isDevFlavor: Boolean,
   private val verboseLogsEnabled: Boolean,
   private val appScope: CoroutineScope,
-  private val _applicationVisibilityManager: Lazy<ApplicationVisibilityManager>,
-  private val _archivesManager: Lazy<ArchivesManager>,
-  private val _bookmarksRepository: Lazy<BookmarksRepository>,
-  private val siteRegistry: SiteRegistry,
-  private val _currentOpenedDescriptorStateManager: Lazy<CurrentOpenedDescriptorStateManager>
+  private val applicationVisibilityManagerLazy: Lazy<ApplicationVisibilityManager>,
+  private val archivesManagerLazy: Lazy<ArchivesManager>,
+  private val bookmarksRepositoryLazy: Lazy<BookmarksRepository>,
+  private val currentOpenedDescriptorStateManagerLazy: Lazy<CurrentOpenedDescriptorStateManager>
 ) {
   private val lock = ReentrantReadWriteLock()
   private val bookmarksChangeFlow = MutableSharedFlow<BookmarkChange>(extraBufferCapacity = Channel.UNLIMITED)
@@ -56,15 +54,14 @@ class BookmarksManager(
   private val bookmarks = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, ThreadBookmark>(256)
 
   private val applicationVisibilityManager: ApplicationVisibilityManager
-    get() = _applicationVisibilityManager.get()
+    get() = applicationVisibilityManagerLazy.get()
   private val archivesManager: ArchivesManager
-    get() = _archivesManager.get()
+    get() = archivesManagerLazy.get()
   private val bookmarksRepository: BookmarksRepository
-    get() = _bookmarksRepository.get()
+    get() = bookmarksRepositoryLazy.get()
   private val currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager
-    get() = _currentOpenedDescriptorStateManager.get()
+    get() = currentOpenedDescriptorStateManagerLazy.get()
 
-  @OptIn(ExperimentalTime::class)
   fun initialize() {
     Logger.d(TAG, "BookmarksManager.initialize()")
     startListeningForAppVisibilityUpdates()
@@ -163,9 +160,7 @@ class BookmarksManager(
     if (threadDescriptor == currentOpenedDescriptorStateManager.currentThreadDescriptor) {
       val isActive = lock.read { bookmarks[threadDescriptor]?.isActive() ?: false }
       if (isActive) {
-        synchronized(this) {
-          threadIsFetchingEventsSubject.onNext(threadDescriptor)
-        }
+        threadIsFetchingEventsSubject.onNext(threadDescriptor)
       }
     }
   }
