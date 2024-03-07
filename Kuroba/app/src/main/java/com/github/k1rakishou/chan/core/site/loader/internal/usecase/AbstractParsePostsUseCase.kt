@@ -18,7 +18,6 @@ import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.data.post.PostFilter
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import kotlinx.coroutines.Dispatchers
-import java.util.*
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
@@ -88,6 +87,13 @@ abstract class AbstractParsePostsUseCase(
       return
     }
 
+    if (postHideManager.contains(postDescriptor)) {
+      // Do not create a filter for post hides. When we remove a post filter manually (unhide/unremove)
+      // we create a post hide with `manuallyRestored` flag set to true. We use that when opening
+      // medias to not filter out such posts/threads.
+      return
+    }
+
     for (filter in filters) {
       if (filter.isWatchFilter() || filter.isAvoidWatchFilter()) {
         // Do not auto create watch filters, this may end up pretty bad
@@ -96,10 +102,9 @@ abstract class AbstractParsePostsUseCase(
 
       if (filterEngine.matches(filter, postToParse)) {
         postFilterManager.insert(postDescriptor, createPostFilter(filter))
-        return
+      } else {
+        postFilterManager.remove(postDescriptor)
       }
-
-      postFilterManager.remove(postDescriptor)
     }
   }
 

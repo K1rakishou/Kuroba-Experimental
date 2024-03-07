@@ -143,6 +143,26 @@ open class PostFilterManager(
     }
   }
 
+  fun updateIfExists(postDescriptor: PostDescriptor, updateFunc: (PostFilter) -> Unit) {
+    updateIfExists(listOf(postDescriptor), updateFunc)
+  }
+
+  fun updateIfExists(postDescriptors: Collection<PostDescriptor>, updateFunc: (PostFilter) -> Unit) {
+    lock.write {
+      postDescriptors.forEach { postDescriptor ->
+        val threadDescriptor = postDescriptor.threadDescriptor()
+
+        val postFilter = filterStorage[threadDescriptor]?.get(postDescriptor)
+        if (postFilter == null) {
+          return@forEach
+        }
+
+        updateFunc(postFilter)
+        filterStorage[threadDescriptor]!![postDescriptor] = postFilter
+      }
+    }
+  }
+
   fun clear() {
     lock.write { filterStorage.clear() }
   }

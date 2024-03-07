@@ -43,17 +43,9 @@ data class ChanLoadOptions(val chanLoadOption: ChanLoadOption) {
 }
 
 sealed class ChanLoadOption {
-  object RetainAll : ChanLoadOption() {
-    override fun toString(): String {
-      return "RetainAll"
-    }
-  }
+  data object RetainAll : ChanLoadOption()
 
-  object ClearMemoryCache : ChanLoadOption() {
-    override fun toString(): String {
-      return "ClearMemoryCache"
-    }
-  }
+  data object ClearMemoryCache : ChanLoadOption()
 
   /**
    * If [postDescriptors] is null then remove all posts
