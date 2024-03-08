@@ -70,7 +70,7 @@ class DialogFactory(
 
     val kurobaComposeDialogHandle = KurobaComposeDialogController.KurobaComposeDialogHandle()
 
-    // TODO: clickable links
+    // TODO: New reply layout. Clickable links.
     containerController.presentController(
       KurobaComposeDialogController(
         context = context,

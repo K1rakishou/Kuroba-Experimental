@@ -1,9 +1,8 @@
 package com.github.k1rakishou.chan.features.reply.left
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.focusable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
@@ -84,6 +83,11 @@ internal fun ReplyTextField(
           replyLayoutVisibility == ReplyLayoutVisibility.Collapsed
       }
 
+      fun isExpandedNow(): Boolean {
+        return prevReplyLayoutVisibility != ReplyLayoutVisibility.Expanded &&
+          replyLayoutVisibility == ReplyLayoutVisibility.Expanded
+      }
+
       if (isOpenedNow()) {
         focusRequester.requestFocusSafe()
         localSoftwareKeyboardController?.show()
@@ -112,16 +116,14 @@ internal fun ReplyTextField(
   val minHeightModifier = if (replyLayoutVisibility == ReplyLayoutVisibility.Expanded) {
     Modifier.heightIn(min = 200.dp)
   } else {
-    Modifier
+    Modifier.height(100.dp)
   }
 
-  val mutableInteractionSource = remember { MutableInteractionSource() }
-
+  // TODO: New reply layout. Try using LookaheadLayout.
   KurobaComposeTextFieldV2(
     modifier = Modifier
-      .fillMaxSize()
+      .fillMaxWidth()
       .padding(vertical = 4.dp)
-      .focusable(interactionSource = mutableInteractionSource)
       .focusRequester(focusRequester)
       .then(minHeightModifier),
     enabled = replyLayoutEnabled,
@@ -139,7 +141,6 @@ internal fun ReplyTextField(
         fontSize = 12.sp,
         color = chanTheme.textColorHintCompose
       )
-    },
-    interactionSource = mutableInteractionSource
+    }
   )
 }

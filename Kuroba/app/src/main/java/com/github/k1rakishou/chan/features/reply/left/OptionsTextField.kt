@@ -38,7 +38,7 @@ internal fun OptionsTextField(
     textStyle = textStyle,
     lineLimits = TextFieldLineLimits.SingleLine,
     keyboardOptions = KeyboardOptions(
-      capitalization = KeyboardCapitalization.Sentences,
+      capitalization = KeyboardCapitalization.None,
       imeAction = ImeAction.Next
     ),
     keyboardActions = KeyboardActions(onNext = { onMoveFocus() }),

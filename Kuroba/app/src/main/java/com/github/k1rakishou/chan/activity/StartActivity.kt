@@ -78,7 +78,6 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
 @DoNotStrip
@@ -224,7 +223,6 @@ class StartActivity : ControllerHostActivity(),
     window.setupStatusAndNavBarColors(themeEngine.chanTheme)
   }
 
-  @OptIn(ExperimentalTime::class)
   private fun createUi() {
     if (isDevBuild()) {
       EpoxyController.setGlobalDebugLoggingEnabled(true)

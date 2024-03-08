@@ -688,7 +688,6 @@ class ReplyLayoutViewModel(
     fun hideDialog()
     fun showToast(message: String)
 
-    fun onSearchRemoteMediaButtonClicked()
     fun onReplyLayoutOptionsButtonClicked()
     fun onAttachedMediaClicked(attachedMedia: ReplyFileAttachable, isFileSupportedForReencoding: Boolean)
     fun onAttachedMediaLongClicked(attachedMedia: ReplyFileAttachable)

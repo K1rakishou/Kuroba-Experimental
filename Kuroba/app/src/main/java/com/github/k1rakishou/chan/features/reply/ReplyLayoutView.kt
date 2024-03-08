@@ -277,11 +277,8 @@ class ReplyLayoutView @JvmOverloads constructor(
       .also { toast -> toast.show() }
   }
 
-  override fun onSearchRemoteMediaButtonClicked() {
-    TODO("Not yet implemented")
-  }
-
   override fun onReplyLayoutOptionsButtonClicked() {
+    // TODO: New reply layout.
     TODO("Not yet implemented")
   }
 
@@ -290,6 +287,7 @@ class ReplyLayoutView @JvmOverloads constructor(
   }
 
   override fun onAttachedMediaLongClicked(attachedMedia: ReplyFileAttachable) {
+    // TODO: New reply layout.
     // TODO("Not yet implemented")
   }
 
