@@ -76,9 +76,9 @@ fun ReplyLayoutBottomSheet(
   val syntheticAttachables = replyLayoutState.syntheticAttachables
 
   val defaultOpenedHeightDp = if (replyAttachables.attachables.isEmpty() && syntheticAttachables.isEmpty()) {
-    dimensionResource(id = R.dimen.reply_layout_container_opened_height_no_attachments)
+    180.dp
   } else {
-    dimensionResource(id = R.dimen.reply_layout_container_opened_height_with_attachments)
+    260.dp
   }
   val defaultOpenedHeightPx = with(density) { defaultOpenedHeightDp.roundToPx() }
 

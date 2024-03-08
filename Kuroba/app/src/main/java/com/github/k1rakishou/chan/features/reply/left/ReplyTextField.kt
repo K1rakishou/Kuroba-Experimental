@@ -47,6 +47,7 @@ internal fun ReplyTextField(
 
   var prevReplyLayoutVisibility by remember { mutableStateOf<ReplyLayoutVisibility>(ReplyLayoutVisibility.Collapsed) }
   val replyTextState = replyLayoutState.replyTextState
+  val replyAttachables by replyLayoutState.attachables
   val replyLayoutVisibility by replyLayoutState.replyLayoutVisibility
   val replyFieldHintText by replyLayoutState.replyFieldHintText
 
@@ -113,10 +114,16 @@ internal fun ReplyTextField(
     }
   )
 
-  val minHeightModifier = if (replyLayoutVisibility == ReplyLayoutVisibility.Expanded) {
-    Modifier.heightIn(min = 200.dp)
+  val defaultHeight = if (replyAttachables.attachables.isEmpty()) {
+    130.dp
   } else {
-    Modifier.height(100.dp)
+    100.dp
+  }
+
+  val heightModifier = if (replyLayoutVisibility == ReplyLayoutVisibility.Expanded) {
+    Modifier.heightIn(min = defaultHeight)
+  } else {
+    Modifier.height(defaultHeight)
   }
 
   // TODO: New reply layout. Try using LookaheadLayout.
@@ -125,7 +132,7 @@ internal fun ReplyTextField(
       .fillMaxWidth()
       .padding(vertical = 4.dp)
       .focusRequester(focusRequester)
-      .then(minHeightModifier),
+      .then(heightModifier),
     enabled = replyLayoutEnabled,
     state = replyTextState,
     lineLimits = TextFieldLineLimits.MultiLine(),

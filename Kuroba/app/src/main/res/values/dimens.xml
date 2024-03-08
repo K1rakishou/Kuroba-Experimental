@@ -41,7 +41,4 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     <dimen name="left_action_strip_button_size">50dp</dimen>
     <dimen name="bottom_action_strip_button_size">40dp</dimen>
-
-    <dimen name="reply_layout_container_opened_height_no_attachments">180dp</dimen>
-    <dimen name="reply_layout_container_opened_height_with_attachments">260dp</dimen>
 </resources>

@@ -844,7 +844,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(con
     currentChanDescriptorOrNull()
       ?: return true
 
-    if (replyLayoutView.isExpanded()) {
+    if (!replyLayoutView.isCollapsed()) {
       return true
     }
 
