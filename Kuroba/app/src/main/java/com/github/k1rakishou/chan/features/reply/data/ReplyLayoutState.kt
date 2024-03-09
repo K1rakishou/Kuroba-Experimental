@@ -52,6 +52,7 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.persist_state.ReplyMode
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
@@ -415,6 +416,40 @@ class ReplyLayoutState(
     )
 
     afterReplyTextChanged()
+  }
+
+  fun quote(post: ChanPost, withText: Boolean) {
+    val comment = if (withText) {
+      post.postComment.comment().toString()
+    } else {
+      null
+    }
+
+    handleQuote(post.postDescriptor.postNo, comment)
+  }
+
+  fun quote(postDescriptor: PostDescriptor, text: CharSequence) {
+    handleQuote(postDescriptor.postNo, text.toString())
+  }
+
+  private fun handleQuote(postNo: Long, textQuote: String?) {
+    try {
+      _replyTextState.value = replyLayoutHelper.handleQuote(
+        replyTextState = _replyTextState.value,
+        postNo = postNo,
+        textQuote = textQuote
+      )
+
+      afterReplyTextChanged()
+    } catch (error: Throwable) {
+      Logger.error(TAG, error) {
+        "replyLayoutHelper.handleQuote() error. " +
+          "replyTextState: '${replyTextState}', " +
+          "selection: ${replyTextState.value.selection}, " +
+          "postNo: ${postNo}, " +
+          "textQuote: '$textQuote'"
+      }
+    }
   }
 
   fun onReplyTextChanged(textFieldValue: TextFieldValue) {

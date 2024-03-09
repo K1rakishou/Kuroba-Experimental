@@ -4,7 +4,9 @@ import android.util.LruCache
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.exifinterface.media.ExifInterface
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.image.InputFile
@@ -15,6 +17,7 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.utils.HashingUtil
 import com.github.k1rakishou.chan.utils.MediaUtils
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -24,6 +27,7 @@ import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.util.regex.Pattern
 
 class ReplyLayoutHelper(
   private val replyManagerLazy: Lazy<ReplyManager>,
@@ -433,6 +437,56 @@ class ReplyLayoutHelper(
     )
   }
 
+  fun handleQuote(replyTextState: TextFieldValue, postNo: Long, textQuote: String?): TextFieldValue {
+    val stringBuilder = StringBuilder()
+    val comment = replyTextState.text
+    val selectionStart = replyTextState.selection.start.coerceAtLeast(0)
+
+    if (selectionStart - 1 >= 0
+      && comment.isNotEmpty()
+      && selectionStart - 1 < comment.length
+      && comment[selectionStart - 1] != '\n'
+    ) {
+      stringBuilder
+        .append('\n')
+    }
+
+    if (!comment.contains(">>${postNo}")) {
+      stringBuilder
+        .append(">>")
+        .append(postNo)
+        .append("\n")
+    }
+
+    if (textQuote.isNotNullNorEmpty()) {
+      val lines = textQuote.split("\n").toTypedArray()
+      for (line in lines) {
+        // do not include post no from quoted post
+        if (QUOTE_PATTERN_COMPLEX.matcher(line).matches()) {
+          continue
+        }
+
+        if (!line.startsWith(">>") && !line.startsWith(">")) {
+          stringBuilder
+            .append(">")
+        }
+
+        stringBuilder
+          .append(line)
+          .append("\n")
+      }
+    }
+
+    val resultComment = StringBuilder(comment)
+      .insert(selectionStart, stringBuilder)
+      .toString()
+
+    return replyTextState.copy(
+      text = resultComment,
+      selection = TextRange(selectionStart + stringBuilder.length)
+    )
+  }
+
   private data class FileKey(
     val filePath: String,
     val fileSize: Long
@@ -440,6 +494,7 @@ class ReplyLayoutHelper(
 
   companion object {
     private const val TAG = "ReplyLayoutFileEnumerator"
+    private val QUOTE_PATTERN_COMPLEX = Pattern.compile("^>>(>/[a-z0-9]+/)?\\d+.*$")
 
     const val MAX_VISIBLE_ATTACHABLES_COUNT = 32
   }

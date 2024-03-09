@@ -452,15 +452,11 @@ class ReplyLayoutViewModel(
   }
 
   fun quote(post: ChanPost, withText: Boolean) {
-    withReplyLayoutState { replyLayoutState ->
-      TODO("New reply layout")
-    }
+    withReplyLayoutState { replyLayoutState -> replyLayoutState.quote(post, withText) }
   }
 
   fun quote(postDescriptor: PostDescriptor, text: CharSequence) {
-    withReplyLayoutState { replyLayoutState ->
-      TODO("New reply layout")
-    }
+    withReplyLayoutState { replyLayoutState -> replyLayoutState.quote(postDescriptor, text) }
   }
 
   fun onReplyTextChanged(textFieldValue: TextFieldValue) {

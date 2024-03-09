@@ -19,13 +19,11 @@ package com.github.k1rakishou.chan.features.reply.data
 import com.github.k1rakishou.chan.ui.captcha.CaptchaSolution
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
-import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.regex.Pattern
 
 /**
  * The data needed to send a reply.
@@ -218,54 +216,6 @@ class Reply(
     basicReplyInfo.resetAfterPosting()
   }
 
-  @Synchronized
-  fun handleQuote(selectStart: Int, postNo: Long, textQuote: String?): Int {
-    val stringBuilder = StringBuilder()
-    val comment = basicReplyInfo.comment
-    val selectionStart = selectStart.coerceAtLeast(0)
-
-    if (selectionStart - 1 >= 0
-      && comment.isNotEmpty()
-      && selectionStart - 1 < comment.length
-      && comment[selectionStart - 1] != '\n'
-    ) {
-      stringBuilder
-        .append('\n')
-    }
-
-    if (!comment.contains(">>${postNo}")) {
-      stringBuilder
-        .append(">>")
-        .append(postNo)
-        .append("\n")
-    }
-
-    if (textQuote.isNotNullNorEmpty()) {
-      val lines = textQuote.split("\n").toTypedArray()
-      for (line in lines) {
-        // do not include post no from quoted post
-        if (QUOTE_PATTERN_COMPLEX.matcher(line).matches()) {
-          continue
-        }
-
-        if (!line.startsWith(">>") && !line.startsWith(">")) {
-          stringBuilder
-            .append(">")
-        }
-
-        stringBuilder
-          .append(line)
-          .append("\n")
-      }
-    }
-
-    basicReplyInfo.comment = StringBuilder(basicReplyInfo.comment)
-      .insert(selectionStart, stringBuilder)
-      .toString()
-
-    return stringBuilder.length
-  }
-
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
@@ -324,7 +274,4 @@ class Reply(
     var captchaSolution: CaptchaSolution? = null
   )
 
-  companion object {
-    private val QUOTE_PATTERN_COMPLEX = Pattern.compile("^>>(>/[a-z0-9]+/)?\\d+.*$")
-  }
 }
