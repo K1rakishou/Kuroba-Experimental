@@ -20,31 +20,32 @@ internal class ReplyInfo(
   retrying: Boolean,
   val chanDescriptor: ChanDescriptor
 ) {
-  private val _status = AtomicReference<PostingStatus>(initialStatus)
-  private val _statusUpdates = MutableSharedFlow<PostingStatus>(extraBufferCapacity = Channel.UNLIMITED)
-  private val _canceled = AtomicBoolean(false)
-  private val _lastError = AtomicReference<ReplyResponse?>(null)
+  private val activeJob = AtomicReference<Job?>(null)
 
   val retrying: AtomicBoolean = AtomicBoolean(retrying)
   val replyModeRef: AtomicReference<ReplyMode> = AtomicReference(initialReplyMode)
   val enqueuedAt: AtomicLong = AtomicLong(System.currentTimeMillis())
 
+  private val _lastError = AtomicReference<ReplyResponse?>(null)
   val lastUnsuccessfulReplyResponse: ReplyResponse?
     get() = _lastError.get()
 
+  private val _status = AtomicReference<PostingStatus>(initialStatus)
   val currentStatus: PostingStatus
     get() = _status.get()
+
+  private val _statusUpdates = MutableSharedFlow<PostingStatus>(extraBufferCapacity = Channel.UNLIMITED)
   val statusUpdates: SharedFlow<PostingStatus>
     get() = _statusUpdates.asSharedFlow()
-  private val activeJob = AtomicReference<Job?>(null)
 
+  private val _canceled = AtomicBoolean(false)
   val canceled: Boolean
     get() = activeJob.get() == null || _canceled.get()
 
   @Synchronized
   fun updateStatus(newStatus: PostingStatus) {
-    Logger.d(TAG, "updateStatus(${chanDescriptor}) currentStatus: ${currentStatus}, newStatus: ${newStatus}")
-    updateStatusInternal(newStatus)
+    val prevStatus = _status.get()
+    updateStatusInternal(prevStatus, newStatus)
 
     if (newStatus is PostingStatus.AfterPosting) {
       val postResult = newStatus.postResult
@@ -60,6 +61,8 @@ internal class ReplyInfo(
         _lastError.set(null)
       }
     }
+
+    _status.set(newStatus)
   }
 
   @Synchronized
@@ -81,15 +84,15 @@ internal class ReplyInfo(
 
   @Synchronized
   fun reset(chanDescriptor: ChanDescriptor) {
-    Logger.d(TAG, "reset(${chanDescriptor}) status=${currentStatus}")
+    Logger.d(TAG, "reset(${chanDescriptor}) currentStatus: ${currentStatus}")
 
     retrying.set(false)
-    _canceled.set(false)
     activeJob.set(null)
+    _canceled.set(false)
     _lastError.set(null)
     enqueuedAt.set(System.currentTimeMillis())
 
-    updateStatusInternal(PostingStatus.Enqueued(chanDescriptor))
+    updateStatusInternal(currentStatus, PostingStatus.Enqueued(chanDescriptor))
   }
 
   @Synchronized
@@ -101,17 +104,22 @@ internal class ReplyInfo(
     previousJob?.cancel()
   }
 
-  private fun updateStatusInternal(newStatus: PostingStatus) {
-    val prevStatus = _status.get()
-    _status.set(newStatus)
-
+  private fun updateStatusInternal(prevStatus: PostingStatus, newStatus: PostingStatus) {
     if (prevStatus is PostingStatus.Attached && newStatus is PostingStatus.AfterPosting) {
-      // Hack! Do not emit AfterPosting is previous status was Attached to avoid showing "Post canceled" dialog
+      // Hack! Do not emit AfterPosting if previous status was Attached to avoid showing "Post canceled" dialog
       // when closing the reply notification.
+      Logger.verbose(TAG) {
+        "updateStatusInternal(${chanDescriptor}) skipping event emission " +
+          "because prevStatus is PostingStatus.Attached (${prevStatus}) " +
+          "and newStatus is PostingStatus.AfterPosting (${newStatus})"
+      }
+
       return
     }
 
-    if (!_statusUpdates.tryEmit(newStatus)) {
+    if (_statusUpdates.tryEmit(newStatus)) {
+      Logger.debug(TAG) { "updateStatusInternal(${chanDescriptor}) emitting ${newStatus} (prevStatus: ${prevStatus})" }
+    } else {
       Logger.error(TAG) { "updateStatusInternal(${chanDescriptor}) failed to emit ${newStatus}" }
     }
   }

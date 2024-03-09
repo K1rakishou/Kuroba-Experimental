@@ -180,10 +180,6 @@ class ReplyLayoutView @JvmOverloads constructor(
     AndroidUtils.hideKeyboard(this)
   }
 
-  override fun cleanup() {
-    replyLayoutViewModel.unbindChanDescriptor()
-  }
-
   override fun onBack(): Boolean {
     return replyLayoutViewModel.onBack()
   }

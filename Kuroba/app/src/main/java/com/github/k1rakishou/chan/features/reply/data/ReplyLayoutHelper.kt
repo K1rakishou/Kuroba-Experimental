@@ -289,7 +289,7 @@ class ReplyLayoutHelper(
       val gpsExifData = attachAdditionalInfo.getGspExifDataOrNull()
       if (gpsExifData.isNotEmpty()) {
         append("GPS exif data: ")
-        append(warningText("'${gpsExifData.joinToString(separator = ",", transform = { it.value })}'"))
+        append(warningText(gpsExifData.joinToString(separator = ", ", transform = { it.value })))
         appendLine()
         appendLine()
       }
@@ -297,7 +297,7 @@ class ReplyLayoutHelper(
       val orientationExifData = attachAdditionalInfo.getOrientationExifData()
       if (orientationExifData.isNotEmpty()) {
         append("Orientation exif data: ")
-        append(warningText("'${orientationExifData.joinToString(separator = ",", transform = { it.value })}}'"))
+        append(warningText(orientationExifData.joinToString(separator = ", ", transform = { it.value })))
         appendLine()
         appendLine()
       }

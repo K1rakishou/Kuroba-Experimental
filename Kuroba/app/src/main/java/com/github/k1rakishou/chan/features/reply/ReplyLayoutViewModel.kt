@@ -55,7 +55,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.onSubscription
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
@@ -202,9 +204,15 @@ class ReplyLayoutViewModel(
 
     _boundChanDescriptor.value = chanDescriptor
 
+    _replyLayoutState.value?.unbindChanDescriptor()
+    sendReplyJob?.cancel()
+    sendReplyJob = null
     listenForPostingStatusUpdatesJob?.cancel()
+
     listenForPostingStatusUpdatesJob = viewModelScope.launch {
       postingServiceDelegate.listenForPostingStatusUpdates(chanDescriptor)
+        .onSubscription { Logger.debug(TAG) { "listenForPostingStatusUpdates(${chanDescriptor}) start" } }
+        .onCompletion { Logger.debug(TAG) { "listenForPostingStatusUpdates(${chanDescriptor}) end" } }
         .onEach { postingStatus -> replyLayoutState.value?.onPostingStatusEvent(postingStatus) }
         .collect()
     }
@@ -228,20 +236,9 @@ class ReplyLayoutViewModel(
       imagePickHelperLazy = imagePickHelperLazy
     )
 
-    unbindChanDescriptor()
     replyLayoutState.bindChanDescriptor(chanDescriptor)
 
     _replyLayoutState.value = replyLayoutState
-  }
-
-  fun unbindChanDescriptor() {
-    _replyLayoutState.value?.unbindChanDescriptor()
-
-    sendReplyJob?.cancel()
-    sendReplyJob = null
-
-    listenForPostingStatusUpdatesJob?.cancel()
-    listenForPostingStatusUpdatesJob = null
   }
 
   fun onBack(): Boolean {

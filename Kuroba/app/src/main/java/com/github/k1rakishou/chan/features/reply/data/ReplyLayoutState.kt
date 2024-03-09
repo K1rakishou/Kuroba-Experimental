@@ -254,27 +254,30 @@ class ReplyLayoutState(
       if (status.chanDescriptor != chanDescriptor) {
         // The user may open another thread while the reply is being uploaded so we need to check
         // whether this even actually belongs to this catalog/thread.
+        Logger.verbose(TAG) { "onPostingStatusEvent(${status.chanDescriptor}) wrong chanDescriptor: ${chanDescriptor}" }
         return@withContext
       }
 
       when (status) {
         is PostingStatus.Attached -> {
-          Logger.d(TAG, "processPostingStatusUpdates(${status.chanDescriptor}) -> ${status.javaClass.simpleName}")
+          Logger.d(TAG, "onPostingStatusEvent(${status.chanDescriptor}) -> ${status.javaClass.simpleName}")
         }
         is PostingStatus.Enqueued,
         is PostingStatus.WaitingForSiteRateLimitToPass,
         is PostingStatus.WaitingForAdditionalService,
         is PostingStatus.BeforePosting -> {
-          Logger.d(TAG, "processPostingStatusUpdates(${status.chanDescriptor}) -> ${status.javaClass.simpleName}")
+          Logger.d(TAG, "onPostingStatusEvent(${status.chanDescriptor}) -> ${status.javaClass.simpleName}")
         }
         is PostingStatus.UploadingProgress -> {
           _replySendProgressInPercentsState.intValue = status.progressInPercents()
+          Logger.verbose(TAG) { "onPostingStatusEvent(${status.chanDescriptor}) -> ${status}" }
         }
         is PostingStatus.Uploaded -> {
           _replySendProgressInPercentsState.intValue = -1
+          Logger.d(TAG, "onPostingStatusEvent(${status.chanDescriptor}) -> ${status.javaClass.simpleName}")
         }
         is PostingStatus.AfterPosting -> {
-          Logger.d(TAG, "processPostingStatusUpdates(${status.chanDescriptor}) -> " +
+          Logger.d(TAG, "onPostingStatusEvent(${status.chanDescriptor}) -> " +
             "${status.javaClass.simpleName}, status.postResult: ${status.postResult}")
 
           onSendReplyEnd()
@@ -302,7 +305,7 @@ class ReplyLayoutState(
             }
           }
 
-          Logger.d(TAG, "processPostingStatusUpdates($chanDescriptor) consumeTerminalEvent(${status.chanDescriptor})")
+          Logger.d(TAG, "onPostingStatusEvent($chanDescriptor) consumeTerminalEvent(${status.chanDescriptor})")
           postingServiceDelegate.consumeTerminalEvent(status.chanDescriptor)
         }
       }

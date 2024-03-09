@@ -878,7 +878,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(con
 
   fun cleanup() {
     postAdapter.cleanup()
-    replyLayoutView.cleanup()
     closeReplyLayout()
 
     prevLastPostNo = 0
@@ -1393,7 +1392,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(con
     fun enqueueReply(chanDescriptor: ChanDescriptor, replyMode: ReplyMode, retrying: Boolean)
     fun onImageOptionsApplied()
     fun hideKeyboard()
-    fun cleanup()
     fun onBack(): Boolean
   }
 
