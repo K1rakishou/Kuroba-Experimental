@@ -391,14 +391,65 @@ class ReplyLayoutViewModel(
 
   fun onAttachedMediaLongClicked(attachedMedia: ReplyFileAttachable) {
     withReplyLayoutState {
-      replyLayoutViewCallbacks?.onAttachedMediaLongClicked(attachedMedia)
+      viewModelScope.launch {
+        replyLayoutViewCallbacks?.onAttachedMediaLongClicked(attachedMedia)
+      }
     }
   }
 
   fun removeAttachedMedia(attachedMedia: ReplyFileAttachable) {
-    withReplyLayoutState { replyLayoutState ->
-      replyLayoutState.removeAttachedMedia(attachedMedia)
-    }
+    withReplyLayoutState { replyLayoutState -> replyLayoutState.removeAttachedMedia(attachedMedia) }
+  }
+
+  fun onRemoteImageSelected(selectedImageUrl: HttpUrl) {
+    withReplyLayoutState { replyLayoutState -> replyLayoutState.pickRemoteMedia(selectedImageUrl) }
+  }
+
+  fun removeAttachedMedia(fileUuid: UUID) {
+    withReplyLayoutState { replyLayoutState -> replyLayoutState.removeAttachedMedia(fileUuid) }
+  }
+
+  fun deleteSelectedFiles() {
+    withReplyLayoutState { replyLayoutState -> replyLayoutState.deleteSelectedFiles() }
+  }
+
+  fun removeSelectedFilesName() {
+    withReplyLayoutState { replyLayoutState -> replyLayoutState.removeSelectedFilesName() }
+  }
+
+  fun removeSelectedFilesMetadata() {
+    withReplyLayoutState { replyLayoutState -> replyLayoutState.removeSelectedFilesMetadata() }
+  }
+
+  fun changeSelectedFilesChecksum() {
+    withReplyLayoutState { replyLayoutState -> replyLayoutState.changeSelectedFilesChecksum() }
+  }
+
+  fun selectUnselectAll(selectAll: Boolean) {
+    withReplyLayoutState { replyLayoutState -> replyLayoutState.selectUnselectAll(selectAll) }
+  }
+
+  fun markUnmarkAsSpoiler(fileUuid: UUID, spoiler: Boolean) {
+    withReplyLayoutState { replyLayoutState -> replyLayoutState.markUnmarkAsSpoiler(fileUuid, spoiler) }
+  }
+
+  fun hasSelectedFiles(): Boolean {
+    return withReplyLayoutState { replyLayoutState -> replyLayoutState.hasSelectedFiles() } ?: false
+  }
+
+  fun allFilesSelected(): Boolean {
+    return withReplyLayoutState { replyLayoutState -> replyLayoutState.allFilesSelected() } ?: false
+  }
+
+  fun boardsSupportsSpoilers(): Boolean {
+    val chanDescriptor = boundChanDescriptor.value
+      ?: return false
+
+    return boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor())?.spoilers ?: false
+  }
+
+  fun isReplyFileMarkedAsSpoiler(fileUuid: UUID): Boolean {
+    return withReplyLayoutState { replyLayoutState -> replyLayoutState.isReplyFileMarkedAsSpoiler(fileUuid) } ?: false
   }
 
   fun onAttachableSelectionChanged(attachedMedia: ReplyFileAttachable, selected: Boolean) {
@@ -486,10 +537,6 @@ class ReplyLayoutViewModel(
     }
 
     withReplyLayoutState { replyLayoutState -> replyLayoutState.pickLocalMedia(showFilePickerChooser = true) }
-  }
-
-  fun onRemoteImageSelected(selectedImageUrl: HttpUrl) {
-    withReplyLayoutState { replyLayoutState -> replyLayoutState.pickRemoteMedia(selectedImageUrl) }
   }
 
   fun onPickRemoteMediaButtonClicked() {
@@ -639,22 +686,22 @@ class ReplyLayoutViewModel(
     }
   }
 
-  private fun withReplyLayoutState(block: (ReplyLayoutState) -> Unit) {
+  private fun <T : Any> withReplyLayoutState(block: (ReplyLayoutState) -> T): T? {
     val replyLayoutState = currentReplyLayoutState
-      ?: return
+      ?: return null
 
     val chanDescriptor = boundChanDescriptor.value
     if (chanDescriptor == null) {
       replyLayoutState.collapseReplyLayout()
-      return
+      return null
     }
 
     if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
       replyLayoutState.collapseReplyLayout()
-      return
+      return null
     }
 
-    block(replyLayoutState)
+    return block(replyLayoutState)
   }
 
   interface ThreadListLayoutCallbacks {
@@ -690,7 +737,7 @@ class ReplyLayoutViewModel(
 
     fun onReplyLayoutOptionsButtonClicked()
     fun onAttachedMediaClicked(attachedMedia: ReplyFileAttachable, isFileSupportedForReencoding: Boolean)
-    fun onAttachedMediaLongClicked(attachedMedia: ReplyFileAttachable)
+    suspend fun onAttachedMediaLongClicked(attachedMedia: ReplyFileAttachable)
     fun onDontKeepActivitiesSettingDetected()
     fun showFileStatusDialog(attachableFileStatus: AnnotatedString)
   }

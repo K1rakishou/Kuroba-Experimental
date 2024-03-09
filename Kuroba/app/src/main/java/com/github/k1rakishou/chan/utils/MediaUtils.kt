@@ -150,7 +150,7 @@ object MediaUtils {
         tempFile = this.tempFile
 
         FileOutputStream(tempFile).use { output ->
-          newBitmap!!.compress(
+          newBitmap.compress(
             compressFormat,
             quality,
             output
@@ -167,7 +167,7 @@ object MediaUtils {
 
         throw error
       } finally {
-        if (newBitmap != null && !newBitmap.isRecycled) {
+        if (!newBitmap.isRecycled) {
           newBitmap.recycle()
         }
       }

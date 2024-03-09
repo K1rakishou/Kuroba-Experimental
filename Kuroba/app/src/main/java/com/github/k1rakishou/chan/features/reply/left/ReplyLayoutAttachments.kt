@@ -344,21 +344,33 @@ private fun AttachedMediaThumbnail(
       )
     }
 
-    Box(
+    Row(
       modifier = Modifier
+        .fillMaxWidth()
         .align(Alignment.BottomCenter)
         .alpha(alpha)
         .drawBehind { drawRect(color = overlayBgColor) }
-        .padding(vertical = 2.dp)
+        .padding(vertical = 2.dp),
+      horizontalArrangement = Arrangement.Center
     ) {
       KurobaComposeMiddleEllipsisText(
         modifier = Modifier
-          .fillMaxWidth()
+          .weight(1f)
           .wrapContentHeight(),
         text = replyFileAttachable.fileName,
         color = Color.White,
-        fontSize = 10.ktu,
+        fontSize = 10.ktu.fixedSize(),
       )
+
+      Spacer(modifier = Modifier.width(4.dp))
+
+      if (replyFileAttachable.spoilerInfo?.markedAsSpoiler == true) {
+        KurobaComposeText(
+          text = stringResource(id = R.string.layout_reply_files_area_spoiler_mark),
+          color = remember { Color(0xFF10b1e6L) },
+          fontSize = 10.ktu.fixedSize()
+        )
+      }
     }
   }
 }

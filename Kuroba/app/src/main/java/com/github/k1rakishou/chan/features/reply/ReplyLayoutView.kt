@@ -43,6 +43,7 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.persist_state.ReplyMode
 import kotlinx.coroutines.suspendCancellableCoroutine
+import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 
@@ -281,8 +282,8 @@ class ReplyLayoutView @JvmOverloads constructor(
     replyLayoutCallbacks.showMediaReencodingController(attachedMedia, isFileSupportedForReencoding)
   }
 
-  override fun onAttachedMediaLongClicked(attachedMedia: ReplyFileAttachable) {
-    // TODO: New reply layout.
+  override suspend fun onAttachedMediaLongClicked(attachedMedia: ReplyFileAttachable) {
+    showAttachFileOptions(attachedMedia.fileUuid)
   }
 
   override fun onDontKeepActivitiesSettingDetected() {
@@ -355,8 +356,119 @@ class ReplyLayoutView @JvmOverloads constructor(
     return hasWebViewLinks
   }
 
+  private suspend fun showAttachFileOptions(selectedFileUuid: UUID) {
+    val floatingListMenuItems = mutableListOf<FloatingListMenuItem>()
+
+    floatingListMenuItems += FloatingListMenuItem(
+      key = ACTION_DELETE_FILE,
+      name = context.getString(R.string.layout_reply_files_area_delete_file_action),
+      value = selectedFileUuid
+    )
+
+    if (replyLayoutViewModel.hasSelectedFiles()) {
+      floatingListMenuItems += FloatingListMenuItem(
+        key = ACTION_DELETE_FILES,
+        name = context.getString(R.string.layout_reply_files_area_delete_selected_files_action),
+        value = selectedFileUuid
+      )
+
+      floatingListMenuItems += FloatingListMenuItem(
+        key = ACTION_REMOVE_FILE_NAME,
+        name = context.getString(R.string.layout_reply_files_area_remove_file_name),
+        value = selectedFileUuid
+      )
+
+      floatingListMenuItems += FloatingListMenuItem(
+        key = ACTION_REMOVE_METADATA,
+        name = context.getString(R.string.layout_reply_files_area_remove_file_metadata),
+        value = selectedFileUuid
+      )
+
+      floatingListMenuItems += FloatingListMenuItem(
+        key = ACTION_CHANGE_CHECKSUM,
+        name = context.getString(R.string.layout_reply_files_area_change_checksum),
+        value = selectedFileUuid
+      )
+    }
+
+    if (replyLayoutViewModel.boardsSupportsSpoilers()) {
+      if (replyLayoutViewModel.isReplyFileMarkedAsSpoiler(selectedFileUuid)) {
+        floatingListMenuItems += FloatingListMenuItem(
+          key = ACTION_UNMARK_AS_SPOILER,
+          name = context.getString(R.string.layout_reply_files_area_unmark_as_spoiler),
+          value = selectedFileUuid
+        )
+      } else {
+        floatingListMenuItems += FloatingListMenuItem(
+          key = ACTION_MARK_AS_SPOILER,
+          name = context.getString(R.string.layout_reply_files_area_mark_as_spoiler),
+          value = selectedFileUuid
+        )
+      }
+    }
+
+    if (!replyLayoutViewModel.allFilesSelected()) {
+      floatingListMenuItems += FloatingListMenuItem(
+        key = ACTION_SELECT_ALL,
+        name = context.getString(R.string.layout_reply_files_area_select_all),
+        value = selectedFileUuid
+      )
+    } else {
+      floatingListMenuItems += FloatingListMenuItem(
+        key = ACTION_UNSELECT_ALL,
+        name = context.getString(R.string.layout_reply_files_area_unselect_all),
+        value = selectedFileUuid
+      )
+    }
+
+    val clickedItem = suspendCancellableCoroutine<FloatingListMenuItem?> { cancellableContinuation ->
+      val floatingListMenuController = FloatingListMenuController(
+        context = context,
+        constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
+        items = floatingListMenuItems,
+        itemClickListener = { item -> cancellableContinuation.resumeValueSafe(item) },
+        menuDismissListener = { cancellableContinuation.resumeValueSafe(null) }
+      )
+
+      replyLayoutCallbacks.presentController(floatingListMenuController)
+    }
+
+    if (clickedItem == null) {
+      return
+    }
+
+    onAttachFileItemClicked(clickedItem)
+  }
+
+  private fun onAttachFileItemClicked(item: FloatingListMenuItem) {
+    val id = item.key as Int
+    val clickedFileUuid = item.value as UUID
+
+    when (id) {
+      ACTION_DELETE_FILE -> replyLayoutViewModel.removeAttachedMedia(clickedFileUuid)
+      ACTION_DELETE_FILES -> replyLayoutViewModel.deleteSelectedFiles()
+      ACTION_REMOVE_FILE_NAME -> replyLayoutViewModel.removeSelectedFilesName()
+      ACTION_REMOVE_METADATA -> replyLayoutViewModel.removeSelectedFilesMetadata()
+      ACTION_CHANGE_CHECKSUM -> replyLayoutViewModel.changeSelectedFilesChecksum()
+      ACTION_SELECT_ALL -> replyLayoutViewModel.selectUnselectAll(selectAll = true)
+      ACTION_UNSELECT_ALL -> replyLayoutViewModel.selectUnselectAll(selectAll = false)
+      ACTION_MARK_AS_SPOILER -> replyLayoutViewModel.markUnmarkAsSpoiler(clickedFileUuid, spoiler = true)
+      ACTION_UNMARK_AS_SPOILER -> replyLayoutViewModel.markUnmarkAsSpoiler(clickedFileUuid, spoiler = false)
+    }
+  }
+
   companion object {
     private const val TAG = "ReplyLayoutView"
+
+    private const val ACTION_DELETE_FILE = 1
+    private const val ACTION_DELETE_FILES = 2
+    private const val ACTION_REMOVE_FILE_NAME = 3
+    private const val ACTION_REMOVE_METADATA = 4
+    private const val ACTION_CHANGE_CHECKSUM = 5
+    private const val ACTION_SELECT_ALL = 6
+    private const val ACTION_UNSELECT_ALL = 7
+    private const val ACTION_MARK_AS_SPOILER = 8
+    private const val ACTION_UNMARK_AS_SPOILER = 9
   }
 
 }

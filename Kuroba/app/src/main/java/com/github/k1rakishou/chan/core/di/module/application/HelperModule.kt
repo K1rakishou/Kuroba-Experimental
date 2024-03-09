@@ -271,6 +271,7 @@ class HelperModule {
   @Provides
   @Singleton
   fun provideReplyLayoutHelper(
+    appContext: Context,
     replyManagerLazy: Lazy<ReplyManager>,
     siteManagerLazy: Lazy<SiteManager>,
     boardManagerLazy: Lazy<BoardManager>,
@@ -279,6 +280,7 @@ class HelperModule {
   ): ReplyLayoutHelper {
     Logger.deps("ReplyLayoutHelper")
     return ReplyLayoutHelper(
+      appContext,
       replyManagerLazy,
       siteManagerLazy,
       boardManagerLazy,

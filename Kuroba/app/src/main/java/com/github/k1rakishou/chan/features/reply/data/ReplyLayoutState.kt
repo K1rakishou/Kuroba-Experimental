@@ -65,6 +65,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
+import java.util.UUID
 
 @Stable
 class ReplyLayoutState(
@@ -467,9 +468,110 @@ class ReplyLayoutState(
     replyManager.deleteFile(
       fileUuid = attachedMedia.fileUuid,
       notifyListeners = true
-    ).onError { error ->
-      Logger.error(TAG) { "removeAttachedMedia(${attachedMedia.fileUuid}) error: ${error.errorMessageOrClassName()}" }
-    }.ignore()
+    )
+      .onError { error ->
+        Logger.error(TAG) { "removeAttachedMedia(${attachedMedia.fileUuid}) error: ${error.errorMessageOrClassName()}" }
+      }
+      .ignore()
+  }
+
+  fun removeAttachedMedia(fileUuid: UUID) {
+    replyManager.deleteFile(
+      fileUuid = fileUuid,
+      notifyListeners = true
+    )
+      .onError { error ->
+        Logger.error(TAG) { "removeAttachedMedia(${fileUuid}) error: ${error.errorMessageOrClassName()}" }
+      }
+      .ignore()
+  }
+
+  fun deleteSelectedFiles() {
+    replyManager.deleteSelectedFiles(
+      notifyListeners = true
+    )
+      .onError { error ->
+        Logger.error(TAG) { "deleteSelectedFiles() error: ${error.errorMessageOrClassName()}" }
+      }
+      .ignore()
+  }
+
+  fun removeSelectedFilesName() {
+    coroutineScope.launch(Dispatchers.IO) {
+      replyManager.iterateSelectedFilesOrdered { _, _, replyFileMeta ->
+        val newFileName = replyManager.getNewImageName(replyFileMeta.fileName)
+
+        replyManager.updateFileName(
+          fileUuid = replyFileMeta.fileUuid,
+          newFileName = newFileName,
+          notifyListeners = true
+        )
+          .onError { error ->
+            Logger.e(TAG, "removeSelectedFilesName(${replyFileMeta.fileUuid}) Failed to update file name", error)
+          }
+          .ignore()
+      }
+    }
+  }
+
+  fun removeSelectedFilesMetadata() {
+    coroutineScope.launch(Dispatchers.IO) {
+      replyLayoutHelper.removeSelectedFilesMetadata()
+      updateAttachables()
+    }
+  }
+
+  fun changeSelectedFilesChecksum() {
+    coroutineScope.launch(Dispatchers.IO) {
+      replyLayoutHelper.changeSelectedFilesChecksum()
+      updateAttachables()
+    }
+  }
+
+  fun selectUnselectAll(selectAll: Boolean) {
+    coroutineScope.launch(Dispatchers.IO) {
+      val toUpdate = mutableListOf<UUID>()
+
+      replyManager.iterateFilesOrdered { _, _, replyFileMeta ->
+        if (replyFileMeta.selected != selectAll) {
+          toUpdate += replyFileMeta.fileUuid
+        }
+      }
+
+      if (toUpdate.isEmpty()) {
+        return@launch
+      }
+
+      toUpdate.forEach { fileUuid ->
+        replyManager.updateFileSelection(
+          fileUuid = fileUuid,
+          selected = selectAll,
+          notifyListeners = false
+        )
+      }
+
+      updateAttachables()
+    }
+  }
+
+  fun markUnmarkAsSpoiler(fileUuid: UUID, spoiler: Boolean) {
+    coroutineScope.launch(Dispatchers.IO) {
+      replyManager.updateFileSpoilerFlag(
+        fileUuid = fileUuid,
+        spoiler = spoiler,
+        notifyListeners = true
+      )
+        .safeUnwrap { error ->
+          Logger.e(TAG, "markUnmarkAsSpoiler($fileUuid, $spoiler) error", error)
+          return@launch
+        }
+    }
+  }
+
+  fun isReplyFileMarkedAsSpoiler(fileUuid: UUID): Boolean {
+    return replyManager.isMarkedAsSpoiler(fileUuid)
+      .onError { error -> Logger.e(TAG, "isReplyFileMarkedAsSpoiler($fileUuid) error", error) }
+      .valueOrNull() ?: false
   }
 
   fun onAttachableSelectionChanged(attachedMedia: ReplyFileAttachable, selected: Boolean) {
@@ -492,7 +594,7 @@ class ReplyLayoutState(
 
       try {
         val input = LocalFilePicker.LocalFilePickerInput(
-          notifyListeners = false,
+          notifyListeners = true,
           replyChanDescriptor = chanDescriptor,
           clearLastRememberedFilePicker = showFilePickerChooser
         )
@@ -528,7 +630,6 @@ class ReplyLayoutState(
       }
     }
   }
-
 
   fun pickRemoteMedia(selectedImageUrl: HttpUrl) {
     filePickerExecutor.post {
@@ -668,6 +769,16 @@ class ReplyLayoutState(
   suspend fun onFlagSelected(selectedFlag: LoadBoardFlagsUseCase.FlagInfo) {
     _flag.value = selectedFlag
     persistInReplyManager()
+  }
+
+  fun hasSelectedFiles(): Boolean {
+    return attachables.value.attachables
+      .any { replyFileAttachable -> replyFileAttachable.selected }
+  }
+
+  fun allFilesSelected(): Boolean {
+    return attachables.value.attachables
+      .all { replyFileAttachable -> replyFileAttachable.selected }
   }
 
   private fun afterReplyTextChanged() {

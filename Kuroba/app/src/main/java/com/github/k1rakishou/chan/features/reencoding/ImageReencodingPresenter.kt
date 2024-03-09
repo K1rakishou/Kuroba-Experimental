@@ -225,7 +225,7 @@ class ImageReencodingPresenter(
           .unwrap()
 
         imageLoaderV2.calculateFilePreviewAndStoreOnDisk(
-          context,
+          context.applicationContext,
           fileUuid
         )
 

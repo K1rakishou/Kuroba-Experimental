@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.features.reply.data
 
+import android.content.Context
 import android.util.LruCache
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
@@ -30,6 +31,7 @@ import java.io.File
 import java.util.regex.Pattern
 
 class ReplyLayoutHelper(
+  private val appContext: Context,
   private val replyManagerLazy: Lazy<ReplyManager>,
   private val siteManagerLazy: Lazy<SiteManager>,
   private val boardManagerLazy: Lazy<BoardManager>,
@@ -301,6 +303,96 @@ class ReplyLayoutHelper(
         appendLine()
         appendLine()
       }
+    }
+  }
+
+  suspend fun removeSelectedFilesMetadata() {
+    val selectedReplyFiles = replyManager.getSelectedFilesOrdered()
+
+    selectedReplyFiles.forEach { replyFile ->
+      val replyFileMeta = replyFile.getReplyFileMeta().valueOrNull()
+        ?: return@forEach
+
+      val reencodedFile = MediaUtils.reencodeBitmapFile(
+        inputBitmapFile = replyFile.fileOnDisk,
+        fixExif = false,
+        removeMetadata = true,
+        changeImageChecksum = false,
+        reencodeSettings = null
+      )
+
+      if (reencodedFile == null) {
+        Logger.error(TAG) {
+          "removeSelectedFilesMetadata() Failed to remove metadata for " +
+            "file '${replyFile.fileOnDisk.absolutePath}'"
+        }
+
+        return@forEach
+      }
+
+      val isSuccess = replyFile.overwriteFileOnDisk(reencodedFile)
+        .onError { error ->
+          Logger.error(TAG, error) {
+            "removeSelectedFilesMetadata() Failed to overwrite " +
+              "file '${replyFile.fileOnDisk.absolutePath}' " +
+              "with '${reencodedFile.absolutePath}'"
+          }
+        }
+        .isValue()
+
+      if (!isSuccess) {
+        return@forEach
+      }
+
+      imageLoaderV2.calculateFilePreviewAndStoreOnDisk(
+        appContext,
+        replyFileMeta.fileUuid
+      )
+    }
+  }
+
+  suspend fun changeSelectedFilesChecksum() {
+    val selectedReplyFiles = replyManager.getSelectedFilesOrdered()
+
+    selectedReplyFiles.forEach { replyFile ->
+      val replyFileMeta = replyFile.getReplyFileMeta().valueOrNull()
+        ?: return@forEach
+
+      val reencodedFile = MediaUtils.reencodeBitmapFile(
+        inputBitmapFile = replyFile.fileOnDisk,
+        fixExif = false,
+        removeMetadata = false,
+        changeImageChecksum = true,
+        reencodeSettings = null
+      )
+
+      if (reencodedFile == null) {
+        Logger.error(TAG) {
+          "changeSelectedFilesChecksum() Failed to change checksum for " +
+            "file '${replyFile.fileOnDisk.absolutePath}'"
+        }
+
+        return@forEach
+      }
+
+      val isSuccess = replyFile.overwriteFileOnDisk(reencodedFile)
+        .onError { error ->
+          Logger.error(TAG, error) {
+            "changeSelectedFilesChecksum() Failed to overwrite " +
+              "file '${replyFile.fileOnDisk.absolutePath}' " +
+              "with '${reencodedFile.absolutePath}'"
+          }
+        }
+        .isValue()
+
+      if (!isSuccess) {
+        return@forEach
+      }
+
+      imageLoaderV2.calculateFilePreviewAndStoreOnDisk(
+        appContext,
+        replyFileMeta.fileUuid
+      )
     }
   }
 
