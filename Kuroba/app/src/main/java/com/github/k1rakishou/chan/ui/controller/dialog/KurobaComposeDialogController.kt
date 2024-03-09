@@ -42,7 +42,6 @@ import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingComposeController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
-import com.github.k1rakishou.common.awaitSilently
 import kotlinx.coroutines.CompletableDeferred
 
 class KurobaComposeDialogController(
@@ -288,13 +287,31 @@ class KurobaComposeDialogController(
   ) {
 
     suspend fun awaitInputResult(): String? {
+      check(inputs.isNotEmpty()) { "You have to add at least one input before using this function" }
+      check(inputs.size == 1) { "To wait for multiple inputs use awaitInputResults()" }
+
       return inputs
-        .map { input -> input.result.awaitSilently("") }
-        .firstOrNull { inputResult -> inputResult.isNotEmpty() }
+        .map { input ->
+          try {
+            return@map input.result.await()
+          } catch (error: Throwable) {
+            return@map null
+          }
+        }
+        .firstOrNull()
     }
 
-    suspend fun awaitInputResults(): List<String> {
-      return inputs.map { input -> input.result.awaitSilently("") }
+    suspend fun awaitInputResults(): List<String?> {
+      check(inputs.isNotEmpty()) { "You have to add at least one input before using this function" }
+      check(inputs.size > 1) { "To wait for a single input use awaitInputResult()" }
+
+      return inputs.map { input ->
+        try {
+          return@map input.result.await()
+        } catch (error: Throwable) {
+          return@map null
+        }
+      }
     }
 
   }

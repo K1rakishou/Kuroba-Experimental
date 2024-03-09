@@ -279,7 +279,6 @@ class ReplyLayoutView @JvmOverloads constructor(
 
   override fun onReplyLayoutOptionsButtonClicked() {
     // TODO: New reply layout.
-    TODO("Not yet implemented")
   }
 
   override fun onAttachedMediaClicked(attachedMedia: ReplyFileAttachable, isFileSupportedForReencoding: Boolean) {
@@ -288,7 +287,6 @@ class ReplyLayoutView @JvmOverloads constructor(
 
   override fun onAttachedMediaLongClicked(attachedMedia: ReplyFileAttachable) {
     // TODO: New reply layout.
-    // TODO("Not yet implemented")
   }
 
   override fun onDontKeepActivitiesSettingDetected() {

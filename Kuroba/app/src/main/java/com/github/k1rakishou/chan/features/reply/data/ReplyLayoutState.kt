@@ -364,7 +364,33 @@ class ReplyLayoutState(
   }
 
   fun insertTags(postFormatterButton: PostFormatterButton) {
-    // TODO: New reply layout.
+    val textFieldValue = _replyTextState.value
+    val capacity = textFieldValue.text.length + postFormatterButton.openTag.length + postFormatterButton.closeTag.length
+    var selectionIndex = -1
+
+    val newText = buildString(capacity = capacity) {
+      val text = textFieldValue.text
+      val selectionStart = textFieldValue.selection.start
+      val selectionEnd = textFieldValue.selection.end
+
+      append(text.subSequence(0, selectionStart))
+      append(postFormatterButton.openTag)
+
+      if (selectionEnd > selectionStart) {
+        append(text.subSequence(selectionStart, selectionEnd))
+      }
+
+      selectionIndex = this.length
+
+      append(postFormatterButton.closeTag)
+      append(text.subSequence(selectionEnd, text.length))
+    }
+
+    _replyTextState.value = textFieldValue.copy(
+      text = newText,
+      selection = TextRange(selectionIndex)
+    )
+
     afterReplyTextChanged()
   }
 
