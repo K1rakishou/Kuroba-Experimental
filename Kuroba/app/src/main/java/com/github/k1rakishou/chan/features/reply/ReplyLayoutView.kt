@@ -216,7 +216,7 @@ class ReplyLayoutView @JvmOverloads constructor(
       )
     )
 
-    dialogFactory.dialog(
+    dialogFactory.showDialog(
       context = context,
       params = params
     )
@@ -300,7 +300,7 @@ class ReplyLayoutView @JvmOverloads constructor(
   }
 
   override fun showFileStatusDialog(attachableFileStatus: AnnotatedString) {
-    dialogFactory.dialog(
+    dialogFactory.showDialog(
       context = context,
       params = KurobaComposeDialogController.informationDialog(
         title = KurobaComposeDialogController.Text.String(

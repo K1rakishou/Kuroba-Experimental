@@ -55,7 +55,7 @@ class DialogFactory(
   }
 
   @JvmOverloads
-  fun dialog(
+  fun showDialog(
     context: Context,
     params: KurobaComposeDialogController.Params,
     dialogId: String? = null,
