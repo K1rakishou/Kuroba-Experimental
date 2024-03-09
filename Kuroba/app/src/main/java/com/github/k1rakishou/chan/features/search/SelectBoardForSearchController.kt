@@ -26,15 +26,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.site.sites.search.SearchBoard
-import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeCardView
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.KurobaSearchInput
+import com.github.k1rakishou.chan.ui.compose.ktu
+import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.simpleVerticalScrollbar
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingComposeController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
@@ -201,9 +201,9 @@ class SelectBoardForSearchController(
         .clickable { onSearchBoardClicked(searchBoard) }
     ) {
       val fontSize = if (isTablet) {
-        18.sp
+        18.ktu
       } else {
-        16.sp
+        16.ktu
       }
 
       KurobaComposeText(

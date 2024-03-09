@@ -28,7 +28,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
@@ -44,6 +43,7 @@ import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextBarButton
 import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
 import com.github.k1rakishou.chan.ui.compose.consumeClicks
+import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.reorder.ReorderableState
 import com.github.k1rakishou.chan.ui.compose.reorder.detectReorder
@@ -272,12 +272,12 @@ class ComposeBoardsController(
         when (catalogCompositionSlot) {
           ComposeBoardsControllerViewModel.CatalogCompositionSlot.Empty -> {
             KurobaComposeText(
-              fontSize = 16.sp,
-              textAlign = TextAlign.Center,
               modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight()
                 .align(Alignment.Center),
+              fontSize = 16.ktu,
+              textAlign = TextAlign.Center,
               text = stringResource(id = R.string.controller_compose_boards_click_to_add_board)
             )
           }
@@ -341,12 +341,12 @@ class ComposeBoardsController(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 KurobaComposeText(
-                  fontSize = 16.sp,
-                  textAlign = TextAlign.Center,
                   modifier = Modifier
                     .wrapContentSize()
                     .padding(horizontal = 4.dp)
                     .align(Alignment.CenterVertically),
+                  fontSize = 16.ktu,
+                  textAlign = TextAlign.Center,
                   text = text
                 )
               }

@@ -34,7 +34,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
@@ -48,6 +47,7 @@ import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextBarButt
 import com.github.k1rakishou.chan.ui.compose.components.KurobaSearchInput
 import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
 import com.github.k1rakishou.chan.ui.compose.consumeClicks
+import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.search.rememberSimpleSearchState
 import com.github.k1rakishou.chan.ui.compose.simpleVerticalScrollbar
@@ -291,7 +291,7 @@ class ComposeBoardsSelectorController(
 
         Row(modifier = Modifier.fillMaxSize()) {
           KurobaComposeText(
-            fontSize = 11.sp,
+            fontSize = 11.ktu,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center,

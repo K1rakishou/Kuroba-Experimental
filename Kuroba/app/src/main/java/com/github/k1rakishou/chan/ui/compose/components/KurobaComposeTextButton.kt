@@ -5,7 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.sp
+import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 
 @Composable
@@ -29,7 +29,7 @@ fun KurobaComposeTextButton(
       ComposeText(
         text = text,
         modifier = Modifier.fillMaxSize(),
-        fontSize = 16.sp,
+        fontSize = 16.ktu,
         color = textColor,
         textAlign = TextAlign.Center
       )

@@ -29,9 +29,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.github.k1rakishou.chan.ui.compose.KurobaTextUnit
+import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.core_themes.ThemeEngine
 
@@ -45,7 +45,7 @@ fun KurobaComposeCustomTextField(
   textColor: Color = Color.Unspecified,
   parentBackgroundColor: Color = Color.Unspecified,
   drawBottomIndicator: Boolean = true,
-  fontSize: TextUnit = 16.sp,
+  fontSize: KurobaTextUnit = 16.ktu,
   maxLines: Int = Int.MAX_VALUE,
   singleLine: Boolean = false,
   labelText: String? = null,
@@ -95,7 +95,7 @@ fun KurobaComposeCustomTextField(
   textColor: Color = Color.Unspecified,
   parentBackgroundColor: Color = Color.Unspecified,
   drawBottomIndicator: Boolean = true,
-  fontSize: TextUnit = 16.sp,
+  fontSize: KurobaTextUnit = 16.ktu,
   maxLines: Int = Int.MAX_VALUE,
   singleLine: Boolean = false,
   labelText: String? = null,
@@ -121,7 +121,7 @@ fun KurobaComposeCustomTextField(
   }
 
   val textStyle = remember(key1 = actualTextColor, key2 = fontSize) {
-    TextStyle.Default.copy(color = actualTextColor, fontSize = fontSize)
+    TextStyle.Default.copy(color = actualTextColor, fontSize = fontSize.value)
   }
 
   val indicatorLineModifier = if (drawBottomIndicator) {
@@ -212,7 +212,7 @@ fun KurobaComposeCustomTextField(
       Column {
         ComposeText(
           text = counterText,
-          fontSize = 12.sp,
+          fontSize = 12.ktu,
           color = counterTextColor,
         )
       }

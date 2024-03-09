@@ -9,9 +9,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutState
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextBarButton
+import com.github.k1rakishou.chan.ui.compose.ktu
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -37,7 +37,7 @@ internal fun ReplyFormattingButtons(
             .wrapContentWidth(),
           enabled = replyLayoutEnabled,
           text = postFormatterButton.title,
-          fontSize = 14.sp,
+          fontSize = 14.ktu,
           onClick = { replyLayoutState.insertTags(postFormatterButton) }
         )
       }

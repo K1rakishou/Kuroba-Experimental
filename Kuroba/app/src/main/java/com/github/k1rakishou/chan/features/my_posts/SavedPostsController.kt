@@ -30,7 +30,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.BaseSelectionHelper
 import com.github.k1rakishou.chan.core.compose.AsyncData
@@ -40,12 +39,13 @@ import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
-import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
-import com.github.k1rakishou.chan.ui.compose.providers.ProvideEverythingForCompose
 import com.github.k1rakishou.chan.ui.compose.SelectableItem
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeErrorMessage
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeProgressIndicator
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
+import com.github.k1rakishou.chan.ui.compose.ktu
+import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
+import com.github.k1rakishou.chan.ui.compose.providers.ProvideEverythingForCompose
 import com.github.k1rakishou.chan.ui.compose.simpleVerticalScrollbar
 import com.github.k1rakishou.chan.ui.controller.navigation.TabPageController
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
@@ -346,7 +346,7 @@ class SavedPostsController(
         if (groupedSavedReplies.headerThreadSubject.isNotNullNorEmpty()) {
           KurobaComposeText(
             text = groupedSavedReplies.headerThreadSubject,
-            fontSize = 14.sp,
+            fontSize = 14.ktu,
             color = chanTheme.postSubjectColorCompose,
             maxLines = 3,
             modifier = Modifier
@@ -359,7 +359,7 @@ class SavedPostsController(
 
         KurobaComposeText(
           text = groupedSavedReplies.headerThreadInfo,
-          fontSize = 12.sp,
+          fontSize = 12.ktu,
           color = chanTheme.textColorHintCompose,
           modifier = Modifier
             .fillMaxWidth()
@@ -402,7 +402,7 @@ class SavedPostsController(
         ) {
           KurobaComposeText(
             text = groupedSavedReplyData.postHeader,
-            fontSize = 12.sp,
+            fontSize = 12.ktu,
             maxLines = 1,
             color = chanTheme.textColorHintCompose,
             modifier = Modifier
@@ -414,7 +414,7 @@ class SavedPostsController(
 
           KurobaComposeText(
             text = groupedSavedReplyData.comment,
-            fontSize = 14.sp,
+            fontSize = 14.ktu,
             maxLines = 5,
             modifier = Modifier
               .fillMaxWidth()

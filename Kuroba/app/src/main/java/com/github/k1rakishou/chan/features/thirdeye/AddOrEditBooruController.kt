@@ -28,7 +28,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.ThirdEyeManager
@@ -37,6 +36,7 @@ import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeCustomTextF
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextBarButton
 import com.github.k1rakishou.chan.ui.compose.consumeClicks
+import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingComposeController
 import com.github.k1rakishou.common.ModularResult
@@ -203,7 +203,7 @@ class AddOrEditBooruController(
         .wrapContentHeight(),
       text = labelText,
       color = chanTheme.textColorSecondaryCompose,
-      fontSize = 12.sp
+      fontSize = 12.ktu
     )
 
     KurobaComposeCustomTextField(

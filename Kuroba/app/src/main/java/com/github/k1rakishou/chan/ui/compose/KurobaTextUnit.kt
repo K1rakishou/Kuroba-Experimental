@@ -2,17 +2,41 @@ package com.github.k1rakishou.chan.ui.compose
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.isUnspecified
+import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.ChanSettings
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
+
+data class KurobaTextUnit(
+  val value: TextUnit,
+  val min: TextUnit? = null,
+  val max: TextUnit? = null
+) {
+
+  fun fixedSize(): KurobaTextUnit {
+    return copy(min = value, max = value)
+  }
+
+  fun toDp(density: Density): Dp {
+    return with(density) { value.toDp() }
+  }
+
+}
+
+@Stable
+val Int.ktu: KurobaTextUnit
+  get() = KurobaTextUnit(this.sp)
 
 @Composable
 fun rememberKurobaTextUnit(
@@ -25,12 +49,6 @@ fun rememberKurobaTextUnit(
   }
 }
 
-data class KurobaTextUnit(
-  val fontSize: TextUnit,
-  val min: TextUnit? = null,
-  val max: TextUnit? = null
-)
-
 @Composable
 fun collectTextFontSize(defaultFontSize: TextUnit): TextUnit {
   val defaultFontSizeKurobaUnits = rememberKurobaTextUnit(fontSize = defaultFontSize)
@@ -40,7 +58,7 @@ fun collectTextFontSize(defaultFontSize: TextUnit): TextUnit {
 
 @Composable
 fun collectTextFontSize(defaultFontSize: KurobaTextUnit): TextUnit {
-  val textUnit = defaultFontSize.fontSize
+  val textUnit = defaultFontSize.value
   val min = defaultFontSize.min
   val max = defaultFontSize.max
 

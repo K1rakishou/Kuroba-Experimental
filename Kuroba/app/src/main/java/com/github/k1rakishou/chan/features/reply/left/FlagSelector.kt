@@ -24,7 +24,6 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.usecase.LoadBoardFlagsUseCase
 import com.github.k1rakishou.chan.features.reply.ReplyLayoutViewModel
@@ -32,6 +31,7 @@ import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutState
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeIcon
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
+import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 
@@ -109,7 +109,7 @@ internal fun FlagSelector(
         .wrapContentHeight()
         .graphicsLayer { alpha = flagSelectorAlpha },
       text = lastUsedFlagText,
-      fontSize = 16.sp
+      fontSize = 16.ktu
     )
 
     Spacer(modifier = Modifier.width(8.dp))

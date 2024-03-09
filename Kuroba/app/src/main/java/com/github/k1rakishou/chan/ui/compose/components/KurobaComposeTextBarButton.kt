@@ -10,8 +10,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.toUpperCase
-import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.sp
+import com.github.k1rakishou.chan.ui.compose.KurobaTextUnit
+import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 
 @Composable
@@ -19,7 +19,7 @@ fun KurobaComposeTextBarButton(
   modifier: Modifier = Modifier,
   enabled: Boolean = true,
   customTextColor: Color? = null,
-  fontSize: TextUnit = 14.sp,
+  fontSize: KurobaTextUnit = 14.ktu,
   onClick: () -> Unit,
   text: String,
 ) {
@@ -59,7 +59,7 @@ fun KurobaComposeTextBarButton(
   modifier: Modifier = Modifier,
   enabled: Boolean = true,
   customTextColor: Color? = null,
-  fontSize: TextUnit = 14.sp,
+  fontSize: KurobaTextUnit = 14.ktu,
   onClick: () -> Unit,
   text: AnnotatedString,
 ) {

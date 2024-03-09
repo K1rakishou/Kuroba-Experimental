@@ -22,13 +22,13 @@ import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.features.reply.ReplyLayoutViewModel
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutState
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextField
 import com.github.k1rakishou.chan.ui.compose.components.KurobaLabelText
 import com.github.k1rakishou.chan.ui.compose.freeFocusSafe
+import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.requestFocusSafe
 
@@ -141,7 +141,7 @@ internal fun ReplyTextField(
       KurobaLabelText(
         enabled = replyLayoutEnabled,
         labelText = replyFieldHintText,
-        fontSize = 12.sp,
+        fontSize = 12.ktu,
         color = chanTheme.textColorHintCompose
       )
     }

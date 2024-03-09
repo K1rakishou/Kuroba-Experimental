@@ -33,7 +33,6 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
@@ -45,6 +44,7 @@ import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeIcon
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeProgressIndicator
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
+import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.providers.ProvideEverythingForCompose
 import com.github.k1rakishou.chan.ui.compose.reorder.ReorderableState
@@ -366,11 +366,11 @@ class BookmarkGroupSettingsController(
         }
 
         KurobaComposeText(
-          fontSize = 16.sp,
           modifier = Modifier
             .weight(1f)
             .padding(horizontal = 4.dp)
             .align(Alignment.CenterVertically),
+          fontSize = 16.ktu,
           text = groupText
         )
 

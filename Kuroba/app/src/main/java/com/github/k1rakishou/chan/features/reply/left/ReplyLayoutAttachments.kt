@@ -37,7 +37,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
 import coil.request.ImageRequest
@@ -56,6 +55,7 @@ import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeMiddleEllip
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeSelectionIndicator
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
+import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
@@ -177,7 +177,7 @@ private fun SyntheticReplyAttachable(
         .align(Alignment.Center),
       text = text,
       color = textColor,
-      fontSize = 14.sp
+      fontSize = 14.ktu
     )
   }
 }
@@ -293,7 +293,7 @@ private fun AttachedMediaThumbnail(
           KurobaComposeText(
             text = stringResource(id = R.string.reply_layout_failed_to_decode_media),
             color = Color.White,
-            fontSize = 10.sp
+            fontSize = 10.ktu
           )
         }
       }
@@ -358,7 +358,7 @@ private fun AttachedMediaThumbnail(
           .wrapContentHeight(),
         text = replyFileAttachable.fileName,
         color = Color.White,
-        fontSize = 10.sp,
+        fontSize = 10.ktu,
       )
     }
   }
@@ -374,7 +374,7 @@ private fun MediaFileSize(replyFileAttachable: ReplyFileAttachable) {
     KurobaComposeText(
       text = fileSizeString,
       color = Color.White,
-      fontSize = 12.sp
+      fontSize = 12.ktu
     )
   }
 }
@@ -390,7 +390,7 @@ private fun MediaDimensions(replyFileAttachable: ReplyFileAttachable) {
     KurobaComposeText(
       text = dimensionsString,
       color = Color.White,
-      fontSize = 12.sp
+      fontSize = 12.ktu
     )
   }
 }

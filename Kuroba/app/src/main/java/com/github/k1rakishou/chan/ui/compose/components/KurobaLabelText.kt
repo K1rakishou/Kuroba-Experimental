@@ -14,15 +14,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.sp
+import com.github.k1rakishou.chan.ui.compose.KurobaTextUnit
+import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 
 @Composable
 fun KurobaLabelText(
   enabled: Boolean = true,
   labelText: String?,
-  fontSize: TextUnit = 13.sp,
+  fontSize: KurobaTextUnit = 13.ktu,
   interactionSource: InteractionSource
 ) {
   if (labelText == null) {
@@ -69,7 +69,7 @@ fun KurobaLabelText(
   enabled: Boolean = true,
   labelText: AnnotatedString?,
   color: Color? = null,
-  fontSize: TextUnit = 13.sp
+  fontSize: KurobaTextUnit = 13.ktu
 ) {
   if (labelText == null) {
     return

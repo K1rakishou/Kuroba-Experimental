@@ -79,6 +79,7 @@ import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeProgressInd
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeSwitch
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
+import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.providers.ProvideEverythingForCompose
 import com.github.k1rakishou.chan.ui.compose.reorder.ReorderableState
@@ -465,7 +466,7 @@ class FiltersController(
               .weight(1f)
               .wrapContentHeight()
               .padding(horizontal = 8.dp, vertical = 4.dp),
-            fontSize = 12.sp,
+            fontSize = 12.ktu,
             text = fullText,
             inlineContent = squareDrawableInlineContent,
             onTextClicked = { textLayoutResult, position -> handleClickedText(textLayoutResult, position) }

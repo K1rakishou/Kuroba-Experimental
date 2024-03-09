@@ -13,12 +13,12 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutState
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeIcon
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
+import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 
 @Composable
@@ -74,7 +74,7 @@ internal fun SendReplyButton(
         KurobaComposeText(
           text = "${replySendProgress}%",
           color = Color.White,
-          fontSize = 10.sp
+          fontSize = 10.ktu.fixedSize()
         )
       }
     }

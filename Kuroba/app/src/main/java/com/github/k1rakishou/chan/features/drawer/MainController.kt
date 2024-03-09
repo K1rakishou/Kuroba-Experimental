@@ -75,7 +75,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import coil.transform.CircleCropTransformation
@@ -120,6 +119,7 @@ import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeSelectionIn
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.KurobaSearchInput
 import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
+import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.providers.ProvideEverythingForCompose
 import com.github.k1rakishou.chan.ui.compose.search.SimpleSearchState
@@ -1255,7 +1255,7 @@ class MainController(
         text = navHistoryEntry.title,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
-        fontSize = 16.sp
+        fontSize = 16.ktu
       )
 
       if (navHistoryEntry.additionalInfo != null) {
@@ -1420,7 +1420,7 @@ class MainController(
           .wrapContentHeight(),
         text = navHistoryEntry.title,
         maxLines = 4,
-        fontSize = 12.sp,
+        fontSize = 12.ktu,
         textAlign = TextAlign.Center
       )
     }
@@ -1535,7 +1535,7 @@ class MainController(
           .padding(horizontal = 6.dp),
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
-        fontSize = 16.sp,
+        fontSize = 16.ktu,
         text = additionalInfoString
       )
     } else {
@@ -1547,7 +1547,7 @@ class MainController(
         maxLines = 1,
         textAlign = TextAlign.Center,
         overflow = TextOverflow.Ellipsis,
-        fontSize = 14.sp,
+        fontSize = 14.ktu,
         text = additionalInfoString
       )
     }

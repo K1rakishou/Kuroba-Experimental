@@ -13,15 +13,16 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.TextUnit
+import com.github.k1rakishou.chan.ui.compose.KurobaTextUnit
 import com.github.k1rakishou.chan.ui.compose.collectTextFontSize
+import com.github.k1rakishou.chan.ui.compose.ktu
 
 @Composable
 internal fun ComposeText(
   text: String,
   modifier: Modifier = Modifier,
   color: Color = Color.Unspecified,
-  fontSize: TextUnit,
+  fontSize: KurobaTextUnit = 16.ktu,
   maxLines: Int = Int.MAX_VALUE,
   overflow: TextOverflow = TextOverflow.Clip,
   softWrap: Boolean = true,
@@ -30,13 +31,13 @@ internal fun ComposeText(
   onTextLayout: (TextLayoutResult) -> Unit = {},
   style: TextStyle = LocalTextStyle.current
 ) {
-  val textFontSize = collectTextFontSize(defaultFontSize = fontSize)
+  val actualFontSize = collectTextFontSize(defaultFontSize = fontSize)
 
   Text(
     modifier = modifier,
     color = color,
     text = text,
-    fontSize = textFontSize,
+    fontSize = actualFontSize,
     maxLines = maxLines,
     overflow = overflow,
     softWrap = softWrap,
@@ -52,7 +53,7 @@ internal fun ComposeText(
   text: AnnotatedString,
   modifier: Modifier = Modifier,
   color: Color = Color.Unspecified,
-  fontSize: TextUnit,
+  fontSize: KurobaTextUnit = 16.ktu,
   maxLines: Int = Int.MAX_VALUE,
   overflow: TextOverflow = TextOverflow.Clip,
   softWrap: Boolean = true,
@@ -62,13 +63,13 @@ internal fun ComposeText(
   onTextLayout: (TextLayoutResult) -> Unit = {},
   style: TextStyle = LocalTextStyle.current
 ) {
-  val textFontSize = collectTextFontSize(defaultFontSize = fontSize)
+  val actualFontSize = collectTextFontSize(defaultFontSize = fontSize)
 
   Text(
     modifier = modifier,
     color = color,
     text = text,
-    fontSize = textFontSize,
+    fontSize = actualFontSize,
     maxLines = maxLines,
     overflow = overflow,
     softWrap = softWrap,
@@ -82,6 +83,6 @@ internal fun ComposeText(
 
 private fun kurobaTextStyle(style: TextStyle): TextStyle {
   return style.copy(
-    lineHeight = style.lineHeight * 0.7f
+    lineHeight = style.lineHeight * 0.8f
   )
 }

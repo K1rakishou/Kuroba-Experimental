@@ -58,7 +58,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.BaseSelectionHelper
@@ -78,6 +77,7 @@ import com.github.k1rakishou.chan.ui.compose.SelectableItem
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeErrorMessage
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeProgressIndicator
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
+import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.providers.ProvideEverythingForCompose
 import com.github.k1rakishou.chan.ui.compose.simpleVerticalScrollbar
@@ -386,7 +386,7 @@ class LocalArchiveController(
         KurobaComposeText(
           text = stringResource(id = R.string.controller_local_archive_show_all_threads),
           textAlign = TextAlign.Center,
-          fontSize = 15.sp,
+          fontSize = 15.ktu,
           maxLines = 1,
           overflow = TextOverflow.Ellipsis,
           fontWeight = FontWeight.SemiBold,
@@ -418,7 +418,7 @@ class LocalArchiveController(
 
         KurobaComposeText(
           text = stringResource(id = R.string.controller_local_archive_show_downloading_threads),
-          fontSize = 15.sp,
+          fontSize = 15.ktu,
           fontWeight = FontWeight.SemiBold,
           textAlign = TextAlign.Center,
           modifier = Modifier
@@ -449,7 +449,7 @@ class LocalArchiveController(
 
         KurobaComposeText(
           text = stringResource(id = R.string.controller_local_archive_show_downloaded_threads),
-          fontSize = 15.sp,
+          fontSize = 15.ktu,
           fontWeight = FontWeight.SemiBold,
           textAlign = TextAlign.Center,
           modifier = Modifier
@@ -507,7 +507,7 @@ class LocalArchiveController(
 
           KurobaComposeText(
             text = threadDownloadView.threadSubject,
-            fontSize = 14.sp,
+            fontSize = 14.ktu,
             color = chanTheme.postSubjectColorCompose,
             maxLines = 2,
             modifier = Modifier
@@ -555,7 +555,7 @@ class LocalArchiveController(
 
             KurobaComposeText(
               text = threadDownloadView.threadDownloadInfo,
-              fontSize = 12.sp,
+              fontSize = 12.ktu,
               color = chanTheme.textColorPrimaryCompose,
               modifier = Modifier
                 .fillMaxWidth()
@@ -592,7 +592,7 @@ class LocalArchiveController(
 
             KurobaComposeText(
               text = statsText,
-              fontSize = 12.sp,
+              fontSize = 12.ktu,
               color = chanTheme.textColorHintCompose,
               modifier = Modifier
                 .fillMaxWidth()

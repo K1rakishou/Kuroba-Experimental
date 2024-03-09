@@ -22,7 +22,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.BaseComposeController
 import com.github.k1rakishou.chan.core.compose.AsyncData
@@ -37,6 +36,7 @@ import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeIcon
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeProgressIndicator
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
+import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.common.errorMessageOrClassName
@@ -152,7 +152,7 @@ class CreateSoundMediaController(
                 maxLines = 5,
                 overflow = TextOverflow.Ellipsis,
                 color = Color.White,
-                fontSize = 12.sp
+                fontSize = 12.ktu
             )
 
             AttachmentOverlay(

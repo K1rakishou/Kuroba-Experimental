@@ -13,9 +13,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.sp
+import com.github.k1rakishou.chan.ui.compose.KurobaTextUnit
 import com.github.k1rakishou.chan.ui.compose.Shimmer
+import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.common.ELLIPSIS_SYMBOL
 import com.github.k1rakishou.common.substringSafe
 import kotlinx.coroutines.Dispatchers
@@ -26,7 +26,7 @@ fun KurobaComposeMiddleEllipsisText(
   modifier: Modifier = Modifier,
   text: String,
   color: Color = Color.White,
-  fontSize: TextUnit = 14.sp
+  fontSize: KurobaTextUnit = 14.ktu
 ) {
   val density = LocalDensity.current
   var visible by remember { mutableStateOf(false) }
@@ -83,7 +83,7 @@ fun KurobaComposeMiddleEllipsisText(
         )
       }
     } else {
-      val height = with(LocalDensity.current) { fontSize.toDp() }
+      val height = with(LocalDensity.current) { fontSize.toDp(this) }
 
       Shimmer(
         modifier = modifier

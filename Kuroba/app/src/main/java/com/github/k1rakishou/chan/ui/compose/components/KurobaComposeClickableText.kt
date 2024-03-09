@@ -16,7 +16,8 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.TextUnit
+import com.github.k1rakishou.chan.ui.compose.KurobaTextUnit
+import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 
 @Composable
@@ -24,7 +25,7 @@ fun KurobaComposeClickableText(
   text: AnnotatedString,
   modifier: Modifier = Modifier,
   color: Color? = null,
-  fontSize: TextUnit = TextUnit.Unspecified,
+  fontSize: KurobaTextUnit = 16.ktu,
   fontWeight: FontWeight? = null,
   maxLines: Int = Int.MAX_VALUE,
   overflow: TextOverflow = TextOverflow.Clip,

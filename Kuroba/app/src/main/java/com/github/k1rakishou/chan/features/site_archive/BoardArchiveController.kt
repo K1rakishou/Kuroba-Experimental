@@ -28,7 +28,6 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.os.bundleOf
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
@@ -40,6 +39,7 @@ import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeErrorMessage
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeProgressIndicator
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
+import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.providers.ProvideEverythingForCompose
 import com.github.k1rakishou.chan.ui.compose.search.rememberSimpleSearchStateNullable
@@ -371,13 +371,13 @@ class BoardArchiveController(
         modifier = Modifier.alpha(alpha),
         text = threadNo,
         color = chanTheme.textColorHintCompose,
-        fontSize = 12.sp
+        fontSize = 12.ktu
       )
 
       KurobaComposeText(
         modifier = Modifier.alpha(alpha),
         text = archiveThread.comment,
-        fontSize = 14.sp
+        fontSize = 14.ktu
       )
     }
   }

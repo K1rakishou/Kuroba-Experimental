@@ -35,7 +35,6 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.BaseComposeController
 import com.github.k1rakishou.chan.core.cache.CacheFileType
@@ -54,6 +53,7 @@ import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeProgressInd
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextField
 import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
+import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.simpleVerticalScrollbar
 import com.github.k1rakishou.chan.ui.compose.update
@@ -304,7 +304,7 @@ class ImageSearchController(
 
     KurobaComposeText(
       text = stringResource(id = R.string.image_search_controller_current_instance),
-      fontSize = 12.sp,
+      fontSize = 12.ktu,
       color = chanTheme.textColorHintCompose
     )
 
@@ -525,7 +525,7 @@ class ImageSearchController(
             .padding(horizontal = 4.dp, vertical = 2.dp)
             .align(Alignment.BottomEnd),
           text = imageInfo,
-          fontSize = 11.sp,
+          fontSize = 11.ktu,
           color = Color.White
         )
       }

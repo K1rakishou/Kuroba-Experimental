@@ -40,13 +40,11 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.ThirdEyeManager
 import com.github.k1rakishou.chan.features.thirdeye.data.BooruSetting
 import com.github.k1rakishou.chan.features.thirdeye.data.ThirdEyeSettings
-import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeCardView
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeCheckbox
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeErrorMessage
@@ -55,6 +53,8 @@ import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextBarButton
 import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
 import com.github.k1rakishou.chan.ui.compose.consumeClicks
+import com.github.k1rakishou.chan.ui.compose.ktu
+import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.reorder.ReorderableState
 import com.github.k1rakishou.chan.ui.compose.reorder.detectReorder
 import com.github.k1rakishou.chan.ui.compose.reorder.draggedItem
@@ -530,7 +530,7 @@ class ThirdEyeSettingsController(context: Context) : BaseFloatingComposeControll
         .wrapContentHeight(),
       text = stringResource(id = labelTextId),
       color = chanTheme.textColorSecondaryCompose,
-      fontSize = 12.sp
+      fontSize = 12.ktu
     )
 
     KurobaComposeText(
@@ -539,7 +539,7 @@ class ThirdEyeSettingsController(context: Context) : BaseFloatingComposeControll
         .wrapContentHeight(),
       text = settingValue.takeIf { it.isNotNullNorBlank() } ?: "<empty>",
       color = chanTheme.textColorPrimaryCompose,
-      fontSize = 15.sp
+      fontSize = 15.ktu
     )
   }
 

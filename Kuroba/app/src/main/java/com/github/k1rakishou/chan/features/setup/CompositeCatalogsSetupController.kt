@@ -31,7 +31,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
@@ -42,6 +41,7 @@ import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeIcon
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
+import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.providers.ProvideEverythingForCompose
 import com.github.k1rakishou.chan.ui.compose.reorder.ReorderableState
@@ -177,8 +177,8 @@ class CompositeCatalogsSetupController(
           })
       } else {
         KurobaComposeText(
-          fontSize = 16.sp,
           modifier = Modifier.fillMaxSize(),
+          fontSize = 16.ktu,
           textAlign = TextAlign.Center,
           text = stringResource(id = R.string.controller_composite_catalogs_empty_text)
         )
@@ -262,11 +262,11 @@ class CompositeCatalogsSetupController(
           .wrapContentHeight()
       ) {
         KurobaComposeText(
-          color = chanTheme.textColorPrimaryCompose,
-          fontSize = 15.sp,
           modifier = Modifier
             .wrapContentHeight()
             .fillMaxWidth(),
+          color = chanTheme.textColorPrimaryCompose,
+          fontSize = 15.ktu,
           text = compositeCatalog.name
         )
 
@@ -286,11 +286,11 @@ class CompositeCatalogsSetupController(
         }
 
         KurobaComposeText(
-          color = chanTheme.textColorSecondaryCompose,
-          fontSize = 12.sp,
           modifier = Modifier
             .wrapContentHeight()
             .fillMaxWidth(),
+          color = chanTheme.textColorSecondaryCompose,
+          fontSize = 12.ktu,
           text = text
         )
       }

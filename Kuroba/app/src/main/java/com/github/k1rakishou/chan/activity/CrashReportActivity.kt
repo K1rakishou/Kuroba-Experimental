@@ -41,7 +41,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
 import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.Chan
@@ -62,6 +61,7 @@ import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeCollapsable
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeDivider
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextButton
+import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.providers.ProvideEverythingForCompose
 import com.github.k1rakishou.chan.ui.compose.verticalScrollbar
@@ -287,7 +287,7 @@ class CrashReportActivity : AppCompatActivity(), FSAFActivityCallbacks, IHasView
           KurobaComposeText(
             text = stringResource(id = R.string.crash_report_activity_title),
             color = chanTheme.accentColorCompose,
-            fontSize = 18.sp
+            fontSize = 18.ktu
           )
         }
 
@@ -307,7 +307,7 @@ class CrashReportActivity : AppCompatActivity(), FSAFActivityCallbacks, IHasView
               modifier = Modifier.fillMaxSize(),
               color = chanTheme.textColorSecondaryCompose,
               text = errorMessage,
-              fontSize = 14.sp
+              fontSize = 14.ktu
             )
           }
         }
@@ -324,7 +324,7 @@ class CrashReportActivity : AppCompatActivity(), FSAFActivityCallbacks, IHasView
               modifier = Modifier.fillMaxSize(),
               color = chanTheme.textColorSecondaryCompose,
               text = stacktrace,
-              fontSize = 12.sp
+              fontSize = 12.ktu
             )
           }
         }
@@ -422,7 +422,7 @@ class CrashReportActivity : AppCompatActivity(), FSAFActivityCallbacks, IHasView
                   .background(Color.Black),
                 color = chanTheme.textColorSecondaryCompose,
                 text = logs,
-                fontSize = 12.sp
+                fontSize = 12.ktu
               )
             }
           }
@@ -448,7 +448,7 @@ class CrashReportActivity : AppCompatActivity(), FSAFActivityCallbacks, IHasView
               modifier = Modifier.fillMaxSize(),
               color = chanTheme.textColorSecondaryCompose,
               text = footer,
-              fontSize = 12.sp
+              fontSize = 12.ktu
             )
           }
         }

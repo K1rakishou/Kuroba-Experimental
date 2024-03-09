@@ -37,7 +37,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
@@ -51,6 +50,7 @@ import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextBarButt
 import com.github.k1rakishou.chan.ui.compose.components.KurobaSearchInput
 import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
 import com.github.k1rakishou.chan.ui.compose.consumeClicks
+import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.search.SimpleSearchState
 import com.github.k1rakishou.chan.ui.compose.search.rememberSimpleSearchState
@@ -374,24 +374,24 @@ class FilterBoardSelectorController(
               .align(Alignment.Center)
           ) {
             KurobaComposeText(
-              fontSize = 11.sp,
-              maxLines = 3,
-              overflow = TextOverflow.Ellipsis,
-              textAlign = TextAlign.Center,
               modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight(),
+              fontSize = 11.ktu,
+              maxLines = 3,
+              overflow = TextOverflow.Ellipsis,
+              textAlign = TextAlign.Center,
               text = cellData.siteCellData.siteName
             )
 
             KurobaComposeText(
-              fontSize = 11.sp,
-              maxLines = 1,
-              overflow = TextOverflow.Ellipsis,
-              textAlign = TextAlign.Center,
               modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight(),
+              fontSize = 11.ktu,
+              maxLines = 1,
+              overflow = TextOverflow.Ellipsis,
+              textAlign = TextAlign.Center,
               text = cellData.catalogCellData.boardCodeFormatted
             )
           }
@@ -401,7 +401,7 @@ class FilterBoardSelectorController(
   }
 
   sealed class SelectedBoards {
-    object AllBoards : SelectedBoards()
+    data object AllBoards : SelectedBoards()
     data class Boards(val boardDescriptors: Set<BoardDescriptor>) : SelectedBoards()
   }
 

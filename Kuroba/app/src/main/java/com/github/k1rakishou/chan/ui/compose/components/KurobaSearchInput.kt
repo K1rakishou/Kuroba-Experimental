@@ -19,8 +19,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ThemeEngine
 
@@ -60,7 +60,7 @@ fun KurobaSearchInput(
             .fillMaxWidth(),
           textColor = textColor,
           parentBackgroundColor = onBackgroundColor,
-          fontSize = 16.sp,
+          fontSize = 16.ktu,
           singleLine = true,
           maxLines = 1,
           value = localQuery,

@@ -53,7 +53,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.graphics.withScale
 import androidx.core.graphics.withTranslation
 import com.github.k1rakishou.ChanSettings
@@ -78,6 +77,7 @@ import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextBarButton
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextField
 import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
+import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.providers.ProvideEverythingForCompose
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
@@ -429,7 +429,7 @@ class Chan4CaptchaLayout(
             .padding(horizontal = 8.dp, vertical = 4.dp),
           text = captchaSuggestion,
           color = textColor,
-          fontSize = 18.sp
+          fontSize = 18.ktu
         )
       }
     }
@@ -651,7 +651,7 @@ class Chan4CaptchaLayout(
             .padding(4.dp),
           text = "${captchaTtlMillis / 1000L} sec",
           color = Color.White,
-          fontSize = 12.sp
+          fontSize = 12.ktu
         )
       }
     }

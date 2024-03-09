@@ -17,6 +17,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutState
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextFieldV2
 import com.github.k1rakishou.chan.ui.compose.components.KurobaLabelText
+import com.github.k1rakishou.chan.ui.compose.ktu
 
 @Composable
 internal fun SubjectTextField(
@@ -46,7 +47,7 @@ internal fun SubjectTextField(
       KurobaLabelText(
         enabled = replyLayoutEnabled,
         labelText = labelText,
-        fontSize = 14.sp,
+        fontSize = 14.ktu,
         interactionSource = interactionSource
       )
     }

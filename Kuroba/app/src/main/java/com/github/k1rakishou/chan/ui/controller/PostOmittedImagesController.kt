@@ -25,7 +25,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
@@ -34,6 +33,7 @@ import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailViews
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeCardView
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
+import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
 import com.github.k1rakishou.model.data.post.ChanPostImage
@@ -86,9 +86,9 @@ class PostOmittedImagesController(
     }
     val fontSize = remember {
       if (isTablet()) {
-        13.sp
+        13.ktu
       } else {
-        11.sp
+        11.ktu
       }
     }
     val shape = remember { RoundedCornerShape(2.dp) }

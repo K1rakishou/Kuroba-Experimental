@@ -22,13 +22,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
-import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeCheckbox
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextBarButton
+import com.github.k1rakishou.chan.ui.compose.ktu
+import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingComposeController
 import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.common.AppConstants
@@ -122,7 +122,10 @@ class ThreadDownloaderSettingsController(
         threadDownloaderDirPath
       )
 
-      KurobaComposeText(text = message, fontSize = 12.sp)
+      KurobaComposeText(
+        text = message,
+        fontSize = 12.ktu
+      )
 
       Spacer(modifier = Modifier.height(8.dp))
 

@@ -24,7 +24,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.sp
 import coil.transform.Transformation
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheFileType
@@ -75,7 +74,7 @@ private fun BoxScope.DefaultErrorHandler(throwable: Throwable) {
     modifier = Modifier.align(Alignment.Center),
     text = errorMsg,
     color = textColor,
-    fontSize = 11.sp,
+    fontSize = 11.ktu.fixedSize(),
     maxLines = 3,
     textAlign = TextAlign.Center
   )

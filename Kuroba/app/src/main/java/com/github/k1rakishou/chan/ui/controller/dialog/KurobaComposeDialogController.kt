@@ -31,7 +31,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeCardView
@@ -39,6 +38,7 @@ import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextBarButton
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextField
 import com.github.k1rakishou.chan.ui.compose.consumeClicks
+import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingComposeController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
@@ -120,7 +120,7 @@ class KurobaComposeDialogController(
       text = params.title.titleText(),
       maxLines = 4,
       overflow = TextOverflow.Ellipsis,
-      fontSize = 22.sp
+      fontSize = 22.ktu
     )
 
     if (params.description != null) {
@@ -179,7 +179,7 @@ class KurobaComposeDialogController(
               KurobaComposeText(
                 text = hint.hintText(),
                 color = chanTheme.textColorHintCompose,
-                fontSize = 12.sp
+                fontSize = 12.ktu
               )
             }
           }
@@ -254,7 +254,7 @@ class KurobaComposeDialogController(
             .padding(vertical = 8.dp)
             .verticalScroll(state = rememberScrollState()),
           text = description.value,
-          fontSize = 16.sp
+          fontSize = 16.ktu
         )
       }
       is Text.Id -> {
@@ -263,7 +263,7 @@ class KurobaComposeDialogController(
             .padding(vertical = 8.dp)
             .verticalScroll(state = rememberScrollState()),
           text = stringResource(id = description.textId),
-          fontSize = 16.sp
+          fontSize = 16.ktu
         )
       }
       is Text.String -> {
@@ -272,7 +272,7 @@ class KurobaComposeDialogController(
             .padding(vertical = 8.dp)
             .verticalScroll(state = rememberScrollState()),
           text = description.value,
-          fontSize = 16.sp
+          fontSize = 16.ktu
         )
       }
     }

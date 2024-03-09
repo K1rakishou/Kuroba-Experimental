@@ -68,6 +68,7 @@ import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextBarButton
 import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
 import com.github.k1rakishou.chan.ui.compose.consumeClicks
+import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingComposeController
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
@@ -490,7 +491,7 @@ class CreateOrUpdateFilterController(
         .wrapContentHeight()
         .padding(vertical = 4.dp),
       enabled = !applyToEmptyComments,
-      fontSize = 18.sp,
+      fontSize = 18.ktu,
       keyboardOptions = keyboardOptions,
       value = pattern,
       labelText = stringResource(id = R.string.filter_enter_pattern),
@@ -552,7 +553,7 @@ class CreateOrUpdateFilterController(
         .fillMaxWidth()
         .wrapContentHeight()
         .padding(vertical = 4.dp),
-      fontSize = 18.sp,
+      fontSize = 18.ktu,
       keyboardOptions = keyboardOptions,
       value = testText,
       labelText = stringResource(id = R.string.filter_test_pattern),
@@ -568,7 +569,7 @@ class CreateOrUpdateFilterController(
         .fillMaxWidth()
         .wrapContentHeight()
         .padding(vertical = 4.dp),
-      fontSize = 18.sp,
+      fontSize = 18.ktu,
       keyboardOptions = keyboardOptions,
       value = note,
       labelText = stringResource(id = R.string.filter_note),

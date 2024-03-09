@@ -14,13 +14,13 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.features.reply.ReplyLayoutViewModel
 import com.github.k1rakishou.chan.ui.compose.components.IconTint
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeIcon
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
+import com.github.k1rakishou.chan.ui.compose.ktu
 
 @Composable
 internal fun PresolveCaptchaButton(
@@ -60,7 +60,7 @@ internal fun PresolveCaptchaButton(
         KurobaComposeText(
           text = captchaCounter.toString(),
           color = Color.White,
-          fontSize = 11.sp
+          fontSize = 11.ktu.fixedSize()
         )
       }
     }

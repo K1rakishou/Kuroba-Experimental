@@ -38,11 +38,11 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
+import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.providers.ProvideEverythingForCompose
 import com.github.k1rakishou.chan.ui.helper.PinHelper
@@ -312,8 +312,8 @@ class KurobaComposeIconPanel(
         val counterText = remember(key1 = counter) { PinHelper.getShortUnreadCount(counter) }
 
         val fontSize = when (orientation) {
-          Orientation.Vertical -> 10.sp
-          Orientation.Horizontal -> 11.sp
+          Orientation.Vertical -> 10.ktu.fixedSize()
+          Orientation.Horizontal -> 11.ktu.fixedSize()
         }
 
         KurobaComposeText(

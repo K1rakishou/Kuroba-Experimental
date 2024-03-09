@@ -25,18 +25,18 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.ReportManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
-import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
-import com.github.k1rakishou.chan.ui.compose.providers.ProvideEverythingForCompose
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeCheckbox
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeCustomTextField
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
+import com.github.k1rakishou.chan.ui.compose.ktu
+import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
+import com.github.k1rakishou.chan.ui.compose.providers.ProvideEverythingForCompose
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
@@ -126,7 +126,7 @@ class ReportIssueController(
             .wrapContentHeight()
             .padding(4.dp),
           text = stringResource(id = R.string.report_controller_note),
-          fontSize = 12.sp
+          fontSize = 12.ktu
         )
       }
 
@@ -239,7 +239,7 @@ class ReportIssueController(
             parentBackgroundColor = chanTheme.backColorCompose,
             value = reportLogs,
             maxTextLength = ReportManager.MAX_LOGS_LENGTH,
-            fontSize = 12.sp,
+            fontSize = 12.ktu,
             onValueChange = { logs -> reportLogsMut = logs }
           )
         }
