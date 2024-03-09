@@ -73,7 +73,6 @@ abstract class LynxchanSite : CommonSite() {
     return@lazy domainUrl.value.toString().removeSuffix("/")
   }
 
-  // TODO: New reply layout. Can this be removed?
   override fun initialize() {
     Chan.getComponent()
       .inject(this)

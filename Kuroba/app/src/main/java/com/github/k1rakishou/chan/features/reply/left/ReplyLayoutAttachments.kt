@@ -223,7 +223,6 @@ private fun AttachedMediaThumbnail(
             "getReplyFileByUuid(${replyFileAttachable.fileUuid})"
           }
 
-          // TODO: New reply layout. Some kind of other error type here instead of just passing null into data?
           value = ImageRequest.Builder(context)
             .data(null)
             .crossfade(true)
