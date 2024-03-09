@@ -51,7 +51,7 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyExpandableGroupView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
-import com.github.k1rakishou.chan.ui.globalstate.FastScrollerControllerType
+import com.github.k1rakishou.chan.ui.globalstate.fastsroller.FastScrollerControllerType
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem
 import com.github.k1rakishou.chan.ui.view.FastScroller

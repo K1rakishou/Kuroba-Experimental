@@ -43,8 +43,8 @@ import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
-import com.github.k1rakishou.chan.ui.globalstate.FastScrollerControllerType
 import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
+import com.github.k1rakishou.chan.ui.globalstate.fastsroller.FastScrollerControllerType
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger

@@ -4,7 +4,7 @@ import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
 
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.github.k1rakishou.chan.ui.globalstate.FastScrollerControllerType;
+import com.github.k1rakishou.chan.ui.globalstate.fastsroller.FastScrollerControllerType;
 
 import org.jetbrains.annotations.Nullable;
 

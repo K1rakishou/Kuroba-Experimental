@@ -43,8 +43,8 @@ import androidx.recyclerview.widget.RecyclerView.OnScrollListener;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 import com.github.k1rakishou.ChanSettings;
-import com.github.k1rakishou.chan.ui.globalstate.FastScrollerControllerType;
 import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder;
+import com.github.k1rakishou.chan.ui.globalstate.fastsroller.FastScrollerControllerType;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.core_themes.ChanTheme;
 import com.github.k1rakishou.core_themes.ThemeEngine;

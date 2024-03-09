@@ -86,15 +86,10 @@ import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
-import com.github.k1rakishou.chan.core.manager.ArchivesManager
-import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
-import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
-import com.github.k1rakishou.chan.core.manager.PageRequestManager
 import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager
-import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.core.navigation.HasNavigation
@@ -136,6 +131,7 @@ import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationContro
 import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.TabHostController
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
+import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayoutNoBackground
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingLinearLayoutNoBackground
@@ -160,7 +156,10 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.*
@@ -177,62 +176,46 @@ class MainController(
   DrawerLayout.DrawerListener {
 
   @Inject
-  lateinit var _themeEngine: Lazy<ThemeEngine>
+  lateinit var themeEngineLazy: Lazy<ThemeEngine>
   @Inject
-  lateinit var _globalWindowInsetsManager: Lazy<GlobalWindowInsetsManager>
+  lateinit var globalWindowInsetsManagerLazy: Lazy<GlobalWindowInsetsManager>
   @Inject
-  lateinit var _settingsNotificationManager: Lazy<SettingsNotificationManager>
+  lateinit var settingsNotificationManagerLazy: Lazy<SettingsNotificationManager>
   @Inject
-  lateinit var _historyNavigationManager: Lazy<HistoryNavigationManager>
+  lateinit var historyNavigationManagerLazy: Lazy<HistoryNavigationManager>
   @Inject
-  lateinit var _siteManager: Lazy<SiteManager>
+  lateinit var bookmarksManagerLazy: Lazy<BookmarksManager>
   @Inject
-  lateinit var _boardManager: Lazy<BoardManager>
+  lateinit var dialogFactoryLazy: Lazy<DialogFactory>
   @Inject
-  lateinit var _bookmarksManager: Lazy<BookmarksManager>
+  lateinit var imageSaverV2Lazy: Lazy<ImageSaverV2>
   @Inject
-  lateinit var _pageRequestManager: Lazy<PageRequestManager>
+  lateinit var imageLoaderV2Lazy: Lazy<ImageLoaderV2>
   @Inject
-  lateinit var _archivesManager: Lazy<ArchivesManager>
+  lateinit var threadDownloadManagerLazy: Lazy<ThreadDownloadManager>
   @Inject
-  lateinit var _chanThreadManager: Lazy<ChanThreadManager>
-  @Inject
-  lateinit var _dialogFactory: Lazy<DialogFactory>
-  @Inject
-  lateinit var _imageSaverV2: Lazy<ImageSaverV2>
-  @Inject
-  lateinit var _imageLoaderV2: Lazy<ImageLoaderV2>
-  @Inject
-  lateinit var _threadDownloadManager: Lazy<ThreadDownloadManager>
+  lateinit var globalUiStateHolderLazy: Lazy<GlobalUiStateHolder>
 
   private val themeEngine: ThemeEngine
-    get() = _themeEngine.get()
+    get() = themeEngineLazy.get()
   private val globalWindowInsetsManager: GlobalWindowInsetsManager
-    get() = _globalWindowInsetsManager.get()
+    get() = globalWindowInsetsManagerLazy.get()
   private val settingsNotificationManager: SettingsNotificationManager
-    get() = _settingsNotificationManager.get()
+    get() = settingsNotificationManagerLazy.get()
   private val historyNavigationManager: HistoryNavigationManager
-    get() = _historyNavigationManager.get()
-  private val siteManager: SiteManager
-    get() = _siteManager.get()
-  private val boardManager: BoardManager
-    get() = _boardManager.get()
+    get() = historyNavigationManagerLazy.get()
   private val bookmarksManager: BookmarksManager
-    get() = _bookmarksManager.get()
-  private val pageRequestManager: PageRequestManager
-    get() = _pageRequestManager.get()
-  private val archivesManager: ArchivesManager
-    get() = _archivesManager.get()
-  private val chanThreadManager: ChanThreadManager
-    get() = _chanThreadManager.get()
+    get() = bookmarksManagerLazy.get()
   private val dialogFactory: DialogFactory
-    get() = _dialogFactory.get()
+    get() = dialogFactoryLazy.get()
   private val imageSaverV2: ImageSaverV2
-    get() = _imageSaverV2.get()
+    get() = imageSaverV2Lazy.get()
   private val imageLoaderV2: ImageLoaderV2
-    get() = _imageLoaderV2.get()
+    get() = imageLoaderV2Lazy.get()
   private val threadDownloadManager: ThreadDownloadManager
-    get() = _threadDownloadManager.get()
+    get() = threadDownloadManagerLazy.get()
+  private val globalUiStateHolder: GlobalUiStateHolder
+    get() = globalUiStateHolderLazy.get()
 
   private lateinit var rootLayout: TouchBlockingFrameLayout
   private lateinit var container: TouchBlockingFrameLayoutNoBackground
@@ -405,6 +388,21 @@ class MainController(
       threadDownloadManager.threadDownloadUpdateFlow
         .debounce(500L)
         .collect { event -> onNewThreadDownloadEvent(event) }
+    }
+
+    mainScope.launch {
+      combine(
+        flow = globalUiStateHolder.replyLayout.replyLayoutVisibilityEventsFlow,
+        flow2 = drawerViewModel.currentNavigationHasDrawer,
+        transform = { replyLayoutVisibilityEvents, currentNavigationHasDrawer ->
+          return@combine DrawerState(
+            replyLayoutVisibilityStates = replyLayoutVisibilityEvents,
+            currentNavigationHasDrawer = currentNavigationHasDrawer
+          )
+        }
+      )
+        .onEach { drawerState -> setDrawerEnabled(drawerState.isDrawerEnabled()) }
+        .collect()
     }
 
     globalWindowInsetsManager.addInsetsUpdatesListener(this)
@@ -777,18 +775,8 @@ class MainController(
     kurobaComposeBottomPanel.setMenuItemSelected(R.id.action_search)
   }
 
-  fun setDrawerEnabled(enabled: Boolean) {
-    val lockMode = if (enabled) {
-      DrawerLayout.LOCK_MODE_UNLOCKED
-    } else {
-      DrawerLayout.LOCK_MODE_LOCKED_CLOSED
-    }
-
-    drawerLayout.setDrawerLockMode(lockMode, GravityCompat.START)
-
-    if (!enabled) {
-      drawerLayout.closeDrawer(drawer)
-    }
+  fun onNavigationItemDrawerInfoUpdated(hasDrawer: Boolean) {
+    drawerViewModel.onNavigationItemDrawerInfoUpdated(hasDrawer)
   }
 
   fun showResolveDuplicateImagesController(uniqueId: String, imageSaverOptionsJson: String) {
@@ -1998,6 +1986,29 @@ class MainController(
         menuItemId = R.id.action_settings,
         menuItemBadgeInfo = KurobaComposeIconPanel.MenuItemBadgeInfo.Dot
       )
+    }
+  }
+
+  private fun setDrawerEnabled(enabled: Boolean) {
+    val lockMode = if (enabled) {
+      DrawerLayout.LOCK_MODE_UNLOCKED
+    } else {
+      DrawerLayout.LOCK_MODE_LOCKED_CLOSED
+    }
+
+    val prevLockMode = drawerLayout.getDrawerLockMode(GravityCompat.START)
+    if (prevLockMode == lockMode) {
+      if (lockMode == DrawerLayout.LOCK_MODE_LOCKED_CLOSED && drawerLayout.isDrawerOpen(drawer)) {
+        drawerLayout.closeDrawer(drawer)
+      }
+
+      return
+    }
+
+    drawerLayout.setDrawerLockMode(lockMode, GravityCompat.START)
+
+    if (!enabled) {
+      drawerLayout.closeDrawer(drawer)
     }
   }
 

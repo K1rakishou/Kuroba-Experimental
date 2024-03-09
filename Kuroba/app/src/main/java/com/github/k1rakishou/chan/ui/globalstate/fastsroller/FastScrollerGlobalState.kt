@@ -1,14 +1,16 @@
-package com.github.k1rakishou.chan.ui.globalstate
+package com.github.k1rakishou.chan.ui.globalstate.fastsroller
 
-interface FastScrollerGlobalStateReadable {
-  fun isDraggingFastScroller(fastScrollerControllerType: FastScrollerControllerType): Boolean
+interface IFastScrollerGlobalState {
+  interface Readable {
+    fun isDraggingFastScroller(fastScrollerControllerType: FastScrollerControllerType): Boolean
+  }
+
+  interface Writeable {
+    fun updateIsDraggingFastScroller(fastScrollerControllerType: FastScrollerControllerType, dragging: Boolean)
+  }
 }
 
-interface FastScrollerGlobalStateWriteable {
-  fun updateIsDraggingFastScroller(fastScrollerControllerType: FastScrollerControllerType, dragging: Boolean)
-}
-
-class FastScrollerGlobalState : FastScrollerGlobalStateReadable, FastScrollerGlobalStateWriteable {
+internal class FastScrollerGlobalState : IFastScrollerGlobalState.Readable, IFastScrollerGlobalState.Writeable {
   private val fastScrollerDragStateMap = mutableMapOf<FastScrollerControllerType, Boolean>()
 
   override fun isDraggingFastScroller(fastScrollerControllerType: FastScrollerControllerType): Boolean {

@@ -103,6 +103,7 @@ fun ReplyLayoutBottomSheet(
     val dragStartPositionY = remember { mutableIntStateOf(0) }
     val lastDragPosition = remember { mutableIntStateOf(0) }
     val isCurrentlyDragging = remember { mutableStateOf(false) }
+    val performingFlingAnimation = remember { mutableStateOf(false) }
 
     val dragOffsetAnimatable = remember {
       Animatable(
@@ -144,7 +145,7 @@ fun ReplyLayoutBottomSheet(
             return@collect
           }
 
-          if (isCurrentlyDragging.value) {
+          if (isCurrentlyDragging.value || performingFlingAnimation.value) {
             return@collect
           }
 
@@ -257,9 +258,13 @@ fun ReplyLayoutBottomSheet(
               velocity = velocity,
               updateDragStartPositionY = { dragStartPositionY.intValue = 0 },
               updateReplyLayoutAnimationState = { newState -> currentReplyLayoutAnimationState = newState },
+              onAnimationStarted = {
+                performingFlingAnimation.value = true
+              },
               onAnimationFinished = { target ->
                 onHeightSettled(maxPositionY - target)
                 isCurrentlyDragging.value = false
+                performingFlingAnimation.value = false
               }
             )
           }
@@ -283,6 +288,7 @@ private suspend fun performFling(
   velocity: Float,
   updateDragStartPositionY: () -> Unit,
   updateReplyLayoutAnimationState: (ReplyLayoutAnimationState) -> Unit,
+  onAnimationStarted: () -> Unit,
   onAnimationFinished: (Int) -> Unit
 ) {
   val newReplyLayoutAnimationState = keyByPosition(
@@ -304,6 +310,9 @@ private suspend fun performFling(
 
   try {
     var prevValue = lastDragPosition.intValue
+
+    replyLayoutState.onAnimationStarted(newReplyLayoutAnimationState)
+    onAnimationStarted()
 
     draggableState.drag {
       Animatable<Int, AnimationVector1D>(

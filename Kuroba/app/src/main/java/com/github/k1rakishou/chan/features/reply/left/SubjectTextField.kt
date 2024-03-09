@@ -47,7 +47,7 @@ internal fun SubjectTextField(
       KurobaLabelText(
         enabled = replyLayoutEnabled,
         labelText = labelText,
-        fontSize = 14.ktu,
+        fontSize = 12.ktu,
         interactionSource = interactionSource
       )
     }

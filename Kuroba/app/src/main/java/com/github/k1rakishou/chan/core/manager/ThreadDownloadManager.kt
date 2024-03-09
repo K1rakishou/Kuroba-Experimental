@@ -463,7 +463,7 @@ class ThreadDownloadManager(
   }
 
   sealed class Event {
-    object Initialized : Event()
+    data object Initialized : Event()
     data class StartDownload(val threadDescriptor: ChanDescriptor.ThreadDescriptor) : Event()
     data class StopDownload(val threadDescriptor: ChanDescriptor.ThreadDescriptor) : Event()
     data class CompleteDownload(val threadDescriptor: ChanDescriptor.ThreadDescriptor) : Event()

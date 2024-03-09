@@ -156,7 +156,7 @@ public class StyledToolbarNavigationController extends ToolbarNavigationControll
         if (to != null) {
             MainController mainController = getMainController();
             if (mainController != null) {
-                mainController.setDrawerEnabled(to.navigation.hasDrawer);
+                mainController.onNavigationItemDrawerInfoUpdated(to.navigation.hasDrawer);
             }
         }
     }
@@ -168,7 +168,7 @@ public class StyledToolbarNavigationController extends ToolbarNavigationControll
         if (finish) {
             MainController mainController = getMainController();
             if (mainController != null) {
-                mainController.setDrawerEnabled(to.navigation.hasDrawer);
+                mainController.onNavigationItemDrawerInfoUpdated(to.navigation.hasDrawer);
             }
         }
     }

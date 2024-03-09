@@ -45,7 +45,7 @@ import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar;
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2;
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2OptionsController;
 import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailView;
-import com.github.k1rakishou.chan.ui.globalstate.FastScrollerControllerType;
+import com.github.k1rakishou.chan.ui.globalstate.fastsroller.FastScrollerControllerType;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableGridRecyclerView;
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar;

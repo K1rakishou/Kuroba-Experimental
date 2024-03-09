@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutAnimationState
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeDivider
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -43,7 +44,7 @@ fun ReplyLayout(
     chanTheme = chanTheme,
     onHeightSettled = { height -> replyLayoutState.onHeightChanged(height) },
     content = { targetHeight, draggableState, onDragStarted, onDragStopped ->
-      if (targetHeight > 0.dp) {
+      if (targetHeight > 0.dp && replyLayoutAnimationState != ReplyLayoutAnimationState.Expanded) {
         KurobaComposeDivider(modifier = Modifier.fillMaxWidth())
       }
 

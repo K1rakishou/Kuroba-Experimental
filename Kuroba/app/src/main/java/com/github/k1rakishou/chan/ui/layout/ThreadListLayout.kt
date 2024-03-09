@@ -25,7 +25,6 @@ import android.util.AttributeSet
 import android.view.KeyEvent
 import android.view.View
 import android.widget.FrameLayout
-import androidx.compose.runtime.snapshotFlow
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ItemDecoration
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
@@ -61,8 +60,8 @@ import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
 import com.github.k1rakishou.chan.ui.controller.CaptchaContainerController
 import com.github.k1rakishou.chan.ui.controller.ThreadControllerType
-import com.github.k1rakishou.chan.ui.globalstate.FastScrollerControllerType
 import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
+import com.github.k1rakishou.chan.ui.globalstate.fastsroller.FastScrollerControllerType
 import com.github.k1rakishou.chan.ui.helper.AppResources
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.view.FastScroller
@@ -100,7 +99,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import java.util.*
@@ -506,13 +506,14 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(con
     threadListLayoutCallback.toolbar?.addToolbarHeightUpdatesCallback(this)
 
     coroutineScope.launch {
-      snapshotFlow { globalUiStateHolder.replyLayout.state(threadControllerType).height.intValue }
-        .collectLatest { setRecyclerViewPadding() }
+      globalUiStateHolder.replyLayout.state(threadControllerType).height
+        .onEach { setRecyclerViewPadding() }
+        .collect()
     }
 
     coroutineScope.launch {
-      snapshotFlow { globalUiStateHolder.replyLayout.state(threadControllerType).layoutVisibility.value }
-        .collectLatest { replyLayoutVisibility ->
+      globalUiStateHolder.replyLayout.state(threadControllerType).layoutVisibility
+        .onEach { replyLayoutVisibility ->
           val isCatalogReplyView = threadControllerType == ThreadControllerType.Catalog
 
           when (replyLayoutVisibility) {
@@ -537,6 +538,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(con
             }
           }
         }
+        .collect()
     }
   }
 
@@ -997,7 +999,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(con
     var recyclerBottom = defaultPadding
 
     if (replyLayoutView.isOpened()) {
-      val replyLayoutViewHeight = globalUiStateHolder.replyLayout.state(threadControllerType).height.intValue
+      val replyLayoutViewHeight = globalUiStateHolder.replyLayout.state(threadControllerType).height.value
       recyclerBottom += replyLayoutViewHeight
     } else {
       recyclerBottom += when (navigationViewContractType) {

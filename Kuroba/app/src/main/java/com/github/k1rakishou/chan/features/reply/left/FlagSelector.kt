@@ -74,6 +74,7 @@ internal fun FlagSelector(
   KurobaComposeText(
     modifier = Modifier.padding(start = 6.dp),
     color = chanTheme.textColorHintCompose,
+    fontSize = 12.ktu,
     text = stringResource(id = R.string.reply_flag)
   )
 

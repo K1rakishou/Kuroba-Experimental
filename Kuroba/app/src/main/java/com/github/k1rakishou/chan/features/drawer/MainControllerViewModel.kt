@@ -38,6 +38,9 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.BehaviorProcessor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
@@ -87,6 +90,10 @@ class MainControllerViewModel(
     get() = _selectedHistoryEntries
 
   val drawerGridMode = mutableStateOf(ChanSettings.drawerGridMode.get())
+
+  private val _currentNavigationHasDrawer = MutableStateFlow<Boolean>(true)
+  val currentNavigationHasDrawer: StateFlow<Boolean>
+    get() = _currentNavigationHasDrawer.asStateFlow()
 
   private val bookmarksBadgeStateSubject = BehaviorProcessor.createDefault(BookmarksBadgeState(0, false))
   private val updateNavigationHistoryEntryListExecutor = SerializedCoroutineExecutor(scope = viewModelScope)
@@ -243,6 +250,10 @@ class MainControllerViewModel(
         _historyControllerState.value = HistoryControllerState.Data
       }
       .ignore()
+  }
+
+  fun onNavigationItemDrawerInfoUpdated(hasDrawer: Boolean) {
+    _currentNavigationHasDrawer.value = hasDrawer
   }
 
   private fun navHistoryElementToNavigationHistoryEntryOrNull(

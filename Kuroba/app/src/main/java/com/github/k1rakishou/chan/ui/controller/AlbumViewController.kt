@@ -44,7 +44,7 @@ import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerOpenTh
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
 import com.github.k1rakishou.chan.features.settings.screens.AppearanceSettingsScreen.Companion.clampColumnsCount
 import com.github.k1rakishou.chan.ui.cell.AlbumViewCell
-import com.github.k1rakishou.chan.ui.globalstate.FastScrollerControllerType
+import com.github.k1rakishou.chan.ui.globalstate.fastsroller.FastScrollerControllerType
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableGridRecyclerView
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar.ToolbarHeightUpdatesCallback
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem

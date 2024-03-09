@@ -316,6 +316,29 @@ class ReplyLayoutState(
     return _replyLayoutVisibility.value == ReplyLayoutVisibility.Expanded
   }
 
+  fun onAnimationStarted(animationState: ReplyLayoutAnimationState) {
+    when (animationState) {
+      ReplyLayoutAnimationState.Collapsing -> {
+        // no-op
+      }
+      ReplyLayoutAnimationState.Collapsed -> {
+        _replyLayoutAnimationState.value = ReplyLayoutAnimationState.Collapsing
+      }
+      ReplyLayoutAnimationState.Opening -> {
+        // no-op
+      }
+      ReplyLayoutAnimationState.Opened -> {
+        _replyLayoutAnimationState.value = ReplyLayoutAnimationState.Opening
+      }
+      ReplyLayoutAnimationState.Expanding -> {
+        // no-op
+      }
+      ReplyLayoutAnimationState.Expanded -> {
+        _replyLayoutAnimationState.value = ReplyLayoutAnimationState.Expanding
+      }
+    }
+  }
+
   fun onAnimationFinished(animationState: ReplyLayoutAnimationState) {
     when (animationState) {
       ReplyLayoutAnimationState.Collapsing -> {
