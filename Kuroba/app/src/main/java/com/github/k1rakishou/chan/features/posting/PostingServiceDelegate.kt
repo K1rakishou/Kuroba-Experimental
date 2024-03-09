@@ -738,7 +738,7 @@ class PostingServiceDelegate(
 
             updateChildNotification(
               chanDescriptor = chanDescriptor,
-              status = ChildNotificationInfo.Status.Uploading(status.toTotalPercent())
+              status = ChildNotificationInfo.Status.Uploading(status.progress())
             )
             readReplyInfo(chanDescriptor) { updateStatus(status) }
           }

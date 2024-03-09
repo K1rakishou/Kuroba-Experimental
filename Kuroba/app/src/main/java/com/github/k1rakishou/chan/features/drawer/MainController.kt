@@ -91,7 +91,6 @@ import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
-import com.github.k1rakishou.chan.core.manager.GlobalViewStateManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.PageRequestManager
@@ -204,8 +203,6 @@ class MainController(
   @Inject
   lateinit var _imageLoaderV2: Lazy<ImageLoaderV2>
   @Inject
-  lateinit var _globalViewStateManager: Lazy<GlobalViewStateManager>
-  @Inject
   lateinit var _threadDownloadManager: Lazy<ThreadDownloadManager>
 
   private val themeEngine: ThemeEngine
@@ -234,8 +231,6 @@ class MainController(
     get() = _imageSaverV2.get()
   private val imageLoaderV2: ImageLoaderV2
     get() = _imageLoaderV2.get()
-  private val globalViewStateManager: GlobalViewStateManager
-    get() = _globalViewStateManager.get()
   private val threadDownloadManager: ThreadDownloadManager
     get() = _threadDownloadManager.get()
 

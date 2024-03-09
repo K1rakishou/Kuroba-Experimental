@@ -1,12 +1,10 @@
 package com.github.k1rakishou.chan.features.reply.left
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.material.ContentAlpha
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -28,13 +26,12 @@ import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.features.reply.ReplyLayoutViewModel
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutState
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
-import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextFieldV2
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextField
 import com.github.k1rakishou.chan.ui.compose.components.KurobaLabelText
 import com.github.k1rakishou.chan.ui.compose.freeFocusSafe
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.requestFocusSafe
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 internal fun ReplyTextField(
   replyLayoutState: ReplyLayoutState,
@@ -46,7 +43,7 @@ internal fun ReplyTextField(
   val focusRequester = remember { FocusRequester() }
 
   var prevReplyLayoutVisibility by remember { mutableStateOf<ReplyLayoutVisibility>(ReplyLayoutVisibility.Collapsed) }
-  val replyTextState = replyLayoutState.replyTextState
+  val replyTextState by replyLayoutState.replyTextState
   val replyAttachables by replyLayoutState.attachables
   val replyLayoutVisibility by replyLayoutState.replyLayoutVisibility
   val replyFieldHintText by replyLayoutState.replyFieldHintText
@@ -92,7 +89,7 @@ internal fun ReplyTextField(
       if (isOpenedNow()) {
         focusRequester.requestFocusSafe()
         localSoftwareKeyboardController?.show()
-      } else if (isCollapsedNow() && !replyLayoutViewModel.isAnyReplyLayoutOpened()) {
+      } else if (isCollapsedNow() && replyLayoutViewModel.allReplyLayoutsCollapsed()) {
         focusRequester.freeFocusSafe()
         localSoftwareKeyboardController?.hide()
       }
@@ -107,7 +104,7 @@ internal fun ReplyTextField(
       onDispose {
         focusRequester.freeFocusSafe()
 
-        if (!replyLayoutViewModel.isAnyReplyLayoutOpened()) {
+        if (replyLayoutViewModel.allReplyLayoutsCollapsed()) {
           localSoftwareKeyboardController?.hide()
         }
       }
@@ -127,20 +124,19 @@ internal fun ReplyTextField(
   }
 
   // TODO: New reply layout. Try using LookaheadLayout.
-  KurobaComposeTextFieldV2(
+  KurobaComposeTextField(
     modifier = Modifier
       .fillMaxWidth()
       .padding(vertical = 4.dp)
       .focusRequester(focusRequester)
       .then(heightModifier),
     enabled = replyLayoutEnabled,
-    state = replyTextState,
-    lineLimits = TextFieldLineLimits.MultiLine(),
-    // TODO: New reply layout
-//    visualTransformation = replyInputVisualTransformation,
+    value = replyTextState,
+    visualTransformation = replyInputVisualTransformation,
     keyboardOptions = KeyboardOptions(
       capitalization = KeyboardCapitalization.Sentences
     ),
+    onValueChange = { textFieldValue -> replyLayoutViewModel.onReplyTextChanged(textFieldValue) },
     label = {
       KurobaLabelText(
         enabled = replyLayoutEnabled,

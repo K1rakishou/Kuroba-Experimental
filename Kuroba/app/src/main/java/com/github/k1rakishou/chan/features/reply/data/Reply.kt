@@ -24,6 +24,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Pattern
 
 /**
@@ -41,7 +42,9 @@ class Reply(
   val lastUpdatedAt: Long
     get() = _lastUpdatedAt
 
-  private var dirty = false
+  private val _dirty = AtomicBoolean(false)
+  val dirty: Boolean
+    get() = _dirty.get()
 
   @get:Synchronized
   @set:Synchronized
@@ -119,16 +122,14 @@ class Reply(
 
   private fun onReplyUpdated() {
     _lastUpdatedAt = System.currentTimeMillis()
-    dirty = true
+    _dirty.set(true)
   }
 
   @Synchronized
   fun toReplyDataJson(): ReplyDataJson? {
-    if (basicReplyInfo.isEmpty() || !dirty) {
+    if (basicReplyInfo.isEmpty()) {
       return null
     }
-
-    dirty = false
 
     return ReplyDataJson(
       chanDescriptor = DescriptorParcelable.fromDescriptor(chanDescriptor),

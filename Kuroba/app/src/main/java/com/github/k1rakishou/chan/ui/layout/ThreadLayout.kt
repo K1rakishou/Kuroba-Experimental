@@ -40,7 +40,6 @@ import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BottomNavBarVisibilityStateManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
-import com.github.k1rakishou.chan.core.manager.GlobalViewStateManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.PostHideManager
@@ -57,6 +56,7 @@ import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.cell.PostCellData
 import com.github.k1rakishou.chan.ui.controller.PostLinksController
 import com.github.k1rakishou.chan.ui.controller.ThreadControllerType
+import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
 import com.github.k1rakishou.chan.ui.helper.PostPopupHelper
 import com.github.k1rakishou.chan.ui.helper.PostPopupHelper.PostPopupHelperCallback
 import com.github.k1rakishou.chan.ui.helper.RemovedPostsHelper
@@ -154,7 +154,7 @@ class ThreadLayout @JvmOverloads constructor(
   @Inject
   lateinit var _chanLoadProgressNotifier: Lazy<ChanLoadProgressNotifier>
   @Inject
-  lateinit var _globalViewStateManager: Lazy<GlobalViewStateManager>
+  lateinit var globalUiStateHolderLazy: Lazy<GlobalUiStateHolder>
 
   private val themeEngine: ThemeEngine
     get() = _themeEngine.get()
@@ -176,8 +176,8 @@ class ThreadLayout @JvmOverloads constructor(
     get() = _globalWindowInsetsManager.get()
   private val chanLoadProgressNotifier: ChanLoadProgressNotifier
     get() = _chanLoadProgressNotifier.get()
-  private val globalViewStateManager: GlobalViewStateManager
-    get() = _globalViewStateManager.get()
+  private val globalUiStateHolder: GlobalUiStateHolder
+    get() = globalUiStateHolderLazy.get()
 
   private lateinit var callback: ThreadLayoutCallback
   private lateinit var progressLayout: View
@@ -889,7 +889,7 @@ class ThreadLayout @JvmOverloads constructor(
       }
 
       SnackbarWrapper.create(
-        globalViewStateManager,
+        globalUiStateHolder,
         globalWindowInsetsManager,
         themeEngine.chanTheme,
         this,
@@ -947,7 +947,7 @@ class ThreadLayout @JvmOverloads constructor(
       }
 
       SnackbarWrapper.create(
-        globalViewStateManager,
+        globalUiStateHolder,
         globalWindowInsetsManager,
         themeEngine.chanTheme,
         this,
@@ -1010,7 +1010,7 @@ class ThreadLayout @JvmOverloads constructor(
       }
 
       SnackbarWrapper.create(
-        globalViewStateManager,
+        globalUiStateHolder,
         globalWindowInsetsManager,
         themeEngine.chanTheme,
         this,
@@ -1106,7 +1106,7 @@ class ThreadLayout @JvmOverloads constructor(
     dismissSnackbar()
 
     newPostsNotification = SnackbarWrapper.create(
-      globalViewStateManager,
+      globalUiStateHolder,
       globalWindowInsetsManager,
       themeEngine.chanTheme,
       this,
@@ -1150,7 +1150,7 @@ class ThreadLayout @JvmOverloads constructor(
     }
 
     newPostsNotification = SnackbarWrapper.create(
-      globalViewStateManager,
+      globalUiStateHolder,
       globalWindowInsetsManager,
       themeEngine.chanTheme,
       this,

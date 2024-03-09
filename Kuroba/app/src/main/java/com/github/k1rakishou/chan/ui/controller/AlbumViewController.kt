@@ -44,6 +44,7 @@ import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerOpenTh
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
 import com.github.k1rakishou.chan.features.settings.screens.AppearanceSettingsScreen.Companion.clampColumnsCount
 import com.github.k1rakishou.chan.ui.cell.AlbumViewCell
+import com.github.k1rakishou.chan.ui.globalstate.FastScrollerControllerType
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableGridRecyclerView
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar.ToolbarHeightUpdatesCallback
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem
@@ -63,7 +64,6 @@ import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.util.ChanPostUtils
 import com.github.k1rakishou.persist_state.PersistableChanState.albumLayoutGridMode
 import com.github.k1rakishou.persist_state.PersistableChanState.showAlbumViewsImageDetails
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl
 import javax.inject.Inject
@@ -172,7 +172,7 @@ class AlbumViewController(
       .build()
 
     fastScroller = FastScrollerHelper.create(
-      FastScroller.FastScrollerControllerType.Album,
+      FastScrollerControllerType.Album,
       recyclerView,
       null
     )

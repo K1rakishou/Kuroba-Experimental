@@ -270,7 +270,7 @@ class HelperModule {
 
   @Provides
   @Singleton
-  fun provideReplyLayoutFileEnumerator(
+  fun provideReplyLayoutHelper(
     replyManagerLazy: Lazy<ReplyManager>,
     siteManagerLazy: Lazy<SiteManager>,
     boardManagerLazy: Lazy<BoardManager>,

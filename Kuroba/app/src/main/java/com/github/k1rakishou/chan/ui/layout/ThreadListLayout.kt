@@ -61,6 +61,7 @@ import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
 import com.github.k1rakishou.chan.ui.controller.CaptchaContainerController
 import com.github.k1rakishou.chan.ui.controller.ThreadControllerType
+import com.github.k1rakishou.chan.ui.globalstate.FastScrollerControllerType
 import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
 import com.github.k1rakishou.chan.ui.helper.AppResources
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
@@ -505,12 +506,12 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(con
     threadListLayoutCallback.toolbar?.addToolbarHeightUpdatesCallback(this)
 
     coroutineScope.launch {
-      snapshotFlow { globalUiStateHolder.uiState.replyLayout.state(threadControllerType).height.intValue }
+      snapshotFlow { globalUiStateHolder.replyLayout.state(threadControllerType).height.intValue }
         .collectLatest { setRecyclerViewPadding() }
     }
 
     coroutineScope.launch {
-      snapshotFlow { globalUiStateHolder.uiState.replyLayout.state(threadControllerType).layoutVisibility.value }
+      snapshotFlow { globalUiStateHolder.replyLayout.state(threadControllerType).layoutVisibility.value }
         .collectLatest { replyLayoutVisibility ->
           val isCatalogReplyView = threadControllerType == ThreadControllerType.Catalog
 
@@ -996,7 +997,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(con
     var recyclerBottom = defaultPadding
 
     if (replyLayoutView.isOpened()) {
-      val replyLayoutViewHeight = globalUiStateHolder.uiState.replyLayout.state(threadControllerType).height.intValue
+      val replyLayoutViewHeight = globalUiStateHolder.replyLayout.state(threadControllerType).height.intValue
       recyclerBottom += replyLayoutViewHeight
     } else {
       recyclerBottom += when (navigationViewContractType) {
@@ -1149,8 +1150,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(con
 
     if (fastScroller == null) {
       val fastScrollerType = when (chanDescriptor) {
-        is ThreadDescriptor -> FastScroller.FastScrollerControllerType.Thread
-        is ChanDescriptor.ICatalogDescriptor -> FastScroller.FastScrollerControllerType.Catalog
+        is ThreadDescriptor -> FastScrollerControllerType.Thread
+        is ChanDescriptor.ICatalogDescriptor -> FastScrollerControllerType.Catalog
       }
 
       val scroller = FastScrollerHelper.create(

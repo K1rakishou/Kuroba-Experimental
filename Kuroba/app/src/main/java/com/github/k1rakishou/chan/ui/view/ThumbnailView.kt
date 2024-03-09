@@ -42,8 +42,9 @@ import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
-import com.github.k1rakishou.chan.core.manager.GlobalViewStateManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
+import com.github.k1rakishou.chan.ui.globalstate.FastScrollerControllerType
+import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
@@ -90,7 +91,7 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
   @Inject
   lateinit var themeEngine: ThemeEngine
   @Inject
-  lateinit var globalViewStateManager: GlobalViewStateManager
+  lateinit var globalUiStateHolder: GlobalUiStateHolder
   @Inject
   lateinit var cacheHandler: Lazy<CacheHandler>
   @Inject
@@ -416,12 +417,10 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
       url = url
     )
 
-    val isDraggingCatalogScroller =
-      globalViewStateManager.isDraggingFastScroller(FastScroller.FastScrollerControllerType.Catalog)
-    val isDraggingThreadScroller =
-      globalViewStateManager.isDraggingFastScroller(FastScroller.FastScrollerControllerType.Thread)
-    val isDraggingCatalogOrThreadFastScroller =
-      isDraggingCatalogScroller || isDraggingThreadScroller
+    val fastScroller = globalUiStateHolder.fastScroller
+    val isDraggingCatalogScroller = fastScroller.isDraggingFastScroller(FastScrollerControllerType.Catalog)
+    val isDraggingThreadScroller = fastScroller.isDraggingFastScroller(FastScrollerControllerType.Thread)
+    val isDraggingCatalogOrThreadFastScroller = isDraggingCatalogScroller || isDraggingThreadScroller
 
     if (!isDraggingCatalogOrThreadFastScroller && isCached) {
       loadImage()

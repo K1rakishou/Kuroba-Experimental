@@ -4,9 +4,9 @@ import android.graphics.Color
 import android.view.View
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.manager.GlobalViewStateManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.ui.controller.ThreadControllerType
+import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
 import com.github.k1rakishou.chan.ui.layout.DrawerWidthAdjustingLayout
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout
 import com.github.k1rakishou.chan.ui.view.HidingFloatingActionButton
@@ -23,7 +23,7 @@ import com.google.android.material.snackbar.Snackbar
 import javax.inject.Inject
 
 class SnackbarWrapper private constructor(
-  private val globalViewStateManager: GlobalViewStateManager,
+  private val globalUiStateHolder: GlobalUiStateHolder,
   private val globalWindowInsetsManager: GlobalWindowInsetsManager,
   private var snackbar: Snackbar? = null
 ) {
@@ -51,7 +51,7 @@ class SnackbarWrapper private constructor(
   }
 
   fun show(threadControllerType: ThreadControllerType) {
-    val isReplyLayoutOpened = globalViewStateManager.isReplyLayoutOpened(threadControllerType)
+    val isReplyLayoutOpened = globalUiStateHolder.replyLayout.state(threadControllerType).isOpenedOrExpanded()
     if (isReplyLayoutOpened) {
       // Do not show the snackbar when the reply layout is opened
       return
@@ -163,7 +163,7 @@ class SnackbarWrapper private constructor(
 
     @JvmStatic
     fun create(
-      globalViewStateManager: GlobalViewStateManager,
+      globalUiStateHolder: GlobalUiStateHolder,
       globalWindowInsetsManager: GlobalWindowInsetsManager,
       theme: ChanTheme,
       view: View,
@@ -177,12 +177,12 @@ class SnackbarWrapper private constructor(
       snackbar.animationMode = Snackbar.ANIMATION_MODE_FADE
 
       fixSnackbarColors(theme, snackbar)
-      return SnackbarWrapper(globalViewStateManager, globalWindowInsetsManager, snackbar)
+      return SnackbarWrapper(globalUiStateHolder, globalWindowInsetsManager, snackbar)
     }
 
     @JvmStatic
     fun create(
-      globalViewStateManager: GlobalViewStateManager,
+      globalUiStateHolder: GlobalUiStateHolder,
       globalWindowInsetsManager: GlobalWindowInsetsManager,
       theme: ChanTheme,
       view: View,
@@ -196,7 +196,7 @@ class SnackbarWrapper private constructor(
       snackbar.animationMode = Snackbar.ANIMATION_MODE_FADE
 
       fixSnackbarColors(theme, snackbar)
-      return SnackbarWrapper(globalViewStateManager, globalWindowInsetsManager, snackbar)
+      return SnackbarWrapper(globalUiStateHolder, globalWindowInsetsManager, snackbar)
     }
 
     private fun fixSnackbarColors(theme: ChanTheme, snackbar: Snackbar) {

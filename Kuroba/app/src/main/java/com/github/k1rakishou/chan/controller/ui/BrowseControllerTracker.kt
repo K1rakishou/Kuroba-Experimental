@@ -5,6 +5,7 @@ import android.view.MotionEvent
 import android.view.ViewParent
 import com.github.k1rakishou.chan.ui.controller.BrowseController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
+import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import kotlin.math.abs
 import kotlin.math.max
@@ -12,7 +13,8 @@ import kotlin.math.max
 class BrowseControllerTracker(
   context: Context,
   private val browseController: BrowseController,
-  private val navigationController: NavigationController
+  private val navigationController: NavigationController,
+  private val globalUiStateHolder: GlobalUiStateHolder
 ) : ControllerTracker(context) {
   private var actionDownSimulated = false
   private var trackingType = TrackingType.None
@@ -20,6 +22,10 @@ class BrowseControllerTracker(
 
   override fun onInterceptTouchEvent(event: MotionEvent): Boolean {
     if (event.pointerCount != 1) {
+      return false
+    }
+
+    if (globalUiStateHolder.replyLayout.isAnyReplyLayoutExpanded()) {
       return false
     }
 

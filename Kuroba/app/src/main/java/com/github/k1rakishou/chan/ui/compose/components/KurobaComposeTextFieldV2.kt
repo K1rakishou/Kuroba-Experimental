@@ -83,7 +83,11 @@ fun KurobaComposeTextFieldV2(
 
   val textSelectionColors = remember(key1 = chanTheme.accentColor) {
     TextSelectionColors(
-      handleColor = Color.Transparent,
+      handleColor = if (lineLimits is TextFieldLineLimits.SingleLine) {
+        Color.Transparent
+      } else {
+        chanTheme.accentColorCompose
+      },
       backgroundColor = chanTheme.accentColorCompose.copy(alpha = 0.4f)
     )
   }

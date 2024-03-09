@@ -26,17 +26,16 @@ import android.view.MotionEvent
 import android.widget.FrameLayout
 import androidx.annotation.RequiresApi
 import androidx.core.view.ViewCompat
-import com.github.k1rakishou.chan.core.manager.GlobalViewStateManager
 import com.github.k1rakishou.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder
 import com.github.k1rakishou.chan.features.gesture_editor.ExclusionZone
 import com.github.k1rakishou.chan.ui.controller.BrowseController
 import com.github.k1rakishou.chan.ui.controller.ViewThreadController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
+import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.findControllerOrNull
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_logger.Logger
-import java.util.*
 import javax.inject.Inject
 
 class NavigationControllerContainerLayout : FrameLayout {
@@ -45,7 +44,7 @@ class NavigationControllerContainerLayout : FrameLayout {
   @Inject
   lateinit var exclusionZonesHolder: Android10GesturesExclusionZonesHolder
   @Inject
-  lateinit var globalViewStateManager: GlobalViewStateManager
+  lateinit var globalUiStateHolder: GlobalUiStateHolder
 
   constructor(context: Context) : super(context) {
     preInit()
@@ -121,7 +120,8 @@ class NavigationControllerContainerLayout : FrameLayout {
     controllerTracker = BrowseControllerTracker(
       context = context,
       browseController = browseController,
-      navigationController = navigationController
+      navigationController = navigationController,
+      globalUiStateHolder = globalUiStateHolder
     )
   }
 

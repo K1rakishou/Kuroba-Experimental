@@ -16,7 +16,6 @@ import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.CompositeCatalogManager
 import com.github.k1rakishou.chan.core.manager.ControllerNavigationManager
 import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManager
-import com.github.k1rakishou.chan.core.manager.GlobalViewStateManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.PostHighlightManager
@@ -138,13 +137,6 @@ class ActivityModule {
       applicationVisibilityManager,
       themeEngine
     )
-  }
-
-  @PerActivity
-  @Provides
-  fun provideGlobalViewStateManager(): GlobalViewStateManager {
-    Logger.deps("GlobalViewStateManager")
-    return GlobalViewStateManager()
   }
 
   @PerActivity

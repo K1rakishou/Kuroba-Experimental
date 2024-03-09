@@ -43,7 +43,8 @@ import androidx.recyclerview.widget.RecyclerView.OnScrollListener;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 import com.github.k1rakishou.ChanSettings;
-import com.github.k1rakishou.chan.core.manager.GlobalViewStateManager;
+import com.github.k1rakishou.chan.ui.globalstate.FastScrollerControllerType;
+import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.core_themes.ChanTheme;
 import com.github.k1rakishou.core_themes.ThemeEngine;
@@ -52,6 +53,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 import javax.inject.Inject;
+
+import kotlin.Unit;
 
 /**
  * Class responsible to animate and provide a fast scroller.
@@ -131,7 +134,7 @@ public class FastScroller
     private int mRecyclerViewLeftPadding = 0;
     private int mRecyclerViewTopPadding = 0;
 
-    private FastScrollerControllerType fastScrollerControllerType;
+    private final FastScrollerControllerType fastScrollerControllerType;
 
     private RecyclerView mRecyclerView;
     /**
@@ -160,7 +163,7 @@ public class FastScroller
     @Inject
     ThemeEngine themeEngine;
     @Inject
-    GlobalViewStateManager globalViewStateManager;
+    GlobalUiStateHolder globalUiStateHolder;
 
     public FastScroller(
             FastScrollerControllerType fastScrollerControllerType,
@@ -579,7 +582,11 @@ public class FastScroller
                 requestRedraw();
 
                 if (thumbDragListener != null) {
-                    globalViewStateManager.updateIsDraggingFastScroller(fastScrollerControllerType, true);
+                    globalUiStateHolder.updateFastScrollerState(fastScrollerGlobalState -> {
+                      fastScrollerGlobalState.updateIsDraggingFastScroller(fastScrollerControllerType, true);
+                      return Unit.INSTANCE;
+                    });
+
                     thumbDragListener.onDragStarted();
                 }
 
@@ -592,7 +599,11 @@ public class FastScroller
             requestRedraw();
 
             if (thumbDragListener != null) {
-                globalViewStateManager.updateIsDraggingFastScroller(fastScrollerControllerType, false);
+                globalUiStateHolder.updateFastScrollerState(fastScrollerGlobalState -> {
+                    fastScrollerGlobalState.updateIsDraggingFastScroller(fastScrollerControllerType, false);
+                    return Unit.INSTANCE;
+                });
+
                 thumbDragListener.onDragEnded();
             }
         } else if (me.getAction() == MotionEvent.ACTION_MOVE && mState == STATE_DRAGGING) {
@@ -726,10 +737,4 @@ public class FastScroller
         void onDragEnded();
     }
 
-    public enum FastScrollerControllerType {
-        Catalog,
-        Thread,
-        Bookmarks,
-        Album
-    }
 }

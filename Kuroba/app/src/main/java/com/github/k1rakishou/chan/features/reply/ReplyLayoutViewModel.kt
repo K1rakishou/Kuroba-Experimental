@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.R
@@ -462,6 +463,12 @@ class ReplyLayoutViewModel(
     }
   }
 
+  fun onReplyTextChanged(textFieldValue: TextFieldValue) {
+    withReplyLayoutState { replyLayoutState ->
+      replyLayoutState.onReplyTextChanged(textFieldValue)
+    }
+  }
+
   suspend fun getFlagInfoList(boardDescriptor: BoardDescriptor): List<LoadBoardFlagsUseCase.FlagInfo> {
     return boardFlagInfoRepository.getFlagInfoList(boardDescriptor)
   }
@@ -516,8 +523,8 @@ class ReplyLayoutViewModel(
     replyLayoutViewCallbacks?.onReplyLayoutOptionsButtonClicked()
   }
 
-  fun isAnyReplyLayoutOpened(): Boolean {
-    return globalUiStateHolder.uiState.replyLayout.isAnyReplyLayoutOpened()
+  fun allReplyLayoutsCollapsed(): Boolean {
+    return globalUiStateHolder.replyLayout.allReplyLayoutCollapsed()
   }
 
   private suspend fun isFileSupportedForReencoding(clickedFileUuid: UUID): Boolean {

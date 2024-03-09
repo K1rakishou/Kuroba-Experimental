@@ -1,10 +1,12 @@
 package com.github.k1rakishou.chan.ui.view;
 
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
+
 import androidx.recyclerview.widget.RecyclerView;
 
-import org.jetbrains.annotations.Nullable;
+import com.github.k1rakishou.chan.ui.globalstate.FastScrollerControllerType;
 
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Helper for attaching a FastScroller with the correct theme colors and default values that
@@ -16,7 +18,7 @@ public class FastScrollerHelper {
     private static final int THUMB_MIN_LENGTH = dp(48);
 
     public static FastScroller create(
-            FastScroller.FastScrollerControllerType fastScrollerControllerType,
+            FastScrollerControllerType fastScrollerControllerType,
             RecyclerView recyclerView,
             @Nullable
             PostInfoMapItemDecoration postInfoMapItemDecoration

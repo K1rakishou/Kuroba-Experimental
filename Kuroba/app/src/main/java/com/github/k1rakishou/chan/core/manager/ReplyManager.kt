@@ -68,7 +68,7 @@ class ReplyManager(
   init {
     applicationVisibilityManager.addListener { applicationVisibility ->
       if (applicationVisibility.isInBackground()) {
-        val duration = measureTime { persistDrafts() }
+        val duration = measureTime { persistAllDrafts() }
         Logger.d(TAG, "persistDrafts() took $duration")
       }
     }
@@ -477,7 +477,7 @@ class ReplyManager(
   }
 
   @Synchronized
-  private fun persistDrafts() {
+  private fun persistAllDrafts() {
     val draftsSorted = drafts
       .entries
       .sortedByDescending { (_, reply) -> reply.lastUpdatedAt }
@@ -494,28 +494,8 @@ class ReplyManager(
     Logger.d(TAG, "persistDrafts() persisting ${draftsSorted.size} out of ${drafts.size}")
 
     for ((chanDescriptor, reply) in draftsSorted) {
-      try {
-        if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
-          continue
-        }
-
-        val draftFile = File(appConstants.replyDraftsDir, chanDescriptor.replyDraftFileName())
-
-        val replyDataJson = reply.toReplyDataJson()
-        if (replyDataJson == null) {
-          draftFile.delete()
-          continue
-        }
-
-        val replyDataJsonString = moshi
-          .adapter<ReplyDataJson>(ReplyDataJson::class.java)
-          .toJson(replyDataJson)
-
-        draftFile.writeText(replyDataJsonString)
-
+      if (persistDraft(chanDescriptor, reply)) {
         ++persistedCount
-      } catch (error: Throwable) {
-        Logger.e(TAG, "persistDrafts() failed to store reply for descriptor ${chanDescriptor}", error)
       }
     }
 
@@ -538,7 +518,45 @@ class ReplyManager(
       }
     }
 
-    Logger.d(TAG, "persistDrafts() done persistedCount=$persistedCount, deletedCount=$deletedCount")
+    Logger.debug(TAG) {
+      "persistDrafts() done " +
+        "persistedCount: $persistedCount, " +
+        "deletedCount: $deletedCount, " +
+        "total: ${draftsSorted.size}"
+    }
+  }
+
+  fun persistDraft(
+    chanDescriptor: ChanDescriptor,
+    reply: Reply
+  ): Boolean {
+    try {
+      if (!reply.dirty) {
+        return false
+      }
+
+      if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+        return false
+      }
+
+      val draftFile = File(appConstants.replyDraftsDir, chanDescriptor.replyDraftFileName())
+
+      val replyDataJson = reply.toReplyDataJson()
+      if (replyDataJson == null) {
+        draftFile.delete()
+        return false
+      }
+
+      val replyDataJsonString = moshi
+        .adapter<ReplyDataJson>(ReplyDataJson::class.java)
+        .toJson(replyDataJson)
+
+      draftFile.writeText(replyDataJsonString)
+      return true
+    } catch (error: Throwable) {
+      Logger.e(TAG, "persistDrafts() failed to store reply for descriptor ${chanDescriptor}", error)
+      return false
+    }
   }
 
   @Synchronized
@@ -626,7 +644,7 @@ class ReplyManager(
       return try {
         UUID.fromString(uuidString)
       } catch (error: Throwable) {
-        Logger.e(TAG, "Bad UUID='$uuidString'")
+        Logger.e(TAG, "Bad UUID: '$uuidString'")
         return null
       }
     }

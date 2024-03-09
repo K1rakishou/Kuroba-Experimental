@@ -3,11 +3,20 @@ package com.github.k1rakishou.chan.ui.globalstate
 import androidx.compose.runtime.snapshots.Snapshot
 
 class GlobalUiStateHolder {
-  val uiState = GlobalUiState()
+  private val _replyLayout = ReplyLayoutGlobalState()
+  val replyLayout: ReplyLayoutGlobalStateReadable
+    get() = _replyLayout
 
-  @Synchronized
-  fun updateReplyLayoutGlobalState(updater: (ReplyLayoutGlobalState) -> Unit) {
-    Snapshot.withMutableSnapshot { updater(uiState.replyLayout) }
+  private val _fastScroller = FastScrollerGlobalState()
+  val fastScroller: FastScrollerGlobalStateReadable
+    get() = _fastScroller
+
+  fun updateReplyLayoutState(updater: (ReplyLayoutGlobalStateWritable) -> Unit) {
+    Snapshot.withMutableSnapshot { updater(_replyLayout) }
+  }
+
+  fun updateFastScrollerState(updater: (FastScrollerGlobalState) -> Unit) {
+    Snapshot.withMutableSnapshot { updater(_fastScroller) }
   }
 
 }
