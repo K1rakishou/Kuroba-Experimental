@@ -56,25 +56,30 @@ class HttpCallManager @Inject constructor(
         requestBuilder.url(httpCall.site.endpoints().reply(replyChanDescriptor))
 
         try {
-          httpCall.setup(requestBuilder) { fileIndex, totalFiles, percent ->
-            val sendResult = trySend(HttpCall.HttpCallWithProgressResult.Progress(fileIndex, totalFiles, percent))
-            if (sendResult.isSuccess) {
-              return@setup
-            }
+          httpCall.setup(
+            requestBuilder = requestBuilder,
+            progressListener = object : ProgressRequestBody.ProgressRequestListener {
+              override fun onRequestProgress(fileIndex: Int, totalFiles: Int, percent: Int) {
+                val sendResult = trySend(HttpCall.HttpCallWithProgressResult.Progress(fileIndex, totalFiles, percent))
+                if (sendResult.isSuccess) {
+                  return
+                }
 
-            if (sendResult.isClosed) {
-              throw CancellationException()
-            }
+                if (sendResult.isClosed) {
+                  throw CancellationException()
+                }
 
-            if (sendResult.isFailure) {
-              val exception = sendResult.exceptionOrNull()
-              if (exception != null) {
-                throw exception
+                if (sendResult.isFailure) {
+                  val exception = sendResult.exceptionOrNull()
+                  if (exception != null) {
+                    throw exception
+                  }
+
+                  Logger.error(TAG) { "trySend failed for unknown reason" }
+                }
               }
-
-              Logger.w(TAG, "trySend failed for unknown reason")
             }
-          }
+          )
         } catch (error: Throwable) {
           send(HttpCall.HttpCallWithProgressResult.Fail(httpCall, error))
           return@channelFlow

@@ -1,125 +1,106 @@
-/*
- * KurobaEx - *chan browser https://github.com/K1rakishou/Kuroba-Experimental/
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-package com.github.k1rakishou.chan.core.site.http;
+package com.github.k1rakishou.chan.core.site.http
 
-import java.io.IOException;
-import java.util.concurrent.CancellationException;
+import okhttp3.MediaType
+import okhttp3.RequestBody
+import okio.Buffer
+import okio.BufferedSink
+import okio.ForwardingSink
+import okio.Sink
+import okio.buffer
+import java.io.IOException
+import java.util.concurrent.CancellationException
 
-import okhttp3.MediaType;
-import okhttp3.RequestBody;
-import okio.Buffer;
-import okio.BufferedSink;
-import okio.ForwardingSink;
-import okio.Okio;
-import okio.Sink;
+open class ProgressRequestBody : RequestBody {
+  private val fileIndex: Int
+  private val totalFiles: Int
 
-public class ProgressRequestBody extends RequestBody {
-    private final int fileIndex;
-    private final int totalFiles;
-    protected RequestBody delegate;
-    protected ProgressRequestListener listener;
-    protected ProgressSink progressSink;
+  private var delegate: RequestBody
+  private var listener: ProgressRequestListener
+  private var progressSink: ProgressSink? = null
 
-    private static final int maxPercent = 100;
-    private static final int percentStep = 5;
+  constructor(
+    delegate: RequestBody,
+    listener: ProgressRequestListener
+  ) {
+    this.fileIndex = 1
+    this.totalFiles = 1
+    this.delegate = delegate
+    this.listener = listener
+  }
 
-    public ProgressRequestBody(
-            RequestBody delegate,
-            ProgressRequestListener listener
-    ) {
-        this.fileIndex = 1;
-        this.totalFiles = 1;
-        this.delegate = delegate;
-        this.listener = listener;
-    }
+  constructor(
+    fileIndex: Int,
+    totalFiles: Int,
+    delegate: RequestBody,
+    listener: ProgressRequestListener
+  ) {
+    this.fileIndex = fileIndex
+    this.totalFiles = totalFiles
+    this.delegate = delegate
+    this.listener = listener
+  }
 
-    public ProgressRequestBody(
-            int fileIndex,
-            int totalFiles,
-            RequestBody delegate,
-            ProgressRequestListener listener
-    ) {
-        this.fileIndex = fileIndex;
-        this.totalFiles = totalFiles;
-        this.delegate = delegate;
-        this.listener = listener;
-    }
+  override fun contentType(): MediaType? {
+    return delegate.contentType()
+  }
 
-    @Override
-    public MediaType contentType() {
-        return delegate.contentType();
-    }
+  @Throws(IOException::class)
+  override fun contentLength(): Long {
+    return delegate.contentLength()
+  }
 
-    @Override
-    public long contentLength() throws IOException {
-        return delegate.contentLength();
-    }
+  @Throws(IOException::class)
+  override fun writeTo(sink: BufferedSink) {
+    val localProgressSink = ProgressSink(sink)
+    progressSink = localProgressSink
 
-    @Override
-    public void writeTo(BufferedSink sink) throws IOException {
-        progressSink = new ProgressSink(sink);
-        BufferedSink bufferedSink = Okio.buffer(progressSink);
+    val bufferedSink = localProgressSink.buffer()
+    delegate.writeTo(bufferedSink)
+    bufferedSink.flush()
+  }
 
-        delegate.writeTo(bufferedSink);
-        bufferedSink.flush();
-    }
+  protected inner class ProgressSink(delegate: Sink) : ForwardingSink(delegate) {
+    private var bytesWritten: Long = 0
+    private var lastPercent = 0
 
-    protected final class ProgressSink extends ForwardingSink {
-        private long bytesWritten = 0;
-        private int lastPercent = 0;
+    override fun write(source: Buffer, byteCount: Long) {
+      super.write(source, byteCount)
 
-        public ProgressSink(Sink delegate) {
-            super(delegate);
+      if (bytesWritten == 0L) {
+        try {
+          // so we can know that the uploading has just started
+          listener.onRequestProgress(fileIndex, totalFiles, 0)
+        } catch (cancellationException: CancellationException) {
+          throw IOException("Canceled")
         }
+      }
 
-        @Override
-        public void write(Buffer source, long byteCount) throws IOException {
-            super.write(source, byteCount);
+      bytesWritten += byteCount
 
-            if (bytesWritten == 0) {
-                try {
-                    // so we can know that the uploading has just started
-                    listener.onRequestProgress(fileIndex, totalFiles, 0);
-                } catch (CancellationException cancellationException) {
-                    throw new IOException("Canceled");
-                }
-            }
+      if (contentLength() > 0) {
+        val percent = (maxPercent * bytesWritten / contentLength()).toInt()
+        if (percent - lastPercent >= percentStep) {
+          lastPercent = percent
 
-            bytesWritten += byteCount;
-
-            if (contentLength() > 0) {
-                int percent = (int) (maxPercent * bytesWritten / contentLength());
-                if (percent - lastPercent >= percentStep) {
-                    lastPercent = percent;
-
-                    // OkHttp will explode if the listener throws anything other than IOException
-                    // so we need to wrap those exceptions into IOException. For now only
-                    // CancellationException was found to be thrown somewhere deep inside the listener.
-                    try {
-                        listener.onRequestProgress(fileIndex, totalFiles, percent);
-                    } catch (CancellationException cancellationException) {
-                        throw new IOException("Canceled");
-                    }
-                }
-            }
+          // OkHttp will explode if the listener throws anything other than IOException
+          // so we need to wrap those exceptions into IOException. For now only
+          // CancellationException was found to be thrown somewhere deep inside the listener.
+          try {
+            listener.onRequestProgress(fileIndex, totalFiles, percent)
+          } catch (cancellationException: CancellationException) {
+            throw IOException("Canceled")
+          }
         }
+      }
     }
+  }
 
-    public interface ProgressRequestListener {
-        void onRequestProgress(int fileIndex, int totalFiles, int percent);
-    }
+  interface ProgressRequestListener {
+    fun onRequestProgress(fileIndex: Int, totalFiles: Int, percent: Int)
+  }
+
+  companion object {
+    private const val maxPercent = 100
+    private const val percentStep = 1
+  }
 }

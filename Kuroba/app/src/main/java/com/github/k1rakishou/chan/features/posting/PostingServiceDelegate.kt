@@ -43,13 +43,13 @@ import dagger.Lazy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Mutex
@@ -234,7 +234,7 @@ class PostingServiceDelegate(
     }
   }
 
-  private suspend fun CoroutineScope.onNewReplyInternal(chanDescriptor: ChanDescriptor) {
+  private suspend fun onNewReplyInternal(chanDescriptor: ChanDescriptor) {
     val postedSuccessfully = AtomicBoolean(false)
     Logger.d(TAG, "onNewReplyInternal($chanDescriptor) start")
 
@@ -249,7 +249,7 @@ class PostingServiceDelegate(
           status = ChildNotificationInfo.Status.Canceled
         )
 
-        readReplyInfo(chanDescriptor) {
+        readReplyInfoIgnoreCancellation(chanDescriptor) {
           updateStatus(PostingStatus.AfterPosting(chanDescriptor, PostResult.Canceled))
         }
       } else {
@@ -260,7 +260,7 @@ class PostingServiceDelegate(
           status = ChildNotificationInfo.Status.Error(error.errorMessageOrClassName())
         )
 
-        readReplyInfo(chanDescriptor) {
+        readReplyInfoIgnoreCancellation(chanDescriptor) {
           updateStatus(PostingStatus.AfterPosting(chanDescriptor, PostResult.Error(error)))
         }
       }
@@ -284,8 +284,7 @@ class PostingServiceDelegate(
     }
 
     if (allRepliesPerBoardProcessed) {
-      Logger.d(TAG, "All replies for board ${chanDescriptor.boardDescriptor()} processed, " +
-        "resetting the cooldowns")
+      Logger.d(TAG, "All replies for board ${chanDescriptor.boardDescriptor()} processed, resetting the cooldowns")
 
       // All replies for the same board as the current reply have been processed. We need to reset
       // the cooldowns and update last reply attempt time just to be sure everything is up to date.
@@ -295,7 +294,7 @@ class PostingServiceDelegate(
     updateMainNotification()
 
     val canceled = readReplyInfo(chanDescriptor) { canceled }
-    if (canceled || !isActive) {
+    if (canceled) {
       Logger.d(TAG, "onNewReplyInternal($chanDescriptor) end, postedSuccessfully: ${postedSuccessfully.get()}")
       _closeChildNotificationFlow.emit(chanDescriptor)
     }
@@ -728,18 +727,17 @@ class PostingServiceDelegate(
               percent = postResult.percent
             )
 
-            // Update the notification only once in 100ms
+            // Update the notification no more than once in 16ms
             val now = System.currentTimeMillis()
-            if (now - prevUploadingProgressNotifyTime < 100) {
-              return@collect
+            if (now - prevUploadingProgressNotifyTime >= 16) {
+              prevUploadingProgressNotifyTime = now
+
+              updateChildNotification(
+                chanDescriptor = chanDescriptor,
+                status = ChildNotificationInfo.Status.Uploading(status.progress())
+              )
             }
 
-            prevUploadingProgressNotifyTime = now
-
-            updateChildNotification(
-              chanDescriptor = chanDescriptor,
-              status = ChildNotificationInfo.Status.Uploading(status.progress())
-            )
             readReplyInfo(chanDescriptor) { updateStatus(status) }
           }
           is SiteActions.PostResult.PostError -> {
@@ -1472,14 +1470,33 @@ class PostingServiceDelegate(
     }
   }
 
+  private suspend fun readReplyInfoIgnoreCancellation(
+    replyDescriptor: ChanDescriptor,
+    func: ReplyInfo.() -> Unit
+  ) {
+    return withContext(NonCancellable) {
+      mutex.withReentrantLock {
+        val replyInfo = activeReplyDescriptors[replyDescriptor]
+        if (replyInfo == null) {
+          return@withReentrantLock
+        }
+
+        func(replyInfo)
+      }
+    }
+  }
+
   private suspend fun <T : Any?> readReplyInfo(
     replyDescriptor: ChanDescriptor,
     func: ReplyInfo.() -> T
   ): T {
     return mutex.withReentrantLock {
-      activeReplyDescriptors[replyDescriptor]
-        ?.let { replyInfo -> func(replyInfo) }
-        ?: throw PostingCancellationException(replyDescriptor)
+      val replyInfo = activeReplyDescriptors[replyDescriptor]
+      if (replyInfo == null) {
+        throw PostingCancellationException(replyDescriptor)
+      }
+
+      return@withReentrantLock func(replyInfo)
     }
   }
 

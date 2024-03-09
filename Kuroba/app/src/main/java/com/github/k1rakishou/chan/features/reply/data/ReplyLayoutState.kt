@@ -280,6 +280,7 @@ class ReplyLayoutState(
           Logger.d(TAG, "onPostingStatusEvent(${status.chanDescriptor}) -> " +
             "${status.javaClass.simpleName}, status.postResult: ${status.postResult}")
 
+          _replySendProgressInPercentsState.intValue = -1
           onSendReplyEnd()
 
           when (val postResult = status.postResult) {
@@ -307,6 +308,8 @@ class ReplyLayoutState(
 
           Logger.d(TAG, "onPostingStatusEvent($chanDescriptor) consumeTerminalEvent(${status.chanDescriptor})")
           postingServiceDelegate.consumeTerminalEvent(status.chanDescriptor)
+
+          loadDraftIntoViews(status.chanDescriptor)
         }
       }
     }
@@ -1015,8 +1018,6 @@ class ReplyLayoutState(
 
     callbacks.hideDialog()
     collapseReplyLayout()
-    loadDraftIntoViews(newThreadDescriptor)
-
     callbacks.onPostedSuccessfully(prevChanDescriptor, newThreadDescriptor)
 
     Logger.debug(TAG) {
