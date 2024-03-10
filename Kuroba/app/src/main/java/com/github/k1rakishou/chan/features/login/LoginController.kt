@@ -277,7 +277,7 @@ class LoginController(
     button.setText(R.string.setting_pass_logout)
     authenticated.text = response.successMessage() ?: ""
 
-    showToast(R.string.setting_pass_update_reply_mode)
+    resetReplyLayoutMode()
   }
   
   private fun authFail(errorMessage: String?) {
@@ -295,9 +295,16 @@ class LoginController(
   
   private fun deauth() {
     site.actions().logout()
-    showToast(R.string.setting_pass_update_reply_mode)
+
+    resetReplyLayoutMode()
   }
-  
+
+  private fun resetReplyLayoutMode() {
+    site
+      .getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
+      ?.set(ReplyMode.Unknown)
+  }
+
   private fun showError(error: String) {
     errors.text = error
     errors.visibility = View.VISIBLE
