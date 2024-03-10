@@ -17,6 +17,7 @@
 package com.github.k1rakishou.chan.core.manager
 
 import android.graphics.Bitmap
+import androidx.annotation.GuardedBy
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.features.reencoding.ImageReencodingPresenter
 import com.github.k1rakishou.chan.features.reply.data.Reply
@@ -30,6 +31,7 @@ import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.SuspendableInitializer
+import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.common.toHashSetBy
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -41,6 +43,9 @@ import okio.source
 import java.io.File
 import java.io.IOException
 import java.util.*
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
@@ -53,8 +58,8 @@ class ReplyManager(
   private val moshi: Moshi,
   commonGson: Gson
 ) {
-  @Volatile
-  private var filesLoaded = false
+  private val filesLoaded = AtomicBoolean(false)
+  private val filesLoadedLatch = CountDownLatch(1)
   private val filesLoadedInitializer = SuspendableInitializer<Unit>("filesLoadedInitializer")
 
   private val gson = commonGson.newBuilder()
@@ -62,7 +67,9 @@ class ReplyManager(
     .setVersion(REPLY_FILE_META_GSON_VERSION)
     .create()
 
-  private val drafts: MutableMap<ChanDescriptor, Reply> = HashMap()
+  @GuardedBy("itself")
+  private val drafts = mutableMapWithCap<ChanDescriptor, Reply>(64)
+
   private val replyFilesStorage by lazy { ReplyFilesStorage(gson, appConstants) }
 
   init {
@@ -89,9 +96,10 @@ class ReplyManager(
     replyFilesStorage.notifyReplyFilesChanged(fileUuid)
   }
 
-  @Synchronized
   fun reloadReplyManagerStateFromDisk(appConstants: AppConstants): ModularResult<Unit> {
-    if (filesLoaded) {
+    if (!filesLoaded.compareAndSet(false, true)) {
+      filesLoadedLatch.await()
+
       if (!filesLoadedInitializer.isInitialized()) {
         filesLoadedInitializer.initWithValue(Unit)
       }
@@ -111,8 +119,8 @@ class ReplyManager(
     }
     Logger.d(TAG, "reloadFilesFromDisk() reloadAllFilesFromDisk() took $reloadAllFilesFromDiskDuration")
 
-    filesLoaded = true
     filesLoadedInitializer.initWithValue(Unit)
+    filesLoadedLatch.countDown()
 
     if (result is ModularResult.Error) {
       Logger.e(TAG, "reloadAllFilesFromDisk() error, clearing all files", result.error)
@@ -123,31 +131,26 @@ class ReplyManager(
     return ModularResult.value(Unit)
   }
 
-  @Synchronized
   fun addNewReplyFileIntoStorage(replyFile: ReplyFile, notifyListeners: Boolean): Boolean {
     ensureFilesLoaded()
     return replyFilesStorage.addNewReplyFile(replyFile, notifyListeners)
   }
 
-  @Synchronized
   fun updateFileSelection(fileUuid: UUID, selected: Boolean, notifyListeners: Boolean): ModularResult<Boolean> {
     ensureFilesLoaded()
     return replyFilesStorage.updateFileSelection(fileUuid, selected, notifyListeners)
   }
 
-  @Synchronized
   fun updateFileSpoilerFlag(fileUuid: UUID, spoiler: Boolean, notifyListeners: Boolean): ModularResult<Boolean> {
     ensureFilesLoaded()
     return replyFilesStorage.updateFileSpoilerFlag(fileUuid, spoiler, notifyListeners)
   }
 
-  @Synchronized
   fun updateFileName(fileUuid: UUID, newFileName: String, notifyListeners: Boolean): ModularResult<Boolean> {
     ensureFilesLoaded()
     return replyFilesStorage.updateFileName(fileUuid, newFileName, notifyListeners)
   }
 
-  @Synchronized
   fun updatePreviewFileOnDisk(fileUuid: UUID, previewBitmap: Bitmap): ModularResult<Boolean> {
     ensureFilesLoaded()
     val previewFile = File(
@@ -159,49 +162,41 @@ class ReplyManager(
       .onError { previewFile.delete() }
   }
 
-  @Synchronized
   fun deleteFile(fileUuid: UUID, notifyListeners: Boolean): ModularResult<Unit> {
     ensureFilesLoaded()
     return replyFilesStorage.deleteFile(fileUuid, notifyListeners)
   }
 
-  @Synchronized
   fun deleteSelectedFiles(notifyListeners: Boolean): ModularResult<Unit> {
     ensureFilesLoaded()
     return replyFilesStorage.deleteSelectedFiles(notifyListeners)
   }
 
-  @Synchronized
   fun hasSelectedFiles(): ModularResult<Boolean> {
     ensureFilesLoaded()
     return replyFilesStorage.hasSelectedFiles()
   }
 
-  @Synchronized
   fun isSelected(fileUuid: UUID): ModularResult<Boolean> {
     ensureFilesLoaded()
     return replyFilesStorage.isSelected(fileUuid)
   }
 
-  @Synchronized
   fun isMarkedAsSpoiler(fileUuid: UUID): ModularResult<Boolean> {
     ensureFilesLoaded()
     return replyFilesStorage.isMarkedAsSpoiler(fileUuid)
   }
 
-  @Synchronized
   fun selectedFilesCount(): ModularResult<Int> {
     ensureFilesLoaded()
     return replyFilesStorage.selectedFilesCount()
   }
 
-  @Synchronized
   fun totalFilesCount(): ModularResult<Int> {
     ensureFilesLoaded()
     return replyFilesStorage.totalFilesCount()
   }
 
-  @Synchronized
   fun takeSelectedFiles(chanDescriptor: ChanDescriptor): ModularResult<Boolean> {
     ensureFilesLoaded()
 
@@ -211,8 +206,11 @@ class ReplyManager(
         val takenFiles = replyFilesStorage.takeSelectedFiles(chanDescriptor).unwrap()
 
         if (takenFiles.size != selectedFiles) {
-          Logger.e(TAG, "takeSelectedFiles($chanDescriptor) failed to take some of selected files, " +
-            "takenFiles.size=${takenFiles.size}, selectedFiles=$selectedFiles")
+          Logger.error(TAG) {
+            "takeSelectedFiles($chanDescriptor) failed to take some of selected files, " +
+              "takenFiles.size: ${takenFiles.size}, selectedFiles: $selectedFiles"
+          }
+
           return@readReply false
         }
 
@@ -222,7 +220,6 @@ class ReplyManager(
     }
   }
 
-  @Synchronized
   fun restoreFiles(chanDescriptor: ChanDescriptor) {
     ensureFilesLoaded()
 
@@ -233,12 +230,10 @@ class ReplyManager(
     }
   }
 
-  @Synchronized
   fun iterateFilesOrdered(iterator: (Int, ReplyFile, ReplyFileMeta) -> Unit) {
     replyFilesStorage.iterateFilesOrdered(iterator)
   }
 
-  @Synchronized
   fun iterateNonTakenFilesOrdered(iterator: (Int, ReplyFile, ReplyFileMeta) -> Unit) {
     replyFilesStorage.iterateFilesOrdered { order, replyFile, replyFileMeta ->
       if (replyFileMeta.isTaken()) {
@@ -249,7 +244,6 @@ class ReplyManager(
     }
   }
 
-  @Synchronized
   fun iterateSelectedFilesOrdered(iterator: (Int, ReplyFile, ReplyFileMeta) -> Unit) {
     replyFilesStorage.iterateFilesOrdered { order, replyFile, replyFileMeta ->
       if (!replyFileMeta.selected) {
@@ -260,7 +254,6 @@ class ReplyManager(
     }
   }
 
-  @Synchronized
   fun getSelectedFilesOrdered(): List<ReplyFile> {
     val files = mutableListOf<ReplyFile>()
 
@@ -273,13 +266,11 @@ class ReplyManager(
     return files
   }
 
-  @Synchronized
   fun getReplyFileByFileUuid(fileUuid: UUID): ModularResult<ReplyFile?> {
     ensureFilesLoaded()
     return replyFilesStorage.getReplyFileByFileUuid(fileUuid)
   }
 
-  @Synchronized
   fun cleanupFiles(chanDescriptor: ChanDescriptor, notifyListeners: Boolean) {
     ensureFilesLoaded()
 
@@ -298,7 +289,6 @@ class ReplyManager(
     }
   }
 
-  @Synchronized
   fun <T> mapOrderedNotNull(mapper: (Int, ReplyFile) -> T?): List<T> {
     ensureFilesLoaded()
     return replyFilesStorage.mapOrderedNotNull(mapper)
@@ -308,14 +298,17 @@ class ReplyManager(
     return replyFilesStorage.listenForReplyFilesUpdates()
   }
 
-  @Synchronized
   fun getReplyOrCreateNew(chanDescriptor: ChanDescriptor): Reply {
     ensureFilesLoaded()
 
-    var reply = drafts[chanDescriptor]
-    if (reply == null) {
-      reply = Reply(chanDescriptor)
-      drafts[chanDescriptor] = reply
+    val reply = synchronized(drafts) {
+      var reply = drafts[chanDescriptor]
+      if (reply == null) {
+        reply = Reply(chanDescriptor)
+        drafts[chanDescriptor] = reply
+      }
+
+      return@synchronized reply
     }
 
     if (reply.postName.isEmpty()) {
@@ -325,25 +318,21 @@ class ReplyManager(
     return reply
   }
 
-  @Synchronized
   fun getReplyOrNull(chanDescriptor: ChanDescriptor): Reply? {
     ensureFilesLoaded()
-    return drafts[chanDescriptor]
+    return synchronized(drafts) { drafts[chanDescriptor] }
   }
 
-  @Synchronized
   fun containsReply(chanDescriptor: ChanDescriptor): Boolean {
     ensureFilesLoaded()
-    return drafts.containsKey(chanDescriptor)
+    return synchronized(drafts) { drafts.containsKey(chanDescriptor) }
   }
 
-  @Synchronized
   fun <T : Any?> readReply(chanDescriptor: ChanDescriptor, reader: (Reply) -> T): T {
     ensureFilesLoaded()
     return reader(getReplyOrCreateNew(chanDescriptor))
   }
 
-  @Synchronized
   fun createNewEmptyAttachFile(
     uniqueFileName: UniqueFileName,
     originalFileName: String,
@@ -401,7 +390,6 @@ class ReplyManager(
     }
   }
 
-  @Synchronized
   fun generateUniqueFileName(appConstants: AppConstants): UniqueFileName {
     BackgroundUtils.ensureBackgroundThread()
 
@@ -468,7 +456,6 @@ class ReplyManager(
     }
   }
 
-  @Synchronized
   fun deleteCachedDraftFromDisk(chanDescriptor: ChanDescriptor) {
     val draftOnDisk = File(appConstants.replyDraftsDir, chanDescriptor.replyDraftFileName())
     draftOnDisk.delete()
@@ -476,53 +463,54 @@ class ReplyManager(
     Logger.d(TAG, "deleteCachedDraftFromDisk($chanDescriptor), draftOnDisk='${draftOnDisk.absolutePath}'")
   }
 
-  @Synchronized
   private fun persistAllDrafts() {
-    val draftsSorted = drafts
-      .entries
-      .sortedByDescending { (_, reply) -> reply.lastUpdatedAt }
-      .take(MAX_DRAFTS_PERSISTED)
+    synchronized(drafts) {
+      val draftsSorted = drafts
+        .entries
+        .sortedByDescending { (_, reply) -> reply.lastUpdatedAt }
+        .take(MAX_DRAFTS_PERSISTED)
 
-    if (draftsSorted.isEmpty()) {
-      Logger.d(TAG, "persistDrafts() drafts are empty")
-      return
-    }
-
-    var persistedCount = 0
-    var deletedCount = 0
-
-    Logger.d(TAG, "persistDrafts() persisting ${draftsSorted.size} out of ${drafts.size}")
-
-    for ((chanDescriptor, reply) in draftsSorted) {
-      if (persistDraft(chanDescriptor, reply)) {
-        ++persistedCount
+      if (draftsSorted.isEmpty()) {
+        Logger.d(TAG, "persistDrafts() drafts are empty")
+        return
       }
-    }
 
-    val draftDescriptorsSet = draftsSorted.toHashSetBy { (chanDescriptor, _) -> chanDescriptor }
-    Logger.d(TAG, "persistDrafts() deleting old drafts")
+      var persistedCount = 0
+      var deletedCount = 0
 
-    // Delete old drafts that are not included in MAX_DRAFTS_PERSISTED
-    for ((chanDescriptor, _) in drafts.entries) {
-      try {
-        if (chanDescriptor in draftDescriptorsSet) {
-          continue
+      Logger.d(TAG, "persistDrafts() persisting ${draftsSorted.size} out of ${drafts.size}")
+
+      for ((chanDescriptor, reply) in draftsSorted) {
+        if (persistDraft(chanDescriptor, reply)) {
+          ++persistedCount
         }
-
-        val draftFile = File(appConstants.replyDraftsDir, chanDescriptor.replyDraftFileName())
-        draftFile.delete()
-
-        ++deletedCount
-      } catch (error: Throwable) {
-        Logger.e(TAG, "persistDrafts() failed to remove old reply draft for descriptor ${chanDescriptor}", error)
       }
-    }
 
-    Logger.debug(TAG) {
-      "persistDrafts() done " +
-        "persistedCount: $persistedCount, " +
-        "deletedCount: $deletedCount, " +
-        "total: ${draftsSorted.size}"
+      val draftDescriptorsSet = draftsSorted.toHashSetBy { (chanDescriptor, _) -> chanDescriptor }
+      Logger.d(TAG, "persistDrafts() deleting old drafts")
+
+      // Delete old drafts that are not included in MAX_DRAFTS_PERSISTED
+      for ((chanDescriptor, _) in drafts.entries) {
+        try {
+          if (chanDescriptor in draftDescriptorsSet) {
+            continue
+          }
+
+          val draftFile = File(appConstants.replyDraftsDir, chanDescriptor.replyDraftFileName())
+          draftFile.delete()
+
+          ++deletedCount
+        } catch (error: Throwable) {
+          Logger.e(TAG, "persistDrafts() failed to remove old reply draft for descriptor ${chanDescriptor}", error)
+        }
+      }
+
+      Logger.debug(TAG) {
+        "persistDrafts() done " +
+          "persistedCount: $persistedCount, " +
+          "deletedCount: $deletedCount, " +
+          "total: ${draftsSorted.size}"
+      }
     }
   }
 
@@ -559,37 +547,38 @@ class ReplyManager(
     }
   }
 
-  @Synchronized
   private fun restoreDrafts() {
-    val draftFiles = appConstants.replyDraftsDir.listFiles()
-    if (draftFiles.isNullOrEmpty()) {
-      Logger.d(TAG, "restoreDrafts() draftFiles is empty")
-      return
-    }
-
-    for (draftFile in draftFiles) {
-      try {
-        val replyDataJson = draftFile.source().buffer().use { bufferedSource ->
-          return@use moshi
-            .adapter<ReplyDataJson>(ReplyDataJson::class.java)
-            .fromJson(bufferedSource)
-        }
-
-        if (replyDataJson == null || replyDataJson.isEmpty()) {
-          continue
-        }
-
-        val reply = replyDataJson.toReplyOrNull()
-          ?: continue
-
-        drafts[reply.chanDescriptor] = reply
-      } catch (error: Throwable) {
-        Logger.e(TAG, "restoreDrafts() failed restore draft for file ${draftFile.absolutePath}", error)
-        draftFile.delete()
+    synchronized(drafts) {
+      val draftFiles = appConstants.replyDraftsDir.listFiles()
+      if (draftFiles.isNullOrEmpty()) {
+        Logger.d(TAG, "restoreDrafts() draftFiles is empty")
+        return
       }
-    }
 
-    Logger.d(TAG, "restoreDrafts() done, draftsCount=${drafts.size}")
+      for (draftFile in draftFiles) {
+        try {
+          val replyDataJson = draftFile.source().buffer().use { bufferedSource ->
+            return@use moshi
+              .adapter<ReplyDataJson>(ReplyDataJson::class.java)
+              .fromJson(bufferedSource)
+          }
+
+          if (replyDataJson == null || replyDataJson.isEmpty()) {
+            continue
+          }
+
+          val reply = replyDataJson.toReplyOrNull()
+            ?: continue
+
+          drafts[reply.chanDescriptor] = reply
+        } catch (error: Throwable) {
+          Logger.e(TAG, "restoreDrafts() failed restore draft for file ${draftFile.absolutePath}", error)
+          draftFile.delete()
+        }
+      }
+
+      Logger.d(TAG, "restoreDrafts() done, draftsCount=${drafts.size}")
+    }
   }
 
   private fun ChanDescriptor.replyDraftFileName(): String {
@@ -601,9 +590,12 @@ class ReplyManager(
     }
   }
 
-  @Synchronized
   private fun ensureFilesLoaded() {
-    check(filesLoaded) { "Files are not loaded yet!" }
+    if (!filesLoaded.get()) {
+      if (!filesLoadedLatch.await(30, TimeUnit.SECONDS)) {
+        error("Deadlock!")
+      }
+    }
   }
 
   data class UniqueFileName(

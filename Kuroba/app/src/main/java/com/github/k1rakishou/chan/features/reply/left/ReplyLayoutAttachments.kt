@@ -111,6 +111,16 @@ internal fun ReplyAttachments(
       horizontalArrangement = Arrangement.spacedBy(4.dp),
       verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
+      syntheticAttachables.forEach { syntheticReplyAttachable ->
+        key(syntheticReplyAttachable.id) {
+          SyntheticReplyAttachable(
+            syntheticReplyAttachable = syntheticReplyAttachable,
+            mediaWidth = mediaWidth,
+            mediaHeight = mediaHeight
+          )
+        }
+      }
+
       attachedMediaList.attachables.forEach { attachedMedia ->
         key(attachedMedia.key) {
           AttachedMediaThumbnail(
@@ -124,16 +134,6 @@ internal fun ReplyAttachments(
             onRemoveAttachedMediaClicked = onRemoveAttachedMediaClicked,
             onAttachableSelectionChanged = onAttachableSelectionChanged,
             onAttachableStatusIconButtonClicked = onAttachableStatusIconButtonClicked
-          )
-        }
-      }
-
-      syntheticAttachables.forEach { syntheticReplyAttachable ->
-        key(syntheticReplyAttachable.id) {
-          SyntheticReplyAttachable(
-            syntheticReplyAttachable = syntheticReplyAttachable,
-            mediaWidth = mediaWidth,
-            mediaHeight = mediaHeight
           )
         }
       }

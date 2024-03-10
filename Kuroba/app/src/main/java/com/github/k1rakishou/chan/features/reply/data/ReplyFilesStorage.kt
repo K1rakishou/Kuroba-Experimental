@@ -109,7 +109,7 @@ class ReplyFilesStorage(
         return false
       }
 
-      replyFiles += replyFile
+      replyFiles.add(0, replyFile)
       ensureFilesSorted()
 
       if (notifyListeners) {
@@ -669,19 +669,13 @@ class ReplyFilesStorage(
       }
 
       return@Try newAttachFiles
-        .sortedBy { newAttachFile -> newAttachFile.getReplyFileMeta().unwrap().addedOn }
+
     }
   }
 
   private fun ensureFilesSorted() {
-    var prevAddedOn = Long.MIN_VALUE
-
-    replyFiles.forEach { replyFile ->
-      val addedOn = replyFile.getReplyFileMeta().unwrap().addedOn
-      check(addedOn >= prevAddedOn) { "Files not sorted! addedOn='$addedOn', prevAddedOn='$prevAddedOn'" }
-
-      prevAddedOn = addedOn
-    }
+    replyFiles
+      .sortByDescending { newAttachFile -> newAttachFile.getReplyFileMeta().unwrap().addedOn }
   }
 
   companion object {
