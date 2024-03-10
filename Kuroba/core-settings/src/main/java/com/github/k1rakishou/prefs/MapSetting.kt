@@ -10,9 +10,6 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
 import dagger.Lazy
-import io.reactivex.Flowable
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.processors.BehaviorProcessor
 
 class MapSetting(
   private val _moshi: Lazy<Moshi>,
@@ -29,8 +26,6 @@ class MapSetting(
   @Volatile
   @GuardedBy("this")
   private var cache: MutableMap<String, String>? = null
-
-  private val settingState = BehaviorProcessor.create<Map<String, String>>()
 
   private fun <T : Any?> withCache(func: MutableMap<String, String>.() -> T): T {
     val _cache = if (cache != null) {
@@ -132,13 +127,6 @@ class MapSetting(
 
     settingProvider.putStringSync(key, json)
     settingState.onNext(value)
-  }
-
-  fun listenForChanges(): Flowable<Map<String, String>> {
-    return settingState
-      .onBackpressureLatest()
-      .hide()
-      .observeOn(AndroidSchedulers.mainThread())
   }
 
   private fun convertMapToJson(value: Map<String, String>): String {

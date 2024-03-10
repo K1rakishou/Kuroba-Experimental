@@ -24,6 +24,8 @@ import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.repository.BoardFlagInfoRepository
 import com.github.k1rakishou.chan.core.site.PostFormatterButton
+import com.github.k1rakishou.chan.core.site.SiteAuthentication
+import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
 import com.github.k1rakishou.chan.core.usecase.LoadBoardFlagsUseCase
 import com.github.k1rakishou.chan.features.posting.PostResult
@@ -54,6 +56,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.persist_state.ReplyMode
+import com.github.k1rakishou.prefs.OptionsSetting
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -63,6 +66,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
@@ -162,6 +166,10 @@ class ReplyLayoutState(
   val replySendProgressInPercentsState: IntState
     get() = _replySendProgressInPercentsState
 
+  private val _displayCaptchaPresolveButton = mutableStateOf(true)
+  val displayCaptchaPresolveButton: State<Boolean>
+    get() = _displayCaptchaPresolveButton
+
   val isCatalogMode: Boolean
     get() = threadControllerType == ThreadControllerType.Catalog
 
@@ -183,6 +191,7 @@ class ReplyLayoutState(
     _replySendProgressInPercentsState.intValue = -1
 
     loadDraftIntoViews(chanDescriptor)
+    updateCaptchaButtonVisibility()
 
     compositeJob += coroutineScope.launch {
       replyManager.listenForReplyFilesUpdates()
@@ -238,6 +247,20 @@ class ReplyLayoutState(
       optionsTextState.forEachTextValue {
         persistInReplyManager()
       }
+    }
+
+    compositeJob += coroutineScope.launch {
+      val replyModeSetting = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+        ?.getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
+
+      if (replyModeSetting == null) {
+        return@launch
+      }
+
+      replyModeSetting.listenForChanges()
+        .asFlow()
+        .onEach { updateCaptchaButtonVisibility() }
+        .collect()
     }
   }
 
@@ -831,6 +854,31 @@ class ReplyLayoutState(
   fun allFilesSelected(): Boolean {
     return attachables.value.attachables
       .all { replyFileAttachable -> replyFileAttachable.selected }
+  }
+
+  fun updateCaptchaButtonVisibility() {
+    val descriptor = chanDescriptor
+
+    val site = siteManager.bySiteDescriptor(descriptor.siteDescriptor())
+      ?: return
+
+    val replyMode = site
+      .getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)?.get()
+      ?: return
+
+    val siteDoesNotRequireAuthentication = site.actions().postAuthenticate().type == SiteAuthentication.Type.NONE
+    if (siteDoesNotRequireAuthentication) {
+      _displayCaptchaPresolveButton.value = false
+      return
+    }
+
+    _displayCaptchaPresolveButton.value = when (replyMode) {
+      ReplyMode.Unknown,
+      ReplyMode.ReplyModeSolveCaptchaManually,
+      ReplyMode.ReplyModeSendWithoutCaptcha,
+      ReplyMode.ReplyModeSolveCaptchaAuto -> true
+      ReplyMode.ReplyModeUsePasscode -> false
+    }
   }
 
   private fun afterReplyTextChanged() {

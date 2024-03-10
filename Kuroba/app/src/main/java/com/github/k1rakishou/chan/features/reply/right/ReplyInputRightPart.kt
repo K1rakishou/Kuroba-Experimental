@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.features.reply.right
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.gestures.DraggableState
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -47,6 +49,8 @@ internal fun ReplyInputRightPart(
   val padding = with(density) { 8.dp.toPx() }
   val cornerRadius = with(density) { remember { CornerRadius(8.dp.toPx(), 8.dp.toPx()) } }
 
+  val displayCaptchaPresolveButton by replyLayoutState.displayCaptchaPresolveButton
+
   Column(
     modifier = Modifier
       .fillMaxSize()
@@ -70,14 +74,16 @@ internal fun ReplyInputRightPart(
       },
     horizontalAlignment = Alignment.CenterHorizontally,
   ) {
-    Spacer(modifier = Modifier.height(6.dp))
+    AnimatedVisibility(visible = displayCaptchaPresolveButton) {
+      Spacer(modifier = Modifier.height(6.dp))
 
-    PresolveCaptchaButton(
-      iconSize = iconSize,
-      padding = 4.dp,
-      replyLayoutViewModel = replyLayoutViewModel,
-      onPresolveCaptchaButtonClicked = onPresolveCaptchaButtonClicked
-    )
+      PresolveCaptchaButton(
+        iconSize = iconSize,
+        padding = 4.dp,
+        replyLayoutViewModel = replyLayoutViewModel,
+        onPresolveCaptchaButtonClicked = onPresolveCaptchaButtonClicked
+      )
+    }
 
     Spacer(modifier = Modifier.height(6.dp))
 

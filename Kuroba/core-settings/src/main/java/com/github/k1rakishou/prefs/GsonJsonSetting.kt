@@ -5,9 +5,6 @@ import com.github.k1rakishou.Setting
 import com.github.k1rakishou.SettingProvider
 import com.github.k1rakishou.core_logger.Logger
 import com.google.gson.Gson
-import io.reactivex.Flowable
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.processors.BehaviorProcessor
 
 class GsonJsonSetting<T>(
   private val gson: Gson,
@@ -19,7 +16,6 @@ class GsonJsonSetting<T>(
   @Volatile
   private var hasCached = false
   private var cached: T? = null
-  private val settingState = BehaviorProcessor.create<T>()
 
   fun update(sync: Boolean, updater: (T) -> T) {
     val prev = get()
@@ -87,13 +83,6 @@ class GsonJsonSetting<T>(
   fun reset() {
     cached = def
     settingProvider.putString(key, ChanSettings.EMPTY_JSON)
-  }
-
-  fun listenForChanges(): Flowable<T> {
-    return settingState
-      .onBackpressureLatest()
-      .hide()
-      .observeOn(AndroidSchedulers.mainThread())
   }
 
 }

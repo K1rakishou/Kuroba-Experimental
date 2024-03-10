@@ -93,7 +93,7 @@ public class ImageOptionsHelper
             @Nullable Pair<Integer, Integer> dims
     ) {
         if (imageReencodeOptionsController != null || imageFormat == null || dims == null) {
-            showToast(context, R.string.image_reencode_format_error, Toast.LENGTH_LONG);
+            AppModuleAndroidUtils.showToast(context, R.string.image_reencode_format_error, Toast.LENGTH_LONG);
             return;
         }
 

@@ -22,6 +22,7 @@ import com.github.k1rakishou.chan.core.site.loader.ClientException
 import com.github.k1rakishou.chan.core.usecase.LoadBoardFlagsUseCase
 import com.github.k1rakishou.chan.features.posting.PostingService
 import com.github.k1rakishou.chan.features.posting.PostingServiceDelegate
+import com.github.k1rakishou.chan.features.posting.solvers.two_captcha.TwoCaptchaSolver
 import com.github.k1rakishou.chan.features.reply.data.PostFormattingButtonsFactory
 import com.github.k1rakishou.chan.features.reply.data.ReplyFile
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileAttachable
@@ -83,7 +84,8 @@ class ReplyLayoutViewModel(
   private val postingServiceDelegateLazy: Lazy<PostingServiceDelegate>,
   private val boardFlagInfoRepositoryLazy: Lazy<BoardFlagInfoRepository>,
   private val runtimePermissionsHelperLazy: Lazy<RuntimePermissionsHelper>,
-  private val imagePickHelperLazy: Lazy<ImagePickHelper>
+  private val imagePickHelperLazy: Lazy<ImagePickHelper>,
+  private val twoCaptchaSolverLazy: Lazy<TwoCaptchaSolver>
 ) : BaseViewModel(), ReplyLayoutState.Callbacks {
   private val appConstants: AppConstants
     get() = appConstantsLazy.get()
@@ -103,6 +105,8 @@ class ReplyLayoutViewModel(
     get() = appResourcesLazy.get()
   private val globalUiStateHolder: GlobalUiStateHolder
     get() = globalUiStateHolderLazy.get()
+  private val twoCaptchaSolver: TwoCaptchaSolver
+    get() = twoCaptchaSolverLazy.get()
 
   private val _replyManagerStateLoaded = AtomicBoolean(false)
 
@@ -594,6 +598,15 @@ class ReplyLayoutViewModel(
     return globalUiStateHolder.replyLayout.allReplyLayoutCollapsed()
   }
 
+  fun updateCaptchaButtonVisibility() {
+    withReplyLayoutState { replyLayoutState -> replyLayoutState.updateCaptchaButtonVisibility() }
+  }
+
+  fun paidCaptchaSolversSupportedAndEnabled(chanDescriptor: ChanDescriptor): Boolean {
+    return twoCaptchaSolver.isSiteCurrentCaptchaTypeSupported(chanDescriptor.siteDescriptor())
+      && twoCaptchaSolver.isLoggedIn
+  }
+
   private suspend fun isFileSupportedForReencoding(clickedFileUuid: UUID): Boolean {
     return withContext(Dispatchers.IO) {
       val replyFile = replyManager.getReplyFileByFileUuid(clickedFileUuid).valueOrNull()
@@ -790,7 +803,8 @@ class ReplyLayoutViewModel(
     private val postingServiceDelegateLazy: Lazy<PostingServiceDelegate>,
     private val boardFlagInfoRepositoryLazy: Lazy<BoardFlagInfoRepository>,
     private val runtimePermissionsHelperLazy: Lazy<RuntimePermissionsHelper>,
-    private val imagePickHelperLazy: Lazy<ImagePickHelper>
+    private val imagePickHelperLazy: Lazy<ImagePickHelper>,
+    private val twoCaptchaSolverLazy: Lazy<TwoCaptchaSolver>
   ) : ViewModelAssistedFactory<ReplyLayoutViewModel> {
     override fun create(handle: SavedStateHandle): ReplyLayoutViewModel {
       return ReplyLayoutViewModel(
@@ -809,7 +823,8 @@ class ReplyLayoutViewModel(
         postingServiceDelegateLazy = postingServiceDelegateLazy,
         boardFlagInfoRepositoryLazy = boardFlagInfoRepositoryLazy,
         runtimePermissionsHelperLazy = runtimePermissionsHelperLazy,
-        imagePickHelperLazy = imagePickHelperLazy
+        imagePickHelperLazy = imagePickHelperLazy,
+        twoCaptchaSolverLazy = twoCaptchaSolverLazy
       )
     }
   }

@@ -36,6 +36,7 @@ import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar;
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity;
 import com.github.k1rakishou.chan.features.reply_attach_sound.CreateSoundMediaController;
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingController;
+import com.github.k1rakishou.chan.ui.helper.AppResources;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView;
@@ -87,6 +88,8 @@ public class ImageOptionsController
 
     @Inject
     ThemeEngine themeEngine;
+    @Inject
+    AppResources appResources;
 
     @Override
     protected void injectDependencies(@NotNull ActivityComponent component) {
@@ -290,7 +293,7 @@ public class ImageOptionsController
         removeMetadata.setEnabled(true);
 
         reencode.setChecked(false);
-        reencode.setText(getString(R.string.image_options_re_encode));
+        reencode.setText(appResources.string(R.string.image_options_re_encode));
 
         presenter.setReencode(null);
     }

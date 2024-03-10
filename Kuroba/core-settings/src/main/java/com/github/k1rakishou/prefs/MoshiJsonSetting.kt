@@ -6,9 +6,6 @@ import com.github.k1rakishou.SettingProvider
 import com.github.k1rakishou.core_logger.Logger
 import com.squareup.moshi.Moshi
 import dagger.Lazy
-import io.reactivex.Flowable
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.processors.BehaviorProcessor
 
 class MoshiJsonSetting<T>(
   private val _moshi: Lazy<Moshi>,
@@ -23,7 +20,6 @@ class MoshiJsonSetting<T>(
   @Volatile
   private var hasCached = false
   private var cached: T? = null
-  private val settingState = BehaviorProcessor.create<T>()
 
   override fun get(): T {
     if (hasCached) {
@@ -76,13 +72,6 @@ class MoshiJsonSetting<T>(
   fun reset() {
     cached = def
     settingProvider.putString(key, ChanSettings.EMPTY_JSON)
-  }
-
-  fun listenForChanges(): Flowable<T> {
-    return settingState
-      .onBackpressureLatest()
-      .hide()
-      .observeOn(AndroidSchedulers.mainThread())
   }
 
 }

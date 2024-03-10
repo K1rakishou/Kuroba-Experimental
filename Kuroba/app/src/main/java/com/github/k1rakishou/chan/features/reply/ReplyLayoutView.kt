@@ -17,6 +17,9 @@ import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
+import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.site.SiteAuthentication
+import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.usecase.LoadBoardFlagsUseCase
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileAttachable
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
@@ -28,6 +31,7 @@ import com.github.k1rakishou.chan.ui.controller.ThreadControllerType
 import com.github.k1rakishou.chan.ui.controller.dialog.KurobaComposeDialogController
 import com.github.k1rakishou.chan.ui.helper.AppResources
 import com.github.k1rakishou.chan.ui.layout.ThreadListLayout
+import com.github.k1rakishou.chan.ui.view.floating_menu.CheckableFloatingListMenuItem
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.ui.widget.dialog.KurobaAlertDialog
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -42,6 +46,8 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.persist_state.ReplyMode
+import com.github.k1rakishou.prefs.BooleanSetting
+import com.github.k1rakishou.prefs.OptionsSetting
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
@@ -62,6 +68,8 @@ class ReplyLayoutView @JvmOverloads constructor(
   lateinit var appResources: AppResources
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
+  @Inject
+  lateinit var siteManager: SiteManager
 
   private lateinit var replyLayoutViewModel: ReplyLayoutViewModel
   private lateinit var replyLayoutCallbacks: ReplyLayoutViewModel.ThreadListLayoutCallbacks
@@ -275,7 +283,15 @@ class ReplyLayoutView @JvmOverloads constructor(
   }
 
   override fun onReplyLayoutOptionsButtonClicked() {
-    // TODO: New reply layout.
+    val chanDescriptor = replyLayoutViewModel.boundChanDescriptor.value
+      ?: return
+
+    val prevReplyMode = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+      ?.getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
+      ?.get()
+      ?: ReplyMode.Unknown
+
+    showReplyOptions(chanDescriptor, prevReplyMode)
   }
 
   override fun onAttachedMediaClicked(attachedMedia: ReplyFileAttachable, isFileSupportedForReencoding: Boolean) {
@@ -479,6 +495,114 @@ class ReplyLayoutView @JvmOverloads constructor(
     }
   }
 
+  private fun showReplyOptions(chanDescriptor: ChanDescriptor, prevReplyMode: ReplyMode) {
+    val menuItems = mutableListOf<FloatingListMenuItem>()
+    val availableReplyModes = buildReplyModeOptions(chanDescriptor, prevReplyMode)
+
+    val ignoreReplyCooldowns = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+      ?.getSettingBySettingId<BooleanSetting>(SiteSetting.SiteSettingId.IgnoreReplyCooldowns)
+    val lastUsedReplyMode = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+      ?.getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
+    val check4chanPostAcknowledgedSetting = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+      ?.getSettingBySettingId<BooleanSetting>(SiteSetting.SiteSettingId.Check4chanPostAcknowledged)
+
+    menuItems += FloatingListMenuItem(
+      key = ACTION_REPLY_MODES,
+      name = context.getString(R.string.reply_layout_reply_modes),
+      more = availableReplyModes
+    )
+    menuItems += CheckableFloatingListMenuItem(
+      key = ACTION_IGNORE_REPLY_COOLDOWNS,
+      name = context.getString(R.string.reply_layout_ignore_reply_cooldowns),
+      isCurrentlySelected = ignoreReplyCooldowns?.get() == true
+    )
+
+    if (chanDescriptor.siteDescriptor().is4chan()) {
+      check4chanPostAcknowledgedSetting?.get()?.let { check4chanPostAcknowledged ->
+        menuItems += CheckableFloatingListMenuItem(
+          key = ACTION_CHECK_4CHAN_POST_ACKNOWLEDGED,
+          name = context.getString(R.string.reply_layout_check_if_post_was_actually_acknowledged_by_4chan),
+          isCurrentlySelected = check4chanPostAcknowledged
+        )
+      }
+    }
+
+    val floatingListMenuController = FloatingListMenuController(
+      context = context,
+      constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
+      items = menuItems,
+      itemClickListener = { clickedItem ->
+        if (clickedItem.key is Int) {
+          when (clickedItem.key) {
+            ACTION_REPLY_MODES -> {
+              // ???
+            }
+            ACTION_IGNORE_REPLY_COOLDOWNS -> {
+              ignoreReplyCooldowns?.toggle()
+            }
+            ACTION_CHECK_4CHAN_POST_ACKNOWLEDGED -> {
+              check4chanPostAcknowledgedSetting?.toggle()
+            }
+          }
+        } else if (clickedItem.key is ReplyMode) {
+          val replyMode = clickedItem.key as? ReplyMode
+            ?: return@FloatingListMenuController
+
+          lastUsedReplyMode?.set(replyMode)
+
+          replyLayoutViewModel.updateCaptchaButtonVisibility()
+        }
+      }
+    )
+
+    replyLayoutCallbacks.presentController(floatingListMenuController)
+  }
+
+  private fun buildReplyModeOptions(
+    chanDescriptor: ChanDescriptor,
+    prevReplyMode: ReplyMode
+  ): MutableList<FloatingListMenuItem> {
+    val availableReplyModes = mutableListOf<FloatingListMenuItem>()
+    val site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+    val groupId = "reply_mode"
+
+    if (site?.actions()?.postAuthenticate()?.type != SiteAuthentication.Type.NONE) {
+      availableReplyModes += CheckableFloatingListMenuItem(
+        key = ReplyMode.ReplyModeSolveCaptchaManually,
+        name = appResources.string(R.string.reply_mode_solve_captcha_and_post),
+        groupId = groupId,
+        isCurrentlySelected = prevReplyMode == ReplyMode.ReplyModeSolveCaptchaManually
+      )
+    }
+
+    availableReplyModes += CheckableFloatingListMenuItem(
+      key = ReplyMode.ReplyModeSendWithoutCaptcha,
+      name = appResources.string(R.string.reply_mode_attempt_post_without_captcha),
+      groupId = groupId,
+      isCurrentlySelected = prevReplyMode == ReplyMode.ReplyModeSendWithoutCaptcha
+    )
+
+    if (replyLayoutViewModel.paidCaptchaSolversSupportedAndEnabled(chanDescriptor)) {
+      availableReplyModes += CheckableFloatingListMenuItem(
+        key = ReplyMode.ReplyModeSolveCaptchaAuto,
+        name = appResources.string(R.string.reply_mode_post_with_captcha_solver),
+        groupId = groupId,
+        isCurrentlySelected = prevReplyMode == ReplyMode.ReplyModeSolveCaptchaAuto
+      )
+    }
+
+    if (site?.actions()?.isLoggedIn() == true) {
+      availableReplyModes += CheckableFloatingListMenuItem(
+        key = ReplyMode.ReplyModeUsePasscode,
+        name = appResources.string(R.string.reply_mode_post_with_passcode),
+        groupId = groupId,
+        isCurrentlySelected = prevReplyMode == ReplyMode.ReplyModeUsePasscode
+      )
+    }
+
+    return availableReplyModes
+  }
+
   companion object {
     private const val TAG = "ReplyLayoutView"
 
@@ -491,6 +615,10 @@ class ReplyLayoutView @JvmOverloads constructor(
     private const val ACTION_UNSELECT_ALL = 7
     private const val ACTION_MARK_AS_SPOILER = 8
     private const val ACTION_UNMARK_AS_SPOILER = 9
+
+    private const val ACTION_REPLY_MODES = 100
+    private const val ACTION_IGNORE_REPLY_COOLDOWNS = 101
+    private const val ACTION_CHECK_4CHAN_POST_ACKNOWLEDGED = 102
   }
 
 }
