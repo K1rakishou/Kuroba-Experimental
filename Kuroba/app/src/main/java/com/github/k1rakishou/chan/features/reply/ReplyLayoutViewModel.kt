@@ -19,6 +19,7 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.repository.BoardFlagInfoRepository
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.loader.ClientException
+import com.github.k1rakishou.chan.core.usecase.ClearPostingCookies
 import com.github.k1rakishou.chan.core.usecase.LoadBoardFlagsUseCase
 import com.github.k1rakishou.chan.features.posting.PostingService
 import com.github.k1rakishou.chan.features.posting.PostingServiceDelegate
@@ -85,7 +86,8 @@ class ReplyLayoutViewModel(
   private val boardFlagInfoRepositoryLazy: Lazy<BoardFlagInfoRepository>,
   private val runtimePermissionsHelperLazy: Lazy<RuntimePermissionsHelper>,
   private val imagePickHelperLazy: Lazy<ImagePickHelper>,
-  private val twoCaptchaSolverLazy: Lazy<TwoCaptchaSolver>
+  private val twoCaptchaSolverLazy: Lazy<TwoCaptchaSolver>,
+  private val clearPostingCookiesLazy: Lazy<ClearPostingCookies>
 ) : BaseViewModel(), ReplyLayoutState.Callbacks {
   private val appConstants: AppConstants
     get() = appConstantsLazy.get()
@@ -185,6 +187,26 @@ class ReplyLayoutViewModel(
     replyLayoutViewCallbacks?.hideDialog()
   }
 
+  override fun showBanDialog(
+    title: String,
+    message: CharSequence,
+    neutralButton: () -> Unit,
+    positiveButton: () -> Unit,
+    onDismissListener: (() -> Unit)?
+  ) {
+    replyLayoutViewCallbacks?.showBanDialog(
+      title = title,
+      message = message,
+      neutralButton = neutralButton,
+      positiveButton = positiveButton,
+      onDismissListener = onDismissListener
+    )
+  }
+
+  override fun hideBanDialog() {
+    replyLayoutViewCallbacks?.hideBanDialog()
+  }
+
   override fun showProgressDialog(title: String) {
     threadListLayoutCallbacks?.showProgressDialog(title)
   }
@@ -255,7 +277,8 @@ class ReplyLayoutViewModel(
       postingServiceDelegateLazy = postingServiceDelegateLazy,
       boardFlagInfoRepositoryLazy = boardFlagInfoRepositoryLazy,
       runtimePermissionsHelperLazy = runtimePermissionsHelperLazy,
-      imagePickHelperLazy = imagePickHelperLazy
+      imagePickHelperLazy = imagePickHelperLazy,
+      clearPostingCookiesLazy = clearPostingCookiesLazy
     )
 
     replyLayoutState.bindChanDescriptor(chanDescriptor)
@@ -775,8 +798,23 @@ class ReplyLayoutViewModel(
     suspend fun promptUserToSelectFlag(chanDescriptor: ChanDescriptor): LoadBoardFlagsUseCase.FlagInfo?
     suspend fun promptUserToConfirmMediaDeletion(): Boolean
 
-    fun showDialog(title: String, message: CharSequence?, onDismissListener: (() -> Unit)? = null)
+    fun showDialog(
+      title: String,
+      message: CharSequence?,
+      onDismissListener: (() -> Unit)? = null
+    )
+
+    fun showBanDialog(
+      title: String,
+      message: CharSequence?,
+      neutralButton: () -> Unit,
+      positiveButton: () -> Unit,
+      onDismissListener: (() -> Unit)? = null
+    )
+
     fun hideDialog()
+    fun hideBanDialog()
+
     fun showToast(message: String)
 
     fun onReplyLayoutOptionsButtonClicked()
@@ -804,7 +842,8 @@ class ReplyLayoutViewModel(
     private val boardFlagInfoRepositoryLazy: Lazy<BoardFlagInfoRepository>,
     private val runtimePermissionsHelperLazy: Lazy<RuntimePermissionsHelper>,
     private val imagePickHelperLazy: Lazy<ImagePickHelper>,
-    private val twoCaptchaSolverLazy: Lazy<TwoCaptchaSolver>
+    private val twoCaptchaSolverLazy: Lazy<TwoCaptchaSolver>,
+    private val clearPostingCookiesLazy: Lazy<ClearPostingCookies>
   ) : ViewModelAssistedFactory<ReplyLayoutViewModel> {
     override fun create(handle: SavedStateHandle): ReplyLayoutViewModel {
       return ReplyLayoutViewModel(
@@ -824,7 +863,8 @@ class ReplyLayoutViewModel(
         boardFlagInfoRepositoryLazy = boardFlagInfoRepositoryLazy,
         runtimePermissionsHelperLazy = runtimePermissionsHelperLazy,
         imagePickHelperLazy = imagePickHelperLazy,
-        twoCaptchaSolverLazy = twoCaptchaSolverLazy
+        twoCaptchaSolverLazy = twoCaptchaSolverLazy,
+        clearPostingCookiesLazy = clearPostingCookiesLazy
       )
     }
   }

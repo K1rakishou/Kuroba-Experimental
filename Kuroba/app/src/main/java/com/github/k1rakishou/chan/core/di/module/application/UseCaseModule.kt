@@ -25,6 +25,7 @@ import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser
 import com.github.k1rakishou.chan.core.site.sites.lynxchan.engine.LynxchanGetBoardsUseCase
 import com.github.k1rakishou.chan.core.usecase.BookmarkFilterWatchableThreadsUseCase
 import com.github.k1rakishou.chan.core.usecase.CatalogDataPreloader
+import com.github.k1rakishou.chan.core.usecase.ClearPostingCookies
 import com.github.k1rakishou.chan.core.usecase.DownloadThemeJsonFilesUseCase
 import com.github.k1rakishou.chan.core.usecase.ExportBackupFileUseCase
 import com.github.k1rakishou.chan.core.usecase.ExportDownloadedThreadAsHtmlUseCase
@@ -529,6 +530,12 @@ class UseCaseModule {
   fun provideLoadBoardFlagsUseCase(proxiedOkHttpClient: ProxiedOkHttpClient): LoadBoardFlagsUseCase {
     deps("LoadBoardFlagsUseCase")
     return LoadBoardFlagsUseCase(proxiedOkHttpClient)
+  }
+
+  @Provides
+  @Singleton
+  fun provideClearSiteCookies(siteManager: SiteManager): ClearPostingCookies {
+    return ClearPostingCookies(siteManager)
   }
 
 }

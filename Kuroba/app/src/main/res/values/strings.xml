@@ -575,6 +575,7 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="reply_layout_filename_removed">File name removed</string>
     <string name="reply_layout_spoiler_flag_updated">Spoiler flag updated</string>
     <string name="reply_layout_error_toast_generic_message">Operation failed. Error: \'%1$s\'</string>
+    <string name="reply_layout_ban_dialog_clear_cookies">Clear cookies</string>
 
     <string name="layout_reply_files_area_too_many_attachables_text">Too many files to display them all at once (%1$d out of %2$d max). Upload or delete some of them to display the rest.</string>
     <string name="layout_reply_files_area_delete_file_action">Delete this file</string>
@@ -1435,7 +1436,7 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="firewall_check_takes_too_long_title">Firewall bypass takes longer than expected.</string>
     <string name="firewall_check_takes_too_long_description">If a browser check seem to get stuck then make sure your system\'s time is correct and you don\'t have any self-signed certificates installed.</string>
     <string name="firewall_check_autoclosed">Firewall bypass screen was automatically closed because it seem to got completely stuck.</string>
-    <string name="firewall_check_header_title">Trying to pass \'%1$s\' firewall.</string>
+    <string name="firewall_check_header_title">\'%1$s\' verification.</string>
 
     <string name="image_search_controller_title">Remote image search</string>
     <string name="image_search_controller_current_instance">Current search instance</string>

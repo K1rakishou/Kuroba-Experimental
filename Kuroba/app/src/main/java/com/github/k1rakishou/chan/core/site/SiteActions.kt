@@ -69,6 +69,8 @@ interface SiteActions {
     replyPostDescriptor: PostDescriptor
   ): ModularResult<Boolean> = ModularResult.value(true)
 
+  fun clearPostingCookies() = Unit
+
   enum class LoginType {
     Passcode,
     TokenAndPass

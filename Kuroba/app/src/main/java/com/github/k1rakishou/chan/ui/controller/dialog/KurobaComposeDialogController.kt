@@ -47,7 +47,7 @@ import kotlinx.coroutines.CompletableDeferred
 class KurobaComposeDialogController(
   context: Context,
   private val params: Params,
-  private val kurobaComposeDialogHandle: KurobaComposeDialogHandle,
+  private val dialogHandle: DialogHandle,
   private val canDismissByClickingOutside: Boolean = true,
   private val onAppeared: (() -> Unit)? = null,
   private val onDismissed: (() -> Unit)? = null
@@ -60,7 +60,7 @@ class KurobaComposeDialogController(
   override fun onCreate() {
     super.onCreate()
     onAppeared?.invoke()
-    kurobaComposeDialogHandle.dismissCallback { pop() }
+    dialogHandle.dismissCallback { pop() }
   }
 
   override fun onDestroy() {
@@ -76,7 +76,7 @@ class KurobaComposeDialogController(
 
   override fun onOutsideOfDialogClicked() {
     if (canDismissByClickingOutside) {
-      kurobaComposeDialogHandle.dismiss()
+      dialogHandle.dismiss()
     }
   }
 
@@ -369,7 +369,7 @@ class KurobaComposeDialogController(
     val onClick: (() -> Unit)? = null
   )
 
-  class KurobaComposeDialogHandle {
+  class DialogHandle {
     private var _dismissed = false
     val dismissed: Boolean
       get() = _dismissed

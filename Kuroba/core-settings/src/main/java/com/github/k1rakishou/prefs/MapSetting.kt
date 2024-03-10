@@ -67,6 +67,10 @@ class MapSetting(
     return value
   }
 
+  fun clear() {
+    set(emptyMap())
+  }
+
   override fun get(): Map<String, String> {
     val cached = cache
     if (cached != null) {

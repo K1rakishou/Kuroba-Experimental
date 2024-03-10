@@ -487,6 +487,14 @@ open class Chan4 : SiteBase() {
       ).execute()
     }
 
+    override fun clearPostingCookies() {
+      chan4CaptchaCookie.setSync("")
+      cloudFlareClearanceCookieMap.clear()
+      chan4CaptchaSettings.update(sync = false) { chan4CaptchaSetting ->
+        chan4CaptchaSetting.copy(captchaTicket = null)
+      }
+    }
+
     private fun HttpUrl.Builder.addBoardCodeParameter(boardCode: String?): HttpUrl.Builder {
       if (boardCode.isNullOrEmpty()) {
         return this

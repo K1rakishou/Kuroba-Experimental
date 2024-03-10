@@ -14,7 +14,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.supervisorScope
-import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
 class CatalogDataPreloader(
@@ -24,7 +23,6 @@ class CatalogDataPreloader(
   private val seenPostsManager: Lazy<SeenPostsManager>
 ) {
 
-  @OptIn(ExperimentalTime::class)
   suspend fun preloadCatalogInfo(catalogDescriptor: ChanDescriptor.CatalogDescriptor) {
     BackgroundUtils.ensureMainThread()
     Logger.d(TAG, "preloadCatalogInfo($catalogDescriptor) begin")

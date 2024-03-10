@@ -450,7 +450,10 @@ class ThreadPresenter @Inject constructor(
     }
 
     if (chanDescriptor is ChanDescriptor.CatalogDescriptor && !ChanSettings.neverShowPages.get()) {
-      pageRequestManager.getBoardPages(chanDescriptor.boardDescriptor())
+      pageRequestManager.getBoardPages(
+        boardDescriptor = chanDescriptor.boardDescriptor(),
+        requestPagesIfNotCached = true
+      )
     }
 
     chanThreadManager.bindChanDescriptor(chanDescriptor)

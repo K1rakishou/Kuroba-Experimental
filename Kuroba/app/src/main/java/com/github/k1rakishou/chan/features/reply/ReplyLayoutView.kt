@@ -80,6 +80,7 @@ class ReplyLayoutView @JvmOverloads constructor(
   private val coroutineScope = KurobaCoroutineScope()
   private val readyState = mutableStateOf(false)
   private val dialogHandle = AtomicReference<KurobaAlertDialog.AlertDialogHandle?>(null)
+  private val banDialogHandle = AtomicReference<KurobaAlertDialog.AlertDialogHandle?>(null)
   private val showPostingDialogExecutor = SerializedCoroutineExecutor(coroutineScope)
 
   init {
@@ -229,49 +230,44 @@ class ReplyLayoutView @JvmOverloads constructor(
     return params.awaitInputResult()
   }
 
-  override fun showDialog(title: String, message: CharSequence?, onDismissListener: (() -> Unit)?) {
-    if (title.isBlank() && message.isNullOrBlank()) {
-      hideDialog()
-      onDismissListener?.invoke()
-      return
-    }
+  override fun showDialog(
+    title: String,
+    message: CharSequence?,
+    onDismissListener: (() -> Unit)?
+  ) {
+    showDialogInternal(
+      banDialog = false,
+      title = title,
+      message = message,
+      neutralButton = null,
+      positiveButton = null,
+      onDismissListener = onDismissListener
+    )
+  }
 
-    showPostingDialogExecutor.post {
-      try {
-        val linkMovementMethod = if (hasWebViewLinks(message)) {
-          WebViewLinkMovementMethod(webViewLinkClickListener = this)
-        } else {
-          null
-        }
-
-        val dialogId = "ReplyPresenterPostingErrorDialog"
-
-        suspendCancellableCoroutine<Unit> { continuation ->
-          continuation.invokeOnCancellation { dialogHandle.getAndSet(null)?.dismiss() }
-
-          dialogFactory.dismissDialogById(dialogId)
-
-          val handle = dialogFactory.createSimpleInformationDialog(
-            context = context,
-            dialogId = dialogId,
-            titleText = title,
-            descriptionText = message,
-            customLinkMovementMethod = linkMovementMethod,
-            onDismissListener = { continuation.resumeValueSafe(Unit) }
-          )
-
-          dialogHandle.getAndSet(handle)
-            ?.dismiss()
-        }
-      } finally {
-        onDismissListener?.invoke()
-      }
-    }
+  override fun showBanDialog(
+    title: String,
+    message: CharSequence?,
+    neutralButton: () -> Unit,
+    positiveButton: () -> Unit,
+    onDismissListener: (() -> Unit)?
+  ) {
+    showDialogInternal(
+      banDialog = true,
+      title = title,
+      message = message,
+      neutralButton = neutralButton,
+      positiveButton = positiveButton,
+      onDismissListener = onDismissListener
+    )
   }
 
   override fun hideDialog() {
-    dialogHandle.getAndSet(null)
-      ?.dismiss()
+    dialogHandle.getAndSet(null)?.dismiss()
+  }
+
+  override fun hideBanDialog() {
+    banDialogHandle.getAndSet(null)?.dismiss()
   }
 
   override fun showToast(message: String) {
@@ -381,6 +377,80 @@ class ReplyLayoutView @JvmOverloads constructor(
         ),
         onDismissListener = { cancellableContinuation.resumeValueSafe(false) }
       )
+    }
+  }
+
+  private fun showDialogInternal(
+    banDialog: Boolean,
+    title: String,
+    message: CharSequence?,
+    neutralButton: (() -> Unit)?,
+    positiveButton: (() -> Unit)?,
+    onDismissListener: (() -> Unit)?
+  ) {
+    if (title.isBlank() && message.isNullOrBlank()) {
+      if (banDialog) {
+        hideBanDialog()
+      } else {
+        hideDialog()
+      }
+
+      onDismissListener?.invoke()
+      return
+    }
+
+    showPostingDialogExecutor.post {
+      try {
+        val linkMovementMethod = if (hasWebViewLinks(message)) {
+          WebViewLinkMovementMethod(webViewLinkClickListener = this)
+        } else {
+          null
+        }
+
+        suspendCancellableCoroutine<Unit> { continuation ->
+          if (banDialog) {
+            continuation.invokeOnCancellation { banDialogHandle.getAndSet(null)?.dismiss() }
+
+            val dialogId = "ReplyPresenterPostingBanDialog"
+            dialogFactory.dismissDialogById(dialogId)
+
+            val handle = dialogFactory.createSimpleConfirmationDialog(
+              context = context,
+              dialogId = dialogId,
+              titleText = title,
+              descriptionText = message,
+              negativeButtonText = appResources.string(R.string.reply_layout_ban_dialog_clear_cookies),
+              onNegativeButtonClickListener = { neutralButton?.invoke() },
+              positiveButtonText = appResources.string(R.string.ok),
+              onPositiveButtonClickListener = { positiveButton?.invoke() },
+              customLinkMovementMethod = linkMovementMethod,
+              onDismissListener = { continuation.resumeValueSafe(Unit) }
+            )
+
+            banDialogHandle.getAndSet(handle)
+              ?.dismiss()
+          } else {
+            continuation.invokeOnCancellation { dialogHandle.getAndSet(null)?.dismiss() }
+
+            val dialogId = "ReplyPresenterPostingErrorDialog"
+            dialogFactory.dismissDialogById(dialogId)
+
+            val handle = dialogFactory.createSimpleInformationDialog(
+              context = context,
+              dialogId = dialogId,
+              titleText = title,
+              descriptionText = message,
+              customLinkMovementMethod = linkMovementMethod,
+              onDismissListener = { continuation.resumeValueSafe(Unit) }
+            )
+
+            dialogHandle.getAndSet(handle)
+              ?.dismiss()
+          }
+        }
+      } finally {
+        onDismissListener?.invoke()
+      }
     }
   }
 

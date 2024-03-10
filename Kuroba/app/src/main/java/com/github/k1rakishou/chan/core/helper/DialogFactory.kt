@@ -45,7 +45,7 @@ class DialogFactory(
     get() = _themeEngine.get()
 
   private val visibleDialogs = mutableMapOf<String, AlertDialogHandle>()
-  private val visibleComposeDialogs = mutableMapOf<String, KurobaComposeDialogController.KurobaComposeDialogHandle>()
+  private val visibleComposeDialogs = mutableMapOf<String, KurobaComposeDialogController.DialogHandle>()
 
   lateinit var containerController: Controller
 
@@ -63,12 +63,12 @@ class DialogFactory(
     checkAppVisibility: Boolean = true,
     onAppearListener: (() -> Unit)? = null,
     onDismissListener: (() -> Unit)? = null,
-  ): KurobaComposeDialogController.KurobaComposeDialogHandle? {
+  ): KurobaComposeDialogController.DialogHandle? {
     if (checkAppVisibility && !applicationVisibilityManager.isAppInForeground()) {
       return null
     }
 
-    val kurobaComposeDialogHandle = KurobaComposeDialogController.KurobaComposeDialogHandle()
+    val dialogHandle = KurobaComposeDialogController.DialogHandle()
 
     // TODO: Clickable links.
     containerController.presentController(
@@ -76,7 +76,7 @@ class DialogFactory(
         context = context,
         canDismissByClickingOutside = cancelable,
         params = params,
-        kurobaComposeDialogHandle = kurobaComposeDialogHandle,
+        dialogHandle = dialogHandle,
         onAppeared = onAppearListener,
         onDismissed = {
           if (dialogId != null) {
@@ -89,10 +89,10 @@ class DialogFactory(
     )
 
     if (dialogId != null) {
-      visibleComposeDialogs[dialogId] = kurobaComposeDialogHandle
+      visibleComposeDialogs[dialogId] = dialogHandle
     }
 
-    return kurobaComposeDialogHandle
+    return dialogHandle
   }
 
   @JvmOverloads
@@ -101,13 +101,13 @@ class DialogFactory(
     titleText: String,
     dialogId: String? = null,
     descriptionText: CharSequence? = null,
+    cancelable: Boolean = true,
+    checkAppVisibility: Boolean = true,
+    customLinkMovementMethod: LinkMovementMethod? = null,
     onPositiveButtonClickListener: (() -> Unit) = { },
     positiveButtonTextId: Int = R.string.ok,
     onAppearListener: (() -> Unit)? = null,
-    onDismissListener: (() -> Unit)? = null,
-    cancelable: Boolean = true,
-    checkAppVisibility: Boolean = true,
-    customLinkMovementMethod: LinkMovementMethod? = null
+    onDismissListener: (() -> Unit)? = null
   ): KurobaAlertDialog.AlertDialogHandle? {
     if (checkAppVisibility && !applicationVisibilityManager.isAppInForeground()) {
       return null
@@ -160,6 +160,7 @@ class DialogFactory(
     descriptionText: CharSequence? = null,
     customView: View? = null,
     cancelable: Boolean = true,
+    customLinkMovementMethod: LinkMovementMethod? = null,
     onPositiveButtonClickListener: ((DialogInterface) -> Unit) = { },
     positiveButtonText: String = getString(R.string.ok),
     onNeutralButtonClickListener: ((DialogInterface) -> Unit) = { },
@@ -199,6 +200,7 @@ class DialogFactory(
           onNegativeButtonClickListener.invoke(dialog)
         }
         .setCancelable(cancelable)
+        .setCustomLinkMovementMethod(customLinkMovementMethod)
         .create(viewGroup, callbacks, alertDialogHandle)
     }
 

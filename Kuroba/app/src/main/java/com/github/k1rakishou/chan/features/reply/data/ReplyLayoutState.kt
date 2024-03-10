@@ -27,6 +27,7 @@ import com.github.k1rakishou.chan.core.site.PostFormatterButton
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
+import com.github.k1rakishou.chan.core.usecase.ClearPostingCookies
 import com.github.k1rakishou.chan.core.usecase.LoadBoardFlagsUseCase
 import com.github.k1rakishou.chan.features.posting.PostResult
 import com.github.k1rakishou.chan.features.posting.PostingServiceDelegate
@@ -89,7 +90,8 @@ class ReplyLayoutState(
   private val postingServiceDelegateLazy: Lazy<PostingServiceDelegate>,
   private val boardFlagInfoRepositoryLazy: Lazy<BoardFlagInfoRepository>,
   private val runtimePermissionsHelperLazy: Lazy<RuntimePermissionsHelper>,
-  private val imagePickHelperLazy: Lazy<ImagePickHelper>
+  private val imagePickHelperLazy: Lazy<ImagePickHelper>,
+  private val clearPostingCookiesLazy: Lazy<ClearPostingCookies>
 ) {
   private val appResources: AppResources
     get() = appResourcesLazy.get()
@@ -115,6 +117,8 @@ class ReplyLayoutState(
     get() = runtimePermissionsHelperLazy.get()
   private val imagePickHelper: ImagePickHelper
     get() = imagePickHelperLazy.get()
+  private val clearPostingCookies: ClearPostingCookies
+    get() = clearPostingCookiesLazy.get()
 
   private val _replyTextState = mutableStateOf<TextFieldValue>(TextFieldValue())
   val replyTextState: State<TextFieldValue>
@@ -1076,7 +1080,13 @@ class ReplyLayoutState(
       }
     }
 
-    showDialog(title, message)
+    showBannedDialog(
+      title = title,
+      message = message,
+      neutralButton = { clearPostingCookies.perform(chanDescriptor.siteDescriptor()) },
+      positiveButton = {},
+      onDismissListener = null
+    )
   }
 
   private suspend fun onPostSendComplete(
@@ -1253,6 +1263,24 @@ class ReplyLayoutState(
     showDialog(title, message, onDismissListener)
   }
 
+  private fun showBannedDialog(
+    title: String,
+    message: CharSequence,
+    neutralButton: () -> Unit,
+    positiveButton: () -> Unit,
+    onDismissListener: (() -> Unit)? = null
+  ) {
+    coroutineScope.launch(Dispatchers.Main) {
+      callbacks.showBanDialog(
+        title = title,
+        message = message,
+        neutralButton = neutralButton,
+        positiveButton = positiveButton,
+        onDismissListener = onDismissListener
+      )
+    }
+  }
+
   private fun showDialog(title: String, message: CharSequence, onDismissListener: (() -> Unit)? = null) {
     coroutineScope.launch(Dispatchers.Main) {
       callbacks.showDialog(title, message, onDismissListener)
@@ -1280,6 +1308,16 @@ class ReplyLayoutState(
     )
 
     fun hideDialog()
+
+    fun showBanDialog(
+      title: String,
+      message: CharSequence,
+      neutralButton: () -> Unit,
+      positiveButton: () -> Unit,
+      onDismissListener: (() -> Unit)? = null
+    )
+
+    fun hideBanDialog()
 
     fun showProgressDialog(title: String)
     fun hideProgressDialog()

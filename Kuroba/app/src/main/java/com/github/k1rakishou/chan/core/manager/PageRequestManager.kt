@@ -38,7 +38,6 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.TimeUnit
-import kotlin.collections.HashSet
 import kotlin.coroutines.CoroutineContext
 
 class PageRequestManager(
@@ -46,7 +45,6 @@ class PageRequestManager(
   private val boardManager: BoardManager
 ) : CoroutineScope {
   private val requestedBoards = Collections.synchronizedSet(HashSet<BoardDescriptor>())
-  private val savedBoards = Collections.synchronizedSet(HashSet<BoardDescriptor>())
   private val boardPagesMap: ConcurrentMap<BoardDescriptor, BoardPages> = ConcurrentHashMap()
   private val boardTimeMap: ConcurrentMap<BoardDescriptor, Long> = ConcurrentHashMap()
   private val notifyIntervals = ConcurrentHashMap<ChanDescriptor.ThreadDescriptor, Long>()
@@ -58,14 +56,14 @@ class PageRequestManager(
   override val coroutineContext: CoroutineContext
     get() = Dispatchers.Default + SupervisorJob() + CoroutineName("PageRequestManager")
 
-  fun getBoardPages(boardDescriptor: BoardDescriptor, requestPagesIfNotCached: Boolean = true): BoardPages? {
+  fun getBoardPages(boardDescriptor: BoardDescriptor, requestPagesIfNotCached: Boolean = false): BoardPages? {
     return getPages(
       boardDescriptor = boardDescriptor,
       requestPagesIfNotCached = requestPagesIfNotCached
     )
   }
 
-  fun getPage(originalPostDescriptor: PostDescriptor?, requestPagesIfNotCached: Boolean = true): BoardPage? {
+  fun getPage(originalPostDescriptor: PostDescriptor?, requestPagesIfNotCached: Boolean = false): BoardPage? {
     if (originalPostDescriptor == null) {
       return null
     }
@@ -81,7 +79,7 @@ class PageRequestManager(
     )
   }
 
-  fun getPage(threadDescriptor: ChanDescriptor.ThreadDescriptor?, requestPagesIfNotCached: Boolean = true): BoardPage? {
+  fun getPage(threadDescriptor: ChanDescriptor.ThreadDescriptor?, requestPagesIfNotCached: Boolean = false): BoardPage? {
     if (threadDescriptor == null || threadDescriptor.threadNo < 0) {
       return null
     }
@@ -178,31 +176,14 @@ class PageRequestManager(
       return null
     }
 
-    if (savedBoards.contains(boardDescriptor)) {
-      if (requestPagesIfNotCached) {
-        // If we have it stored already, return the pages for it
-        // also issue a new request if 3 minutes have passed
-        shouldUpdate(boardDescriptor)
-      }
+    if (requestPagesIfNotCached) {
+      // If we have it stored already, return the pages for it
+      // also issue a new request if 3 minutes have passed
+      shouldUpdate(boardDescriptor)
+    }
 
+    if (boardPagesMap.contains(boardDescriptor)) {
       return boardPagesMap[boardDescriptor]
-    }
-
-    if (!requestPagesIfNotCached) {
-      return null
-    }
-
-    val alreadyRequested = synchronized(this) {
-      requestedBoards.contains(boardDescriptor)
-    }
-
-    if (alreadyRequested) {
-      return null
-    }
-
-    launch {
-      // Otherwise, get the site for the board and request the pages for it
-      requestBoardInternal(boardDescriptor)
     }
 
     return null
@@ -304,7 +285,6 @@ class PageRequestManager(
   ) {
     Logger.d(TAG, "Got pages for ${boardDescriptor.siteName()}/${boardDescriptor.boardCode}/")
 
-    savedBoards.add(boardDescriptor)
     boardTimeMap[boardDescriptor] = System.currentTimeMillis()
     boardPagesMap[boardDescriptor] = pages
 
