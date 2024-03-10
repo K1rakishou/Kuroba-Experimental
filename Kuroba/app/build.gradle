@@ -229,7 +229,8 @@ android {
         jvmTarget = JavaVersion.VERSION_1_8.toString()
         freeCompilerArgs = [
                 "-Xopt-in=kotlin.RequiresOptIn",
-                "-Xopt-in=androidx.compose.foundation.ExperimentalFoundationApi"
+                "-Xopt-in=androidx.compose.foundation.ExperimentalFoundationApi",
+                "-Xopt-in=androidx.compose.foundation.layout.ExperimentalLayoutApi"
         ]
         jvmTarget = "17"
         languageVersion = "2.0"
