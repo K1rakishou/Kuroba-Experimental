@@ -593,7 +593,7 @@ class ReplyManager(
   private fun ensureFilesLoaded() {
     if (!filesLoaded.get()) {
       if (!filesLoadedLatch.await(30, TimeUnit.SECONDS)) {
-        error("Deadlock!")
+        error("Hello, this is Deadlock! Please report me to Github.")
       }
     }
   }
