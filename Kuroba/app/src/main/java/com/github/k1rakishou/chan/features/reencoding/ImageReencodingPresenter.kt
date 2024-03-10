@@ -168,7 +168,7 @@ class ImageReencodingPresenter(
 
     val replyFile = replyManager.getReplyFileByFileUuid(fileUuid).valueOrNull()
     if (replyFile == null) {
-      callback.onImageOptionsApplied()
+      callback.onImageOptionsApplied(fileUuid)
       return
     }
 
@@ -183,14 +183,14 @@ class ImageReencodingPresenter(
 
     // all options are default - do nothing
     if (optionsDefault()) {
-      callback.onImageOptionsApplied()
+      callback.onImageOptionsApplied(fileUuid)
       return
     }
 
     // only the "remove filename" option is selected
     if (onlyRemoveFileNameSelected()) {
       updateFileName(imageOptions.newFileName)
-      callback.onImageOptionsApplied()
+      callback.onImageOptionsApplied(fileUuid)
       return
     }
 
@@ -217,7 +217,7 @@ class ImageReencodingPresenter(
             AppModuleAndroidUtils.getString(R.string.could_not_reencode_image)
           )
 
-          callback.onImageOptionsApplied()
+          callback.onImageOptionsApplied(fileUuid)
           return@launch
         }
 
@@ -229,7 +229,7 @@ class ImageReencodingPresenter(
           fileUuid
         )
 
-        callback.onImageOptionsApplied()
+        callback.onImageOptionsApplied(fileUuid)
       } catch (error: Throwable) {
         Logger.e(TAG, "Error while trying to re-encode bitmap file", error)
         callback.disableOrEnableButtons(true)
@@ -239,7 +239,7 @@ class ImageReencodingPresenter(
           AppModuleAndroidUtils.getString(R.string.could_not_apply_image_options, error.message)
         )
 
-        callback.onImageOptionsApplied()
+        callback.onImageOptionsApplied(fileUuid)
       } finally {
         callback.disableOrEnableButtons(true)
         synchronized(this) { bitmapReencodeJob = null }
@@ -366,7 +366,7 @@ class ImageReencodingPresenter(
   interface ImageReencodingPresenterCallback {
     fun showImagePreview(bitmap: Bitmap)
     fun disableOrEnableButtons(enabled: Boolean)
-    fun onImageOptionsApplied()
+    fun onImageOptionsApplied(fileUuid: UUID)
   }
 
   companion object {

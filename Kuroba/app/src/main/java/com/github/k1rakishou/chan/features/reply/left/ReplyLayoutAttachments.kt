@@ -211,7 +211,7 @@ private fun AttachedMediaThumbnail(
       key2 = mediaHeightPx,
       initialValue = null
     ) {
-      val transformations = if (replyFileAttachable.maxAttachedFilesCountExceeded) {
+      val transformations = if (replyFileAttachable.attachAdditionalInfo.maxAttachedFilesCountExceeded) {
         listOf(GrayscaleTransformation())
       } else {
         listOf()
@@ -311,6 +311,8 @@ private fun AttachedMediaThumbnail(
         MediaDimensions(replyFileAttachable)
 
         MediaFileSize(replyFileAttachable)
+
+        SpoilerMark(replyFileAttachable)
       }
     }
 
@@ -361,17 +363,18 @@ private fun AttachedMediaThumbnail(
         color = Color.White,
         fontSize = 10.ktu.fixedSize(),
       )
-
-      Spacer(modifier = Modifier.width(4.dp))
-
-      if (replyFileAttachable.spoilerInfo?.markedAsSpoiler == true) {
-        KurobaComposeText(
-          text = stringResource(id = R.string.layout_reply_files_area_spoiler_mark),
-          color = remember { Color(0xFF10b1e6L) },
-          fontSize = 10.ktu.fixedSize()
-        )
-      }
     }
+  }
+}
+
+@Composable
+private fun SpoilerMark(replyFileAttachable: ReplyFileAttachable) {
+  if (replyFileAttachable.spoilerInfo?.markedAsSpoiler == true) {
+    KurobaComposeText(
+      text = stringResource(id = R.string.layout_reply_files_area_spoiler_mark),
+      color = remember { Color(0xFF10b1e6L) },
+      fontSize = 10.ktu.fixedSize()
+    )
   }
 }
 
@@ -385,7 +388,7 @@ private fun MediaFileSize(replyFileAttachable: ReplyFileAttachable) {
     KurobaComposeText(
       text = fileSizeString,
       color = Color.White,
-      fontSize = 12.ktu
+      fontSize = 10.ktu.fixedSize()
     )
   }
 }
@@ -401,7 +404,7 @@ private fun MediaDimensions(replyFileAttachable: ReplyFileAttachable) {
     KurobaComposeText(
       text = dimensionsString,
       color = Color.White,
-      fontSize = 12.ktu
+      fontSize = 10.ktu.fixedSize()
     )
   }
 }
@@ -429,24 +432,19 @@ private fun AttachableStatusIconButton(
   val chanTheme = LocalChanTheme.current
   val attachAdditionalInfo = replyFileAttachable.attachAdditionalInfo
 
-  val iconTint = remember(attachAdditionalInfo) {
-    val color = when {
-      attachAdditionalInfo.fileMaxSizeExceeded
-        || attachAdditionalInfo.totalFileSizeExceeded
-        || attachAdditionalInfo.markedAsSpoilerOnNonSpoilerBoard -> chanTheme.colorError
-      attachAdditionalInfo.hasGspExifData() -> chanTheme.colorWarning
-      attachAdditionalInfo.hasOrientationExifData() -> chanTheme.colorWarning
-      else -> chanTheme.colorInfo
+  val iconTintWithDrawableId: Pair<IconTint, Int> = remember(attachAdditionalInfo, chanTheme) {
+    val (color, drawableId) = when {
+      attachAdditionalInfo.anyLimitsExceeded() -> chanTheme.colorError to R.drawable.ic_alert
+      attachAdditionalInfo.hasGspExifData() -> chanTheme.colorWarning to R.drawable.ic_alert
+      attachAdditionalInfo.hasOrientationExifData() -> chanTheme.colorWarning to R.drawable.ic_help_outline_white_24dp
+      else -> chanTheme.colorInfo to R.drawable.ic_help_outline_white_24dp
     }
 
-    return@remember IconTint.TintWithColor(color)
+    return@remember IconTint.TintWithColor(color) to drawableId
   }
 
-  val drawableId = if (attachAdditionalInfo.hasGspExifData()) {
-    R.drawable.ic_alert
-  } else {
-    R.drawable.ic_help_outline_white_24dp
-  }
+  val iconTint = iconTintWithDrawableId.first
+  val drawableId = iconTintWithDrawableId.second
 
   KurobaComposeIcon(
     modifier = Modifier

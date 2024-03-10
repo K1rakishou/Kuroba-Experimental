@@ -1,7 +1,6 @@
 package com.github.k1rakishou.chan.features.reply.data
 
 import android.content.Context
-import android.util.LruCache
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -28,6 +27,7 @@ import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.util.*
 import java.util.regex.Pattern
 
 class ReplyLayoutHelper(
@@ -49,11 +49,11 @@ class ReplyLayoutHelper(
   private val imageLoaderV2: ImageLoaderV2
     get() = imageLoaderV2Lazy.get()
 
-  private val imageDimensionsCache = LruCache<FileKey, ReplyFileAttachable.ImageDimensions>(1024)
-  private val fileExifInfoCache = LruCache<FileKey, Set<FileExifInfoStatus>>(1024)
+  private val cachedReplyFileVersions = mutableMapOf<UUID, Int>()
 
   suspend fun enumerateReplyFiles(
-    chanDescriptor: ChanDescriptor
+    chanDescriptor: ChanDescriptor,
+    forceUpdateFiles: Collection<UUID>
   ): ModularResult<ReplyAttachables> {
     if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
       return ModularResult.value(ReplyAttachables())
@@ -117,12 +117,15 @@ class ReplyLayoutHelper(
             }
 
             val imageDimensions = getImageDimensions(replyFile)
+            val dimensionsExceeded = dimensionsExceeded(imageDimensions, chanDescriptor)
 
             val fileOnDisk = replyFile.fileOnDisk.absolutePath
             val fileMetaOnDisk = replyFile.fileMetaOnDisk.absolutePath
             val previewFileOnDiskPath = replyFile.previewFileOnDisk?.absolutePath
+            val version = getFileVersion(replyFileMeta, forceUpdateFiles)
 
             return@map ReplyFileAttachable(
+              version = version,
               fileUuid = replyFileMeta.fileUuid,
               fileName = replyFileMeta.fileName,
               spoilerInfo = spoilerInfo,
@@ -133,14 +136,15 @@ class ReplyLayoutHelper(
                 fileExifStatus = fileExifStatus,
                 totalFileSizeExceeded = totalFileSizeExceeded,
                 fileMaxSizeExceeded = exceedsMaxFileSize,
-                markedAsSpoilerOnNonSpoilerBoard = markedAsSpoilerOnNonSpoilerBoard
+                markedAsSpoilerOnNonSpoilerBoard = markedAsSpoilerOnNonSpoilerBoard,
+                maxAttachedFilesCountExceeded = when {
+                  maxAllowedFilesPerPost == null -> false
+                  selectedFilesCount < maxAllowedFilesPerPost -> false
+                  selectedFilesCount == maxAllowedFilesPerPost -> !isSelected
+                  else -> true
+                },
+                dimensionsExceeded = dimensionsExceeded
               ),
-              maxAttachedFilesCountExceeded = when {
-                maxAllowedFilesPerPost == null -> false
-                selectedFilesCount < maxAllowedFilesPerPost -> false
-                selectedFilesCount == maxAllowedFilesPerPost -> !isSelected
-                else -> true
-              },
               fileOnDisk = fileOnDisk,
               fileMetaOnDisk = fileMetaOnDisk,
               previewFileOnDiskPath = previewFileOnDiskPath
@@ -167,6 +171,8 @@ class ReplyLayoutHelper(
 
     val maxBoardFileSizeRaw = chanBoard?.maxFileSize ?: -1
     val maxBoardWebmSizeRaw = chanBoard?.maxWebmSize ?: -1
+    val maxMediaWidth = chanBoard?.maxMediaWidth ?: -1
+    val maxMediaHeight = chanBoard?.maxMediaHeight ?: -1
 
     val totalFileSizeSum = getTotalFileSizeSumPerPost(chanDescriptor)
     val attachAdditionalInfo = clickedFile.attachAdditionalInfo
@@ -208,21 +214,24 @@ class ReplyLayoutHelper(
         append("File name")
         appendLine()
         append(infoText(clickedFile.fileName))
-        appendLine()
-        appendLine()
       }
 
       if (fileMd5Hash != null) {
+        appendLine()
+        appendLine()
+
         append("File MD5 hash")
         appendLine()
         append(colorizedText(fileMd5Hash))
-        appendLine()
-        appendLine()
       }
 
       clickedFile.spoilerInfo?.let { spoilerInfo ->
+        appendLine()
+        appendLine()
+
         append("Marked as spoiler: ")
         append(infoText(spoilerInfo.markedAsSpoiler.toString()))
+        appendLine()
         appendLine()
 
         append("Board supports spoilers: ")
@@ -231,12 +240,12 @@ class ReplyLayoutHelper(
         } else {
           append(errorText(spoilerInfo.boardSupportsSpoilers.toString()))
         }
-
-        appendLine()
-        appendLine()
       }
 
       run {
+        appendLine()
+        appendLine()
+
         append("File size: ")
 
         val exceedsFileSize = (maxBoardFileSizeRaw > 0 && clickedFile.fileSize > maxBoardFileSizeRaw) ||
@@ -249,32 +258,67 @@ class ReplyLayoutHelper(
         }
 
         appendLine()
+
+        val maxFileSizeFormatted = maxBoardFileSizeRaw
+          .takeIf { it > 0 }
+          ?.let { fileSize -> ChanPostUtils.getReadableFileSize(fileSize.toLong()) }
+          ?: "INF"
+
+        val maxWebmSizeFormatted = maxBoardWebmSizeRaw
+          .takeIf { it > 0 }
+          ?.let { webmSize -> ChanPostUtils.getReadableFileSize(webmSize.toLong()) }
+          ?: "INF"
+
+        append("Max file size: ")
+        append(infoText(maxFileSizeFormatted))
         appendLine()
+        append("Max webm size: ")
+        append(infoText(maxWebmSizeFormatted))
       }
 
-
       clickedFile.imageDimensions?.let { imageDimensions ->
+        appendLine()
+        appendLine()
+
         append("Image dimensions: ")
 
-        if (imageDimensions.width > 10000) {
+        if (maxMediaWidth > 0 && imageDimensions.width > maxMediaWidth) {
           append(errorText(imageDimensions.width.toString()))
         } else {
           append(infoText(imageDimensions.width.toString()))
         }
 
-        append("x")
+        append(infoText("x"))
 
-        if (imageDimensions.height > 10000) {
+        if (maxMediaHeight > 0 && imageDimensions.height > maxMediaHeight) {
           append(errorText(imageDimensions.height.toString()))
         } else {
           append(infoText(imageDimensions.height.toString()))
         }
 
         appendLine()
+
+        val maxMediaWidthFormatted = maxMediaWidth
+          .takeIf { it > 0 }
+          ?.toString()
+          ?: "INF"
+
+        val maxMediaHeightFormatted = maxMediaHeight
+          .takeIf { it > 0 }
+          ?.toString()
+          ?: "INF"
+
+        append("Max width: ")
+        append(infoText(maxMediaWidthFormatted))
         appendLine()
+        append("Max height: ")
+        append(infoText(maxMediaHeightFormatted))
       }
 
       if (totalFileSizeSum != null && totalFileSizeSum > 0) {
+        appendLine()
+        appendLine()
+
         val totalFileSizeSumFormatted = ChanPostUtils.getReadableFileSize(totalFileSizeSum)
 
         append("Total file size sum per post: ")
@@ -283,30 +327,30 @@ class ReplyLayoutHelper(
         } else {
           append(infoText(totalFileSizeSumFormatted))
         }
-
-        appendLine()
-        appendLine()
       }
 
       val gpsExifData = attachAdditionalInfo.getGspExifDataOrNull()
       if (gpsExifData.isNotEmpty()) {
+        appendLine()
+        appendLine()
+
         append("GPS exif data: ")
         append(warningText(gpsExifData.joinToString(separator = ", ", transform = { it.value })))
-        appendLine()
-        appendLine()
       }
 
       val orientationExifData = attachAdditionalInfo.getOrientationExifData()
       if (orientationExifData.isNotEmpty()) {
+        appendLine()
+        appendLine()
+
         append("Orientation exif data: ")
         append(warningText(orientationExifData.joinToString(separator = ", ", transform = { it.value })))
-        appendLine()
-        appendLine()
       }
     }
   }
 
-  suspend fun removeSelectedFilesMetadata() {
+  suspend fun removeSelectedFilesMetadata(): List<UUID> {
+    val fileUuids = mutableListOf<UUID>()
     val selectedReplyFiles = replyManager.getSelectedFilesOrdered()
 
     selectedReplyFiles.forEach { replyFile ->
@@ -344,14 +388,23 @@ class ReplyLayoutHelper(
         return@forEach
       }
 
-      imageLoaderV2.calculateFilePreviewAndStoreOnDisk(
+      val success = imageLoaderV2.calculateFilePreviewAndStoreOnDisk(
         appContext,
         replyFileMeta.fileUuid
       )
+
+      if (!success) {
+        return@forEach
+      }
+
+      fileUuids += replyFileMeta.fileUuid
     }
+
+    return fileUuids
   }
 
-  suspend fun changeSelectedFilesChecksum() {
+  suspend fun changeSelectedFilesChecksum(): List<UUID> {
+    val fileUuids = mutableListOf<UUID>()
     val selectedReplyFiles = replyManager.getSelectedFilesOrdered()
 
     selectedReplyFiles.forEach { replyFile ->
@@ -389,11 +442,19 @@ class ReplyLayoutHelper(
         return@forEach
       }
 
-      imageLoaderV2.calculateFilePreviewAndStoreOnDisk(
+      val success = imageLoaderV2.calculateFilePreviewAndStoreOnDisk(
         appContext,
         replyFileMeta.fileUuid
       )
+
+      if (!success) {
+        return@forEach
+      }
+
+      fileUuids += replyFileMeta.fileUuid
     }
+
+    return fileUuids
   }
 
   suspend fun getTotalFileSizeSumPerPost(chanDescriptor: ChanDescriptor): Long? {
@@ -401,7 +462,6 @@ class ReplyLayoutHelper(
       return null
     }
 
-    // TODO: add caching
     return postingLimitationsInfoManager.getMaxAllowedTotalFilesSizePerPost(
       chanDescriptor.boardDescriptor()
     )
@@ -414,30 +474,64 @@ class ReplyLayoutHelper(
 
     siteManager.awaitUntilInitialized()
 
-    // TODO: add caching
     return postingLimitationsInfoManager.getMaxAllowedFilesPerPost(
       chanDescriptor.boardDescriptor()
     )
   }
 
-  private fun getImageDimensions(replyFile: ReplyFile): ReplyFileAttachable.ImageDimensions? {
-    val fileOnDisk = replyFile.fileOnDisk
-    val key = fileOnDisk.asFileKey()
+  private fun getFileVersion(
+    replyFileMeta: ReplyFileMeta,
+    forceUpdateFiles: Collection<UUID>
+  ): Int {
+    if (replyFileMeta.fileUuid in forceUpdateFiles) {
+      val prevVersion = cachedReplyFileVersions[replyFileMeta.fileUuid]
+      val newVersion = if (prevVersion != null) {
+        prevVersion + 1
+      } else {
+        0
+      }
 
-    val fromCache = imageDimensionsCache.get(key)
-    if (fromCache != null) {
-      return fromCache
+      cachedReplyFileVersions[replyFileMeta.fileUuid] = newVersion
+      return newVersion
     }
 
+    return -1
+  }
+
+  private fun dimensionsExceeded(
+    imageDimensions: ReplyFileAttachable.ImageDimensions?,
+    chanDescriptor: ChanDescriptor
+  ): Boolean {
+    if (imageDimensions == null) {
+      return false
+    }
+
+    val chanBoard = boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor())
+    if (chanBoard == null) {
+      return false
+    }
+
+    val maxMediaWidth = chanBoard.maxMediaWidth
+    val maxMediaHeight = chanBoard.maxMediaHeight
+
+    if (maxMediaWidth > 0 && imageDimensions.width > maxMediaWidth) {
+      return true
+    }
+
+    if (maxMediaHeight > 0 && imageDimensions.height > maxMediaHeight) {
+      return true
+    }
+
+    return false
+  }
+
+  private fun getImageDimensions(replyFile: ReplyFile): ReplyFileAttachable.ImageDimensions? {
     return MediaUtils.getImageDims(replyFile.fileOnDisk)
       ?.let { dimensions ->
-        val imageDimensions = ReplyFileAttachable.ImageDimensions(
+        return@let ReplyFileAttachable.ImageDimensions(
           dimensions.first!!,
           dimensions.second!!
         )
-
-        imageDimensionsCache.put(key, imageDimensions)
-        return@let imageDimensions
       }
   }
 
@@ -473,11 +567,6 @@ class ReplyLayoutHelper(
 
   private fun getFileExifInfoStatus(fileOnDisk: File): Set<FileExifInfoStatus> {
     try {
-      val fromCache = fileExifInfoCache.get(fileOnDisk.asFileKey())
-      if (fromCache != null) {
-        return fromCache
-      }
-
       val resultSet = hashSetOf<FileExifInfoStatus>()
       val exif = ExifInterface(fileOnDisk.absolutePath)
       val orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_UNDEFINED)
@@ -509,7 +598,6 @@ class ReplyLayoutHelper(
         resultSet += FileExifInfoStatus.GpsExifFound(fullString)
       }
 
-      fileExifInfoCache.put(fileOnDisk.asFileKey(), resultSet)
       return resultSet
     } catch (ignored: Exception) {
       return emptySet()
@@ -520,13 +608,6 @@ class ReplyLayoutHelper(
     return boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor())
       ?.spoilers
       ?: return false
-  }
-
-  private fun File.asFileKey(): FileKey {
-    return FileKey(
-      filePath = absolutePath,
-      fileSize = length()
-    )
   }
 
   fun handleQuote(replyTextState: TextFieldValue, postNo: Long, textQuote: String?): TextFieldValue {
@@ -578,11 +659,6 @@ class ReplyLayoutHelper(
       selection = TextRange(selectionStart + stringBuilder.length)
     )
   }
-
-  private data class FileKey(
-    val filePath: String,
-    val fileSize: Long
-  )
 
   companion object {
     private const val TAG = "ReplyLayoutFileEnumerator"

@@ -97,7 +97,10 @@ class Chan4BoardsRequest(
           else -> skipValue()
         }
       }
-  
+
+      board.maxMediaWidth = 10000
+      board.maxMediaHeight = 10000
+
       if (board.hasMissingInfo()) {
         // Invalid data, ignore
         return@jsonObject null

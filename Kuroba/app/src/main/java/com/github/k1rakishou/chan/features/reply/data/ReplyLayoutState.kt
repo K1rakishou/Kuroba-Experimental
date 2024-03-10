@@ -60,12 +60,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
-import java.util.UUID
+import java.util.*
 
 @Stable
 class ReplyLayoutState(
@@ -136,8 +137,6 @@ class ReplyLayoutState(
     get() = _postFormatterButtons
 
   private val _maxCommentLength = mutableIntStateOf(0)
-  val maxCommentLength: State<Int>
-    get() = _maxCommentLength
 
   private val _hasFlagsToShow = mutableStateOf<Boolean>(false)
   val hasFlagsToShow: State<Boolean>
@@ -187,13 +186,15 @@ class ReplyLayoutState(
 
     compositeJob += coroutineScope.launch {
       replyManager.listenForReplyFilesUpdates()
-        .onEach { updateAttachables() }
+        .filter { fileUuids -> fileUuids.isNotEmpty() }
+        .onEach { forceUpdateFiles -> updateAttachables(forceUpdateFiles) }
         .collect()
     }
 
     compositeJob += coroutineScope.launch {
       imagePickHelper.pickedFilesUpdateFlow
-        .onEach { updateAttachables() }
+        .filter { fileUuids -> fileUuids.isNotEmpty() }
+        .onEach { fileUuids -> updateAttachables(fileUuids) }
         .collect()
     }
 
@@ -395,34 +396,40 @@ class ReplyLayoutState(
   }
 
   fun insertTags(postFormatterButton: PostFormatterButton) {
-    val textFieldValue = _replyTextState.value
-    val capacity = textFieldValue.text.length + postFormatterButton.openTag.length + postFormatterButton.closeTag.length
-    var selectionIndex = -1
+    try {
+      val textFieldValue = _replyTextState.value
+      val capacity = textFieldValue.text.length + postFormatterButton.openTag.length + postFormatterButton.closeTag.length
+      var selectionIndex = -1
 
-    val newText = buildString(capacity = capacity) {
-      val text = textFieldValue.text
-      val selectionStart = textFieldValue.selection.start
-      val selectionEnd = textFieldValue.selection.end
+      val newText = buildString(capacity = capacity) {
+        val text = textFieldValue.text
+        val selectionStart = textFieldValue.selection.start
+        val selectionEnd = textFieldValue.selection.end
 
-      append(text.subSequence(0, selectionStart))
-      append(postFormatterButton.openTag)
+        append(text.subSequence(0, selectionStart))
+        append(postFormatterButton.openTag)
 
-      if (selectionEnd > selectionStart) {
-        append(text.subSequence(selectionStart, selectionEnd))
+        if (selectionEnd > selectionStart) {
+          append(text.subSequence(selectionStart, selectionEnd))
+        }
+
+        selectionIndex = this.length
+
+        append(postFormatterButton.closeTag)
+        append(text.subSequence(selectionEnd, text.length))
       }
 
-      selectionIndex = this.length
+      _replyTextState.value = textFieldValue.copy(
+        text = newText,
+        selection = TextRange(selectionIndex)
+      )
 
-      append(postFormatterButton.closeTag)
-      append(text.subSequence(selectionEnd, text.length))
+      afterReplyTextChanged()
+    } catch (error: Throwable) {
+      Logger.error(TAG, error) { "insertTags() error postFormatterButton: ${postFormatterButton}" }
+
+      showErrorToast(error)
     }
-
-    _replyTextState.value = textFieldValue.copy(
-      text = newText,
-      selection = TextRange(selectionIndex)
-    )
-
-    afterReplyTextChanged()
   }
 
   fun quote(post: ChanPost, withText: Boolean) {
@@ -456,6 +463,8 @@ class ReplyLayoutState(
           "postNo: ${postNo}, " +
           "textQuote: '$textQuote'"
       }
+
+      showErrorToast(error)
     }
   }
 
@@ -465,14 +474,7 @@ class ReplyLayoutState(
   }
 
   fun removeAttachedMedia(attachedMedia: ReplyFileAttachable) {
-    replyManager.deleteFile(
-      fileUuid = attachedMedia.fileUuid,
-      notifyListeners = true
-    )
-      .onError { error ->
-        Logger.error(TAG) { "removeAttachedMedia(${attachedMedia.fileUuid}) error: ${error.errorMessageOrClassName()}" }
-      }
-      .ignore()
+    removeAttachedMedia(attachedMedia.fileUuid)
   }
 
   fun removeAttachedMedia(fileUuid: UUID) {
@@ -482,6 +484,10 @@ class ReplyLayoutState(
     )
       .onError { error ->
         Logger.error(TAG) { "removeAttachedMedia(${fileUuid}) error: ${error.errorMessageOrClassName()}" }
+        showErrorToast(error)
+      }
+      .onSuccess {
+        showToast(appResources.string(R.string.reply_layout_attached_media_deleted))
       }
       .ignore()
   }
@@ -492,6 +498,10 @@ class ReplyLayoutState(
     )
       .onError { error ->
         Logger.error(TAG) { "deleteSelectedFiles() error: ${error.errorMessageOrClassName()}" }
+        showErrorToast(error)
+      }
+      .onSuccess {
+        showToast(appResources.string(R.string.reply_layout_selected_files_deleted))
       }
       .ignore()
   }
@@ -508,6 +518,10 @@ class ReplyLayoutState(
         )
           .onError { error ->
             Logger.e(TAG, "removeSelectedFilesName(${replyFileMeta.fileUuid}) Failed to update file name", error)
+            showErrorToast(error)
+          }
+          .onSuccess {
+            showToast(appResources.string(R.string.reply_layout_filename_removed))
           }
           .ignore()
       }
@@ -516,15 +530,27 @@ class ReplyLayoutState(
 
   fun removeSelectedFilesMetadata() {
     coroutineScope.launch(Dispatchers.IO) {
-      replyLayoutHelper.removeSelectedFilesMetadata()
-      updateAttachables()
+      doWithProgressDialog {
+        val updatedFileUuids = replyLayoutHelper.removeSelectedFilesMetadata()
+        updateAttachables(updatedFileUuids)
+
+        withContext(Dispatchers.Main) {
+          showToast(appResources.string(R.string.reply_layout_metadata_remove_success))
+        }
+      }
     }
   }
 
   fun changeSelectedFilesChecksum() {
     coroutineScope.launch(Dispatchers.IO) {
-      replyLayoutHelper.changeSelectedFilesChecksum()
-      updateAttachables()
+      doWithProgressDialog {
+        val updatedFileUuids = replyLayoutHelper.changeSelectedFilesChecksum()
+        updateAttachables(updatedFileUuids)
+
+        withContext(Dispatchers.Main) {
+          showToast(appResources.string(R.string.reply_layout_checksum_change_success))
+        }
+      }
     }
   }
 
@@ -550,7 +576,7 @@ class ReplyLayoutState(
         )
       }
 
-      updateAttachables()
+      updateAttachables(toUpdate)
     }
   }
 
@@ -561,10 +587,14 @@ class ReplyLayoutState(
         spoiler = spoiler,
         notifyListeners = true
       )
-        .safeUnwrap { error ->
+        .onError { error ->
           Logger.e(TAG, "markUnmarkAsSpoiler($fileUuid, $spoiler) error", error)
-          return@launch
+          showErrorToast(error)
         }
+        .onSuccess {
+          showToast(appResources.string(R.string.reply_layout_spoiler_flag_updated))
+        }
+        .ignore()
     }
   }
 
@@ -579,16 +609,21 @@ class ReplyLayoutState(
       fileUuid = attachedMedia.fileUuid,
       selected = selected,
       notifyListeners = true
-    ).onError { error ->
-      Logger.error(TAG) { "onAttachableSelectionChanged(${attachedMedia.fileUuid}, ${selected}) " +
-        "error: ${error.errorMessageOrClassName()}" }
-    }.ignore()
+    )
+      .onError { error ->
+        Logger.error(TAG) {
+          "onAttachableSelectionChanged(${attachedMedia.fileUuid}, ${selected}) error: ${error.errorMessageOrClassName()}"
+        }
+
+        showErrorToast(error)
+      }
+      .ignore()
   }
 
   fun pickLocalMedia(showFilePickerChooser: Boolean) {
     filePickerExecutor.post {
       if (!requestPermissionIfNeededSuspend()) {
-        callbacks.showToast(appResources.string(R.string.reply_layout_pick_file_permission_required))
+        showToast(appResources.string(R.string.reply_layout_pick_file_permission_required))
         return@post
       }
 
@@ -606,6 +641,7 @@ class ReplyLayoutState(
         replyFiles.forEach { replyFile ->
           val replyFileMeta = replyFile.getReplyFileMeta().safeUnwrap { error ->
             Logger.e(TAG, "pickLocalMedia() imagePickHelper.pickLocalFile($chanDescriptor) getReplyFileMeta() error", error)
+            showErrorToast(error)
             return@forEach
           }
 
@@ -620,11 +656,11 @@ class ReplyLayoutState(
         }
 
         Logger.d(TAG, "pickLocalMedia() success")
-        callbacks.showToast(appResources.string(R.string.reply_layout_local_file_pick_success))
+        showToast(appResources.string(R.string.reply_layout_local_file_pick_success))
       } catch (error: Throwable) {
         Logger.error(TAG) { "pickLocalMedia() error: ${error.errorMessageOrClassName()}" }
 
-        callbacks.showToast(
+        showToast(
           appResources.string(R.string.reply_layout_local_file_pick_error, error.errorMessageOrClassName())
         )
       }
@@ -649,6 +685,7 @@ class ReplyLayoutState(
         replyFiles.forEach { replyFile ->
           val replyFileMeta = replyFile.getReplyFileMeta().safeUnwrap { error ->
             Logger.e(TAG, "pickLocalMedia() imagePickHelper.pickRemoteMedia($chanDescriptor) getReplyFileMeta() error", error)
+            showErrorToast(error)
             return@forEach
           }
 
@@ -663,10 +700,10 @@ class ReplyLayoutState(
         }
 
         Logger.d(TAG, "pickRemoteMedia() success")
-        callbacks.showToast(appResources.string(R.string.reply_layout_remote_file_pick_success))
+        showToast(appResources.string(R.string.reply_layout_remote_file_pick_success))
       } catch (error: Throwable) {
         Logger.error(TAG) { "pickRemoteMedia() error: ${error.errorMessageOrClassName()}" }
-        callbacks.showToast(
+        showToast(
           appResources.string(R.string.reply_layout_remote_file_pick_error, error.errorMessageOrClassName())
         )
       }
@@ -685,12 +722,27 @@ class ReplyLayoutState(
       openReplyLayout()
     }
 
-    callbacks.hideDialog()
+    hideDialog()
   }
 
   fun onSendReplyEnd() {
     Logger.debug(TAG) { "onSendReplyEnd(${chanDescriptor})" }
     _sendReplyState.value = SendReplyState.Finished
+  }
+
+  private suspend fun doWithProgressDialog(
+    title: String? = null,
+    block: suspend () -> Unit
+  ) {
+    try {
+      withContext(Dispatchers.Main) {
+        val actualTitle = title ?: appResources.string(R.string.doing_heavy_lifting_please_wait)
+        callbacks.showProgressDialog(actualTitle)
+      }
+      block()
+    } finally {
+      withContext(Dispatchers.Main) { callbacks.hideProgressDialog() }
+    }
   }
 
   private suspend fun loadDraftIntoViews(chanDescriptor: ChanDescriptor) {
@@ -730,7 +782,7 @@ class ReplyLayoutState(
       _flag.value = boardFlagInfoRepository.getLastUsedFlagInfo(chanDescriptor.boardDescriptor())
     }
 
-    updateAttachables()
+    updateAttachables(emptyList())
   }
 
   suspend fun loadViewsIntoDraft(): Boolean {
@@ -762,8 +814,8 @@ class ReplyLayoutState(
     )
   }
 
-  fun onImageOptionsApplied() {
-    replyManager.notifyReplyFilesChanged()
+  fun onImageOptionsApplied(fileUuid: UUID) {
+    replyManager.notifyReplyFilesChanged(fileUuid)
   }
 
   suspend fun onFlagSelected(selectedFlag: LoadBoardFlagsUseCase.FlagInfo) {
@@ -813,8 +865,8 @@ class ReplyLayoutState(
     }
   }
 
-  private suspend fun updateAttachables() {
-    val replyAttachables = replyLayoutHelper.enumerateReplyFiles(chanDescriptor)
+  private suspend fun updateAttachables(forceUpdateFiles: Collection<UUID>) {
+    val replyAttachables = replyLayoutHelper.enumerateReplyFiles(chanDescriptor, forceUpdateFiles)
       .onError { error ->
         Logger.error(TAG) {
           "updateAttachables() Failed to enumerate reply files for ${chanDescriptor}, error: ${error.errorMessageOrClassName()}"
@@ -825,7 +877,7 @@ class ReplyLayoutState(
           error.errorMessageOrClassName()
         )
 
-        callbacks.showToast(message)
+        showToast(message)
       }
       .valueOrNull()
 
@@ -949,7 +1001,7 @@ class ReplyLayoutState(
 
   private fun onPostSendCanceled(chanDescriptor: ChanDescriptor) {
     Logger.debug(TAG) { "onPostSendCanceled(${chanDescriptor})" }
-    callbacks.showToast(appResources.string(R.string.reply_send_canceled_by_user))
+    showToast(appResources.string(R.string.reply_send_canceled_by_user))
   }
 
   private fun onPostSendError(chanDescriptor: ChanDescriptor, exception: Throwable) {
@@ -1127,12 +1179,24 @@ class ReplyLayoutState(
       threadNo = threadNo
     )
 
-    callbacks.hideDialog()
+    hideDialog()
     collapseReplyLayout()
     callbacks.onPostedSuccessfully(prevChanDescriptor, newThreadDescriptor)
 
     Logger.debug(TAG) {
       "onPostedSuccessfully(${prevChanDescriptor}) success, newThreadDescriptor: ${newThreadDescriptor}"
+    }
+  }
+
+  private fun showToast(message: String) {
+    coroutineScope.launch(Dispatchers.Main) {
+      callbacks.showToast(message)
+    }
+  }
+
+  private fun showErrorToast(throwable: Throwable) {
+    coroutineScope.launch(Dispatchers.Main) {
+      callbacks.showErrorToast(throwable)
     }
   }
 
@@ -1142,7 +1206,15 @@ class ReplyLayoutState(
   }
 
   private fun showDialog(title: String, message: CharSequence, onDismissListener: (() -> Unit)? = null) {
-    callbacks.showDialog(title, message, onDismissListener)
+    coroutineScope.launch(Dispatchers.Main) {
+      callbacks.showDialog(title, message, onDismissListener)
+    }
+  }
+
+  private fun hideDialog() {
+    coroutineScope.launch(Dispatchers.Main) {
+      callbacks.hideDialog()
+    }
   }
 
   interface Callbacks {
@@ -1161,7 +1233,11 @@ class ReplyLayoutState(
 
     fun hideDialog()
 
+    fun showProgressDialog(title: String)
+    fun hideProgressDialog()
+
     fun showToast(message: String)
+    fun showErrorToast(throwable: Throwable)
 
     suspend fun onPostedSuccessfully(
       prevChanDescriptor: ChanDescriptor,

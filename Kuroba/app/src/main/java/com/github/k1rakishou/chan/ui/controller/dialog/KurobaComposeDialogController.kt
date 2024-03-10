@@ -119,7 +119,7 @@ class KurobaComposeDialogController(
       text = params.title.titleText(),
       maxLines = 4,
       overflow = TextOverflow.Ellipsis,
-      fontSize = 22.ktu
+      fontSize = 20.ktu
     )
 
     if (params.description != null) {
@@ -392,6 +392,22 @@ class KurobaComposeDialogController(
   companion object {
     private val TABLET_WIDTH = 500.dp
     private val NORMAL_WIDTH = 360.dp
+
+    fun confirmationDialog(
+      title: Text,
+      description: Text?,
+      negativeButton: DialogButton,
+      positionButton: PositiveDialogButton
+    ): Params {
+      return Params(
+        title = title,
+        description = description,
+        inputs = emptyList(),
+        negativeButton = negativeButton,
+        neutralButton = null,
+        positiveButton = positionButton
+      )
+    }
 
     fun informationDialog(title: Text, description: Text): Params {
       return Params(

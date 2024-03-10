@@ -40,6 +40,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.MediaUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.rethrowCancellationException
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -180,7 +181,24 @@ class ReplyLayoutViewModel(
     replyLayoutViewCallbacks?.hideDialog()
   }
 
+  override fun showProgressDialog(title: String) {
+    threadListLayoutCallbacks?.showProgressDialog(title)
+  }
+
+  override fun hideProgressDialog() {
+    threadListLayoutCallbacks?.hideProgressDialog()
+  }
+
   override fun showToast(message: String) {
+    replyLayoutViewCallbacks?.showToast(message)
+  }
+
+  override fun showErrorToast(throwable: Throwable) {
+    val message = appResources.string(
+      R.string.reply_layout_error_toast_generic_message,
+      throwable.errorMessageOrClassName()
+    )
+
     replyLayoutViewCallbacks?.showToast(message)
   }
 
@@ -397,12 +415,21 @@ class ReplyLayoutViewModel(
     }
   }
 
-  fun removeAttachedMedia(attachedMedia: ReplyFileAttachable) {
-    withReplyLayoutState { replyLayoutState -> replyLayoutState.removeAttachedMedia(attachedMedia) }
-  }
-
   fun onRemoteImageSelected(selectedImageUrl: HttpUrl) {
     withReplyLayoutState { replyLayoutState -> replyLayoutState.pickRemoteMedia(selectedImageUrl) }
+  }
+
+  fun removeAttachedMedia(attachedMedia: ReplyFileAttachable) {
+    withReplyLayoutState { replyLayoutState ->
+      viewModelScope.launch {
+        val delete = replyLayoutViewCallbacks?.promptUserToConfirmMediaDeletion() ?: false
+        if (!delete) {
+          return@launch
+        }
+
+        replyLayoutState.removeAttachedMedia(attachedMedia)
+      }
+    }
   }
 
   fun removeAttachedMedia(fileUuid: UUID) {
@@ -517,8 +544,8 @@ class ReplyLayoutViewModel(
     return boardFlagInfoRepository.getFlagInfoList(boardDescriptor)
   }
 
-  fun onImageOptionsApplied() {
-    withReplyLayoutState { replyLayoutState -> replyLayoutState.onImageOptionsApplied() }
+  fun onImageOptionsApplied(fileUuid: UUID) {
+    withReplyLayoutState { replyLayoutState -> replyLayoutState.onImageOptionsApplied(fileUuid) }
   }
 
   fun onPickLocalMediaButtonClicked() {
@@ -720,6 +747,9 @@ class ReplyLayoutViewModel(
       newThreadDescriptor: ChanDescriptor.ThreadDescriptor
     )
 
+    fun showProgressDialog(title: String)
+    fun hideProgressDialog()
+
     fun presentController(controller: BaseFloatingController)
     fun pushController(controller: Controller)
     fun showMediaReencodingController(attachedMedia: ReplyFileAttachable, fileSupportedForReencoding: Boolean)
@@ -730,6 +760,7 @@ class ReplyLayoutViewModel(
     suspend fun showDialogSuspend(title: String, message: CharSequence?)
     suspend fun promptUserForMediaUrl(): String?
     suspend fun promptUserToSelectFlag(chanDescriptor: ChanDescriptor): LoadBoardFlagsUseCase.FlagInfo?
+    suspend fun promptUserToConfirmMediaDeletion(): Boolean
 
     fun showDialog(title: String, message: CharSequence?, onDismissListener: (() -> Unit)? = null)
     fun hideDialog()

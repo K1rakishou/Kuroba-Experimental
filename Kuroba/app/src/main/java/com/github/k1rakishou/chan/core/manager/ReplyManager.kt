@@ -84,9 +84,9 @@ class ReplyManager(
     Logger.d(TAG, "ReplyManager initialization completed, took $duration")
   }
 
-  fun notifyReplyFilesChanged() {
+  fun notifyReplyFilesChanged(fileUuid: UUID) {
     ensureFilesLoaded()
-    replyFilesStorage.notifyReplyFilesChanged()
+    replyFilesStorage.notifyReplyFilesChanged(fileUuid)
   }
 
   @Synchronized
@@ -227,7 +227,7 @@ class ReplyManager(
     ensureFilesLoaded()
 
     readReply(chanDescriptor) { reply ->
-      if (!replyFilesStorage.putFiles(reply.getAndConsumeFiles())) {
+      if (!replyFilesStorage.restoreFiles(reply.getAndConsumeFiles())) {
         Logger.e(TAG, "replyFiles.putFiles() Not all files were put back")
       }
     }
@@ -304,7 +304,7 @@ class ReplyManager(
     return replyFilesStorage.mapOrderedNotNull(mapper)
   }
 
-  fun listenForReplyFilesUpdates(): Flow<Unit> {
+  fun listenForReplyFilesUpdates(): Flow<Collection<UUID>> {
     return replyFilesStorage.listenForReplyFilesUpdates()
   }
 

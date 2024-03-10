@@ -35,6 +35,10 @@ data class ChanBoardEntity(
   val maxFileSize: Int = -1,
   @ColumnInfo(name = MAX_WEBM_SIZE_COLUMN_NAME)
   val maxWebmSize: Int = -1,
+  @ColumnInfo(name = MAX_FILE_WIDTH_COLUMN_NAME)
+  val maxMediaWidth: Int = -1,
+  @ColumnInfo(name = MAX_FILE_HEIGHT_COLUMN_NAME)
+  val maxMediaHeight: Int = -1,
   @ColumnInfo(name = MAX_COMMENT_CHARS_COLUMN_NAME)
   val maxCommentChars: Int = -1,
   @ColumnInfo(name = BUMP_LIMIT_COLUMN_NAME)
@@ -74,6 +78,8 @@ data class ChanBoardEntity(
     const val PAGES_COLUMN_NAME = "pages"
     const val MAX_FILE_SIZE_COLUMN_NAME = "max_file_size"
     const val MAX_WEBM_SIZE_COLUMN_NAME = "max_webm_size"
+    const val MAX_FILE_WIDTH_COLUMN_NAME = "max_file_width"
+    const val MAX_FILE_HEIGHT_COLUMN_NAME = "max_file_height"
     const val MAX_COMMENT_CHARS_COLUMN_NAME = "max_comment_chars"
     const val BUMP_LIMIT_COLUMN_NAME = "bump_limit"
     const val IMAGE_LIMIT_COLUMN_NAME = "image_limit"

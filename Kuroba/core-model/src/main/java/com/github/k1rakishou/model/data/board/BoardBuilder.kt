@@ -13,12 +13,14 @@ class BoardBuilder(
   var pages: Int = 10
   var maxFileSize: Int = -1
   var maxWebmSize: Int = -1
+  var maxMediaWidth: Int = -1
+  var maxMediaHeight: Int = -1
   var maxCommentChars: Int = -1
   var bumpLimit: Int = -1
   var imageLimit: Int = -1
-  var cooldownThreads: Int = 0
-  var cooldownReplies: Int = 0
-  var cooldownImages: Int = 0
+  var cooldownThreads: Int = -1
+  var cooldownReplies: Int = -1
+  var cooldownImages: Int = -1
   var customSpoilers: Int = -1
   var description: String = ""
   var saved: Boolean = false
@@ -47,6 +49,8 @@ class BoardBuilder(
       pages = pages,
       maxFileSize = maxFileSize,
       maxWebmSize = maxWebmSize,
+      maxMediaWidth = maxMediaWidth,
+      maxMediaHeight = maxMediaHeight,
       maxCommentChars = maxCommentChars,
       bumpLimit = bumpLimit,
       imageLimit = imageLimit,

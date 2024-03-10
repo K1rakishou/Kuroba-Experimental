@@ -1,11 +1,10 @@
 package com.github.k1rakishou.chan.features.reencoding;
 
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast;
-
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.util.Pair;
 
@@ -115,10 +114,10 @@ public class ImageOptionsHelper
     }
 
     @Override
-    public void onImageOptionsApplied() {
+    public void onImageOptionsApplied(@NonNull UUID fileUuid) {
         BackgroundUtils.ensureMainThread();
 
-        callbacks.onImageOptionsApplied();
+        callbacks.onImageOptionsApplied(fileUuid);
     }
 
     @Override
@@ -152,7 +151,7 @@ public class ImageOptionsHelper
 
     public interface ImageReencodingHelperCallback {
         void presentReencodeOptionsController(Controller controller);
-        void onImageOptionsApplied();
+        void onImageOptionsApplied(@NonNull UUID fileUuid);
         void pushCreateSoundMediaController(CreateSoundMediaController controller);
     }
 }

@@ -43,7 +43,7 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.persist_state.ReplyMode
 import kotlinx.coroutines.suspendCancellableCoroutine
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 
@@ -173,8 +173,8 @@ class ReplyLayoutView @JvmOverloads constructor(
     replyLayoutViewModel.enqueueReply(chanDescriptor, replyMode, retrying)
   }
 
-  override fun onImageOptionsApplied() {
-    replyLayoutViewModel.onImageOptionsApplied()
+  override fun onImageOptionsApplied(fileUuid: UUID) {
+    replyLayoutViewModel.onImageOptionsApplied(fileUuid)
   }
 
   override fun hideKeyboard() {
@@ -344,6 +344,28 @@ class ReplyLayoutView @JvmOverloads constructor(
     }
 
     return selectedBoardFlag
+  }
+
+  override suspend fun promptUserToConfirmMediaDeletion(): Boolean {
+    return suspendCancellableCoroutine<Boolean> { cancellableContinuation ->
+      dialogFactory.showDialog(
+        context = context,
+        params = KurobaComposeDialogController.confirmationDialog(
+          title = KurobaComposeDialogController.Text.Id(R.string.reply_layout_attached_deletion_dialog_title),
+          description = null,
+          negativeButton = KurobaComposeDialogController.DialogButton(
+            buttonText = R.string.no,
+            onClick = { cancellableContinuation.resumeValueSafe(false) }
+          ),
+          positionButton = KurobaComposeDialogController.PositiveDialogButton(
+            buttonText = R.string.yes,
+            isActionDangerous = true,
+            onClick = { cancellableContinuation.resumeValueSafe(true) }
+          )
+        ),
+        onDismissListener = { cancellableContinuation.resumeValueSafe(false) }
+      )
+    }
   }
 
   private fun hasWebViewLinks(message: CharSequence?): Boolean {

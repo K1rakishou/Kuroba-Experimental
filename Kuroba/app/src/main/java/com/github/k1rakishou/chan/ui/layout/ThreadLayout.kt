@@ -1321,9 +1321,9 @@ class ThreadLayout @JvmOverloads constructor(
     callback.presentController(controller, true)
   }
 
-  override fun onImageOptionsApplied() {
+  override fun onImageOptionsApplied(fileUuid: UUID) {
     BackgroundUtils.ensureMainThread()
-    threadListLayout.onImageOptionsApplied()
+    threadListLayout.onImageOptionsApplied(fileUuid)
   }
 
   override fun pushCreateSoundMediaController(controller: CreateSoundMediaController) {

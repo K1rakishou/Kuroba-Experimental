@@ -11,6 +11,10 @@ data class ReplyAttachables(
 
 @Immutable
 data class ReplyFileAttachable(
+  // Used to notify compose to update this reply when all the other internal data of this class has not changed.
+  // We need this because sometimes we want to update the actual file on disk (modify a pixel) without changing the file's
+  // location.
+  private val version: Int,
   val fileUuid: UUID,
   val fileName: String,
   val spoilerInfo: SpoilerInfo?,
@@ -18,7 +22,6 @@ data class ReplyFileAttachable(
   val fileSize: Long,
   val imageDimensions: ImageDimensions?,
   val attachAdditionalInfo: AttachAdditionalInfo,
-  val maxAttachedFilesCountExceeded: Boolean,
   val fileOnDisk: String,
   val fileMetaOnDisk: String,
   val previewFileOnDiskPath: String?
@@ -27,7 +30,10 @@ data class ReplyFileAttachable(
   val key: String
     get() = "ReplyFileAttachable_${fileUuid}"
 
-  data class ImageDimensions(val width: Int, val height: Int)
+  data class ImageDimensions(
+    val width: Int,
+    val height: Int
+  )
 
   data class SpoilerInfo(
     val markedAsSpoiler: Boolean,
@@ -38,8 +44,17 @@ data class ReplyFileAttachable(
     val fileExifStatus: Set<FileExifInfoStatus>,
     val totalFileSizeExceeded: Boolean,
     val fileMaxSizeExceeded: Boolean,
-    val markedAsSpoilerOnNonSpoilerBoard: Boolean
+    val markedAsSpoilerOnNonSpoilerBoard: Boolean,
+    val maxAttachedFilesCountExceeded: Boolean,
+    val dimensionsExceeded: Boolean
   ) {
+
+    fun anyLimitsExceeded(): Boolean {
+      return fileMaxSizeExceeded
+        || totalFileSizeExceeded
+        || markedAsSpoilerOnNonSpoilerBoard
+        || dimensionsExceeded
+    }
 
     fun getGspExifDataOrNull(): List<FileExifInfoStatus.GpsExifFound> {
       return fileExifStatus.filterIsInstance<FileExifInfoStatus.GpsExifFound>()
@@ -50,6 +65,7 @@ data class ReplyFileAttachable(
     }
 
     fun hasGspExifData(): Boolean = getGspExifDataOrNull().isNotEmpty()
+
     fun hasOrientationExifData(): Boolean = getOrientationExifData().isNotEmpty()
   }
 }

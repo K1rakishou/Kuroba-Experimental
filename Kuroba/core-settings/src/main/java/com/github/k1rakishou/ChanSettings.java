@@ -36,6 +36,7 @@ import java.io.File;
 
 import kotlin.Lazy;
 import kotlin.LazyKt;
+import kotlin.ranges.IntRange;
 
 public class ChanSettings {
     private static final String TAG = "ChanSettings";
@@ -875,5 +876,9 @@ public class ChanSettings {
 
     public static boolean isSplitLayoutMode() {
         return getCurrentLayoutMode() == LayoutMode.SPLIT;
+    }
+
+    public static IntRange supportedFontSizes() {
+        return new IntRange(10, 20);
     }
 }

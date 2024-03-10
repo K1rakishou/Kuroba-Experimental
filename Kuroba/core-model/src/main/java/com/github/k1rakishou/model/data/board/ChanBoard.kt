@@ -7,18 +7,20 @@ class ChanBoard(
   var active: Boolean = false,
   val order: Int? = null,
   val name: String? = null,
+  val description: String = "",
   val perPage: Int = 15,
   val pages: Int = 10,
   val maxFileSize: Int = -1,
   val maxWebmSize: Int = -1,
+  val maxMediaWidth: Int = -1,
+  val maxMediaHeight: Int = -1,
   val maxCommentChars: Int = -1,
   val bumpLimit: Int = -1,
   val imageLimit: Int = -1,
-  val cooldownThreads: Int = 0,
-  val cooldownReplies: Int = 0,
-  val cooldownImages: Int = 0,
+  val cooldownThreads: Int = -1,
+  val cooldownReplies: Int = -1,
+  val cooldownImages: Int = -1,
   val customSpoilers: Int = -1,
-  val description: String = "",
   val workSafe: Boolean = false,
   val spoilers: Boolean = false,
   val userIds: Boolean = false,
@@ -31,10 +33,13 @@ class ChanBoard(
     active: Boolean? = null,
     order: Int? = null,
     name: String? = null,
+    description: String? = null,
     perPage: Int? = null,
     pages: Int? = null,
     maxFileSize: Int? = null,
     maxWebmSize: Int? = null,
+    maxMediaWidth: Int? = null,
+    maxMediaHeight: Int? = null,
     maxCommentChars: Int? = null,
     bumpLimit: Int? = null,
     imageLimit: Int? = null,
@@ -42,7 +47,6 @@ class ChanBoard(
     cooldownReplies: Int? = null,
     cooldownImages: Int? = null,
     customSpoilers: Int? = null,
-    description: String? = null,
     workSafe: Boolean? = null,
     spoilers: Boolean? = null,
     userIds: Boolean? = null,
@@ -55,10 +59,13 @@ class ChanBoard(
       active ?: this.active,
       order ?: this.order,
       name ?: this.name,
+      description ?: this.description,
       perPage ?: this.perPage,
       pages ?: this.pages,
       maxFileSize ?: this.maxFileSize,
       maxWebmSize ?: this.maxWebmSize,
+      maxMediaWidth ?: this.maxMediaWidth,
+      maxMediaHeight ?: this.maxMediaHeight,
       maxCommentChars ?: this.maxCommentChars,
       bumpLimit ?: this.bumpLimit,
       imageLimit ?: this.imageLimit,
@@ -66,7 +73,6 @@ class ChanBoard(
       cooldownReplies ?: this.cooldownReplies,
       cooldownImages ?: this.cooldownImages,
       customSpoilers ?: this.customSpoilers,
-      description ?: this.description,
       workSafe ?: this.workSafe,
       spoilers ?: this.spoilers,
       userIds ?: this.userIds,
@@ -75,7 +81,8 @@ class ChanBoard(
     ).also { newChanBoard -> newChanBoard.updateChanBoardMeta<ChanBoardMeta> { chanBoardMeta ?: this.chanBoardMeta } }
   }
 
-  // Do not persist on the disk!
+  // Only ever put data that can be accessed when a catalog/thread is loaded in ChanBoardMeta!
+  // This is to avoid storing that data in the database.
   @get:Synchronized
   @set:Synchronized
   var chanBoardMeta: ChanBoardMeta? = null
@@ -105,6 +112,8 @@ class ChanBoard(
     if (pages != other.pages) return false
     if (maxFileSize != other.maxFileSize) return false
     if (maxWebmSize != other.maxWebmSize) return false
+    if (maxMediaWidth != other.maxMediaWidth) return false
+    if (maxMediaHeight != other.maxMediaHeight) return false
     if (maxCommentChars != other.maxCommentChars) return false
     if (bumpLimit != other.bumpLimit) return false
     if (imageLimit != other.imageLimit) return false
@@ -132,6 +141,8 @@ class ChanBoard(
     result = 31 * result + pages
     result = 31 * result + maxFileSize
     result = 31 * result + maxWebmSize
+    result = 31 * result + maxMediaWidth
+    result = 31 * result + maxMediaHeight
     result = 31 * result + maxCommentChars
     result = 31 * result + bumpLimit
     result = 31 * result + imageLimit
@@ -152,8 +163,8 @@ class ChanBoard(
 
   override fun toString(): String {
     return "ChanBoard(boardDescriptor=$boardDescriptor, active=$active, order=$order, name=$name, " +
-      "perPage=$perPage, pages=$pages, maxFileSize=$maxFileSize, maxWebmSize=$maxWebmSize, " +
-      "maxCommentChars=$maxCommentChars, bumpLimit=$bumpLimit, imageLimit=$imageLimit, " +
+      "perPage=$perPage, pages=$pages, maxFileSize=$maxFileSize, maxWebmSize=$maxWebmSize, maxMediaWidth=$maxMediaWidth, " +
+      "maxMediaHeight=$maxMediaHeight, maxCommentChars=$maxCommentChars, bumpLimit=$bumpLimit, imageLimit=$imageLimit, " +
       "cooldownThreads=$cooldownThreads, cooldownReplies=$cooldownReplies, cooldownImages=$cooldownImages, " +
       "customSpoilers=$customSpoilers, description='$description', workSafe=$workSafe, " +
       "spoilers=$spoilers, userIds=$userIds, countryFlags=$countryFlags, isUnlimitedCatalog=$isUnlimitedCatalog, " +

@@ -238,12 +238,11 @@ class CompositeCatalogSite : Site {
 
   override fun board(code: String): ChanBoard? = null
 
-  override suspend fun createBoard(boardName: String, boardCode: String): ModularResult<ChanBoard?> {
-    return ModularResult.value(null)
-  }
-
   override fun getChunkDownloaderSiteProperties(): ChunkDownloaderSiteProperties {
-    return ChunkDownloaderSiteProperties(false, false)
+    return ChunkDownloaderSiteProperties(
+      enabled = false,
+      siteSendsCorrectFileSizeInBytes = false
+    )
   }
 
   override fun postingLimitationInfo(): SitePostingLimitation? = null

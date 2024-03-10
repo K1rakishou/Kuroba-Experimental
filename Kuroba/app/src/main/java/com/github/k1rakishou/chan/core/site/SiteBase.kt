@@ -259,23 +259,6 @@ abstract class SiteBase : Site, CoroutineScope {
     return settings
   }
 
-  override suspend fun createBoard(boardName: String, boardCode: String): ModularResult<ChanBoard?> {
-    val existing = board(boardCode)
-    if (existing != null) {
-      return ModularResult.value(existing)
-    }
-
-    val boardDescriptor = BoardDescriptor.create(siteDescriptor(), boardCode)
-    val board = ChanBoard.create(boardDescriptor, boardName)
-
-    val created = boardManager.createOrUpdateBoards(listOf(board))
-    if (!created) {
-      return ModularResult.value(null)
-    }
-
-    return ModularResult.value(board)
-  }
-
   companion object {
     private const val TAG = "SiteBase"
     val secureRandom: Random = SecureRandom()

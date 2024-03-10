@@ -13,6 +13,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.TextUnit
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.ui.compose.KurobaTextUnit
 import com.github.k1rakishou.chan.ui.compose.collectTextFontSize
 import com.github.k1rakishou.chan.ui.compose.ktu
@@ -44,7 +46,7 @@ internal fun ComposeText(
     textAlign = textAlign,
     fontWeight = fontWeight,
     onTextLayout = onTextLayout,
-    style = remember(style) { kurobaTextStyle(style) }
+    style = remember(actualFontSize, style) { kurobaTextStyle(actualFontSize, style) }
   )
 }
 
@@ -77,12 +79,24 @@ internal fun ComposeText(
     fontWeight = fontWeight,
     inlineContent = inlineContent,
     onTextLayout = onTextLayout,
-    style = remember(style) { kurobaTextStyle(style) }
+    style = remember(actualFontSize, style) { kurobaTextStyle(actualFontSize, style) }
   )
 }
 
-private fun kurobaTextStyle(style: TextStyle): TextStyle {
+private fun kurobaTextStyle(actualFontSize: TextUnit, style: TextStyle): TextStyle {
+  val supportedFontSizes = ChanSettings.supportedFontSizes()
+
+  val currentFontSize = actualFontSize.value
+  val minFont = supportedFontSizes.first
+  val maxFont = supportedFontSizes.last
+
+  val percentage = (currentFontSize - minFont) / (maxFont - minFont)
+  val maxLineLength = 1.0f
+  val maxLineLengthDiff = 0.3f
+  val lineLengthDiff = maxLineLength - maxLineLengthDiff
+  val lineLengthDiffPercentage = lineLengthDiff + ((maxLineLengthDiff * percentage).coerceIn(0.0f, 0.2f))
+
   return style.copy(
-    lineHeight = style.lineHeight * 0.8f
+    lineHeight = style.lineHeight * lineLengthDiffPercentage
   )
 }

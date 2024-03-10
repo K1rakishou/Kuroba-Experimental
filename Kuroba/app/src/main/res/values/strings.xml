@@ -567,6 +567,15 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="reply_layout_remote_file_pick_no_url_provided">No media url was provided</string>
     <string name="reply_layout_remote_file_pick_url_not_url">Provided string is not a url</string>
     <string name="reply_layout_enumerate_attachables_error">Error while enumerating files: \'%1$s\'</string>
+    <string name="reply_layout_attached_deletion_dialog_title">Do you really want to delete this file?</string>
+    <string name="reply_layout_metadata_remove_success">Successfully removed metadata from selected files</string>
+    <string name="reply_layout_checksum_change_success">Successfully changed checksum of selected files</string>
+    <string name="reply_layout_attached_media_deleted">Attached media deleted</string>
+    <string name="reply_layout_selected_files_deleted">Selected files deleted</string>
+    <string name="reply_layout_filename_removed">File name removed</string>
+    <string name="reply_layout_spoiler_flag_updated">Spoiler flag updated</string>
+    <string name="reply_layout_error_toast_generic_message">Operation failed. Error: \'%1$s\'</string>
+
     <string name="layout_reply_files_area_too_many_attachables_text">Too many files to display them all at once (%1$d out of %2$d max). Upload or delete some of them to display the rest.</string>
     <string name="layout_reply_files_area_delete_file_action">Delete this file</string>
     <string name="layout_reply_files_area_delete_selected_files_action">Delete selected files</string>
@@ -580,7 +589,7 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="layout_reply_files_area_removing_metadata">Removing metadata</string>
     <string name="layout_reply_files_area_changing_checksum">Changing checksum</string>
     <string name="layout_reply_files_area_updating_selection">Updating selection</string>
-    <string name="layout_reply_files_area_spoiler_mark">(S)</string>
+    <string name="layout_reply_files_area_spoiler_mark">SPLR</string>
 
     <string name="delete_confirm">Delete your post?</string>
     <string name="delete_wait">Deleting post…</string>

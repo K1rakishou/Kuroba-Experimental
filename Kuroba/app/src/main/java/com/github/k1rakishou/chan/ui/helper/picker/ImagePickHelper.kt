@@ -49,8 +49,8 @@ class ImagePickHelper(
   private val replyLayoutHelper: ReplyLayoutHelper
     get() = replyLayoutHelperLazy.get()
 
-  private val _pickedFilesUpdateFlow = MutableSharedFlow<UUID>(extraBufferCapacity = Channel.UNLIMITED)
-  val pickedFilesUpdateFlow: SharedFlow<UUID>
+  private val _pickedFilesUpdateFlow = MutableSharedFlow<Collection<UUID>>(extraBufferCapacity = Channel.UNLIMITED)
+  val pickedFilesUpdateFlow: SharedFlow<Collection<UUID>>
     get() = _pickedFilesUpdateFlow.asSharedFlow()
 
   private val _syntheticFilesUpdatesFlow = MutableSharedFlow<SyntheticReplyAttachable>(extraBufferCapacity = Channel.UNLIMITED)
@@ -106,11 +106,15 @@ class ImagePickHelper(
           }
 
           withContext(Dispatchers.IO) {
-            imageLoaderV2.calculateFilePreviewAndStoreOnDisk(
+            val success = imageLoaderV2.calculateFilePreviewAndStoreOnDisk(
               appContext,
               replyFileMeta.fileUuid,
               Scale.FIT
             )
+
+            if (!success) {
+              throw AbstractFilePicker.FilePickerError.FailedToCalculateFilePreview()
+            }
           }
 
           val currentFocusedDescriptor = currentOpenedDescriptorStateManager.currentFocusedDescriptor
@@ -130,7 +134,7 @@ class ImagePickHelper(
         }
 
         if (filePickerInput.notifyListeners) {
-          toEmit.forEach { fileUuid -> _pickedFilesUpdateFlow.emit(fileUuid) }
+          _pickedFilesUpdateFlow.emit(toEmit)
         }
       } finally {
         withContext(Dispatchers.Main) {
@@ -199,11 +203,15 @@ class ImagePickHelper(
           )
 
           withContext(Dispatchers.IO) {
-            imageLoaderV2.calculateFilePreviewAndStoreOnDisk(
+            val success = imageLoaderV2.calculateFilePreviewAndStoreOnDisk(
               context = appContext,
               fileUuid = replyFileMeta.fileUuid,
               scale = Scale.FIT
             )
+
+            if (!success) {
+              throw AbstractFilePicker.FilePickerError.FailedToCalculateFilePreview()
+            }
           }
         } catch (error: Throwable) {
           Logger.error(TAG) {
@@ -243,7 +251,7 @@ class ImagePickHelper(
       }
 
       if (filePickerInput.notifyListeners) {
-        toEmit.forEach { fileUuid -> _pickedFilesUpdateFlow.emit(fileUuid) }
+        _pickedFilesUpdateFlow.emit(toEmit)
       }
 
       return@Try result.unwrap()
@@ -310,17 +318,21 @@ class ImagePickHelper(
         }
 
         withContext(Dispatchers.IO) {
-          imageLoaderV2.calculateFilePreviewAndStoreOnDisk(
+          val success = imageLoaderV2.calculateFilePreviewAndStoreOnDisk(
             appContext,
             replyFileMeta.fileUuid,
             Scale.FIT
           )
+
+          if (!success) {
+            throw AbstractFilePicker.FilePickerError.FailedToCalculateFilePreview()
+          }
         }
 
         Logger.d(TAG, "pickRemoteFile() success! Picked new remote file with UUID='${replyFileMeta.fileUuid}'")
 
         if (filePickerInput.notifyListeners) {
-          _pickedFilesUpdateFlow.emit(replyFileMeta.fileUuid)
+          _pickedFilesUpdateFlow.emit(listOf(replyFileMeta.fileUuid))
         }
 
         return@Try result.unwrap()

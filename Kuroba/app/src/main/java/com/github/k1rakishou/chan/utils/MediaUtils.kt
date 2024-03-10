@@ -89,20 +89,24 @@ object MediaUtils {
     }
 
     var bitmap: Bitmap? = null
-    var compressFormat = getImageFormat(inputBitmapFile)
-      ?: return null
-
-    if (reencodeType == ReencodeType.AS_JPEG) {
-      compressFormat = CompressFormat.JPEG
-    } else if (reencodeType == ReencodeType.AS_PNG) {
-      compressFormat = CompressFormat.PNG
-    }
 
     try {
+      var compressFormat = getImageFormat(inputBitmapFile)
+        ?: return null
+
+      if (reencodeType == ReencodeType.AS_JPEG) {
+        compressFormat = CompressFormat.JPEG
+      } else if (reencodeType == ReencodeType.AS_PNG) {
+        compressFormat = CompressFormat.PNG
+      }
+
       val opt = BitmapFactory.Options()
       opt.inMutable = true
 
       bitmap = BitmapFactory.decodeFile(inputBitmapFile.absolutePath, opt)
+      if (bitmap == null) {
+        return null
+      }
 
       val matrix = Matrix()
 
@@ -171,6 +175,9 @@ object MediaUtils {
           newBitmap.recycle()
         }
       }
+    } catch (error: Throwable) {
+      Logger.error(TAG, error) { "reencodeBitmapFile() unhandled error" }
+      return null
     } finally {
       if (bitmap != null && !bitmap.isRecycled) {
         bitmap.recycle()

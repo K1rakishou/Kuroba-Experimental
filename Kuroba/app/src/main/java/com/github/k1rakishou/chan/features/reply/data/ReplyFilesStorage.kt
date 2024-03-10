@@ -24,21 +24,29 @@ class ReplyFilesStorage(
   private val appConstants: AppConstants,
   private val replyFiles: MutableList<ReplyFile> = mutableListOf()
 ) {
-  private val replyFilesUpdates = MutableSharedFlow<Unit>(
+  private val replyFilesUpdates = MutableSharedFlow<Collection<UUID>>(
     extraBufferCapacity = 1,
     onBufferOverflow = BufferOverflow.DROP_OLDEST
   )
 
-  fun listenForReplyFilesUpdates(): Flow<Unit> {
+  fun listenForReplyFilesUpdates(): Flow<Collection<UUID>> {
     return replyFilesUpdates.asSharedFlow()
   }
 
-  private fun onReplyFilesChanged() {
-    replyFilesUpdates.tryEmit(Unit)
+  private fun onReplyFileChanged(fileUuid: UUID) {
+    onReplyFilesChanged(listOf(fileUuid))
   }
 
-  fun notifyReplyFilesChanged() {
-    onReplyFilesChanged()
+  private fun onReplyFilesChanged(fileUuids: Collection<UUID>) {
+    if (fileUuids.isEmpty()) {
+      return
+    }
+
+    replyFilesUpdates.tryEmit(fileUuids)
+  }
+
+  fun notifyReplyFilesChanged(fileUuid: UUID) {
+    onReplyFileChanged(fileUuid)
   }
 
   @Synchronized
@@ -105,7 +113,7 @@ class ReplyFilesStorage(
       ensureFilesSorted()
 
       if (notifyListeners) {
-        onReplyFilesChanged()
+        onReplyFileChanged(replyFileMeta.fileUuid)
       }
 
       return true
@@ -114,10 +122,6 @@ class ReplyFilesStorage(
 
       replyFiles -= replyFile
       ensureFilesSorted()
-
-      if (notifyListeners) {
-        onReplyFilesChanged()
-      }
 
       return false
     }
@@ -130,6 +134,7 @@ class ReplyFilesStorage(
   ): ModularResult<List<ReplyFile>> {
     return Try {
       val takenFiles = mutableListOf<ReplyFile>()
+      val fileUuids = mutableListOf<UUID>()
 
       for (replyFile in replyFiles) {
         val replyFileMeta = replyFile.getReplyFileMeta().unwrap()
@@ -153,12 +158,13 @@ class ReplyFilesStorage(
         }
 
         takenFiles += replyFile
+        fileUuids += replyFileMeta.fileUuid
       }
 
       ensureFilesSorted()
 
       if (takenFiles.isNotEmpty() && notifyListeners) {
-        onReplyFilesChanged()
+        onReplyFilesChanged(fileUuids)
       }
 
       return@Try takenFiles
@@ -166,12 +172,13 @@ class ReplyFilesStorage(
   }
 
   @Synchronized
-  fun putFiles(files: List<ReplyFile>): Boolean {
+  fun restoreFiles(files: List<ReplyFile>): Boolean {
     if (files.isEmpty()) {
       return true
     }
 
     var success = true
+    val fileUuids = mutableListOf<UUID>()
 
     files.forEach { replyFile ->
       val error = replyFile.markFilesAsNotTaken().errorOrNull()
@@ -179,12 +186,15 @@ class ReplyFilesStorage(
         return@forEach
       }
 
+      replyFile.getReplyFileMeta().valueOrNull()
+        ?.let { replyFileMeta -> fileUuids += replyFileMeta.fileUuid }
+
       Logger.e(TAG, "Failed to put file back", error)
       success = false
     }
 
     if (success) {
-      onReplyFilesChanged()
+      onReplyFilesChanged(fileUuids)
     }
 
     return success
@@ -200,14 +210,15 @@ class ReplyFilesStorage(
         return@Try false
       }
 
-      if (replyFile.getReplyFileMeta().unwrap().isTaken()) {
+      val replyFileMeta = replyFile.getReplyFileMeta().unwrap()
+      if (replyFileMeta.isTaken()) {
         return@Try false
       }
 
       replyFile.updateFileSelection(selected).unwrap()
 
       if (notifyListeners) {
-        onReplyFilesChanged()
+        onReplyFileChanged(replyFileMeta.fileUuid)
       }
 
       return@Try true
@@ -224,14 +235,15 @@ class ReplyFilesStorage(
         return@Try false
       }
 
-      if (replyFile.getReplyFileMeta().unwrap().isTaken()) {
+      val replyFileMeta = replyFile.getReplyFileMeta().unwrap()
+      if (replyFileMeta.isTaken()) {
         return@Try false
       }
 
       replyFile.updateFileSpoilerFlag(spoiler).unwrap()
 
       if (notifyListeners) {
-        onReplyFilesChanged()
+        onReplyFileChanged(replyFileMeta.fileUuid)
       }
 
       return@Try true
@@ -248,14 +260,15 @@ class ReplyFilesStorage(
         return@Try false
       }
 
-      if (replyFile.getReplyFileMeta().unwrap().isTaken()) {
+      val replyFileMeta = replyFile.getReplyFileMeta().unwrap()
+      if (replyFileMeta.isTaken()) {
         return@Try false
       }
 
       replyFile.updateFileName(newFileName).unwrap()
 
       if (notifyListeners) {
-        onReplyFilesChanged()
+        onReplyFileChanged(replyFileMeta.fileUuid)
       }
 
       return@Try true
@@ -272,6 +285,8 @@ class ReplyFilesStorage(
       if (replyFile == null) {
         return@Try false
       }
+
+      val replyFileMeta = replyFile.getReplyFileMeta().unwrap()
 
       val oldPreviewFileOnDisk = replyFile.previewFileOnDisk
       if (oldPreviewFileOnDisk != null) {
@@ -290,7 +305,7 @@ class ReplyFilesStorage(
         .use { fos -> previewBitmap.compress(Bitmap.CompressFormat.JPEG, 95, fos) }
 
       replyFiles[replyFileIndex] = updatedReplyFile
-      onReplyFilesChanged()
+      onReplyFileChanged(replyFileMeta.fileUuid)
 
       return@Try true
     }
@@ -306,7 +321,7 @@ class ReplyFilesStorage(
     return Try {
       val toDelete = mutableListOf<UUID>()
 
-      iterateFilesOrdered { _, replyFile, replyFileMeta ->
+      iterateFilesOrdered { _, _, replyFileMeta ->
         if (replyFileMeta.isTaken()) {
           return@iterateFilesOrdered
         }
@@ -346,7 +361,7 @@ class ReplyFilesStorage(
       }
 
       if (deleted && notifyListeners) {
-        onReplyFilesChanged()
+        onReplyFilesChanged(fileUuids)
       }
     }
   }
@@ -426,10 +441,13 @@ class ReplyFilesStorage(
 
   @Synchronized
   fun deleteAllFiles() {
+    val fileUuids = replyFiles
+      .mapNotNull { replyFile -> replyFile.getReplyFileMeta().valueOrNull()?.fileUuid }
+
     replyFiles.forEach { replyFile -> replyFile.deleteFromDisk() }
     replyFiles.clear()
 
-    onReplyFilesChanged()
+    onReplyFilesChanged(fileUuids)
   }
 
   @Synchronized
@@ -503,8 +521,11 @@ class ReplyFilesStorage(
       replyFiles.clear()
       replyFiles.addAll(newAttachFiles)
 
+      val fileUuids = newAttachFiles
+        .mapNotNull { replyFile -> replyFile.getReplyFileMeta().valueOrNull()?.fileUuid }
+
       ensureFilesSorted()
-      onReplyFilesChanged()
+      onReplyFilesChanged(fileUuids)
     }
   }
 
@@ -637,11 +658,12 @@ class ReplyFilesStorage(
       }
 
       if (allPreviewFiles.isNotEmpty()) {
-        allPreviewFiles.entries.forEach { (previewFilePath, previewFile) ->
+        allPreviewFiles.entries.forEach { (_, previewFile) ->
           Logger.d(
             TAG, "Deleting previewFile='${previewFile.absolutePath}' " +
               "because it wasn't processed normally"
           )
+
           previewFile.delete()
         }
       }

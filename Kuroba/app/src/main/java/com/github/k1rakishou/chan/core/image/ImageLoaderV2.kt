@@ -1019,51 +1019,58 @@ class ImageLoaderV2(
     context: Context,
     fileUuid: UUID,
     scale: Scale = Scale.FIT
-  ) {
+  ): Boolean {
     BackgroundUtils.ensureBackgroundThread()
 
-    val replyFileMaybe = replyManager.getReplyFileByFileUuid(fileUuid)
-    if (replyFileMaybe is ModularResult.Error) {
-      Logger.e(TAG, "calculateFilePreviewAndStoreOnDisk() " +
+    try {
+      val replyFileMaybe = replyManager.getReplyFileByFileUuid(fileUuid)
+      if (replyFileMaybe is ModularResult.Error) {
+        Logger.e(TAG, "calculateFilePreviewAndStoreOnDisk() " +
           "getReplyFileByFileUuid($fileUuid) error", replyFileMaybe.error)
-      return
-    }
+        return false
+      }
 
-    val replyFile = (replyFileMaybe as ModularResult.Value).value
-    if (replyFile == null) {
-      Logger.e(TAG, "calculateFilePreviewAndStoreOnDisk() replyFile==null")
-      return
-    }
+      val replyFile = (replyFileMaybe as ModularResult.Value).value
+      if (replyFile == null) {
+        Logger.e(TAG, "calculateFilePreviewAndStoreOnDisk() replyFile==null")
+        return false
+      }
 
-    val replyFileMetaMaybe = replyFile.getReplyFileMeta()
-    if (replyFileMetaMaybe is ModularResult.Error) {
-      Logger.e(TAG, "calculateFilePreviewAndStoreOnDisk() replyFile.getReplyFileMeta() error", replyFileMetaMaybe.error)
-      return
-    }
+      val replyFileMetaMaybe = replyFile.getReplyFileMeta()
+      if (replyFileMetaMaybe is ModularResult.Error) {
+        Logger.e(TAG, "calculateFilePreviewAndStoreOnDisk() replyFile.getReplyFileMeta() error", replyFileMetaMaybe.error)
+        return false
+      }
 
-    val replyFileMeta = (replyFileMetaMaybe as ModularResult.Value).value
-    val inputFile = InputFile.JavaFile(replyFile.fileOnDisk)
+      val replyFileMeta = (replyFileMetaMaybe as ModularResult.Value).value
+      val inputFile = InputFile.JavaFile(replyFile.fileOnDisk)
 
-    val isProbablyVideo = fileIsProbablyVideoInterruptible(
-      replyFileMeta.originalFileName,
-      inputFile
-    )
+      val isProbablyVideo = fileIsProbablyVideoInterruptible(
+        replyFileMeta.originalFileName,
+        inputFile
+      )
 
-    val previewBitmap = decodedFilePreview(
-      isProbablyVideo = isProbablyVideo,
-      inputFile = inputFile,
-      context = context,
-      width = Dimension(PREVIEW_SIZE),
-      height = Dimension(PREVIEW_SIZE),
-      scale = scale,
-      addAudioIcon = true
-    ).bitmap
+      val previewBitmap = decodedFilePreview(
+        isProbablyVideo = isProbablyVideo,
+        inputFile = inputFile,
+        context = context,
+        width = Dimension(PREVIEW_SIZE),
+        height = Dimension(PREVIEW_SIZE),
+        scale = scale,
+        addAudioIcon = true
+      ).bitmap
 
-    runInterruptible {
-      replyManager.updatePreviewFileOnDisk(
-        fileUuid = replyFileMeta.fileUuid,
-        previewBitmap = previewBitmap
-      ).unwrap()
+      runInterruptible {
+        replyManager.updatePreviewFileOnDisk(
+          fileUuid = replyFileMeta.fileUuid,
+          previewBitmap = previewBitmap
+        ).unwrap()
+      }
+
+      return true
+    } catch (error: Throwable) {
+      Logger.error(TAG, error) { "calculateFilePreviewAndStoreOnDisk(${fileUuid}) error" }
+      return false
     }
   }
 

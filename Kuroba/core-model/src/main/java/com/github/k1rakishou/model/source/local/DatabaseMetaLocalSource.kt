@@ -12,7 +12,7 @@ class DatabaseMetaLocalSource(
   suspend fun checkpoint(): Int {
     ensureNotInTransaction()
 
-    return dao.checkpoint((SimpleSQLiteQuery("pragma wal_checkpoint(full)")))
+    return dao.checkpoint(SimpleSQLiteQuery("pragma wal_checkpoint(full)"))
   }
 
 }

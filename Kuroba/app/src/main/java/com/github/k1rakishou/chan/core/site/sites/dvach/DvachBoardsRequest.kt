@@ -114,7 +114,8 @@ class DvachBoardsRequest internal constructor(
         "threads_per_page" -> board.perPage = nextInt()
         "name" -> board.name = nextString()
         "max_files_size" -> {
-          val maxFileSize = nextInt()
+          // 2ch.hk's file size is in KBs
+          val maxFileSize = nextInt() * 1024
           board.maxFileSize = maxFileSize
           board.maxWebmSize = maxFileSize
         }
@@ -131,7 +132,12 @@ class DvachBoardsRequest internal constructor(
       }
     }
 
-    board.maxFileSize = Dvach.DEFAULT_MAX_FILE_SIZE
+    if (board.maxFileSize < 0) {
+      board.maxFileSize = Dvach.DEFAULT_MAX_FILE_SIZE
+    }
+    if (board.maxWebmSize < 0) {
+      board.maxWebmSize = Dvach.DEFAULT_MAX_FILE_SIZE
+    }
 
     if (board.hasMissingInfo()) {
       // Invalid data, ignore

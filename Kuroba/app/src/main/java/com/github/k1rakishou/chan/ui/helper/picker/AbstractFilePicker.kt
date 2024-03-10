@@ -174,6 +174,7 @@ abstract class AbstractFilePicker<T>(
     class FailedToReadFileMeta : FilePickerError("Failed to read file meta information")
     class FailedToAddNewReplyFileIntoStorage : FilePickerError("Failed to add new reply file into reply storage")
     class FailedToPickAnyFiles : FilePickerError("Failed to pick any files")
+    class FailedToCalculateFilePreview : FilePickerError("Failed to calculate file preview")
 
     // Remote errors
     class BadUrl(url: String) : FilePickerError("Bad url \"$url\"")

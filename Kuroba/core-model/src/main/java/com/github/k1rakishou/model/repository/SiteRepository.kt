@@ -21,7 +21,6 @@ class SiteRepository(
   private val TAG = "SiteRepository"
   private val allSitesLoadedInitializer = SuspendableInitializer<Unit>("allSitesLoadedInitializer")
 
-  @OptIn(ExperimentalTime::class)
   suspend fun initialize(allSiteDescriptors: Collection<SiteDescriptor>): ModularResult<List<ChanSiteData>> {
     return applicationScope.dbCall {
       val result = tryWithTransaction {

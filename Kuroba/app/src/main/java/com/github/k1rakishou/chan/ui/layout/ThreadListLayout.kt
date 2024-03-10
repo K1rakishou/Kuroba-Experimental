@@ -59,6 +59,7 @@ import com.github.k1rakishou.chan.ui.cell.PreviousThreadScrollPositionData
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
 import com.github.k1rakishou.chan.ui.controller.CaptchaContainerController
+import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.controller.ThreadControllerType
 import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
 import com.github.k1rakishou.chan.ui.globalstate.fastsroller.FastScrollerControllerType
@@ -448,6 +449,15 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(con
     if (prevChanDescriptor.isCatalogDescriptor()) {
       callback?.showThread(newThreadDescriptor)
     }
+  }
+
+  override fun showProgressDialog(title: String) {
+    val loadingViewController = LoadingViewController(context, true, title)
+    presentController(loadingViewController)
+  }
+
+  override fun hideProgressDialog() {
+    threadListLayoutCallback?.unpresentController { controller -> controller is LoadingViewController }
   }
 
   override fun presentController(controller: BaseFloatingController) {
@@ -974,8 +984,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(con
     postAdapter.resetCachedPostData(postDescriptors)
   }
 
-  fun onImageOptionsApplied() {
-    replyLayoutView.onImageOptionsApplied()
+  fun onImageOptionsApplied(fileUuid: UUID) {
+    replyLayoutView.onImageOptionsApplied(fileUuid)
   }
 
   private fun setRecyclerViewPadding() {
@@ -1390,7 +1400,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(con
     fun isCollapsed(): Boolean
     fun updateReplyLayoutVisibility(newReplyLayoutVisibility: ReplyLayoutVisibility)
     fun enqueueReply(chanDescriptor: ChanDescriptor, replyMode: ReplyMode, retrying: Boolean)
-    fun onImageOptionsApplied()
+    fun onImageOptionsApplied(fileUuid: UUID)
     fun hideKeyboard()
     fun onBack(): Boolean
   }

@@ -89,11 +89,11 @@ class AppearanceSettingsScreen(
           identifier = AppearanceScreen.PostGroup.FontSize,
           topDescriptionIdFunc = { R.string.setting_font_size },
           bottomDescriptionStringFunc = { itemName -> itemName },
-          items = SUPPORTED_FONT_SIZES.map { fontSize -> fontSize.toString() }.toList(),
+          items = ChanSettings.supportedFontSizes().map { fontSize -> fontSize.toString() }.toList(),
           groupId = "font_size",
           itemNameMapper = { fontSize ->
             when (fontSize.toIntOrNull()) {
-              in SUPPORTED_FONT_SIZES -> fontSize
+              in ChanSettings.supportedFontSizes() -> fontSize
               else -> throw IllegalArgumentException("Bad font size: $fontSize")
             }
           },
@@ -561,7 +561,6 @@ class AppearanceSettingsScreen(
   }
 
   companion object {
-    private val SUPPORTED_FONT_SIZES = (10..19)
     private const val AUTO_COLUMN = 0
     private val ALL_COLUMNS = listOf(AUTO_COLUMN, 1, 2, 3, 4, 5)
     private val ALL_COLUMNS_EXCLUDING_AUTO = setOf(1, 2, 3, 4, 5)

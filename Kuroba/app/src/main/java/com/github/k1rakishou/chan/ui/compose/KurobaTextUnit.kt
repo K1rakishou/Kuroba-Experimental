@@ -66,21 +66,7 @@ fun collectTextFontSize(defaultFontSize: KurobaTextUnit): TextUnit {
     return textUnit
   }
 
-  val coroutineScope = rememberCoroutineScope()
-  var globalFontSizeMultiplier by remember { mutableFloatStateOf(calculateFontSizeMultiplier()) }
-
-  LaunchedEffect(
-    key1 = Unit,
-    block = {
-      coroutineScope.launch {
-        ChanSettings.fontSize.listenForChanges().asFlow()
-          .collectLatest {
-            globalFontSizeMultiplier = calculateFontSizeMultiplier()
-          }
-      }
-    }
-  )
-
+  val globalFontSizeMultiplier = collectGlobalFontSizeMultiplierAsState()
   var updatedTextUnit = (textUnit * globalFontSizeMultiplier)
 
   if (min != null && updatedTextUnit < min) {
@@ -92,6 +78,25 @@ fun collectTextFontSize(defaultFontSize: KurobaTextUnit): TextUnit {
   }
 
   return updatedTextUnit
+}
+
+@Composable
+fun collectGlobalFontSizeMultiplierAsState(): Float {
+  val coroutineScope = rememberCoroutineScope()
+  var globalFontSizeMultiplier by remember { mutableFloatStateOf(calculateFontSizeMultiplier()) }
+
+  LaunchedEffect(
+    key1 = Unit,
+    block = {
+      coroutineScope.launch {
+        ChanSettings.fontSize.listenForChanges()
+          .asFlow()
+          .collectLatest { globalFontSizeMultiplier = calculateFontSizeMultiplier() }
+      }
+    }
+  )
+
+  return globalFontSizeMultiplier
 }
 
 private fun calculateFontSizeMultiplier(): Float {

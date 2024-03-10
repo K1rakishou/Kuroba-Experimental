@@ -26,7 +26,6 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
-import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
 @DoNotStrip
@@ -50,7 +49,6 @@ class BoardManager(
   private val boardRepository: BoardRepository
     get() = _boardRepository.get()
 
-  @OptIn(ExperimentalTime::class)
   fun initialize(siteDataListAsync: CompletableDeferred<List<ChanSiteData>>) {
     Logger.d(TAG, "BoardManager.initialize()")
 
@@ -510,7 +508,6 @@ class BoardManager(
 
   fun isReady() = suspendableInitializer.isInitialized()
 
-  @OptIn(ExperimentalTime::class)
   suspend fun awaitUntilInitialized() {
     if (isReady()) {
       return
@@ -596,6 +593,8 @@ class BoardManager(
       pages = newBoard.pages,
       maxFileSize = newBoard.maxFileSize,
       maxWebmSize = newBoard.maxWebmSize,
+      maxMediaWidth = newBoard.maxMediaWidth,
+      maxMediaHeight = newBoard.maxMediaHeight,
       maxCommentChars = newBoard.maxCommentChars,
       bumpLimit = newBoard.bumpLimit,
       imageLimit = newBoard.imageLimit,
