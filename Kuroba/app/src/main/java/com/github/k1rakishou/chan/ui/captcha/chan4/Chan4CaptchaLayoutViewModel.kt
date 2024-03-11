@@ -59,37 +59,39 @@ class Chan4CaptchaLayoutViewModel(
 
   private var activeJob: Job? = null
   private var captchaTtlUpdateJob: Job? = null
+  @Volatile private var notifiedUserAboutCaptchaSolver = false
 
   val chan4CaptchaSettingsJson by lazy {
     siteManager.bySiteDescriptor(Chan4.SITE_DESCRIPTOR)!!
       .getSettingBySettingId<GsonJsonSetting<Chan4CaptchaSettings>>(SiteSetting.SiteSettingId.Chan4CaptchaSettings)!!
   }
 
+  private val captchaInfoCache = mutableMapOf<ChanDescriptor, CaptchaInfo>()
+  private val _captchaSuggestions = mutableListOf<String>()
+
   private val _captchaTtlMillisFlow = MutableStateFlow(-1L)
   val captchaTtlMillisFlow: StateFlow<Long>
     get() = _captchaTtlMillisFlow.asStateFlow()
 
-  private val captchaInfoCache = mutableMapOf<ChanDescriptor, CaptchaInfo>()
-
-  private var _captchaInfoToShow = mutableStateOf<AsyncData<CaptchaInfo>>(AsyncData.NotInitialized)
+  private val _captchaInfoToShow = mutableStateOf<AsyncData<CaptchaInfo>>(AsyncData.NotInitialized)
   val captchaInfoToShow: State<AsyncData<CaptchaInfo>>
     get() = _captchaInfoToShow
 
-  @Volatile private var notifiedUserAboutCaptchaSolver = false
-
-  private var _captchaSolverInstalled = mutableStateOf<Boolean>(false)
+  private val _captchaSolverInstalled = mutableStateOf<Boolean>(false)
   val captchaSolverInstalled: State<Boolean>
     get() = _captchaSolverInstalled
 
-  private var _solvingInProgress = mutableStateOf<Boolean>(false)
+  private val _solvingInProgress = mutableStateOf<Boolean>(false)
   val solvingInProgress: State<Boolean>
     get() = _solvingInProgress
+
+  private val _captchaDataJson = mutableStateOf<String?>(null)
+  val captchaDataJson: State<String?>
+    get() = _captchaDataJson
 
   private val _notifyUserAboutCaptchaSolverErrorFlow = MutableSharedFlow<CaptchaSolverInfo>(extraBufferCapacity = 1)
   val notifyUserAboutCaptchaSolverErrorFlow: SharedFlow<CaptchaSolverInfo>
     get() = _notifyUserAboutCaptchaSolverErrorFlow.asSharedFlow()
-
-  private val _captchaSuggestions = mutableListOf<String>()
 
   override fun injectDependencies(component: ViewModelComponent) {
     component.inject(this)
@@ -163,7 +165,6 @@ class Chan4CaptchaLayoutViewModel(
     }
   }
 
-  @Suppress("MoveVariableDeclarationIntoWhen")
   fun requestCaptcha(context: Context, chanDescriptor: ChanDescriptor, forced: Boolean) {
     activeJob?.cancel()
     activeJob = null
@@ -310,10 +311,14 @@ class Chan4CaptchaLayoutViewModel(
     chanDescriptor: ChanDescriptor,
     ticket: String?
   ): CaptchaInfo {
+    _captchaDataJson.value = null
+
     val (captchaInfoRaw, captchaInfoRawString) = getCachedCaptchaOrLoadFresh(
       chanDescriptor = chanDescriptor,
       ticket = ticket
     )
+
+    _captchaDataJson.value = captchaInfoRawString.takeIf { it.isNotBlank() }
 
     if (captchaInfoRaw.err?.contains(ERROR_MSG, ignoreCase = true) == true) {
       val cooldownMs = captchaInfoRaw.cooldown?.times(1000L)
@@ -358,7 +363,6 @@ class Chan4CaptchaLayoutViewModel(
         ttlSeconds = captchaInfoRaw.ttlSeconds(),
         imgWidth = null,
         bgWidth = null,
-        captchaInfoRawString = null,
         captchaSolution = null
       )
     }
@@ -416,7 +420,6 @@ class Chan4CaptchaLayoutViewModel(
       ttlSeconds = captchaInfoRaw.ttl,
       imgWidth = captchaInfoRaw.imgWidth,
       bgWidth = captchaInfoRaw.bgWidth,
-      captchaInfoRawString = captchaInfoRawString,
       captchaSolution = captchaSolution
     )
   }
@@ -543,7 +546,6 @@ class Chan4CaptchaLayoutViewModel(
     val ttlSeconds: Int,
     val bgWidth: Int?,
     val imgWidth: Int?,
-    val captchaInfoRawString: String?,
     captchaSolution: Chan4CaptchaSolverHelper.CaptchaSolution?
   ) {
     val currentInputValue = mutableStateOf<String>("")

@@ -438,6 +438,7 @@ class Chan4CaptchaLayout(
     val captchaInfoAsync by viewModel.captchaInfoToShow
     val solvingInProgress by viewModel.solvingInProgress
     val captchaSolverInstalled by viewModel.captchaSolverInstalled
+    val captchaDataJson by viewModel.captchaDataJson
     val captchaInfo = (captchaInfoAsync as? AsyncData.Data)?.data
 
     Row(
@@ -476,9 +477,9 @@ class Chan4CaptchaLayout(
           .width(28.dp)
           .height(28.dp),
         drawableId = R.drawable.ic_baseline_content_copy_24,
-        enabled = captchaInfo?.captchaInfoRawString != null,
+        enabled = captchaDataJson != null,
         onClick = {
-          captchaInfo?.captchaInfoRawString?.let { captchaInfoJson ->
+          captchaDataJson?.let { captchaInfoJson ->
             AndroidUtils.setClipboardContent("captcha_json", captchaInfoJson)
             showToast(context, "Captcha json copied to clipboard")
           }
@@ -489,10 +490,11 @@ class Chan4CaptchaLayout(
 
       KurobaComposeTextBarButton(
         onClick = {
-          if (captchaInfo?.captchaInfoRawString != null) {
+          val localCaptchaDataJson = captchaDataJson
+          if (localCaptchaDataJson != null && captchaInfo != null) {
             viewModel.solveCaptcha(
               context = context,
-              captchaInfoRawString = captchaInfo.captchaInfoRawString,
+              captchaInfoRawString = localCaptchaDataJson,
               sliderOffset = captchaInfo.sliderValue.value
             )
           }
@@ -501,7 +503,7 @@ class Chan4CaptchaLayout(
         enabled = !solvingInProgress &&
           captchaSolverInstalled &&
           captchaInfo != null &&
-          captchaInfo.captchaInfoRawString != null
+          captchaDataJson != null
       )
 
       Spacer(modifier = Modifier.width(8.dp))

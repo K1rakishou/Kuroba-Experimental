@@ -28,315 +28,317 @@ import kotlinx.coroutines.withContext
 import okhttp3.Request
 
 class LoadChan4CaptchaUseCase(
-    private val moshi: Moshi,
-    private val siteManager: SiteManager,
-    private val proxiedOkHttpClient: ProxiedOkHttpClient
+  private val moshi: Moshi,
+  private val siteManager: SiteManager,
+  private val proxiedOkHttpClient: ProxiedOkHttpClient
 ) {
 
-    suspend fun await(
-        chanDescriptor: ChanDescriptor,
-        ticket: String?,
-        isRefreshing: Boolean
-    ): ModularResult<CaptchaResult> {
-        return ModularResult.Try {
-            val captchaResult = loadCaptcha(
-                chanDescriptor = chanDescriptor,
-                ticket = ticket,
-                loadWebsiteCaptcha = true,
-                isRefreshing = isRefreshing
-            )
+  suspend fun await(
+    chanDescriptor: ChanDescriptor,
+    ticket: String?,
+    isRefreshing: Boolean
+  ): ModularResult<CaptchaResult> {
+    return ModularResult.Try {
+      val captchaResult = loadCaptcha(
+        chanDescriptor = chanDescriptor,
+        ticket = ticket,
+        loadWebsiteCaptcha = true,
+        isRefreshing = isRefreshing
+      )
 
-            updateCaptchaTicket(
-                chanDescriptor = chanDescriptor,
-                captchaResult = captchaResult
-            )
+      updateCaptchaTicket(
+        chanDescriptor = chanDescriptor,
+        captchaResult = captchaResult
+      )
 
-            return@Try captchaResult
+      return@Try captchaResult
+    }
+  }
+
+  private suspend fun loadCaptcha(
+    chanDescriptor: ChanDescriptor,
+    ticket: String?,
+    loadWebsiteCaptcha: Boolean,
+    isRefreshing: Boolean
+  ): CaptchaResult {
+    val boardCode = chanDescriptor.boardDescriptor().boardCode
+    val urlRaw = formatCaptchaUrl(chanDescriptor, boardCode, ticket, loadWebsiteCaptcha)
+
+    Logger.d(TAG, "loadCaptcha($chanDescriptor) requesting $urlRaw")
+
+    val requestBuilder = Request.Builder()
+      .url(urlRaw)
+      .also { builder ->
+        if (isRefreshing) {
+          builder.tag(
+            CloudFlareHandlerInterceptor.IgnoreCloudFlareBotDetectionErrors::class.java,
+            CloudFlareHandlerInterceptor.IgnoreCloudFlareBotDetectionErrors
+          )
         }
+      }
+      .get()
+
+    siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())?.let { chan4 ->
+      chan4.requestModifier().modifyCaptchaGetRequest(chan4, requestBuilder)
     }
 
-    private suspend fun loadCaptcha(
-        chanDescriptor: ChanDescriptor,
-        ticket: String?,
-        loadWebsiteCaptcha: Boolean,
-        isRefreshing: Boolean
-    ): CaptchaResult {
-        val boardCode = chanDescriptor.boardDescriptor().boardCode
-        val urlRaw = formatCaptchaUrl(chanDescriptor, boardCode, ticket, loadWebsiteCaptcha)
+    val request = requestBuilder.build()
+    val captchaInfoRawAdapter = moshi.adapter(CaptchaInfoRaw::class.java)
 
-        Logger.d(TAG, "loadCaptcha($chanDescriptor) requesting $urlRaw")
-
-        val requestBuilder = Request.Builder()
-            .url(urlRaw)
-            .also { builder ->
-                if (isRefreshing) {
-                    builder.tag(
-                        CloudFlareHandlerInterceptor.IgnoreCloudFlareBotDetectionErrors::class.java,
-                        CloudFlareHandlerInterceptor.IgnoreCloudFlareBotDetectionErrors
-                    )
-                }
-            }
-            .get()
-
-        siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())?.let { chan4 ->
-            chan4.requestModifier().modifyCaptchaGetRequest(chan4, requestBuilder)
-        }
-
-        val request = requestBuilder.build()
-        val captchaInfoRawAdapter = moshi.adapter(CaptchaInfoRaw::class.java)
-
-        val response = proxiedOkHttpClient.okHttpClient().suspendCall(request)
-        if (!response.isSuccessful) {
-            throw BadStatusResponseException(response.code)
-        }
-
-        val captchaResponseHtml = response.body?.string()
-        if (captchaResponseHtml == null) {
-            throw EmptyBodyResponseException()
-        }
-
-        val captchaInfoRawString = try {
-            extractCaptchaInfoRawJson(captchaResponseHtml)
-        } catch (error: Throwable) {
-            Logger.error(TAG) {
-                "loadCaptcha($chanDescriptor) extractCaptchaInfoRawJson() error: ${error.errorMessageOrClassName()}"
-            }
-
-            captchaResponseHtml
-                .chunked(256)
-                .forEach { captchaChunk -> Logger.e(TAG, "'${captchaChunk}'") }
-
-            if (loadWebsiteCaptcha) {
-                Logger.debug(TAG) {
-                    "extractCaptchaInfoRawJson() Failed. Retrying captcha load with loadWebsiteCaptcha set to false"
-                }
-
-                return loadCaptcha(
-                    chanDescriptor = chanDescriptor,
-                    ticket = ticket,
-                    loadWebsiteCaptcha = false,
-                    isRefreshing = isRefreshing
-                )
-            }
-
-            throw FailedToExtractCaptchaJsonFromHtml()
-        }
-
-        try {
-            val captchaInfoRaw = withContext(Dispatchers.IO) { captchaInfoRawAdapter.fromJson(captchaInfoRawString) }
-            if (captchaInfoRaw == null) {
-                throw ParsingException("Failed to parse 4chan captcha json, captchaInfoRawString: ${captchaInfoRawString}")
-            }
-
-            return CaptchaResult(captchaInfoRaw, captchaInfoRawString)
-        } catch (error: Throwable) {
-            Logger.error(TAG) {
-                "loadCaptcha($chanDescriptor) captchaInfoRawAdapter.fromJson() error: ${error.errorMessageOrClassName()}"
-            }
-
-            captchaInfoRawString
-                .chunked(256)
-                .forEach { captchaChunk -> Logger.e(TAG, "'${captchaChunk}'") }
-
-            if (loadWebsiteCaptcha) {
-                Logger.debug(TAG) {
-                    "captchaInfoRawAdapter.fromJson() Failed. Retrying captcha load with loadWebsiteCaptcha set to false"
-                }
-
-                return loadCaptcha(
-                    chanDescriptor = chanDescriptor,
-                    ticket = ticket,
-                    loadWebsiteCaptcha = false,
-                    isRefreshing = isRefreshing
-                )
-            }
-
-            throw FailedToExtractCaptchaJsonFromHtml()
-        }
+    val response = proxiedOkHttpClient.okHttpClient().suspendCall(request)
+    if (!response.isSuccessful) {
+      throw BadStatusResponseException(response.code)
     }
 
-    private fun updateCaptchaTicket(
-        chanDescriptor: ChanDescriptor,
-        captchaResult: CaptchaResult
-    ) {
-        val chan4CaptchaSettingsSetting = siteManager.bySiteDescriptor(Chan4.SITE_DESCRIPTOR)
-            ?.getSettingBySettingId<GsonJsonSetting<Chan4CaptchaSettings>>(SiteSetting.SiteSettingId.Chan4CaptchaSettings)
-            ?: return
+    val captchaResponseHtml = response.body?.string()
+    if (captchaResponseHtml == null) {
+      throw EmptyBodyResponseException()
+    }
 
-        val newTicket = captchaResult.captchaInfoRaw.ticketAsString
-        if (newTicket.isNullOrBlank()) {
-            Logger.debug(TAG) { "updateCaptchaTicket($chanDescriptor) ticked is null or blank" }
-            return
-        }
+    val captchaInfoRawString = try {
+      extractCaptchaInfoRawJson(captchaResponseHtml)
+    } catch (error: Throwable) {
+      Logger.error(TAG) {
+        "loadCaptcha($chanDescriptor) extractCaptchaInfoRawJson() error: ${error.errorMessageOrClassName()}"
+      }
 
-        val oldTicket = chan4CaptchaSettingsSetting.get().captchaTicket
+      captchaResponseHtml
+        .chunked(256)
+        .forEach { captchaChunk -> Logger.e(TAG, "'${captchaChunk}'") }
 
+      if (loadWebsiteCaptcha) {
         Logger.debug(TAG) {
-            "updateCaptchaTicket($chanDescriptor) " +
-                    "updating currentTicket with '${StringUtils.formatToken(newTicket)}'"
+          "extractCaptchaInfoRawJson() Failed. Retrying captcha load with loadWebsiteCaptcha set to false"
         }
 
-        chan4CaptchaSettingsSetting.update(sync = true) { chan4CaptchaSettings ->
-            chan4CaptchaSettings.copy(
-                captchaTicket = newTicket,
-                lastRefreshTime = System.currentTimeMillis()
-            )
-        }
+        return loadCaptcha(
+          chanDescriptor = chanDescriptor,
+          ticket = ticket,
+          loadWebsiteCaptcha = false,
+          isRefreshing = isRefreshing
+        )
+      }
 
+      throw FailedToExtractCaptchaJsonFromHtml()
+    }
+
+    try {
+      val captchaInfoRaw = withContext(Dispatchers.IO) { captchaInfoRawAdapter.fromJson(captchaInfoRawString) }
+      if (captchaInfoRaw == null) {
+        throw ParsingException("Failed to parse 4chan captcha json, captchaInfoRawString: ${captchaInfoRawString}")
+      }
+
+      return CaptchaResult(captchaInfoRaw, captchaInfoRawString)
+    } catch (error: Throwable) {
+      Logger.error(TAG) {
+        "loadCaptcha($chanDescriptor) captchaInfoRawAdapter.fromJson() error: ${error.errorMessageOrClassName()}"
+      }
+
+      captchaInfoRawString
+        .chunked(256)
+        .forEach { captchaChunk -> Logger.e(TAG, "'${captchaChunk}'") }
+
+      if (loadWebsiteCaptcha) {
         Logger.debug(TAG) {
-            "updateCaptchaTicket() Successfully refreshed 4chan captcha ticket! " +
-                    "Old: ${StringUtils.formatToken(oldTicket)}, " +
-                    "New: ${StringUtils.formatToken(newTicket)}"
+          "captchaInfoRawAdapter.fromJson() Failed. Retrying captcha load with loadWebsiteCaptcha set to false"
         }
+
+        return loadCaptcha(
+          chanDescriptor = chanDescriptor,
+          ticket = ticket,
+          loadWebsiteCaptcha = false,
+          isRefreshing = isRefreshing
+        )
+      }
+
+      throw FailedToExtractCaptchaJsonFromHtml()
+    }
+  }
+
+  private fun updateCaptchaTicket(
+    chanDescriptor: ChanDescriptor,
+    captchaResult: CaptchaResult
+  ) {
+    val chan4CaptchaSettingsSetting = siteManager.bySiteDescriptor(Chan4.SITE_DESCRIPTOR)
+      ?.getSettingBySettingId<GsonJsonSetting<Chan4CaptchaSettings>>(SiteSetting.SiteSettingId.Chan4CaptchaSettings)
+      ?: return
+
+    val newTicket = captchaResult.captchaInfoRaw.ticketAsString
+    if (newTicket.isNullOrBlank()) {
+      Logger.debug(TAG) { "updateCaptchaTicket($chanDescriptor) ticked is null or blank" }
+      return
     }
 
-    private fun formatCaptchaUrl(
-        chanDescriptor: ChanDescriptor,
-        boardCode: String,
-        ticket: String?,
-        loadWebsiteCaptcha: Boolean
-    ): String {
-        return buildString {
-            when (chanDescriptor) {
-                is ChanDescriptor.CompositeCatalogDescriptor -> {
-                    error("Cannot use CompositeCatalogDescriptor here")
-                }
-                is ChanDescriptor.CatalogDescriptor -> {
-                    append("https://sys.4chan.org/captcha")
+    val oldTicket = chan4CaptchaSettingsSetting.get().captchaTicket
 
-                    if (loadWebsiteCaptcha) {
-                        append("?framed=1&board=${boardCode}")
-                    } else {
-                        append("?board=${boardCode}")
-                    }
-
-                    if (ticket.isNotNullNorEmpty()) {
-                        append("&ticket=${ticket}")
-                    }
-                }
-                is ChanDescriptor.ThreadDescriptor -> {
-                    append("https://sys.4chan.org/captcha")
-
-                    if (loadWebsiteCaptcha) {
-                        append("?framed=1&board=${boardCode}&thread_id=${chanDescriptor.threadNo}")
-                    } else {
-                        append("?board=${boardCode}&thread_id=${chanDescriptor.threadNo}")
-                    }
-
-                    if (ticket.isNotNullNorEmpty()) {
-                        append("&ticket=${ticket}")
-                    }
-                }
-            }
-        }
+    Logger.debug(TAG) {
+      "updateCaptchaTicket($chanDescriptor) " +
+        "updating currentTicket with '${StringUtils.formatToken(newTicket)}'"
     }
 
-    private fun extractCaptchaInfoRawJson(captchaResponseHtml: String): String {
-        val postMessageFunc = ".postMessage("
-
-        val jsonStart = captchaResponseHtml.indexOf(postMessageFunc)
-            .takeIf { index -> index >= 0 }
-            ?.plus(postMessageFunc.length)
-            ?: -1
-
-        if (jsonStart < 0) {
-            throw ParsingException("Failed to find '${postMessageFunc}' in website captcha response")
-        }
-
-        if (captchaResponseHtml.getOrNull(jsonStart) != '{') {
-            throw ParsingException("Failed to find json start ('{' symbol) in website captcha response")
-        }
-
-        val jsonEnd = StringUtils.findJsonEnd(captchaResponseHtml, jsonStart)
-        if (jsonEnd == null || jsonEnd < 0) {
-            throw ParsingException("Failed to find json end ('}' symbol) in website captcha response")
-        }
-
-        val json = captchaResponseHtml.substringSafe(jsonStart, jsonEnd)
-        if (json.isNullOrBlank()) {
-            throw ParsingException("Failed to extract json. jsonStart: ${jsonStart}, jsonEnd: ${jsonEnd}")
-        }
-
-        return json
-            .removePrefix("{\"twister\":")
-            .removeSuffix("}")
+    chan4CaptchaSettingsSetting.update(sync = true) { chan4CaptchaSettings ->
+      chan4CaptchaSettings.copy(
+        captchaTicket = newTicket,
+        lastRefreshTime = System.currentTimeMillis()
+      )
     }
 
-    data class CaptchaResult(
-        val captchaInfoRaw: CaptchaInfoRaw,
-        val captchaInfoRawString: String
-    )
+    Logger.debug(TAG) {
+      "updateCaptchaTicket() Successfully refreshed 4chan captcha ticket! " +
+        "Old: ${StringUtils.formatToken(oldTicket)}, " +
+        "New: ${StringUtils.formatToken(newTicket)}"
+    }
+  }
 
-    @JsonClass(generateAdapter = true)
-    data class CaptchaInfoRaw(
-        @Json(name = "error")
-        val err: String?,
-        @Json(name = "pcd_msg")
-        val pcdMsg: String?,
-        @Json(name = "cd")
-        val cd: Int?,
-        @Json(name = "pcd")
-        val pcd: Int?,
-
-        // For Slider captcha
-        @Json(name = "bg")
-        val bg: String?,
-        @Json(name = "bg_width")
-        val bgWidth: Int?,
-
-        @Json(name = "cd_until")
-        val cooldownUntil: Long?,
-        @Json(name = "challenge")
-        val challenge: String?,
-        @Json(name = "img")
-        val img: String?,
-        @Json(name = "img_width")
-        val imgWidth: Int?,
-        @Json(name = "img_height")
-        val imgHeight: Int?,
-        @Json(name = "valid_until")
-        val validUntil: Long?,
-        @Json(name = "ttl")
-        val ttl: Int?,
-        @Json(name = "ticket")
-        val ticket: Any?
-    ) {
-        val cooldown: Int?
-            get() {
-                if (pcd != null && pcd > 0) {
-                    return pcd
-                }
-
-                if (cd != null && cd > 0) {
-                    return cd
-                }
-
-                return null
-            }
-
-        val ticketAsString: String?
-            get() = ticket as? String
-
-        fun ttlMillis(): Int {
-            return ttlSeconds() * 1000
+  private fun formatCaptchaUrl(
+    chanDescriptor: ChanDescriptor,
+    boardCode: String,
+    ticket: String?,
+    loadWebsiteCaptcha: Boolean
+  ): String {
+    return buildString {
+      when (chanDescriptor) {
+        is ChanDescriptor.CompositeCatalogDescriptor -> {
+          error("Cannot use CompositeCatalogDescriptor here")
         }
 
-        fun ttlSeconds(): Int {
-            return ttl ?: 120
+        is ChanDescriptor.CatalogDescriptor -> {
+          append("https://sys.4chan.org/captcha")
+
+          if (loadWebsiteCaptcha) {
+            append("?framed=1&board=${boardCode}")
+          } else {
+            append("?board=${boardCode}")
+          }
+
+          if (ticket.isNotNullNorEmpty()) {
+            append("&ticket=${ticket}")
+          }
         }
 
-        fun isNoopChallenge(): Boolean {
-            return challenge?.equals(Chan4CaptchaLayoutViewModel.NOOP_CHALLENGE, ignoreCase = true) == true
+        is ChanDescriptor.ThreadDescriptor -> {
+          append("https://sys.4chan.org/captcha")
+
+          if (loadWebsiteCaptcha) {
+            append("?framed=1&board=${boardCode}&thread_id=${chanDescriptor.threadNo}")
+          } else {
+            append("?board=${boardCode}&thread_id=${chanDescriptor.threadNo}")
+          }
+
+          if (ticket.isNotNullNorEmpty()) {
+            append("&ticket=${ticket}")
+          }
         }
+      }
+    }
+  }
+
+  private fun extractCaptchaInfoRawJson(captchaResponseHtml: String): String {
+    val postMessageFunc = ".postMessage("
+
+    val jsonStart = captchaResponseHtml.indexOf(postMessageFunc)
+      .takeIf { index -> index >= 0 }
+      ?.plus(postMessageFunc.length)
+      ?: -1
+
+    if (jsonStart < 0) {
+      throw ParsingException("Failed to find '${postMessageFunc}' in website captcha response")
     }
 
-    class FailedToExtractCaptchaJsonFromHtml : ClientException(
-        "Failed to extract 4chan captcha json from HTML. " +
-                "This is most likely because the captcha format was changed."
-    )
-
-    companion object {
-        private const val TAG = "LoadChan4CaptchaUseCase"
+    if (captchaResponseHtml.getOrNull(jsonStart) != '{') {
+      throw ParsingException("Failed to find json start ('{' symbol) in website captcha response")
     }
+
+    val jsonEnd = StringUtils.findJsonEnd(captchaResponseHtml, jsonStart)
+    if (jsonEnd == null || jsonEnd < 0) {
+      throw ParsingException("Failed to find json end ('}' symbol) in website captcha response")
+    }
+
+    val json = captchaResponseHtml.substringSafe(jsonStart, jsonEnd)
+    if (json.isNullOrBlank()) {
+      throw ParsingException("Failed to extract json. jsonStart: ${jsonStart}, jsonEnd: ${jsonEnd}")
+    }
+
+    return json
+      .removePrefix("{\"twister\":")
+      .removeSuffix("}")
+  }
+
+  data class CaptchaResult(
+    val captchaInfoRaw: CaptchaInfoRaw,
+    val captchaInfoRawString: String
+  )
+
+  @JsonClass(generateAdapter = true)
+  data class CaptchaInfoRaw(
+    @Json(name = "error")
+    val err: String?,
+    @Json(name = "pcd_msg")
+    val pcdMsg: String?,
+    @Json(name = "cd")
+    val cd: Int?,
+    @Json(name = "pcd")
+    val pcd: Int?,
+
+    // For Slider captcha
+    @Json(name = "bg")
+    val bg: String?,
+    @Json(name = "bg_width")
+    val bgWidth: Int?,
+
+    @Json(name = "cd_until")
+    val cooldownUntil: Long?,
+    @Json(name = "challenge")
+    val challenge: String?,
+    @Json(name = "img")
+    val img: String?,
+    @Json(name = "img_width")
+    val imgWidth: Int?,
+    @Json(name = "img_height")
+    val imgHeight: Int?,
+    @Json(name = "valid_until")
+    val validUntil: Long?,
+    @Json(name = "ttl")
+    val ttl: Int?,
+    @Json(name = "ticket")
+    val ticket: Any?
+  ) {
+    val cooldown: Int?
+      get() {
+        if (pcd != null && pcd > 0) {
+          return pcd
+        }
+
+        if (cd != null && cd > 0) {
+          return cd
+        }
+
+        return null
+      }
+
+    val ticketAsString: String?
+      get() = ticket as? String
+
+    fun ttlMillis(): Int {
+      return ttlSeconds() * 1000
+    }
+
+    fun ttlSeconds(): Int {
+      return ttl ?: 120
+    }
+
+    fun isNoopChallenge(): Boolean {
+      return challenge?.equals(Chan4CaptchaLayoutViewModel.NOOP_CHALLENGE, ignoreCase = true) == true
+    }
+  }
+
+  class FailedToExtractCaptchaJsonFromHtml : ClientException(
+    "Failed to extract 4chan captcha json from HTML. " +
+      "This is most likely because the captcha format was changed."
+  )
+
+  companion object {
+    private const val TAG = "LoadChan4CaptchaUseCase"
+  }
 
 }
