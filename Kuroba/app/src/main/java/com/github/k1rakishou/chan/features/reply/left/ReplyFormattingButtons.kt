@@ -48,7 +48,8 @@ internal fun ReplyFormattingButtons(
               onClick = { replyLayoutState.insertTags(postFormatterButton) }
             )
             .padding(vertical = 6.dp, horizontal = 10.dp),
-          shape = remember { RoundedCornerShape(4.dp) }
+          shape = remember { RoundedCornerShape(4.dp) },
+          elevation = 0.dp
         ) {
           KurobaComposeText(
             text = postFormatterButton.title,
