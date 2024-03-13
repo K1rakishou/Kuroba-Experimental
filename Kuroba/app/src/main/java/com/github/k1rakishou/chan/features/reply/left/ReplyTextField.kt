@@ -47,6 +47,7 @@ internal fun ReplyTextField(
   val replyAttachables by replyLayoutState.attachables
   val replyLayoutVisibility by replyLayoutState.replyLayoutVisibility
   val replyFieldHintText by replyLayoutState.replyFieldHintText
+  val syntheticAttachables = replyLayoutState.syntheticAttachables
 
   val disabledAlpha = ContentAlpha.disabled
 
@@ -111,7 +112,7 @@ internal fun ReplyTextField(
     }
   )
 
-  val defaultHeight = if (replyAttachables.attachables.isEmpty()) {
+  val defaultHeight = if (replyAttachables.attachables.isEmpty() && syntheticAttachables.isEmpty()) {
     130.dp
   } else {
     100.dp
