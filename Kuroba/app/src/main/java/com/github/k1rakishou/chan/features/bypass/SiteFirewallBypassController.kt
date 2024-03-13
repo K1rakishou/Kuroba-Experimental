@@ -135,6 +135,9 @@ class SiteFirewallBypassController(
     )
 
     closeButton.setImageDrawable(tintedDrawable)
+
+    val textColor = ThemeEngine.resolveTextColor(themeEngine.chanTheme)
+    headerTitle.setTextColor(textColor)
   }
 
   @SuppressLint("SetJavaScriptEnabled")

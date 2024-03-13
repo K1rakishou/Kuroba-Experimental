@@ -361,6 +361,15 @@ open class ThemeEngine(
     val DARK_DRAWABLE_TINT_COMPOSE = ComposeColor(Color.parseColor("#7E7E7E"))
 
     @JvmStatic
+    fun resolveTextColor(chanTheme: ChanTheme): Int {
+      return if (chanTheme.isBackColorDark) {
+        Color.WHITE
+      } else {
+        Color.BLACK
+      }
+    }
+
+    @JvmStatic
     fun resolveDrawableTintColor(chanTheme: ChanTheme): Int {
       return if (chanTheme.isBackColorDark) {
         LIGHT_DRAWABLE_TINT
