@@ -14,109 +14,95 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.k1rakishou.chan.ui.layout;
+package com.github.k1rakishou.chan.ui.layout
 
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.waitForLayout;
+import android.content.Context
+import android.os.Parcelable
+import android.util.AttributeSet
+import android.view.ViewGroup
+import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
+import com.github.k1rakishou.chan.ui.widget.SlidingPaneLayoutEx
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.core_themes.ThemeEngine
+import javax.inject.Inject
 
-import android.content.Context;
-import android.os.Parcelable;
-import android.util.AttributeSet;
-import android.view.ViewGroup;
+class ThreadSlidingPaneLayout @JvmOverloads constructor(
+  context: Context,
+  attrs: AttributeSet? = null,
+  defStyle: Int = 0
+) : SlidingPaneLayoutEx(
+  context, attrs, defStyle
+) {
+  @Inject
+  lateinit var themeEngine: ThemeEngine
 
-import com.github.k1rakishou.ChanSettings;
-import com.github.k1rakishou.chan.R;
-import com.github.k1rakishou.chan.ui.controller.ThreadSlideController;
-import com.github.k1rakishou.chan.ui.widget.SlidingPaneLayoutEx;
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
-import com.github.k1rakishou.core_themes.ThemeEngine;
+  @JvmField
+  var leftPane: ViewGroup? = null
+  @JvmField
+  var rightPane: ViewGroup? = null
 
-import javax.inject.Inject;
+  private var threadSlideController: ThreadSlideController? = null
 
-public class ThreadSlidingPaneLayout extends SlidingPaneLayoutEx {
-    private static final int SLIDE_PANE_OVERHANG_SIZE = dp(20);
+  init {
+    if (!isInEditMode) {
+      AppModuleAndroidUtils.extractActivityComponent(context)
+        .inject(this)
+    }
+  }
 
-    @Inject
-    ThemeEngine themeEngine;
+  override fun onFinishInflate() {
+    super.onFinishInflate()
+    leftPane = findViewById<ViewGroup>(R.id.left_pane)
+    rightPane = findViewById<ViewGroup>(R.id.right_pane)
+    setOverhangSize(currentOverhangSize())
+  }
 
-    public ViewGroup leftPane;
-    public ViewGroup rightPane;
-
-    private ThreadSlideController threadSlideController;
-
-    public ThreadSlidingPaneLayout(Context context) {
-        this(context, null);
-        init();
+  private fun currentOverhangSize(): Int {
+    if (ChanSettings.isSlideLayoutMode()) {
+      return SLIDE_PANE_OVERHANG_SIZE
     }
 
-    public ThreadSlidingPaneLayout(Context context, AttributeSet attrs) {
-        this(context, attrs, 0);
-        init();
+    return 0
+  }
+
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
+
+    // Forces a relayout after it has already been layed out, because SlidingPaneLayout sucks and otherwise
+    // gives the children too much room until they request a relayout.
+    AppModuleAndroidUtils.waitForLayout(this) {
+      requestLayout()
+      false
     }
+  }
 
-    public ThreadSlidingPaneLayout(Context context, AttributeSet attrs, int defStyle) {
-        super(context, attrs, defStyle);
-        init();
-    }
+  fun setThreadSlideController(slideController: ThreadSlideController) {
+    threadSlideController = slideController
+  }
 
-    private void init() {
-        if (!isInEditMode()) {
-            AppModuleAndroidUtils.extractActivityComponent(getContext())
-                    .inject(this);
-        }
-    }
+  override fun onRestoreInstanceState(state: Parcelable) {
+    super.onRestoreInstanceState(state)
 
-    @Override
-    protected void onFinishInflate() {
-        super.onFinishInflate();
-        leftPane = findViewById(R.id.left_pane);
-        rightPane = findViewById(R.id.right_pane);
+    threadSlideController?.onSlidingPaneLayoutStateRestored()
+  }
 
-        setOverhangSize(currentOverhangSize());
-    }
+  override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+    val width = MeasureSpec.getSize(widthMeasureSpec)
 
-    private int currentOverhangSize() {
-        if (ChanSettings.isSlideLayoutMode()) {
-            return SLIDE_PANE_OVERHANG_SIZE;
-        }
+    val leftParams = leftPane?.layoutParams
+      ?: return
+    val rightParams = rightPane?.layoutParams
+      ?: return
 
-        return 0;
-    }
+    leftParams.width = width - currentOverhangSize()
+    rightParams.width = width
+    super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+  }
 
-    @Override
-    protected void onAttachedToWindow() {
-        super.onAttachedToWindow();
+  companion object {
+    private val SLIDE_PANE_OVERHANG_SIZE = AppModuleAndroidUtils.dp(20f)
+  }
 
-        // Forces a relayout after it has already been layed out, because SlidingPaneLayout sucks and otherwise
-        // gives the children too much room until they request a relayout.
-        waitForLayout(this, view -> {
-            requestLayout();
-            return false;
-        });
-    }
-
-    public void setThreadSlideController(ThreadSlideController threadSlideController) {
-        this.threadSlideController = threadSlideController;
-    }
-
-    @Override
-    protected void onRestoreInstanceState(Parcelable state) {
-        super.onRestoreInstanceState(state);
-        if (threadSlideController != null) {
-            threadSlideController.onSlidingPaneLayoutStateRestored();
-        }
-    }
-
-    @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        int width = MeasureSpec.getSize(widthMeasureSpec);
-
-        ViewGroup.LayoutParams leftParams = leftPane.getLayoutParams();
-        ViewGroup.LayoutParams rightParams = rightPane.getLayoutParams();
-
-        leftParams.width = width - currentOverhangSize();
-        rightParams.width = width;
-
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-    }
 }

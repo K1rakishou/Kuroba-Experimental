@@ -257,8 +257,8 @@ class MainController(
       if (nav.top is ThreadSlideController) {
         val slideNav = nav.top as ThreadSlideController?
 
-        if (slideNav?.leftController is ThreadController) {
-          return slideNav.leftController as ThreadController
+        if (slideNav?.leftController() is ThreadController) {
+          return slideNav.leftController() as ThreadController
         }
       }
 
@@ -393,10 +393,14 @@ class MainController(
     mainScope.launch {
       combine(
         flow = globalUiStateHolder.replyLayout.replyLayoutVisibilityEventsFlow,
-        flow2 = drawerViewModel.currentNavigationHasDrawer,
-        transform = { replyLayoutVisibilityEvents, currentNavigationHasDrawer ->
-          return@combine DrawerState(
+        flow2 = globalUiStateHolder.replyLayout.replyLayoutsBoundsFlow,
+        flow3 = globalUiStateHolder.mainUiState.touchPositionFlow,
+        flow4 = drawerViewModel.currentNavigationHasDrawer,
+        transform = { replyLayoutVisibilityEvents, replyLayoutsBounds, touchPosition, currentNavigationHasDrawer ->
+          return@combine DrawerEnableState(
             replyLayoutVisibilityStates = replyLayoutVisibilityEvents,
+            replyLayoutsBounds = replyLayoutsBounds,
+            touchPosition = touchPosition,
             currentNavigationHasDrawer = currentNavigationHasDrawer
           )
         }

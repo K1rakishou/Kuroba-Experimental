@@ -153,6 +153,8 @@ public class SlidingPaneLayoutEx extends ViewGroup {
 
     private boolean allowedToSlide = true;
 
+    private boolean slidingLocked = false;
+
     /**
      * The child view that can slide, if any.
      */
@@ -345,6 +347,10 @@ public class SlidingPaneLayoutEx extends ViewGroup {
 
     public void setPanelSlideListener(@Nullable PanelSlideListener listener) {
         mPanelSlideListener = listener;
+    }
+
+    public void lockUnlockSliding(boolean lock) {
+        slidingLocked = lock;
     }
 
     void dispatchOnPanelSlide(View panel) {
@@ -772,6 +778,10 @@ public class SlidingPaneLayoutEx extends ViewGroup {
     public boolean onInterceptTouchEvent(MotionEvent ev) {
         final int action = ev.getActionMasked();
 
+        if (slidingLocked) {
+            return super.onInterceptTouchEvent(ev);
+        }
+
         if (action == MotionEvent.ACTION_DOWN) {
             WindowInsetsCompat rootWindowInsets = ViewCompat.getRootWindowInsets(this);
 
@@ -854,6 +864,10 @@ public class SlidingPaneLayoutEx extends ViewGroup {
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
         if (!mCanSlide) {
+            return super.onTouchEvent(ev);
+        }
+
+        if (slidingLocked) {
             return super.onTouchEvent(ev);
         }
 

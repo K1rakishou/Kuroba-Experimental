@@ -131,7 +131,7 @@ public class StyledToolbarNavigationController extends ToolbarNavigationControll
             return null;
         }
 
-        return threadSlideController.rightController;
+        return threadSlideController.rightController();
     }
 
     @Nullable

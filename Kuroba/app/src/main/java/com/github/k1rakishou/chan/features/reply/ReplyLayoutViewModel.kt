@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.features.reply
 import android.content.Context
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.SavedStateHandle
@@ -628,6 +629,10 @@ class ReplyLayoutViewModel(
   fun paidCaptchaSolversSupportedAndEnabled(chanDescriptor: ChanDescriptor): Boolean {
     return twoCaptchaSolver.isSiteCurrentCaptchaTypeSupported(chanDescriptor.siteDescriptor())
       && twoCaptchaSolver.isLoggedIn
+  }
+
+  fun onReplyLayoutPositionChanged(boundsInRoot: Rect) {
+    withReplyLayoutState { replyLayoutState -> replyLayoutState.onReplyLayoutPositionChanged(boundsInRoot) }
   }
 
   private suspend fun isFileSupportedForReencoding(clickedFileUuid: UUID): Boolean {

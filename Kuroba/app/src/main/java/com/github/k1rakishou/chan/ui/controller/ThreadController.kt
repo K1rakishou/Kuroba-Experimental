@@ -47,6 +47,7 @@ import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScroll
 import com.github.k1rakishou.chan.features.report.Chan4ReportPostController
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.SlideChangeListener
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
+import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
 import com.github.k1rakishou.chan.ui.helper.AppSettingsUpdateAppRefreshHelper
 import com.github.k1rakishou.chan.ui.helper.OpenExternalThreadHelper
 import com.github.k1rakishou.chan.ui.helper.ShowPostsInExternalThreadHelper
@@ -87,59 +88,63 @@ abstract class ThreadController(
   AlbumViewController.ThreadControllerCallbacks {
 
   @Inject
-  lateinit var _siteManager: Lazy<SiteManager>
+  lateinit var siteManagerLazy: Lazy<SiteManager>
   @Inject
-  lateinit var _themeEngine: Lazy<ThemeEngine>
+  lateinit var themeEngineLazy: Lazy<ThemeEngine>
   @Inject
-  lateinit var _applicationVisibilityManager: Lazy<ApplicationVisibilityManager>
+  lateinit var applicationVisibilityManagerLazy: Lazy<ApplicationVisibilityManager>
   @Inject
-  lateinit var _chanThreadManager: Lazy<ChanThreadManager>
+  lateinit var chanThreadManagerLazy: Lazy<ChanThreadManager>
   @Inject
-  lateinit var _threadFollowHistoryManager: Lazy<ThreadFollowHistoryManager>
+  lateinit var threadFollowHistoryManagerLazy: Lazy<ThreadFollowHistoryManager>
   @Inject
-  lateinit var _archivesManager: Lazy<ArchivesManager>
+  lateinit var archivesManagerLazy: Lazy<ArchivesManager>
   @Inject
-  lateinit var _globalWindowInsetsManager: Lazy<GlobalWindowInsetsManager>
+  lateinit var globalWindowInsetsManagerLazy: Lazy<GlobalWindowInsetsManager>
   @Inject
-  lateinit var _chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>
+  lateinit var chanThreadViewableInfoManagerLazy: Lazy<ChanThreadViewableInfoManager>
   @Inject
-  lateinit var _mediaViewerScrollerHelper: Lazy<MediaViewerScrollerHelper>
+  lateinit var mediaViewerScrollerHelperLazy: Lazy<MediaViewerScrollerHelper>
   @Inject
-  lateinit var _mediaViewerOpenAlbumHelper: Lazy<MediaViewerOpenAlbumHelper>
+  lateinit var mediaViewerOpenAlbumHelperLazy: Lazy<MediaViewerOpenAlbumHelper>
   @Inject
-  lateinit var _appSettingsUpdateAppRefreshHelper: Lazy<AppSettingsUpdateAppRefreshHelper>
+  lateinit var appSettingsUpdateAppRefreshHelperLazy: Lazy<AppSettingsUpdateAppRefreshHelper>
   @Inject
-  lateinit var _dialogFactory: Lazy<DialogFactory>
+  lateinit var dialogFactoryLazy: Lazy<DialogFactory>
   @Inject
-  lateinit var _currentOpenedDescriptorStateManager: Lazy<CurrentOpenedDescriptorStateManager>
+  lateinit var currentOpenedDescriptorStateManagerLazy: Lazy<CurrentOpenedDescriptorStateManager>
+  @Inject
+  lateinit var globalUiStateHolderLazy: Lazy<GlobalUiStateHolder>
 
   protected val siteManager: SiteManager
-    get() = _siteManager.get()
+    get() = siteManagerLazy.get()
   protected val themeEngine: ThemeEngine
-    get() = _themeEngine.get()
+    get() = themeEngineLazy.get()
   protected val chanThreadViewableInfoManager: ChanThreadViewableInfoManager
-    get() = _chanThreadViewableInfoManager.get()
+    get() = chanThreadViewableInfoManagerLazy.get()
   protected val archivesManager: ArchivesManager
-    get() = _archivesManager.get()
+    get() = archivesManagerLazy.get()
   protected val dialogFactory: DialogFactory
-    get() = _dialogFactory.get()
+    get() = dialogFactoryLazy.get()
   protected val chanThreadManager: ChanThreadManager
-    get() = _chanThreadManager.get()
+    get() = chanThreadManagerLazy.get()
   protected val threadFollowHistoryManager: ThreadFollowHistoryManager
-    get() = _threadFollowHistoryManager.get()
+    get() = threadFollowHistoryManagerLazy.get()
   protected val currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager
-    get() = _currentOpenedDescriptorStateManager.get()
+    get() = currentOpenedDescriptorStateManagerLazy.get()
+  protected val globalUiStateHolder: GlobalUiStateHolder
+    get() = globalUiStateHolderLazy.get()
 
   private val applicationVisibilityManager: ApplicationVisibilityManager
-    get() = _applicationVisibilityManager.get()
+    get() = applicationVisibilityManagerLazy.get()
   protected val globalWindowInsetsManager: GlobalWindowInsetsManager
-    get() = _globalWindowInsetsManager.get()
+    get() = globalWindowInsetsManagerLazy.get()
   private val mediaViewerScrollerHelper: MediaViewerScrollerHelper
-    get() = _mediaViewerScrollerHelper.get()
+    get() = mediaViewerScrollerHelperLazy.get()
   private val mediaViewerOpenAlbumHelper: MediaViewerOpenAlbumHelper
-    get() = _mediaViewerOpenAlbumHelper.get()
+    get() = mediaViewerOpenAlbumHelperLazy.get()
   private val appSettingsUpdateAppRefreshHelper: AppSettingsUpdateAppRefreshHelper
-    get() = _appSettingsUpdateAppRefreshHelper.get()
+    get() = appSettingsUpdateAppRefreshHelperLazy.get()
 
   protected lateinit var threadLayout: ThreadLayout
   protected lateinit var showPostsInExternalThreadHelper: ShowPostsInExternalThreadHelper
@@ -184,7 +189,7 @@ abstract class ThreadController(
       context = context,
       scope = mainScope,
       postPopupHelper = threadLayout.popupHelper,
-      _chanThreadManager = _chanThreadManager,
+      chanThreadManagerLazy = chanThreadManagerLazy,
       presentControllerFunc = { controller -> presentController(controller) },
       showAvailableArchivesListFunc = { postDescriptor, canAutoSelectArchive ->
         showAvailableArchivesList(
@@ -198,8 +203,8 @@ abstract class ThreadController(
 
     openExternalThreadHelper = OpenExternalThreadHelper(
       postPopupHelper = threadLayout.popupHelper,
-      _chanThreadViewableInfoManager = _chanThreadViewableInfoManager,
-      _threadFollowHistoryManager = _threadFollowHistoryManager
+      chanThreadViewableInfoManagerLazy = chanThreadViewableInfoManagerLazy,
+      threadFollowHistoryManagerLazy = threadFollowHistoryManagerLazy
     )
 
     mainScope.launch {

@@ -9,14 +9,14 @@ import dagger.Lazy
 
 class OpenExternalThreadHelper(
   private val postPopupHelper: PostPopupHelper,
-  private val _chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>,
-  private val _threadFollowHistoryManager: Lazy<ThreadFollowHistoryManager>
+  private val chanThreadViewableInfoManagerLazy: Lazy<ChanThreadViewableInfoManager>,
+  private val threadFollowHistoryManagerLazy: Lazy<ThreadFollowHistoryManager>
 ) {
 
   private val chanThreadViewableInfoManager: ChanThreadViewableInfoManager
-    get() = _chanThreadViewableInfoManager.get()
+    get() = chanThreadViewableInfoManagerLazy.get()
   private val threadFollowHistoryManager: ThreadFollowHistoryManager
-    get() = _threadFollowHistoryManager.get()
+    get() = threadFollowHistoryManagerLazy.get()
 
   fun openExternalThread(
     currentChanDescriptor: ChanDescriptor,

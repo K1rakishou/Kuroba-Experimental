@@ -25,13 +25,13 @@ class ShowPostsInExternalThreadHelper(
   private val context: Context,
   private val scope: CoroutineScope,
   private val postPopupHelper: PostPopupHelper,
-  private val _chanThreadManager: Lazy<ChanThreadManager>,
+  private val chanThreadManagerLazy: Lazy<ChanThreadManager>,
   private val presentControllerFunc: (Controller) -> Unit,
   private val showAvailableArchivesListFunc: (PostDescriptor, canAutoSelectArchive: Boolean) -> Unit,
   private val showToastFunc: (String) -> Unit
 ) {
   private val chanThreadManager: ChanThreadManager
-    get() = _chanThreadManager.get()
+    get() = chanThreadManagerLazy.get()
 
   suspend fun showPostsInExternalThread(
     postDescriptor: PostDescriptor,

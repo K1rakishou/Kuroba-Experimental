@@ -52,7 +52,7 @@ class BrowseControllerTracker(
 
     when (actionMasked) {
       MotionEvent.ACTION_DOWN -> {
-        this.browseControllerViewWidth = width
+        browseControllerViewWidth = width
 
         interceptedEvent?.recycle()
         interceptedEvent = null
@@ -95,7 +95,7 @@ class BrowseControllerTracker(
         trackingType = TrackingType.None
         blockTracking = false
         actionDownSimulated = false
-        this.browseControllerViewWidth = 0
+        browseControllerViewWidth = 0
       }
     }
 

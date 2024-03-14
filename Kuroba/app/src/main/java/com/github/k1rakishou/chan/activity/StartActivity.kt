@@ -23,6 +23,7 @@ import android.os.Bundle
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
+import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.OnLifecycleEvent
 import androidx.lifecycle.lifecycleScope
@@ -54,6 +55,7 @@ import com.github.k1rakishou.chan.ui.controller.ViewThreadController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigationController
+import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
 import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
 import com.github.k1rakishou.chan.ui.view.KurobaBottomNavigationView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -113,6 +115,8 @@ class StartActivity : ControllerHostActivity(),
   lateinit var updateManager: Lazy<UpdateManager>
   @Inject
   lateinit var applicationCrashNotifier: ApplicationCrashNotifier
+  @Inject
+  lateinit var globalUiStateHolder: GlobalUiStateHolder
 
   private val compositeDisposable = CompositeDisposable()
   private var intentMismatchWorkaroundActive = false
@@ -422,9 +426,9 @@ class StartActivity : ControllerHostActivity(),
 
     if (layoutMode == ChanSettings.LayoutMode.PHONE || layoutMode == ChanSettings.LayoutMode.SLIDE) {
       val slideController = ThreadSlideController(
-        this,
-        inflate(this, R.layout.layout_split_empty),
-        mainController
+        context = this,
+        mainControllerCallbacks = mainController,
+        emptyView = inflate(this, R.layout.layout_split_empty)
       )
 
       mainNavigationController.pushController(slideController, false)
@@ -450,9 +454,22 @@ class StartActivity : ControllerHostActivity(),
     }
   }
 
-  override fun dispatchTouchEvent(ev: MotionEvent?): Boolean {
-    globalWindowInsetsManager.updateLastTouchCoordinates(ev)
-    return super.dispatchTouchEvent(ev)
+  override fun dispatchTouchEvent(event: MotionEvent?): Boolean {
+    globalUiStateHolder.updateMainUiState { updater ->
+      if (
+        event == null ||
+        event.pointerCount != 1 ||
+        event.actionMasked == MotionEvent.ACTION_UP ||
+        event.actionMasked == MotionEvent.ACTION_CANCEL
+      ) {
+        updater.updateTouchPosition(Offset.Unspecified)
+      } else {
+        updater.updateTouchPosition(Offset(event.rawX, event.rawY))
+      }
+    }
+
+    globalWindowInsetsManager.updateLastTouchCoordinates(event)
+    return super.dispatchTouchEvent(event)
   }
 
   override fun onSaveInstanceState(outState: Bundle) {

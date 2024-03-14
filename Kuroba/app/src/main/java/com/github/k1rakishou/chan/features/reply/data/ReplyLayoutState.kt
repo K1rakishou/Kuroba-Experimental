@@ -10,6 +10,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
@@ -755,6 +756,14 @@ class ReplyLayoutState(
   fun onSendReplyEnd() {
     Logger.debug(TAG) { "onSendReplyEnd(${chanDescriptor})" }
     _sendReplyState.value = SendReplyState.Finished
+  }
+
+  fun onReplyLayoutPositionChanged(boundsInRoot: Rect) {
+    globalUiStateHolder.updateReplyLayoutState { replyLayoutWritable ->
+      replyLayoutWritable.update(threadControllerType) { individualReplyLayoutWritable ->
+        individualReplyLayoutWritable.onReplyLayoutPositionChanged(boundsInRoot)
+      }
+    }
   }
 
   private suspend fun doWithProgressDialog(

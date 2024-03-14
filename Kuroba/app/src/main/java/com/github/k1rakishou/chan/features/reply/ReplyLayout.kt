@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutAnimationState
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeDivider
@@ -52,6 +54,9 @@ fun ReplyLayout(
         modifier = Modifier
           .fillMaxWidth()
           .height(targetHeight)
+          .onGloballyPositioned { layoutCoordinates ->
+            replyLayoutViewModel.onReplyLayoutPositionChanged(layoutCoordinates.boundsInRoot())
+          }
       ) {
         ReplyLayoutContainer(
           chanDescriptor = chanDescriptor,
