@@ -462,9 +462,9 @@ class StartActivity : ControllerHostActivity(),
         event.actionMasked == MotionEvent.ACTION_UP ||
         event.actionMasked == MotionEvent.ACTION_CANCEL
       ) {
-        updater.updateTouchPosition(Offset.Unspecified)
+        updater.updateTouchPosition(Offset.Unspecified, event?.actionMasked)
       } else {
-        updater.updateTouchPosition(Offset(event.rawX, event.rawY))
+        updater.updateTouchPosition(Offset(event.rawX, event.rawY), event.actionMasked)
       }
     }
 

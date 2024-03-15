@@ -45,7 +45,8 @@ public class NavigationItem {
     public CharSequence subtitle = "";
 
     public boolean hasBack = true;
-    public boolean hasDrawer;
+    public boolean hasDrawer = false;
+    public boolean replyOpened = false;
     public boolean swipeable = true;
     public boolean scrollableTitle = false;
 
@@ -60,7 +61,7 @@ public class NavigationItem {
     protected View rightView;
 
     public boolean hasArrow() {
-        return hasBack || search;
+        return hasBack || search || replyOpened;
     }
 
     public void setTitle(int resId) {

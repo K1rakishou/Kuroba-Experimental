@@ -36,6 +36,7 @@ import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
 import com.github.k1rakishou.chan.ui.controller.ThreadControllerType
 import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
+import com.github.k1rakishou.chan.ui.globalstate.drawer.DrawerAppearanceEvent
 import com.github.k1rakishou.chan.ui.helper.AppResources
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper
 import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
@@ -58,6 +59,7 @@ import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
@@ -121,6 +123,9 @@ class ReplyLayoutViewModel(
     get() = _replyLayoutState
   private val currentReplyLayoutState: ReplyLayoutState?
     get() = _replyLayoutState.value
+
+  val drawerAppearanceEventFlow: StateFlow<DrawerAppearanceEvent>
+    get() = globalUiStateHolder.drawer.drawerAppearanceEventFlow
 
   private val threadControllerType by lazy {
     requireNotNull(savedStateHandle.get<ThreadControllerType>(ThreadControllerTypeParam)) {

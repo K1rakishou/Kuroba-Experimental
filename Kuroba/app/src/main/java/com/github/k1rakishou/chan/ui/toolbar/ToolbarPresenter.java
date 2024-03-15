@@ -153,6 +153,36 @@ public class ToolbarPresenter {
         return item.search;
     }
 
+    void enterReplyLayoutMode() {
+        if (item == null || item.replyOpened) {
+            return;
+        }
+
+        cancelTransitionIfNeeded();
+        item.replyOpened = true;
+
+        callback.showForNavigationItem(item, themeEngine.getChanTheme(), AnimationStyle.NONE);
+    }
+
+    boolean isInReplyLayoutMode() {
+        if (item == null) {
+            return false;
+        }
+
+        return item.replyOpened;
+    }
+
+    void exitReplyLayoutMode() {
+        if (item == null || !item.replyOpened) {
+            return;
+        }
+
+        cancelTransitionIfNeeded();
+        item.replyOpened = false;
+
+        callback.showForNavigationItem(item, themeEngine.getChanTheme(), AnimationStyle.NONE);
+    }
+
     void enterSelectionMode(String text) {
         if (item == null || item.selectionMode) {
             return;

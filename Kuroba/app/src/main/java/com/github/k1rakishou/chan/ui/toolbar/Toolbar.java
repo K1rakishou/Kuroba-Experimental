@@ -368,6 +368,7 @@ public class Toolbar
     }
 
     public void attachRecyclerViewScrollStateListener(RecyclerView recyclerView) {
+        detachRecyclerViewScrollStateListener(recyclerView);
         recyclerView.addOnScrollListener(recyclerViewOnScrollListener);
     }
 
@@ -559,6 +560,18 @@ public class Toolbar
 
     public void exitSelectionMode() {
         presenter.exitSelectionMode();
+    }
+
+    public void enterReplyLayoutMode() {
+        presenter.enterReplyLayoutMode();
+    }
+
+    public boolean isInReplyLayoutMode() {
+        return presenter.isInReplyLayoutMode();
+    }
+
+    public void exitReplyLayoutMode() {
+        presenter.exitReplyLayoutMode();
     }
 
     public boolean isTransitioning() {

@@ -405,7 +405,14 @@ class MainController(
           )
         }
       )
-        .onEach { drawerState -> setDrawerEnabled(drawerState.isDrawerEnabled()) }
+        .onEach { drawerState ->
+          if (drawerLayout.isDrawerOpen(drawer)) {
+            setDrawerEnabled(true)
+            return@onEach
+          }
+
+          setDrawerEnabled(drawerState.isDrawerEnabled())
+        }
         .collect()
     }
 
@@ -471,11 +478,19 @@ class MainController(
 
   override fun onDrawerOpened(drawerView: View) {
     drawerOpenedState.value = true
+
+    globalUiStateHolder.updateDrawerState { drawerState ->
+      drawerState.onDrawerAppearanceChanged(opened = true)
+    }
   }
 
   override fun onDrawerClosed(drawerView: View) {
     drawerViewModel.clearSelection()
     drawerOpenedState.value = false
+
+    globalUiStateHolder.updateDrawerState { drawerState ->
+      drawerState.onDrawerAppearanceChanged(opened = false)
+    }
   }
 
   override fun onDrawerStateChanged(newState: Int) {

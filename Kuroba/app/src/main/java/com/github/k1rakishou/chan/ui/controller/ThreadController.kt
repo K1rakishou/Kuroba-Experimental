@@ -71,6 +71,8 @@ import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.persist_state.ReplyMode
 import dagger.Lazy
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl
 import javax.inject.Inject
@@ -236,6 +238,27 @@ abstract class ThreadController(
         Logger.d(TAG, "Reloading thread because app settings were updated")
         threadLayout.presenter.quickReloadFromMemoryCache()
       }
+    }
+
+    mainScope.launch {
+      globalUiStateHolder.replyLayout.replyLayoutVisibilityEventsFlow
+        .onEach { replyLayoutVisibilityEvents ->
+          toolbar?.let { toolbar ->
+            val isInReplyLayoutMode = toolbar.isInReplyLayoutMode
+            val anyReplyLayoutOpenedOrExpanded = replyLayoutVisibilityEvents.anyOpened() || replyLayoutVisibilityEvents.anyExpanded()
+
+            if (isInReplyLayoutMode == anyReplyLayoutOpenedOrExpanded) {
+              return@let
+            }
+
+            if (anyReplyLayoutOpenedOrExpanded) {
+              toolbar.enterReplyLayoutMode()
+            } else {
+              toolbar.exitReplyLayoutMode()
+            }
+          }
+        }
+        .collect()
     }
 
     onThemeChanged()

@@ -1,5 +1,7 @@
 package com.github.k1rakishou.chan.ui.globalstate
 
+import com.github.k1rakishou.chan.ui.globalstate.drawer.DrawerGlobalState
+import com.github.k1rakishou.chan.ui.globalstate.drawer.IDrawerGlobalState
 import com.github.k1rakishou.chan.ui.globalstate.fastsroller.FastScrollerGlobalState
 import com.github.k1rakishou.chan.ui.globalstate.fastsroller.IFastScrollerGlobalState
 import com.github.k1rakishou.chan.ui.globalstate.global.IMainUiState
@@ -20,6 +22,10 @@ class GlobalUiStateHolder {
   val fastScroller: IFastScrollerGlobalState.Readable
     get() = _fastScroller
 
+  private val _drawer = DrawerGlobalState()
+  val drawer: IDrawerGlobalState.Readable
+    get() = _drawer
+
   fun updateMainUiState(updater: (IMainUiState.Writeable) -> Unit) {
     updater(_mainUiState)
   }
@@ -30,6 +36,10 @@ class GlobalUiStateHolder {
 
   fun updateFastScrollerState(updater: (IFastScrollerGlobalState.Writeable) -> Unit) {
     updater(_fastScroller)
+  }
+
+  fun updateDrawerState(updater: (IDrawerGlobalState.Writable) -> Unit) {
+    updater(_drawer)
   }
 
 }

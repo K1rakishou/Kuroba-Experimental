@@ -316,6 +316,7 @@ open class ViewThreadController(
   }
 
   override fun onReplyViewShouldClose() {
+    toolbar?.exitReplyLayoutMode()
     threadLayout.openReply(false)
   }
 

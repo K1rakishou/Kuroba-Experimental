@@ -511,7 +511,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(con
     recyclerView.addItemDecoration(gridModeSpaceItemDecoration)
 
     runBlocking { setFastScroll(false, emptyList()) }
-    attachToolbarScroll(true)
+    attachToolbarScroll(attach = true)
 
     threadListLayoutCallback.toolbar?.addToolbarHeightUpdatesCallback(this)
 
@@ -529,7 +529,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(con
           when (replyLayoutVisibility) {
             ReplyLayoutVisibility.Collapsed -> {
               threadListLayoutCallback.showReplyButton(true)
-
               bottomNavBarVisibilityStateManager.replyViewStateChanged(
                 isCatalogReplyView = isCatalogReplyView,
                 isVisible = false
@@ -547,6 +546,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(con
               // no-op
             }
           }
+
+          attachToolbarScroll(attach = replyLayoutVisibility.isCollapsed())
         }
         .collect()
     }
@@ -556,6 +557,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(con
     compositeDisposable.clear()
     job.cancelChildren()
 
+    recyclerView.removeOnScrollListener(scrollListener)
     threadListLayoutCallback?.toolbar?.removeToolbarHeightUpdatesCallback(this)
     runBlocking { setFastScroll(false, emptyList()) }
 
@@ -1059,11 +1061,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(con
     recyclerView.scrollToPosition(scrollPosition)
   }
 
-  private fun canToolbarCollapse(): Boolean {
-    return (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT
-      && !ChanSettings.neverHideToolbar.get())
-  }
-
   private fun attachToolbarScroll(attach: Boolean) {
     if (!canToolbarCollapse()) {
       return
@@ -1072,7 +1069,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(con
     val toolbar = threadListLayoutCallback?.toolbar
       ?: return
 
-    if (attach && !replyLayoutView.isOpened()) {
+    if (attach && replyLayoutView.isCollapsed()) {
       toolbar.attachRecyclerViewScrollStateListener(recyclerView)
     } else {
       toolbar.detachRecyclerViewScrollStateListener(recyclerView)
@@ -1092,13 +1089,18 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(con
     val toolbar = threadListLayoutCallback?.toolbar
       ?: return
 
-    if (replyLayoutView.isOpened()) {
+    if (replyLayoutView.isOpenedOrExpanded()) {
       // force toolbar to show
       toolbar.collapseShow(true)
     } else {
       // check if it should show if it was scrolled at the top
       toolbar.checkToolbarCollapseState(recyclerView, true)
     }
+  }
+
+  private fun canToolbarCollapse(): Boolean {
+    return (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT
+      && !ChanSettings.neverHideToolbar.get())
   }
 
   private suspend fun setFastScroll(enable: Boolean, posts: List<PostIndexed>) {
@@ -1196,8 +1198,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(con
     if (!open) {
       AndroidUtils.hideKeyboard(replyLayoutView)
     }
-
-    attachToolbarScroll(!open)
   }
 
   private fun requireThreadControllerType(): ThreadControllerType {
@@ -1398,6 +1398,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?) : FrameLayout(con
     fun isExpanded(): Boolean
     fun isOpened(): Boolean
     fun isCollapsed(): Boolean
+    fun isOpenedOrExpanded(): Boolean
     fun updateReplyLayoutVisibility(newReplyLayoutVisibility: ReplyLayoutVisibility)
     fun enqueueReply(chanDescriptor: ChanDescriptor, replyMode: ReplyMode, retrying: Boolean)
     fun onImageOptionsApplied(fileUuid: UUID)

@@ -322,7 +322,7 @@ class ThreadSlideController(
     }
 
     for (childController in controller.childControllers) {
-      notifyFocusGained(controllerType, childController)
+      notifyFocusLost(controllerType, childController)
     }
   }
 

@@ -735,6 +735,7 @@ class BrowseController(
   }
 
   override fun onReplyViewShouldClose() {
+    toolbar?.exitReplyLayoutMode()
     threadLayout.openReply(false)
   }
 

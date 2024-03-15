@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
@@ -14,7 +15,11 @@ import com.github.k1rakishou.chan.features.reply.ReplyLayoutViewModel
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileAttachable
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutState
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
+import com.github.k1rakishou.chan.ui.compose.clearFocusSafe
+import com.github.k1rakishou.chan.ui.globalstate.drawer.DrawerAppearanceEvent
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.onEach
 
 
 @Composable
@@ -32,6 +37,21 @@ internal fun ReplyInputLeftPart(
   val focusManager = LocalFocusManager.current
 
   val replyLayoutVisibility by replyLayoutState.replyLayoutVisibility
+
+  LaunchedEffect(key1 = Unit) {
+    replyLayoutViewModel.drawerAppearanceEventFlow
+      .onEach { drawerAppearanceEvent ->
+        when (drawerAppearanceEvent) {
+          DrawerAppearanceEvent.Opened -> {
+            focusManager.clearFocusSafe(force = true)
+          }
+          DrawerAppearanceEvent.Closed -> {
+            // no-op
+          }
+        }
+      }
+      .collect()
+  }
 
   Column(
     modifier = Modifier

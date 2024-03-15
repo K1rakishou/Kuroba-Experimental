@@ -174,6 +174,10 @@ class ReplyLayoutView @JvmOverloads constructor(
     return replyLayoutViewModel.replyLayoutVisibility() == ReplyLayoutVisibility.Collapsed
   }
 
+  override fun isOpenedOrExpanded(): Boolean {
+    return isOpened() || isExpanded()
+  }
+
   override fun updateReplyLayoutVisibility(newReplyLayoutVisibility: ReplyLayoutVisibility) {
     replyLayoutViewModel.updateReplyLayoutVisibility(newReplyLayoutVisibility)
   }
