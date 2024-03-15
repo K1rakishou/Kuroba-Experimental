@@ -15,7 +15,6 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.withStyle
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
@@ -121,10 +120,7 @@ class ReplyLayoutState(
   private val clearPostingCookies: ClearPostingCookies
     get() = clearPostingCookiesLazy.get()
 
-  private val _replyTextState = mutableStateOf<TextFieldValue>(TextFieldValue())
-  val replyTextState: State<TextFieldValue>
-    get() = _replyTextState
-
+  val replyTextState = TextFieldState()
   val subjectTextState = TextFieldState()
   val nameTextState = TextFieldState()
   val optionsTextState = TextFieldState()
@@ -234,6 +230,12 @@ class ReplyLayoutState(
           }
         }
         .collect()
+    }
+
+    compositeJob += coroutineScope.launch {
+      replyTextState.forEachTextValue {
+        afterReplyTextChanged()
+      }
     }
 
     compositeJob += coroutineScope.launch {
@@ -425,32 +427,32 @@ class ReplyLayoutState(
 
   fun insertTags(postFormatterButton: PostFormatterButton) {
     try {
-      val textFieldValue = _replyTextState.value
-      val capacity = textFieldValue.text.length + postFormatterButton.openTag.length + postFormatterButton.closeTag.length
+      val replyText = replyTextState.text.toString()
+
+      val capacity = replyText.length + postFormatterButton.openTag.length + postFormatterButton.closeTag.length
       var selectionIndex = -1
 
       val newText = buildString(capacity = capacity) {
-        val text = textFieldValue.text
-        val selectionStart = textFieldValue.selection.start
-        val selectionEnd = textFieldValue.selection.end
+        val selectionStart = replyTextState.text.selectionInChars.start
+        val selectionEnd = replyTextState.text.selectionInChars.end
 
-        append(text.subSequence(0, selectionStart))
+        append(replyText.subSequence(0, selectionStart))
         append(postFormatterButton.openTag)
 
         if (selectionEnd > selectionStart) {
-          append(text.subSequence(selectionStart, selectionEnd))
+          append(replyText.subSequence(selectionStart, selectionEnd))
         }
 
         selectionIndex = this.length
 
         append(postFormatterButton.closeTag)
-        append(text.subSequence(selectionEnd, text.length))
+        append(replyText.subSequence(selectionEnd, replyText.length))
       }
 
-      _replyTextState.value = textFieldValue.copy(
-        text = newText,
-        selection = TextRange(selectionIndex)
-      )
+      replyTextState.edit {
+        replace(0, length, newText)
+        selectCharsIn(TextRange(selectionIndex))
+      }
 
       afterReplyTextChanged()
     } catch (error: Throwable) {
@@ -476,8 +478,8 @@ class ReplyLayoutState(
 
   private fun handleQuote(postNo: Long, textQuote: String?) {
     try {
-      _replyTextState.value = replyLayoutHelper.handleQuote(
-        replyTextState = _replyTextState.value,
+      replyLayoutHelper.handleQuote(
+        replyTextState = replyTextState,
         postNo = postNo,
         textQuote = textQuote
       )
@@ -487,18 +489,13 @@ class ReplyLayoutState(
       Logger.error(TAG, error) {
         "replyLayoutHelper.handleQuote() error. " +
           "replyTextState: '${replyTextState}', " +
-          "selection: ${replyTextState.value.selection}, " +
+          "selection: ${replyTextState.text.selectionInChars}, " +
           "postNo: ${postNo}, " +
           "textQuote: '$textQuote'"
       }
 
       showErrorToast(error)
     }
-  }
-
-  fun onReplyTextChanged(textFieldValue: TextFieldValue) {
-    _replyTextState.value = textFieldValue
-    afterReplyTextChanged()
   }
 
   fun removeAttachedMedia(attachedMedia: ReplyFileAttachable) {
@@ -788,7 +785,10 @@ class ReplyLayoutState(
     }
 
     replyManager.readReply(chanDescriptor) { reply ->
-      _replyTextState.value = TextFieldValue(reply.comment, TextRange(reply.comment.length))
+      replyTextState.edit {
+        append(reply.comment)
+        placeCursorAtEnd()
+      }
 
       subjectTextState.edit {
         append(reply.subject)
@@ -826,7 +826,7 @@ class ReplyLayoutState(
       val lastUsedFlagKey = boardFlagInfoRepository.getLastUsedFlagKey(chanDescriptor.boardDescriptor())
 
       replyManager.readReply(chanDescriptor) { reply ->
-        reply.comment = replyTextState.value.text
+        reply.comment = replyTextState.text.toString()
         reply.postName = nameTextState.text.toString()
         reply.subject = subjectTextState.text.toString()
         reply.options = optionsTextState.text.toString()
@@ -981,14 +981,14 @@ class ReplyLayoutState(
       threadControllerType = threadControllerType,
       makeNewThreadHint = appResources.string(R.string.reply_make_new_thread_hint),
       replyInThreadHint = appResources.string(R.string.reply_reply_in_thread_hint),
-      replyText = replyTextState.value.text,
+      replyText = replyTextState.text.toString(),
       maxCommentLength = _maxCommentLength.intValue
     )
   }
 
   private fun updateHighlightedPosts() {
     highlightQuotesExecutor.post(300) {
-      val replyTextCopy = replyTextState.value.text
+      val replyTextCopy = replyTextState.text.toString()
 
       val foundQuotes = withContext(Dispatchers.Default) {
         ReplyTextFieldHelpers.findAllQuotesInText(chanDescriptor, replyTextCopy)

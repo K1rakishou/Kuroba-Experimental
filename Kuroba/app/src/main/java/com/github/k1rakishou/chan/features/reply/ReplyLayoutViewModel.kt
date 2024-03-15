@@ -5,7 +5,6 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.R
@@ -565,12 +564,6 @@ class ReplyLayoutViewModel(
 
   fun quote(postDescriptor: PostDescriptor, text: CharSequence) {
     withReplyLayoutState { replyLayoutState -> replyLayoutState.quote(postDescriptor, text) }
-  }
-
-  fun onReplyTextChanged(textFieldValue: TextFieldValue) {
-    withReplyLayoutState { replyLayoutState ->
-      replyLayoutState.onReplyTextChanged(textFieldValue)
-    }
   }
 
   suspend fun getFlagInfoList(boardDescriptor: BoardDescriptor): List<LoadBoardFlagsUseCase.FlagInfo> {

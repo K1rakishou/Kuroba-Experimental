@@ -1,12 +1,12 @@
 package com.github.k1rakishou.chan.features.reply.data
 
 import android.content.Context
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.exifinterface.media.ExifInterface
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.image.InputFile
@@ -610,10 +610,10 @@ class ReplyLayoutHelper(
       ?: return false
   }
 
-  fun handleQuote(replyTextState: TextFieldValue, postNo: Long, textQuote: String?): TextFieldValue {
+  fun handleQuote(replyTextState: TextFieldState, postNo: Long, textQuote: String?) {
     val stringBuilder = StringBuilder()
     val comment = replyTextState.text
-    val selectionStart = replyTextState.selection.start.coerceAtLeast(0)
+    val selectionStart = replyTextState.text.selectionInChars.start.coerceAtLeast(0)
 
     if (selectionStart - 1 >= 0
       && comment.isNotEmpty()
@@ -654,10 +654,10 @@ class ReplyLayoutHelper(
       .insert(selectionStart, stringBuilder)
       .toString()
 
-    return replyTextState.copy(
-      text = resultComment,
-      selection = TextRange(selectionStart + stringBuilder.length)
-    )
+    replyTextState.edit {
+      replace(0, length, resultComment)
+      selectCharsIn(TextRange(selectionStart + stringBuilder.length))
+    }
   }
 
   companion object {

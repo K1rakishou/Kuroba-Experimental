@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.features.reply.ReplyLayoutViewModel
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutState
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
-import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextField
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextFieldV2
 import com.github.k1rakishou.chan.ui.compose.components.KurobaLabelText
 import com.github.k1rakishou.chan.ui.compose.freeFocusSafe
 import com.github.k1rakishou.chan.ui.compose.ktu
@@ -43,7 +43,7 @@ internal fun ReplyTextField(
   val focusRequester = remember { FocusRequester() }
 
   var prevReplyLayoutVisibility by remember { mutableStateOf<ReplyLayoutVisibility>(ReplyLayoutVisibility.Collapsed) }
-  val replyTextState by replyLayoutState.replyTextState
+  val replyTextState = replyLayoutState.replyTextState
   val replyAttachables by replyLayoutState.attachables
   val replyLayoutVisibility by replyLayoutState.replyLayoutVisibility
   val replyFieldHintText by replyLayoutState.replyFieldHintText
@@ -125,19 +125,18 @@ internal fun ReplyTextField(
   }
 
   // TODO: New reply layout. Try using LookaheadLayout.
-  KurobaComposeTextField(
+  KurobaComposeTextFieldV2(
     modifier = Modifier
       .fillMaxWidth()
       .padding(vertical = 4.dp)
       .focusRequester(focusRequester)
       .then(heightModifier),
     enabled = replyLayoutEnabled,
-    value = replyTextState,
-    visualTransformation = replyInputVisualTransformation,
+    state = replyTextState,
+//    visualTransformation = replyInputVisualTransformation,
     keyboardOptions = KeyboardOptions(
       capitalization = KeyboardCapitalization.Sentences
     ),
-    onValueChange = { textFieldValue -> replyLayoutViewModel.onReplyTextChanged(textFieldValue) },
     label = {
       KurobaLabelText(
         enabled = replyLayoutEnabled,
