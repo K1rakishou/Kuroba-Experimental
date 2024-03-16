@@ -88,7 +88,6 @@ sealed class ModularResult<V : Any?> {
   }
 
   @CheckReturnValue
-  @Suppress("UNCHECKED_CAST")
   inline fun mapError(mapper: (error: Throwable) -> Throwable): ModularResult<V> {
     return when (this) {
       is Error -> error(mapper(error))
@@ -105,7 +104,6 @@ sealed class ModularResult<V : Any?> {
   }
 
   @CheckReturnValue
-  @Suppress("UNCHECKED_CAST")
   inline fun finally(block: () -> Unit): ModularResult<V> {
     block()
     return this
