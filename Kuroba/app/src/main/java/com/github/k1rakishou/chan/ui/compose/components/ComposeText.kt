@@ -14,6 +14,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.util.lerp
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.ui.compose.KurobaTextUnit
 import com.github.k1rakishou.chan.ui.compose.collectTextFontSize
@@ -92,9 +93,8 @@ private fun kurobaTextStyle(actualFontSize: TextUnit, style: TextStyle): TextSty
 
   val percentage = (currentFontSize - minFont) / (maxFont - minFont)
   val maxLineLength = 1.0f
-  val maxLineLengthDiff = 0.3f
-  val lineLengthDiff = maxLineLength - maxLineLengthDiff
-  val lineLengthDiffPercentage = lineLengthDiff + ((maxLineLengthDiff * percentage).coerceIn(0.0f, 0.2f))
+  val minLineLength = 0.6f
+  val lineLengthDiffPercentage = lerp(minLineLength, maxLineLength, percentage)
 
   return style.copy(
     lineHeight = style.lineHeight * lineLengthDiffPercentage
