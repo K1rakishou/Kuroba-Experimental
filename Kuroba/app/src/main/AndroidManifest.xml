@@ -120,8 +120,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 <data android:host="wired-7.org" />
                 <data android:host="www.wired-7.org" />
 
-                <data android:host="370chan.info" />
-                <data android:host="www.370chan.info" />
+                <data android:host="370ch.lt" />
+                <data android:host="www.370ch.lt" />
 
                 <data android:host="vhschan.org" />
                 <data android:host="www.vhschan.org" />

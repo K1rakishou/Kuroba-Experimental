@@ -35,6 +35,8 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Map;
+
 import okhttp3.HttpUrl;
 
 @DoNotStrip
@@ -44,7 +46,7 @@ public class Chan370
     public static final String SITE_NAME = "370chan";
 
     public static final CommonSiteUrlHandler URL_HANDLER = new CommonSiteUrlHandler() {
-        private static final String ROOT = "https://370chan.info/";
+        private static final String ROOT = "https://370ch.lt/";
 
         @Override
         public Class<? extends Site> getSiteClass() {
@@ -92,19 +94,17 @@ public class Chan370
     public void setup() {
         setEnabled(true);
         setName(SITE_NAME);
-        setIcon(SiteIcon.fromFavicon(getImageLoaderV2(), HttpUrl.parse("https://370chan.info/favicon.ico")));
+        setIcon(SiteIcon.fromFavicon(getImageLoaderV2(), HttpUrl.parse("https://370ch.lt/favicon.ico")));
 
         setBoards(
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "a"), "anime"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "a"), "anime ir manga"),
                 ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "b"), "apie viską"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "ž"), "kompiuteriniai žaidimai"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "tv"), "televizija & filmai"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "pol"), "politika"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "g"), "technologijos"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "fa"), "mada & stilius"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "g"), "technologijos ir žaidimai"),
                 ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "fo"), "fotografija"),
                 ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "mu"), "muzika"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "int"), "International")
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "int"), "internacionalus"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "t"), "teptukas"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "meta"), "svetainės aptarimas")
         );
 
         setResolvable(URL_HANDLER);
@@ -112,11 +112,29 @@ public class Chan370
         setConfig(new CommonConfig() {
             @Override
             public boolean siteFeature(SiteFeature siteFeature) {
-                return super.siteFeature(siteFeature) || siteFeature == SiteFeature.POSTING;
+                return super.siteFeature(siteFeature); //features are not implemented.
             }
         });
 
-        setEndpoints(new VichanEndpoints(this, "https://370chan.info/", "https://370chan.info/"));
+        setEndpoints(new VichanEndpoints(this, "https://370ch.lt/", "https://370ch.lt/")
+        {
+            @Override
+            public HttpUrl thumbnailUrl(BoardDescriptor boardDescriptor, boolean spoiler, int customSpoilers, Map<String, String> arg) {
+                String extension = switch (arg.get("ext")){
+                    // for an unknown reason, not all media files follow the same rules
+                    // i.e. some jpg images have png thumbnails, others have jpg
+                    // this makes some amount of media files have 404 thumbnails
+                    case "jpg", "jpeg" -> "." + arg.get("ext");
+                    case "webm", "mp4", "gif" -> ".gif";
+                    default -> ".png";
+                };
+                return root.builder()
+                        .s(boardDescriptor.getBoardCode())
+                        .s("thumb")
+                        .s(arg.get("tim") + extension)
+                        .url();
+            }
+        });
         setActions(new VichanActions(this, getProxiedOkHttpClient(), getSiteManager(), getReplyManager()));
         setApi(new VichanApi(getSiteManager(), getBoardManager(), this));
         setParser(new VichanCommentParser());
