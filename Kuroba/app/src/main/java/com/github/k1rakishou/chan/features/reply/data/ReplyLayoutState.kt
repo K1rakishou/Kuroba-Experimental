@@ -33,6 +33,7 @@ import com.github.k1rakishou.chan.features.posting.PostResult
 import com.github.k1rakishou.chan.features.posting.PostingServiceDelegate
 import com.github.k1rakishou.chan.features.posting.PostingStatus
 import com.github.k1rakishou.chan.features.reply.left.ReplyTextFieldHelpers
+import com.github.k1rakishou.chan.ui.compose.clearText
 import com.github.k1rakishou.chan.ui.controller.ThreadControllerType
 import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
 import com.github.k1rakishou.chan.ui.helper.AppResources
@@ -450,7 +451,8 @@ class ReplyLayoutState(
       }
 
       replyTextState.edit {
-        replace(0, length, newText)
+        clearText()
+        append(newText)
         selectCharsIn(TextRange(selectionIndex))
       }
 
@@ -786,21 +788,25 @@ class ReplyLayoutState(
 
     replyManager.readReply(chanDescriptor) { reply ->
       replyTextState.edit {
+        clearText()
         append(reply.comment)
         placeCursorAtEnd()
       }
 
       subjectTextState.edit {
+        clearText()
         append(reply.subject)
         placeCursorAtEnd()
       }
 
       nameTextState.edit {
+        clearText()
         append(reply.postName)
         placeCursorAtEnd()
       }
 
       optionsTextState.edit {
+        clearText()
         append(reply.options)
         placeCursorAtEnd()
       }

@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.text.input.TextFieldBuffer
+import androidx.compose.foundation.text.input.delete
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisallowComposableCalls
 import androidx.compose.runtime.SideEffect
@@ -445,4 +447,8 @@ fun List<Measurable>.ensureSingleMeasurable(): Measurable {
   }
 
   return first()
+}
+
+fun TextFieldBuffer.clearText() {
+  delete(0, length)
 }
