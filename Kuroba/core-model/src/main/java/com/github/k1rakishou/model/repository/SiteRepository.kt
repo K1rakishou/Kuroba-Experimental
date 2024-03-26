@@ -9,7 +9,6 @@ import com.github.k1rakishou.model.data.site.ChanSiteData
 import com.github.k1rakishou.model.source.local.SiteLocalSource
 import com.github.k1rakishou.model.util.ensureBackgroundThread
 import kotlinx.coroutines.CoroutineScope
-import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
@@ -42,7 +41,6 @@ class SiteRepository(
     }
   }
 
-  @OptIn(ExperimentalTime::class)
   suspend fun persist(chanSiteDataList: Collection<ChanSiteData>): ModularResult<Unit> {
     check(allSitesLoadedInitializer.isInitialized()) { "SiteRepository is not initialized" }
     Logger.d(TAG, "persist(chanSiteDataListCount=${chanSiteDataList.size})")

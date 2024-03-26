@@ -94,6 +94,8 @@ class CloudFlareHandlerInterceptor(
     synchronized(this) { sitesThatRequireCloudFlareCache.add(host) }
 
     if (canShowCloudFlareBypassScreen(retrying, request)) {
+      siteResolver.waitUntilInitialized()
+
       val site = siteResolver.findSiteForUrl(request.url.toString())
       if (site != null) {
         val siteDescriptor = site.siteDescriptor()
@@ -176,6 +178,8 @@ class CloudFlareHandlerInterceptor(
       return true
     }
 
+    siteResolver.waitUntilInitialized()
+
     val url = request.url
     val site = siteResolver.findSiteForUrl(url.toString())
 
@@ -204,6 +208,8 @@ class CloudFlareHandlerInterceptor(
 
   private fun addCloudFlareCookie(prevRequest: Request): Request? {
     val url = prevRequest.url
+
+    siteResolver.waitUntilInitialized()
     val site = siteResolver.findSiteForUrl(url.toString())
 
     val domainOrHost = prevRequest.url.domain()

@@ -7,7 +7,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.time.ExperimentalTime
 
 /**
  * A super useful class for cases when you want to initialize something in a class (that may take
@@ -61,7 +60,6 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
     }
   }
 
-  @OptIn(ExperimentalTime::class)
   suspend fun awaitUntilInitialized() {
     if (value.isCompleted) {
       val throwable = error.get()

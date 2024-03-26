@@ -29,7 +29,6 @@ import java.io.File
 import java.net.InetSocketAddress
 import java.net.Proxy
 import java.net.URI
-import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicBoolean
 
 @Suppress("BlockingMethodInNonBlockingContext")
@@ -238,10 +237,7 @@ class ProxyStorage(
       return
     }
 
-    val countDownLatch = CountDownLatch(1)
-    siteResolver.runWhenInitialized { countDownLatch.countDown() }
-    countDownLatch.await()
-
+    siteResolver.waitUntilInitialized()
     dependenciesInitialized.set(true)
   }
 
