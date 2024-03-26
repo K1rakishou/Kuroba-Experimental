@@ -102,7 +102,6 @@ public class SoyjakParty
                 ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "jak"), "jaks"),
                 ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "qa"), "question & answer"),
                 ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "r"), "requests and soy art"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "q"), "the 'party"),
                 ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "caca"), "cacaborea"),
                 ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "a"), "tranime"),
                 ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "raid"), "raid: shadow legends"),
