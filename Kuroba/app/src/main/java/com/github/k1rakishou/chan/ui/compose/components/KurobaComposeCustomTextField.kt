@@ -14,7 +14,6 @@ import androidx.compose.material.ContentAlpha
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -54,35 +53,119 @@ fun KurobaComposeCustomTextField(
   keyboardActions: KeyboardActions = remember { KeyboardActions() },
   interactionSource: MutableInteractionSource = remember { MutableInteractionSource() }
 ) {
-  var prevTextFieldValue by remember { mutableStateOf<TextFieldValue?>(null) }
+  val chanTheme = LocalChanTheme.current
+  val textFieldColors = chanTheme.textFieldColors()
+  val cursorBrush = remember(key1 = chanTheme) { SolidColor(chanTheme.accentColorCompose) }
+  val lineTotalHeight = if (drawBottomIndicator) 4.dp else 0.dp
+  val labelTextBottomOffset = if (drawBottomIndicator) 2.dp else 0.dp
 
-  val currentTextFieldValueMut by produceState<TextFieldValue?>(initialValue = prevTextFieldValue, key1 = value) {
-    val newTextFieldValue = prevTextFieldValue?.copy(text = value) ?: TextFieldValue(text = value)
-    prevTextFieldValue = newTextFieldValue
-    this.value = newTextFieldValue
+  val actualTextColor = if (!textColor.isUnspecified) {
+    textColor
+  } else {
+    if (ThemeEngine.isDarkColor(parentBackgroundColor)) {
+      Color.White
+    } else {
+      Color.Black
+    }
   }
 
-  val currentTextFieldValue = currentTextFieldValueMut
-  if (currentTextFieldValue == null) {
-    return
+  val textStyle = remember(key1 = actualTextColor, key2 = fontSize) {
+    TextStyle.Default.copy(color = actualTextColor, fontSize = fontSize.value)
   }
 
-  KurobaComposeCustomTextField(
-    value = currentTextFieldValue,
-    onValueChange = { newTextFieldValue -> onValueChange(newTextFieldValue.text) },
+  val indicatorLineModifier = if (drawBottomIndicator) {
+    val indicatorColorState = textFieldColors.indicatorColor(
+      enabled = enabled,
+      isError = false,
+      interactionSource = interactionSource
+    )
+
+    Modifier.drawIndicatorLine(
+      color = indicatorColorState.value,
+      lineWidth = 2.dp,
+      verticalOffset = 2.dp
+    )
+  } else {
+    Modifier
+  }
+
+  var localInput by remember { mutableStateOf(value) }
+
+  KurobaComposeCustomTextFieldInternal(
     modifier = modifier,
-    enabled = enabled,
-    textColor = textColor,
-    parentBackgroundColor = parentBackgroundColor,
-    drawBottomIndicator = drawBottomIndicator,
-    fontSize = fontSize,
-    maxLines = maxLines,
-    singleLine = singleLine,
     labelText = labelText,
+    labelTextBottomOffset = labelTextBottomOffset,
     maxTextLength = maxTextLength,
-    keyboardOptions = keyboardOptions,
-    keyboardActions = keyboardActions,
-    interactionSource = interactionSource,
+    labelTextContent = {
+      val isFocused by interactionSource.collectIsFocusedAsState()
+
+      AnimatedVisibility(
+        visible = !enabled || (!isFocused && localInput.isEmpty()),
+        enter = fadeIn(),
+        exit = fadeOut()
+      ) {
+        val alpha = if (enabled) {
+          ContentAlpha.medium
+        } else {
+          ContentAlpha.disabled
+        }
+
+        val hintColor = remember(key1 = parentBackgroundColor, key2 = alpha) {
+          if (parentBackgroundColor.isUnspecified) {
+            Color.DarkGray.copy(alpha = alpha)
+          } else {
+            if (ThemeEngine.isDarkColor(parentBackgroundColor)) {
+              Color.LightGray.copy(alpha = alpha)
+            } else {
+              Color.DarkGray.copy(alpha = alpha)
+            }
+          }
+        }
+
+        ComposeText(
+          text = labelText!!,
+          fontSize = fontSize,
+          color = hintColor
+        )
+      }
+    },
+    textFieldContent = {
+      BasicTextField(
+        modifier = indicatorLineModifier
+          .padding(bottom = lineTotalHeight),
+        enabled = enabled,
+        textStyle = textStyle,
+        singleLine = singleLine,
+        maxLines = maxLines,
+        cursorBrush = cursorBrush,
+        value = value,
+        keyboardOptions = keyboardOptions,
+        keyboardActions = keyboardActions,
+        interactionSource = interactionSource,
+        onValueChange = { text ->
+          localInput = text
+          onValueChange(text)
+        }
+      )
+    },
+    textCounterContent = {
+      val currentCounter = localInput.length
+      val maxCounter = maxTextLength
+      val counterText = remember(key1 = currentCounter, key2 = maxCounter) { "$currentCounter / $maxCounter" }
+      val counterTextColor = if (currentCounter > maxCounter) {
+        chanTheme.errorColorCompose
+      } else {
+        chanTheme.textColorHintCompose
+      }
+
+      Column {
+        ComposeText(
+          text = counterText,
+          fontSize = 12.ktu,
+          color = counterTextColor,
+        )
+      }
+    }
   )
 }
 
