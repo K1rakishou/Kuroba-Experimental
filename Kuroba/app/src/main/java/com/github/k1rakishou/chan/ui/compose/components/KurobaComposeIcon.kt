@@ -18,19 +18,19 @@ fun KurobaComposeIcon(
   modifier: Modifier = Modifier,
   @DrawableRes drawableId: Int,
   enabled: Boolean = true,
-  colorTint: IconTint = IconTint.Tint
+  iconTint: IconTint = IconTint.Tint
 ) {
   val chanTheme = LocalChanTheme.current
 
-  val colorFilter = remember(key1 = chanTheme, key2 = colorTint) {
-    return@remember when (colorTint) {
+  val colorFilter = remember(key1 = chanTheme, key2 = iconTint) {
+    return@remember when (iconTint) {
       is IconTint.DoNotTint -> null
       is IconTint.Tint -> {
         val tintColor = Color(ThemeEngine.resolveDrawableTintColor(chanTheme))
         ColorFilter.tint(tintColor)
       }
       is IconTint.TintWithColor -> {
-        val tintColor = colorTint.color
+        val tintColor = iconTint.color
         ColorFilter.tint(tintColor)
       }
     }

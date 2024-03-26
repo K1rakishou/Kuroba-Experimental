@@ -45,262 +45,269 @@ import java.io.File
 import javax.inject.Inject
 
 class CreateSoundMediaController(
-    context: Context
+  context: Context
 ) : BaseComposeController<CreateSoundMediaControllerViewModel>(
-    context = context,
-    titleStringId = R.string.create_sound_media_controller_title
+  context = context,
+  titleStringId = R.string.create_sound_media_controller_title
 ) {
 
-    @Inject
-    lateinit var imageLoaderV2: ImageLoaderV2
-    @Inject
-    lateinit var fileChooser: FileChooser
-    @Inject
-    lateinit var dialogFactory: DialogFactory
+  @Inject
+  lateinit var imageLoaderV2: ImageLoaderV2
 
-    override fun injectDependencies(component: ActivityComponent) {
-        component.inject(this)
-    }
+  @Inject
+  lateinit var fileChooser: FileChooser
 
-    override fun controllerVM(): CreateSoundMediaControllerViewModel {
-        return requireComponentActivity().viewModelByKey<CreateSoundMediaControllerViewModel>()
-    }
+  @Inject
+  lateinit var dialogFactory: DialogFactory
 
-    @Composable
-    override fun BuildContent() {
-        val attachments = controllerViewModel.attachments
-        val processingAttachments = controllerViewModel.processingAttachments
-        val selectedFiles = controllerViewModel.selectedFiles
+  override fun injectDependencies(component: ActivityComponent) {
+    component.inject(this)
+  }
 
-        val paddingValues by controllerPaddingsState
+  override fun controllerVM(): CreateSoundMediaControllerViewModel {
+    return requireComponentActivity().viewModelByKey<CreateSoundMediaControllerViewModel>()
+  }
 
-        LazyVerticalGrid(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(4.dp),
-            contentPadding = paddingValues,
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            columns = GridCells.Adaptive(minSize = 192.dp)
-        ) {
-            items(
-                count = attachments.size,
-                itemContent = { index ->
-                    val attachment = attachments[index]
-                    val processingAttachment = processingAttachments[attachment.fileUUID] ?: AsyncData.NotInitialized
+  @Composable
+  override fun BuildContent() {
+    val attachments = controllerViewModel.attachments
+    val processingAttachments = controllerViewModel.processingAttachments
+    val selectedFiles = controllerViewModel.selectedFiles
 
-                    Attachment(
-                        attachment = attachment,
-                        canRetryOnError = selectedFiles.containsKey(attachment.fileUUID),
-                        processingAttachment = processingAttachment,
-                        createSoundMedia = { clickedAttachment, checkMediaHasSound ->
-                            tryToCreateSoundMedia(
-                                clickedAttachment = clickedAttachment,
-                                checkMediaHasSound = checkMediaHasSound
-                            )
-                        }
-                    )
-                }
-            )
-        }
-    }
+    val paddingValues by controllerPaddingsState
 
-    @Composable
-    private fun Attachment(
-        attachment: CreateSoundMediaControllerViewModel.Attachment,
-        canRetryOnError: Boolean,
-        processingAttachment: AsyncData<Unit>,
-        createSoundMedia: (CreateSoundMediaControllerViewModel.Attachment, checkMediaHasSound: Boolean) -> Unit
+    LazyVerticalGrid(
+      modifier = Modifier
+          .fillMaxSize()
+          .padding(4.dp),
+      contentPadding = paddingValues,
+      verticalArrangement = Arrangement.spacedBy(4.dp),
+      horizontalArrangement = Arrangement.spacedBy(8.dp),
+      columns = GridCells.Adaptive(minSize = 192.dp)
     ) {
-        val request = remember(attachment.imagePath) {
-            ImageLoaderRequest(
-                data = ImageLoaderRequestData.File(
-                    file = File(attachment.imagePath)
-                )
-            )
+      items(
+        count = attachments.size,
+        itemContent = { index ->
+          val attachment = attachments[index]
+          val processingAttachment = processingAttachments[attachment.fileUUID] ?: AsyncData.NotInitialized
+
+          Attachment(
+            attachment = attachment,
+            canRetryOnError = selectedFiles.containsKey(attachment.fileUUID),
+            processingAttachment = processingAttachment,
+            createSoundMedia = { clickedAttachment, checkMediaHasSound ->
+              tryToCreateSoundMedia(
+                clickedAttachment = clickedAttachment,
+                checkMediaHasSound = checkMediaHasSound
+              )
+            }
+          )
         }
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(256.dp)
-                .kurobaClickable(
-                    enabled = processingAttachment !is AsyncData.Loading,
-                    bounded = true,
-                    onClick = { createSoundMedia(attachment, true) }
-                )
-        ) {
-            KurobaComposeImage(
-                request = request,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop,
-                imageLoaderV2 = imageLoaderV2
-            )
-
-            KurobaComposeText(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .wrapContentHeight()
-                    .kurobaClickable(
-                        bounded = true,
-                        onClick = { showFullAttachmentName(attachment) }
-                    )
-                    .background(Color.Black.copy(alpha = 0.7f))
-                    .padding(horizontal = 4.dp, vertical = 2.dp)
-                    .align(Alignment.BottomCenter),
-                text = attachment.attachmentName,
-                maxLines = 5,
-                overflow = TextOverflow.Ellipsis,
-                color = Color.White,
-                fontSize = 12.ktu
-            )
-
-            AttachmentOverlay(
-                processingAttachment = processingAttachment,
-                canRetryOnError = canRetryOnError,
-                retryCreatingSoundMedia = { createSoundMedia(attachment, false) },
-                cancelCreatingSoundMedia = {
-                    controllerViewModel.cancelCreatingSoundMedia(attachment)
-                    showToast(R.string.create_sound_media_controller_creation_canceled)
-                }
-            )
-        }
+      )
     }
+  }
 
-    @Composable
-    private fun AttachmentOverlay(
-        processingAttachment: AsyncData<Unit>,
-        canRetryOnError: Boolean,
-        retryCreatingSoundMedia: () -> Unit,
-        cancelCreatingSoundMedia: () -> Unit,
-    ) {
-        val bgColor = remember { Color.Black.copy(alpha = 0.7f) }
-
-        Box(
-            modifier = Modifier
-                .customClickModifier(
-                    processingAttachment = processingAttachment,
-                    retryCreatingSoundMedia = retryCreatingSoundMedia,
-                    cancelCreatingSoundMedia = cancelCreatingSoundMedia
-                )
-                .fillMaxSize()
-                .drawBehind {
-                    val drawDimmedBackground = processingAttachment is AsyncData.Loading
-                            || (processingAttachment is AsyncData.Error && canRetryOnError)
-
-                    if (drawDimmedBackground) {
-                        drawRect(color = bgColor)
-                    }
-                }
-        ) {
-            when (processingAttachment) {
-                AsyncData.NotInitialized -> {
-                    // no-op
-                }
-                AsyncData.Loading -> {
-                    Box(
-                        modifier = Modifier
-                            .size(42.dp)
-                            .align(Alignment.Center)
-                    ) {
-                        KurobaComposeProgressIndicator(
-                            modifier = Modifier.fillMaxSize(),
-                            overrideColor = Color.White
-                        )
-
-                        KurobaComposeIcon(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(8.dp),
-                            drawableId = R.drawable.ic_clear_white_24dp
-                        )
-                    }
-                }
-                is AsyncData.Error -> {
-                    if (canRetryOnError) {
-                        KurobaComposeIcon(
-                            modifier = Modifier
-                                .size(42.dp)
-                                .align(Alignment.Center),
-                            drawableId = R.drawable.ic_refresh_white_24dp,
-                            colorTint = IconTint.TintWithColor(bgColor)
-                        )
-                    }
-                }
-                is AsyncData.Data -> {
-                    // no-op
-                }
-            }
-        }
-    }
-
-    private fun Modifier.customClickModifier(
-        processingAttachment: AsyncData<Unit>,
-        retryCreatingSoundMedia: () -> Unit,
-        cancelCreatingSoundMedia: () -> Unit,
-    ): Modifier {
-        return when (processingAttachment) {
-            is AsyncData.Loading -> {
-                this.then(
-                    Modifier.kurobaClickable(
-                        bounded = true,
-                        onClick = { cancelCreatingSoundMedia() }
-                    )
-                )
-            }
-            is AsyncData.Error -> {
-                this.then(
-                    Modifier.kurobaClickable(
-                        bounded = true,
-                        onClick = { retryCreatingSoundMedia() }
-                    )
-                )
-            }
-            else -> this
-        }
-    }
-
-    private fun tryToCreateSoundMedia(
-        clickedAttachment: CreateSoundMediaControllerViewModel.Attachment,
-        checkMediaHasSound: Boolean = true
-    ) {
-        if (checkMediaHasSound && controllerViewModel.checkMediaAlreadyHasSoundAttached(clickedAttachment)) {
-            dialogFactory.createSimpleConfirmationDialog(
-                context = context,
-                titleTextId = R.string.create_sound_media_controller_media_already_has_sound_dialog_title,
-                descriptionTextId = R.string.create_sound_media_controller_media_already_has_sound_dialog_description,
-                onPositiveButtonClickListener = { tryToCreateSoundMedia(clickedAttachment, false) }
-            )
-
-            return
-        }
-
-        controllerViewModel.tryToCreateSoundMedia(
-            fileChooser = fileChooser,
-            clickedAttachment = clickedAttachment,
-            showErrorToast = { error ->
-                error.toastOnError(
-                    message = { error ->
-                        getString(R.string.create_sound_media_controller_creation_error, error.errorMessageOrClassName())
-                    }
-                )
-            },
-            showSuccessToast = { attachmentName ->
-                showToast(getString(R.string.create_sound_media_controller_creation_success, attachmentName))
-            }
+  @Composable
+  private fun Attachment(
+    attachment: CreateSoundMediaControllerViewModel.Attachment,
+    canRetryOnError: Boolean,
+    processingAttachment: AsyncData<Unit>,
+    createSoundMedia: (CreateSoundMediaControllerViewModel.Attachment, checkMediaHasSound: Boolean) -> Unit
+  ) {
+    val request = remember(attachment.imagePath) {
+      ImageLoaderRequest(
+        data = ImageLoaderRequestData.File(
+          file = File(attachment.imagePath)
         )
+      )
     }
 
+    Box(
+      modifier = Modifier
+          .fillMaxWidth()
+          .height(256.dp)
+          .kurobaClickable(
+              enabled = processingAttachment !is AsyncData.Loading,
+              bounded = true,
+              onClick = { createSoundMedia(attachment, true) }
+          )
+    ) {
+      KurobaComposeImage(
+        request = request,
+        modifier = Modifier.fillMaxSize(),
+        contentScale = ContentScale.Crop,
+        imageLoaderV2 = imageLoaderV2
+      )
 
-    private fun showFullAttachmentName(attachment: CreateSoundMediaControllerViewModel.Attachment) {
-        dialogFactory.createSimpleInformationDialog(
-            context = context,
-            titleText = getString(R.string.create_sound_media_controller_attachment_full_file_name_dialog_title),
-            descriptionText = attachment.attachmentName
+      KurobaComposeText(
+        modifier = Modifier
+            .fillMaxWidth()
+            .wrapContentHeight()
+            .kurobaClickable(
+                bounded = true,
+                onClick = { showFullAttachmentName(attachment) }
+            )
+            .background(Color.Black.copy(alpha = 0.7f))
+            .padding(horizontal = 4.dp, vertical = 2.dp)
+            .align(Alignment.BottomCenter),
+        text = attachment.attachmentName,
+        maxLines = 5,
+        overflow = TextOverflow.Ellipsis,
+        color = Color.White,
+        fontSize = 12.ktu
+      )
+
+      AttachmentOverlay(
+        processingAttachment = processingAttachment,
+        canRetryOnError = canRetryOnError,
+        retryCreatingSoundMedia = { createSoundMedia(attachment, false) },
+        cancelCreatingSoundMedia = {
+          controllerViewModel.cancelCreatingSoundMedia(attachment)
+          showToast(R.string.create_sound_media_controller_creation_canceled)
+        }
+      )
+    }
+  }
+
+  @Composable
+  private fun AttachmentOverlay(
+    processingAttachment: AsyncData<Unit>,
+    canRetryOnError: Boolean,
+    retryCreatingSoundMedia: () -> Unit,
+    cancelCreatingSoundMedia: () -> Unit,
+  ) {
+    val bgColor = remember { Color.Black.copy(alpha = 0.7f) }
+
+    Box(
+      modifier = Modifier
+          .customClickModifier(
+              processingAttachment = processingAttachment,
+              retryCreatingSoundMedia = retryCreatingSoundMedia,
+              cancelCreatingSoundMedia = cancelCreatingSoundMedia
+          )
+          .fillMaxSize()
+          .drawBehind {
+              val drawDimmedBackground = processingAttachment is AsyncData.Loading
+                || (processingAttachment is AsyncData.Error && canRetryOnError)
+
+              if (drawDimmedBackground) {
+                  drawRect(color = bgColor)
+              }
+          }
+    ) {
+      when (processingAttachment) {
+        AsyncData.NotInitialized -> {
+          // no-op
+        }
+
+        AsyncData.Loading -> {
+          Box(
+            modifier = Modifier
+                .size(42.dp)
+                .align(Alignment.Center)
+          ) {
+            KurobaComposeProgressIndicator(
+              modifier = Modifier.fillMaxSize(),
+              overrideColor = Color.White
+            )
+
+            KurobaComposeIcon(
+              modifier = Modifier
+                  .fillMaxSize()
+                  .padding(8.dp),
+              drawableId = R.drawable.ic_clear_white_24dp
+            )
+          }
+        }
+
+        is AsyncData.Error -> {
+          if (canRetryOnError) {
+            KurobaComposeIcon(
+              modifier = Modifier
+                  .size(42.dp)
+                  .align(Alignment.Center),
+              drawableId = R.drawable.ic_refresh_white_24dp,
+              iconTint = IconTint.TintWithColor(bgColor)
+            )
+          }
+        }
+
+        is AsyncData.Data -> {
+          // no-op
+        }
+      }
+    }
+  }
+
+  private fun Modifier.customClickModifier(
+    processingAttachment: AsyncData<Unit>,
+    retryCreatingSoundMedia: () -> Unit,
+    cancelCreatingSoundMedia: () -> Unit,
+  ): Modifier {
+    return when (processingAttachment) {
+      is AsyncData.Loading -> {
+        this.then(
+          Modifier.kurobaClickable(
+            bounded = true,
+            onClick = { cancelCreatingSoundMedia() }
+          )
         )
+      }
+
+      is AsyncData.Error -> {
+        this.then(
+          Modifier.kurobaClickable(
+            bounded = true,
+            onClick = { retryCreatingSoundMedia() }
+          )
+        )
+      }
+
+      else -> this
+    }
+  }
+
+  private fun tryToCreateSoundMedia(
+    clickedAttachment: CreateSoundMediaControllerViewModel.Attachment,
+    checkMediaHasSound: Boolean = true
+  ) {
+    if (checkMediaHasSound && controllerViewModel.checkMediaAlreadyHasSoundAttached(clickedAttachment)) {
+      dialogFactory.createSimpleConfirmationDialog(
+        context = context,
+        titleTextId = R.string.create_sound_media_controller_media_already_has_sound_dialog_title,
+        descriptionTextId = R.string.create_sound_media_controller_media_already_has_sound_dialog_description,
+        onPositiveButtonClickListener = { tryToCreateSoundMedia(clickedAttachment, false) }
+      )
+
+      return
     }
 
-    companion object {
-        private const val TAG = "CreateSoundMediaController"
-    }
+    controllerViewModel.tryToCreateSoundMedia(
+      fileChooser = fileChooser,
+      clickedAttachment = clickedAttachment,
+      showErrorToast = { error ->
+        error.toastOnError(
+          message = { error ->
+            getString(R.string.create_sound_media_controller_creation_error, error.errorMessageOrClassName())
+          }
+        )
+      },
+      showSuccessToast = { attachmentName ->
+        showToast(getString(R.string.create_sound_media_controller_creation_success, attachmentName))
+      }
+    )
+  }
+
+
+  private fun showFullAttachmentName(attachment: CreateSoundMediaControllerViewModel.Attachment) {
+    dialogFactory.createSimpleInformationDialog(
+      context = context,
+      titleText = getString(R.string.create_sound_media_controller_attachment_full_file_name_dialog_title),
+      descriptionText = attachment.attachmentName
+    )
+  }
+
+  companion object {
+    private const val TAG = "CreateSoundMediaController"
+  }
 }

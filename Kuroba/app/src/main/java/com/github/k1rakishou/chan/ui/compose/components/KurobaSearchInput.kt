@@ -89,7 +89,7 @@ fun KurobaSearchInput(
               }
             ),
           drawableId = R.drawable.ic_clear_white_24dp,
-          colorTint = IconTint.TintWithColor(chanTheme.primaryColorCompose)
+          iconTint = IconTint.TintWithColor(chanTheme.primaryColorCompose)
         )
       }
     }

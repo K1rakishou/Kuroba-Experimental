@@ -41,7 +41,7 @@ internal fun PresolveCaptchaButton(
           onClick = onPresolveCaptchaButtonClicked
         ),
       drawableId = R.drawable.ic_captcha_24dp,
-      colorTint = IconTint.DoNotTint
+      iconTint = IconTint.DoNotTint
     )
 
     if (captchaCounter > 0) {

@@ -453,7 +453,7 @@ private fun AttachableStatusIconButton(
       ),
     enabled = replyLayoutEnabled,
     drawableId = drawableId,
-    colorTint = iconTint
+    iconTint = iconTint
   )
 }
 
@@ -463,6 +463,10 @@ private fun RemoveAttachableButton(
   onRemoveAttachedMediaClicked: (ReplyFileAttachable) -> Unit,
   replyFileAttachable: ReplyFileAttachable
 ) {
+  val iconTint = remember {
+    IconTint.TintWithColor(Color.White)
+  }
+
   KurobaComposeIcon(
     modifier = Modifier
       .kurobaClickable(
@@ -471,6 +475,7 @@ private fun RemoveAttachableButton(
         onClick = { onRemoveAttachedMediaClicked(replyFileAttachable) }
       ),
     enabled = replyLayoutEnabled,
-    drawableId = R.drawable.ic_baseline_clear_24
+    drawableId = R.drawable.ic_baseline_clear_24,
+    iconTint = iconTint
   )
 }
