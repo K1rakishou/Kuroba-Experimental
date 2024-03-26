@@ -395,6 +395,14 @@ open class ThemeEngine(
       }
     }
 
+    fun resolveDrawableTintColorCompose(color: androidx.compose.ui.graphics.Color): ComposeColor {
+      return if (isDarkColor(color)) {
+        LIGHT_DRAWABLE_TINT_COMPOSE
+      } else {
+        DARK_DRAWABLE_TINT_COMPOSE
+      }
+    }
+
     /**
      * Makes color brighter if factor > 1.0f or darker if factor < 1.0f
      */
