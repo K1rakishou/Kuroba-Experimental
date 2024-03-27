@@ -38,6 +38,7 @@ import com.github.k1rakishou.chan.core.site.sites.leftypol.Leftypol
 import com.github.k1rakishou.chan.core.site.sites.lynxchan.Endchan
 import com.github.k1rakishou.chan.core.site.sites.lynxchan.Kohlchan
 import com.github.k1rakishou.chan.core.site.sites.lynxchan.YesHoney
+import com.github.k1rakishou.chan.core.site.sites.soyjakparty.SoyjakParty
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 
 /**
@@ -73,6 +74,7 @@ object SiteRegistry {
     siteClasses.addSiteToSiteClassesMap(RozenArcana.SITE_NAME, RozenArcana::class.java)
     siteClasses.addSiteToSiteClassesMap(YesHoney.SITE_NAME, YesHoney::class.java)
     siteClasses.addSiteToSiteClassesMap(Leftypol.SITE_NAME, Leftypol::class.java)
+    siteClasses.addSiteToSiteClassesMap(SoyjakParty.SITE_NAME, SoyjakParty::class.java)
 
     // A synthetic site which only purpose is to have an order in the global site order for composed
     // catalogs when showing them on the board selection screen.
