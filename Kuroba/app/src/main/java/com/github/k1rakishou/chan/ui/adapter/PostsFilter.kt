@@ -100,11 +100,11 @@ class PostsFilter(
     }
 
     private val NEWEST_COMPARATOR = Comparator<ChanOriginalPost> { lhs, rhs ->
-      (rhs.timestamp - lhs.timestamp).toInt()
+      (rhs.timestampInSeconds - lhs.timestampInSeconds).toInt()
     }
 
     private val OLDEST_COMPARATOR = Comparator<ChanOriginalPost> { lhs, rhs ->
-      (lhs.timestamp - rhs.timestamp).toInt()
+      (lhs.timestampInSeconds - rhs.timestampInSeconds).toInt()
     }
 
     private val MODIFIED_COMPARATOR = Comparator<ChanOriginalPost> { lhs, rhs ->
@@ -128,8 +128,8 @@ class PostsFilter(
         eps
       }
 
-      val score1 = ((currentTimeSeconds - lhs.timestamp).toFloat() / lhsDivider).toLong()
-      val score2 = ((currentTimeSeconds - rhs.timestamp).toFloat() / rhsDivider).toLong()
+      val score1 = ((currentTimeSeconds - lhs.timestampInSeconds).toFloat() / lhsDivider).toLong()
+      val score2 = ((currentTimeSeconds - rhs.timestampInSeconds).toFloat() / rhsDivider).toLong()
 
       return@Comparator score1.compareTo(score2)
     }

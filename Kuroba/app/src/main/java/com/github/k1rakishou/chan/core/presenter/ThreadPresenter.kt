@@ -31,7 +31,9 @@ import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.OnDemandContentLoaderManager
 import com.github.k1rakishou.chan.core.manager.PageRequestManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
+import com.github.k1rakishou.chan.core.manager.PostFilterManagerImpl
 import com.github.k1rakishou.chan.core.manager.PostHideManager
+import com.github.k1rakishou.chan.core.manager.PostHideManagerImpl
 import com.github.k1rakishou.chan.core.manager.PostHighlightManager
 import com.github.k1rakishou.chan.core.manager.RevealedSpoilerImagesManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
@@ -74,7 +76,7 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.bidirectionalSequence
 import com.github.k1rakishou.common.errorMessageOrClassName
-import com.github.k1rakishou.common.hashSetWithCap
+import com.github.k1rakishou.common.mutableSetWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -2735,8 +2737,8 @@ class ThreadPresenter @Inject constructor(
         .append(post.tripcode)
     }
 
-    if (post.postIcons.isNotEmpty()) {
-      for (icon in post.postIcons) {
+    if (post.deprecatedPostIcons.isNotEmpty()) {
+      for (icon in post.deprecatedPostIcons) {
         val iconUrl = icon.iconUrl.toString()
 
         when {
@@ -2754,6 +2756,10 @@ class ThreadPresenter @Inject constructor(
           }
         }
       }
+    }
+
+    if (post.postIcons.isNotEmpty()) {
+      // TODO: compose post cells. Implement this after deprecatedPostIcons are removed.
     }
 
     if (!TextUtils.isEmpty(post.moderatorCapcode)) {
@@ -2813,7 +2819,7 @@ class ThreadPresenter @Inject constructor(
     func: (suspend (Collection<PostDescriptor>) -> Unit)? = null
   ) {
     val totalPostsWithReplies = withContext(Dispatchers.Default) {
-      val totalPostsWithReplies = hashSetWithCap<PostDescriptor>(16)
+      val totalPostsWithReplies = mutableSetWithCap<PostDescriptor>(16)
 
       postDescriptors.forEach { postDescriptor ->
         totalPostsWithReplies += chanThreadManager.findPostWithReplies(

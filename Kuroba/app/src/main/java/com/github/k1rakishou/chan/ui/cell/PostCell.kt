@@ -898,7 +898,7 @@ class PostCell @JvmOverloads constructor(
   @Suppress("ReplaceGetOrSet")
   private fun bindIcons(postCellData: PostCellData) {
     val theme = postCellData.theme
-    val postIcons = postCellData.postIcons
+    val postIcons = postCellData.deprecatedPostIcons
 
     icons.edit()
     icons.set(PostIcons.DELETED, postCellData.isDeleted)

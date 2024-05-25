@@ -2,7 +2,7 @@ package com.github.k1rakishou.chan.core.site
 
 import com.github.k1rakishou.Setting
 import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitation
-import com.github.k1rakishou.chan.core.site.parser.ChanReader
+import com.github.k1rakishou.chan.core.site.parser.ChanApi
 import com.github.k1rakishou.chan.core.site.parser.CommentParserType
 import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
 import com.github.k1rakishou.common.DoNotStrip
@@ -59,7 +59,7 @@ interface Site {
   fun settings(): List<SiteSetting>
   fun endpoints(): SiteEndpoints
   fun requestModifier(): SiteRequestModifier<Site>
-  fun chanReader(): ChanReader
+  fun chanApi(): ChanApi
   fun actions(): SiteActions
   fun commentParserType(): CommentParserType
   fun getChunkDownloaderSiteProperties(): ChunkDownloaderSiteProperties

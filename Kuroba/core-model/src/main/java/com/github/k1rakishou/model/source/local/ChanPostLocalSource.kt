@@ -200,11 +200,13 @@ class ChanPostLocalSource(
       chanPostIdEntities.flatMapIndexed { index, chanPostIdEntity ->
         val chanPost = chanPostList[index]
 
-        return@flatMapIndexed chanPost.postIcons.map { postIcon ->
+        return@flatMapIndexed chanPost.deprecatedPostIcons.map { postIcon ->
           ChanPostHttpIconMapper.toEntity(chanPostIdEntity.postId, postIcon)
         }
       }
     )
+
+    // TODO: compose post cells. PostIcons persistence.
 
     chanPostReplyDao.insertManyOrIgnore(
       chanPostIdEntities.flatMapIndexed { index, chanPostIdEntity ->

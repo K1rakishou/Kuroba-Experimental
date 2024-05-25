@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.core.site.parser
 
 import com.github.k1rakishou.chan.core.site.parser.processor.AbstractChanReaderProcessor
 import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
+import com.github.k1rakishou.chan.core.site.parser_v2.AbstractSitePostParser
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoObject
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
@@ -14,8 +15,9 @@ import java.io.InputStream
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
 
-abstract class ChanReader {
-  abstract suspend fun getParser(): PostParser?
+abstract class ChanApi {
+  abstract suspend fun parser(): PostParser?
+  abstract suspend fun parserV2(): AbstractSitePostParser?
 
   @Throws(Exception::class)
   abstract suspend fun loadThreadFresh(

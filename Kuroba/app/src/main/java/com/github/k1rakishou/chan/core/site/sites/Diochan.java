@@ -92,7 +92,7 @@ public class Diochan extends CommonSite {
     public void setup() {
         setEnabled(true);
         setName(SITE_NAME);
-        setIcon(SiteIcon.fromFavicon(getImageLoaderDeprecated(), HttpUrl.parse("https://diochan.com/favicon.ico")));
+        setIcon(SiteIcon.fromFavicon(getImageLoaderDeprecatedLazy(), HttpUrl.parse("https://diochan.com/favicon.ico")));
 
         setBoards(
                 ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "b"), "Random"),
@@ -122,7 +122,7 @@ public class Diochan extends CommonSite {
         setEndpoints(new VichanEndpoints(this, "https://diochan.com", "https://diochan.com"));
         setActions(new VichanActions(this, getProxiedOkHttpClient(), getSiteManager(), getReplyManager()));
         setApi(new VichanApi(getSiteManager(), getBoardManager(), this));
-        setParser(new VichanCommentParser());
+        setParser(new VichanCommentParser(getStaticHtmlColorRepository()));
     }
 
     @NotNull

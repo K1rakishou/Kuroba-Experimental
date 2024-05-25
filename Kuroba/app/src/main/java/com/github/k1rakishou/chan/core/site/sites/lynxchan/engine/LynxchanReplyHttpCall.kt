@@ -28,6 +28,7 @@ import okhttp3.MultipartBody
 import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import java.io.IOException
 import java.util.Locale
@@ -38,8 +39,8 @@ class LynxchanReplyHttpCall(
   site: LynxchanSite,
   private val replyChanDescriptor: ChanDescriptor,
   private val replyMode: ReplyMode,
-  private val replyManager: Lazy<ReplyManager>,
-  private val moshi: Lazy<Moshi>
+  private val replyManager: ReplyManager,
+  private val moshi: Moshi
 ) : HttpCall(site) {
   private val lynxchanSite: LynxchanSite
     get() = site as LynxchanSite
@@ -55,7 +56,7 @@ class LynxchanReplyHttpCall(
       "replyChanDescriptor == null"
     )
 
-    if (!replyManager.get().containsReply(chanDescriptor)) {
+    if (!replyManager.containsReply(chanDescriptor)) {
       throw IOException("No reply found for chanDescriptor=$chanDescriptor")
     }
 
@@ -63,7 +64,7 @@ class LynxchanReplyHttpCall(
     replyResponse.boardCode = chanDescriptor.boardCode()
     site.requestModifier().modifyHttpCall(this, requestBuilder)
 
-    replyManager.get().readReply(chanDescriptor) { reply ->
+    replyManager.readReply(chanDescriptor) { reply ->
       val threadNo = if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
         chanDescriptor.threadNo
       } else {
@@ -251,14 +252,12 @@ class LynxchanReplyHttpCall(
       ),
     )
 
-    val content = moshi.get()
+    val content = moshi
       .adapter(LynxchanReplyData::class.java)
       .toJson(lynxchanReplyData)
 
-    return RequestBody.create(
-      contentType = "application/json".toMediaType(),
-      content = content
-    )
+    return content
+      .toRequestBody(contentType = "application/json".toMediaType())
   }
 
   private fun fileToLynxchanReplyFileContent(replyFile: ReplyFile, replyFileMeta: ReplyFileMeta): String? {

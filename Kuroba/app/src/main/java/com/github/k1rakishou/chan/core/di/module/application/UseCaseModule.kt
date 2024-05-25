@@ -11,17 +11,25 @@ import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
+import com.github.k1rakishou.chan.core.manager.MarkedPostManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
+import com.github.k1rakishou.chan.core.manager.PostFilterManagerImpl
 import com.github.k1rakishou.chan.core.manager.PostHideManager
+import com.github.k1rakishou.chan.core.manager.PostHideManagerImpl
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.core.manager.SeenPostsManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.ThirdEyeManager
 import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager
+import com.github.k1rakishou.chan.core.parser.repository.PostReplyChainRepository
+import com.github.k1rakishou.chan.core.parser.usecase.CalculateParsedPostDataUseCase
+import com.github.k1rakishou.chan.core.parser.usecase.CalculateParsedPostDataUseCaseImpl
+import com.github.k1rakishou.chan.core.parser.usecase.PostCommentApplier
 import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ParsePostsV1UseCase
 import com.github.k1rakishou.chan.core.site.parser.ReplyParser
 import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser
+import com.github.k1rakishou.chan.core.site.parser_v2.PostCommentParser
 import com.github.k1rakishou.chan.core.site.sites.lynxchan.engine.LynxchanGetBoardsUseCase
 import com.github.k1rakishou.chan.core.usecase.BookmarkFilterWatchableThreadsUseCase
 import com.github.k1rakishou.chan.core.usecase.CatalogDataPreloader
@@ -52,9 +60,10 @@ import com.github.k1rakishou.chan.core.usecase.TwoCaptchaCheckBalanceUseCase
 import com.github.k1rakishou.chan.core.usecase.UploadFileToCatBoxUseCase
 import com.github.k1rakishou.chan.core.usecase.YandexImageSearchUseCase
 import com.github.k1rakishou.chan.features.posting.solvers.two_captcha.TwoCaptchaSolver
+import com.github.k1rakishou.chan.ui.helper.AppResources
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.common.AppConstants
-import com.github.k1rakishou.core_logger.Logger.deps
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
@@ -82,7 +91,7 @@ class UseCaseModule {
     chanFilterManager: ChanFilterManager,
     thirdEyeManager: ThirdEyeManager
   ): ExtractPostMapInfoHolderUseCase {
-    deps("ExtractPostMapInfoHolderUseCase")
+    Logger.deps("ExtractPostMapInfoHolderUseCase")
     return ExtractPostMapInfoHolderUseCase(
       savedReplyManager,
       siteManager,
@@ -102,7 +111,7 @@ class UseCaseModule {
     bookmarksManager: BookmarksManager,
     appConstants: AppConstants
   ): FetchThreadBookmarkInfoUseCase {
-    deps("FetchThreadBookmarkInfoUseCase")
+    Logger.deps("FetchThreadBookmarkInfoUseCase")
     return FetchThreadBookmarkInfoUseCase(
       AppModuleAndroidUtils.isDevBuild(),
       ChanSettings.verboseLogs.get(),
@@ -122,7 +131,7 @@ class UseCaseModule {
     siteManager: SiteManager,
     chanSavedReplyRepository: Lazy<ChanSavedReplyRepository>
   ): ParsePostRepliesUseCase {
-    deps("ParsePostRepliesUseCase")
+    Logger.deps("ParsePostRepliesUseCase")
     return ParsePostRepliesUseCase(
       appScope,
       replyParser,
@@ -143,7 +152,7 @@ class UseCaseModule {
     bookmarksManager: BookmarksManager,
     chanPostRepository: ChanPostRepository
   ): KurobaSettingsImportUseCase {
-    deps("KurobaSettingsImportUseCase")
+    Logger.deps("KurobaSettingsImportUseCase")
     return KurobaSettingsImportUseCase(
       gson,
       fileManager,
@@ -163,7 +172,7 @@ class UseCaseModule {
     themeEngine: ThemeEngine,
     simpleCommentParser: Lazy<SimpleCommentParser>
   ): GlobalSearchUseCase {
-    deps("GlobalSearchUseCase")
+    Logger.deps("GlobalSearchUseCase")
     return GlobalSearchUseCase(
       siteManager,
       themeEngine,
@@ -177,7 +186,7 @@ class UseCaseModule {
     postHideManager: PostHideManager,
     postFilterManager: PostFilterManager
   ): FilterOutHiddenImagesUseCase {
-    deps("FilterOutHiddenImagesUseCase")
+    Logger.deps("FilterOutHiddenImagesUseCase")
     return FilterOutHiddenImagesUseCase(
       postHideManager,
       postFilterManager
@@ -200,7 +209,7 @@ class UseCaseModule {
     chanPostRepository: ChanPostRepository,
     chanFilterWatchRepository: ChanFilterWatchRepository
   ): BookmarkFilterWatchableThreadsUseCase {
-    deps("BookmarkFilterWatchableThreadsUseCase")
+    Logger.deps("BookmarkFilterWatchableThreadsUseCase")
     return BookmarkFilterWatchableThreadsUseCase(
       ChanSettings.verboseLogs.get(),
       appConstants,
@@ -226,7 +235,7 @@ class UseCaseModule {
     databaseMetaRepository: DatabaseMetaRepository,
     fileManager: FileManager
   ): ExportBackupFileUseCase {
-    deps("ExportBackupFileUseCase")
+    Logger.deps("ExportBackupFileUseCase")
     return ExportBackupFileUseCase(
       appContext,
       appConstants,
@@ -242,7 +251,7 @@ class UseCaseModule {
     appConstants: AppConstants,
     fileManager: FileManager
   ): ImportBackupFileUseCase {
-    deps("ImportBackupFileUseCase")
+    Logger.deps("ImportBackupFileUseCase")
     return ImportBackupFileUseCase(
       appContext,
       appConstants,
@@ -255,7 +264,7 @@ class UseCaseModule {
   fun provideTwoCaptchaCheckBalanceUseCase(
     twoCaptchaSolver: Lazy<TwoCaptchaSolver>
   ): TwoCaptchaCheckBalanceUseCase {
-    deps("TwoCaptchaCheckBalanceUseCase")
+    Logger.deps("TwoCaptchaCheckBalanceUseCase")
     return TwoCaptchaCheckBalanceUseCase(twoCaptchaSolver)
   }
 
@@ -266,7 +275,7 @@ class UseCaseModule {
     moshi: Moshi,
     themeEngine: ThemeEngine
   ): DownloadThemeJsonFilesUseCase {
-    deps("DownloadThemeJsonFilesUseCase")
+    Logger.deps("DownloadThemeJsonFilesUseCase")
     return DownloadThemeJsonFilesUseCase(
       proxiedOkHttpClient,
       moshi,
@@ -282,7 +291,7 @@ class UseCaseModule {
     fileManager: FileManager,
     chanPostRepository: ChanPostRepository
   ): ExportDownloadedThreadAsHtmlUseCase {
-    deps("ExportDownloadedThreadAsHtmlUseCase")
+    Logger.deps("ExportDownloadedThreadAsHtmlUseCase")
     return ExportDownloadedThreadAsHtmlUseCase(
       appContext,
       appConstants,
@@ -300,7 +309,7 @@ class UseCaseModule {
     chanPostRepository: ChanPostRepository,
     proxiedOkHttpClient: RealProxiedOkHttpClient
   ): ThreadDownloaderPersistPostsInDatabaseUseCase {
-    deps("ThreadDownloaderPersistPostsInDatabaseUseCase")
+    Logger.deps("ThreadDownloaderPersistPostsInDatabaseUseCase")
     return ThreadDownloaderPersistPostsInDatabaseUseCase(
       siteManager,
       chanThreadLoaderCoordinator,
@@ -321,9 +330,8 @@ class UseCaseModule {
     boardManager: BoardManager,
     chanLoadProgressNotifier: ChanLoadProgressNotifier
   ): ParsePostsV1UseCase {
-    deps("ParsePostsV1UseCase")
+    Logger.deps("ParsePostsV1UseCase")
     return ParsePostsV1UseCase(
-      ChanSettings.verboseLogs.get(),
       chanPostRepository,
       filterEngine,
       postFilterManager,
@@ -340,7 +348,7 @@ class UseCaseModule {
     proxiedOkHttpClient: RealProxiedOkHttpClient,
     moshi: Moshi
   ): SearxImageSearchUseCase {
-    deps("SearxImageSearchUseCase")
+    Logger.deps("SearxImageSearchUseCase")
     return SearxImageSearchUseCase(
       proxiedOkHttpClient,
       moshi
@@ -356,7 +364,7 @@ class UseCaseModule {
     postHideManager: Lazy<PostHideManager>,
     chanPostRepository: Lazy<ChanPostRepository>
   ): ThreadDataPreloader {
-    deps("ThreadDataPreloadUseCase")
+    Logger.deps("ThreadDataPreloadUseCase")
     return ThreadDataPreloader(
       seenPostsManager,
       chanThreadViewableInfoManager,
@@ -374,7 +382,7 @@ class UseCaseModule {
     chanCatalogSnapshotRepository: ChanCatalogSnapshotRepository,
     seenPostsManager: Lazy<SeenPostsManager>
   ): CatalogDataPreloader {
-    deps("CatalogDataPreloadUseCase")
+    Logger.deps("CatalogDataPreloadUseCase")
     return CatalogDataPreloader(
       boardManager,
       postHideManager,
@@ -390,7 +398,7 @@ class UseCaseModule {
     chanFilterManager: ChanFilterManager,
     moshi: Moshi
   ): ExportFiltersUseCase {
-    deps("ExportFiltersUseCase")
+    Logger.deps("ExportFiltersUseCase")
     return ExportFiltersUseCase(
       fileManager,
       chanFilterManager,
@@ -405,7 +413,7 @@ class UseCaseModule {
     chanFilterManager: ChanFilterManager,
     moshi: Moshi
   ): ImportFiltersUseCase {
-    deps("ImportFiltersUseCase")
+    Logger.deps("ImportFiltersUseCase")
     return ImportFiltersUseCase(
       fileManager,
       chanFilterManager,
@@ -421,7 +429,7 @@ class UseCaseModule {
     moshi: Moshi,
     proxiedOkHttpClient: ProxiedOkHttpClient
   ): InstallMpvNativeLibrariesFromGithubUseCase {
-    deps("InstallMpvNativeLibrariesFromGithubUseCase")
+    Logger.deps("InstallMpvNativeLibrariesFromGithubUseCase")
     return InstallMpvNativeLibrariesFromGithubUseCase(
       applicationContext,
       appConstants,
@@ -436,7 +444,7 @@ class UseCaseModule {
     appConstants: AppConstants,
     fileManager: FileManager
   ): InstallMpvNativeLibrariesFromLocalDirectoryUseCase {
-    deps("InstallMpvNativeLibrariesFromLocalDirectoryUseCase")
+    Logger.deps("InstallMpvNativeLibrariesFromLocalDirectoryUseCase")
     return InstallMpvNativeLibrariesFromLocalDirectoryUseCase(
       appConstants,
       fileManager
@@ -449,7 +457,7 @@ class UseCaseModule {
     threadBookmarkGroupManager: Lazy<ThreadBookmarkGroupManager>,
     chanThreadManager: Lazy<ChanThreadManager>
   ): GetThreadBookmarkGroupIdsUseCase {
-    deps("GetThreadBookmarkGroupIdsUseCase")
+    Logger.deps("GetThreadBookmarkGroupIdsUseCase")
     return GetThreadBookmarkGroupIdsUseCase(
       threadBookmarkGroupManager,
       chanThreadManager
@@ -463,7 +471,7 @@ class UseCaseModule {
     moshi: Lazy<Moshi>,
     proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>
   ): LynxchanGetBoardsUseCase {
-    deps("LynxchanGetBoardsUseCase")
+    Logger.deps("LynxchanGetBoardsUseCase")
     return LynxchanGetBoardsUseCase(
       appConstants,
       moshi,
@@ -477,7 +485,7 @@ class UseCaseModule {
     appConstants: AppConstants,
     fileManager: FileManager
   ): ExportDownloadedThreadMediaUseCase {
-    deps("ExportDownloadedThreadMediaUseCase")
+    Logger.deps("ExportDownloadedThreadMediaUseCase")
     return ExportDownloadedThreadMediaUseCase(
       appConstants,
       fileManager
@@ -490,7 +498,7 @@ class UseCaseModule {
     proxiedOkHttpClient: RealProxiedOkHttpClient,
     moshi: Moshi
   ): YandexImageSearchUseCase {
-    deps("YandexImageSearchUseCase")
+    Logger.deps("YandexImageSearchUseCase")
     return YandexImageSearchUseCase(proxiedOkHttpClient, moshi)
   }
 
@@ -500,7 +508,7 @@ class UseCaseModule {
     proxiedOkHttpClient: RealProxiedOkHttpClient,
     fileManager: FileManager
   ): UploadFileToCatBoxUseCase {
-    deps("UploadFileToCatBoxUseCase")
+    Logger.deps("UploadFileToCatBoxUseCase")
     return UploadFileToCatBoxUseCase(proxiedOkHttpClient, fileManager)
   }
 
@@ -511,7 +519,7 @@ class UseCaseModule {
     siteManager: SiteManager,
     proxiedOkHttpClient: ProxiedOkHttpClient
   ): LoadChan4CaptchaUseCase {
-    deps("LoadChan4CaptchaUseCase")
+    Logger.deps("LoadChan4CaptchaUseCase")
     return LoadChan4CaptchaUseCase(moshi, siteManager, proxiedOkHttpClient)
   }
 
@@ -521,21 +529,41 @@ class UseCaseModule {
     siteManager: SiteManager,
     loadChan4CaptchaUseCase: LoadChan4CaptchaUseCase
   ): RefreshChan4CaptchaTicketUseCase {
-    deps("RefreshChan4CaptchaTicketUseCase")
+    Logger.deps("RefreshChan4CaptchaTicketUseCase")
     return RefreshChan4CaptchaTicketUseCase(siteManager, loadChan4CaptchaUseCase)
   }
 
   @Provides
   @Singleton
   fun provideLoadBoardFlagsUseCase(proxiedOkHttpClient: ProxiedOkHttpClient): LoadBoardFlagsUseCase {
-    deps("LoadBoardFlagsUseCase")
+    Logger.deps("LoadBoardFlagsUseCase")
     return LoadBoardFlagsUseCase(proxiedOkHttpClient)
   }
 
   @Provides
   @Singleton
   fun provideClearSiteCookies(siteManager: SiteManager): ClearPostingCookies {
+    Logger.deps("ClearPostingCookies")
     return ClearPostingCookies(siteManager)
+  }
+
+  @Provides
+  @Singleton
+  fun provideCalculateParsedPostDataUseCase(
+    postCommentParser: PostCommentParser,
+    postReplyChainRepository: PostReplyChainRepository,
+    postCommentApplier: PostCommentApplier,
+    markedPostManager: MarkedPostManager,
+    appResources: AppResources
+  ): CalculateParsedPostDataUseCase {
+    Logger.deps("CalculateParsedPostDataUseCase")
+    return CalculateParsedPostDataUseCaseImpl(
+      postCommentParser,
+      postReplyChainRepository,
+      postCommentApplier,
+      markedPostManager,
+      appResources
+    )
   }
 
 }

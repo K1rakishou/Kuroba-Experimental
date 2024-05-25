@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.core.site
 
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
+import com.github.k1rakishou.chan.core.repository.StaticHtmlColorRepository
 import com.github.k1rakishou.chan.core.site.common.taimaba.TaimabaCommentParser
 import com.github.k1rakishou.chan.core.site.common.vichan.VichanCommentParser
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
@@ -12,18 +13,19 @@ import com.github.k1rakishou.chan.core.site.sites.fuuka.FuukaCommentParser
 import com.github.k1rakishou.chan.core.site.sites.lynxchan.engine.LynxchanCommentParser
 
 class ParserRepository(
-  private val archivesManager: ArchivesManager
+  private val archivesManager: ArchivesManager,
+  private val staticHtmlColorRepository: StaticHtmlColorRepository
 ) {
   private val parsers = mutableMapOf<CommentParserType, ICommentParser>()
 
   init {
-    parsers[CommentParserType.Default] = CommentParser()
-    parsers[CommentParserType.DvachParser] = DvachCommentParser()
-    parsers[CommentParserType.FuukaParser] = FuukaCommentParser()
-    parsers[CommentParserType.FoolFuukaParser] = FoolFuukaCommentParser(archivesManager)
-    parsers[CommentParserType.TaimabaParser] = TaimabaCommentParser()
-    parsers[CommentParserType.VichanParser] = VichanCommentParser()
-    parsers[CommentParserType.LynxchanParser] = LynxchanCommentParser()
+    parsers[CommentParserType.Default] = CommentParser(staticHtmlColorRepository)
+    parsers[CommentParserType.DvachParser] = DvachCommentParser(staticHtmlColorRepository)
+    parsers[CommentParserType.FuukaParser] = FuukaCommentParser(staticHtmlColorRepository)
+    parsers[CommentParserType.FoolFuukaParser] = FoolFuukaCommentParser(staticHtmlColorRepository, archivesManager)
+    parsers[CommentParserType.TaimabaParser] = TaimabaCommentParser(staticHtmlColorRepository)
+    parsers[CommentParserType.VichanParser] = VichanCommentParser(staticHtmlColorRepository)
+    parsers[CommentParserType.LynxchanParser] = LynxchanCommentParser(staticHtmlColorRepository)
   }
 
   @Synchronized

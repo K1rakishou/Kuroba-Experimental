@@ -275,7 +275,7 @@ public class ChanSettings {
     public static BooleanSetting neverShowPages;
 
     //Post
-    public static StringSetting fontSize;
+    public static StringSetting globalFontSize;
     public static RangeSetting postCellThumbnailSizePercents;
     public static BooleanSetting postFullDate;
     public static BooleanSetting postFullDateUseLocalLocale;
@@ -485,7 +485,7 @@ public class ChanSettings {
         neverShowPages = new BooleanSetting(provider, "never_show_page_number", false);
 
         // Post
-        fontSize = new StringSetting(provider, "preference_font", String.valueOf(defaultFontSize()));
+        globalFontSize = new StringSetting(provider, "preference_font", String.valueOf(defaultFontSize()));
         postCellThumbnailSizePercents = new RangeSetting(provider, "post_cell_thumbnail_size_percents", 75, 50, 125);
         postFullDate = new BooleanSetting(provider, "preference_post_full_date", false);
         postFullDateUseLocalLocale = new BooleanSetting(provider, "preference_post_full_date_use_local_locale", false);
@@ -804,11 +804,11 @@ public class ChanSettings {
     }
 
     public static int detailsSizeSp() {
-        return Integer.parseInt(ChanSettings.fontSize.get()) - 2;
+        return Integer.parseInt(ChanSettings.globalFontSize.get()) - 2;
     }
 
     public static int codeTagFontSizePx() {
-        return Integer.parseInt(ChanSettings.fontSize.get()) - 2;
+        return Integer.parseInt(ChanSettings.globalFontSize.get()) - 2;
     }
 
     public static int sjisTagFontSizePx() {
@@ -816,7 +816,7 @@ public class ChanSettings {
     }
 
     public static int redTextFontSizePx() {
-        return Integer.parseInt(ChanSettings.fontSize.get()) + 2;
+        return Integer.parseInt(ChanSettings.globalFontSize.get()) + 2;
     }
 
     public static boolean isSlideLayoutMode() {

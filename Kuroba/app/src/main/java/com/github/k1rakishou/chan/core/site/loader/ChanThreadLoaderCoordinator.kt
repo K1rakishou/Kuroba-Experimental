@@ -30,7 +30,7 @@ import com.github.k1rakishou.chan.core.site.loader.internal.DatabasePostLoader
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ParsePostsV1UseCase
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ReloadPostsFromDatabaseUseCase
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.StorePostsInRepositoryUseCase
-import com.github.k1rakishou.chan.core.site.parser.ChanReader
+import com.github.k1rakishou.chan.core.site.parser.ChanApi
 import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
@@ -148,7 +148,7 @@ class ChanThreadLoaderCoordinator(
           postProcessFlags = postProcessFlags
         )
 
-        val chanReader = site.chanReader()
+        val chanReader = site.chanApi()
 
         val chanReaderProcessorOptions = ChanReaderProcessor.Options(
           isDownloadingThread = false,
@@ -235,7 +235,7 @@ class ChanThreadLoaderCoordinator(
               chanReadOptions = chanReadOptions,
               chanLoadOptions = chanLoadOptions,
               chanReaderProcessorOptions = chanReaderProcessorOptions,
-              chanReader = chanReader
+              chanApi = chanReader
             ).unwrap()
           }
         }
@@ -256,8 +256,10 @@ class ChanThreadLoaderCoordinator(
           }
         }
 
-        val postParser = chanReader.getParser()
+        val postParser = chanReader.parser()
           ?: throw NullPointerException("PostParser cannot be null!")
+
+        // TODO: compose post cells. parserV2
 
         val (threadLoadResult, loadTimeInfo) = chanPostPersister.persistPosts(
           compositeCatalogDescriptor = compositeCatalogDescriptor,
@@ -585,7 +587,7 @@ class ChanThreadLoaderCoordinator(
     chanReadOptions: ChanReadOptions,
     chanLoadOptions: ChanLoadOptions,
     chanReaderProcessorOptions: ChanReaderProcessor.Options,
-    chanReader: ChanReader
+    chanApi: ChanApi
   ): ModularResult<ChanReaderProcessor> {
     BackgroundUtils.ensureBackgroundThread()
 
@@ -603,13 +605,13 @@ class ChanThreadLoaderCoordinator(
       when (chanDescriptor) {
         is ChanDescriptor.ThreadDescriptor -> {
           if (chanLoadUrl.isIncremental) {
-            chanReader.loadThreadIncremental(
+            chanApi.loadThreadIncremental(
               requestUrl = chanLoadUrl.urlString,
               responseBodyStream = responseBodyStream,
               chanReaderProcessor = chanReaderProcessor
             )
           } else {
-            chanReader.loadThreadFresh(
+            chanApi.loadThreadFresh(
               requestUrl = chanLoadUrl.urlString,
               responseBodyStream = responseBodyStream,
               chanReaderProcessor = chanReaderProcessor
@@ -617,7 +619,7 @@ class ChanThreadLoaderCoordinator(
           }
         }
         is ChanDescriptor.CatalogDescriptor -> {
-          chanReader.loadCatalog(
+          chanApi.loadCatalog(
             requestUrl = chanLoadUrl.urlString,
             responseBodyStream = responseBodyStream,
             chanReaderProcessor = chanReaderProcessor

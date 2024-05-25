@@ -19,7 +19,7 @@ import okhttp3.Request
 class DvachPagesRequest(
   private val chanBoard: ChanBoard,
   request: Request,
-  proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>
+  proxiedOkHttpClient: RealProxiedOkHttpClient
 ) : JsonReaderRequest<BoardPages>(
   request,
   proxiedOkHttpClient

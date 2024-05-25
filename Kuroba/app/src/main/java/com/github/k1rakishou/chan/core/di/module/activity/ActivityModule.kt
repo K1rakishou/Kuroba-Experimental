@@ -50,9 +50,9 @@ class ActivityModule {
     Logger.deps("UpdateManager")
     return UpdateManager(
       activity,
+      settingsNotificationManager,
       cacheHandler,
       fileManager,
-      settingsNotificationManager,
       fileChooser,
       proxiedOkHttpClient,
       dialogFactory

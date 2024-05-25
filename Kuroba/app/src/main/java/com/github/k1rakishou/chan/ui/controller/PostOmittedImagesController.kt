@@ -56,7 +56,7 @@ class PostOmittedImagesController(
   }
 
   @Composable
-  override fun BoxScope.BuildContent() {
+  override fun BoxScope.Content() {
     LazyVerticalGrid(
       modifier = Modifier
         .widthIn(max = 600.dp)

@@ -10,8 +10,6 @@ import com.github.k1rakishou.common.extractFileName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.AbstractFile
-import com.github.k1rakishou.fsaf.file.FileSegment
-import com.github.k1rakishou.fsaf.file.Segment
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
@@ -180,7 +178,7 @@ class ExportDownloadedThreadAsHtmlUseCase(
           chanPost.tripcode ?: ""
         }
         "DATE_TIME_FORMATTED" -> {
-          DATE_TIME_PRINTER.print(chanPost.timestamp * 1000L)
+          DATE_TIME_PRINTER.print(chanPost.timestampInMillis)
         }
         "POST_COMMENT" -> {
           chanPost.postComment.originalUnparsedComment ?: ""

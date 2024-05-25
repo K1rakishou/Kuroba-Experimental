@@ -209,7 +209,7 @@ object ChanPostUtils {
 
   fun getLocalDate(post: ChanPost, localDate: Boolean): String {
     val tmpDate = Date()
-    tmpDate.time = post.timestamp * 1000L
+    tmpDate.time = post.timestampInSeconds * 1000L
 
     try {
       if (localDate) {

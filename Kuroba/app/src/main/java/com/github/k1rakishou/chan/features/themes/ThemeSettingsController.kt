@@ -18,7 +18,9 @@ import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
+import com.github.k1rakishou.chan.core.manager.PostFilterManagerImpl
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
+import com.github.k1rakishou.chan.core.repository.StaticHtmlColorRepository
 import com.github.k1rakishou.chan.features.toolbar.BackArrowMenuItem
 import com.github.k1rakishou.chan.features.toolbar.KurobaToolbarState
 import com.github.k1rakishou.chan.features.toolbar.ToolbarMenuCheckableOverflowItem
@@ -36,6 +38,7 @@ import com.github.k1rakishou.chan.utils.awaitUntilGloballyLaidOutAndGetSize
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.exhaustive
+import com.github.k1rakishou.core_parser.comment.HtmlParserPool
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.core_themes.ThemeParser
@@ -66,12 +69,21 @@ class ThemeSettingsController(context: Context) : Controller(context), WindowIns
   lateinit var dialogFactory: DialogFactory
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
+  @Inject
+  lateinit var staticHtmlColorRepository: StaticHtmlColorRepository
+  @Inject
+  lateinit var htmlParserPool: HtmlParserPool
 
   private lateinit var pager: ViewPager
   private lateinit var currentThemeIndicator: TextView
 
   private val themeControllerHelper by lazy {
-    ThemeControllerHelper(themeEngine, postFilterManager, archivesManager)
+    ThemeControllerHelper(
+      themeEngine = themeEngine,
+      archivesManager = archivesManager,
+      staticHtmlColorRepository = staticHtmlColorRepository,
+      htmlParserPool = htmlParserPool
+    )
   }
 
   override fun injectActivityDependencies(component: ActivityComponent) {

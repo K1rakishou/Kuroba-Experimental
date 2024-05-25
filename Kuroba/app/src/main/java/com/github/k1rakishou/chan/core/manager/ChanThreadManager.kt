@@ -609,8 +609,10 @@ class ChanThreadManager(
         val siteDescriptor = chanDescriptor.siteDescriptor()
 
         val postParser = siteManager.bySiteDescriptor(siteDescriptor)
-          ?.chanReader()
-          ?.getParser()
+          ?.chanApi()
+          ?.parser()
+
+        // TODO: compose post cells. parserV2
 
         if (postParser == null) {
           val threadLoadResult = ThreadLoadResult.Error(
@@ -657,8 +659,10 @@ class ChanThreadManager(
         val siteDescriptor = chanDescriptor.siteDescriptor()
 
         val postParser = siteManager.bySiteDescriptor(siteDescriptor)
-          ?.chanReader()
-          ?.getParser()
+          ?.chanApi()
+          ?.parser()
+
+        // TODO: compose post cells. parserV2
 
         if (postParser == null) {
           val threadLoadResult = ThreadLoadResult.Error(

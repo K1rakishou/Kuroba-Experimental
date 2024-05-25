@@ -1,8 +1,12 @@
 package com.github.k1rakishou.model.data.descriptor
 
+import android.os.Parcelable
 import com.github.k1rakishou.core_logger.Logger
+import kotlinx.parcelize.Parcelize
+import okio.Buffer
 import java.util.*
 
+@Parcelize
 open class PostDescriptor protected constructor(
   /**
    * A post may belong to a thread or to a catalog (OP) that's why we use abstract
@@ -11,7 +15,7 @@ open class PostDescriptor protected constructor(
   val descriptor: ChanDescriptor,
   val postNo: Long,
   open val postSubNo: Long = 0L
-) : Comparable<PostDescriptor> {
+) : Comparable<PostDescriptor>, Parcelable {
 
   override fun compareTo(other: PostDescriptor): Int {
     if (descriptor !is ChanDescriptor.ThreadDescriptor) {

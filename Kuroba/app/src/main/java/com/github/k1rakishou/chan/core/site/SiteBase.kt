@@ -13,6 +13,7 @@ import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.repository.BoardFlagInfoRepository
+import com.github.k1rakishou.chan.core.repository.StaticHtmlColorRepository
 import com.github.k1rakishou.chan.core.site.http.HttpCallManager
 import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -20,6 +21,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_parser.comment.HtmlParserPool
 import com.github.k1rakishou.model.data.site.SiteBoards
 import com.github.k1rakishou.persist_state.ReplyMode
 import com.github.k1rakishou.prefs.BooleanSetting
@@ -45,31 +47,66 @@ abstract class SiteBase : Site, CoroutineScope {
   private val job = SupervisorJob()
 
   @Inject
-  lateinit var proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>
+  lateinit var proxiedOkHttpClientLazy: Lazy<RealProxiedOkHttpClient>
   @Inject
-  lateinit var appConstants: AppConstants
+  lateinit var appConstantsLazy: Lazy<AppConstants>
   @Inject
-  lateinit var boardManager: BoardManager
+  lateinit var boardManagerLazy: Lazy<BoardManager>
   @Inject
-  lateinit var httpCallManager: Lazy<HttpCallManager>
+  lateinit var httpCallManagerLazy: Lazy<HttpCallManager>
   @Inject
-  lateinit var moshi: Lazy<Moshi>
+  lateinit var moshiLazy: Lazy<Moshi>
   @Inject
-  lateinit var siteManager: SiteManager
+  lateinit var gsonLazy: Lazy<Gson>
   @Inject
-  lateinit var imageLoaderDeprecated: Lazy<ImageLoaderDeprecated>
+  lateinit var siteManagerLazy: Lazy<SiteManager>
   @Inject
-  lateinit var archivesManager: ArchivesManager
+  lateinit var imageLoaderDeprecatedLazy: Lazy<ImageLoaderDeprecated>
   @Inject
-  lateinit var postFilterManager: Lazy<PostFilterManager>
+  lateinit var archivesManagerLazy: Lazy<ArchivesManager>
   @Inject
-  lateinit var replyManager: Lazy<ReplyManager>
+  lateinit var postFilterManagerLazy: Lazy<PostFilterManager>
   @Inject
-  lateinit var gson: Gson
+  lateinit var replyManagerLazy: Lazy<ReplyManager>
   @Inject
-  lateinit var boardFlagInfoRepository: Lazy<BoardFlagInfoRepository>
+  lateinit var boardFlagInfoRepositoryLazy: Lazy<BoardFlagInfoRepository>
   @Inject
-  lateinit var simpleCommentParser: Lazy<SimpleCommentParser>
+  lateinit var simpleCommentParserLazy: Lazy<SimpleCommentParser>
+  @Inject
+  lateinit var staticHtmlColorRepositoryLazy: Lazy<StaticHtmlColorRepository>
+  @Inject
+  lateinit var htmlParserPoolLazy: Lazy<HtmlParserPool>
+
+  protected val proxiedOkHttpClient: RealProxiedOkHttpClient
+    get() = proxiedOkHttpClientLazy.get()
+  protected val appConstants: AppConstants
+    get() = appConstantsLazy.get()
+  protected val boardManager: BoardManager
+    get() = boardManagerLazy.get()
+  protected val httpCallManager: HttpCallManager
+    get() = httpCallManagerLazy.get()
+  protected val moshi: Moshi
+    get() = moshiLazy.get()
+  protected val gson: Gson
+    get() = gsonLazy.get()
+  protected val siteManager: SiteManager
+    get() = siteManagerLazy.get()
+  protected val imageLoaderDeprecated: ImageLoaderDeprecated
+    get() = imageLoaderDeprecatedLazy.get()
+  protected val archivesManager: ArchivesManager
+    get() = archivesManagerLazy.get()
+  protected val postFilterManager: PostFilterManager
+    get() = postFilterManagerLazy.get()
+  protected val replyManager: ReplyManager
+    get() = replyManagerLazy.get()
+  protected val boardFlagInfoRepository: BoardFlagInfoRepository
+    get() = boardFlagInfoRepositoryLazy.get()
+  protected val simpleCommentParser: SimpleCommentParser
+    get() = simpleCommentParserLazy.get()
+  protected val staticHtmlColorRepository: StaticHtmlColorRepository
+    get() = staticHtmlColorRepositoryLazy.get()
+  protected val htmlParserPool: HtmlParserPool
+    get() = htmlParserPoolLazy.get()
 
   override val coroutineContext: CoroutineContext
     get() = job + Dispatchers.Main + CoroutineName("SiteBase")
@@ -108,7 +145,7 @@ abstract class SiteBase : Site, CoroutineScope {
     )
 
     cloudFlareClearanceCookieMap = MapSetting(
-      _moshi = moshi,
+      moshiLazy = moshiLazy,
       mapperFrom = { mapSettingEntry ->
         return@MapSetting MapSetting.KeyValue(
           key = mapSettingEntry.key,

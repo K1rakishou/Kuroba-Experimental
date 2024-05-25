@@ -253,7 +253,7 @@ class ThreadCellData(
     val totalPostsCount = postIndexedList.size
     val resultList = mutableListWithCap<PostCellDataLazy>(totalPostsCount)
 
-    val textSizeSp = ChanSettings.fontSize.get().toInt()
+    val textSizeSp = ChanSettings.globalFontSize.get().toInt()
     val detailsSizeSp = ChanSettings.detailsSizeSp()
     val boardPostsSortOrder = PostsFilter.CatalogSortingOrder.current()
     val neverShowPages = ChanSettings.neverShowPages.get()
@@ -632,8 +632,10 @@ class ThreadCellData(
       val calculatedValue = lazyDataCalcFunc.value
 
       if (!isAlreadyCalculated && !isPrecalculating && isDevBuild()) {
-        Logger.w(TAG, "getOrCalculate(${Thread.currentThread().name}) value was not already calculated, " +
-          "index=${calculatedValue.postIndex}, postNo=${calculatedValue.postNo}")
+        Logger.warning(TAG) {
+          "getOrCalculate(${Thread.currentThread().name}) value has not been calculated yet! " +
+            "index: ${calculatedValue.postIndex}, postNo: ${calculatedValue.postNo}"
+        }
       }
 
       return calculatedValue

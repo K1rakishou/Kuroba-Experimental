@@ -620,7 +620,7 @@ inline fun <T, R : Any> Collection<T>.mapReverseIndexedNotNull(transform: (index
 }
 
 public inline fun <T, K> Iterable<T>.toHashSetBy(capacity: Int = 16, keySelector: (T) -> K): HashSet<K> {
-  val hashSet = hashSetWithCap<K>(capacity)
+  val hashSet = mutableSetWithCap<K>(capacity)
 
   for (element in this) {
     hashSet.add(keySelector(element))
@@ -1078,12 +1078,32 @@ inline fun <K, V> linkedMapWithCap(collection: Collection<*>): LinkedHashMap<K, 
   return LinkedHashMap(safeCapacity(collection.size))
 }
 
-inline fun <T> hashSetWithCap(initialCapacity: Int): HashSet<T> {
+inline fun <T> mutableSetWithCap(initialCapacity: Int): HashSet<T> {
   return HashSet(safeCapacity(initialCapacity))
 }
 
-inline fun <T> hashSetWithCap(collection: Collection<*>): HashSet<T> {
+inline fun <T> mutableSetWithCap(collection: Collection<*>): HashSet<T> {
   return HashSet(safeCapacity(collection.size))
+}
+
+
+fun <T> MutableList<T>.reserve(count: Int, create: (Int) -> T) {
+  val toReserve = count - size
+  if (toReserve <= 0) {
+    return
+  }
+
+  val start = size
+  repeat(toReserve) { index -> add(create(start + index)) }
+}
+
+fun <T> MutableList<T?>.reserve(count: Int) {
+  val toReserve = count - size
+  if (toReserve <= 0) {
+    return
+  }
+
+  repeat(toReserve) { add(null) }
 }
 
 inline fun <T> Iterable<T>.sumByLong(selector: (T) -> Long): Long {

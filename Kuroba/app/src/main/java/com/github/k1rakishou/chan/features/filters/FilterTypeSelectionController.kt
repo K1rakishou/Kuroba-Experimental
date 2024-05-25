@@ -46,7 +46,7 @@ class FilterTypeSelectionController(
   }
 
   @Composable
-  override fun BoxScope.BuildContent() {
+  override fun BoxScope.Content() {
     KurobaComposeCard(
       modifier = Modifier
         .widthIn(max = 600.dp)

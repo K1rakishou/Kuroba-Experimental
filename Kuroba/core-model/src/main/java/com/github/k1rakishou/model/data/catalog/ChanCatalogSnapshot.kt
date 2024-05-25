@@ -1,7 +1,7 @@
 package com.github.k1rakishou.model.data.catalog
 
 import androidx.annotation.GuardedBy
-import com.github.k1rakishou.common.hashSetWithCap
+import com.github.k1rakishou.common.mutableSetWithCap
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -20,7 +20,7 @@ data class ChanCatalogSnapshot(
   private var endReached: Boolean = false
 
   @GuardedBy("lock")
-  private val duplicateChecker = hashSetWithCap<ChanDescriptor.ThreadDescriptor>(32)
+  private val duplicateChecker = mutableSetWithCap<ChanDescriptor.ThreadDescriptor>(32)
   @GuardedBy("lock")
   private val chanCatalogSnapshotEntryList = mutableListWithCap<ChanDescriptor.ThreadDescriptor>(32)
 

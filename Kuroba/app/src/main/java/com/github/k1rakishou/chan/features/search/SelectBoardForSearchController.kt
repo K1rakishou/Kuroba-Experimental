@@ -68,7 +68,7 @@ class SelectBoardForSearchController(
   }
 
   @Composable
-  override fun BoxScope.BuildContent() {
+  override fun BoxScope.Content() {
     val chanTheme = LocalChanTheme.current
     val isTablet = remember { isTablet() }
     val fraction = if (isTablet) {

@@ -8,7 +8,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.ui.epoxy.epoxyPostLink
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
-import com.github.k1rakishou.common.hashSetWithCap
+import com.github.k1rakishou.common.mutableSetWithCap
 import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.post.ChanPost
@@ -66,7 +66,7 @@ class PostLinksController(
     val linkables = post.postComment.linkables
       .filter { postLinkable -> postLinkable.type == PostLinkable.Type.LINK }
 
-    val links = hashSetWithCap<PostLink>(linkables.size)
+    val links = mutableSetWithCap<PostLink>(linkables.size)
 
     for (index in linkables.indices) {
       val link = linkables[index].key.toString()

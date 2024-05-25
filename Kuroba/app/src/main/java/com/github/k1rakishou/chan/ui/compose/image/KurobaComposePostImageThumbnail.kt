@@ -51,7 +51,7 @@ import javax.net.ssl.SSLException
 @Immutable
 interface PostImageThumbnailKey {
   val postDescriptor: PostDescriptor
-  val thumbnailImageUrl: HttpUrl
+  val thumbnailImageUrl: HttpUrl?
   val fullImageUrl: HttpUrl?
 }
 
@@ -85,7 +85,7 @@ class ImageLoaderRequestProvider(
 @Composable
 fun KurobaComposePostImageThumbnail(
   modifier: Modifier,
-  controllerKey: ControllerKey,
+  controllerKey: ControllerKey?,
   postImageThumbnailKey: PostImageThumbnailKey,
   requestProvider: ImageLoaderRequestProvider,
   mediaType: KurobaMediaType,

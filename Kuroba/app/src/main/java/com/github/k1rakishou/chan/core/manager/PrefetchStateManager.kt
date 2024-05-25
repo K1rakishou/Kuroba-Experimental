@@ -1,7 +1,7 @@
 package com.github.k1rakishou.chan.core.manager
 
 import androidx.annotation.GuardedBy
-import com.github.k1rakishou.common.hashSetWithCap
+import com.github.k1rakishou.common.mutableSetWithCap
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import kotlinx.coroutines.channels.BufferOverflow
@@ -24,9 +24,9 @@ class PrefetchStateManager {
   private val lock = ReentrantReadWriteLock()
 
   @GuardedBy("lock")
-  private val _prefetchingChanPostImages = hashSetWithCap<PrefetchChanPostImage>(initialCapacity = 32)
+  private val _prefetchingChanPostImages = mutableSetWithCap<PrefetchChanPostImage>(initialCapacity = 32)
   @GuardedBy("lock")
-  private val _prefetchedChanPostImages = hashSetWithCap<PrefetchChanPostImage>(initialCapacity = 1024)
+  private val _prefetchedChanPostImages = mutableSetWithCap<PrefetchChanPostImage>(initialCapacity = 1024)
 
   fun isPrefetching(postImage: ChanPostImage?): Boolean {
     if (postImage == null) {

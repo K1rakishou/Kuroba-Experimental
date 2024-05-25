@@ -19,13 +19,13 @@ import java.nio.charset.StandardCharsets
 
 class Chan4ArchiveThreadsRequest(
   private val request: Request,
-  private val proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>
+  private val proxiedOkHttpClientLazy: Lazy<RealProxiedOkHttpClient>
 ) {
 
   suspend fun execute(): ModularResult<NativeArchivePostList> {
     return withContext(Dispatchers.IO) {
       return@withContext ModularResult.Try {
-        val response = proxiedOkHttpClient.get().okHttpClient().suspendCall(request)
+        val response = proxiedOkHttpClientLazy.get().okHttpClient().suspendCall(request)
 
         if (!response.isSuccessful) {
           throw BadStatusResponseException(response.code)

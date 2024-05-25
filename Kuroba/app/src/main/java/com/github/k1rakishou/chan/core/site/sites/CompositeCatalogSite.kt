@@ -18,11 +18,12 @@ import com.github.k1rakishou.chan.core.site.SiteUrlHandler
 import com.github.k1rakishou.chan.core.site.http.DeleteRequest
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
 import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitation
-import com.github.k1rakishou.chan.core.site.parser.ChanReader
+import com.github.k1rakishou.chan.core.site.parser.ChanApi
 import com.github.k1rakishou.chan.core.site.parser.CommentParserType
 import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.core.site.parser.processor.AbstractChanReaderProcessor
 import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
+import com.github.k1rakishou.chan.core.site.parser_v2.AbstractSitePostParser
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.model.data.board.ChanBoard
@@ -127,8 +128,9 @@ class CompositeCatalogSite : Site {
     }
   }
 
-  private val noOpChanReader = object : ChanReader() {
-    override suspend fun getParser(): PostParser? = null
+  private val noOpChanApi = object : ChanApi() {
+    override suspend fun parser(): PostParser? = null
+    override suspend fun parserV2(): AbstractSitePostParser? = null
 
     override suspend fun loadThreadFresh(
       requestUrl: String,
@@ -232,7 +234,7 @@ class CompositeCatalogSite : Site {
 
   override fun requestModifier(): SiteRequestModifier<Site> = noOpSiteRequestModifier
 
-  override fun chanReader(): ChanReader = noOpChanReader
+  override fun chanApi(): ChanApi = noOpChanApi
 
   override fun actions(): SiteActions = noOpActions
 

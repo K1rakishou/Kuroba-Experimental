@@ -4,7 +4,7 @@ import androidx.annotation.GuardedBy
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.common.errorMessageOrClassName
-import com.github.k1rakishou.common.hashSetWithCap
+import com.github.k1rakishou.common.mutableSetWithCap
 import com.github.k1rakishou.common.linkedMapWithCap
 import com.github.k1rakishou.common.mutableIteration
 import com.github.k1rakishou.common.mutableMapWithCap
@@ -22,7 +22,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import org.joda.time.DateTime
-import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
@@ -45,7 +44,7 @@ class SeenPostsManager(
   @GuardedBy("lock")
   private var lastLoadedCatalogDescriptor: ChanDescriptor.ICatalogDescriptor? = null
   @GuardedBy("lock")
-  private val alreadyLoadedDescriptorsForUnlimitedCatalog = hashSetWithCap<ChanDescriptor.ThreadDescriptor>(32)
+  private val alreadyLoadedDescriptorsForUnlimitedCatalog = mutableSetWithCap<ChanDescriptor.ThreadDescriptor>(32)
 
   private val _seenThreadUpdatesFlow = MutableSharedFlow<ChanDescriptor.ThreadDescriptor>(extraBufferCapacity = 64)
   val seenThreadUpdatesFlow: SharedFlow<ChanDescriptor.ThreadDescriptor>

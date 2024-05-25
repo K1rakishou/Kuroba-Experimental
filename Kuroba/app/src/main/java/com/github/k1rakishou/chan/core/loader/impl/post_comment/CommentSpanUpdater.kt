@@ -139,7 +139,7 @@ internal object CommentSpanUpdater {
 
     // Create the icon span for the linkable
     val iconSpan = ImageSpan(AndroidUtils.getAppContext(), icon)
-    val height = ChanSettings.fontSize.get().toInt()
+    val height = ChanSettings.globalFontSize.get().toInt()
     val width = (sp(height.toFloat()) / (icon.height.toFloat() / icon.width.toFloat())).toInt()
 
     iconSpan.drawable.setBounds(0, 0, width, sp(height.toFloat()))

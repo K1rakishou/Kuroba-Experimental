@@ -1,5 +1,7 @@
 package com.github.k1rakishou.chan.core.site.sites.foolfuuka
 
+import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
@@ -23,7 +25,11 @@ import kotlinx.coroutines.flow.flow
 import okhttp3.HttpUrl
 import okhttp3.Request
 
-class FoolFuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
+class FoolFuukaActions(
+  site: CommonSite,
+  private val proxiedOkHttpClient: RealProxiedOkHttpClient,
+  private val boardManager: BoardManager,
+) : CommonSite.CommonActions(site) {
 
   override suspend fun post(replyChanDescriptor: ChanDescriptor, replyMode: ReplyMode): Flow<SiteActions.PostResult> {
     return flow {
@@ -75,9 +81,9 @@ class FoolFuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
 
     return FoolFuukaBoardsRequest(
       siteDescriptor = site.siteDescriptor(),
-      boardManager = site.boardManager,
+      boardManager = boardManager,
       request = request,
-      proxiedOkHttpClient = site.proxiedOkHttpClient
+      proxiedOkHttpClient = proxiedOkHttpClient
     ).execute()
   }
 
@@ -113,9 +119,9 @@ class FoolFuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
     site.requestModifier().modifySearchGetRequest(site, requestBuilder)
 
     return FoolFuukaSearchRequest(
-      searchParams,
-      requestBuilder.build(),
-      site.proxiedOkHttpClient.get()
+      searchParams = searchParams,
+      request = requestBuilder.build(),
+      proxiedOkHttpClient = proxiedOkHttpClient
     ).execute()
   }
 

@@ -44,7 +44,7 @@ class Wired7 : CommonSite() {
   override fun setup() {
     setEnabled(true)
     setName(SITE_NAME)
-    setIcon(SiteIcon.fromFavicon(imageLoaderDeprecated, "https://wired-7.org/favicon_144.png".toHttpUrl()))
+    setIcon(SiteIcon.fromFavicon(imageLoaderDeprecatedLazy, "https://wired-7.org/favicon_144.png".toHttpUrl()))
 
     setBoards(
       ChanBoard.create(BoardDescriptor.create(siteDescriptor().siteName, "a"), "Anime"),
@@ -70,9 +70,9 @@ class Wired7 : CommonSite() {
     })
 
     setEndpoints(Wired7Endpoints(this, "https://wired-7.org", "https://wired-7.org"))
-    setActions(LainchanActions(this, proxiedOkHttpClient, siteManager, replyManager))
+    setActions(LainchanActions(this, proxiedOkHttpClient, siteManager, boardManager, replyManager))
     setApi(Wired7Api(siteManager, boardManager, this))
-    setParser(VichanCommentParser())
+    setParser(VichanCommentParser(staticHtmlColorRepository))
     setPostingLimitationInfo(
       postingLimitationInfoLazy = lazy {
         SitePostingLimitation(

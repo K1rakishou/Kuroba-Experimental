@@ -43,6 +43,7 @@ import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostHide
 import com.github.k1rakishou.model.data.post.ChanPostHttpIcon
+import com.github.k1rakishou.model.data.post.ChanPostIcon
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.util.ChanPostUtils
 import kotlinx.coroutines.Dispatchers
@@ -117,8 +118,10 @@ data class PostCellData(
   val imagesCount: Int
     get() = postImages.size
   val timestamp: Long
-    get() = post.timestamp
-  val postIcons: List<ChanPostHttpIcon>
+    get() = post.timestampInSeconds
+  val deprecatedPostIcons: List<ChanPostHttpIcon>
+    get() = post.deprecatedPostIcons
+  val postIcons: List<ChanPostIcon>
     get() = post.postIcons
   val isDeleted: Boolean
     get() = post.isDeleted
@@ -175,7 +178,7 @@ data class PostCellData(
     }
 
   private val _detailsSizePx = RecalculatableLazy { sp(ChanSettings.detailsSizeSp()) }
-  private val _fontSizePx = RecalculatableLazy { sp(ChanSettings.fontSize.get().toInt()) }
+  private val _fontSizePx = RecalculatableLazy { sp(ChanSettings.globalFontSize.get().toInt()) }
   private val _postTitleStub = RecalculatableLazy { postTitleStubPrecalculated ?: forceLtr(calculatePostTitleStub()) }
   private val _postTitle = RecalculatableLazy { postTitlePrecalculated ?: forceLtr(calculatePostTitle()) }
   private val _postFileInfoMap = RecalculatableLazy { postFileInfoPrecalculated ?: calculatePostFileInfo() }
@@ -351,7 +354,7 @@ data class PostCellData(
       ++count
     }
 
-    count += postIcons.size
+    count += deprecatedPostIcons.size
     return count
   }
 
@@ -609,7 +612,7 @@ data class PostCellData(
       ChanPostUtils.getLocalDate(post, postFullDateLocalLocale)
     } else {
       DateUtils.getRelativeTimeSpanString(
-        post.timestamp * 1000L,
+        post.timestampInSeconds * 1000L,
         System.currentTimeMillis(),
         DateUtils.SECOND_IN_MILLIS,
         0
@@ -794,7 +797,7 @@ data class PostCellData(
 
     if (!isViewingThread && catalogImagesCount > 0) {
       val imagesCountText = AppModuleAndroidUtils.getQuantityString(
-        R.plurals.image,
+        R.plurals.image_with_number,
         catalogImagesCount,
         catalogImagesCount
       )
@@ -865,7 +868,7 @@ data class PostCellData(
           .append(getString(R.string.post_reply_hidden))
 
         if (replyCount <= 0) {
-          val repliesCountText = getQuantityString(R.plurals.reply, hiddenRepliesCount)
+          val repliesCountText = getQuantityString(R.plurals.reply_with_number, hiddenRepliesCount)
 
           catalogRepliesTextBuilder
             .append(" ")
@@ -885,7 +888,7 @@ data class PostCellData(
           .append(getString(R.string.post_reply_removed))
 
         if (replyCount <= 0) {
-          val repliesCountText = getQuantityString(R.plurals.reply, removedRepliesCount)
+          val repliesCountText = getQuantityString(R.plurals.reply_with_number, removedRepliesCount)
 
           catalogRepliesTextBuilder
             .append(" ")

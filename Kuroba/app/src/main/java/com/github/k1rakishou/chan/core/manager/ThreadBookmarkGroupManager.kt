@@ -6,7 +6,7 @@ import com.github.k1rakishou.chan.core.usecase.GetThreadBookmarkGroupIdsUseCase
 import com.github.k1rakishou.chan.features.bookmarks.data.GroupOfThreadBookmarkItemViews
 import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkItemView
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.common.hashSetWithCap
+import com.github.k1rakishou.common.mutableSetWithCap
 import com.github.k1rakishou.common.move
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.common.withLockNonCancellable
@@ -975,7 +975,7 @@ class ThreadBookmarkGroupManager(
     threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>
   ): Set<String> {
     require(mutex.isLocked) { "Mutex is not locked!" }
-    val resultSet = hashSetWithCap<String>(threadDescriptors.size)
+    val resultSet = mutableSetWithCap<String>(threadDescriptors.size)
 
     fun findGroupOrUseDefaultGroup(threadDescriptor: ChanDescriptor.ThreadDescriptor): String {
       for (threadBookmarkGroup in groupsByGroupIdMap.values) {

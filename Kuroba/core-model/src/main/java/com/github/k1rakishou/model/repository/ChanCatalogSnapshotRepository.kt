@@ -2,7 +2,7 @@ package com.github.k1rakishou.model.repository
 
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.common.hashSetWithCap
+import com.github.k1rakishou.common.mutableSetWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.data.catalog.ChanCatalogSnapshot
@@ -24,7 +24,7 @@ class ChanCatalogSnapshotRepository(
 
   private val mutex = Mutex()
   @GuardedBy("mutex")
-  private val alreadyPreloadedSet = hashSetWithCap<ChanDescriptor.CatalogDescriptor>(128)
+  private val alreadyPreloadedSet = mutableSetWithCap<ChanDescriptor.CatalogDescriptor>(128)
 
   suspend fun preloadChanCatalogSnapshot(
     catalogDescriptor: ChanDescriptor.CatalogDescriptor,

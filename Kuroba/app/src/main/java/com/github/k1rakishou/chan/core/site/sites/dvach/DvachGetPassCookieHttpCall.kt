@@ -16,7 +16,7 @@ import java.net.HttpCookie
 
 class DvachGetPassCookieHttpCall(
   site: Site,
-  private val moshi: Lazy<Moshi>,
+  private val moshi: Moshi,
   private val dvachLoginRequest: DvachLoginRequest
 ) : HttpCall(site) {
   var loginResponse: DvachLoginResponse? = null
@@ -43,7 +43,7 @@ class DvachGetPassCookieHttpCall(
       return
     }
 
-    val passcodeResult = moshi.get()
+    val passcodeResult = moshi
       .adapter(PasscodeResult::class.java)
       .fromJson(result)
 

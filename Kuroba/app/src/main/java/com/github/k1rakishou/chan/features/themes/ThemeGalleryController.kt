@@ -11,7 +11,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
-import com.github.k1rakishou.chan.core.manager.PostFilterManager
+import com.github.k1rakishou.chan.core.manager.PostFilterManagerImpl
+import com.github.k1rakishou.chan.core.repository.StaticHtmlColorRepository
 import com.github.k1rakishou.chan.core.repository.ThemeJsonFilesRepository
 import com.github.k1rakishou.chan.features.toolbar.BackArrowMenuItem
 import com.github.k1rakishou.chan.features.toolbar.KurobaToolbarState
@@ -26,6 +27,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.common.updatePaddings
+import com.github.k1rakishou.core_parser.comment.HtmlParserPool
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -44,12 +46,19 @@ class ThemeGalleryController(
   @Inject
   lateinit var themeEngine: ThemeEngine
   @Inject
-  lateinit var postFilterManager: PostFilterManager
-  @Inject
   lateinit var archivesManager: ArchivesManager
+  @Inject
+  lateinit var staticHtmlColorRepository: StaticHtmlColorRepository
+  @Inject
+  lateinit var htmlParserPool: HtmlParserPool
 
   private val themeControllerHelper by lazy {
-    ThemeControllerHelper(themeEngine, postFilterManager, archivesManager)
+    ThemeControllerHelper(
+      themeEngine = themeEngine,
+      archivesManager = archivesManager,
+      staticHtmlColorRepository = staticHtmlColorRepository,
+      htmlParserPool = htmlParserPool
+    )
   }
 
   private lateinit var themesList: ColorizableInsetAwareEpoxyRecyclerView

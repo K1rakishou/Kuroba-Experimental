@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.core.site.sites.leftypol
 
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.common.CommonSite
@@ -14,10 +15,11 @@ import okhttp3.Request
 
 class LeftypolActions(
         commonSite: CommonSite,
-        proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>,
+        proxiedOkHttpClient: RealProxiedOkHttpClient,
         siteManager: SiteManager,
-        replyManager: Lazy<ReplyManager>
-) : LainchanActions(commonSite, proxiedOkHttpClient, siteManager, replyManager) {
+        boardManager: BoardManager,
+        replyManager: ReplyManager
+) : LainchanActions(commonSite, proxiedOkHttpClient, siteManager, boardManager, replyManager) {
 
     override suspend fun boards(): ModularResult<SiteBoards> {
         val requestBuilder = Request.Builder()
@@ -27,7 +29,7 @@ class LeftypolActions(
 
         return LeftypolBoardsRequest(
                 siteDescriptor = site.siteDescriptor(),
-                boardManager = site.boardManager,
+                boardManager = boardManager,
                 request = requestBuilder.build(),
                 proxiedOkHttpClient = proxiedOkHttpClient
         ).execute()

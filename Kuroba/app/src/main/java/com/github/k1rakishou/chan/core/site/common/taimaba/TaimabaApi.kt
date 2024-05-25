@@ -19,6 +19,7 @@ import com.github.k1rakishou.model.data.filter.FilterWatchCatalogInfoObject
 import com.github.k1rakishou.model.data.filter.FilterWatchCatalogThreadInfoObject
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.data.post.ChanPostHttpIcon
+import com.github.k1rakishou.model.data.post.ChanPostIcon
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.ChanPostImageBuilder
 import com.google.gson.stream.JsonReader
@@ -29,7 +30,6 @@ import java.io.InputStreamReader
 import java.util.*
 import kotlin.math.max
 
-@Suppress("BlockingMethodInNonBlockingContext")
 class TaimabaApi(
   private val siteManager: SiteManager,
   private val boardManager: BoardManager,
@@ -193,12 +193,14 @@ class TaimabaApi(
 
     if (countryCode != null && countryName != null) {
       val countryUrl = endpoints.icon("country", SiteEndpoints.makeArgument("country_code", countryCode))
-      builder.addHttpIcon(ChanPostHttpIcon(countryUrl, "$countryName/$countryCode"))
+      builder.deprecatedAddHttpIcon(ChanPostHttpIcon(countryUrl, "$countryName/$countryCode"))
+      builder.addHttpIcon(ChanPostIcon.CountryFlag(countryName, countryCode))
     }
 
     if (trollCountryCode != null && countryName != null) {
       val countryUrl = endpoints.icon("troll_country", SiteEndpoints.makeArgument("troll_country_code", trollCountryCode))
-      builder.addHttpIcon(ChanPostHttpIcon(countryUrl, "$countryName/t_$trollCountryCode"))
+      builder.deprecatedAddHttpIcon(ChanPostHttpIcon(countryUrl, "$countryName/t_$trollCountryCode"))
+      builder.addHttpIcon(ChanPostIcon.CustomFlag(ChanPostIcon.CustomFlag.FlagType.CustomCountryFlag, countryName, trollCountryCode))
     }
 
     chanReaderProcessor.addPost(builder)

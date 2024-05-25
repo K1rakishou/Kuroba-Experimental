@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.core.site.sites.dvach
 
 import android.text.TextUtils
+import com.github.k1rakishou.chan.core.repository.StaticHtmlColorRepository
 import com.github.k1rakishou.chan.core.site.common.vichan.VichanCommentParser
 import com.github.k1rakishou.chan.core.site.parser.ICommentParser
 import com.github.k1rakishou.chan.core.site.parser.PostParser
@@ -12,7 +13,9 @@ import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
-class DvachCommentParser : VichanCommentParser(), ICommentParser {
+class DvachCommentParser(
+  staticHtmlColorRepository: StaticHtmlColorRepository
+) : VichanCommentParser(staticHtmlColorRepository), ICommentParser {
 
   init {
     addDefaultRules()

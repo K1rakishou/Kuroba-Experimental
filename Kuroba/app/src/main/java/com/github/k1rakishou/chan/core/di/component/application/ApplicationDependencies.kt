@@ -9,14 +9,19 @@ import com.github.k1rakishou.chan.core.manager.PrefetchStateManager
 import com.github.k1rakishou.chan.core.manager.RevealedSpoilerImagesManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.ThirdEyeManager
+import com.github.k1rakishou.chan.core.parser.repository.ParsedPostDataRepository
 import com.github.k1rakishou.chan.ui.compose.snackbar.manager.SnackbarManagerFactory
 import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
 import com.github.k1rakishou.chan.ui.helper.AppResources
+import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.common.KurobaDispatchers
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
 
 interface ApplicationDependencies {
   val application: Chan
+  val appConstants: AppConstants
+  val kurobaDispatchers: KurobaDispatchers
   val themeEngine: ThemeEngine
   val siteManager: SiteManager
   val globalUiStateHolder: GlobalUiStateHolder
@@ -30,4 +35,5 @@ interface ApplicationDependencies {
   val downloadedImagesManager: DownloadedImagesManager
   val cacheHandler: CacheHandler
   val revealedSpoilerImagesManager: RevealedSpoilerImagesManager
+  val parsedPostDataRepository: ParsedPostDataRepository
 }

@@ -89,7 +89,7 @@ fun collectGlobalFontSizeMultiplierAsState(): Float {
     key1 = Unit,
     block = {
       coroutineScope.launch {
-        ChanSettings.fontSize.listenForChanges()
+        ChanSettings.globalFontSize.listenForChanges()
           .asFlow()
           .collectLatest { globalFontSizeMultiplier = calculateFontSizeMultiplier() }
       }
@@ -101,8 +101,7 @@ fun collectGlobalFontSizeMultiplierAsState(): Float {
 
 private fun calculateFontSizeMultiplier(): Float {
   val defaultFontSizeFromSettings = ChanSettings.defaultFontSize().toFloat()
-  val fontSize = ChanSettings.fontSize.get().toIntOrNull()?.toFloat()
-    ?: ChanSettings.defaultFontSize().toFloat()
+  val fontSize = ChanSettings.globalFontSize.get().toInt().toFloat()
 
   return fontSize / defaultFontSizeFromSettings
 }

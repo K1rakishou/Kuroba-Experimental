@@ -1,6 +1,6 @@
 package com.github.k1rakishou.model.data.bookmark
 
-import com.github.k1rakishou.common.hashSetWithCap
+import com.github.k1rakishou.common.mutableSetWithCap
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
@@ -31,7 +31,7 @@ class ThreadBookmarkGroup(
   private val entries: MutableMap<Long, ThreadBookmarkGroupEntry> = mutableMapWithCap(16)
   // List<ThreadBookmarkGroupEntryDatabaseId>
   private val orders: MutableList<Long> = mutableListWithCap(16)
-  private val fastLookupDescriptorSet: MutableSet<ChanDescriptor.ThreadDescriptor> = hashSetWithCap(16)
+  private val fastLookupDescriptorSet: MutableSet<ChanDescriptor.ThreadDescriptor> = mutableSetWithCap(16)
 
   init {
     entries.clear()

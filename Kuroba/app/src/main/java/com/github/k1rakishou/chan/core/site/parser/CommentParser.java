@@ -1,19 +1,3 @@
-/*
- * KurobaEx - *chan browser https://github.com/K1rakishou/Kuroba-Experimental/
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 package com.github.k1rakishou.chan.core.site.parser;
 
 import static com.github.k1rakishou.chan.core.site.parser.style.StyleRule.tagRule;
@@ -34,6 +18,7 @@ import androidx.annotation.Nullable;
 import androidx.core.graphics.ColorUtils;
 
 import com.github.k1rakishou.ChanSettings;
+import com.github.k1rakishou.chan.core.repository.StaticHtmlColorRepository;
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRule;
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRulesParams;
 import com.github.k1rakishou.chan.utils.ConversionUtils;
@@ -68,8 +53,9 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
     private static final String TAG = "CommentParser";
     private static final String IFRAME_CONTENT_PREFIX = "[Iframe content]";
 
-    private final Map<String, List<StyleRule>> rules = new HashMap<>();
+    private final StaticHtmlColorRepository staticHtmlColorRepository;
 
+    private final Map<String, List<StyleRule>> rules = new HashMap<>();
     private final Pattern defaultQuoteRegex = Pattern.compile("//boards\\.4chan.*?\\.org/(.*?)/thread/(\\d*?)#p(\\d*)");
     private final Pattern deadQuotePattern = Pattern.compile(">>(\\d+)");
     private final Pattern fullQuotePattern = Pattern.compile("/(\\w+)/\\w+/(\\d+)#p(\\d+)");
@@ -80,7 +66,9 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
     private final Pattern colorPattern = Pattern.compile("color:#?(\\w+)");
     private final Pattern colorRgbFgBgPattern = Pattern.compile("color:rgb\\((\\d+),(\\d+),(\\d+)\\)\\;background\\-color\\:rgb\\((\\d+),(\\d+),(\\d+)\\)");
 
-    public CommentParser() {
+    public CommentParser(StaticHtmlColorRepository staticHtmlColorRepository) {
+        this.staticHtmlColorRepository = staticHtmlColorRepository;
+
         // Required tags.
         addRule(tagRule("p"));
         addRule(tagRule("div"));
@@ -318,7 +306,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
 
         String colorRaw = matcher.group(1);
         if (colorRaw != null) {
-            Integer colorByName = StaticHtmlColorRepository.getColorValueByHtmlColorName(colorRaw);
+            Integer colorByName = staticHtmlColorRepository.colorByName(colorRaw);
 
             if (colorByName == null) {
                 colorByName = ConversionUtils.toIntOrNull(colorRaw);

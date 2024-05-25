@@ -48,7 +48,7 @@ class Chan420 : CommonSite() {
   override fun setup() {
     setEnabled(false)
     setName(SITE_NAME)
-    setIcon(SiteIcon.fromFavicon(imageLoaderDeprecated, "https://420chan.org/favicon.ico".toHttpUrl()))
+    setIcon(SiteIcon.fromFavicon(imageLoaderDeprecatedLazy, "https://420chan.org/favicon.ico".toHttpUrl()))
     setBoardsType(Site.BoardsType.DYNAMIC)
     setResolvable(URL_HANDLER)
     
@@ -71,10 +71,10 @@ class Chan420 : CommonSite() {
               .build()
 
             return@genericBoardsRequestResponseHandler Chan420BoardsRequest(
-              siteDescriptor(),
-              boardManager,
-              request,
-              proxiedOkHttpClient
+              siteDescriptor = siteDescriptor(),
+              boardManager = boardManager,
+              request = request,
+              proxiedOkHttpClient = proxiedOkHttpClient
             )
           },
           defaultBoardsProvider = {
@@ -89,7 +89,7 @@ class Chan420 : CommonSite() {
       }
     })
     setApi(TaimabaApi(siteManager, boardManager, this))
-    setParser(TaimabaCommentParser())
+    setParser(TaimabaCommentParser(staticHtmlColorRepository))
 
     setPostingLimitationInfo(
       postingLimitationInfoLazy = lazy {

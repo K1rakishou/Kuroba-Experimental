@@ -94,7 +94,7 @@ public class SoyjakParty
     public void setup() {
         setEnabled(true);
         setName(SITE_NAME);
-        setIcon(SiteIcon.fromFavicon(getImageLoaderDeprecated(), HttpUrl.parse("https://soyjak.party/favicon.ico")));
+        setIcon(SiteIcon.fromFavicon(getImageLoaderDeprecatedLazy(), HttpUrl.parse("https://soyjak.party/favicon.ico")));
 
         setBoards(
                 ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "q"), "the 'party"),
@@ -149,7 +149,7 @@ public class SoyjakParty
         });
         setActions(new VichanActions(this, getProxiedOkHttpClient(), getSiteManager(), getReplyManager()));
         setApi(new VichanApi(getSiteManager(), getBoardManager(), this));
-        setParser(new VichanCommentParser());
+        setParser(new VichanCommentParser(getStaticHtmlColorRepository()));
     }
 
     @NotNull

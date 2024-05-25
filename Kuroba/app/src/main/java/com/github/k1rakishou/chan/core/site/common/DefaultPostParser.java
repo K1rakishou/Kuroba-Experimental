@@ -20,6 +20,7 @@ import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.core_parser.comment.HtmlDocument;
 import com.github.k1rakishou.core_parser.comment.HtmlNode;
 import com.github.k1rakishou.core_parser.comment.HtmlParser;
+import com.github.k1rakishou.core_parser.comment.HtmlParserPool;
 import com.github.k1rakishou.core_parser.comment.HtmlTag;
 import com.github.k1rakishou.core_spannable.PostLinkable;
 import com.github.k1rakishou.model.data.post.ChanPost;
@@ -38,14 +39,16 @@ public class DefaultPostParser implements PostParser {
     private static final String TAG = "DefaultPostParser";
 
     static final String CHAN4_DEFAULT_POSTER_NAME = "Anonymous";
-    private final ThreadLocal<HtmlParser> htmlParserThreadLocal = new ThreadLocal<>();
+    private final HtmlParserPool htmlParserPool;
     private final CommentParser commentParser;
     private final ArchivesManager archivesManager;
 
     public DefaultPostParser(
-            CommentParser commentParser,
-            ArchivesManager archivesManager
+      HtmlParserPool htmlParserPool,
+      CommentParser commentParser,
+      ArchivesManager archivesManager
     ) {
+        this.htmlParserPool = htmlParserPool;
         this.commentParser = commentParser;
         this.archivesManager = archivesManager;
     }
@@ -120,12 +123,7 @@ public class DefaultPostParser implements PostParser {
         try {
             String comment = commentRaw.toString().replace("<wbr>", "");
 
-            HtmlParser htmlParser = htmlParserThreadLocal.get();
-            if (htmlParser == null) {
-                htmlParserThreadLocal.set(new HtmlParser());
-                htmlParser = htmlParserThreadLocal.get();
-            }
-
+            HtmlParser htmlParser = htmlParserPool.get();
             HtmlDocument document = htmlParser.parse(comment);
 
             List<HtmlNode> nodes = document.getNodes();

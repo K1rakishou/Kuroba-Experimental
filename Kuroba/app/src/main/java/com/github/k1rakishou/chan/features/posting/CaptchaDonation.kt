@@ -4,7 +4,7 @@ import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.manager.CaptchaImageCache
 import com.github.k1rakishou.chan.ui.captcha.CaptchaSolution
 import com.github.k1rakishou.common.errorMessageOrClassName
-import com.github.k1rakishou.common.hashSetWithCap
+import com.github.k1rakishou.common.mutableSetWithCap
 import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -24,7 +24,7 @@ class CaptchaDonation(
     private val captchaImageCache: CaptchaImageCache,
     private val proxiedOkHttpClient: RealProxiedOkHttpClient
 ) {
-    private val _autoSolvedCaptchas = hashSetWithCap<String>(initialCapacity = 256)
+    private val _autoSolvedCaptchas = mutableSetWithCap<String>(initialCapacity = 256)
 
     @OptIn(ObsoleteCoroutinesApi::class)
     private val actor = appScope.actor<Data>(

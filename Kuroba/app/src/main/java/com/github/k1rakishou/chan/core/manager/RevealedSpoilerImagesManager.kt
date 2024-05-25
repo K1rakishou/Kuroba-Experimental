@@ -4,7 +4,7 @@ import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.features.album.AlbumItemData
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
-import com.github.k1rakishou.common.hashSetWithCap
+import com.github.k1rakishou.common.mutableSetWithCap
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostImage
@@ -89,7 +89,7 @@ class RevealedSpoilerImagesManager {
     private val mutex = Mutex()
 
     @GuardedBy("mutex")
-    private val _revealedImages = hashSetWithCap<RevealedSpoilerImage>(16)
+    private val _revealedImages = mutableSetWithCap<RevealedSpoilerImage>(16)
 
     suspend fun add(albumItemData: AlbumItemData): RevealedSpoilerImage? {
       val revealedSpoilerImage = albumItemData.toRevealedSpoilerImage()

@@ -63,7 +63,7 @@ class AddOrEditBooruController(
   }
 
   @Composable
-  override fun BoxScope.BuildContent() {
+  override fun BoxScope.Content() {
     val chanTheme = LocalChanTheme.current
     val focusManager = LocalFocusManager.current
     val booruSettingState = remember { BooruSettingState.fromBooruSetting(booruSetting ?: BooruSetting()) }

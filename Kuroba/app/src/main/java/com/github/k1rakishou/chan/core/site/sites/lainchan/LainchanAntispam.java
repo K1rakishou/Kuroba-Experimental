@@ -54,10 +54,10 @@ public class LainchanAntispam {
     private final List<String> allowedFields = new ArrayList<>();
     private final List<String> fakeFields = new ArrayList<>();
     private final List<String> binFields = new ArrayList<>();
-    private final Lazy<RealProxiedOkHttpClient> proxiedOkHttpClient;
+    private final RealProxiedOkHttpClient proxiedOkHttpClient;
     private final HttpUrl url;
 
-    public LainchanAntispam(Lazy<RealProxiedOkHttpClient> proxiedOkHttpClient, HttpUrl url) {
+    public LainchanAntispam(RealProxiedOkHttpClient proxiedOkHttpClient, HttpUrl url) {
         this.proxiedOkHttpClient = proxiedOkHttpClient;
         this.url = url;
 
@@ -119,7 +119,7 @@ public class LainchanAntispam {
 
         try {
             Request request = new Request.Builder().url(url).build();
-            Response response = proxiedOkHttpClient.get().okHttpClient().newCall(request).execute();
+            Response response = proxiedOkHttpClient.okHttpClient().newCall(request).execute();
             if (!response.isSuccessful()) {
                 return ModularResult.error(new IOException("(Antispam) Bad response status code: " + response.code()));
             }

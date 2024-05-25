@@ -1,18 +1,18 @@
 package com.github.k1rakishou.model.data.post
 
-import com.github.k1rakishou.common.copy
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 
 class ChanOriginalPost(
   chanPostId: Long,
   postDescriptor: PostDescriptor,
   postImages: List<ChanPostImage>,
-  postIcons: List<ChanPostHttpIcon>,
+  deprecatedPostIcons: List<ChanPostHttpIcon>,
+  postIcons: List<ChanPostIcon>,
   repliesTo: Set<PostDescriptor>,
   timestamp: Long = -1L,
   postComment: PostComment,
-  subject: CharSequence? = null,
-  tripcode: CharSequence? = null,
+  subject: String? = null,
+  tripcode: String? = null,
   name: String? = null,
   posterId: String? = null,
   moderatorCapcode: String? = null,
@@ -39,6 +39,7 @@ class ChanOriginalPost(
   chanPostId,
   postDescriptor,
   postImages.toMutableList(),
+  deprecatedPostIcons,
   postIcons,
   repliesTo,
   timestamp,
@@ -60,12 +61,13 @@ class ChanOriginalPost(
       chanPostId = chanPostId,
       postDescriptor = postDescriptor,
       postImages = postImages,
+      deprecatedPostIcons = deprecatedPostIcons,
       postIcons = postIcons,
       repliesTo = repliesTo,
-      timestamp = timestamp,
+      timestamp = timestampInSeconds,
       postComment = postComment.copy(),
-      subject = subject.copy(),
-      tripcode = tripcode.copy(),
+      subject = subject,
+      tripcode = tripcode,
       name = name,
       posterId = posterId,
       posterIdColor = posterIdColor,
@@ -98,6 +100,8 @@ class ChanOriginalPost(
     if (catalogImagesCount != other.catalogImagesCount) return false
     if (uniqueIps != other.uniqueIps) return false
     if (lastModified != other.lastModified) return false
+    if (deprecatedPostIcons != other.deprecatedPostIcons) return false
+    if (postIcons != other.postIcons) return false
     if (sticky != other.sticky) return false
     if (closed != other.closed) return false
     if (archived != other.archived) return false
@@ -114,6 +118,8 @@ class ChanOriginalPost(
     result = 31 * result + catalogImagesCount
     result = 31 * result + uniqueIps
     result = 31 * result + lastModified.hashCode()
+    result = 31 * result + deprecatedPostIcons.hashCode()
+    result = 31 * result + postIcons.hashCode()
     result = 31 * result + sticky.hashCode()
     result = 31 * result + closed.hashCode()
     result = 31 * result + archived.hashCode()
@@ -130,6 +136,9 @@ class ChanOriginalPost(
       ", totalRepliesCount=" + catalogRepliesCount +
       ", threadImagesCount=" + catalogImagesCount +
       ", uniqueIps=" + uniqueIps +
+      ", lastModified=" + lastModified +
+      ", deprecatedPostIcons=" + deprecatedPostIcons.size +
+      ", postIcons=" + postIcons.size +
       ", lastModified=" + lastModified +
       ", sticky=" + sticky +
       ", closed=" + closed +

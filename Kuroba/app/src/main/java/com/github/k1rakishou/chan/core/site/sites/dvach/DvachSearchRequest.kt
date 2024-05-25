@@ -22,19 +22,19 @@ import org.joda.time.DateTime
 import org.jsoup.parser.Parser
 
 class DvachSearchRequest(
-  private val moshi: Lazy<Moshi>,
+  private val moshi: Moshi,
+  private val proxiedOkHttpClient: RealProxiedOkHttpClient,
+  private val siteManager: SiteManager,
   private val request: Request,
-  private val proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>,
-  private val searchParams: DvachSearchParams,
-  private val siteManager: SiteManager
+  private val searchParams: DvachSearchParams
 ) {
 
   suspend fun execute(): SearchResult {
-    val dvachSearchResult = proxiedOkHttpClient.get()
+    val dvachSearchResult = proxiedOkHttpClient
       .okHttpClient()
       .suspendConvertIntoJsonObjectWithAdapter(
         request,
-        moshi.get().adapter(DvachSearchResult::class.java)
+        moshi.adapter(DvachSearchResult::class.java)
       )
 
     val dvachSearch = if (dvachSearchResult is ModularResult.Error) {

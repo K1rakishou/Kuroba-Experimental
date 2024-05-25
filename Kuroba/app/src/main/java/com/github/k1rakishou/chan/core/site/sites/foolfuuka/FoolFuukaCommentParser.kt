@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.core.site.sites.foolfuuka
 
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
+import com.github.k1rakishou.chan.core.repository.StaticHtmlColorRepository
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.core.site.parser.ICommentParser
 import com.github.k1rakishou.chan.core.site.parser.PostParser
@@ -19,8 +20,9 @@ import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import java.util.regex.Pattern
 
 class FoolFuukaCommentParser(
+  staticHtmlColorRepository: StaticHtmlColorRepository,
   private val archivesManager: ArchivesManager
-) : CommentParser(), ICommentParser {
+) : CommentParser(staticHtmlColorRepository), ICommentParser {
 
   init {
     addDefaultRules()

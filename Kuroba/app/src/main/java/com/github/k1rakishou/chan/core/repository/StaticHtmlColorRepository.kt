@@ -1,8 +1,12 @@
-package com.github.k1rakishou.chan.core.site.parser
+package com.github.k1rakishou.chan.core.repository
 
 import java.util.*
 
-object StaticHtmlColorRepository {
+interface StaticHtmlColorRepository {
+  fun colorByName(colorName: String): Int?
+}
+
+class StaticHtmlColorRepositoryImpl : StaticHtmlColorRepository {
   private val map = mutableMapOf<String, Int>()
 
   init {
@@ -156,8 +160,7 @@ object StaticHtmlColorRepository {
     map.put("yellowgreen", 0x9ACD32L.toInt())
   }
 
-  @JvmStatic
-  fun getColorValueByHtmlColorName(colorName: String): Int? {
+  override fun colorByName(colorName: String): Int? {
     return map[colorName.lowercase(Locale.ENGLISH)]
   }
 

@@ -47,14 +47,6 @@ public class BackgroundUtils {
         mainHandler.postDelayed(runnable, delay);
     }
 
-    public static void runOnMainThreadWithToken(long delay, Object token, Runnable runnable) {
-        HandlerCompat.postDelayed(mainHandler, runnable, token, delay);
-    }
-
-    public static void cancelAllByToken(Object token) {
-        mainHandler.removeCallbacksAndMessages(token);
-    }
-
     public static boolean isMainThread() {
         return Thread.currentThread() == Looper.getMainLooper().getThread();
     }

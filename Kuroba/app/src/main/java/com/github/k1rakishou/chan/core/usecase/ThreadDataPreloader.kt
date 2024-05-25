@@ -25,7 +25,6 @@ class ThreadDataPreloader(
   private val chanPostRepository: Lazy<ChanPostRepository>,
 ) {
 
-  @OptIn(ExperimentalTime::class)
   suspend fun preloadThreadInfo(threadDescriptor: ChanDescriptor.ThreadDescriptor, isThreadCached: Boolean) {
     Logger.d(TAG, "preloadThreadInfo($threadDescriptor) begin")
 

@@ -10,14 +10,25 @@ class HtmlParser {
 
   fun parse(html: String): HtmlDocument {
     try {
-      val nodes = parseInternal(html = html, start = 0).nodes
+      val nodes = parseInternal(
+        html = preProcessHtml(html),
+        start = 0
+      ).nodes
       return HtmlDocument(nodes)
     } catch (error: Throwable) {
       throw ParsingException("Failed to parse '$html'", error)
     }
   }
 
-  private fun parseInternal(parentNode: HtmlNode? = null, html: String, start: Int): ParseResult {
+  private fun preProcessHtml(html: String): String {
+    return html.replace("<wbr>", "")
+  }
+
+  private fun parseInternal(
+    parentNode: HtmlNode? = null,
+    html: String,
+    start: Int
+  ): ParseResult {
     var localOffset = start
     var tagIndex = 0
 
@@ -30,7 +41,7 @@ class HtmlParser {
       if (currChar == '<') {
         if (currentBuffer.size > 0) {
           val text = String(currentBuffer.toCharArray())
-          val textUnescaped = Parser.unescapeEntities(text, false)
+          val textUnescaped = HtmlUnescape.unescape(text)
 
           addNewTextNode(parentNode, outNodes, textUnescaped)
           currentBuffer.clear()
@@ -47,12 +58,12 @@ class HtmlParser {
         }
 
         val parseNodeResult = parseNode(parentNode, html, localOffset, tagIndex)
-        outNodes.add(parseNodeResult.htmlNode)
+
+        val htmlNode = parseNodeResult.htmlNode
+        outNodes.add(htmlNode)
 
         localOffset = parseNodeResult.offset
         ++tagIndex
-
-        val htmlNode = parseNodeResult.htmlNode
 
         // Skip any '\n' symbols after <br> tag
         if (htmlNode is HtmlNode.Tag && htmlNode.htmlTag.tagName == "br") {
@@ -70,7 +81,7 @@ class HtmlParser {
 
     if (currentBuffer.size > 0) {
       val text = String(currentBuffer.toCharArray())
-      val textUnescaped = Parser.unescapeEntities(text, false)
+      val textUnescaped = HtmlUnescape.unescape(text)
 
       addNewTextNode(parentNode, outNodes, textUnescaped)
       currentBuffer.clear()
@@ -82,7 +93,8 @@ class HtmlParser {
   private fun addNewTextNode(parentNode: HtmlNode?, outNodes: MutableList<HtmlNode>, textUnescaped: String) {
     val lastNode = outNodes.lastOrNull()
     val isLastNodeVoid = (lastNode as? HtmlNode.Tag)?.htmlTag?.isVoidElement == true
-    val emptyOrNewLineCharacter = textUnescaped.trim().let { text -> text.isEmpty() || (text.length == 1 && text[0] == '\n') }
+    val emptyOrNewLineCharacter = textUnescaped.trim()
+      .let { text -> text.isEmpty() || (text.length == 1 && text[0] == '\n') }
 
     if (lastNode == null || !isLastNodeVoid || !emptyOrNewLineCharacter) {
       outNodes.add(HtmlNode.Text(textUnescaped, parentNode))
@@ -147,7 +159,7 @@ class HtmlParser {
 
       val attributeSplitList = splitIntoPartsBySeparator(tagPart, '=')
       val attrName = attributeSplitList.getOrNull(0) ?: CharArray(0)
-      var attrValue = attributeSplitList?.getOrNull(1) ?: CharArray(0)
+      var attrValue = attributeSplitList.getOrNull(1) ?: CharArray(0)
 
       if (attrName.isEmpty() || attrValue.isEmpty()) {
         continue

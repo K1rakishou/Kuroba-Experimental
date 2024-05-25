@@ -39,6 +39,9 @@ abstract class BaseFloatingComposeController(
 
   private var presenting = true
 
+  protected val themeEngineInitialized: Boolean
+    get() = ::themeEngine.isInitialized
+
   open val contentAlignment: Alignment = Alignment.TopStart
 
   override fun onCreate() {
@@ -105,7 +108,7 @@ abstract class BaseFloatingComposeController(
                 ),
               contentAlignment = contentAlignment,
             ) {
-              BuildContent()
+              Content()
             }
           }
         }
@@ -145,7 +148,7 @@ abstract class BaseFloatingComposeController(
   }
 
   @Composable
-  abstract fun BoxScope.BuildContent()
+  abstract fun BoxScope.Content()
 
   companion object {
     val HPADDING_COMPOSE = 12.dp

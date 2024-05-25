@@ -52,7 +52,7 @@ class EditMpvConfController(
   }
 
   @Composable
-  override fun BoxScope.BuildContent() {
+  override fun BoxScope.Content() {
     var editTextValueMut by remember { mutableStateOf<TextFieldValue?>(null) }
     val editTextValue = editTextValueMut
 

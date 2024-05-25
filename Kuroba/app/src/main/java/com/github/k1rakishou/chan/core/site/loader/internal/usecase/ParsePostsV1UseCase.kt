@@ -5,7 +5,9 @@ import com.github.k1rakishou.chan.core.helper.ChanLoadProgressNotifier
 import com.github.k1rakishou.chan.core.helper.FilterEngine
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
+import com.github.k1rakishou.chan.core.manager.PostFilterManagerImpl
 import com.github.k1rakishou.chan.core.manager.PostHideManager
+import com.github.k1rakishou.chan.core.manager.PostHideManagerImpl
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.core.site.parser.PostParseWorker
 import com.github.k1rakishou.chan.core.site.parser.PostParser
@@ -22,7 +24,6 @@ import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
 class ParsePostsV1UseCase(
-  verboseLogsEnabled: Boolean,
   chanPostRepository: ChanPostRepository,
   filterEngine: FilterEngine,
   postFilterManager: PostFilterManager,
@@ -31,7 +32,6 @@ class ParsePostsV1UseCase(
   boardManager: BoardManager,
   chanLoadProgressNotifier: ChanLoadProgressNotifier
 ) : AbstractParsePostsUseCase(
-  verboseLogsEnabled,
   chanPostRepository,
   filterEngine,
   postFilterManager,

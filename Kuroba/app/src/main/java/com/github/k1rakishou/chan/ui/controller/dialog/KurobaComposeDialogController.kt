@@ -82,7 +82,7 @@ class KurobaComposeDialogController(
   }
 
   @Composable
-  override fun BoxScope.BuildContent() {
+  override fun BoxScope.Content() {
     val keyboardController = LocalSoftwareKeyboardController.current
 
     DisposableEffect(

@@ -147,6 +147,10 @@ open class ChanTheme(
   val errorColorCompose by lazy(LazyThreadSafetyMode.NONE) { Color(errorColor) }
   val dividerColorCompose by lazy(LazyThreadSafetyMode.NONE) { Color(dividerColor) }
   val postSubjectColorCompose by lazy(LazyThreadSafetyMode.NONE) { Color(postSubjectColor) }
+  val postSpoilerColorCompose by lazy(LazyThreadSafetyMode.NONE) { Color(postSpoilerColor) }
+  val postSpoilerRevealTextColorCompose by lazy(LazyThreadSafetyMode.NONE) { Color(postSpoilerRevealTextColor) }
+  val postNameColorCompose by lazy(LazyThreadSafetyMode.NONE) { Color(postNameColor) }
+  val postDetailsColorCompose by lazy(LazyThreadSafetyMode.NONE) { Color(postDetailsColor) }
   val postHighlightedColorCompose by lazy(LazyThreadSafetyMode.NONE) { Color(postHighlightedColor) }
   val bookmarkCounterNotWatchingColorCompose by lazy(LazyThreadSafetyMode.NONE) { Color(bookmarkCounterNotWatchingColor) }
   val bookmarkCounterHasRepliesColorCompose by lazy(LazyThreadSafetyMode.NONE) { Color(bookmarkCounterHasRepliesColor) }
@@ -228,6 +232,19 @@ open class ChanTheme(
       ChanThemeColorId.BackColorSecondary -> backColorSecondary
       ChanThemeColorId.PostLinkColor -> postLinkColor
       ChanThemeColorId.TextColorPrimary -> textColorPrimary
+    }
+  }
+
+  fun getComposeColorByColorId(chanThemeColorId: ChanThemeColorId): Color {
+    return when (chanThemeColorId) {
+      ChanThemeColorId.PostSubjectColor -> postSubjectColorCompose
+      ChanThemeColorId.PostNameColor -> postNameColorCompose
+      ChanThemeColorId.AccentColor -> accentColorCompose
+      ChanThemeColorId.PostInlineQuoteColor -> postInlineQuoteColorCompose
+      ChanThemeColorId.PostQuoteColor -> postQuoteColorCompose
+      ChanThemeColorId.BackColorSecondary -> backColorSecondaryCompose
+      ChanThemeColorId.PostLinkColor -> postLinkColorCompose
+      ChanThemeColorId.TextColorPrimary -> textColorPrimaryCompose
     }
   }
 

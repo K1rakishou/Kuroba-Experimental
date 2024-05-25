@@ -17,7 +17,7 @@ import com.github.k1rakishou.chan.core.site.SiteRequestModifier
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.SiteSetting.SiteOptionsSetting
 import com.github.k1rakishou.chan.core.site.SiteUrlHandler
-import com.github.k1rakishou.chan.core.site.common.FutabaChanReader
+import com.github.k1rakishou.chan.core.site.common.FutabaChanApi
 import com.github.k1rakishou.chan.core.site.http.DeleteRequest
 import com.github.k1rakishou.chan.core.site.http.HttpCall
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
@@ -28,8 +28,10 @@ import com.github.k1rakishou.chan.core.site.http.report.PostReportResult
 import com.github.k1rakishou.chan.core.site.limitations.ConstantAttachablesCount
 import com.github.k1rakishou.chan.core.site.limitations.PasscodeDependantMaxAttachablesTotalSize
 import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitation
-import com.github.k1rakishou.chan.core.site.parser.ChanReader
+import com.github.k1rakishou.chan.core.site.parser.ChanApi
 import com.github.k1rakishou.chan.core.site.parser.CommentParserType
+import com.github.k1rakishou.chan.core.site.parser_v2.AbstractSitePostParser
+import com.github.k1rakishou.chan.core.site.parser_v2.Chan4PostParser
 import com.github.k1rakishou.chan.core.site.sites.archive.NativeArchivePostList
 import com.github.k1rakishou.chan.core.site.sites.search.Chan4SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchParams
@@ -79,9 +81,19 @@ open class Chan4 : SiteBase() {
   lateinit var chan4CaptchaSettings: GsonJsonSetting<Chan4CaptchaSettings>
   lateinit var check4chanPostAcknowledged: BooleanSetting
 
-  private val _siteIcon by lazy { SiteIcon.fromFavicon(imageLoaderDeprecated, "https://s.4cdn.org/image/favicon.ico".toHttpUrl()) }
+  private val _siteIcon by lazy {
+    SiteIcon.fromFavicon(
+      imageLoaderDeprecatedLazy = imageLoaderDeprecatedLazy,
+      url = "https://s.4cdn.org/image/favicon.ico".toHttpUrl()
+    )
+  }
 
-  private val siteRequestModifier by lazy { Chan4SiteRequestModifier(this, appConstants) }
+  private val siteRequestModifier by lazy {
+    Chan4SiteRequestModifier(
+      site = this,
+      appConstants = appConstants
+    )
+  }
 
   override fun initialize() {
     super.initialize()
@@ -294,10 +306,10 @@ open class Chan4 : SiteBase() {
         .build()
 
       return Chan4BoardsRequest(
-        siteDescriptor(),
-        boardManager,
-        request,
-        proxiedOkHttpClient
+        siteDescriptor = siteDescriptor(),
+        boardManager = boardManager,
+        request = request,
+        proxiedOkHttpClient = proxiedOkHttpClient
       ).execute()
     }
 
@@ -308,10 +320,10 @@ open class Chan4 : SiteBase() {
         .build()
 
       return Chan4PagesRequest(
-        board.boardDescriptor,
-        board.pages,
-        request,
-        proxiedOkHttpClient
+        boardDescriptor = board.boardDescriptor,
+        boardTotalPagesCount = board.pages,
+        request = request,
+        proxiedOkHttpClient = proxiedOkHttpClient
       ).execute()
     }
 
@@ -320,12 +332,12 @@ open class Chan4 : SiteBase() {
         site = this@Chan4,
         replyChanDescriptor = replyChanDescriptor,
         replyMode = replyMode,
-        replyManager = replyManager,
-        boardFlagInfoRepository = boardFlagInfoRepository,
-        appConstants = appConstants
+        replyManagerLazy = replyManagerLazy,
+        boardFlagInfoRepositoryLazy = boardFlagInfoRepositoryLazy,
+        appConstantsLazy = appConstantsLazy
       )
 
-      return httpCallManager.get().makePostHttpCallWithProgress(replyCall, replyChanDescriptor)
+      return httpCallManager.makePostHttpCallWithProgress(replyCall, replyChanDescriptor)
         .map { replyCallResult ->
           when (replyCallResult) {
             is HttpCall.HttpCallWithProgressResult.Success -> {
@@ -350,7 +362,7 @@ open class Chan4 : SiteBase() {
     }
 
     override suspend fun delete(deleteRequest: DeleteRequest): SiteActions.DeleteResult {
-      val deleteResult = httpCallManager.get().makeHttpCall(
+      val deleteResult = httpCallManager.makeHttpCall(
         Chan4DeleteHttpCall(this@Chan4, deleteRequest)
       )
 
@@ -375,7 +387,7 @@ open class Chan4 : SiteBase() {
       passUser.set(chan4LoginRequest.user)
       passPass.set(chan4LoginRequest.pass)
 
-      val loginResult = httpCallManager.get().makeHttpCall(
+      val loginResult = httpCallManager.makeHttpCall(
         Chan4PassHttpCall(this@Chan4, chan4LoginRequest)
       )
 
@@ -445,9 +457,9 @@ open class Chan4 : SiteBase() {
       this@Chan4.requestModifier().modifySearchGetRequest(this@Chan4, requestBuilder)
 
       return Chan4SearchRequest(
-        requestBuilder.build(),
-        proxiedOkHttpClient,
-        searchParams
+        request = requestBuilder.build(),
+        proxiedOkHttpClientLazy = proxiedOkHttpClientLazy,
+        searchParams = searchParams
       ).execute()
     }
 
@@ -462,7 +474,7 @@ open class Chan4 : SiteBase() {
 
       return Chan4ArchiveThreadsRequest(
         request = requestBuilder.build(),
-        proxiedOkHttpClient = proxiedOkHttpClient
+        proxiedOkHttpClientLazy = proxiedOkHttpClientLazy
       ).execute()
     }
 
@@ -473,7 +485,7 @@ open class Chan4 : SiteBase() {
 
       return Chan4ReportPostRequest(
         siteManager = siteManager,
-        _proxiedOkHttpClient = proxiedOkHttpClient,
+        proxiedOkHttpClientLazy = proxiedOkHttpClientLazy,
         postReportData = postReportData
       ).execute()
     }
@@ -483,7 +495,7 @@ open class Chan4 : SiteBase() {
       replyPostDescriptor: PostDescriptor
     ): ModularResult<Boolean> {
       return Chan4CheckPostExistsRequest(
-        proxiedOkHttpClientLazy = proxiedOkHttpClient,
+        proxiedOkHttpClientLazy = proxiedOkHttpClientLazy,
         chan4 = this@Chan4,
         replyPostDescriptor = replyPostDescriptor
       ).execute()
@@ -562,11 +574,14 @@ open class Chan4 : SiteBase() {
     return siteRequestModifier as SiteRequestModifier<Site>
   }
 
-  override fun chanReader(): ChanReader {
-    return FutabaChanReader(
-      archivesManager,
-      siteManager,
-      boardManager
+  override fun chanApi(): ChanApi {
+    return FutabaChanApi(
+      archivesManager = archivesManager,
+      siteManager = siteManager,
+      boardManager = boardManager,
+      parserV2 = Chan4PostParser(staticHtmlColorRepository),
+      staticHtmlColorRepository = staticHtmlColorRepository,
+      htmlParserPool = htmlParserPool
     )
   }
 

@@ -24,7 +24,6 @@ import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
 abstract class AbstractParsePostsUseCase(
-  protected val verboseLogsEnabled: Boolean,
   protected val chanPostRepository: ChanPostRepository,
   protected val filterEngine: FilterEngine,
   protected val postFilterManager: PostFilterManager,

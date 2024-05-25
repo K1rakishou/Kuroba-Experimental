@@ -6,7 +6,7 @@ import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.common.awaitSilently
 import com.github.k1rakishou.common.bidirectionalMap
 import com.github.k1rakishou.common.errorMessageOrClassName
-import com.github.k1rakishou.common.hashSetWithCap
+import com.github.k1rakishou.common.mutableSetWithCap
 import com.github.k1rakishou.common.isExceptionImportant
 import com.github.k1rakishou.common.mutableIteration
 import com.github.k1rakishou.common.mutableMapWithCap
@@ -45,7 +45,7 @@ class Chan4CloudFlareImagePreloaderManager(
   @GuardedBy("lock")
   private val preloading = mutableMapWithCap<PostDescriptor, CancellableImagePreload>(128)
   @GuardedBy("lock")
-  private val awaitingCancellation = hashSetWithCap<PostDescriptor>(32)
+  private val awaitingCancellation = mutableSetWithCap<PostDescriptor>(32)
 
   private val actor = appScope.actor<PostDescriptor>(
     context = Dispatchers.Default,
@@ -101,7 +101,7 @@ class Chan4CloudFlareImagePreloaderManager(
                 preloadImagesForPost(postDescriptor)
 
                 lock.write {
-                  alreadyPreloaded.putIfNotContains(chanDescriptor, hashSetWithCap(128))
+                  alreadyPreloaded.putIfNotContains(chanDescriptor, mutableSetWithCap(128))
                   alreadyPreloaded[chanDescriptor]!!.add(postDescriptor)
                 }
               } catch (error: Throwable) {

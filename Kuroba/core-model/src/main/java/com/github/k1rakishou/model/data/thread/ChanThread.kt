@@ -2,7 +2,7 @@ package com.github.k1rakishou.model.data.thread
 
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.common.MurmurHashUtils
-import com.github.k1rakishou.common.hashSetWithCap
+import com.github.k1rakishou.common.mutableSetWithCap
 import com.github.k1rakishou.common.mutableIteration
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
@@ -797,7 +797,7 @@ class ChanThread(
     }
 
     val newChanPostDescriptors = postsFromServerData.allPostDescriptors
-    val deletedPosts = hashSetWithCap<PostDescriptor>(4)
+    val deletedPosts = mutableSetWithCap<PostDescriptor>(4)
 
     oldChanPosts.forEach { oldPost ->
       if (oldPost.postDescriptor !in newChanPostDescriptors) {
@@ -828,9 +828,10 @@ class ChanThread(
       postDescriptor = oldChanPost.postDescriptor,
       repliesFrom = oldChanPost.repliesFrom,
       _postImages = mergePostImages(newChanPost.postImages, oldChanPost.postImages).toMutableList(),
+      deprecatedPostIcons = newChanPost.deprecatedPostIcons,
       postIcons = newChanPost.postIcons,
       repliesTo = newChanPost.repliesTo,
-      timestamp = newChanPost.timestamp,
+      timestampInSeconds = newChanPost.timestampInSeconds,
       postComment = mergePostComments(oldChanPost.postComment, newChanPost.postComment),
       subject = newChanPost.subject,
       tripcode = newChanPost.tripcode,
@@ -869,6 +870,7 @@ class ChanThread(
       postDescriptor = oldChanOriginalPost.postDescriptor,
       repliesFrom = oldChanOriginalPost.repliesFrom,
       postImages = mergePostImages(newChanOriginalPost.postImages, oldChanOriginalPost.postImages),
+      deprecatedPostIcons = newChanOriginalPost.deprecatedPostIcons,
       postIcons = newChanOriginalPost.postIcons,
       repliesTo = newChanOriginalPost.repliesTo,
       postComment = mergePostComments(oldChanOriginalPost.postComment, newChanOriginalPost.postComment),
@@ -881,7 +883,7 @@ class ChanThread(
       isSavedReply = newChanOriginalPost.isSavedReply,
       catalogRepliesCount = Math.max(oldChanOriginalPost.catalogRepliesCount, newChanOriginalPost.catalogRepliesCount),
       catalogImagesCount = Math.max(oldChanOriginalPost.catalogImagesCount, newChanOriginalPost.catalogImagesCount),
-      timestamp = Math.max(oldChanOriginalPost.timestamp, newChanOriginalPost.timestamp),
+      timestamp = Math.max(oldChanOriginalPost.timestampInSeconds, newChanOriginalPost.timestampInSeconds),
       uniqueIps = Math.max(oldChanOriginalPost.uniqueIps, newChanOriginalPost.uniqueIps),
       lastModified = Math.max(oldChanOriginalPost.lastModified, newChanOriginalPost.lastModified),
       sticky = newChanOriginalPost.sticky,
@@ -1058,7 +1060,7 @@ class ChanThread(
       return emptyList()
     }
 
-    val duplicatesSet = hashSetWithCap<PostDescriptor>(totalCount)
+    val duplicatesSet = mutableSetWithCap<PostDescriptor>(totalCount)
     val resultList = mutableListWithCap<ChanPost>(totalCount)
 
     lock.read {

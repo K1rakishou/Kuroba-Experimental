@@ -1,19 +1,3 @@
-/*
- * KurobaEx - *chan browser https://github.com/K1rakishou/Kuroba-Experimental/
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 package com.github.k1rakishou.chan.core.site.sites.leftypol
 
 import com.github.k1rakishou.chan.core.site.ChunkDownloaderSiteProperties
@@ -40,18 +24,20 @@ class Leftypol : CommonSite() {
     override fun setup() {
         setEnabled(true)
         setName(SITE_NAME)
-        setIcon(fromFavicon(imageLoaderDeprecated, "https://leftypol.org/favicon.ico".toHttpUrl()))
+        setIcon(fromFavicon(imageLoaderDeprecatedLazy, "https://leftypol.org/favicon.ico".toHttpUrl()))
         setBoardsType(Site.BoardsType.DYNAMIC)
         setResolvable(URL_HANDLER)
         setConfig(object : CommonConfig() {
             override fun siteFeature(siteFeature: SiteFeature): Boolean {
-                return super.siteFeature(siteFeature) || siteFeature === SiteFeature.POSTING || siteFeature === SiteFeature.POST_DELETE
+                return super.siteFeature(siteFeature)
+                  || siteFeature === SiteFeature.POSTING
+                  || siteFeature === SiteFeature.POST_DELETE
             }
         })
         setEndpoints(LeftypolEndpoints(this, "https://leftypol.org", "https://leftypol.org"))
-        setActions(LeftypolActions(this, proxiedOkHttpClient, siteManager, replyManager))
+        setActions(LeftypolActions(this, proxiedOkHttpClient, siteManager, boardManager, replyManager))
         setApi(LeftypolApi(siteManager, boardManager, this))
-        setParser(LeftypolCommentParser())
+        setParser(LeftypolCommentParser(staticHtmlColorRepository))
         setPostingLimitationInfo(
             postingLimitationInfoLazy = lazy {
                 SitePostingLimitation(

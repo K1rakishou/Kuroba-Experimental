@@ -21,9 +21,10 @@ import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
 import com.github.k1rakishou.chan.core.site.limitations.ConstantAttachablesCount
 import com.github.k1rakishou.chan.core.site.limitations.ConstantMaxTotalSizeInfo
 import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitation
-import com.github.k1rakishou.chan.core.site.parser.ChanReader
+import com.github.k1rakishou.chan.core.site.parser.ChanApi
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.core.site.parser.PostParser
+import com.github.k1rakishou.chan.core.site.parser_v2.AbstractSitePostParser
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.groupOrNull
 import com.github.k1rakishou.core_logger.Logger
@@ -61,6 +62,8 @@ abstract class CommonSite : SiteBase() {
   
   @JvmField
   var postParser: PostParser? = null
+  @JvmField
+  var postParserV2: AbstractSitePostParser? = null
 
   private val defaultPostingLimitationInfo = lazy {
     SitePostingLimitation(
@@ -180,7 +183,11 @@ abstract class CommonSite : SiteBase() {
   }
 
   open fun setParser(commentParser: CommentParser) {
-    postParser = DefaultPostParser(commentParser, archivesManager)
+    postParser = DefaultPostParser(htmlParserPool, commentParser, archivesManager)
+  }
+
+  open fun setParserV2(postParser: AbstractSitePostParser) {
+    postParserV2 = postParser
   }
 
   override fun enabled(): Boolean {
@@ -234,7 +241,7 @@ abstract class CommonSite : SiteBase() {
     return requestModifier!!
   }
   
-  override fun chanReader(): ChanReader {
+  override fun chanApi(): ChanApi {
     return api!!
   }
 
@@ -433,7 +440,7 @@ abstract class CommonSite : SiteBase() {
     override suspend fun post(replyChanDescriptor: ChanDescriptor, replyMode: ReplyMode): Flow<SiteActions.PostResult> {
       val replyResponse = ReplyResponse()
 
-      site.replyManager.get().readReply(replyChanDescriptor) { reply ->
+      site.replyManager.readReply(replyChanDescriptor) { reply ->
         reply.password = toHexString(secureRandom.nextLong())
         replyResponse.password = reply.password
       }
@@ -478,7 +485,7 @@ abstract class CommonSite : SiteBase() {
     }
     
     private suspend fun makePostCall(call: HttpCall, replyResponse: ReplyResponse): SiteActions.PostResult {
-      return when (val result = site.httpCallManager.get().makeHttpCall(call)) {
+      return when (val result = site.httpCallManager.makeHttpCall(call)) {
         is HttpCall.HttpCallResult.Success -> {
           SiteActions.PostResult.PostComplete(replyResponse)
         }
@@ -512,7 +519,7 @@ abstract class CommonSite : SiteBase() {
       call.url(site.endpoints().delete(deleteRequest.post))
       setupDelete(deleteRequest, call)
       
-      return when (val result = site.httpCallManager.get().makeHttpCall(call)) {
+      return when (val result = site.httpCallManager.makeHttpCall(call)) {
         is HttpCall.HttpCallResult.Success -> {
           SiteActions.DeleteResult.DeleteComplete(deleteResponse)
         }
@@ -569,13 +576,16 @@ abstract class CommonSite : SiteBase() {
     
   }
   
-  abstract class CommonApi(protected var site: CommonSite) : ChanReader() {
+  abstract class CommonApi(protected var site: CommonSite) : ChanApi() {
     val vichanReaderExtensions = VichanReaderExtensions()
 
-    override suspend fun getParser(): PostParser? {
+    override suspend fun parser(): PostParser? {
       return site.postParser
     }
 
+    override suspend fun parserV2(): AbstractSitePostParser? {
+      return site.postParserV2
+    }
   }
   
   companion object {

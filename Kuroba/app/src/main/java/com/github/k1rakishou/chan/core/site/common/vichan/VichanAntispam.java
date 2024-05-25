@@ -47,12 +47,12 @@ import okhttp3.ResponseBody;
 public class VichanAntispam {
     private static final String TAG = "Antispam";
 
-    private Lazy<RealProxiedOkHttpClient> proxiedOkHttpClient;
+    private RealProxiedOkHttpClient proxiedOkHttpClient;
 
     private HttpUrl url;
     private List<String> fieldsToIgnore = new ArrayList<>();
 
-    public VichanAntispam(Lazy<RealProxiedOkHttpClient> proxiedOkHttpClient, HttpUrl url) {
+    public VichanAntispam(RealProxiedOkHttpClient proxiedOkHttpClient, HttpUrl url) {
         this.proxiedOkHttpClient = proxiedOkHttpClient;
         this.url = url;
 
@@ -78,7 +78,7 @@ public class VichanAntispam {
 
         try {
             Request request = new Request.Builder().url(url).build();
-            Response response = proxiedOkHttpClient.get().okHttpClient().newCall(request).execute();
+            Response response = proxiedOkHttpClient.okHttpClient().newCall(request).execute();
             if (!response.isSuccessful()) {
                 return ModularResult.error(new IOException("(Antispam) Bad response status code: " + response.code()));
             }

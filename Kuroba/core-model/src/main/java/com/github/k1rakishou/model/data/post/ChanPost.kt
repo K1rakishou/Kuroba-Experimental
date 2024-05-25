@@ -1,6 +1,5 @@
 package com.github.k1rakishou.model.data.post
 
-import com.github.k1rakishou.common.copy
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 
@@ -8,12 +7,14 @@ open class ChanPost(
   val chanPostId: Long,
   val postDescriptor: PostDescriptor,
   private val _postImages: MutableList<ChanPostImage>,
-  val postIcons: List<ChanPostHttpIcon>,
+  @Deprecated("Use postIcons")
+  val deprecatedPostIcons: List<ChanPostHttpIcon>,
+  val postIcons: List<ChanPostIcon>,
   repliesTo: Set<PostDescriptor>,
-  val timestamp: Long = -1L,
+  val timestampInSeconds: Long = -1L,
   val postComment: PostComment,
-  val subject: CharSequence?,
-  val tripcode: CharSequence?,
+  val subject: String?,
+  val tripcode: String?,
   val name: String? = null,
   val posterId: String? = null,
   val moderatorCapcode: String? = null,
@@ -73,6 +74,9 @@ open class ChanPost(
   open val uniqueIps: Int
     get() = 0
 
+  val timestampInMillis: Long
+    get() = timestampInSeconds * 1000L
+
   val boardDescriptor: BoardDescriptor
     get() = postDescriptor.boardDescriptor()
 
@@ -94,13 +98,14 @@ open class ChanPost(
     return ChanPost(
       chanPostId = chanPostId,
       postDescriptor = postDescriptor,
-      _postImages = _postImages,
-      postIcons = postIcons,
+      _postImages = _postImages.toMutableList(),
+      deprecatedPostIcons = deprecatedPostIcons.toList(),
+      postIcons = postIcons.toList(),
       repliesTo = repliesTo,
-      timestamp = timestamp,
+      timestampInSeconds = timestampInSeconds,
       postComment = postComment.copy(),
-      subject = subject.copy(),
-      tripcode = tripcode.copy(),
+      subject = subject,
+      tripcode = tripcode,
       name = name,
       posterId = posterId,
       posterIdColor = posterIdColor,
@@ -249,11 +254,23 @@ open class ChanPost(
   }
 
   private fun arePostIconsTheSame(other: ChanPost): Boolean {
+    if (deprecatedPostIcons.size != other.deprecatedPostIcons.size) {
+      return false
+    }
+
     if (postIcons.size != other.postIcons.size) {
       return false
     }
 
-    return postIcons.indices.none { postIcons[it] != other.postIcons[it] }
+    if (deprecatedPostIcons != other.deprecatedPostIcons) {
+      return false
+    }
+
+    if (postIcons != other.postIcons) {
+      return false
+    }
+
+    return true
   }
 
   private fun arePostImagesTheSame(other: ChanPost): Boolean {
@@ -270,6 +287,8 @@ open class ChanPost(
     result = 31 * result + repliesTo.hashCode()
     result = 31 * result + _postImages.hashCode()
     result = 31 * result + postComment.hashCode()
+    result = 31 * result + deprecatedPostIcons.hashCode()
+    result = 31 * result + postIcons.hashCode()
     result = 31 * result + subject.hashCode()
     result = 31 * result + (name?.hashCode() ?: 0)
     result = 31 * result + tripcode.hashCode()

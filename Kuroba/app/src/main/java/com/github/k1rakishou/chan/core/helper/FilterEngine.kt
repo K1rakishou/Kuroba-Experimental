@@ -127,11 +127,13 @@ class FilterEngine @Inject constructor(
       }
     }
 
-    if (post.httpIcons.size > 0) {
+    if (post.deprecatedHttpIcons.size > 0) {
       if (tryMatchPostFlagsWithFilter(filter, post)) {
         return true
       }
     }
+
+    // TODO: compose post cells. postIcons
 
     return false
   }
@@ -140,13 +142,15 @@ class FilterEngine @Inject constructor(
     // figure out if the post has a country code, if so check the filter
     var countryCode = ""
 
-    for (icon in post.httpIcons) {
+    for (icon in post.deprecatedHttpIcons) {
       val index = icon.iconName.indexOf('/')
       if (index != -1) {
         countryCode = icon.iconName.substring(index + 1)
         break
       }
     }
+
+    // TODO: compose post cells. postIcons
 
     if (countryCode.isEmpty()) {
       return false

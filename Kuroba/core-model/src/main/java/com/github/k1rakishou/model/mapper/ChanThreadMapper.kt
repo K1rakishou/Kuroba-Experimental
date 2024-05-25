@@ -3,6 +3,7 @@ package com.github.k1rakishou.model.mapper
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanOriginalPost
+import com.github.k1rakishou.model.data.post.ChanPostIcon
 import com.github.k1rakishou.model.entity.chan.post.ChanPostFull
 import com.github.k1rakishou.model.entity.chan.post.ChanTextSpanEntity
 import com.github.k1rakishou.model.entity.chan.thread.ChanThreadEntity
@@ -47,9 +48,12 @@ object ChanThreadMapper {
       ?.map { chanPostImageEntity -> ChanPostImageMapper.fromEntity(chanPostImageEntity, postDescriptor) }
       ?: emptyList()
 
-    val postIcons = postAdditionalData.postIconsByPostIdMap[chanPostFull.chanPostIdEntity.postId]
+    val deprecatedPostIcons = postAdditionalData.postIconsByPostIdMap[chanPostFull.chanPostIdEntity.postId]
       ?.map { chanPostHttpIconEntity -> ChanPostHttpIconMapper.fromEntity(chanPostHttpIconEntity) }
       ?: emptyList()
+
+    // TODO: compose post cells.
+    val postIcons = emptyList<ChanPostIcon>()
 
     val repliesTo = postAdditionalData.postReplyToByPostIdMap[chanPostFull.chanPostIdEntity.postId]
       ?.map { chanPostReplyEntity ->
@@ -70,6 +74,7 @@ object ChanThreadMapper {
       chanPostId = chanPostFull.chanPostIdEntity.postId,
       postDescriptor = postDescriptor,
       postImages = postImages,
+      deprecatedPostIcons = deprecatedPostIcons,
       postIcons = postIcons,
       repliesTo = repliesTo,
       catalogRepliesCount = chanThreadEntity.catalogRepliesCount,
@@ -83,8 +88,8 @@ object ChanThreadMapper {
       timestamp = chanPostFull.chanPostEntity.timestamp,
       name = chanPostFull.chanPostEntity.name,
       postComment = ChanPostEntityMapper.mapPostComment(chanTextSpanEntityList),
-      subject = ChanPostEntityMapper.mapSubject(chanTextSpanEntityList),
-      tripcode = ChanPostEntityMapper.mapTripcode(chanTextSpanEntityList),
+      subject = ChanPostEntityMapper.mapSubject(chanTextSpanEntityList).toString(),
+      tripcode = ChanPostEntityMapper.mapTripcode(chanTextSpanEntityList).toString(),
       posterId = chanPostFull.chanPostEntity.posterId,
       posterIdColor = chanPostFull.chanPostEntity.posterIdColor,
       moderatorCapcode = chanPostFull.chanPostEntity.moderatorCapcode,

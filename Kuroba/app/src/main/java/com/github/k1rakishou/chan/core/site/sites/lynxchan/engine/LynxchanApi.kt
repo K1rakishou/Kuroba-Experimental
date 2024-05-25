@@ -25,6 +25,7 @@ import com.github.k1rakishou.model.data.filter.FilterWatchCatalogInfoObject
 import com.github.k1rakishou.model.data.filter.FilterWatchCatalogThreadInfoObject
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.data.post.ChanPostHttpIcon
+import com.github.k1rakishou.model.data.post.ChanPostIcon
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.ChanPostImageBuilder
 import com.squareup.moshi.Json
@@ -350,7 +351,8 @@ open class LynxchanApi(
           LynxchanEndpoints.COUNTRY_FLAG_ICON_KEY,
           SiteEndpoints.makeArgument(LynxchanEndpoints.COUNTRY_FLAG_PATH_KEY, flag)
         )
-        builder.addHttpIcon(ChanPostHttpIcon(countryUrl, "$flagName/$flagCode"))
+        builder.deprecatedAddHttpIcon(ChanPostHttpIcon(countryUrl, "$flagName/$flagCode"))
+        builder.addHttpIcon(ChanPostIcon.CountryFlag(flagName, flagCode))
       }
 
       val timestampSeconds = if (post.creation != null) {

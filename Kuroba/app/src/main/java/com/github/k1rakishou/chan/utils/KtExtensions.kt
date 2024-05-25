@@ -31,11 +31,14 @@ import com.github.k1rakishou.chan.ui.activity.SharingActivity
 import com.github.k1rakishou.chan.ui.activity.StartActivity
 import com.github.k1rakishou.chan.ui.controller.base.Controller
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.core_logger.Logger
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
 import kotlin.math.absoluteValue
 import kotlin.math.log10
 
@@ -68,6 +71,18 @@ fun extractFileNameExtension(filename: String): String? {
   }
 }
 
+fun String.removeAllBefore(delimiter: String, removeDelimiter: Boolean = true): String {
+  val index = indexOf(delimiter)
+  if (index < 0) {
+    return this
+  }
+
+  if (removeDelimiter) {
+    return substring(index + delimiter.length)
+  }
+
+  return substring(index)
+}
 
 fun EpoxyRecyclerView.withModelsAsync(buildModels: EpoxyController.() -> Unit) {
   val controller = object : AsyncEpoxyController(true) {
@@ -417,4 +432,56 @@ fun Context.startActivitySafe(intent: Intent) {
         "Error: '${error.errorMessageOrClassName()}', intent: '${intent}'", Toast.LENGTH_LONG
     )
   }
+}
+
+fun decodeUrlOrNull(
+  input: String,
+  encoding: String = StandardCharsets.UTF_8.name()
+): String? {
+  return try {
+    URLDecoder.decode(input, encoding)
+  } catch (error: Throwable) {
+    null
+  }
+}
+
+fun String.findAllOccurrences(query: String?, minQueryLength: Int): List<IntRange> {
+  if (this.isEmpty() || (query == null || query.length < minQueryLength)) {
+    return emptyList()
+  }
+
+  check(query.isNotEmpty()) { "query must not be empty" }
+
+  val resultList = mutableListWithCap<IntRange>(16)
+  var index = 0
+
+  while (index < this.length) {
+    val ch = this.getOrNull(index)
+      ?: break
+
+    if (ch.equals(other = query[0], ignoreCase = true)) {
+      var found = true
+
+      for (queryOffset in 1 until query.length) {
+        val innerCh = this.getOrNull(index + queryOffset)
+
+        if (innerCh == null || !innerCh.equals(other = query[queryOffset], ignoreCase = true)) {
+          found = false
+          index += queryOffset
+          break
+        }
+      }
+
+      if (!found) {
+        continue
+      }
+
+      resultList += IntRange(index, index + query.length)
+      index += query.length
+    }
+
+    ++index
+  }
+
+  return resultList
 }

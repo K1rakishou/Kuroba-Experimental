@@ -8,6 +8,7 @@ import com.github.k1rakishou.chan.core.site.common.DefaultPostParser
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_parser.comment.HtmlParserPool
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import org.jsoup.Jsoup
@@ -15,9 +16,10 @@ import org.jsoup.parser.Parser
 import java.util.regex.Pattern
 
 class DvachPostParser(
+  htmlParserPool: HtmlParserPool,
   commentParser: CommentParser,
   archivesManager: ArchivesManager
-) : DefaultPostParser(commentParser, archivesManager) {
+) : DefaultPostParser(htmlParserPool, commentParser, archivesManager) {
 
   override fun defaultName(): String {
     return DVACH_DEFAULT_POSTER_NAME

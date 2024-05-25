@@ -50,7 +50,7 @@ class ThreadDownloaderSettingsController(
 
   @OptIn(ExperimentalMaterialApi::class)
   @Composable
-  override fun BoxScope.BuildContent() {
+  override fun BoxScope.Content() {
     val chanTheme = LocalChanTheme.current
 
     Surface(

@@ -4,6 +4,7 @@ import android.content.Context
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.PostHideManager
+import com.github.k1rakishou.chan.core.manager.PostHideManagerImpl
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter
 import com.github.k1rakishou.chan.ui.controller.RemovedPostsController
 import com.github.k1rakishou.chan.ui.controller.base.Controller

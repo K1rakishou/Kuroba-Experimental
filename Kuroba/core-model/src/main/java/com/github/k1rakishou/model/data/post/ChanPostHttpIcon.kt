@@ -2,6 +2,7 @@ package com.github.k1rakishou.model.data.post
 
 import okhttp3.HttpUrl
 
+@Deprecated("Use ChanPostIcon")
 class ChanPostHttpIcon(
   val iconUrl: HttpUrl,
   val iconName: String

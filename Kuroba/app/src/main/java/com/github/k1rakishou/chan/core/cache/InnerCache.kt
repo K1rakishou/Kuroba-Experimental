@@ -10,7 +10,7 @@ import com.github.k1rakishou.chan.utils.ConversionUtils
 import com.github.k1rakishou.chan.utils.HashingUtil
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.StringUtils
-import com.github.k1rakishou.common.hashSetWithCap
+import com.github.k1rakishou.common.mutableSetWithCap
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.util.ChanPostUtils
@@ -49,9 +49,9 @@ internal class InnerCache(
   private val directoriesChecked = AtomicBoolean(false)
 
   @GuardedBy("itself")
-  private val filesOnDiskCache = hashSetWithCap<String>(128)
+  private val filesOnDiskCache = mutableSetWithCap<String>(128)
   @GuardedBy("itself")
-  private val fullyDownloadedFiles = hashSetWithCap<String>(128)
+  private val fullyDownloadedFiles = mutableSetWithCap<String>(128)
 
   private val _cacheDirFile: File = cacheDirFile
   private val cacheDirFile: File

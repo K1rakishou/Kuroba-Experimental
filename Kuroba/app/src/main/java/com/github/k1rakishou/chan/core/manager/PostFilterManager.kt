@@ -1,7 +1,6 @@
 package com.github.k1rakishou.chan.core.manager
 
 import androidx.annotation.GuardedBy
-import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.mutableIteration
 import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.common.putIfNotContains
@@ -15,21 +14,41 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
-@DoNotStrip
-open class PostFilterManager(
-  private val verboseLogsEnabled: Boolean,
+interface PostFilterManager {
+  fun countMatchedFilters(postDescriptors: List<PostDescriptor>): Int
+  fun getManyPostFilters(postDescriptors: Collection<PostDescriptor>): Map<PostDescriptor, PostFilter>
+  fun countMatchedPosts(filterDatabaseId: Long): Int
+  fun insert(postDescriptor: PostDescriptor, postFilter: PostFilter)
+  fun contains(postDescriptor: PostDescriptor): Boolean
+  fun remove(postDescriptor: PostDescriptor)
+  fun removeMany(postDescriptorList: Collection<PostDescriptor>)
+  fun removeAllForDescriptor(chanDescriptor: ChanDescriptor)
+  fun update(postDescriptor: PostDescriptor, ownerFilterId: Long?, updateFunc: (PostFilter) -> Unit)
+  fun updateIfExists(postDescriptor: PostDescriptor, updateFunc: (PostFilter) -> Unit)
+  fun updateIfExists(postDescriptors: Collection<PostDescriptor>, updateFunc: (PostFilter) -> Unit)
+  fun clear()
+  fun isEnabled(postDescriptor: PostDescriptor): Boolean
+  fun getPostFilter(postDescriptor: PostDescriptor): PostFilter?
+  fun getManyFilterHashes(postDescriptors: Collection<PostDescriptor>): Map<PostDescriptor, Int>
+  fun getManyFilterHighlights(postDescriptors: Collection<PostDescriptor>): Map<PostDescriptor, PostFilter>
+  fun getFilterStubOrRemove(postDescriptor: PostDescriptor): Boolean
+  fun getFilterStub(postDescriptor: PostDescriptor): Boolean
+  fun getManyFilterStubs(postDescriptors: Collection<PostDescriptor>): Map<PostDescriptor, Boolean>
+}
+
+open class PostFilterManagerImpl(
   private val appScope: CoroutineScope,
   private val chanThreadsCache: ChanThreadsCache
-) : IPostFilterManager{
+) : PostFilterManager {
   private val lock = ReentrantReadWriteLock()
   @GuardedBy("lock")
   private val filterStorage = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, MutableMap<PostDescriptor, PostFilter>>(16)
 
   init {
     chanThreadsCache.addChanThreadDeleteEventListener { threadDeleteEvent ->
-      if (verboseLogsEnabled) {
-        Logger.d(TAG, "chanThreadsCache.chanThreadDeleteEventFlow() " +
-          "threadDeleteEvent=${threadDeleteEvent.javaClass.simpleName}")
+      Logger.verbose(TAG) {
+        "chanThreadsCache.chanThreadDeleteEventFlow() " +
+          "threadDeleteEvent: ${threadDeleteEvent.javaClass.simpleName}"
       }
 
       onThreadDeleteEventReceived(threadDeleteEvent)
@@ -51,7 +70,7 @@ open class PostFilterManager(
     }
   }
 
-  fun countMatchedPosts(filterDatabaseId: Long): Int {
+  override fun countMatchedPosts(filterDatabaseId: Long): Int {
     return lock.read {
       var postsCount = 0
 
@@ -67,7 +86,7 @@ open class PostFilterManager(
     }
   }
 
-  fun insert(postDescriptor: PostDescriptor, postFilter: PostFilter) {
+  override fun insert(postDescriptor: PostDescriptor, postFilter: PostFilter) {
     lock.write {
       val threadDescriptor = postDescriptor.threadDescriptor()
 
@@ -76,21 +95,21 @@ open class PostFilterManager(
     }
   }
 
-  fun contains(postDescriptor: PostDescriptor): Boolean {
+  override fun contains(postDescriptor: PostDescriptor): Boolean {
     return lock.read {
       val threadDescriptor = postDescriptor.threadDescriptor()
       return@read filterStorage[threadDescriptor]?.containsKey(postDescriptor) == true
     }
   }
 
-  fun remove(postDescriptor: PostDescriptor) {
+  override fun remove(postDescriptor: PostDescriptor) {
     lock.write {
       val threadDescriptor = postDescriptor.threadDescriptor()
       filterStorage[threadDescriptor]?.remove(postDescriptor)
     }
   }
 
-  fun removeMany(postDescriptorList: Collection<PostDescriptor>) {
+  override fun removeMany(postDescriptorList: Collection<PostDescriptor>) {
     lock.write {
       postDescriptorList.forEach { postDescriptor ->
         val threadDescriptor = postDescriptor.threadDescriptor()
@@ -100,7 +119,7 @@ open class PostFilterManager(
     }
   }
 
-  fun removeAllForDescriptor(chanDescriptor: ChanDescriptor) {
+  override fun removeAllForDescriptor(chanDescriptor: ChanDescriptor) {
     lock.write {
       when (chanDescriptor) {
         is ChanDescriptor.ICatalogDescriptor -> {
@@ -128,7 +147,7 @@ open class PostFilterManager(
     }
   }
 
-  fun update(postDescriptor: PostDescriptor, ownerFilterId: Long?, updateFunc: (PostFilter) -> Unit) {
+  override fun update(postDescriptor: PostDescriptor, ownerFilterId: Long?, updateFunc: (PostFilter) -> Unit) {
     lock.write {
       val threadDescriptor = postDescriptor.threadDescriptor()
       filterStorage.putIfNotContains(threadDescriptor, mutableMapWithCap(128))
@@ -143,11 +162,11 @@ open class PostFilterManager(
     }
   }
 
-  fun updateIfExists(postDescriptor: PostDescriptor, updateFunc: (PostFilter) -> Unit) {
+  override fun updateIfExists(postDescriptor: PostDescriptor, updateFunc: (PostFilter) -> Unit) {
     updateIfExists(listOf(postDescriptor), updateFunc)
   }
 
-  fun updateIfExists(postDescriptors: Collection<PostDescriptor>, updateFunc: (PostFilter) -> Unit) {
+  override fun updateIfExists(postDescriptors: Collection<PostDescriptor>, updateFunc: (PostFilter) -> Unit) {
     lock.write {
       postDescriptors.forEach { postDescriptor ->
         val threadDescriptor = postDescriptor.threadDescriptor()
@@ -163,11 +182,11 @@ open class PostFilterManager(
     }
   }
 
-  fun clear() {
+  override fun clear() {
     lock.write { filterStorage.clear() }
   }
 
-  fun isEnabled(postDescriptor: PostDescriptor): Boolean {
+  override fun isEnabled(postDescriptor: PostDescriptor): Boolean {
     return lock.read {
       val threadDescriptor = postDescriptor.threadDescriptor()
 
@@ -175,7 +194,7 @@ open class PostFilterManager(
     }
   }
 
-  fun getPostFilter(postDescriptor: PostDescriptor): PostFilter? {
+  override fun getPostFilter(postDescriptor: PostDescriptor): PostFilter? {
     return lock.read { filterStorage[postDescriptor.threadDescriptor()]?.get(postDescriptor) }
   }
 
@@ -198,7 +217,7 @@ open class PostFilterManager(
     }
   }
 
-  fun getManyFilterHashes(postDescriptors: Collection<PostDescriptor>): Map<PostDescriptor, Int> {
+  override fun getManyFilterHashes(postDescriptors: Collection<PostDescriptor>): Map<PostDescriptor, Int> {
     if (postDescriptors.isEmpty()) {
       return emptyMap()
     }
@@ -219,7 +238,7 @@ open class PostFilterManager(
     }
   }
 
-  fun getManyFilterHighlights(postDescriptors: Collection<PostDescriptor>): Map<PostDescriptor, PostFilter> {
+  override fun getManyFilterHighlights(postDescriptors: Collection<PostDescriptor>): Map<PostDescriptor, PostFilter> {
     if (postDescriptors.isEmpty()) {
       return emptyMap()
     }
@@ -248,7 +267,7 @@ open class PostFilterManager(
     }
   }
 
-  fun getFilterStubOrRemove(postDescriptor: PostDescriptor): Boolean {
+  override fun getFilterStubOrRemove(postDescriptor: PostDescriptor): Boolean {
     return lock.read {
       val threadDescriptor = postDescriptor.threadDescriptor()
 
@@ -269,7 +288,7 @@ open class PostFilterManager(
     }
   }
 
-  fun getFilterStub(postDescriptor: PostDescriptor): Boolean {
+  override fun getFilterStub(postDescriptor: PostDescriptor): Boolean {
     return lock.read {
       val threadDescriptor = postDescriptor.threadDescriptor()
 
@@ -282,7 +301,7 @@ open class PostFilterManager(
     }
   }
 
-  fun getManyFilterStubs(postDescriptors: Collection<PostDescriptor>): Map<PostDescriptor, Boolean> {
+  override fun getManyFilterStubs(postDescriptors: Collection<PostDescriptor>): Map<PostDescriptor, Boolean> {
     if (postDescriptors.isEmpty()) {
       return emptyMap()
     }

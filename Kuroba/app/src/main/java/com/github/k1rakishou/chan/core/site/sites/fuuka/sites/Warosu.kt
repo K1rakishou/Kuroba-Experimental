@@ -32,14 +32,14 @@ class Warosu : BaseFuukaSite() {
 
     setEnabled(true)
     setName(SITE_NAME)
-    setIcon(SiteIcon.fromFavicon(imageLoaderDeprecated, FAVICON_URL))
+    setIcon(SiteIcon.fromFavicon(imageLoaderDeprecatedLazy, FAVICON_URL))
     setBoardsType(Site.BoardsType.INFINITE)
     setResolvable(URL_HANDLER)
     setConfig(object : CommonConfig() {})
     setEndpoints(FuukaEndpoints(this, rootUrl()))
-    setActions(FuukaActions(this))
+    setActions(FuukaActions(this, proxiedOkHttpClient))
     setApi(FuukaApi(this))
-    setParser(FuukaCommentParser())
+    setParser(FuukaCommentParser(staticHtmlColorRepository))
   }
 
   companion object {

@@ -14,6 +14,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.image.ImageLoaderDeprecated
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
+import com.github.k1rakishou.chan.core.manager.PostFilterManagerImpl
 import com.github.k1rakishou.chan.core.manager.PostHighlightManager
 import com.github.k1rakishou.chan.core.manager.SeenPostsManager
 import com.github.k1rakishou.chan.core.manager.ThreadPostSearchManager
@@ -478,7 +479,7 @@ class CardPostCell : ConstraintLayout,
     comment.textSize = textSizeSp.toFloat()
     replies.textSize = textSizeSp.toFloat()
 
-    val hasIconWithName = postCellData.postIcons
+    val hasIconWithName = postCellData.deprecatedPostIcons
       .any { chanPostHttpIcon -> chanPostHttpIcon.iconName.isNotEmpty() }
 
     val postIconsCompactMode = isPostIconCompactModeSpanCount
@@ -501,7 +502,7 @@ class CardPostCell : ConstraintLayout,
   @Suppress("ReplaceGetOrSet")
   private fun bindIcons(postCellData: PostCellData) {
     val theme = postCellData.theme
-    val postIcons = postCellData.postIcons
+    val postIcons = postCellData.deprecatedPostIcons
 
     icons.edit()
     icons.set(PostIcons.DELETED, postCellData.isDeleted)

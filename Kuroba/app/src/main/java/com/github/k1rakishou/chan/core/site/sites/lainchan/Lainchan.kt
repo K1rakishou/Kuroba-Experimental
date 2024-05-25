@@ -45,7 +45,7 @@ class Lainchan : CommonSite() {
     override fun setup() {
         setEnabled(true)
         setName(SITE_NAME)
-        setIcon(fromFavicon(imageLoaderDeprecated, "https://lainchan.org/favicon.ico".toHttpUrl()))
+        setIcon(fromFavicon(imageLoaderDeprecatedLazy, "https://lainchan.org/favicon.ico".toHttpUrl()))
         setBoards(
             create(create(siteDescriptor().siteName, "λ"), "Programming"),
             create(create(siteDescriptor().siteName, "Δ"), "Do It Yourself"),
@@ -73,9 +73,9 @@ class Lainchan : CommonSite() {
             }
         })
         setEndpoints(VichanEndpoints(this, "https://lainchan.org", "https://lainchan.org"))
-        setActions(LainchanActions(this, proxiedOkHttpClient, siteManager, replyManager))
+        setActions(LainchanActions(this, proxiedOkHttpClient, siteManager, boardManager, replyManager))
         setApi(VichanApi(siteManager, boardManager, this))
-        setParser(LainchanCommentParser())
+        setParser(LainchanCommentParser(staticHtmlColorRepository))
         setPostingLimitationInfo(
             postingLimitationInfoLazy = lazy {
                 SitePostingLimitation(

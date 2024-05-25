@@ -19,6 +19,7 @@ import com.github.k1rakishou.chan.core.manager.ChanFilterManager;
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager;
 import com.github.k1rakishou.chan.core.manager.PostFilterHighlightManager;
 import com.github.k1rakishou.chan.core.manager.PostFilterManager;
+import com.github.k1rakishou.chan.core.manager.PostFilterManagerImpl;
 import com.github.k1rakishou.chan.core.manager.PrefetchStateManager;
 import com.github.k1rakishou.chan.core.manager.ThirdEyeManager;
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager;
@@ -93,11 +94,11 @@ public class LoaderModule {
     @Provides
     @Singleton
     public PostHighlightFilterLoader providePostHighlightFilterLoader(
-            ChanFilterManager chanFilterManager,
-            FilterEngine filterEngine,
-            PostFilterManager postFilterManager,
-            ChanThreadManager chanThreadManager,
-            PostFilterHighlightManager postFilterHighlightManager
+      ChanFilterManager chanFilterManager,
+      FilterEngine filterEngine,
+      PostFilterManager postFilterManager,
+      ChanThreadManager chanThreadManager,
+      PostFilterHighlightManager postFilterHighlightManager
     ) {
         Logger.deps("PostHighlightFilterLoader");
 

@@ -16,12 +16,15 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.HttpUrl
 
 class SiteIcon private constructor(
-  private val imageLoaderDeprecated: Lazy<ImageLoaderDeprecated>
+  private val imageLoaderDeprecatedLazy: Lazy<ImageLoaderDeprecated>
 ) {
   var url: HttpUrl? = null
   var drawable: BitmapDrawable? = null
 
   private var requestDisposable: ImageLoaderDeprecated.ImageLoaderRequestDisposable? = null
+
+  private val imageLoaderDeprecated: ImageLoaderDeprecated
+    get() = imageLoaderDeprecatedLazy.get()
 
   fun cancel() {
     requestDisposable?.dispose()
@@ -62,7 +65,7 @@ class SiteIcon private constructor(
 
     cancel()
 
-    requestDisposable = imageLoaderDeprecated.get().loadFromNetwork(
+    requestDisposable = imageLoaderDeprecated.loadFromNetwork(
       context = context,
       requestUrl = url.toString(),
       cacheFileType = CacheFileType.SiteIcon,
@@ -134,8 +137,8 @@ class SiteIcon private constructor(
     const val FAVICON_SIZE = 64
 
     @JvmStatic
-    fun fromFavicon(imageLoaderDeprecated: Lazy<ImageLoaderDeprecated>, url: HttpUrl): SiteIcon {
-      val siteIcon = SiteIcon(imageLoaderDeprecated)
+    fun fromFavicon(imageLoaderDeprecatedLazy: Lazy<ImageLoaderDeprecated>, url: HttpUrl): SiteIcon {
+      val siteIcon = SiteIcon(imageLoaderDeprecatedLazy)
       siteIcon.url = url
       return siteIcon
     }

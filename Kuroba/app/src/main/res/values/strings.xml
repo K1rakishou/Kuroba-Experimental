@@ -4,14 +4,29 @@
         <item quantity="one">%d reply</item>
         <item quantity="other">%d replies</item>
     </plurals>
-    <plurals name="reply">
-        <item quantity="one">reply</item>
-        <item quantity="other">replies</item>
+    <plurals name="reply_with_number_compact">
+        <item quantity="one">%dR</item>
+        <item quantity="other">%dR</item>
     </plurals>
-    <plurals name="image">
+
+    <plurals name="image_with_number">
         <item quantity="one">%d image</item>
         <item quantity="other">%d images</item>
     </plurals>
+    <plurals name="image_with_number_compact">
+        <item quantity="one">%dI</item>
+        <item quantity="other">%dI</item>
+    </plurals>
+
+    <plurals name="poster_with_number">
+        <item quantity="one">%d poster</item>
+        <item quantity="other">%d posters</item>
+    </plurals>
+    <plurals name="poster_with_number_compact">
+        <item quantity="one">%dP</item>
+        <item quantity="other">%dP</item>
+    </plurals>
+
     <plurals name="board">
         <item quantity="one">%d board</item>
         <item quantity="other">%d boards</item>

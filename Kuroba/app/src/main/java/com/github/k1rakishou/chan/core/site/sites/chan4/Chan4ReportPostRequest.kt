@@ -16,12 +16,12 @@ import java.util.Locale
 
 class Chan4ReportPostRequest(
   private val siteManager: SiteManager,
-  private val _proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>,
+  private val proxiedOkHttpClientLazy: Lazy<RealProxiedOkHttpClient>,
   private val postReportData: PostReportData.Chan4
 ) {
 
   private val proxiedOkHttpClient: RealProxiedOkHttpClient
-    get() = _proxiedOkHttpClient.get()
+    get() = proxiedOkHttpClientLazy.get()
 
   suspend fun execute(): PostReportResult {
     val postDescriptor = postReportData.postDescriptor

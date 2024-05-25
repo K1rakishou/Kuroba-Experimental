@@ -1,19 +1,3 @@
-/*
- * KurobaEx - *chan browser https://github.com/K1rakishou/Kuroba-Experimental/
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 package com.github.k1rakishou.chan.core.site.common.taimaba
 
 import android.text.TextUtils
@@ -36,7 +20,7 @@ import java.util.regex.Pattern
 
 open class TaimabaActions(
   commonSite: CommonSite,
-  private val replyManager: Lazy<ReplyManager>
+  private val replyManager: ReplyManager
 ) : CommonActions(commonSite) {
   @Volatile
   var threadNo = 0L
@@ -48,11 +32,11 @@ open class TaimabaActions(
     call: MultipartHttpCall
   ): ModularResult<Unit> {
     return Try {
-      if (!replyManager.get().containsReply(replyChanDescriptor)) {
+      if (!replyManager.containsReply(replyChanDescriptor)) {
         throw IOException("No reply found for chanDescriptor=$replyChanDescriptor")
       }
 
-      replyManager.get().readReply(replyChanDescriptor) { reply ->
+      replyManager.readReply(replyChanDescriptor) { reply ->
         // pass threadNo & password with correct variables
         threadNo = reply.threadNo()
         password = reply.password

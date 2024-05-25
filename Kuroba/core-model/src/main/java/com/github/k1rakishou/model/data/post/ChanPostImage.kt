@@ -220,6 +220,24 @@ class ChanPostImage(
     }
   }
 
+  fun originalFileNameForPostCell(maxLength: Int = 80): String? {
+    if (filename == null) {
+      return null
+    }
+
+    val cutMarker = "[...]"
+
+    if (filename.length <= (maxLength + cutMarker.length)) {
+      return filename
+    }
+
+    return buildString {
+      append(filename.take(maxLength / 2))
+      append(cutMarker)
+      append(filename.takeLast(maxLength / 2))
+    }
+  }
+
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is ChanPostImage) return false

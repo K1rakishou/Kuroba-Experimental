@@ -302,7 +302,7 @@ private fun getImageLoaderRequestProvider(
   val revealedSpoilerImagesManager = appDependencies().revealedSpoilerImagesManager
 
   return ImageLoaderRequestProvider(
-    key = ImageLoaderRequestProvider.FullKey(arrayOf(chanDescriptor, albumItemData, albumItemData)),
+    key = ImageLoaderRequestProvider.FullKey(arrayOf(chanDescriptor, albumItemData, albumSpanCount)),
     provide = {
       if (chanDescriptor == null) {
         return@ImageLoaderRequestProvider null

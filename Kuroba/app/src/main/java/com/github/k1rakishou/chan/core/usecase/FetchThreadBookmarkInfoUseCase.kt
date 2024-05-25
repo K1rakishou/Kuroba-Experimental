@@ -3,7 +3,7 @@ package com.github.k1rakishou.chan.core.usecase
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.core.site.parser.ChanReader
+import com.github.k1rakishou.chan.core.site.parser.ChanApi
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.EmptyBodyResponseException
 import com.github.k1rakishou.common.ModularResult
@@ -57,7 +57,7 @@ class FetchThreadBookmarkInfoUseCase(
       return@parallelForEach fetchThreadBookmarkInfo(
         threadDescriptor,
         threadJsonEndpoint,
-        site.chanReader()
+        site.chanApi()
       )
     }
   }
@@ -65,7 +65,7 @@ class FetchThreadBookmarkInfoUseCase(
   private suspend fun fetchThreadBookmarkInfo(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
     threadJsonEndpoint: HttpUrl,
-    chanReader: ChanReader
+    chanApi: ChanApi
   ): ThreadBookmarkFetchResult {
     val requestBuilder = Request.Builder()
       .url(threadJsonEndpoint)
@@ -107,9 +107,9 @@ class FetchThreadBookmarkInfoUseCase(
         return@use ThreadBookmarkFetchResult.AlreadyDeleted(threadDescriptor)
       }
 
-      val threadBookmarkInfoObject = chanReader.readThreadBookmarkInfoObject(
+      val threadBookmarkInfoObject = chanApi.readThreadBookmarkInfoObject(
         threadDescriptor,
-        max(postsCount, ChanReader.DEFAULT_POST_LIST_CAPACITY),
+        max(postsCount, ChanApi.DEFAULT_POST_LIST_CAPACITY),
         request.url.toString(),
         inputStream
       ).safeUnwrap { error -> return@use ThreadBookmarkFetchResult.Error(error, threadDescriptor) }

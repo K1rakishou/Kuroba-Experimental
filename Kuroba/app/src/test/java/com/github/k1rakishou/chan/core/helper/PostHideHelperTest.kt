@@ -1,7 +1,7 @@
 package com.github.k1rakishou.chan.core.helper
 
-import com.github.k1rakishou.chan.core.manager.IPostFilterManager
-import com.github.k1rakishou.chan.core.manager.IPostHideManager
+import com.github.k1rakishou.chan.core.manager.PostFilterManager
+import com.github.k1rakishou.chan.core.manager.PostHideManager
 import com.github.k1rakishou.common.toHashMapBy
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
@@ -21,8 +21,8 @@ class PostHideHelperTest {
   private val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(catalogDescriptor, 1L)
 
   private var postHideHelper = PostHideHelper(
-    Mockito.mock(IPostHideManager::class.java),
-    Mockito.mock(IPostFilterManager::class.java),
+    Mockito.mock(PostHideManager::class.java),
+    Mockito.mock(PostFilterManager::class.java),
     ChanLoadProgressNotifier()
   )
 
@@ -450,7 +450,8 @@ class PostHideHelperTest {
         chanPostId = 0L,
         postDescriptor = PostDescriptor.create(threadDescriptor, postNo),
         postImages = mutableListOf(),
-        postIcons = mutableListOf<ChanPostHttpIcon>(),
+        deprecatedPostIcons = mutableListOf(),
+        postIcons = mutableListOf(),
         repliesTo = mutableSetOf(),
         timestamp = postNo,
         postComment = PostComment(originalComment = "$postNo", originalUnparsedComment = "$postNo", emptyList()),
@@ -475,9 +476,10 @@ class PostHideHelperTest {
         chanPostId = 0L,
         postDescriptor = PostDescriptor.Companion.create(threadDescriptor, postNo),
         _postImages = mutableListOf(),
-        postIcons = mutableListOf<ChanPostHttpIcon>(),
+        deprecatedPostIcons = mutableListOf(),
+        postIcons = mutableListOf(),
         repliesTo = mutableSetOf(),
-        timestamp = postNo,
+        timestampInSeconds = postNo,
         postComment = PostComment(originalComment = "$postNo", originalUnparsedComment = "$postNo", emptyList()),
         subject = null,
         tripcode = null,

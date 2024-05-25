@@ -92,7 +92,7 @@ public class Sushichan
     public void setup() {
         setEnabled(true);
         setName(SITE_NAME);
-        setIcon(SiteIcon.fromFavicon(getImageLoaderDeprecated(), HttpUrl.parse("https://sushigirl.us/favicon.ico")));
+        setIcon(SiteIcon.fromFavicon(getImageLoaderDeprecatedLazy(), HttpUrl.parse("https://sushigirl.us/favicon.ico")));
 
         setBoards(
                 ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "wildcard"), "artsy"),
@@ -120,7 +120,7 @@ public class Sushichan
         setEndpoints(new VichanEndpoints(this, "https://sushigirl.us/", "https://sushigirl.us/"));
         setActions(new VichanActions(this, getProxiedOkHttpClient(), getSiteManager(), getReplyManager()));
         setApi(new VichanApi(getSiteManager(), getBoardManager(), this));
-        setParser(new VichanCommentParser());
+        setParser(new VichanCommentParser(getStaticHtmlColorRepository()));
     }
 
     @NotNull

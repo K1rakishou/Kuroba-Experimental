@@ -18,12 +18,42 @@ import kotlin.concurrent.read
 import kotlin.concurrent.write
 import kotlin.time.measureTime
 
-open class PostHideManager(
-  private val verboseLogsEnabled: Boolean,
+interface PostHideManager {
+  fun create(chanPostHide: ChanPostHide)
+  fun createOrUpdateMany(chanPostHideList: Collection<ChanPostHide>)
+  suspend fun createManySuspend(chanPostHideList: List<ChanPostHide>)
+
+  suspend fun getTotalCount(): ModularResult<Int>
+  fun contains(postDescriptor: PostDescriptor): Boolean
+  fun countPostHides(postDescriptors: List<PostDescriptor>): Int
+  fun getHiddenPostsMap(postDescriptors: Set<PostDescriptor>): Map<PostDescriptor, ChanPostHide>
+  fun remove(postDescriptor: PostDescriptor)
+  fun removeManyChanPostHides(postDescriptorList: Collection<PostDescriptor>)
+  fun update(postDescriptor: PostDescriptor, updater: (PostDescriptor, ChanPostHide?) -> ChanPostHide)
+  fun updateMany(
+    postDescriptors: Collection<PostDescriptor>,
+    updater: (PostDescriptor, ChanPostHide?) -> ChanPostHide
+  )
+  fun getHiddenPostsForCatalog(
+    threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>,
+    filterManuallyRestored: Boolean = true
+  ): List<ChanPostHide>
+  fun getHiddenPostsForThread(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    filterManuallyRestored: Boolean = true
+  ): List<ChanPostHide>
+  fun hiddenOrRemoved(postDescriptor: PostDescriptor): Boolean
+  fun clearAllPostHides()
+
+  suspend fun preloadForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor)
+  suspend fun preloadForCatalog(catalogDescriptor: ChanDescriptor.CatalogDescriptor)
+}
+
+class PostHideManagerImpl(
   private val appScope: CoroutineScope,
   private val chanPostHideRepository: ChanPostHideRepository,
   private val chanThreadsCache: ChanThreadsCache
-) : IPostHideManager {
+) : PostHideManager {
   private val lock = ReentrantReadWriteLock()
   @GuardedBy("lock")
   private val postHideMap = mutableMapOf<ChanDescriptor, MutableMap<PostDescriptor, ChanPostHide>>()
@@ -34,9 +64,9 @@ open class PostHideManager(
 
   init {
     chanThreadsCache.addChanThreadDeleteEventListener { threadDeleteEvent ->
-      if (verboseLogsEnabled) {
-        Logger.d(TAG, "chanThreadsCache.chanThreadDeleteEventFlow() " +
-          "threadDeleteEvent=${threadDeleteEvent.javaClass.simpleName}")
+      Logger.verbose(TAG) {
+        "chanThreadsCache.chanThreadDeleteEventFlow() " +
+          "threadDeleteEvent: ${threadDeleteEvent.javaClass.simpleName}"
       }
 
       onThreadDeleteEventReceived(threadDeleteEvent)
@@ -60,7 +90,7 @@ open class PostHideManager(
     }
   }
 
-  suspend fun preloadForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+  override suspend fun preloadForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
     // TODO(KurobaEx): this may not be correct, probably should use the previous solution but also
     //  check whether the post hide is for the OP.
     val alreadyPreloaded = lock.read { !alreadyPreloaded.add(threadDescriptor) }
@@ -68,32 +98,20 @@ open class PostHideManager(
       return
     }
 
-    if (verboseLogsEnabled) {
-      Logger.d(TAG, "preloadForThread($threadDescriptor) begin")
-    }
-
+    Logger.verbose(TAG) { "preloadForThread($threadDescriptor) begin" }
     val time = measureTime { preloadForThreadInternal(threadDescriptor) }
-
-    if (verboseLogsEnabled) {
-      Logger.d(TAG, "preloadForThread($threadDescriptor) end, took $time")
-    }
+    Logger.verbose(TAG) { "preloadForThread($threadDescriptor) end, took $time" }
   }
 
-  suspend fun preloadForCatalog(catalogDescriptor: ChanDescriptor.CatalogDescriptor) {
+  override suspend fun preloadForCatalog(catalogDescriptor: ChanDescriptor.CatalogDescriptor) {
     val alreadyPreloaded = lock.read { postHideMap.contains(catalogDescriptor) }
     if (alreadyPreloaded) {
       return
     }
 
-    if (verboseLogsEnabled) {
-      Logger.d(TAG, "preloadForCatalog($catalogDescriptor) begin")
-    }
-
+    Logger.verbose(TAG) { "preloadForCatalog($catalogDescriptor) begin" }
     val time = measureTime { preloadForCatalogInternal(catalogDescriptor, CATALOG_PRELOAD_MAX_COUNT) }
-
-    if (verboseLogsEnabled) {
-      Logger.d(TAG, "preloadForCatalog($catalogDescriptor) end, took $time")
-    }
+    Logger.verbose(TAG) { "preloadForCatalog($catalogDescriptor) end, took $time" }
   }
 
   private suspend fun preloadForThreadInternal(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
@@ -139,7 +157,7 @@ open class PostHideManager(
       "preloaded ${chanPostHides.size} post hides")
   }
 
-  fun create(chanPostHide: ChanPostHide) {
+  override fun create(chanPostHide: ChanPostHide) {
     createOrUpdateMany(listOf(chanPostHide))
   }
 
@@ -169,7 +187,7 @@ open class PostHideManager(
     }
   }
 
-  suspend fun createManySuspend(chanPostHideList: List<ChanPostHide>) {
+  override suspend fun createManySuspend(chanPostHideList: List<ChanPostHide>) {
     lock.write {
       chanPostHideList.forEach { chanPostHide ->
         val chanDescriptor = chanPostHide.postDescriptor.descriptor
@@ -194,19 +212,19 @@ open class PostHideManager(
       }
   }
 
-  suspend fun getTotalCount(): ModularResult<Int> {
+  override suspend fun getTotalCount(): ModularResult<Int> {
     return chanPostHideRepository.getTotalCount()
   }
 
-  fun contains(postDescriptor: PostDescriptor): Boolean {
+  override fun contains(postDescriptor: PostDescriptor): Boolean {
     return lock.read { postHideMap[postDescriptor.descriptor]?.containsKey(postDescriptor) == true }
   }
 
-  fun remove(postDescriptor: PostDescriptor) {
+  override fun remove(postDescriptor: PostDescriptor) {
     removeManyChanPostHides(listOf(postDescriptor))
   }
 
-  fun removeManyChanPostHides(postDescriptorList: Collection<PostDescriptor>) {
+  override fun removeManyChanPostHides(postDescriptorList: Collection<PostDescriptor>) {
     val copy = lock.write {
       postDescriptorList.mapNotNull { postDescriptor ->
         val chanDescriptor = postDescriptor.descriptor
@@ -232,11 +250,11 @@ open class PostHideManager(
     }
   }
 
-  fun update(postDescriptor: PostDescriptor, updater: (PostDescriptor, ChanPostHide?) -> ChanPostHide) {
+  override fun update(postDescriptor: PostDescriptor, updater: (PostDescriptor, ChanPostHide?) -> ChanPostHide) {
     updateMany(listOf(postDescriptor), updater)
   }
 
-  fun updateMany(
+  override fun updateMany(
     postDescriptors: Collection<PostDescriptor>,
     updater: (PostDescriptor, ChanPostHide?) -> ChanPostHide
   ) {
@@ -298,9 +316,9 @@ open class PostHideManager(
     }
   }
 
-  fun getHiddenPostsForCatalog(
+  override fun getHiddenPostsForCatalog(
     threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>,
-    filterManuallyRestored: Boolean = true
+    filterManuallyRestored: Boolean
   ): List<ChanPostHide> {
     val chanPostHideList = mutableListOf<ChanPostHide>()
 
@@ -323,9 +341,9 @@ open class PostHideManager(
   }
 
 
-  fun getHiddenPostsForThread(
+  override fun getHiddenPostsForThread(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
-    filterManuallyRestored: Boolean = true
+    filterManuallyRestored: Boolean
   ): List<ChanPostHide> {
     val chanPostHideList = mutableListOf<ChanPostHide>()
 
@@ -342,7 +360,7 @@ open class PostHideManager(
     return chanPostHideList
   }
 
-  fun hiddenOrRemoved(postDescriptor: PostDescriptor): Boolean {
+  override fun hiddenOrRemoved(postDescriptor: PostDescriptor): Boolean {
     return lock.read {
       val chanPostHide = postHideMap[postDescriptor.threadDescriptor()]?.get(postDescriptor)
         ?: return@read false
@@ -369,7 +387,7 @@ open class PostHideManager(
     return resultMap
   }
 
-  fun clearAllPostHides() {
+  override fun clearAllPostHides() {
     lock.write { postHideMap.clear() }
 
     serializedCoroutineExecutor.post {

@@ -100,7 +100,13 @@ class Dvach : CommonSite() {
 
   private val siteRequestModifier by lazy { DvachSiteRequestModifier(this, appConstants) }
   private val urlHandlerLazy = lazy { DvachSiteUrlHandler(domainUrl) }
-  private val siteIconLazy = lazy { SiteIcon.fromFavicon(imageLoaderDeprecated, "${domainString}/favicon.ico".toHttpUrl()) }
+
+  private val siteIcon by lazy {
+    SiteIcon.fromFavicon(
+      imageLoaderDeprecatedLazy = imageLoaderDeprecatedLazy,
+      url = "${domainString}/favicon.ico".toHttpUrl()
+    )
+  }
 
   val captchaV2NoJs by lazy {
     SiteAuthentication.fromCaptcha2nojs(
@@ -187,13 +193,17 @@ class Dvach : CommonSite() {
   override fun siteGlobalSearchType(): SiteGlobalSearchType = SiteGlobalSearchType.SimpleQueryBoardSearch
 
   override fun setParser(commentParser: CommentParser) {
-    postParser = DvachPostParser(commentParser, archivesManager)
+    postParser = DvachPostParser(
+      htmlParserPool = htmlParserPool,
+      commentParser = commentParser,
+      archivesManager = archivesManager
+    )
   }
 
   override fun setup() {
     setEnabled(true)
     setName(SITE_NAME)
-    setIcon(siteIconLazy.value)
+    setIcon(siteIcon)
     setBoardsType(BoardsType.DYNAMIC)
     setLazyResolvable(urlHandlerLazy)
     setConfig(object : CommonConfig() {
@@ -207,8 +217,9 @@ class Dvach : CommonSite() {
     setEndpoints(DvachEndpoints(this))
     setActions(DvachActions())
     setRequestModifier(siteRequestModifier as SiteRequestModifier<Site>)
-    setApi(DvachApiV2(moshi, siteManager, boardManager, this))
-    setParser(DvachCommentParser())
+    setApi(DvachApiV2(moshiLazy, siteManager, boardManager, this))
+    setParser(DvachCommentParser(staticHtmlColorRepository))
+    setParserV2(com.github.k1rakishou.chan.core.site.parser_v2.DvachPostParser(staticHtmlColorRepository))
 
     setPostingLimitationInfo(
       postingLimitationInfoLazy = lazy {
@@ -551,7 +562,13 @@ class Dvach : CommonSite() {
 
   }
 
-  private inner class DvachActions : VichanActions(this@Dvach, proxiedOkHttpClient, siteManager, replyManager) {
+  private inner class DvachActions : VichanActions(
+    commonSite = this@Dvach,
+    proxiedOkHttpClient = proxiedOkHttpClient,
+    siteManager = siteManager,
+    replyManager = replyManager
+  ) {
+
     override fun setupPost(
       replyChanDescriptor: ChanDescriptor,
       call: MultipartHttpCall
@@ -586,7 +603,7 @@ class Dvach : CommonSite() {
         replyManager = replyManager
       )
 
-      return httpCallManager.get().makePostHttpCallWithProgress(replyCall, replyChanDescriptor)
+      return httpCallManager.makePostHttpCallWithProgress(replyCall, replyChanDescriptor)
         .map { replyCallResult ->
           when (replyCallResult) {
             is HttpCall.HttpCallWithProgressResult.Success -> {
@@ -617,19 +634,22 @@ class Dvach : CommonSite() {
 
       return DvachBoardsRequest(
         siteDescriptor = siteDescriptor(),
-        boardManager = boardManager,
-        proxiedOkHttpClient = proxiedOkHttpClient,
+        boardManagerLazy = boardManagerLazy,
+        proxiedOkHttpClientLazy = proxiedOkHttpClientLazy,
         boardsRequestUrl = dvachEndpoints.boards(),
       ).execute()
     }
 
-    @Suppress("MoveVariableDeclarationIntoWhen")
     override suspend fun <T : AbstractLoginRequest> login(loginRequest: T): SiteActions.LoginResult {
       val dvachLoginRequest = loginRequest as DvachLoginRequest
       passCode.set(dvachLoginRequest.passcode)
 
-      val loginResult = httpCallManager.get().makeHttpCall(
-        DvachGetPassCookieHttpCall(this@Dvach, moshi, loginRequest)
+      val loginResult = httpCallManager.makeHttpCall(
+        DvachGetPassCookieHttpCall(
+          site = this@Dvach,
+          moshi = moshi,
+          dvachLoginRequest = loginRequest
+        )
       )
 
       when (loginResult) {
@@ -686,7 +706,7 @@ class Dvach : CommonSite() {
 
       val passcodeInfoCall = DvachGetPasscodeInfoHttpCall(this@Dvach, gson)
 
-      val passcodeInfoCallResult = httpCallManager.get().makeHttpCall(passcodeInfoCall)
+      val passcodeInfoCallResult = httpCallManager.makeHttpCall(passcodeInfoCall)
       if (passcodeInfoCallResult is HttpCall.HttpCallResult.Fail) {
         return SiteActions.GetPasscodeInfoResult.Failure(passcodeInfoCallResult.error)
       }
@@ -746,9 +766,9 @@ class Dvach : CommonSite() {
       this@Dvach.requestModifier().modifyPagesRequest(this@Dvach, requestBuilder)
 
       return DvachPagesRequest(
-        board,
-        requestBuilder.build(),
-        proxiedOkHttpClient
+        chanBoard = board,
+        request = requestBuilder.build(),
+        proxiedOkHttpClient = proxiedOkHttpClient
       ).execute()
     }
 
@@ -769,11 +789,11 @@ class Dvach : CommonSite() {
       this@Dvach.requestModifier().modifySearchGetRequest(this@Dvach, requestBuilder)
 
       return DvachSearchRequest(
-        moshi,
-        requestBuilder.build(),
-        proxiedOkHttpClient,
-        dvachSearchParams,
-        siteManager
+        moshi = moshi,
+        proxiedOkHttpClient = proxiedOkHttpClient,
+        siteManager = siteManager,
+        request = requestBuilder.build(),
+        searchParams = dvachSearchParams
       ).execute()
     }
 
@@ -787,8 +807,8 @@ class Dvach : CommonSite() {
       this@Dvach.requestModifier().modifyArchiveGetRequest(this@Dvach, requestBuilder)
 
       return DvachArchiveThreadsRequest(
-        request = requestBuilder.build(),
-        proxiedOkHttpClient = proxiedOkHttpClient
+        proxiedOkHttpClient = proxiedOkHttpClient,
+        request = requestBuilder.build()
       ).execute()
     }
 
@@ -796,9 +816,9 @@ class Dvach : CommonSite() {
       postReportData as PostReportData.Dvach
 
       return DvachReportPostRequest(
+        moshi = moshi,
+        proxiedOkHttpClient = proxiedOkHttpClient,
         site = this@Dvach,
-        _moshi = moshi,
-        _proxiedOkHttpClient = proxiedOkHttpClient,
         postReportData = postReportData
       ).execute()
     }

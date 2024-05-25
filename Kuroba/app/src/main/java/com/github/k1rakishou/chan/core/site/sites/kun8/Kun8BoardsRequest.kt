@@ -20,7 +20,7 @@ class Kun8BoardsRequest(
   private val siteDescriptor: SiteDescriptor,
   private val boardManager: BoardManager,
   request: Request,
-  proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>
+  proxiedOkHttpClient: RealProxiedOkHttpClient
 ) : AbstractRequest<SiteBoards>(request, proxiedOkHttpClient) {
 
   override suspend fun processBody(responseBody: ResponseBody): SiteBoards {

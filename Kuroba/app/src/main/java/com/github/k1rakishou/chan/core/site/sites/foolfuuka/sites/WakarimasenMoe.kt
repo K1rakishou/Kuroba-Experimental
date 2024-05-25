@@ -38,14 +38,14 @@ class WakarimasenMoe: BaseFoolFuukaSite() {
 
     setEnabled(true)
     setName(SITE_NAME)
-    setIcon(SiteIcon.fromFavicon(imageLoaderDeprecated, FAVICON_URL))
+    setIcon(SiteIcon.fromFavicon(imageLoaderDeprecatedLazy, FAVICON_URL))
     setBoardsType(Site.BoardsType.DYNAMIC)
     setResolvable(URL_HANDLER)
     setConfig(object : CommonConfig() {})
     setEndpoints(wakarimasenEndpoints)
-    setActions(FoolFuukaActions(this))
+    setActions(FoolFuukaActions(this, proxiedOkHttpClient, boardManager))
     setApi(FoolFuukaApi(this))
-    setParser(FoolFuukaCommentParser(archivesManager))
+    setParser(FoolFuukaCommentParser(staticHtmlColorRepository, archivesManager))
   }
 
   companion object {

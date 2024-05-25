@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.ui.helper
 
 import android.content.Context
+import androidx.compose.runtime.Immutable
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.ui.cell.PostCellData
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface
@@ -218,6 +219,7 @@ class PostPopupHelper(
     presentingPostRepliesController?.onImageIsAboutToShowUp()
   }
 
+  @Immutable
   interface PostPopupData {
     val descriptor: ChanDescriptor
     val postViewMode: PostCellData.PostViewMode

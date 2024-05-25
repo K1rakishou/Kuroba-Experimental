@@ -9,6 +9,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
+import com.github.k1rakishou.model.data.post.ChanPostIcon
 import com.github.k1rakishou.model.data.post.PostComment
 import com.github.k1rakishou.model.entity.chan.post.ChanPostEntity
 import com.github.k1rakishou.model.entity.chan.post.ChanPostIdEntity
@@ -25,7 +26,7 @@ object ChanPostEntityMapper {
     return ChanPostEntity(
       chanPostId = chanPostId,
       deleted = chanPost.isDeleted,
-      timestamp = chanPost.timestamp,
+      timestamp = chanPost.timestampInSeconds,
       name = chanPost.name,
       posterId = chanPost.posterId,
       posterIdColor = chanPost.posterIdColor,
@@ -73,9 +74,12 @@ object ChanPostEntityMapper {
       ?.map { chanPostImageEntity -> ChanPostImageMapper.fromEntity(chanPostImageEntity, postDescriptor) }
       ?: emptyList()
 
-    val postIcons = postAdditionalData.postIconsByPostIdMap[chanPostEntity.chanPostId]
+    val deprecatedPostIcons = postAdditionalData.postIconsByPostIdMap[chanPostEntity.chanPostId]
       ?.map { chanPostHttpIconEntity -> ChanPostHttpIconMapper.fromEntity(chanPostHttpIconEntity) }
       ?: emptyList()
+
+    // TODO: compose post cells. Persistence.
+    val postIcons = emptyList<ChanPostIcon>()
 
     val repliesTo = postAdditionalData.postReplyToByPostIdMap[chanPostEntity.chanPostId]
       ?.map { chanPostReplyEntity ->
@@ -101,6 +105,7 @@ object ChanPostEntityMapper {
         chanPostId = chanPostEntity.chanPostId,
         postDescriptor = postDescriptor,
         postImages = postImages,
+        deprecatedPostIcons = deprecatedPostIcons,
         postIcons = postIcons,
         repliesTo = repliesTo,
         catalogRepliesCount = chanThreadEntity.catalogRepliesCount,
@@ -114,8 +119,8 @@ object ChanPostEntityMapper {
         timestamp = chanPostEntity.timestamp,
         name = chanPostEntity.name,
         postComment = mapPostComment(chanTextSpanEntityList),
-        subject = mapSubject(chanTextSpanEntityList),
-        tripcode = mapTripcode(chanTextSpanEntityList),
+        subject = mapSubject(chanTextSpanEntityList).toString(),
+        tripcode = mapTripcode(chanTextSpanEntityList).toString(),
         posterId = chanPostEntity.posterId,
         posterIdColor = chanPostEntity.posterIdColor,
         moderatorCapcode = chanPostEntity.moderatorCapcode,
@@ -129,13 +134,14 @@ object ChanPostEntityMapper {
         chanPostId = chanPostEntity.chanPostId,
         postDescriptor = postDescriptor,
         _postImages = postImages.toMutableList(),
+        deprecatedPostIcons = deprecatedPostIcons,
         postIcons = postIcons,
         repliesTo = repliesTo,
-        timestamp = chanPostEntity.timestamp,
+        timestampInSeconds = chanPostEntity.timestamp,
         name = chanPostEntity.name,
         postComment = mapPostComment(chanTextSpanEntityList),
-        subject = mapSubject(chanTextSpanEntityList),
-        tripcode = mapTripcode(chanTextSpanEntityList),
+        subject = mapSubject(chanTextSpanEntityList).toString(),
+        tripcode = mapTripcode(chanTextSpanEntityList).toString(),
         posterId = chanPostEntity.posterId,
         posterIdColor = chanPostEntity.posterIdColor,
         moderatorCapcode = chanPostEntity.moderatorCapcode,

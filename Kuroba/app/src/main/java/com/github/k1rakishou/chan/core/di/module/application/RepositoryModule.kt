@@ -3,9 +3,16 @@ package com.github.k1rakishou.chan.core.di.module.application
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.parser.repository.ParsedPostDataRepository
+import com.github.k1rakishou.chan.core.parser.repository.ParsedPostDataRepositoryImpl
+import com.github.k1rakishou.chan.core.parser.repository.PostReplyChainRepository
+import com.github.k1rakishou.chan.core.parser.repository.PostReplyChainRepositoryImpl
+import com.github.k1rakishou.chan.core.parser.usecase.CalculateParsedPostDataUseCase
 import com.github.k1rakishou.chan.core.repository.BoardFlagInfoRepository
 import com.github.k1rakishou.chan.core.repository.CurrentlyDisplayedCatalogPostsRepository
 import com.github.k1rakishou.chan.core.repository.ImportExportRepository
+import com.github.k1rakishou.chan.core.repository.StaticHtmlColorRepository
+import com.github.k1rakishou.chan.core.repository.StaticHtmlColorRepositoryImpl
 import com.github.k1rakishou.chan.core.repository.ThemeJsonFilesRepository
 import com.github.k1rakishou.chan.core.site.ParserRepository
 import com.github.k1rakishou.chan.core.site.SiteResolver
@@ -16,11 +23,12 @@ import com.github.k1rakishou.chan.core.usecase.KurobaSettingsImportUseCase
 import com.github.k1rakishou.chan.core.usecase.LoadBoardFlagsUseCase
 import com.github.k1rakishou.chan.features.media_viewer.helper.ChanPostBackgroundColorStorage
 import com.github.k1rakishou.chan.features.posting.LastReplyRepository
-import com.github.k1rakishou.core_logger.Logger.deps
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileManager
 import com.google.gson.Gson
 import dagger.Module
 import dagger.Provides
+import kotlinx.coroutines.CoroutineScope
 import javax.inject.Singleton
 
 @Module
@@ -34,7 +42,7 @@ class RepositoryModule {
     exportBackupFileUseCase: ExportBackupFileUseCase,
     importBackupFileUseCase: ImportBackupFileUseCase
   ): ImportExportRepository {
-    deps("ImportExportRepository")
+    Logger.deps("ImportExportRepository")
     return ImportExportRepository(
       gson,
       fileManager,
@@ -47,10 +55,11 @@ class RepositoryModule {
   @Provides
   @Singleton
   fun provideParserRepository(
-    archivesManager: ArchivesManager
+    archivesManager: ArchivesManager,
+    staticHtmlColorRepository: StaticHtmlColorRepository
   ): ParserRepository {
-    deps("ParserRepository")
-    return ParserRepository(archivesManager)
+    Logger.deps("ParserRepository")
+    return ParserRepository(archivesManager, staticHtmlColorRepository)
   }
 
   @Provides
@@ -59,7 +68,7 @@ class RepositoryModule {
     siteManager: SiteManager,
     boardManager: BoardManager
   ): LastReplyRepository {
-    deps("LastReplyRepository")
+    Logger.deps("LastReplyRepository")
     return LastReplyRepository(siteManager, boardManager)
   }
 
@@ -70,7 +79,7 @@ class RepositoryModule {
     boardManager: BoardManager,
     loadBoardFlagsUseCase: LoadBoardFlagsUseCase
   ): BoardFlagInfoRepository {
-    deps("BoardFlagInfoRepository")
+    Logger.deps("BoardFlagInfoRepository")
     return BoardFlagInfoRepository(
       siteManager,
       boardManager,
@@ -83,7 +92,7 @@ class RepositoryModule {
   fun provideDownloadThemeJsonFilesRepository(
     downloadThemeJsonFilesUseCase: DownloadThemeJsonFilesUseCase
   ): ThemeJsonFilesRepository {
-    deps("DownloadThemeJsonFilesRepository")
+    Logger.deps("DownloadThemeJsonFilesRepository")
     return ThemeJsonFilesRepository(downloadThemeJsonFilesUseCase)
   }
 
@@ -93,14 +102,42 @@ class RepositoryModule {
     boardManager: BoardManager,
     siteResolver: SiteResolver
   ): ChanPostBackgroundColorStorage {
-    deps("ChanPostBackgroundColorStorage")
+    Logger.deps("ChanPostBackgroundColorStorage")
     return ChanPostBackgroundColorStorage(boardManager, siteResolver)
   }
 
   @Provides
   @Singleton
   fun provideCurrentlyDisplayedPostsRepository(): CurrentlyDisplayedCatalogPostsRepository {
-    deps("CurrentlyDisplayedPostsRepository")
+    Logger.deps("CurrentlyDisplayedPostsRepository")
     return CurrentlyDisplayedCatalogPostsRepository()
   }
+
+  @Provides
+  @Singleton
+  fun provideStaticHtmlColorRepository(): StaticHtmlColorRepository {
+    Logger.deps("StaticHtmlColorRepository")
+    return StaticHtmlColorRepositoryImpl()
+  }
+
+  @Provides
+  @Singleton
+  fun provideParsedPostDataRepository(
+    appScope: CoroutineScope,
+    calculateParsedPostDataUseCase: CalculateParsedPostDataUseCase
+  ): ParsedPostDataRepository {
+    Logger.deps("ParsedPostDataRepository")
+    return ParsedPostDataRepositoryImpl(
+      appScope,
+      calculateParsedPostDataUseCase
+    )
+  }
+
+  @Provides
+  @Singleton
+  fun providePostReplyChainRepository(): PostReplyChainRepository {
+    Logger.deps("PostReplyChainRepository")
+    return PostReplyChainRepositoryImpl()
+  }
+
 }

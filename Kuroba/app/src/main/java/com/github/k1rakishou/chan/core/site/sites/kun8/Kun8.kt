@@ -34,7 +34,7 @@ class Kun8 : CommonSite() {
   override fun setup() {
     setEnabled(true)
     setName(SITE_NAME)
-    setIcon(SiteIcon.fromFavicon(imageLoaderDeprecated, "https://media.128ducks.com/static/favicon.ico".toHttpUrl()))
+    setIcon(SiteIcon.fromFavicon(imageLoaderDeprecatedLazy, "https://media.128ducks.com/static/favicon.ico".toHttpUrl()))
     setBoardsType(BoardsType.DYNAMIC)
     setResolvable(URL_HANDLER)
 
@@ -142,7 +142,7 @@ class Kun8 : CommonSite() {
     })
 
     setApi(VichanApi(siteManager, boardManager, this))
-    setParser(Kun8CommentParser())
+    setParser(Kun8CommentParser(staticHtmlColorRepository))
   }
 
   override fun commentParserType(): CommentParserType {

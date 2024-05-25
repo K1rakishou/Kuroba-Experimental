@@ -8,7 +8,7 @@ import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager
-import com.github.k1rakishou.chan.core.site.parser.ChanReader
+import com.github.k1rakishou.chan.core.site.parser.ChanApi
 import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.EmptyBodyResponseException
@@ -474,7 +474,7 @@ class BookmarkFilterWatchableThreadsUseCase(
       return@parallelForEach fetchBoardCatalog(
         boardDescriptor,
         catalogJsonEndpoint,
-        site.chanReader()
+        site.chanApi()
       )
     }
   }
@@ -482,7 +482,7 @@ class BookmarkFilterWatchableThreadsUseCase(
   private suspend fun fetchBoardCatalog(
     boardDescriptor: BoardDescriptor,
     catalogJsonEndpoint: HttpUrl,
-    chanReader: ChanReader
+    chanApi: ChanApi
   ): CatalogFetchResult {
     if (verboseLogsEnabled) {
       Logger.d(TAG, "fetchBoardCatalog() catalogJsonEndpoint=$catalogJsonEndpoint")
@@ -524,7 +524,7 @@ class BookmarkFilterWatchableThreadsUseCase(
     }
 
     val filterWatchCatalogInfoObjectResult = responseBody.byteStream().use { inputStream ->
-      return@use chanReader.readFilterWatchCatalogInfoObject(
+      return@use chanApi.readFilterWatchCatalogInfoObject(
         boardDescriptor,
         request.url.toString(),
         inputStream

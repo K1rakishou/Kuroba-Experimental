@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.utils
 
 import android.webkit.MimeTypeMap
 import androidx.compose.runtime.Immutable
+import com.github.k1rakishou.model.data.post.ChanPostImage
 
 private val MimeTypeMapInstance by lazy { MimeTypeMap.getSingleton() }
 
@@ -11,6 +12,10 @@ sealed interface KurobaMediaType {
   data object Video : KurobaMediaType
   data object Image : KurobaMediaType
   data object Gif : KurobaMediaType
+}
+
+fun ChanPostImage.asKurobaMediaType(): KurobaMediaType {
+  return extension.asKurobaMediaType()
 }
 
 fun String?.asKurobaMediaType(): KurobaMediaType {

@@ -36,14 +36,14 @@ import java.util.regex.Pattern
 
 class Chan4SearchRequest(
   private val request: Request,
-  private val proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>,
+  private val proxiedOkHttpClientLazy: Lazy<RealProxiedOkHttpClient>,
   private val searchParams: Chan4SearchParams
 ) {
 
   suspend fun execute(): SearchResult {
     return withContext(Dispatchers.IO) {
       try {
-        val response = proxiedOkHttpClient.get().okHttpClient().suspendCall(request)
+        val response = proxiedOkHttpClientLazy.get().okHttpClient().suspendCall(request)
 
         if (!response.isSuccessful) {
           throw BadStatusResponseException(response.code)

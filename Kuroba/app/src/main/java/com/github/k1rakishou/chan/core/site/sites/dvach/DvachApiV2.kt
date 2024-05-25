@@ -22,6 +22,7 @@ import com.github.k1rakishou.model.data.filter.FilterWatchCatalogInfoObject
 import com.github.k1rakishou.model.data.filter.FilterWatchCatalogThreadInfoObject
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.data.post.ChanPostHttpIcon
+import com.github.k1rakishou.model.data.post.ChanPostIcon
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.ChanPostImageBuilder
 import com.squareup.moshi.Json
@@ -34,7 +35,7 @@ import java.io.InputStream
 import java.util.concurrent.ConcurrentHashMap
 
 class DvachApiV2(
-  private val moshi: Lazy<Moshi>,
+  private val moshiLazy: Lazy<Moshi>,
   private val siteManager: SiteManager,
   private val boardManager: BoardManager,
   commonSite: CommonSite
@@ -55,7 +56,7 @@ class DvachApiV2(
 
     val endpoints = site.endpoints()
 
-    val dvachThreadsFreshAdapter = moshi.get().adapter(DvachThreadsFresh::class.java)
+    val dvachThreadsFreshAdapter = moshiLazy.get().adapter(DvachThreadsFresh::class.java)
     val dvachThreadsFresh = responseBodyStream
       .useBufferedSource { bufferedSource -> dvachThreadsFreshAdapter.fromJson(bufferedSource) }
 
@@ -112,7 +113,7 @@ class DvachApiV2(
       ?: return
 
     val endpoints = site.endpoints()
-    val dvachThreadIncrementalAdapter = moshi.get().adapter(DvachThreadIncremental::class.java)
+    val dvachThreadIncrementalAdapter = moshiLazy.get().adapter(DvachThreadIncremental::class.java)
 
     val dvachThreadIncremental = responseBodyStream
       .useBufferedSource { bufferedSource -> dvachThreadIncrementalAdapter.fromJson(bufferedSource) }
@@ -164,7 +165,7 @@ class DvachApiV2(
 
     val endpoints = site.endpoints()
 
-    val dvachCatalogAdapter = moshi.get().adapter(DvachCatalog::class.java)
+    val dvachCatalogAdapter = moshiLazy.get().adapter(DvachCatalog::class.java)
     val dvachCatalog = responseBodyStream
       .useBufferedSource { bufferedSource -> dvachCatalogAdapter.fromJson(bufferedSource) }
 
@@ -298,7 +299,8 @@ class DvachApiV2(
             SiteEndpoints.makeArgument("icon", imageUrl)
           )
 
-          builder.addHttpIcon(ChanPostHttpIcon(iconUrl, title))
+          builder.deprecatedAddHttpIcon(ChanPostHttpIcon(iconUrl, title))
+          builder.addHttpIcon(ChanPostIcon.DvachFlag(title))
         }
       }
 
@@ -313,7 +315,7 @@ class DvachApiV2(
     responseBodyStream: InputStream
   ): ModularResult<ThreadBookmarkInfoObject> {
     return ModularResult.Try {
-      val dvachBookmarkCatalogInfoAdapter = moshi.get().adapter(DvachBookmarkCatalogInfo::class.java)
+      val dvachBookmarkCatalogInfoAdapter = moshiLazy.get().adapter(DvachBookmarkCatalogInfo::class.java)
       val dvachThreadsFresh = responseBodyStream
         .useBufferedSource { bufferedSource -> dvachBookmarkCatalogInfoAdapter.fromJson(bufferedSource) }
 
@@ -380,7 +382,7 @@ class DvachApiV2(
     return ModularResult.Try {
       val endpoints = site.endpoints()
 
-      val dvachFilterWatchCatalogInfoAdapter = moshi.get().adapter(DvachFilterWatchCatalogInfo::class.java)
+      val dvachFilterWatchCatalogInfoAdapter = moshiLazy.get().adapter(DvachFilterWatchCatalogInfo::class.java)
       val catalogThreadPosts = responseBodyStream
         .useBufferedSource { bufferedSource -> dvachFilterWatchCatalogInfoAdapter.fromJson(bufferedSource) }
         ?.threads

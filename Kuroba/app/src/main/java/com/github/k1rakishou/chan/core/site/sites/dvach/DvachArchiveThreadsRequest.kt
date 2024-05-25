@@ -16,14 +16,14 @@ import org.jsoup.nodes.Element
 import java.util.regex.Pattern
 
 class DvachArchiveThreadsRequest(
-  private val request: Request,
-  private val proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>
+  private val proxiedOkHttpClient: RealProxiedOkHttpClient,
+  private val request: Request
 ) {
 
   suspend fun execute(): ModularResult<NativeArchivePostList> {
     return withContext(Dispatchers.IO) {
       return@withContext ModularResult.Try {
-        val htmlDocument = proxiedOkHttpClient.get().okHttpClient()
+        val htmlDocument = proxiedOkHttpClient.okHttpClient()
           .suspendConvertIntoJsoupDocument(request)
           .unwrap()
 

@@ -86,7 +86,7 @@ class ComposeBoardsController(
   }
 
   @Composable
-  override fun BoxScope.BuildContent() {
+  override fun BoxScope.Content() {
     val chanTheme = LocalChanTheme.current
     val compositionSlots = viewModel.catalogCompositionSlots
     val focusManager = LocalFocusManager.current

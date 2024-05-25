@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.core.site.sites.fuuka
 
 import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
@@ -24,7 +25,10 @@ import kotlinx.coroutines.flow.flow
 import okhttp3.HttpUrl
 import okhttp3.Request
 
-class FuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
+class FuukaActions(
+  site: CommonSite,
+  private val proxiedOkHttpClient: RealProxiedOkHttpClient
+) : CommonSite.CommonActions(site) {
 
   override suspend fun post(replyChanDescriptor: ChanDescriptor, replyMode: ReplyMode): Flow<SiteActions.PostResult> {
     return flow {
@@ -103,10 +107,10 @@ class FuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
     site.requestModifier().modifySearchGetRequest(site, requestBuilder)
 
     return FuukaSearchRequest(
-      ChanSettings.verboseLogs.get(),
-      searchParams,
-      requestBuilder.build(),
-      site.proxiedOkHttpClient.get()
+      verboseLogs = ChanSettings.verboseLogs.get(),
+      searchParams = searchParams,
+      request = requestBuilder.build(),
+      proxiedOkHttpClient = proxiedOkHttpClient
     ).execute()
   }
 

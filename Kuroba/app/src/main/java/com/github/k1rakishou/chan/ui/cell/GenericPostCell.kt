@@ -42,7 +42,6 @@ class GenericPostCell(context: Context) : FrameLayout(context), PostCellInterfac
     throw IllegalStateException("Shouldn't be called")
   }
 
-  @OptIn(ExperimentalTime::class)
   override fun setPost(postCellData: PostCellData) {
     val time = measureTime { setPostCellInternal(postCellData) }
     PostCellStatistics.onPostBound(getChildPostCell(), time)
@@ -116,7 +115,6 @@ class GenericPostCell(context: Context) : FrameLayout(context), PostCellInterfac
     return getChildPostCell()?.getThumbnailView(postImage)
   }
 
-  @OptIn(ExperimentalTime::class)
   override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
     val time = measureTime { super.onMeasure(widthMeasureSpec, heightMeasureSpec) }
     PostCellStatistics.onPostMeasured(getChildPostCell(), time)

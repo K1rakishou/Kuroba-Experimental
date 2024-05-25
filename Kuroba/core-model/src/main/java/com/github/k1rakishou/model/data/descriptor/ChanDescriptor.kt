@@ -4,6 +4,7 @@ import android.os.Parcelable
 import com.github.k1rakishou.model.entity.chan.catalog.CompositeCatalogEntity
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
+import okio.Buffer
 
 sealed class ChanDescriptor : Parcelable {
   abstract fun isThreadDescriptor(): Boolean

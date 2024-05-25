@@ -113,7 +113,7 @@ class CreateOrUpdateFilterController(
   }
 
   @Composable
-  override fun BoxScope.BuildContent() {
+  override fun BoxScope.Content() {
     Box(
       modifier = Modifier
         .widthIn(max = 600.dp)

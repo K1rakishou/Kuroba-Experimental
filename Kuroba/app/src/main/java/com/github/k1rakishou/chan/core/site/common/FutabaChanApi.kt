@@ -3,16 +3,19 @@ package com.github.k1rakishou.chan.core.site.common
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.repository.StaticHtmlColorRepository
 import com.github.k1rakishou.chan.core.site.SiteEndpoints
-import com.github.k1rakishou.chan.core.site.parser.ChanReader
+import com.github.k1rakishou.chan.core.site.parser.ChanApi
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.core.site.parser.processor.AbstractChanReaderProcessor
 import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
+import com.github.k1rakishou.chan.core.site.parser_v2.AbstractSitePostParser
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_parser.comment.HtmlParserPool
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.bookmark.StickyThread
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoObject
@@ -23,6 +26,7 @@ import com.github.k1rakishou.model.data.filter.FilterWatchCatalogInfoObject
 import com.github.k1rakishou.model.data.filter.FilterWatchCatalogThreadInfoObject
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.data.post.ChanPostHttpIcon
+import com.github.k1rakishou.model.data.post.ChanPostIcon
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.ChanPostImageBuilder
 import com.google.gson.stream.JsonReader
@@ -35,22 +39,31 @@ import java.io.InputStream
 import java.io.InputStreamReader
 import kotlin.math.max
 
-@Suppress("BlockingMethodInNonBlockingContext")
-class FutabaChanReader(
+class FutabaChanApi(
   private val archivesManager: ArchivesManager,
   private val siteManager: SiteManager,
-  private val boardManager: BoardManager
-) : ChanReader() {
+  private val boardManager: BoardManager,
+  private val parserV2: AbstractSitePostParser,
+  private val staticHtmlColorRepository: StaticHtmlColorRepository,
+  private val htmlParserPool: HtmlParserPool
+) : ChanApi() {
   private val mutex = Mutex()
+
+  @Volatile
   private var parser: PostParser? = null
 
-  override suspend fun getParser(): PostParser {
+  override suspend fun parser(): PostParser {
+    if (parser != null) {
+      return parser!!
+    }
+
     return mutex.withLock {
       if (parser == null) {
-        val commentParser = CommentParser()
+        val commentParser = CommentParser(staticHtmlColorRepository)
           .addDefaultRules()
 
         val defaultPostParser = DefaultPostParser(
+          htmlParserPool,
           commentParser,
           archivesManager
         )
@@ -61,6 +74,8 @@ class FutabaChanReader(
       return@withLock parser!!
     }
   }
+
+  override suspend fun parserV2(): AbstractSitePostParser = parserV2
 
   @Throws(Exception::class)
   override suspend fun loadThreadFresh(
@@ -233,7 +248,8 @@ class FutabaChanReader(
 
     if (countryCode != null && countryName != null) {
       val countryUrl = endpoints.icon("country", SiteEndpoints.makeArgument("country_code", countryCode))
-      builder.addHttpIcon(ChanPostHttpIcon(countryUrl, "$countryName/$countryCode"))
+      builder.deprecatedAddHttpIcon(ChanPostHttpIcon(countryUrl, "$countryName/$countryCode"))
+      builder.addHttpIcon(ChanPostIcon.CountryFlag(countryName, countryCode))
     }
 
     if (boardFlagCode != null && boardFlagName != null) {
@@ -245,12 +261,20 @@ class FutabaChanReader(
       )
 
       val countryUrl = endpoints.icon("board_flag", argument)
-      builder.addHttpIcon(ChanPostHttpIcon(countryUrl, "$boardFlagName/t_$boardFlagCode"))
+      builder.deprecatedAddHttpIcon(ChanPostHttpIcon(countryUrl, "$boardFlagName/t_$boardFlagCode"))
+      builder.addHttpIcon(
+        ChanPostIcon.CustomFlag(
+          ChanPostIcon.CustomFlag.FlagType.CustomBoardFlag,
+          boardFlagName,
+          "t_$boardFlagCode"
+        )
+      )
     }
 
     if (since4pass != 0) {
       val iconUrl = endpoints.icon("since4pass", null)
-      builder.addHttpIcon(ChanPostHttpIcon(iconUrl, since4pass.toString()))
+      builder.deprecatedAddHttpIcon(ChanPostHttpIcon(iconUrl, since4pass.toString()))
+      builder.addHttpIcon(ChanPostIcon.Since4Pass(since4pass))
     }
 
     chanReaderProcessor.addPost(builder)

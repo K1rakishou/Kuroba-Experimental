@@ -1,7 +1,7 @@
 package com.github.k1rakishou.model.source.cache.thread
 
 import com.github.k1rakishou.common.MurmurHashUtils
-import com.github.k1rakishou.common.hashSetWithCap
+import com.github.k1rakishou.common.mutableSetWithCap
 import com.github.k1rakishou.common.linkedMapWithCap
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
@@ -265,7 +265,7 @@ class ChanThreadsCache(
     val chanThread = chanThreads[threadDescriptor]
       ?: return emptySet()
 
-    val resultSet = hashSetWithCap<Long>(chanThread.postsCount)
+    val resultSet = mutableSetWithCap<Long>(chanThread.postsCount)
 
     chanThread.iteratePostsOrdered { chanPost ->
       resultSet.add(chanPost.postDescriptor.postNo)

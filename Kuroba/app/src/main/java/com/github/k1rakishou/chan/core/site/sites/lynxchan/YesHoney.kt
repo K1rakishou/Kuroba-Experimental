@@ -8,7 +8,7 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
 class YesHoney : LynxchanSite() {
-  private val siteIconLazy by lazy { SiteIcon.fromFavicon(imageLoaderDeprecated, "${domainString}/favicon.ico".toHttpUrl()) }
+  private val siteIconLazy by lazy { SiteIcon.fromFavicon(imageLoaderDeprecatedLazy, "${domainString}/favicon.ico".toHttpUrl()) }
   private val yesHoneyEndpoints = lazy { YesHoneyEndpoints(this) }
 
   override val siteDomainSetting: StringSetting? by lazy {

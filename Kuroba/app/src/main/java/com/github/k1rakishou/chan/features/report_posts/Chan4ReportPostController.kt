@@ -71,7 +71,7 @@ class Chan4ReportPostController(
   }
 
   @Composable
-  override fun BoxScope.BuildContent() {
+  override fun BoxScope.Content() {
     val reportCategoriesAsync by produceState<AsyncData<List<Chan4ReportPostControllerViewModel.ReportCategory>>>(
       initialValue = AsyncData.Loading,
       producer = {

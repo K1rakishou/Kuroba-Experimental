@@ -264,5 +264,9 @@ open class AppConstants(
     object Animations {
       const val ToolbarAnimationDurationMs = 250L
     }
+
+    object Strings {
+      const val TextSeparator = " • "
+    }
   }
 }

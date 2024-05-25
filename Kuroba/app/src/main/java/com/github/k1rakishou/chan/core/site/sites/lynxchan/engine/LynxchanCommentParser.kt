@@ -1,13 +1,16 @@
 package com.github.k1rakishou.chan.core.site.sites.lynxchan.engine
 
 import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.chan.core.repository.StaticHtmlColorRepository
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRule.tagRule
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp
 import com.github.k1rakishou.core_themes.ChanThemeColorId
 import java.util.regex.Pattern
 
-class LynxchanCommentParser : CommentParser() {
+class LynxchanCommentParser(
+  staticHtmlColorRepository: StaticHtmlColorRepository
+) : CommentParser(staticHtmlColorRepository) {
 
   init {
     val redTextFontSize = sp(ChanSettings.redTextFontSizePx())

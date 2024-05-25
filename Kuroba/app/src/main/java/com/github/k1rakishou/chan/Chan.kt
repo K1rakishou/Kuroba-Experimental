@@ -61,6 +61,7 @@ import com.github.k1rakishou.chan.utils.TimeUtils
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AndroidUtils.getApplicationLabel
 import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.common.KurobaDispatchersImpl
 import com.github.k1rakishou.common.dns.DnsOverHttpsSelector
 import com.github.k1rakishou.common.dns.DnsOverHttpsSelectorFactory
 import com.github.k1rakishou.common.dns.NormalDnsSelector
@@ -304,6 +305,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       .normalDnsSelectorFactory(normalDnsCreatorFactory)
       .dnsOverHttpsSelectorFactory(dnsOverHttpsCreatorFactory)
       .appConstants(appConstants)
+      .kurobaDispatchers(KurobaDispatchersImpl())
       .modelMainComponent(modelComponent)
       .appModule(AppModule())
       .roomDatabaseModule(RoomDatabaseModule())

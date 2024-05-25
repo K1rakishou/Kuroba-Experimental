@@ -5,7 +5,7 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteEndpoints
 import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.common.CommonSite.CommonApi
-import com.github.k1rakishou.chan.core.site.parser.ChanReader
+import com.github.k1rakishou.chan.core.site.parser.ChanApi
 import com.github.k1rakishou.chan.core.site.parser.processor.AbstractChanReaderProcessor
 import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
 import com.github.k1rakishou.common.ModularResult
@@ -21,6 +21,7 @@ import com.github.k1rakishou.model.data.filter.FilterWatchCatalogInfoObject
 import com.github.k1rakishou.model.data.filter.FilterWatchCatalogThreadInfoObject
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.data.post.ChanPostHttpIcon
+import com.github.k1rakishou.model.data.post.ChanPostIcon
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.ChanPostImageBuilder
 import com.google.gson.stream.JsonReader
@@ -196,12 +197,14 @@ class Wired7Api(
 
     if (countryCode != null && countryName != null) {
       val countryUrl = endpoints.icon("country", SiteEndpoints.makeArgument("country_code", countryCode))
-      builder.addHttpIcon(ChanPostHttpIcon(countryUrl, "$countryName/$countryCode"))
+      builder.deprecatedAddHttpIcon(ChanPostHttpIcon(countryUrl, "$countryName/$countryCode"))
+      builder.addHttpIcon(ChanPostIcon.CountryFlag(countryName, countryCode))
     }
 
     if (trollCountryCode != null && countryName != null) {
       val countryUrl = endpoints.icon("troll_country", SiteEndpoints.makeArgument("troll_country_code", trollCountryCode))
-      builder.addHttpIcon(ChanPostHttpIcon(countryUrl, "$countryName/t_$trollCountryCode"))
+      builder.deprecatedAddHttpIcon(ChanPostHttpIcon(countryUrl, "$countryName/t_$trollCountryCode"))
+      builder.addHttpIcon(ChanPostIcon.CustomFlag(ChanPostIcon.CustomFlag.FlagType.CustomCountryFlag, countryName, countryCode))
     }
 
     chanReaderProcessor.addPost(builder)
@@ -275,7 +278,7 @@ class Wired7Api(
   ): ModularResult<ThreadBookmarkInfoObject> {
     return ModularResult.Try {
       val postObjects = ArrayList<ThreadBookmarkInfoPostObject>(
-        max(expectedCapacity, ChanReader.DEFAULT_POST_LIST_CAPACITY)
+        max(expectedCapacity, ChanApi.DEFAULT_POST_LIST_CAPACITY)
       )
 
       JsonReader(InputStreamReader(responseBodyStream)).use { jsonReader ->

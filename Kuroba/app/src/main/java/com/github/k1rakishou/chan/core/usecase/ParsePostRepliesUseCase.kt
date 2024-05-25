@@ -3,7 +3,7 @@ package com.github.k1rakishou.chan.core.usecase
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.parser.ReplyParser
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.common.hashSetWithCap
+import com.github.k1rakishou.common.mutableSetWithCap
 import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.common.putIfNotContains
 import com.github.k1rakishou.core_logger.Logger
@@ -94,7 +94,7 @@ class ParsePostRepliesUseCase(
               return@forEach
             }
 
-            quoteOwnerPostsMap.putIfNotContains(extractedQuote.postId, hashSetWithCap(16))
+            quoteOwnerPostsMap.putIfNotContains(extractedQuote.postId, mutableSetWithCap(16))
 
             val tempReplyToMyPost = TempReplyToMyPost(
               simplePostObject.postNo(),
@@ -103,7 +103,7 @@ class ParsePostRepliesUseCase(
             quoteOwnerPostsMap[extractedQuote.postId]!!.add(tempReplyToMyPost)
           }
           is ReplyParser.ExtractedQuote.Quote -> {
-            quoteOwnerPostsMap.putIfNotContains(extractedQuote.postId, hashSetWithCap(16))
+            quoteOwnerPostsMap.putIfNotContains(extractedQuote.postId, mutableSetWithCap(16))
 
             val tempReplyToMyPost = TempReplyToMyPost(
               simplePostObject.postNo(),

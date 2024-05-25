@@ -92,7 +92,7 @@ class ThirdEyeSettingsController(context: Context) : BaseFloatingComposeControll
   }
 
   @Composable
-  override fun BoxScope.BuildContent() {
+  override fun BoxScope.Content() {
     val chanTheme = LocalChanTheme.current
     val focusManager = LocalFocusManager.current
     val thirdEyeSettingState = remember { ThirdEyeSettingsState() }

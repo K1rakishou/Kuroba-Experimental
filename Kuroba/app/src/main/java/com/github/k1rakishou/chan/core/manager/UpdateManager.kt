@@ -1,19 +1,3 @@
-/*
- * KurobaEx - *chan browser https://github.com/K1rakishou/Kuroba-Experimental/
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 package com.github.k1rakishou.chan.core.manager
 
 import android.Manifest
@@ -91,13 +75,24 @@ import kotlin.coroutines.CoroutineContext
  */ 
 class UpdateManager(
   private val context: Context,
-  private val cacheHandler: Lazy<CacheHandler>,
-  private val fileManager: Lazy<FileManager>,
   private val settingsNotificationManager: SettingsNotificationManager,
-  private val fileChooser: Lazy<FileChooser>,
-  private val proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>,
-  private val dialogFactory: Lazy<DialogFactory>
+  private val cacheHandlerLazy: Lazy<CacheHandler>,
+  private val fileManagerLazy: Lazy<FileManager>,
+  private val fileChooserLazy: Lazy<FileChooser>,
+  private val proxiedOkHttpClientLazy: Lazy<RealProxiedOkHttpClient>,
+  private val dialogFactoryLazy: Lazy<DialogFactory>
 ) : CoroutineScope {
+  private val cacheHandler: CacheHandler
+    get() = cacheHandlerLazy.get()
+  private val fileManager: FileManager
+    get() = fileManagerLazy.get()
+  private val fileChooser: FileChooser
+    get() = fileChooserLazy.get()
+  private val proxiedOkHttpClient: RealProxiedOkHttpClient
+    get() = proxiedOkHttpClientLazy.get()
+  private val dialogFactory: DialogFactory
+    get() = dialogFactoryLazy.get()
+
   private var updateDownloadDialog: ProgressDialog? = null
 
   private val job = SupervisorJob()
@@ -293,7 +288,7 @@ class UpdateManager(
       cancelApkUpdateNotification()
 
       if (manual) {
-        dialogFactory.get().createSimpleInformationDialog(
+        dialogFactory.createSimpleInformationDialog(
           context = context,
           titleText = getString(R.string.update_none, getApplicationLabel()),
         )
@@ -316,7 +311,7 @@ class UpdateManager(
       val dialogTitle = getApplicationLabel().toString() + " " +
         responseRelease.versionCodeString + " available"
 
-      dialogFactory.get().createSimpleConfirmationDialog(
+      dialogFactory.createSimpleConfirmationDialog(
         context = context,
         titleText = dialogTitle,
         descriptionText = updateMessage,
@@ -377,7 +372,7 @@ class UpdateManager(
         .parseAsHtml()
     }
 
-    dialogFactory.get().createSimpleInformationDialog(
+    dialogFactory.createSimpleInformationDialog(
       context = context,
       titleText = getString(R.string.update_already_updated),
       descriptionText = text
@@ -416,7 +411,7 @@ class UpdateManager(
     Logger.e(TAG, "Failed to process $buildTag API call for updating")
 
     if (manual && BackgroundUtils.isInForeground()) {
-      dialogFactory.get().createSimpleInformationDialog(
+      dialogFactory.createSimpleInformationDialog(
         context = context,
         titleText = getString(R.string.update_check_failed),
         descriptionText = getString(
@@ -452,16 +447,16 @@ class UpdateManager(
       setProgressNumberFormat("")
 
       show()
-      dialogFactory.get().applyColorsToDialog(this)
+      dialogFactory.applyColorsToDialog(this)
     }
 
     val apkUrl = responseRelease.apkURL.toString()
-    cacheHandler.get().deleteCacheFileByUrl(cacheFileType, apkUrl)
+    cacheHandler.deleteCacheFileByUrl(cacheFileType, apkUrl)
 
-    val apkFile = cacheHandler.get().createTemptFile()
+    val apkFile = cacheHandler.createTemptFile()
     val request = Request.Builder().url(apkUrl).get().build()
 
-    val downloadFileResult = proxiedOkHttpClient.get().okHttpClient().downloadIntoFile(
+    val downloadFileResult = proxiedOkHttpClient.okHttpClient().downloadIntoFile(
       request = request,
       outputFile = apkFile,
       onProgress = { percent ->
@@ -487,7 +482,7 @@ class UpdateManager(
           exception.message
         )
 
-        dialogFactory.get().createSimpleInformationDialog(
+        dialogFactory.createSimpleInformationDialog(
           context = context,
           titleText = getString(R.string.update_install_download_failed),
           descriptionText = description
@@ -516,7 +511,7 @@ class UpdateManager(
       return
     }
 
-    dialogFactory.get().createSimpleConfirmationDialog(
+    dialogFactory.createSimpleConfirmationDialog(
       context = context,
       titleTextId = R.string.update_manager_copy_apk_title,
       descriptionTextId = R.string.update_manager_copy_apk_message,
@@ -524,7 +519,7 @@ class UpdateManager(
       onNegativeButtonClickListener = { onDone.invoke() },
       positiveButtonText = getString(R.string.yes),
       onPositiveButtonClickListener = {
-        fileChooser.get().openCreateFileDialog(fileName, object : FileCreateCallback() {
+        fileChooser.openCreateFileDialog(fileName, object : FileCreateCallback() {
           override fun onResult(uri: Uri) {
             onApkFilePathSelected(file, uri)
             onDone.invoke()
@@ -541,7 +536,7 @@ class UpdateManager(
   }
 
   private fun onApkFilePathSelected(downloadedFile: File, uri: Uri) {
-    val newApkFile = fileManager.get().fromUri(uri)
+    val newApkFile = fileManager.fromUri(uri)
     if (newApkFile == null) {
       val message = getString(R.string.update_manager_could_not_convert_uri, uri.toString())
       showToast(context, message)
@@ -558,7 +553,7 @@ class UpdateManager(
       return
     }
 
-    if (!fileManager.get().exists(newApkFile)) {
+    if (!fileManager.exists(newApkFile)) {
       val message = getString(
         R.string.update_manager_output_file_does_not_exist,
         newApkFile.toString()
@@ -568,9 +563,9 @@ class UpdateManager(
       return
     }
 
-    val downloadedFileRaw = fileManager.get().fromRawFile(downloadedFile)
+    val downloadedFileRaw = fileManager.fromRawFile(downloadedFile)
 
-    if (!fileManager.get().copyFileContents(downloadedFileRaw, newApkFile)) {
+    if (!fileManager.copyFileContents(downloadedFileRaw, newApkFile)) {
       val message = getString(
         R.string.update_manager_could_not_copy_apk,
         downloadedFileRaw.getFullPath(),
@@ -594,7 +589,7 @@ class UpdateManager(
     cancelApkUpdateNotification()
 
     // First open the dialog that asks to retry and calls this method again.
-    dialogFactory.get().createSimpleConfirmationDialog(
+    dialogFactory.createSimpleConfirmationDialog(
       context = context,
       titleTextId = R.string.update_retry_title,
       descriptionText = getString(R.string.update_retry, getApplicationLabel()),
@@ -650,7 +645,7 @@ class UpdateManager(
 
       Logger.e(TAG, "installApk(${apkFile.absolutePath}) error", error)
 
-      dialogFactory.get().createSimpleInformationDialog(
+      dialogFactory.createSimpleInformationDialog(
         context = context,
         titleText = getString(R.string.update_failed_to_install),
         descriptionText = getString(R.string.update_failed_to_install_description, error.errorMessageOrClassName())

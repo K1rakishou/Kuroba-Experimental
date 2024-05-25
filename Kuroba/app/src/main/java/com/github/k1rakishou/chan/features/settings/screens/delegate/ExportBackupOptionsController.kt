@@ -39,7 +39,7 @@ class ExportBackupOptionsController(
   }
 
   @Composable
-  override fun BoxScope.BuildContent() {
+  override fun BoxScope.Content() {
     KurobaComposeCard(
       modifier = Modifier
         .align(Alignment.Center)

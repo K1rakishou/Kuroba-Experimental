@@ -99,7 +99,7 @@ class ThreadDownloaderPersistPostsInDatabaseUseCase(
     val body = response.body
       ?: throw EmptyBodyResponseException()
 
-    val chanReader = site.chanReader()
+    val chanReader = site.chanApi()
 
     val chanReaderProcessor = body.byteStream().use { inputStream ->
       return@use chanThreadLoaderCoordinator.get().readPostsFromResponse(
@@ -110,12 +110,14 @@ class ThreadDownloaderPersistPostsInDatabaseUseCase(
         chanReadOptions = ChanReadOptions.default(),
         chanLoadOptions = ChanLoadOptions.retainAll(),
         chanReaderProcessorOptions = ChanReaderProcessor.Options(isDownloadingThread = true),
-        chanReader = chanReader
+        chanApi = chanReader
       ).unwrap()
     }
 
-    val postParser = chanReader.getParser()
+    val postParser = chanReader.parser()
       ?: throw NullPointerException("PostParser cannot be null!")
+
+    // TODO: compose post cells. parserV2
 
     val parsingResult = parsePostsV1UseCase.parseNewPostsPosts(
       chanDescriptor = threadDescriptor,

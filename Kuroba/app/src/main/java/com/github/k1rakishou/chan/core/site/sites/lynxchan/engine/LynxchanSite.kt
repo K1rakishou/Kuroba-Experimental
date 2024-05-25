@@ -90,10 +90,10 @@ abstract class LynxchanSite : CommonSite() {
     setLazyResolvable(urlHandler)
     setConfig(LynxchanConfig())
     setEndpointsLazy(endpoints)
-    setActions(LynxchanActions(replyManager, moshi, httpCallManager, _lynxchanGetBoardsUseCase, this))
+    setActions(LynxchanActions(replyManager, moshi, httpCallManager, _lynxchanGetBoardsUseCase.get(), this))
     setRequestModifier(LynxchanRequestModifier(this, appConstants) as SiteRequestModifier<Site>)
     setApi(LynxchanApi(_moshi, _siteManager, _boardManager, this))
-    setParser(LynxchanCommentParser())
+    setParser(LynxchanCommentParser(staticHtmlColorRepository))
 
     setPostingLimitationInfo(
       postingLimitationInfoLazy = lazy {
@@ -115,7 +115,11 @@ abstract class LynxchanSite : CommonSite() {
   }
 
   override fun setParser(commentParser: CommentParser) {
-    postParser = LynxchanPostParser(commentParser as LynxchanCommentParser, archivesManager)
+    postParser = LynxchanPostParser(
+      htmlParserPool = htmlParserPool,
+      commentParser = commentParser as LynxchanCommentParser,
+      archivesManager = archivesManager
+    )
   }
 
   override fun commentParserType(): CommentParserType = CommentParserType.LynxchanParser

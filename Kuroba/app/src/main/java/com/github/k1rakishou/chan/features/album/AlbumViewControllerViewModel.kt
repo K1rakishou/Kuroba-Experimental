@@ -443,7 +443,7 @@ class AlbumViewControllerViewModel(
       null -> ""
     }
     val toolbarSubTitle = appResources.quantityString(
-      R.plurals.image,
+      R.plurals.image_with_number,
       newAlbumItems.size,
       newAlbumItems.size
     )

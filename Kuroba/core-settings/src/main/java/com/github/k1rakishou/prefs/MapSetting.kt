@@ -12,7 +12,7 @@ import com.squareup.moshi.Moshi
 import dagger.Lazy
 
 class MapSetting(
-  private val _moshi: Lazy<Moshi>,
+  private val moshiLazy: Lazy<Moshi>,
   private val mapperTo: (KeyValue) -> MapSettingEntry,
   private val mapperFrom: (MapSettingEntry) -> KeyValue,
   settingProvider: SettingProvider,
@@ -21,7 +21,7 @@ class MapSetting(
 ) : Setting<Map<String, String>>(settingProvider, key, def) {
 
   private val moshi: Moshi
-    get() = _moshi.get()
+    get() = moshiLazy.get()
 
   @Volatile
   @GuardedBy("this")

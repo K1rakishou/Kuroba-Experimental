@@ -1,19 +1,3 @@
-/*
- * KurobaEx - *chan browser https://github.com/K1rakishou/Kuroba-Experimental/
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 package com.github.k1rakishou.chan.core.site.sites.chan4
 
 import android.text.SpannableStringBuilder
@@ -70,9 +54,9 @@ class Chan4ReplyCall(
   site: Site,
   replyChanDescriptor: ChanDescriptor,
   val replyMode: ReplyMode,
-  private val replyManager: Lazy<ReplyManager>,
-  private val boardFlagInfoRepository: Lazy<BoardFlagInfoRepository>,
-  private val appConstants: AppConstants
+  private val replyManagerLazy: Lazy<ReplyManager>,
+  private val boardFlagInfoRepositoryLazy: Lazy<BoardFlagInfoRepository>,
+  private val appConstantsLazy: Lazy<AppConstants>
 ) : CommonReplyHttpCall(site, replyChanDescriptor) {
 
   @get:Synchronized
@@ -89,11 +73,11 @@ class Chan4ReplyCall(
       "replyChanDescriptor == null"
     )
 
-    if (!replyManager.get().containsReply(chanDescriptor)) {
+    if (!replyManagerLazy.get().containsReply(chanDescriptor)) {
       throw IOException("No reply found for chanDescriptor=$chanDescriptor")
     }
 
-    replyManager.get().readReply(chanDescriptor) { reply ->
+    replyManagerLazy.get().readReply(chanDescriptor) { reply ->
       formBuilder.addFormDataPart("mode", "regist")
       formBuilder.addFormDataPart("pwd", replyResponse.password)
 
@@ -135,7 +119,7 @@ class Chan4ReplyCall(
         if (reply.flag.isNotEmpty()) {
           formBuilder.addFormDataPart("flag", reply.flag)
         } else {
-          val lastUsedFlag = boardFlagInfoRepository.get()
+          val lastUsedFlag = boardFlagInfoRepositoryLazy.get()
             .getLastUsedFlagKey(replyChanDescriptor.boardDescriptor())
 
           if (lastUsedFlag.isNotNullNorEmpty()) {
@@ -168,7 +152,7 @@ class Chan4ReplyCall(
     val replyUrl = site.endpoints().reply(replyChanDescriptor)
 
     requestBuilder.addHeader("Host", "sys.4chan.org")
-    requestBuilder.addHeader("User-Agent", appConstants.userAgent)
+    requestBuilder.addHeader("User-Agent", appConstantsLazy.get().userAgent)
     requestBuilder.addHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
     requestBuilder.addHeader("Accept-Language", "en-US,en;q=0.5")
     requestBuilder.addHeader("Accept-Encoding", "gzip")

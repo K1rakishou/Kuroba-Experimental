@@ -29,11 +29,12 @@ object ChanPostMapper {
         .name(chanPost.name)
         .comment(chanPost.postComment.originalUnparsedComment)
         .tripcode(chanPost.tripcode)
-        .setUnixTimestampSeconds(chanPost.timestamp)
+        .setUnixTimestampSeconds(chanPost.timestampInSeconds)
         .postImages(chanPost.postImages, postDescriptor)
         .posterId(chanPost.posterId)
         .posterIdColor(chanPost.posterIdColor)
         .moderatorCapcode(chanPost.moderatorCapcode)
+        .deprecatedHttpIcons(chanPost.deprecatedPostIcons)
         .httpIcons(chanPost.postIcons)
         .isSavedReply(chanPost.isSavedReply)
         .postLinkables(chanPost.postComment.getAllLinkables())
@@ -50,11 +51,12 @@ object ChanPostMapper {
         .name(chanPost.name)
         .comment(chanPost.postComment.originalUnparsedComment)
         .tripcode(chanPost.tripcode)
-        .setUnixTimestampSeconds(chanPost.timestamp)
+        .setUnixTimestampSeconds(chanPost.timestampInSeconds)
         .postImages(chanPost.postImages, postDescriptor)
         .posterId(chanPost.posterId)
         .posterIdColor(chanPost.posterIdColor)
         .moderatorCapcode(chanPost.moderatorCapcode)
+        .deprecatedHttpIcons(chanPost.deprecatedPostIcons)
         .httpIcons(chanPost.postIcons)
         .isSavedReply(chanPost.isSavedReply)
         .postLinkables(chanPost.postComment.getAllLinkables())
@@ -77,7 +79,8 @@ object ChanPostMapper {
         chanPostId = 0L,
         postDescriptor = postDescriptor,
         postImages = chanPostBuilder.postImages,
-        postIcons = chanPostBuilder.httpIcons,
+        deprecatedPostIcons = chanPostBuilder.deprecatedHttpIcons,
+        postIcons = chanPostBuilder.chanPostIcons,
         repliesTo = chanPostBuilder.repliesToIds,
         catalogRepliesCount = chanPostBuilder.totalRepliesCount,
         catalogImagesCount = chanPostBuilder.threadImagesCount,
@@ -104,9 +107,10 @@ object ChanPostMapper {
         chanPostId = 0L,
         postDescriptor = postDescriptor,
         _postImages = chanPostBuilder.postImages.toMutableList(),
-        postIcons = chanPostBuilder.httpIcons,
+        deprecatedPostIcons = chanPostBuilder.deprecatedHttpIcons,
+        postIcons = chanPostBuilder.chanPostIcons,
         repliesTo = chanPostBuilder.repliesToIds,
-        timestamp = chanPostBuilder.unixTimestampSeconds,
+        timestampInSeconds = chanPostBuilder.unixTimestampSeconds,
         name = chanPostBuilder.name,
         postComment = postComment,
         subject = chanPostBuilder.subject,

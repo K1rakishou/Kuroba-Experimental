@@ -42,17 +42,20 @@ public class ChanPostBuilder {
     public long unixTimestampSeconds = -1L;
     @NonNull
     public List<ChanPostImage> postImages = new ArrayList<>();
+    @Deprecated
     @NonNull
-    public List<ChanPostHttpIcon> httpIcons = new ArrayList<>();
+    public List<ChanPostHttpIcon> deprecatedHttpIcons = new ArrayList<>();
+    @NonNull
+    public List<ChanPostIcon> chanPostIcons = new ArrayList<>();
     public String posterId = "";
     public String moderatorCapcode = "";
     public int idColor = 0;
     public boolean isSavedReply;
     public Set<PostDescriptor> repliesToIds = new HashSet<>();
     @Nullable
-    public CharSequence tripcode;
+    public String tripcode;
     @Nullable
-    public CharSequence subject;
+    public String subject;
     private PostDescriptor postDescriptor;
 
     private final Lazy<MurmurHashUtils.Murmur3Hash> postHash = LazyKt.lazy(
@@ -89,7 +92,8 @@ public class ChanPostBuilder {
         this.postDescriptor = other.postDescriptor;
 
         this.postImages.addAll(other.postImages);
-        this.httpIcons.addAll(other.httpIcons);
+        this.deprecatedHttpIcons.addAll(other.deprecatedHttpIcons);
+        this.chanPostIcons.addAll(other.chanPostIcons);
         this.repliesToIds.addAll(other.repliesToIds);
     }
 
@@ -232,7 +236,7 @@ public class ChanPostBuilder {
         return this;
     }
 
-    public ChanPostBuilder subject(CharSequence subject) {
+    public ChanPostBuilder subject(String subject) {
         this.subject = subject;
         return this;
     }
@@ -252,7 +256,7 @@ public class ChanPostBuilder {
         return this;
     }
 
-    public ChanPostBuilder tripcode(@Nullable CharSequence tripcode) {
+    public ChanPostBuilder tripcode(@Nullable String tripcode) {
         this.tripcode = tripcode;
         return this;
     }
@@ -306,14 +310,25 @@ public class ChanPostBuilder {
         return this;
     }
 
-    public ChanPostBuilder addHttpIcon(ChanPostHttpIcon httpIcon) {
-        httpIcons.add(httpIcon);
+    public ChanPostBuilder deprecatedAddHttpIcon(ChanPostHttpIcon httpIcon) {
+        deprecatedHttpIcons.add(httpIcon);
         return this;
     }
 
-    public ChanPostBuilder httpIcons(List<ChanPostHttpIcon> httpIcons) {
-        this.httpIcons.clear();
-        this.httpIcons.addAll(httpIcons);
+    public ChanPostBuilder deprecatedHttpIcons(List<ChanPostHttpIcon> httpIcons) {
+        this.deprecatedHttpIcons.clear();
+        this.deprecatedHttpIcons.addAll(httpIcons);
+        return this;
+    }
+
+    public ChanPostBuilder addHttpIcon(ChanPostIcon httpIcon) {
+        chanPostIcons.add(httpIcon);
+        return this;
+    }
+
+    public ChanPostBuilder httpIcons(List<ChanPostIcon> httpIcons) {
+        this.chanPostIcons.clear();
+        this.chanPostIcons.addAll(httpIcons);
         return this;
     }
 

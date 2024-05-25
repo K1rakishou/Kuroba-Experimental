@@ -32,6 +32,7 @@ import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2Service
 import com.github.k1rakishou.chan.features.posting.PostingService
 import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadingWorker
 import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.common.KurobaDispatchers
 import com.github.k1rakishou.common.dns.DnsOverHttpsSelectorFactory
 import com.github.k1rakishou.common.dns.NormalDnsSelectorFactory
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -101,6 +102,8 @@ interface ApplicationComponent : ApplicationDependencies {
     fun dnsOverHttpsSelectorFactory(dnsOverHttpsSelectorFactory: DnsOverHttpsSelectorFactory): Builder
     @BindsInstance
     fun appConstants(appConstants: AppConstants): Builder
+    @BindsInstance
+    fun kurobaDispatchers(kurobaDispatchers: KurobaDispatchers): Builder
     @BindsInstance
     fun modelMainComponent(modelComponent: ModelComponent): Builder
     @BindsInstance

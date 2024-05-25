@@ -1,11 +1,11 @@
 package com.github.k1rakishou.chan.core.helper
 
 import androidx.annotation.VisibleForTesting
-import com.github.k1rakishou.chan.core.manager.IPostFilterManager
-import com.github.k1rakishou.chan.core.manager.IPostHideManager
+import com.github.k1rakishou.chan.core.manager.PostFilterManager
+import com.github.k1rakishou.chan.core.manager.PostHideManager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.common.hashSetWithCap
+import com.github.k1rakishou.common.mutableSetWithCap
 import com.github.k1rakishou.common.linkedMapWithCap
 import com.github.k1rakishou.common.mutableIteration
 import com.github.k1rakishou.core_logger.Logger
@@ -20,8 +20,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class PostHideHelper(
-  private val postHideManager: IPostHideManager,
-  private val postFilterManager: IPostFilterManager,
+  private val postHideManager: PostHideManager,
+  private val postFilterManager: PostFilterManager,
   private val chanLoadProgressNotifier: ChanLoadProgressNotifier
 ) {
 
@@ -192,7 +192,7 @@ class PostHideHelper(
     }
 
     if (!processingCatalog) {
-      val alreadyVisited = hashSetWithCap<PostDescriptor>(64)
+      val alreadyVisited = mutableSetWithCap<PostDescriptor>(64)
 
       // Second pass, process the reply chains (Do not do this in the catalogs)
       for ((index, chanPostWithFilterResult) in resultMap.values.withIndex()) {

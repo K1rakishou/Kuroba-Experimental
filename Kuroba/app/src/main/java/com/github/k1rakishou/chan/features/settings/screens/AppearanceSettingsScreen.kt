@@ -97,7 +97,7 @@ class AppearanceSettingsScreen(
               else -> throw IllegalArgumentException("Bad font size: $fontSize")
             }
           },
-          setting = ChanSettings.fontSize,
+          setting = ChanSettings.globalFontSize,
           requiresUiRefresh = true
         )
 

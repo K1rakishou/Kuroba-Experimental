@@ -42,9 +42,10 @@ import kotlin.math.sqrt
 
 @Composable
 fun rememberShimmerState(
+  mainShimmerColor: Color,
   rotation: Float = 15f,
   cornerRadius: Dp = 0.dp,
-  mainShimmerColor: Color
+  durationMillis: Int = 1000
 ): ShimmerState {
   val cornerRadiusPx = with(LocalDensity.current) {
     remember(key1 = cornerRadius) { cornerRadius.toPx()  }
@@ -54,7 +55,8 @@ fun rememberShimmerState(
     ShimmerState(
       rotation = rotation,
       mainShimmerColor = mainShimmerColor,
-      cornerRadiusPx = cornerRadiusPx
+      cornerRadiusPx = cornerRadiusPx,
+      durationMillis = durationMillis
     )
   }
 }
@@ -109,7 +111,8 @@ private fun calculateSecondaryShimmerColor(mainShimmerColor: Color): Color {
 class ShimmerState(
   val rotation: Float,
   val mainShimmerColor: Color,
-  val cornerRadiusPx: Float
+  val cornerRadiusPx: Float,
+  val durationMillis: Int
 ) {
   private val animatedState = Animatable(0f)
   private val transformationMatrix = android.graphics.Matrix()
@@ -120,14 +123,14 @@ class ShimmerState(
 
   private val animationSpec = infiniteRepeatable<Float>(
     animation = tween(
-      1000,
+      durationMillis = durationMillis,
       easing = LinearEasing,
     ),
     repeatMode = RepeatMode.Restart,
   )
 
   private val rectF = RectF()
-  private val backgroundPaint by lazy {
+  private val backgroundPaint by lazy(LazyThreadSafetyMode.NONE) {
     android.graphics.Paint().apply {
       isAntiAlias = true
       style = android.graphics.Paint.Style.FILL
@@ -156,7 +159,10 @@ class ShimmerState(
   private fun Float.toRadian(): Float = (this.toDouble() / 180.0 * Math.PI).toFloat()
 
   suspend fun start(maxWidth: Float, maxHeight: Float, secondaryShimmerColor: Color) {
-    animatedState.snapTo(0f)
+    require(durationMillis > 0) { "Bad durationMillis: ${durationMillis}" }
+
+    val initialValue = (System.currentTimeMillis() % durationMillis).toFloat() / durationMillis.toFloat()
+    animatedState.snapTo(initialValue)
 
     pivotPoint = -Offset(0f, 0f) + Rect(0f, 0f, maxWidth, maxHeight).center
 

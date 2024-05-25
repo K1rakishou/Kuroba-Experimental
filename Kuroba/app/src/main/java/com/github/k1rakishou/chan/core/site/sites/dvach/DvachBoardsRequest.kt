@@ -1,19 +1,3 @@
-/*
- * KurobaEx - *chan browser https://github.com/K1rakishou/Kuroba-Experimental/
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 package com.github.k1rakishou.chan.core.site.sites.dvach
 
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
@@ -39,8 +23,8 @@ import java.nio.charset.StandardCharsets
 
 class DvachBoardsRequest internal constructor(
   private val siteDescriptor: SiteDescriptor,
-  private val boardManager: BoardManager,
-  private val proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>,
+  private val boardManagerLazy: Lazy<BoardManager>,
+  private val proxiedOkHttpClientLazy: Lazy<RealProxiedOkHttpClient>,
   private val boardsRequestUrl: HttpUrl
 ) {
 
@@ -62,7 +46,7 @@ class DvachBoardsRequest internal constructor(
       .get()
       .build()
 
-    val response = proxiedOkHttpClient.get().okHttpClient().suspendCall(request)
+    val response = proxiedOkHttpClientLazy.get().okHttpClient().suspendCall(request)
     if (!response.isSuccessful) {
       throw DvachBoardsRequestException.ServerErrorException(response.code)
     }
@@ -144,7 +128,7 @@ class DvachBoardsRequest internal constructor(
       return null
     }
 
-    return board.toChanBoard(boardManager.byBoardDescriptor(board.boardDescriptor()))
+    return board.toChanBoard(boardManagerLazy.get().byBoardDescriptor(board.boardDescriptor()))
   }
 
   private sealed class DvachBoardsRequestException(

@@ -22,16 +22,14 @@ import kotlinx.coroutines.flow.map
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
 open class LynxchanActions(
-  private val replyManager: Lazy<ReplyManager>,
-  private val moshi: Lazy<Moshi>,
-  private val httpCallManager: Lazy<HttpCallManager>,
-  private val lynxchanGetBoardsUseCaseLazy: Lazy<LynxchanGetBoardsUseCase>,
+  private val replyManager: ReplyManager,
+  private val moshi: Moshi,
+  private val httpCallManager: HttpCallManager,
+  private val lynxchanGetBoardsUseCase: LynxchanGetBoardsUseCase,
   site: LynxchanSite
 ) : CommonSite.CommonActions(site) {
   private val lynxchanSite: LynxchanSite
     get() = site as LynxchanSite
-  private val lynxchanGetBoardsUseCase: LynxchanGetBoardsUseCase
-    get() = lynxchanGetBoardsUseCaseLazy.get()
 
   override suspend fun boards(): ModularResult<SiteBoards> {
     val getBoardsEndpoint = site.endpoints().boards()
@@ -62,7 +60,7 @@ open class LynxchanActions(
       moshi = moshi,
     )
 
-    return httpCallManager.get().makePostHttpCallWithProgress(replyCall, replyChanDescriptor)
+    return httpCallManager.makePostHttpCallWithProgress(replyCall, replyChanDescriptor)
       .map { replyCallResult ->
         when (replyCallResult) {
           is HttpCall.HttpCallWithProgressResult.Success -> {

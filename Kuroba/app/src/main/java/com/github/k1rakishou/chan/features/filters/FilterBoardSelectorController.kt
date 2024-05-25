@@ -91,7 +91,7 @@ class FilterBoardSelectorController(
   }
 
   @Composable
-  override fun BoxScope.BuildContent() {
+  override fun BoxScope.Content() {
     val chanTheme = LocalChanTheme.current
 
     val searchState = rememberSimpleSearchStateV2<FilterBoardSelectorControllerViewModel.CellData>(
