@@ -113,16 +113,7 @@ class CalculateParsedPostDataUseCaseImpl(
       val isPostMarkedAsMine = markedPostManager.getMarkedPosts(postDescriptor)
         .any { markedPost -> markedPost.markedPostType == MarkedPostType.MyPost }
 
-      val isReplyToPostMarkedAsMine = kotlin.run {
-        return@run markedPostManager.getManyMarkedPosts(repliesTo)
-          .takeIf { map -> map.isNotEmpty() }
-          ?.any { (_, markedPosts) ->
-            markedPosts.takeIf { posts -> posts.isNotEmpty() }
-              ?.any { markedPost -> markedPost.markedPostType == MarkedPostType.MyPost }
-              ?: false
-          }
-          ?: false
-      }
+      val isReplyToPostMarkedAsMine = isReplyToPostMarkedAsMine(repliesTo)
 
       return ParsedPostDataRaw(
         parsedPostParts = textParts,
@@ -509,6 +500,16 @@ class CalculateParsedPostDataUseCaseImpl(
         }
       }
     )
+  }
+
+  private suspend fun isReplyToPostMarkedAsMine(repliesTo: Set<PostDescriptor>): Boolean {
+    return markedPostManager.getManyMarkedPosts(repliesTo)
+      .takeIf { map -> map.isNotEmpty() }
+      ?.any { (_, markedPosts) ->
+        markedPosts.takeIf { posts -> posts.isNotEmpty() }
+          ?.any { markedPost -> markedPost.markedPostType == MarkedPostType.MyPost }
+          ?: false
+      } ?: false
   }
 
   private fun calculatePosterIdTextColor(

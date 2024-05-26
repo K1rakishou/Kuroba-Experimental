@@ -12,28 +12,10 @@ data class ParsedPostDataContext(
   val isParsingCatalog: Boolean,
   val postViewMode: PostViewMode,
   val postCommentFontSizePixels: Int,
-  val revealFullPostComment: Boolean = false,
   val revealedSpoilers: ImmutableSet<RevealedSpoiler> = persistentSetOf(),
   val boldPostDescriptor: PostDescriptor? = null
 ) {
   val isParsingThread: Boolean = !isParsingCatalog
-
-  fun maxPostCommentLength(): Int {
-    if (revealFullPostComment) {
-      return Int.MAX_VALUE
-    }
-
-    if (isParsingCatalog) {
-      return when (postViewMode) {
-        PostViewMode.List -> 200
-        PostViewMode.Grid -> Int.MAX_VALUE
-        PostViewMode.StaggeredGrid -> Int.MAX_VALUE
-      }
-    }
-
-    return Int.MAX_VALUE
-  }
-
 }
 
 @Immutable

@@ -14,13 +14,10 @@ import com.github.k1rakishou.chan.core.parser.MarkedPost
 import com.github.k1rakishou.chan.core.parser.MarkedPostType
 import com.github.k1rakishou.chan.core.parser.ParsedPostDataContext
 import com.github.k1rakishou.chan.core.parser.RevealedSpoiler
-import com.github.k1rakishou.chan.core.parser.PostViewMode
 import com.github.k1rakishou.chan.core.parser.TextPart
 import com.github.k1rakishou.chan.core.parser.TextPartSpan
 import com.github.k1rakishou.chan.utils.buildAnnotatedString
 import com.github.k1rakishou.chan.utils.createAnnotationItem
-import com.github.k1rakishou.common.errorMessageOrClassName
-import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
@@ -55,7 +52,7 @@ class PostCommentApplierImpl(
       var totalLength = 0
 
       for (textPart in textParts) {
-        val (text, overflowHappened) = processTextPart(
+        val text = processTextPart(
           postDescriptor = postDescriptor,
           markedPosts = markedPosts,
           chanTheme = chanTheme,
@@ -66,10 +63,6 @@ class PostCommentApplierImpl(
 
         append(text)
         totalLength += text.length
-
-        if (overflowHappened) {
-          break
-        }
       }
     }
   }
@@ -81,9 +74,7 @@ class PostCommentApplierImpl(
     textPart: TextPart,
     parsedPostDataContext: ParsedPostDataContext,
     totalLength: Int,
-  ): Pair<AnnotatedString, Boolean> {
-    var overflowHappened = false
-
+  ): AnnotatedString {
     // TODO: compose post cells.
 //    val appliedDataResult = postBindProcessorCoordinator.applyData(
 //      textPart = textPart,
@@ -95,14 +86,6 @@ class PostCommentApplierImpl(
     val resultString = buildAnnotatedString(capacity = textPart.text.length) {
       pushStyle(style = SpanStyle(fontSize = parsedPostDataContext.postCommentFontSizePixels.sp))
 
-      val (textPartText, overflow) = trimTextPartIfNeeded(
-        totalLength = totalLength,
-        textPart = textPart,
-        parsedPostDataContext = parsedPostDataContext
-      )
-
-      overflowHappened = overflow
-
       try {
         // TODO: compose post cells.
 //        val innerAnnotatedString = buildAnnotatedString(capacity = textPartText.length) {
@@ -110,7 +93,7 @@ class PostCommentApplierImpl(
 //        }
 //        append(innerAnnotatedString)
 
-        append(textPartText)
+        append(textPart.text)
       } catch (error: Throwable) {
         // TODO: compose post cells.
 //        if (androidHelpers.isDevFlavor()) {
@@ -122,7 +105,7 @@ class PostCommentApplierImpl(
 //            "textPartText: ${textPartText}, appliedDataResult: ${appliedDataResult}"
 //        }
 
-        append(textPartText)
+        append(textPart.text)
       }
 
       if (textPart.spans.isNotEmpty()) {
@@ -135,14 +118,9 @@ class PostCommentApplierImpl(
           totalLength = totalLength
         )
       }
-
-      if (overflow) {
-        append("\n")
-        append(buildClickToViewFullSpan(parsedPostDataContext.postCommentFontSizePixels, chanTheme))
-      }
     }
 
-    return resultString to overflowHappened
+    return resultString
   }
 
   private fun AnnotatedString.Builder.processTextPartSpans(
@@ -381,61 +359,6 @@ class PostCommentApplierImpl(
     return textDecoration
   }
 
-  private fun trimTextPartIfNeeded(
-    totalLength: Int,
-    textPart: TextPart,
-    parsedPostDataContext: ParsedPostDataContext
-  ): Pair<String, Boolean> {
-    val maxLength = parsedPostDataContext.maxPostCommentLength()
-    if (maxLength == Int.MAX_VALUE || parsedPostDataContext.isParsingThread) {
-      return textPart.text to false
-    }
-
-    if (totalLength + textPart.text.length <= maxLength) {
-      return textPart.text to false
-    }
-
-    val count = (totalLength + textPart.text.length)
-      .coerceAtMost(maxLength)
-
-    val resultText = buildString(capacity = count + ELLIPSIZE.length) {
-      append(textPart.text.take(count))
-      append(ELLIPSIZE)
-    }
-
-    return when (parsedPostDataContext.postViewMode) {
-      PostViewMode.List -> resultText to true
-      PostViewMode.Grid,
-      PostViewMode.StaggeredGrid -> resultText to false
-    }
-  }
-
-  private fun buildClickToViewFullSpan(
-    defaultPostCommentFontSize: Int,
-    chanTheme: ChanTheme
-  ) : AnnotatedString {
-    return buildAnnotatedString(capacity = CLICK_TO_EXPAND.length) {
-      append(CLICK_TO_EXPAND)
-
-      addStyle(
-        style = SpanStyle(
-          color = chanTheme.postLinkColorCompose,
-          fontSize = defaultPostCommentFontSize.sp,
-          textDecoration = TextDecoration.Underline
-        ),
-        start = 0,
-        end = length
-      )
-
-      addStringAnnotation(
-        tag = ANNOTATION_CLICK_TO_VIEW_FULL_COMMENT_TAG,
-        annotation = "",
-        start = 0,
-        end = length
-      )
-    }
-  }
-
   private fun matchesOpenedSpoilerPosition(
     startPos: Int,
     endPos: Int,
@@ -458,11 +381,9 @@ class PostCommentApplierImpl(
   companion object {
     private const val TAG = "PostCommentApplier"
     private const val ELLIPSIZE = "..."
-    private const val CLICK_TO_EXPAND = "[Click to expand]"
 
     private const val SEARCH_QUERY_SPAN = "search_query_span"
 
-    const val ANNOTATION_CLICK_TO_VIEW_FULL_COMMENT_TAG = "[click_to_view_full_comment]"
     const val ANNOTATION_POST_LINKABLE = "[post_linkable]"
     const val ANNOTATION_POST_SPOILER_TEXT = "[spoiler_text]"
     const val ANNOTATION_INLINED_IMAGE = "[inlined_image]"
@@ -473,7 +394,6 @@ class PostCommentApplierImpl(
     private const val YOU_POSTFIX = "(You)"
 
     val ALL_TAGS = mutableSetOf(
-      ANNOTATION_CLICK_TO_VIEW_FULL_COMMENT_TAG,
       ANNOTATION_POST_LINKABLE,
       ANNOTATION_POST_SPOILER_TEXT,
       ANNOTATION_INLINED_IMAGE
