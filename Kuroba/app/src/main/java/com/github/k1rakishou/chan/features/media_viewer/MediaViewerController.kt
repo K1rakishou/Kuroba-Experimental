@@ -19,7 +19,6 @@ import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderMana
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.PostHideManager
-import com.github.k1rakishou.chan.core.manager.PostHideManagerImpl
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2
@@ -194,7 +193,7 @@ class MediaViewerController(
     override fun onPostBind(postCellData: PostCellData) {}
     override fun onPostUnbind(postCellData: PostCellData, isActuallyRecycling: Boolean) {}
     override fun onPostClicked(postDescriptor: PostDescriptor) {}
-    override fun onGoToPostButtonLongClicked(post: ChanPost, postViewMode: PostCellData.PostViewMode) {}
+    override fun onGoToPostButtonLongClicked(post: ChanPost, popupControllerType: PostCellData.PopupControllerType) {}
     override fun getBoardPages(boardDescriptor: BoardDescriptor): BoardPages? = null
     override fun onThumbnailOmittedFilesClicked(postCellData: PostCellData, postImage: ChanPostImage) {}
     override fun onPreviewThreadPostsClicked(post: ChanPost) {}
@@ -235,7 +234,7 @@ class MediaViewerController(
       notSupported()
     }
 
-    override fun onGoToPostButtonClicked(post: ChanPost, postViewMode: PostCellData.PostViewMode) {
+    override fun onGoToPostButtonClicked(post: ChanPost, popupControllerType: PostCellData.PopupControllerType) {
       onGoToPostClick(post.postDescriptor)
     }
     override fun onThumbnailClicked(postCellData: PostCellData, postImage: ChanPostImage) {
@@ -686,7 +685,7 @@ class MediaViewerController(
 
     postPopupHelper.showRepliesPopup(
       threadDescriptor = threadDescriptor,
-      postViewMode = PostCellData.PostViewMode.MediaViewerPostsPopup,
+      popupControllerType = PostCellData.PopupControllerType.MediaViewerPostsPopup,
       postDescriptor = postDescriptor,
       posts = listOf(chanPost)
     )
@@ -731,7 +730,7 @@ class MediaViewerController(
 
     postPopupHelper.showRepliesPopup(
       threadDescriptor = threadDescriptor,
-      postViewMode = PostCellData.PostViewMode.MediaViewerPostsPopup,
+      popupControllerType = PostCellData.PopupControllerType.MediaViewerPostsPopup,
       postDescriptor = postDescriptor,
       posts = posts
     )

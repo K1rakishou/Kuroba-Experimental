@@ -46,20 +46,12 @@ import java.util.concurrent.atomic.AtomicInteger
 @Composable
 fun rememberThreadState(initialWindowSize: Int, controllerKey: ControllerKey): ThreadState {
   val coroutineScope = rememberCoroutineScope()
-  val kurobaDispatchers = appDependencies().kurobaDispatchers
-  val appResources = appDependencies().appResources
-  val parsedPostDataRepository = appDependencies().parsedPostDataRepository
-  val themeEngine = appDependencies().themeEngine
 
   return remember {
     return@remember ThreadState(
       initialWindowSize = initialWindowSize,
       controllerKey = controllerKey,
-      coroutineScope = coroutineScope,
-      kurobaDispatchers = kurobaDispatchers,
-      appResources = appResources,
-      themeEngine = themeEngine,
-      parsedPostDataRepository = parsedPostDataRepository
+      coroutineScope = coroutineScope
     )
   }
 }
@@ -69,10 +61,10 @@ class ThreadState(
   val initialWindowSize: Int,
   val controllerKey: ControllerKey,
   private val coroutineScope: CoroutineScope,
-  private val kurobaDispatchers: KurobaDispatchers,
-  private val appResources: AppResources,
-  private val themeEngine: ThemeEngine,
-  private val parsedPostDataRepository: ParsedPostDataRepository
+  private val kurobaDispatchers: KurobaDispatchers = appDependencies().kurobaDispatchers,
+  private val appResources: AppResources = appDependencies().appResources,
+  private val themeEngine: ThemeEngine = appDependencies().themeEngine,
+  private val parsedPostDataRepository: ParsedPostDataRepository = appDependencies().parsedPostDataRepository
 ) {
   private val _postCellStates = mutableStateListOf<PostCellState>()
   val postCellStates: SnapshotStateList<PostCellState>

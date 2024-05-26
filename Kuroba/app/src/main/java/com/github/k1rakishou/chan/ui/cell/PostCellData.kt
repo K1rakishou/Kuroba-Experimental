@@ -77,7 +77,7 @@ data class PostCellData(
   var compact: Boolean,
   val postHideMap: Map<PostDescriptor, ChanPostHide>,
   val theme: ChanTheme,
-  val postViewMode: PostViewMode,
+  val popupControllerType: PopupControllerType,
   val searchQuery: SearchQuery,
   val keywordsToHighlight: Set<HighlightFilterKeyword>,
   val postAlignmentMode: ChanSettings.PostAlignmentMode,
@@ -144,19 +144,19 @@ data class PostCellData(
   val singleImageMode: Boolean
     get() = postImages.size == 1 || (postImages.isNotEmpty() && postMultipleImagesCompactMode)
   val isInPopup: Boolean
-    get() = postViewMode == PostViewMode.RepliesPopup
-      || postViewMode == PostViewMode.ExternalPostsPopup
-      || postViewMode == PostViewMode.MediaViewerPostsPopup
-      || postViewMode == PostViewMode.Search
+    get() = popupControllerType == PopupControllerType.RepliesPopup
+      || popupControllerType == PopupControllerType.ExternalPostsPopup
+      || popupControllerType == PopupControllerType.MediaViewerPostsPopup
+      || popupControllerType == PopupControllerType.Search
   val isSelectionMode: Boolean
-    get() = postViewMode == PostViewMode.PostSelection
+    get() = popupControllerType == PopupControllerType.PostSelection
   val threadPreviewMode: Boolean
-    get() = postViewMode == PostViewMode.ExternalPostsPopup
-      || postViewMode == PostViewMode.MediaViewerPostsPopup
+    get() = popupControllerType == PopupControllerType.ExternalPostsPopup
+      || popupControllerType == PopupControllerType.MediaViewerPostsPopup
   val isMediaViewerPostsPopup: Boolean
-    get() = postViewMode == PostViewMode.MediaViewerPostsPopup
+    get() = popupControllerType == PopupControllerType.MediaViewerPostsPopup
   val searchMode: Boolean
-    get() = postViewMode == PostViewMode.Search
+    get() = popupControllerType == PopupControllerType.Search
   val markedNo: Long
     get() = markedPostNo ?: -1
   val showImageFileName: Boolean
@@ -308,7 +308,7 @@ data class PostCellData(
       compact = compact,
       postHideMap = postHideMap.toMap(),
       theme = theme,
-      postViewMode = postViewMode,
+      popupControllerType = popupControllerType,
       searchQuery = searchQuery,
       keywordsToHighlight = keywordsToHighlight.toSet(),
       postAlignmentMode = postAlignmentMode,
@@ -949,7 +949,7 @@ data class PostCellData(
     return bidiFormatter.unicodeWrap(text, TextDirectionHeuristicsCompat.LTR)
   }
 
-  enum class PostViewMode {
+  enum class PopupControllerType {
     Normal,
     RepliesPopup,
     ExternalPostsPopup,

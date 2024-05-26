@@ -483,7 +483,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       this.postFileInfosHash = postCellData.postFileInfoMapHash.copy()
       this.postCellDataWidthNoPaddings = postCellData.postCellDataWidthNoPaddings
       this.postCellThumbnailSizePercents = postCellData.postCellThumbnailSizePercents
-      this.canShowGoToPostButton = postCellData.postViewMode.canShowGoToPostButton()
+      this.canShowGoToPostButton = postCellData.popupControllerType.canShowGoToPostButton()
       this.postNo = postCellData.postNo
     }
 
@@ -495,7 +495,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
         && this.postFileInfosHash == postCellData.postFileInfoMapHash
         && this.postCellDataWidthNoPaddings == postCellData.postCellDataWidthNoPaddings
         && this.postCellThumbnailSizePercents == postCellData.postCellThumbnailSizePercents
-        && this.canShowGoToPostButton == postCellData.postViewMode.canShowGoToPostButton()
+        && this.canShowGoToPostButton == postCellData.popupControllerType.canShowGoToPostButton()
         && this.postNo == postCellData.postNo
     }
 

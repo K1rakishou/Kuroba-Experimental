@@ -11,12 +11,11 @@ import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.PostFilterHighlightManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
-import com.github.k1rakishou.chan.core.manager.PostFilterManagerImpl
 import com.github.k1rakishou.chan.core.manager.PostHideManager
-import com.github.k1rakishou.chan.core.manager.PostHideManagerImpl
 import com.github.k1rakishou.chan.core.manager.PostHighlightManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface
+import com.github.k1rakishou.chan.ui.compose.post.state.ThreadState
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingComposeController
 import com.github.k1rakishou.chan.ui.helper.PostPopupHelper
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
@@ -50,14 +49,22 @@ abstract class BasePostPopupController<T : PostPopupHelper.PostPopupData>(
   @Inject
   lateinit var postHighlightManager: PostHighlightManager
 
-  protected val displayingAsyncDataState = mutableStateOf<AsyncData<T>>(AsyncData.Loading)
-  protected val displayingData: T?
-    get() = (displayingAsyncDataState.value as? AsyncData.Data<T>)?.data
-
   abstract val postPopupType: PostPopupType
 
   protected val rendezvousCoroutineExecutor = RendezvousCoroutineExecutor(controllerScope)
   protected val debouncingCoroutineExecutor = DebouncingCoroutineExecutor(controllerScope)
+
+  protected val displayingAsyncDataState = mutableStateOf<AsyncData<T>>(AsyncData.Loading)
+  protected val displayingData: T?
+    get() = (displayingAsyncDataState.value as? AsyncData.Data<T>)?.data
+
+  protected val threadState by lazy(LazyThreadSafetyMode.NONE) {
+    ThreadState(
+      initialWindowSize = 32,
+      controllerKey = controllerKey,
+      coroutineScope = controllerScope
+    )
+  }
 
   override fun onCreate() {
     super.onCreate()
@@ -179,6 +186,10 @@ abstract class BasePostPopupController<T : PostPopupHelper.PostPopupData>(
 //    postsView.smoothScrollToPosition(displayPosition)
 
     // TODO: compose post cells.
+  }
+
+  override fun onOutsideOfDialogClicked() {
+    postPopupHelper.pop()
   }
 
   override fun onBack(): Boolean {

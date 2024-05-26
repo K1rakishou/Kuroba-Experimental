@@ -11,7 +11,6 @@ import com.github.k1rakishou.chan.ui.controller.popup.PostRepliesPopupController
 import com.github.k1rakishou.chan.ui.controller.popup.PostSearchPopupController
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.common.exhaustive
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
@@ -42,21 +41,21 @@ class PostPopupHelper(
 
   fun showRepliesPopup(
     threadDescriptor: ThreadDescriptor,
-    postViewMode: PostCellData.PostViewMode,
+    popupControllerType: PostCellData.PopupControllerType,
     postDescriptor: PostDescriptor,
     posts: List<ChanPost>
   ) {
     val data = PostRepliesPopupController.PostRepliesPopupData(
       descriptor = threadDescriptor,
       forPostWithDescriptor = postDescriptor,
-      postViewMode = postViewMode,
+      popupControllerType = popupControllerType,
       posts = posts
     )
 
-    val prevPostViewMode = dataQueue.lastOrNull()?.postViewMode
+    val prevPostViewMode = dataQueue.lastOrNull()?.popupControllerType
     dataQueue.add(data)
 
-    if (dataQueue.size == 1 || prevPostViewMode != postViewMode) {
+    if (dataQueue.size == 1 || prevPostViewMode != popupControllerType) {
       present(PostRepliesPopupController(context, this, postCellCallback))
     }
 
@@ -64,20 +63,20 @@ class PostPopupHelper(
   }
 
   fun showSearchPopup(chanDescriptor: ChanDescriptor, searchQuery: String? = null) {
-    val postViewMode = PostCellData.PostViewMode.Search
+    val popupControllerType = PostCellData.PopupControllerType.Search
 
     val data = PostSearchPopupController.PostSearchPopupData(
       chanDescriptor,
-      postViewMode
+      popupControllerType
     )
 
-    val prevPostViewMode = dataQueue.lastOrNull()?.postViewMode
+    val prevPostViewMode = dataQueue.lastOrNull()?.popupControllerType
 
-    if (searchQuery == null || prevPostViewMode != postViewMode) {
+    if (searchQuery == null || prevPostViewMode != popupControllerType) {
       dataQueue.add(data)
     }
 
-    if (dataQueue.size == 1 || prevPostViewMode != postViewMode) {
+    if (dataQueue.size == 1 || prevPostViewMode != popupControllerType) {
       present(PostSearchPopupController(context, this, postCellCallback, searchQuery))
     }
 
@@ -143,20 +142,20 @@ class PostPopupHelper(
     }
 
     if (needPresentController) {
-      when (repliesData.postViewMode) {
-        PostCellData.PostViewMode.PostSelection,
-        PostCellData.PostViewMode.Normal -> {
-          throw IllegalArgumentException("Invalid postViewMode: ${repliesData.postViewMode}")
+      when (repliesData.popupControllerType) {
+        PostCellData.PopupControllerType.PostSelection,
+        PostCellData.PopupControllerType.Normal -> {
+          throw IllegalArgumentException("Invalid postViewMode: ${repliesData.popupControllerType}")
         }
-        PostCellData.PostViewMode.RepliesPopup,
-        PostCellData.PostViewMode.ExternalPostsPopup,
-        PostCellData.PostViewMode.MediaViewerPostsPopup -> {
+        PostCellData.PopupControllerType.RepliesPopup,
+        PostCellData.PopupControllerType.ExternalPostsPopup,
+        PostCellData.PopupControllerType.MediaViewerPostsPopup -> {
           present(PostRepliesPopupController(context, this, postCellCallback))
         }
-        PostCellData.PostViewMode.Search -> {
+        PostCellData.PopupControllerType.Search -> {
           present(PostSearchPopupController(context, this, postCellCallback))
         }
-      }.exhaustive
+      }
     }
 
     presentingPostRepliesController?.displayData(
@@ -166,13 +165,13 @@ class PostPopupHelper(
   }
 
   private fun isNotSearchPostViewMode(repliesData: PostPopupData): Boolean {
-    return repliesData.postViewMode != PostCellData.PostViewMode.Search
+    return repliesData.popupControllerType != PostCellData.PopupControllerType.Search
   }
 
   private fun isNotReplyPostViewMode(repliesData: PostPopupData): Boolean {
-    return repliesData.postViewMode != PostCellData.PostViewMode.RepliesPopup
-      && repliesData.postViewMode != PostCellData.PostViewMode.ExternalPostsPopup
-      && repliesData.postViewMode != PostCellData.PostViewMode.MediaViewerPostsPopup
+    return repliesData.popupControllerType != PostCellData.PopupControllerType.RepliesPopup
+      && repliesData.popupControllerType != PostCellData.PopupControllerType.ExternalPostsPopup
+      && repliesData.popupControllerType != PostCellData.PopupControllerType.MediaViewerPostsPopup
   }
 
   fun popAll() {
@@ -222,7 +221,7 @@ class PostPopupHelper(
   @Immutable
   interface PostPopupData {
     val descriptor: ChanDescriptor
-    val postViewMode: PostCellData.PostViewMode
+    val popupControllerType: PostCellData.PopupControllerType
   }
 
   interface PostPopupHelperCallback {

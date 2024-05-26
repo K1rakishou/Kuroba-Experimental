@@ -61,7 +61,7 @@ class ThreadCellData(
   private var currentTheme: ChanTheme = initialTheme
   private var lazyCalculationJob: Job? = null
 
-  var postViewMode: PostCellData.PostViewMode = PostCellData.PostViewMode.Normal
+  var popupControllerType: PostCellData.PopupControllerType = PostCellData.PopupControllerType.Normal
   var defaultIsCompact: Boolean = false
   var defaultBoardPostViewMode: ChanSettings.BoardPostViewMode = ChanSettings.boardPostViewMode.get()
   var defaultMarkedNo: Long? = null
@@ -194,7 +194,7 @@ class ThreadCellData(
     this.postCellDataLazyList.clear()
     this.postCellDataLazyList.addAll(newPostCellDataLazyList)
 
-    if (postViewMode.canShowLastSeenIndicator()) {
+    if (popupControllerType.canShowLastSeenIndicator()) {
       this.lastSeenIndicatorPosition = getLastSeenIndicatorPosition(chanDescriptor) ?: -1
     }
   }
@@ -309,7 +309,7 @@ class ThreadCellData(
         val postDescriptor = chanPost.postDescriptor
 
         val postMultipleImagesCompactMode = ChanSettings.postMultipleImagesCompactMode.get()
-          && postViewMode != PostCellData.PostViewMode.Search
+          && popupControllerType != PostCellData.PopupControllerType.Search
           && chanPost.postImages.size > 1
 
         val boardPage = boardPages?.boardPages
@@ -324,7 +324,7 @@ class ThreadCellData(
           textSizeSp = textSizeSp,
           detailsSizeSp = detailsSizeSp,
           theme = chanTheme,
-          postViewMode = postViewMode,
+          popupControllerType = popupControllerType,
           markedPostNo = defaultMarkedNo,
           showDivider = oldPostCellData?.showDivider ?: defaultShowDividerFunc.invoke(orderInList, totalPostsCount),
           compact = defaultIsCompact,
@@ -554,7 +554,7 @@ class ThreadCellData(
   }
 
   private fun showStatusView(): Boolean {
-    if (!postViewMode.canShowThreadStatusCell()) {
+    if (!popupControllerType.canShowThreadStatusCell()) {
       return false
     }
 

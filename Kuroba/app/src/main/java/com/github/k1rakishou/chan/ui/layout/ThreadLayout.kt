@@ -24,9 +24,7 @@ import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
-import com.github.k1rakishou.chan.core.manager.PostFilterManagerImpl
 import com.github.k1rakishou.chan.core.manager.PostHideManager
-import com.github.k1rakishou.chan.core.manager.PostHideManagerImpl
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter.ThreadPresenterCallback
@@ -776,7 +774,7 @@ class ThreadLayout @JvmOverloads constructor(
 
   override fun showPostsPopup(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
-    postViewMode: PostCellData.PostViewMode,
+    popupControllerType: PostCellData.PopupControllerType,
     postDescriptor: PostDescriptor,
     posts: List<ChanPost>
   ) {
@@ -786,7 +784,7 @@ class ThreadLayout @JvmOverloads constructor(
       currentFocus.clearFocus()
     }
 
-    postPopupHelper.showRepliesPopup(threadDescriptor, postViewMode, postDescriptor, posts)
+    postPopupHelper.showRepliesPopup(threadDescriptor, popupControllerType, postDescriptor, posts)
   }
 
   override fun hidePostsPopup() {

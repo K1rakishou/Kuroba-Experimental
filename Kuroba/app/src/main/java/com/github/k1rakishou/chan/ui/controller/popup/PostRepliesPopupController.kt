@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.ui.controller.popup
 
 import android.content.Context
 import android.util.LruCache
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -28,7 +29,6 @@ import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeProgressInd
 import com.github.k1rakishou.chan.ui.compose.lazylist.LazyColumnWithFastScroller
 import com.github.k1rakishou.chan.ui.compose.post.state.PostThumbnailAlignmentUi
 import com.github.k1rakishou.chan.ui.compose.post.ui.PostCellUi
-import com.github.k1rakishou.chan.ui.compose.post.state.rememberThreadState
 import com.github.k1rakishou.chan.ui.helper.PostPopupHelper
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
@@ -57,12 +57,7 @@ class PostRepliesPopupController(
   @Composable
   override fun BoxScope.Content() {
     val displayingAsyncData by displayingAsyncDataState
-
     val lazyListState = rememberLazyListState()
-    val threadState = rememberThreadState(
-      initialWindowSize = 32,
-      controllerKey = controllerKey
-    )
 
     LaunchedEffect(key1 = Unit) {
       snapshotFlow { displayingAsyncDataState.value }
@@ -76,14 +71,18 @@ class PostRepliesPopupController(
             is AsyncData.Data -> {
               val postRepliesPopupData = displayingAsyncData.data
 
-              threadState.updatePosts(
-                chanDescriptor = postRepliesPopupData.descriptor,
-                posts = postRepliesPopupData.posts,
-                postViewMode = PostViewMode.List,
-                // TODO: compose post cells. Determine preloadStartPosition.
-                preloadStartPosition = 0,
-                forced = true
-              )
+              try {
+                threadState.updatePosts(
+                  chanDescriptor = postRepliesPopupData.descriptor,
+                  posts = postRepliesPopupData.posts,
+                  postViewMode = PostViewMode.List,
+                  // TODO: compose post cells. Determine preloadStartPosition.
+                  preloadStartPosition = 0,
+                  forced = true
+                )
+              } catch (ignored: Throwable) {
+                // no-op
+              }
             }
           }
         }
@@ -101,8 +100,9 @@ class PostRepliesPopupController(
       LazyColumnWithFastScroller(
         modifier = Modifier
           .fillMaxWidth()
-          .heightIn(min = 160.dp)
-          .padding(horizontal = 8.dp, vertical = 4.dp),
+          .wrapContentHeight()
+          .padding(horizontal = 8.dp, vertical = 4.dp)
+          .animateContentSize(),
         state = lazyListState,
         content = {
           val localDisplayingData = displayingAsyncData
@@ -114,7 +114,7 @@ class PostRepliesPopupController(
                 KurobaComposeErrorMessage(
                   modifier = Modifier
                     .fillMaxWidth()
-                    .fillParentMaxHeight(),
+                    .heightIn(min = 160.dp),
                   error = localDisplayingData.throwable
                 )
               }
@@ -142,7 +142,7 @@ class PostRepliesPopupController(
                 KurobaComposeProgressIndicator(
                   modifier = Modifier
                     .fillMaxWidth()
-                    .fillParentMaxHeight()
+                    .heightIn(min = 160.dp)
                 )
               }
             )
@@ -363,9 +363,9 @@ class PostRepliesPopupController(
     return true
   }
 
-  class PostRepliesPopupData(
+  data class PostRepliesPopupData(
     override val descriptor: ChanDescriptor,
-    override val postViewMode: PostCellData.PostViewMode,
+    override val popupControllerType: PostCellData.PopupControllerType,
     val forPostWithDescriptor: PostDescriptor,
     val posts: List<ChanPost>
   ) : PostPopupHelper.PostPopupData

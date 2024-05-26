@@ -336,9 +336,9 @@ class PostSearchPopupController(
     TODO()
   }
 
-  class PostSearchPopupData(
+  data class PostSearchPopupData(
     override val descriptor: ChanDescriptor,
-    override val postViewMode: PostCellData.PostViewMode
+    override val popupControllerType: PostCellData.PopupControllerType
   ) : PostPopupHelper.PostPopupData
 
   companion object {

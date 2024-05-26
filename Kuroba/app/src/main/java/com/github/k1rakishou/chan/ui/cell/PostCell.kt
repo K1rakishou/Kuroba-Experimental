@@ -727,18 +727,18 @@ class PostCell @JvmOverloads constructor(
   }
 
   private fun bindGoToPostButton(postCellData: PostCellData) {
-    if (postCellData.postViewMode.canShowGoToPostButton()) {
+    if (postCellData.popupControllerType.canShowGoToPostButton()) {
       goToPostButton.setVisibilityFast(VISIBLE)
 
       goToPostButton.setOnClickListener {
         this.postCellData?.let { pcd ->
-          postCellCallback?.onGoToPostButtonClicked(pcd.post, pcd.postViewMode)
+          postCellCallback?.onGoToPostButtonClicked(pcd.post, pcd.popupControllerType)
         }
       }
       if (!postCellData.isViewingThread) {
         goToPostButton.setOnLongClickListener {
           this.postCellData?.let { pcd ->
-            postCellCallback?.onGoToPostButtonLongClicked(pcd.post, pcd.postViewMode)
+            postCellCallback?.onGoToPostButtonLongClicked(pcd.post, pcd.popupControllerType)
           }
 
           return@setOnLongClickListener true
@@ -963,7 +963,7 @@ class PostCell @JvmOverloads constructor(
       if (postCellData.isViewingThread || postCellData.searchMode) {
         comment.customMovementMethod(commentMovementMethod)
 
-        if (postCellData.tapNoReply && postCellData.postViewMode.canUseTapPostTitleToReply()) {
+        if (postCellData.tapNoReply && postCellData.popupControllerType.canUseTapPostTitleToReply()) {
           title.movementMethod = titleMovementMethod
         } else {
           title.movementMethod = null

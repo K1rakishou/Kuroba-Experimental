@@ -21,7 +21,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
-import com.github.k1rakishou.chan.core.manager.PostFilterManagerImpl
 import com.github.k1rakishou.chan.core.repository.StaticHtmlColorRepository
 import com.github.k1rakishou.chan.core.site.common.DefaultPostParser
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
@@ -78,8 +77,8 @@ class ThemeControllerHelper(
     override fun onPostBind(postCellData: PostCellData) {}
     override fun onPostUnbind(postCellData: PostCellData, isActuallyRecycling: Boolean) {}
     override fun onPostClicked(postDescriptor: PostDescriptor) {}
-    override fun onGoToPostButtonClicked(post: ChanPost, postViewMode: PostCellData.PostViewMode) {}
-    override fun onGoToPostButtonLongClicked(post: ChanPost, postViewMode: PostCellData.PostViewMode) {}
+    override fun onGoToPostButtonClicked(post: ChanPost, popupControllerType: PostCellData.PopupControllerType) {}
+    override fun onGoToPostButtonLongClicked(post: ChanPost, popupControllerType: PostCellData.PopupControllerType) {}
     override fun onThumbnailClicked(postCellData: PostCellData, postImage: ChanPostImage) {}
     override fun onThumbnailLongClicked(chanDescriptor: ChanDescriptor, postImage: ChanPostImage) {}
     override fun onThumbnailOmittedFilesClicked(postCellData: PostCellData, postImage: ChanPostImage) {}

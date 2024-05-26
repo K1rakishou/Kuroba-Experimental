@@ -7,9 +7,7 @@ import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.PostFilterHighlightManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
-import com.github.k1rakishou.chan.core.manager.PostFilterManagerImpl
 import com.github.k1rakishou.chan.core.manager.PostHideManager
-import com.github.k1rakishou.chan.core.manager.PostHideManagerImpl
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.ui.cell.GenericPostCell
 import com.github.k1rakishou.chan.ui.cell.PostCellData
@@ -24,7 +22,7 @@ import dagger.Lazy
 
 class PostRepliesAdapter(
   private val recyclerView: RecyclerView,
-  private val postViewMode: PostCellData.PostViewMode,
+  private val popupControllerType: PostCellData.PopupControllerType,
   private val postCellCallback: PostCellInterface.PostCellCallback,
   val chanDescriptor: ChanDescriptor,
   _chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>,
@@ -47,7 +45,7 @@ class PostRepliesAdapter(
   )
 
   fun init(clickedPostDescriptor: PostDescriptor?) {
-    threadCellData.postViewMode = postViewMode
+    threadCellData.popupControllerType = popupControllerType
     threadCellData.defaultIsCompact = false
     threadCellData.defaultBoardPostViewMode = ChanSettings.BoardPostViewMode.LIST
     threadCellData.defaultMarkedNo = clickedPostDescriptor?.postNo

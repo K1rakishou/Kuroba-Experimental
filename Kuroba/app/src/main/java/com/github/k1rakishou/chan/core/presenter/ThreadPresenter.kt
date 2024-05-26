@@ -31,9 +31,7 @@ import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.OnDemandContentLoaderManager
 import com.github.k1rakishou.chan.core.manager.PageRequestManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
-import com.github.k1rakishou.chan.core.manager.PostFilterManagerImpl
 import com.github.k1rakishou.chan.core.manager.PostHideManager
-import com.github.k1rakishou.chan.core.manager.PostHideManagerImpl
 import com.github.k1rakishou.chan.core.manager.PostHighlightManager
 import com.github.k1rakishou.chan.core.manager.RevealedSpoilerImagesManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
@@ -1604,7 +1602,7 @@ class ThreadPresenter @Inject constructor(
     }
 
     val topRepliesData = threadPresenterCallback?.getTopPostRepliesDataOrNull()
-    val postViewMode = topRepliesData?.postViewMode
+    val postViewMode = topRepliesData?.popupControllerType
 
     if (topRepliesData != null && postViewMode?.consumePostClicks() == true) {
       return
@@ -1621,7 +1619,7 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  override fun onGoToPostButtonClicked(post: ChanPost, postViewMode: PostCellData.PostViewMode) {
+  override fun onGoToPostButtonClicked(post: ChanPost, popupControllerType: PostCellData.PopupControllerType) {
     if (!isBound) {
       return
     }
@@ -1645,7 +1643,7 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  override fun onGoToPostButtonLongClicked(post: ChanPost, postViewMode: PostCellData.PostViewMode) {
+  override fun onGoToPostButtonLongClicked(post: ChanPost, popupControllerType: PostCellData.PopupControllerType) {
     threadPresenterCallback?.hidePostsPopup()
 
     scrollToPost(post.postDescriptor)
@@ -2034,15 +2032,15 @@ class ThreadPresenter @Inject constructor(
             return@onPostLinkableClicked
           }
 
-          val postViewMode = if (isExternalThread) {
-            PostCellData.PostViewMode.ExternalPostsPopup
+          val popupControllerType = if (isExternalThread) {
+            PostCellData.PopupControllerType.ExternalPostsPopup
           } else {
-            PostCellData.PostViewMode.RepliesPopup
+            PostCellData.PopupControllerType.RepliesPopup
           }
 
           threadPresenterCallback?.showPostsPopup(
             currentThreadDescriptor,
-            postViewMode,
+            popupControllerType,
             post.postDescriptor,
             listOf(chanPost)
           )
@@ -2373,15 +2371,15 @@ class ThreadPresenter @Inject constructor(
         return@post
       }
 
-      val postViewMode = if (isExternalThread) {
-        PostCellData.PostViewMode.ExternalPostsPopup
+      val popupControllerType = if (isExternalThread) {
+        PostCellData.PopupControllerType.ExternalPostsPopup
       } else {
-        PostCellData.PostViewMode.RepliesPopup
+        PostCellData.PopupControllerType.RepliesPopup
       }
 
       threadPresenterCallback?.showPostsPopup(
         threadDescriptor = threadDescriptor,
-        postViewMode = postViewMode,
+        popupControllerType = popupControllerType,
         postDescriptor = post.postDescriptor,
         posts = posts
       )
@@ -2448,7 +2446,7 @@ class ThreadPresenter @Inject constructor(
 
     threadPresenterCallback?.showPostsPopup(
       threadDescriptor = threadDescriptor,
-      postViewMode = PostCellData.PostViewMode.RepliesPopup,
+      popupControllerType = PostCellData.PopupControllerType.RepliesPopup,
       postDescriptor = post.postDescriptor,
       posts = postsOfTheSamePoster
     )
@@ -3001,7 +2999,7 @@ class ThreadPresenter @Inject constructor(
 
     fun showPostsPopup(
       threadDescriptor: ChanDescriptor.ThreadDescriptor,
-      postViewMode: PostCellData.PostViewMode,
+      popupControllerType: PostCellData.PopupControllerType,
       postDescriptor: PostDescriptor,
       posts: List<ChanPost>
     )
