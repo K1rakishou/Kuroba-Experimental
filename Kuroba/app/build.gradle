@@ -3,6 +3,7 @@ plugins {
     id 'kotlin-android'
     id 'kotlin-parcelize'
     id 'com.google.devtools.ksp'
+    id 'org.jetbrains.kotlin.plugin.compose'
 }
 
 android {
@@ -242,10 +243,6 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
-    }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion = versions.compose_compiler_version
     }
 
     lintOptions {

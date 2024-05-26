@@ -30,6 +30,7 @@ class SegmentedCircleDrawable : Drawable() {
     paint.alpha = alpha
   }
 
+  @Deprecated("Deprecated in Java")
   override fun getOpacity(): Int {
     return PixelFormat.TRANSLUCENT
   }

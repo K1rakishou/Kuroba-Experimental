@@ -86,6 +86,7 @@ abstract class ControllerHostActivity :
     }
   }
 
+  @Deprecated("Deprecated in Java")
   override fun onBackPressed() {
     if (stack.peek().onBack()) {
       return
