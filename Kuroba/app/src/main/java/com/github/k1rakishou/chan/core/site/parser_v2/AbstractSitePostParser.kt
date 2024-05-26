@@ -4,13 +4,12 @@ import androidx.annotation.CallSuper
 import com.github.k1rakishou.chan.core.parser.TextPartMut
 import com.github.k1rakishou.chan.core.parser.TextPartSpan
 import com.github.k1rakishou.chan.core.repository.StaticHtmlColorRepository
-import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_parser.comment.HtmlTag
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import org.nibor.autolink.LinkExtractor
 import org.nibor.autolink.LinkType
-import java.util.*
+import java.util.EnumSet
 
 abstract class AbstractSitePostParser(
   private val staticHtmlColorRepository: StaticHtmlColorRepository
@@ -191,23 +190,6 @@ abstract class AbstractSitePostParser(
   abstract fun parseStrikethroughTag(childTextParts: MutableList<TextPartMut>)
   abstract fun parseLinkable(className: String?, href: String, postDescriptor: PostDescriptor): TextPartSpan.Linkable?
   abstract fun postProcessTextParts(textPartMut: TextPartMut): TextPartMut
-
-  protected fun mergeChildTextPartsIntoOne(
-    childTextParts: List<TextPartMut>
-  ): TextPartMut {
-    val totalText = StringBuilder(childTextParts.sumOf { it.text.length })
-    val totalSpans = mutableListWithCap<TextPartSpan>(childTextParts.sumOf { it.spans.size })
-
-    for (inputChildTextPart in childTextParts) {
-      totalText.append(inputChildTextPart.text)
-      totalSpans.addAll(inputChildTextPart.spans)
-    }
-
-    return TextPartMut(
-      text = totalText.toString(),
-      spans = totalSpans
-    )
-  }
 
   private fun parseAnyTagColorAttribute(htmlTag: HtmlTag, childTextParts: MutableList<TextPartMut>) {
     val colorName = htmlTag.attrUnescapedOrNull("color")

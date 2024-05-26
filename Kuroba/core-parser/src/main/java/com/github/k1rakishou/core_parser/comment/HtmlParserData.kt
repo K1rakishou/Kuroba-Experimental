@@ -2,7 +2,7 @@ package com.github.k1rakishou.core_parser.comment
 
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.common.mutableMapWithCap
-import org.jsoup.parser.Parser
+
 data class HtmlDocument(
   val nodes: List<HtmlNode>
 ) {
@@ -183,6 +183,10 @@ class HtmlAttribute(
     }
 
     return valueAsString!!
+  }
+
+  override fun toString(): String {
+    return "HtmlAttribute(${nameAsString()}[${valueAsString()}])"
   }
 
 }

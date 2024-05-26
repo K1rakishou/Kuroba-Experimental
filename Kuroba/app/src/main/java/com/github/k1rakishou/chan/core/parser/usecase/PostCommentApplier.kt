@@ -206,7 +206,7 @@ class PostCommentApplierImpl(
         is TextPartSpan.Underline -> {
           underline = true
         }
-        is TextPartSpan.Linethrough -> {
+        is TextPartSpan.Strikethrough -> {
           linethrough = true
         }
         is TextPartSpan.Bold -> {

@@ -21,7 +21,7 @@ sealed class TextPartSpan {
       is Linkable.Url,
       is PartialSpan,
       is Underline,
-      is Linethrough,
+      is Strikethrough,
       is Bold,
       is Italic,
       is Superscript,
@@ -70,7 +70,7 @@ sealed class TextPartSpan {
   data object Spoiler : TextPartSpan()
   data object Underline : TextPartSpan()
   data object Monospace : TextPartSpan()
-  data object Linethrough : TextPartSpan()
+  data object Strikethrough : TextPartSpan()
   data object Bold : TextPartSpan()
   data object Italic : TextPartSpan()
   data object Superscript : TextPartSpan()

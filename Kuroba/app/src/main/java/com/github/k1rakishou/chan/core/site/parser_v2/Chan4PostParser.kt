@@ -40,7 +40,7 @@ open class Chan4PostParser(
 
   override fun parseStrikethroughTag(childTextParts: MutableList<TextPartMut>) {
     for (childTextPart in childTextParts) {
-      childTextPart.spans.add(TextPartSpan.Spoiler)
+      childTextPart.spans.add(TextPartSpan.Strikethrough)
     }
   }
 
@@ -59,7 +59,7 @@ open class Chan4PostParser(
 
     if (htmlTag.hasClass("s")) {
       for (childTextPart in childTextParts) {
-        childTextPart.spans.add(TextPartSpan.Linethrough)
+        childTextPart.spans.add(TextPartSpan.Strikethrough)
       }
     }
 
@@ -74,12 +74,7 @@ open class Chan4PostParser(
     val childTextPart = if (childTextParts.size == 1) {
       childTextParts.first()
     } else {
-      val mergedTextPart = mergeChildTextPartsIntoOne(childTextParts)
-
-      childTextParts.clear()
-      childTextParts.add(mergedTextPart)
-
-      mergedTextPart
+      return
     }
 
     val isDeadLink = htmlTag.tagName == "span" && htmlTag.hasClass("deadlink")

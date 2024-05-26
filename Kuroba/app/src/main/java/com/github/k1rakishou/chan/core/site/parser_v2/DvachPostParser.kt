@@ -31,6 +31,12 @@ class DvachPostParser(
       }
     }
 
+    if (htmlTag.hasClass("spoiler")) {
+      for (childTextPart in childTextParts) {
+        childTextPart.spans.add(TextPartSpan.Spoiler)
+      }
+    }
+
     parseLinkTag(htmlTag, childTextParts, postDescriptor)
   }
 
@@ -39,19 +45,13 @@ class DvachPostParser(
     childTextParts: MutableList<TextPartMut>,
     postDescriptor: PostDescriptor
   ) {
-    val className = htmlTag.classAttrOrNull()
-
     var childTextPart = if (childTextParts.size == 1) {
       childTextParts.first()
     } else {
-      val mergedTextPart = mergeChildTextPartsIntoOne(childTextParts)
-
-      childTextParts.clear()
-      childTextParts.add(mergedTextPart)
-
-      mergedTextPart
+      return
     }
 
+    val className = htmlTag.classAttrOrNull()
     val isDeadLink = htmlTag.tagName == "span" && htmlTag.hasClass("deadlink")
 
     val href = if (isDeadLink) {
