@@ -11,6 +11,7 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.ThirdEyeManager
 import com.github.k1rakishou.chan.core.parser.repository.ParsedPostDataRepository
 import com.github.k1rakishou.chan.ui.compose.snackbar.manager.SnackbarManagerFactory
+import com.github.k1rakishou.chan.ui.config.UiConfiguration
 import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
 import com.github.k1rakishou.chan.ui.helper.AppResources
 import com.github.k1rakishou.common.AppConstants
@@ -26,6 +27,7 @@ interface ApplicationDependencies {
   val siteManager: SiteManager
   val globalUiStateHolder: GlobalUiStateHolder
   val appResources: AppResources
+  val uiConfiguration: UiConfiguration
   val snackbarManagerFactory: SnackbarManagerFactory
   val onDemandContentLoaderManager: OnDemandContentLoaderManager
   val chanThreadsCache: ChanThreadsCache

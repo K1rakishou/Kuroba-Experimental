@@ -29,11 +29,11 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.image.ImageLoaderDeprecated
 import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailView
-import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailViewsContainer
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeCard
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
 import com.github.k1rakishou.chan.ui.compose.ktu
+import com.github.k1rakishou.chan.ui.config.UiConfiguration
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
 import com.github.k1rakishou.model.data.post.ChanPostImage
@@ -50,6 +50,8 @@ class PostOmittedImagesController(
 
   @Inject
   lateinit var imageLoaderDeprecated: ImageLoaderDeprecated
+  @Inject
+  lateinit var uiConfiguration: UiConfiguration
 
   override fun injectActivityDependencies(component: ActivityComponent) {
     component.inject(this)
@@ -74,16 +76,9 @@ class PostOmittedImagesController(
   @Composable
   private fun BuildPostImage(postImage: ChanPostImage) {
     val thumbnailSize = with(LocalDensity.current) {
-      remember(key1 = postImage) {
-        val size = PostImageThumbnailViewsContainer.calculatePostCellSingleThumbnailSize().toDp()
-
-        if (isTablet()) {
-          return@remember size * 1.5f
-        }
-
-        return@remember size
-      }
+      remember(key1 = postImage) { uiConfiguration.thumbnails.postThumbnailSizeDp() }
     }
+
     val fontSize = remember {
       if (isTablet()) {
         13.ktu

@@ -50,6 +50,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.*
 
+@Deprecated("Use PostCellState")
 data class PostCellData(
   val chanDescriptor: ChanDescriptor,
   val post: ChanPost,

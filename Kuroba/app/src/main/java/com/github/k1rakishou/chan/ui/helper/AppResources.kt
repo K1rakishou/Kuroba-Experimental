@@ -2,11 +2,14 @@ package com.github.k1rakishou.chan.ui.helper
 
 import android.content.Context
 import androidx.compose.ui.unit.Density
+import com.github.k1rakishou.chan.R
 
 class AppResources(
   private val appContext: Context
 ) {
-  val composeDensity by lazy { Density(appContext) }
+  val composeDensity by lazy(LazyThreadSafetyMode.NONE) { Density(appContext) }
+
+  val isTablet by lazy(LazyThreadSafetyMode.NONE) { boolean(R.bool.is_tablet) }
 
   fun string(stringId: Int, vararg args: Any): String {
     return if (args.isEmpty()) {

@@ -95,8 +95,8 @@ fun KurobaComposePostImageThumbnail(
   displayErrorMessage: Boolean = true,
   showShimmerEffectWhenLoading: Boolean = true,
   contentDescription: String? = null,
-  onClick: (PostImageThumbnailKey) -> Unit,
-  onLongClick: (PostImageThumbnailKey) -> Unit
+  onClick: ((PostImageThumbnailKey) -> Unit)?,
+  onLongClick: ((PostImageThumbnailKey) -> Unit)?
 ) {
   val context = LocalContext.current
   val kurobaImageLoader = appDependencies().kurobaImageLoader
@@ -109,8 +109,9 @@ fun KurobaComposePostImageThumbnail(
     modifier = Modifier
       .kurobaClickable(
         bounded = true,
-        onLongClick = { onLongClick(postImageThumbnailKey) },
-        onClick = { onClick(postImageThumbnailKey) }
+        enabled = onClick != null || onLongClick != null,
+        onLongClick = { onLongClick?.invoke(postImageThumbnailKey) },
+        onClick = { onClick?.invoke(postImageThumbnailKey) }
       )
       .drawBehind { drawRect(color = backgroundColor) }
       .onSizeChanged { intSize -> size = intSize }

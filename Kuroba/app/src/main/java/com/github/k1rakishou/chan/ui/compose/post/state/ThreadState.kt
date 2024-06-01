@@ -8,14 +8,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.parser.PostViewMode
 import com.github.k1rakishou.chan.core.parser.repository.ParsedPostDataRepository
+import com.github.k1rakishou.chan.core.parser.usecase.PostCommentApplier
 import com.github.k1rakishou.chan.ui.compose.data.ChanDescriptorUi
 import com.github.k1rakishou.chan.ui.compose.data.PostDescriptorUi
 import com.github.k1rakishou.chan.ui.compose.image.PostImageThumbnailKey
+import com.github.k1rakishou.chan.ui.config.UiConfiguration
 import com.github.k1rakishou.chan.ui.controller.base.ControllerKey
 import com.github.k1rakishou.chan.ui.helper.AppResources
 import com.github.k1rakishou.chan.utils.appDependencies
@@ -29,6 +32,9 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
+import kotlinx.collections.immutable.ImmutableMap
+import kotlinx.collections.immutable.PersistentMap
+import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.NonCancellable
@@ -63,6 +69,7 @@ class ThreadState(
   private val coroutineScope: CoroutineScope,
   private val kurobaDispatchers: KurobaDispatchers = appDependencies().kurobaDispatchers,
   private val appResources: AppResources = appDependencies().appResources,
+  private val uiConfiguration: UiConfiguration = appDependencies().uiConfiguration,
   private val themeEngine: ThemeEngine = appDependencies().themeEngine,
   private val parsedPostDataRepository: ParsedPostDataRepository = appDependencies().parsedPostDataRepository
 ) {
@@ -76,10 +83,26 @@ class ThreadState(
   val initialWindowLoaded: State<Boolean>
     get() = _initialWindowLoaded
 
+  private val _detectLinkableClicks = mutableStateOf(true)
+  val detectLinkableClicks: State<Boolean>
+    get() = _detectLinkableClicks
+
+  private val _isInPostSelectionMode = mutableStateOf(false)
+  val isInPostSelectionMode: State<Boolean>
+    get() = _isInPostSelectionMode
+
+  private val _isInTextSelectionMode = mutableStateOf(false)
+  val isInTextSelectionMode: State<Boolean>
+    get() = _isInTextSelectionMode
+
+  private val _clickedTextBackgroundColorMap = mutableStateOf<PersistentMap<String, Color>>(persistentMapOf())
+  val clickedTextBackgroundColorMap: State<ImmutableMap<String, Color>>
+    get() = _clickedTextBackgroundColorMap
+
   val thumbnailSize: StateFlow<Dp?> = ChanSettings.postCellThumbnailSizePercents
     .listenForChanges()
     .asFlow()
-    .map { postCellThumbnailSizePercents -> DefaultThumbnailSize * (postCellThumbnailSizePercents / 100f) }
+    .map { uiConfiguration.thumbnails.postThumbnailSizeDp() }
     .stateIn(coroutineScope, SharingStarted.Lazily, null)
 
   val postMultipleImagesCompactMode: StateFlow<Boolean?> = ChanSettings.postMultipleImagesCompactMode
@@ -124,6 +147,8 @@ class ThreadState(
     val chanTheme = themeEngine.chanTheme
     // TODO: compose post cells. Reparse when fontSize changes
     val fontSize = ChanSettings.globalFontSize.get().toInt()
+
+    _clickedTextBackgroundColorMap.value = createClickableTextColorMap(chanTheme)
 
     withContext(NonCancellable) {
       val toRecalculate = mutableListWithCap<PostCellState?>(posts.size)
@@ -230,16 +255,48 @@ class ThreadState(
     )
   }
 
+  private fun createClickableTextColorMap(chanTheme: ChanTheme): PersistentMap<String, Color> {
+    val postLinkColor = run {
+      val resultColor = if (ThemeEngine.isDarkColor(chanTheme.postLinkColorCompose)) {
+        ThemeEngine.manipulateColor(chanTheme.postLinkColorCompose, 1.2f)
+      } else {
+        ThemeEngine.manipulateColor(chanTheme.postLinkColorCompose, 0.8f)
+      }
+
+      return@run resultColor.copy(alpha = .6f)
+    }
+
+    return persistentMapOf(
+      PostCommentApplier.ANNOTATION_POST_LINKABLE to postLinkColor,
+    )
+  }
+
+  fun onCopySelectedText(selectedText: String) {
+    // TODO: compose post cells.
+  }
+
+  fun onQuoteSelectedText(postCellState: PostCellState, withText: Boolean, selectedText: String) {
+    // TODO: compose post cells.
+  }
+
+  fun onTextSelectionModeChanged(postCellState: PostCellState, inSelectionMode: Boolean) {
+    // TODO: compose post cells.
+  }
+
+  fun onPostCellCommentClicked(postCellState: PostCellState, text: AnnotatedString, offset: Int) {
+    // TODO: compose post cells.
+  }
+
+  fun onPostCellCommentLongClicked(postCellState: PostCellState, text: AnnotatedString, offset: Int) {
+    // TODO: compose post cells.
+  }
+
   fun onPostImageClicked(postImageThumbnailKey: PostImageThumbnailKey) {
     // TODO: compose post cells.
   }
 
   fun onPostImageLongClicked(postImageThumbnailKey: PostImageThumbnailKey) {
     // TODO: compose post cells.
-  }
-
-  companion object {
-    private val DefaultThumbnailSize = 70.dp
   }
 
 }

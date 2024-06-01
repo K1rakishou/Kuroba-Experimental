@@ -109,6 +109,7 @@ import com.github.k1rakishou.chan.ui.cell.PostStubCell
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
 import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailView
 import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailViewWrapper
+import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailViewsContainer
 import com.github.k1rakishou.chan.ui.compose.ThreadSearchNavigationButtonsView
 import com.github.k1rakishou.chan.ui.compose.bottom_panel.KurobaComposeIconPanel
 import com.github.k1rakishou.chan.ui.compose.lazylist.ScrollbarView
@@ -411,6 +412,7 @@ interface ActivityComponent : ActivityDependencies {
   fun inject(replyLayoutView: ReplyLayoutView)
   fun inject(kurobaToolbarView: KurobaToolbarView)
   fun inject(threadSearchNavigationButtonsView: ThreadSearchNavigationButtonsView)
+  fun inject(postImageThumbnailViewsContainer: PostImageThumbnailViewsContainer)
 
   @Subcomponent.Builder
   interface Builder {

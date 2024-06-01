@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.ui.compose.Shimmer
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
+import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
 import com.github.k1rakishou.chan.ui.compose.image.KurobaComposePostImageThumbnail
 import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.post.state.PostCellMediaState
@@ -54,6 +55,12 @@ internal fun PostCellTitleMultipleImagesContainer(
       ) {
         for (postCellMediaState in postMediaList) {
           Thumbnail(
+            modifier = Modifier
+              .kurobaClickable(
+                bounded = true,
+                onClick = { threadState.onPostImageClicked(postCellMediaState.postCellMediaKey) },
+                onLongClick = { threadState.onPostImageLongClicked(postCellMediaState.postCellMediaKey) }
+              ),
             postCellMediaState = postCellMediaState,
             postCellState = postCellState,
             threadState = threadState,
@@ -67,6 +74,7 @@ internal fun PostCellTitleMultipleImagesContainer(
 
 @Composable
 private fun Thumbnail(
+  modifier: Modifier,
   postCellMediaState: PostCellMediaState,
   postCellState: PostCellState,
   threadState: ThreadState,
@@ -86,15 +94,18 @@ private fun Thumbnail(
   val mediaSizeMut by postCellMediaState.mediaSizeState
   val mediaSize = mediaSizeMut
 
-  Column(horizontalAlignment = Alignment.CenterHorizontally) {
+  Column(
+    modifier = modifier,
+    horizontalAlignment = Alignment.CenterHorizontally
+  ) {
     KurobaComposePostImageThumbnail(
       modifier = Modifier.size(thumbnailSize),
       controllerKey = threadState.controllerKey,
       postImageThumbnailKey = postCellMediaState.postCellMediaKey,
       requestProvider = requestProvider,
       mediaType = postCellMediaState.kurobaMediaType,
-      onClick = { postImageThumbnailKey -> threadState.onPostImageClicked(postImageThumbnailKey) },
-      onLongClick = { postImageThumbnailKey -> threadState.onPostImageLongClicked(postImageThumbnailKey) }
+      onClick = null,
+      onLongClick = null
     )
 
     Spacer(modifier = Modifier.height(4.dp))

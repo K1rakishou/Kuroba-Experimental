@@ -6,23 +6,27 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.updateLayoutParams
 import com.github.k1rakishou.ChanSettings
-import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.cell.PostCellData
+import com.github.k1rakishou.chan.ui.config.UiConfiguration
 import com.github.k1rakishou.chan.ui.helper.KurobaViewGroup
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.MurmurHashUtils
 import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.model.data.post.ChanPostImage
-import java.util.*
+import javax.inject.Inject
 
 class PostImageThumbnailViewsContainer @JvmOverloads constructor(
   context: Context,
   attributeSet: AttributeSet? = null,
   defAttrStyle: Int = 0
 ) : KurobaViewGroup(context, attributeSet, defAttrStyle) {
+
+  @Inject
+  lateinit var uiConfiguration: UiConfiguration
+
   private var thumbnailViews: MutableList<PostImageThumbnailViewContract>? = null
   private var postCellThumbnailCallbacks: PostCellThumbnailCallbacks? = null
 
@@ -32,6 +36,11 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     // BIND
     CachedThumbnailViewContainerInfo()
   )
+
+  init {
+    AppModuleAndroidUtils.extractActivityComponent(context)
+      .inject(this)
+  }
 
   fun getThumbnailView(postImage: ChanPostImage): ThumbnailView? {
     val thumbnails = thumbnailViews
@@ -114,7 +123,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 
     val postCellCallback = postCellData.postCellCallback
     val resultThumbnailViews = mutableListOf<PostImageThumbnailViewContract>()
-    val cellPostThumbnailSize = calculatePostCellSingleThumbnailSize()
+    val cellPostThumbnailSize = uiConfiguration.thumbnails.postThumbnailSizePx()
 
     for ((index, postImage) in postCellData.postImages.withIndex()) {
       if (postImage.imageUrl == null && postImage.actualThumbnailUrl == null) {
@@ -210,7 +219,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       ?: return
 
     val postCellCallback = postCellData.postCellCallback
-    val cellPostThumbnailSize = calculatePostCellSingleThumbnailSize()
+    val cellPostThumbnailSize = uiConfiguration.thumbnails.postThumbnailSizePx()
     val resultThumbnailViews = mutableListOf<PostImageThumbnailViewContract>()
 
     if (postImage.imageUrl == null && postImage.actualThumbnailUrl == null) {
@@ -325,7 +334,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
         setMeasuredDimension(0, 0)
       } else {
         val child = getChildAt(0)
-        val childWidth = calculatePostCellSingleThumbnailSize()
+        val childWidth = uiConfiguration.thumbnails.postThumbnailSizePx()
 
         child.measure(
           exactly(childWidth + paddingLeft + paddingRight),
@@ -523,7 +532,6 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 
   companion object {
     private val MULTIPLE_THUMBNAILS_PADDING = dp(6f)
-    private val CELL_POST_THUMBNAIL_SIZE_MAX = getDimen(R.dimen.cell_post_thumbnail_size_max).toFloat()
 
     const val THUMBNAIL_CLICK_TOKEN = "POST_THUMBNAIL_VIEW_CLICK"
     const val THUMBNAIL_LONG_CLICK_TOKEN = "POST_THUMBNAIL_VIEW_LONG_CLICK"
@@ -531,13 +539,6 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 
     const val PRE_BIND = 0
     const val BIND = 1
-
-    fun calculatePostCellSingleThumbnailSize(): Int {
-      val postCellThumbnailSizePercent = CELL_POST_THUMBNAIL_SIZE_MAX / 100f
-      val newSize = ChanSettings.postCellThumbnailSizePercents.get() * postCellThumbnailSizePercent
-
-      return newSize.toInt()
-    }
   }
 
 }

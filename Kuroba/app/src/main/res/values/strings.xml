@@ -478,6 +478,7 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="post_filter_name">Filter name</string>
     <string name="post_filter_poster_id">Filter poster ID</string>
     <string name="post_text_copied">Text copied to clipboard</string>
+    <string name="post_copy">Copy</string>
     <string name="post_quote">Quote</string>
     <string name="post_quote_text">Quote text</string>
     <string name="post_info">Info</string>

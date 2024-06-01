@@ -28,6 +28,8 @@ import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScroll
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutHelper
 import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadProgressNotifier
 import com.github.k1rakishou.chan.ui.captcha.chan4.Chan4CaptchaSolverHelper
+import com.github.k1rakishou.chan.ui.config.UiConfiguration
+import com.github.k1rakishou.chan.ui.config.UiConfigurationImpl
 import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
 import com.github.k1rakishou.chan.ui.helper.AppResources
 import com.github.k1rakishou.chan.ui.helper.AppSettingsUpdateAppRefreshHelper
@@ -259,7 +261,15 @@ class HelperModule {
   @Provides
   @Singleton
   fun provideAppResources(appContext: Context): AppResources {
+    Logger.deps("AppResources");
     return AppResources(appContext)
+  }
+
+  @Provides
+  @Singleton
+  fun provideUiConfiguration(appResources: AppResources): UiConfiguration {
+    Logger.deps("UiConfiguration");
+    return UiConfigurationImpl(appResources)
   }
 
   @Provides

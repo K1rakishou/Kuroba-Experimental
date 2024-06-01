@@ -68,6 +68,8 @@ data class PostCellState(
     get() = _repliesFromCount
 
   private val _parsedPostDataRaw = mutableStateOf<ParsedPostDataRaw?>(null)
+  val parsedPostDataRaw: State<ParsedPostDataRaw?>
+    get() = _parsedPostDataRaw
 
   val chanDescriptor: ChanDescriptor
     get() = chanDescriptorUi.chanDescriptor

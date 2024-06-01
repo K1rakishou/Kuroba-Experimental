@@ -5,7 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.github.k1rakishou.chan.ui.compose.post.state.PostCellState
 import com.github.k1rakishou.chan.ui.compose.post.state.ThreadState
-import com.github.k1rakishou.chan.ui.compose.post.ui.body.PostCellBodyUi
+import com.github.k1rakishou.chan.ui.compose.post.ui.body.PostCellCommentUi
 import com.github.k1rakishou.chan.ui.compose.post.ui.footer.PostCellFooterUi
 import com.github.k1rakishou.chan.ui.compose.post.ui.title.PostCellTitleContainer
 
@@ -26,7 +26,7 @@ fun PostCellUi(
       )
     },
     body = {
-      PostCellBodyUi(
+      PostCellCommentUi(
         modifier = Modifier.fillMaxWidth(),
         threadState = threadState,
         postCellState = postCellState

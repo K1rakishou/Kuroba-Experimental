@@ -308,6 +308,7 @@ dependencies {
 
     // noinspection GradleDependency wants to upgrade to older version
     implementation "com.github.K1rakishou:Fuck-Storage-Access-Framework:${versions.fsaf}"
+    implementation 'com.github.K1rakishou:ComposeCustomTextSelection:8724bc088d'
 
     implementation "androidx.room:room-runtime:${versions.room_version}"
     testImplementation 'junit:junit:4.13.2'

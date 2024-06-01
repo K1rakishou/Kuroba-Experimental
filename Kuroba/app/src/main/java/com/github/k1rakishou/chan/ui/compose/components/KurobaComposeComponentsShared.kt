@@ -53,10 +53,12 @@ fun Modifier.kurobaClickable(
   onLongClick: (() -> Unit)? = null,
   onClick: (() -> Unit)? = null
 ): Modifier {
-  if (enabled) {
-    if (onLongClick == null && onClick == null) {
-      error("At least one of the callbacks must be non-null")
-    }
+  if (!enabled) {
+    return this
+  }
+
+  if (onLongClick == null && onClick == null) {
+    error("At least one of the callbacks must be non-null")
   }
 
   return composed {
@@ -72,7 +74,7 @@ fun Modifier.kurobaClickable(
 
     return@composed then(
       Modifier.combinedClickable(
-        enabled = enabled,
+        enabled = true,
         indication = rememberKurobaRipple(bounded = bounded, color = color),
         interactionSource = remember { MutableInteractionSource() },
         onLongClick = onLongClick,

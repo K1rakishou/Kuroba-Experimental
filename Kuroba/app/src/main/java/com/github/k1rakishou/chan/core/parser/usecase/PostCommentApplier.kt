@@ -32,6 +32,25 @@ interface PostCommentApplier {
     parsedPostDataContext: ParsedPostDataContext
   ): AnnotatedString
 
+  companion object {
+    const val CROSS_THREAD_POSTFIX = "(CT) \u2192"
+    const val OP_POSTFIX = "(OP)"
+    const val DEAD_POSTFIX = "(Dead)"
+    const val YOU_POSTFIX = "(You)"
+
+    const val ANNOTATION_POST_LINKABLE = "[post_linkable]"
+    const val ANNOTATION_POST_SPOILER_TEXT = "[spoiler_text]"
+    const val ANNOTATION_INLINED_IMAGE = "[inlined_image]"
+
+    const val INLINE_CONTENT_TAG = "androidx.compose.foundation.text.inlineContent"
+
+    val ALL_TAGS = mutableSetOf(
+      ANNOTATION_POST_LINKABLE,
+      ANNOTATION_POST_SPOILER_TEXT,
+      ANNOTATION_INLINED_IMAGE
+    )
+  }
+
 }
 
 class PostCommentApplierImpl(
@@ -163,7 +182,7 @@ class PostCommentApplierImpl(
           }
 
           if (parsedPostDataContext.isParsingThread) {
-            annotationTag = ANNOTATION_POST_LINKABLE
+            annotationTag = PostCommentApplier.ANNOTATION_POST_LINKABLE
           }
 
           annotationValue = span.linkSpan.createAnnotationItem()
@@ -201,7 +220,7 @@ class PostCommentApplierImpl(
             chanTheme.postSpoilerColorCompose
           }
 
-          annotationTag = ANNOTATION_POST_SPOILER_TEXT
+          annotationTag = PostCommentApplier.ANNOTATION_POST_SPOILER_TEXT
         }
         is TextPartSpan.Underline -> {
           underline = true
@@ -235,14 +254,14 @@ class PostCommentApplierImpl(
               if (span is TextPartSpan.Linkable.Quote) {
                 if (span.dead) {
                   this.append(" ")
-                  this.append(DEAD_POSTFIX)
+                  this.append(PostCommentApplier.DEAD_POSTFIX)
 
                   linethrough = true
                 }
 
                 if (span.postDescriptor.isOP() && !span.crossThread) {
                   this.append(" ")
-                  this.append(OP_POSTFIX)
+                  this.append(PostCommentApplier.OP_POSTFIX)
                 }
 
                 val markedPostInfoSet = markedPosts[span.postDescriptor]
@@ -251,7 +270,7 @@ class PostCommentApplierImpl(
                     when (markedPost.markedPostType) {
                       MarkedPostType.MyPost -> {
                         this.append(" ")
-                        this.append(YOU_POSTFIX)
+                        this.append(PostCommentApplier.YOU_POSTFIX)
                       }
                     }
                   }
@@ -259,7 +278,7 @@ class PostCommentApplierImpl(
 
                 if (span.crossThread) {
                   this.append(" ")
-                  this.append(CROSS_THREAD_POSTFIX)
+                  this.append(PostCommentApplier.CROSS_THREAD_POSTFIX)
                 }
 
                 bold = parsedPostDataContext.boldPostDescriptor == span.postDescriptor
@@ -279,7 +298,7 @@ class PostCommentApplierImpl(
           }
 
           if (parsedPostDataContext.isParsingThread) {
-            annotationTag = ANNOTATION_POST_LINKABLE
+            annotationTag = PostCommentApplier.ANNOTATION_POST_LINKABLE
           }
 
           annotationValue = span.createAnnotationItem()
@@ -380,24 +399,6 @@ class PostCommentApplierImpl(
 
   companion object {
     private const val TAG = "PostCommentApplier"
-    private const val ELLIPSIZE = "..."
-
-    private const val SEARCH_QUERY_SPAN = "search_query_span"
-
-    const val ANNOTATION_POST_LINKABLE = "[post_linkable]"
-    const val ANNOTATION_POST_SPOILER_TEXT = "[spoiler_text]"
-    const val ANNOTATION_INLINED_IMAGE = "[inlined_image]"
-
-    private const val CROSS_THREAD_POSTFIX = "(CT) \u2192"
-    private const val OP_POSTFIX = "(OP)"
-    private const val DEAD_POSTFIX = "(Dead)"
-    private const val YOU_POSTFIX = "(You)"
-
-    val ALL_TAGS = mutableSetOf(
-      ANNOTATION_POST_LINKABLE,
-      ANNOTATION_POST_SPOILER_TEXT,
-      ANNOTATION_INLINED_IMAGE
-    )
   }
 
 }
