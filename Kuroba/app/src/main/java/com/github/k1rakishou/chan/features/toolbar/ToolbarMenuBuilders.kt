@@ -16,13 +16,15 @@ class ToolbarMenuBuilder {
   private val overflowItems = mutableListOf<AbstractToolbarMenuOverflowItem>()
 
   fun withMenuItem(
-    id: Int? = null,
     @DrawableRes drawableId: Int,
+    id: Int? = null,
+    disableWhenToolbarContentIsNotLoaded: Boolean = true,
     onClick: (ToolbarMenuItem) -> Unit
   ): ToolbarMenuBuilder {
     val toolbarMenuItem = ToolbarMenuItem(
       id = id,
       drawableId = drawableId,
+      disableWhenToolbarContentIsNotLoaded = disableWhenToolbarContentIsNotLoaded,
       onClick = onClick
     )
 

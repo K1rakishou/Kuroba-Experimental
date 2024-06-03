@@ -99,12 +99,19 @@ fun KurobaThreadToolbarContent(
             continue
           }
 
+          val disableWhenToolbarContentIsNotLoaded by rightIcon.disableWhenToolbarContentIsNotLoadedState
+          val enabled = if (disableWhenToolbarContentIsNotLoaded) {
+            toolbarContentState.isLoaded
+          } else {
+            true
+          }
+
           Spacer(modifier = Modifier.width(12.dp))
 
           ToolbarClickableIcon(
             toolbarMenuItem = rightIcon,
             chanTheme = chanTheme,
-            enabled = toolbarContentState.isLoaded,
+            enabled = enabled,
             onClick = {
               val iconClickInterceptor = state.iconClickInterceptor
 

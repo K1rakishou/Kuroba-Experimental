@@ -1,6 +1,6 @@
 package com.github.k1rakishou.chan.core.site.parser_v2
 
-import com.github.k1rakishou.chan.core.parser.TextPartMut
+import com.github.k1rakishou.chan.core.parser.TextPartBuilder
 import com.github.k1rakishou.chan.core.parser.TextPartSpan
 import com.github.k1rakishou.chan.core.repository.StaticHtmlColorRepository
 import com.github.k1rakishou.core_parser.comment.HtmlTag
@@ -14,39 +14,33 @@ class DvachPostParser(
 
   override fun parseSpanTag(
     htmlTag: HtmlTag,
-    childTextParts: MutableList<TextPartMut>,
+    textPartBuilders: MutableList<TextPartBuilder>,
     postDescriptor: PostDescriptor
   ) {
-    super.parseSpanTag(htmlTag, childTextParts, postDescriptor)
+    super.parseSpanTag(htmlTag, textPartBuilders, postDescriptor)
 
     if (htmlTag.hasClass("unkfunc")) {
-      for (childTextPart in childTextParts) {
-        childTextPart.spans.add(TextPartSpan.FgColorId(ChanThemeColorId.PostInlineQuoteColor))
-      }
+      TextPartBuilder.addMany(textPartBuilders, TextPartSpan.FgColorId(ChanThemeColorId.PostInlineQuoteColor))
     }
 
     if (htmlTag.hasClass("post__pomyanem")) {
-      for (childTextPart in childTextParts) {
-        childTextPart.spans.add(TextPartSpan.FgColorId(ChanThemeColorId.AccentColor))
-      }
+      TextPartBuilder.addMany(textPartBuilders, TextPartSpan.FgColorId(ChanThemeColorId.AccentColor))
     }
 
     if (htmlTag.hasClass("spoiler")) {
-      for (childTextPart in childTextParts) {
-        childTextPart.spans.add(TextPartSpan.Spoiler)
-      }
+      TextPartBuilder.addMany(textPartBuilders, TextPartSpan.Spoiler)
     }
 
-    parseLinkTag(htmlTag, childTextParts, postDescriptor)
+    parseLinkTag(htmlTag, textPartBuilders, postDescriptor)
   }
 
   override fun parseLinkTag(
     htmlTag: HtmlTag,
-    childTextParts: MutableList<TextPartMut>,
+    textPartBuilders: MutableList<TextPartBuilder>,
     postDescriptor: PostDescriptor
   ) {
-    var childTextPart = if (childTextParts.size == 1) {
-      childTextParts.first()
+    var textPartBuilder = if (textPartBuilders.size == 1) {
+      textPartBuilders.first()
     } else {
       return
     }
@@ -55,7 +49,7 @@ class DvachPostParser(
     val isDeadLink = htmlTag.tagName == "span" && htmlTag.hasClass("deadlink")
 
     val href = if (isDeadLink) {
-      childTextPart.text
+      textPartBuilder.text
     } else {
       htmlTag.attrUnescapedOrNull("href")
     }
@@ -68,18 +62,22 @@ class DvachPostParser(
       ?: TextPartSpan.Linkable.Url(href)
 
     if (linkable is TextPartSpan.Linkable.Quote) {
-      childTextPart = quoteTrimUnnecessaryCharacters(childTextPart)
+      textPartBuilder = quoteTrimUnnecessaryCharacters(textPartBuilder)
 
-      childTextParts.clear()
-      childTextParts.add(childTextPart)
+      textPartBuilders.clear()
+      textPartBuilders.add(textPartBuilder)
     }
 
-    childTextPart.spans += linkable
+    TextPartBuilder.add(textPartBuilder, linkable)
   }
 
-  override fun parseParagraphTag(childTextParts: MutableList<TextPartMut>) {
-    childTextParts += TextPartMut(text = "\n")
-    childTextParts += TextPartMut(text = "\n")
+  override fun parseParagraphTag(textPartBuilders: MutableList<TextPartBuilder>) {
+    textPartBuilders += TextPartBuilder(text = "\n")
+    textPartBuilders += TextPartBuilder(text = "\n")
+  }
+
+  override fun parseStrikethroughTag(textPartBuilders: MutableList<TextPartBuilder>) {
+    TextPartBuilder.addMany(textPartBuilders, TextPartSpan.Strikethrough)
   }
 
   override fun parseLinkable(className: String?, href: String, postDescriptor: PostDescriptor): TextPartSpan.Linkable? {
@@ -141,11 +139,11 @@ class DvachPostParser(
 
   // >>7484866 (OP) ->  >>7484866
   // >>7499275 →    ->  >>7499275
-  private fun quoteTrimUnnecessaryCharacters(childTextPart: TextPartMut): TextPartMut {
+  private fun quoteTrimUnnecessaryCharacters(textPartBuilder: TextPartBuilder): TextPartBuilder {
     val newQuoteText = buildString {
       var offset = 0
       var processingPostNumber = false
-      val text = childTextPart.text
+      val text = textPartBuilder.text
 
       while (offset < text.length) {
         val ch = text.getOrNull(offset) ?: break
@@ -169,10 +167,10 @@ class DvachPostParser(
     }
 
     if (newQuoteText.isBlank()) {
-      return childTextPart
+      return textPartBuilder
     }
 
-    return childTextPart.copy(text = newQuoteText)
+    return textPartBuilder.copy(text = newQuoteText)
   }
 
 }

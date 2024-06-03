@@ -16,6 +16,7 @@ import com.github.k1rakishou.chan.core.parser.MarkedPostType
 import com.github.k1rakishou.chan.core.parser.ParsedPostDataContext
 import com.github.k1rakishou.chan.core.parser.ParsedPostDataRaw
 import com.github.k1rakishou.chan.core.parser.PostViewMode
+import com.github.k1rakishou.chan.core.parser.ProcessedPostComment
 import com.github.k1rakishou.chan.core.parser.TextPart
 import com.github.k1rakishou.chan.core.parser.TextPartSpan
 import com.github.k1rakishou.chan.core.parser.repository.PostReplyChainRepository
@@ -37,6 +38,7 @@ import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostIcon
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.util.ChanPostUtils
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentSet
 import java.util.Locale
 
@@ -171,7 +173,10 @@ class CalculateParsedPostDataUseCaseImpl(
         parsedPostParts = emptyList(),
         repliesTo = emptySet(),
         parsedPostComment = postComment,
-        processedPostComment = postCommentAnnotated,
+        processedPostComment = ProcessedPostComment(
+          string = postCommentAnnotated,
+          spans = persistentListOf()
+        ),
         parsedPostSubject = "",
         processedPostSubject = AnnotatedString(""),
         postFooterText = AnnotatedString(""),

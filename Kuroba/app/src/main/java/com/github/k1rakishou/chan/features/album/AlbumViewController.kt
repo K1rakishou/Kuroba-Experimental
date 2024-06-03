@@ -379,13 +379,13 @@ class AlbumViewController(
         totalItemsCount = totalItemsCount,
         menuBuilder = {
           withMenuItem(
-            ACTION_TOGGLE_SELECTION,
-            com.github.k1rakishou.chan.R.drawable.ic_select_all_white_24dp
+            id = ACTION_TOGGLE_SELECTION,
+            drawableId = com.github.k1rakishou.chan.R.drawable.ic_select_all_white_24dp
           ) { controllerViewModel.toggleAlbumItemsSelection() }
 
           withMenuItem(
-            ACTION_DOWNLOAD_SELECTED_IMAGES,
-            com.github.k1rakishou.chan.R.drawable.ic_baseline_file_download_24
+            drawableId = ACTION_DOWNLOAD_SELECTED_IMAGES,
+            id = com.github.k1rakishou.chan.R.drawable.ic_baseline_file_download_24
           ) { controllerViewModel.downloadSelectedItems() }
         }
       )

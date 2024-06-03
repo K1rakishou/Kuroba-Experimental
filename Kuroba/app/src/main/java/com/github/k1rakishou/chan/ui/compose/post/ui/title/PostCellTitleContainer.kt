@@ -19,10 +19,24 @@ internal fun PostCellTitleContainer(
     return
   }
 
+  val thumbnailSizeMut by threadState.thumbnailSize.collectAsState()
+  val thumbnailSize = thumbnailSizeMut
+  if (thumbnailSize == null) {
+    return
+  }
+
+  val thumbnailScalingMut by threadState.thumbnailScaling.collectAsState()
+  val thumbnailScaling = thumbnailScalingMut
+  if (thumbnailScaling == null) {
+    return
+  }
+
   val postMediaList by postCellState.postMediaList
   if (postMediaList.size <= 1 || postMultipleImagesCompactMode) {
     PostCellTitleUiOneOrLessImages(
       modifier = modifier,
+      thumbnailSize = thumbnailSize,
+      thumbnailScaling = thumbnailScaling,
       postCellState = postCellState,
       threadState = threadState,
       postMediaList = postMediaList,
@@ -31,6 +45,8 @@ internal fun PostCellTitleContainer(
   } else {
     PostCellTitleMultipleImagesContainer(
       modifier = modifier,
+      thumbnailSize = thumbnailSize,
+      thumbnailScaling = thumbnailScaling,
       postCellState = postCellState,
       threadState = threadState,
       postMediaList = postMediaList

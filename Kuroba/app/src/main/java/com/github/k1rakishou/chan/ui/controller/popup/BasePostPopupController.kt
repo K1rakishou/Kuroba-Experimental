@@ -15,6 +15,8 @@ import com.github.k1rakishou.chan.core.manager.PostHideManager
 import com.github.k1rakishou.chan.core.manager.PostHighlightManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface
+import com.github.k1rakishou.chan.ui.compose.post.state.PostDisplayOptions
+import com.github.k1rakishou.chan.ui.compose.post.state.ThreadCellStateDependenciesImpl
 import com.github.k1rakishou.chan.ui.compose.post.state.ThreadState
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingComposeController
 import com.github.k1rakishou.chan.ui.helper.PostPopupHelper
@@ -50,6 +52,7 @@ abstract class BasePostPopupController<T : PostPopupHelper.PostPopupData>(
   lateinit var postHighlightManager: PostHighlightManager
 
   abstract val postPopupType: PostPopupType
+  abstract val postDisplayOptions: PostDisplayOptions
 
   protected val rendezvousCoroutineExecutor = RendezvousCoroutineExecutor(controllerScope)
   protected val debouncingCoroutineExecutor = DebouncingCoroutineExecutor(controllerScope)
@@ -60,9 +63,10 @@ abstract class BasePostPopupController<T : PostPopupHelper.PostPopupData>(
 
   protected val threadState by lazy(LazyThreadSafetyMode.NONE) {
     ThreadState(
+      dependencies = ThreadCellStateDependenciesImpl(controllerScope),
       initialWindowSize = 32,
       controllerKey = controllerKey,
-      coroutineScope = controllerScope
+      postDisplayOptions = postDisplayOptions
     )
   }
 

@@ -50,6 +50,7 @@ internal fun Modifier.drawIndicatorLine(
 fun Modifier.kurobaClickable(
   enabled: Boolean = true,
   bounded: Boolean = false,
+  withRipple: Boolean = true,
   onLongClick: (() -> Unit)? = null,
   onClick: (() -> Unit)? = null
 ): Modifier {
@@ -72,10 +73,16 @@ fun Modifier.kurobaClickable(
       }
     }
 
+    val indication = if (withRipple) {
+      rememberKurobaRipple(bounded = bounded, color = color)
+    } else {
+      null
+    }
+
     return@composed then(
       Modifier.combinedClickable(
         enabled = true,
-        indication = rememberKurobaRipple(bounded = bounded, color = color),
+        indication = indication,
         interactionSource = remember { MutableInteractionSource() },
         onLongClick = onLongClick,
         onClick = onClick ?: DefaultNoopClickCallback

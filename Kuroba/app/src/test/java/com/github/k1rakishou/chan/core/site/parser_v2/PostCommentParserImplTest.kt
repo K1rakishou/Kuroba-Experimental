@@ -29,7 +29,8 @@ class PostCommentParserImplTest {
 
     postCommentParser = PostCommentParserImpl(
       siteManager,
-      HtmlParserPool()
+      HtmlParserPool(),
+      TextPartBuilderMerger()
     )
   }
 
@@ -57,7 +58,7 @@ class PostCommentParserImplTest {
       spans = listOf(
         TextPartSpan.Linkable.Url("https://author.today/work/51427"),
         TextPartSpan.Italic,
-        TextPartSpan.PartialSpan(start = 0, end = 31, linkSpan = TextPartSpan.Linkable.Url("https://author.today/work/51427")),
+        TextPartSpan.PartialSpan(start = 0, end = 31, textPartSpan = TextPartSpan.Linkable.Url("https://author.today/work/51427")),
         TextPartSpan.Spoiler
       )
     )
@@ -74,7 +75,7 @@ class PostCommentParserImplTest {
       spans = listOf(
         TextPartSpan.Linkable.Url("https://author.today/work/148606"),
         TextPartSpan.Italic,
-        TextPartSpan.PartialSpan(start = 0, end = 32, linkSpan = TextPartSpan.Linkable.Url("https://author.today/work/148606")),
+        TextPartSpan.PartialSpan(start = 0, end = 32, textPartSpan = TextPartSpan.Linkable.Url("https://author.today/work/148606")),
         TextPartSpan.Spoiler
       )
     )

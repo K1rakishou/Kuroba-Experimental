@@ -27,7 +27,9 @@ import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeCard
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeErrorMessage
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeProgressIndicator
 import com.github.k1rakishou.chan.ui.compose.lazylist.LazyColumnWithFastScroller
+import com.github.k1rakishou.chan.ui.compose.post.state.PostDisplayOptions
 import com.github.k1rakishou.chan.ui.compose.post.state.PostThumbnailAlignmentUi
+import com.github.k1rakishou.chan.ui.compose.post.state.postDisplayOptionsForRepliesPopup
 import com.github.k1rakishou.chan.ui.compose.post.ui.PostCellUi
 import com.github.k1rakishou.chan.ui.helper.PostPopupHelper
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -53,6 +55,8 @@ class PostRepliesPopupController(
 
   override val postPopupType: PostPopupType
     get() = PostPopupType.Replies
+  override val postDisplayOptions: PostDisplayOptions
+    get() =  postDisplayOptionsForRepliesPopup()
 
   @Composable
   override fun BoxScope.Content() {
@@ -89,13 +93,7 @@ class PostRepliesPopupController(
     }
 
     KurobaComposeCard {
-      val initialWindowLoaded by threadState.initialWindowLoaded
-      val thumbnailSize by threadState.thumbnailSize.collectAsState()
-      val postMultipleImagesCompactMode by threadState.postMultipleImagesCompactMode.collectAsState()
-      val postTitleFontSize by threadState.postTitleFontSize.collectAsState()
-      val postCommentFontSize by threadState.postCommentFontSize.collectAsState()
-      val catalogThumbnailAlignment by threadState.catalogThumbnailAlignment.collectAsState()
-      val threadThumbnailAlignment by threadState.threadThumbnailAlignment.collectAsState()
+      val threadInitializationState by threadState.threadInitializationState.collectAsState()
 
       LazyColumnWithFastScroller(
         modifier = Modifier
@@ -123,18 +121,7 @@ class PostRepliesPopupController(
             return@LazyColumnWithFastScroller
           }
 
-          val isInitialized = isInitialized(
-            localDisplayingData = localDisplayingData,
-            initialWindowLoaded = initialWindowLoaded,
-            thumbnailSize = thumbnailSize,
-            postMultipleImagesCompactMode = postMultipleImagesCompactMode,
-            postTitleFontSize = postTitleFontSize,
-            postCommentFontSize = postCommentFontSize,
-            catalogThumbnailAlignment = catalogThumbnailAlignment,
-            threadThumbnailAlignment = threadThumbnailAlignment,
-          )
-
-          if (!isInitialized) {
+          if (threadInitializationState?.isInitialized(localDisplayingData) != true) {
             item(
               key = "loading_state",
               contentType = "loading_state",

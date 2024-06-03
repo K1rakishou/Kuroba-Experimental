@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.ui.compose.image.KurobaComposePostImageThumbnail
+import com.github.k1rakishou.chan.ui.compose.image.KurobaThumbnailScaling
 import com.github.k1rakishou.chan.ui.compose.post.state.PostCellMediaState
 import com.github.k1rakishou.chan.ui.compose.post.state.PostCellState
 import com.github.k1rakishou.chan.ui.compose.post.state.PostThumbnailAlignmentUi
@@ -25,17 +26,13 @@ import kotlinx.collections.immutable.ImmutableList
 @Composable
 internal fun PostCellTitleUiOneOrLessImages(
   modifier: Modifier,
+  thumbnailSize: Dp,
+  thumbnailScaling: KurobaThumbnailScaling,
   postCellState: PostCellState,
   threadState: ThreadState,
   postMediaList: ImmutableList<PostCellMediaState>,
   postMultipleImagesCompactMode: Boolean
 ) {
-  val thumbnailSizeMut by threadState.thumbnailSize.collectAsState()
-  val thumbnailSize = thumbnailSizeMut
-  if (thumbnailSize == null) {
-    return
-  }
-
   val thumbnailAlignmentMut by when (postCellState.chanDescriptor) {
     is ChanDescriptor.ICatalogDescriptor -> threadState.catalogThumbnailAlignment.collectAsState()
     is ChanDescriptor.ThreadDescriptor -> threadState.threadThumbnailAlignment.collectAsState()
@@ -61,6 +58,7 @@ internal fun PostCellTitleUiOneOrLessImages(
         postCellState = postCellState,
         threadState = threadState,
         thumbnailSize = thumbnailSize,
+        thumbnailScaling = thumbnailScaling,
         postMediaListSize = postMediaList.size,
         addSpacerToLeftSide = addSpacerToLeftSide,
         postMultipleImagesCompactMode = postMultipleImagesCompactMode
@@ -94,6 +92,7 @@ private fun Thumbnail(
   postCellState: PostCellState,
   threadState: ThreadState,
   thumbnailSize: Dp,
+  thumbnailScaling: KurobaThumbnailScaling,
   postMediaListSize: Int,
   addSpacerToLeftSide: Boolean,
   postMultipleImagesCompactMode: Boolean
@@ -123,6 +122,7 @@ private fun Thumbnail(
         postImageThumbnailKey = postCellMediaState.postCellMediaKey,
         requestProvider = requestProvider,
         mediaType = postCellMediaState.kurobaMediaType,
+        thumbnailScaling = thumbnailScaling,
         onClick = { postImageThumbnailKey -> threadState.onPostImageClicked(postImageThumbnailKey) },
         onLongClick = { postImageThumbnailKey -> threadState.onPostImageLongClicked(postImageThumbnailKey) }
       )

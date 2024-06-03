@@ -2,7 +2,7 @@ package com.github.k1rakishou.chan.core.site.parser_v2
 
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.parser.TextPart
-import com.github.k1rakishou.chan.core.parser.TextPartMut
+import com.github.k1rakishou.chan.core.parser.TextPartBuilder
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.mutableListWithCap
@@ -29,7 +29,8 @@ interface PostCommentParser {
 
 class PostCommentParserImpl(
   private val siteManager: SiteManager,
-  private val htmlParserPool: HtmlParserPool
+  private val htmlParserPool: HtmlParserPool,
+  private val textPartBuilderMerger: TextPartBuilderMerger
 ) : PostCommentParser {
 
   override suspend fun parsePostCommentAsText(
@@ -124,14 +125,15 @@ class PostCommentParserImpl(
     val htmlNodes = htmlParser.parse(postCommentUnparsed).nodes
     val parserContext = PostCommentParserContext()
 
-    return processNodes(
+    val textPartBuilders = processNodes(
       postDescriptor = postDescriptor,
       htmlNodes = htmlNodes,
       sitePostParser = postParser,
       parserContext = parserContext
-    )
-      .map { textPartMut -> postParser.postProcessTextParts(textPartMut) }
-      .map { textPartMut -> textPartMut.toTextPartWithSortedSpans() }
+    ).map { textPartMut -> postParser.postProcessTextParts(textPartMut) }
+
+    return textPartBuilderMerger.merge(textPartBuilders)
+      .map { textPartMut -> textPartMut.build() }
   }
 
   private fun processNodes(
@@ -139,12 +141,12 @@ class PostCommentParserImpl(
     htmlNodes: List<HtmlNode>,
     sitePostParser: AbstractSitePostParser,
     parserContext: PostCommentParserContext
-  ): MutableList<TextPartMut> {
+  ): MutableList<TextPartBuilder> {
     if (htmlNodes.isEmpty()) {
       return mutableListOf()
     }
 
-    val currentTextParts = mutableListWithCap<TextPartMut>(16)
+    val currentTextParts = mutableListWithCap<TextPartBuilder>(16)
 
     for (htmlNode in htmlNodes) {
       when (htmlNode) {
@@ -152,7 +154,7 @@ class PostCommentParserImpl(
           parserContext.onTagOpened(htmlNode)
 
           val htmlTag = htmlNode.htmlTag
-          val childTextParts = processNodes(
+          val textPartBuilders = processNodes(
             postDescriptor = postDescriptor,
             htmlNodes = htmlTag.children,
             sitePostParser = sitePostParser,
@@ -161,19 +163,19 @@ class PostCommentParserImpl(
 
           sitePostParser.parseHtmlNode(
             htmlTag = htmlTag,
-            childTextParts = childTextParts,
+            textPartBuilders = textPartBuilders,
             postDescriptor = postDescriptor,
             parserContext = parserContext
           )
 
           sitePostParser.postProcessHtmlNode(
             htmlTag = htmlTag,
-            childTextParts = childTextParts,
+            textPartBuilders = textPartBuilders,
             postDescriptor = postDescriptor,
             parserContext = parserContext
           )
 
-          currentTextParts.addAll(childTextParts)
+          currentTextParts.addAll(textPartBuilders)
 
           parserContext.onTagClosed(htmlNode)
         }
@@ -184,7 +186,7 @@ class PostCommentParserImpl(
             htmlNode.text
           }
 
-          currentTextParts += TextPartMut(nodeText)
+          currentTextParts += TextPartBuilder(nodeText)
         }
       }
     }

@@ -28,6 +28,7 @@ data class ToolbarMenu(
 open class ToolbarMenuItem(
   val id: Int? = null,
   drawableId: Int,
+  disableWhenToolbarContentIsNotLoaded: Boolean = true,
   visible: Boolean = true,
   val onClick: (ToolbarMenuItem) -> Unit
 ) {
@@ -38,6 +39,10 @@ open class ToolbarMenuItem(
   private val _visibleState = mutableStateOf(visible)
   val visibleState: State<Boolean>
     get() = _visibleState
+
+  private val _disableWhenToolbarContentIsNotLoadedState = mutableStateOf(disableWhenToolbarContentIsNotLoaded)
+  val disableWhenToolbarContentIsNotLoadedState: State<Boolean>
+    get() = _disableWhenToolbarContentIsNotLoadedState
 
   private val _spinEventsFlow = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   val spinEventsFlow: SharedFlow<Unit>

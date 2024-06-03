@@ -19,9 +19,14 @@ internal fun PostCellUiLayout(
 ) {
   Column(modifier = modifier) {
     title()
-    Spacer(modifier = Modifier.height(8.dp))
 
-    body()
+    val postCommentMut by postCellState.postComment
+    val postComment = postCommentMut
+
+    if (postComment != null && postComment.isNotEmpty()) {
+      Spacer(modifier = Modifier.height(8.dp))
+      body()
+    }
 
     val repliesFromCount by postCellState.repliesFromCount
     if (repliesFromCount > 0) {

@@ -10,7 +10,7 @@ data class ParsedPostDataRaw(
   val repliesTo: Set<PostDescriptorUi>,
   val parsedPostComment: String,
   val parsedPostSubject: String,
-  val processedPostComment: AnnotatedString,
+  val processedPostComment: ProcessedPostComment,
   val processedPostSubject: AnnotatedString,
   val postFooterText: AnnotatedString?,
   val isPostMarkedAsMine: Boolean,

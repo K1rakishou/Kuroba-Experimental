@@ -7,9 +7,12 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.text.AnnotatedString
+import com.github.k1rakishou.chan.core.manager.RevealedTextSpoilersManager
 import com.github.k1rakishou.chan.core.parser.ParsedPostDataContext
 import com.github.k1rakishou.chan.core.parser.ParsedPostDataRaw
 import com.github.k1rakishou.chan.core.parser.PostViewMode
+import com.github.k1rakishou.chan.core.parser.ProcessedPostComment
+import com.github.k1rakishou.chan.core.parser.TextPartSpan
 import com.github.k1rakishou.chan.core.parser.repository.ParsedPostDataRepository
 import com.github.k1rakishou.chan.ui.compose.data.ChanDescriptorUi
 import com.github.k1rakishou.chan.ui.compose.data.PostDescriptorUi
@@ -29,9 +32,9 @@ import kotlinx.coroutines.CoroutineScope
 
 @Stable
 data class PostCellState(
-  private val coroutineScope: CoroutineScope,
-  private val parsedPostDataRepository: ParsedPostDataRepository,
+  val dependencies: PostCellStateDependencies,
   val postCellHighlightState: PostCellHighlightState,
+  val threadState: ThreadState,
   val postIndex: Int,
   val chanDescriptorUi: ChanDescriptorUi,
   val postDescriptorUi: PostDescriptorUi,
@@ -39,6 +42,22 @@ data class PostCellState(
   val postViewMode: PostViewMode,
   val fontSize: Int
 ) {
+  private val coroutineScope: CoroutineScope
+    get() = dependencies.coroutineScope
+  private val parsedPostDataRepository: ParsedPostDataRepository
+    get() = dependencies.parsedPostDataRepository
+  private val revealedTextSpoilersManager: RevealedTextSpoilersManager
+    get() = dependencies.revealedTextSpoilersManager
+
+  val postCellTextState by lazy(LazyThreadSafetyMode.NONE) {
+    PostCellTextState(
+      coroutineScope = coroutineScope,
+      postCellState = this,
+      threadState = threadState,
+      revealedTextSpoilersManager = revealedTextSpoilersManager
+    )
+  }
+
   private val _initialized = mutableStateOf(false)
   val initialized: State<Boolean>
     get() = _initialized
@@ -51,8 +70,8 @@ data class PostCellState(
   val postTitle: State<AnnotatedString?>
     get() = _postTitle
 
-  private val _postComment = mutableStateOf<AnnotatedString?>(null)
-  val postComment: State<AnnotatedString?>
+  private val _postComment = mutableStateOf<ProcessedPostComment?>(null)
+  val postComment: State<ProcessedPostComment?>
     get() = _postComment
 
   private val _postMediaList = mutableStateOf<PersistentList<PostCellMediaState>>(persistentListOf())
@@ -136,6 +155,48 @@ data class PostCellState(
     }
   }
 
+  suspend fun onSpoilerClicked(clickedSpoiler: PostCommentClickable.Spoiler) {
+    val textSpoiler = RevealedTextSpoilersManager.TextSpoiler(
+      postDescriptor = postDescriptor,
+      start = clickedSpoiler.start,
+      end = clickedSpoiler.end
+    )
+
+    revealedTextSpoilersManager.revealSpoiler(textSpoiler)
+  }
+
+  suspend fun findSpoilers(): PersistentList<PostCommentClickable.Spoiler> {
+    val parsedPostDataRaw = _parsedPostDataRaw.value
+    if (parsedPostDataRaw == null) {
+      return persistentListOf()
+    }
+
+    val spoilers = parsedPostDataRaw.processedPostComment.spans
+      .filter { appliedSpan -> appliedSpan.span is TextPartSpan.Spoiler }
+
+    if (spoilers.isEmpty()) {
+      return persistentListOf()
+    }
+
+    return spoilers.mapNotNull { appliedSpan ->
+      val textSpoiler = RevealedTextSpoilersManager.TextSpoiler(
+        postDescriptor = postDescriptor,
+        start = appliedSpan.start,
+        end = appliedSpan.end
+      )
+
+      val isRevealed = revealedTextSpoilersManager.isRevealed(textSpoiler)
+      if (isRevealed) {
+        return@mapNotNull null
+      }
+
+      return@mapNotNull PostCommentClickable.Spoiler(
+        start = appliedSpan.start,
+        end = appliedSpan.end
+      )
+    }.toPersistentList()
+  }
+
   private fun calculatePostFooter(
     isPostHidden: Boolean,
     parsedPostDataRaw: ParsedPostDataRaw
@@ -194,7 +255,7 @@ data class PostCellState(
   private fun calculatePostComment(
     isPostHidden: Boolean,
     parsedPostDataRaw: ParsedPostDataRaw
-  ): AnnotatedString {
+  ): ProcessedPostComment {
     return parsedPostDataRaw.processedPostComment
   }
 

@@ -8,6 +8,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.ui.cell.PostCellData
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface
+import com.github.k1rakishou.chan.ui.compose.post.state.PostDisplayOptions
+import com.github.k1rakishou.chan.ui.compose.post.state.postDisplayOptionsForRepliesPopup
 import com.github.k1rakishou.chan.ui.helper.PostPopupHelper
 import com.github.k1rakishou.chan.ui.layout.SearchLayout
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
@@ -51,6 +53,8 @@ class PostSearchPopupController(
 
   override val postPopupType: PostPopupType
     get() = PostPopupType.Search
+  override val postDisplayOptions: PostDisplayOptions
+    get() = postDisplayOptionsForRepliesPopup()
 
   @Composable
   override fun BoxScope.Content() {

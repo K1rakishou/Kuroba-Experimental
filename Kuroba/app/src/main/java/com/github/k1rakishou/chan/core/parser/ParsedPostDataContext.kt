@@ -4,15 +4,12 @@ import androidx.compose.runtime.Immutable
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.ChanSettings.BoardPostViewMode
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
-import kotlinx.collections.immutable.ImmutableSet
-import kotlinx.collections.immutable.persistentSetOf
 
 @Immutable
 data class ParsedPostDataContext(
   val isParsingCatalog: Boolean,
   val postViewMode: PostViewMode,
   val postCommentFontSizePixels: Int,
-  val revealedSpoilers: ImmutableSet<RevealedSpoiler> = persistentSetOf(),
   val boldPostDescriptor: PostDescriptor? = null
 ) {
   val isParsingThread: Boolean = !isParsingCatalog

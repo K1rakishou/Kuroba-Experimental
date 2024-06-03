@@ -1,7 +1,7 @@
 package com.github.k1rakishou.chan.core.site.parser_v2
 
 import androidx.annotation.CallSuper
-import com.github.k1rakishou.chan.core.parser.TextPartMut
+import com.github.k1rakishou.chan.core.parser.TextPartBuilder
 import com.github.k1rakishou.chan.core.parser.TextPartSpan
 import com.github.k1rakishou.chan.core.repository.StaticHtmlColorRepository
 import com.github.k1rakishou.core_logger.Logger
@@ -17,26 +17,26 @@ abstract class AbstractSitePostParser(
 
   fun parseHtmlNode(
     htmlTag: HtmlTag,
-    childTextParts: MutableList<TextPartMut>,
+    textPartBuilders: MutableList<TextPartBuilder>,
     postDescriptor: PostDescriptor,
     parserContext: PostCommentParserContext
   ) {
     when (val tagName = htmlTag.tagName) {
-      "br" -> parseNewLineTag(childTextParts)
-      "p" -> parseParagraphTag(childTextParts)
-      "s" -> parseStrikethroughTag(childTextParts)
+      "br" -> parseNewLineTag(textPartBuilders)
+      "p" -> parseParagraphTag(textPartBuilders)
+      "s" -> parseStrikethroughTag(textPartBuilders)
       "b",
-      "strong" -> parseStrongTag(childTextParts)
-      "em" -> parseEmphasizedTag(childTextParts)
-      "sup" -> parseSuperscriptTag(childTextParts)
-      "sub" -> parseSubscriptTag(childTextParts)
-      "span" -> parseSpanTag(htmlTag, childTextParts, postDescriptor)
-      "ins" -> parseInsTag(htmlTag, childTextParts, postDescriptor)
-      "a" -> parseLinkTag(htmlTag, childTextParts, postDescriptor)
+      "strong" -> parseStrongTag(textPartBuilders)
+      "em" -> parseEmphasizedTag(textPartBuilders)
+      "sup" -> parseSuperscriptTag(textPartBuilders)
+      "sub" -> parseSubscriptTag(textPartBuilders)
+      "span" -> parseSpanTag(htmlTag, textPartBuilders, postDescriptor)
+      "ins" -> parseInsTag(htmlTag, textPartBuilders, postDescriptor)
+      "a" -> parseLinkTag(htmlTag, textPartBuilders, postDescriptor)
       "ul" -> { /**no-op*/ }
-      "tr" -> parseTrTag(htmlTag, childTextParts, postDescriptor, parserContext)
-      "li" -> parseLiTag(htmlTag, childTextParts, postDescriptor, parserContext)
-      "pre" -> parsePreTag(htmlTag, childTextParts, postDescriptor, parserContext)
+      "tr" -> parseTrTag(htmlTag, textPartBuilders, postDescriptor, parserContext)
+      "li" -> parseLiTag(htmlTag, textPartBuilders, postDescriptor, parserContext)
+      "pre" -> parsePreTag(htmlTag, textPartBuilders, postDescriptor, parserContext)
       "wbr" -> {
         error("<wbr> tags should all be removed during the HTML parsing stage. This is most likely a HTML parser bug.")
       }
@@ -44,7 +44,7 @@ abstract class AbstractSitePostParser(
         if (tagName.startsWith("h", ignoreCase = true) && tagName.length == 2) {
           parseHeadingTag(
             htmlTag = htmlTag,
-            childTextParts = childTextParts,
+            textPartBuilders = textPartBuilders,
             postDescriptor = postDescriptor,
             parserContext = parserContext
           )
@@ -62,43 +62,43 @@ abstract class AbstractSitePostParser(
 
   fun postProcessHtmlNode(
     htmlTag: HtmlTag,
-    childTextParts: MutableList<TextPartMut>,
+    textPartBuilders: MutableList<TextPartBuilder>,
     postDescriptor: PostDescriptor,
     parserContext: PostCommentParserContext
   ) {
-    val allChildTextIsBlank = childTextParts.all { textPartMut -> textPartMut.text.isBlank() }
+    val allChildTextIsBlank = textPartBuilders.all { textPartMut -> textPartMut.text.isBlank() }
     if (allChildTextIsBlank) {
       return
     }
 
-    parseAnyTagStyleAttribute(htmlTag, childTextParts)
-    parseAnyTagSizeAttribute(htmlTag, childTextParts)
-    parseAnyTagColorAttribute(htmlTag, childTextParts)
+    parseAnyTagStyleAttribute(htmlTag, textPartBuilders)
+    parseAnyTagSizeAttribute(htmlTag, textPartBuilders)
+    parseAnyTagColorAttribute(htmlTag, textPartBuilders)
   }
 
   @CallSuper
   open fun parsePreTag(
     htmlTag: HtmlTag,
-    childTextParts: MutableList<TextPartMut>,
+    textPartBuilders: MutableList<TextPartBuilder>,
     postDescriptor: PostDescriptor,
     parserContext: PostCommentParserContext
   ) {
-    for (childTextPart in childTextParts) {
-      childTextPart.spans.add(TextPartSpan.Monospace)
-    }
+    TextPartBuilder.addMany(textPartBuilders, TextPartSpan.Monospace)
   }
 
   @CallSuper
-  open fun parseInsTag(htmlTag: HtmlTag, childTextParts: MutableList<TextPartMut>, postDescriptor: PostDescriptor) {
-    for (childTextPart in childTextParts) {
-      childTextPart.spans.add(TextPartSpan.Underline)
-    }
+  open fun parseInsTag(
+    htmlTag: HtmlTag,
+    textPartBuilders: MutableList<TextPartBuilder>,
+    postDescriptor: PostDescriptor
+  ) {
+    TextPartBuilder.addMany(textPartBuilders, TextPartSpan.Underline)
   }
 
   @CallSuper
   open fun parseHeadingTag(
     htmlTag: HtmlTag,
-    childTextParts: MutableList<TextPartMut>,
+    textPartBuilders: MutableList<TextPartBuilder>,
     postDescriptor: PostDescriptor,
     parserContext: PostCommentParserContext
   ) {
@@ -107,27 +107,25 @@ abstract class AbstractSitePostParser(
       ?.takeIf { size -> size in 0..5 }
       ?: return
 
-    for (childTextPart in childTextParts) {
-      childTextPart.spans.add(TextPartSpan.Heading(headingSize))
-    }
+    TextPartBuilder.addMany(textPartBuilders, TextPartSpan.Heading(headingSize))
   }
 
   @CallSuper
   open fun parseTrTag(
     htmlTag: HtmlTag,
-    childTextParts: MutableList<TextPartMut>,
+    textPartBuilders: MutableList<TextPartBuilder>,
     postDescriptor: PostDescriptor,
     parserContext: PostCommentParserContext
   ) {
     if (parserContext.isInsideTableTag) {
-      childTextParts += TextPartMut("\n")
+      textPartBuilders += TextPartBuilder("\n")
     }
   }
 
   @CallSuper
   open fun parseLiTag(
     htmlTag: HtmlTag,
-    childTextParts: MutableList<TextPartMut>,
+    textPartBuilders: MutableList<TextPartBuilder>,
     postDescriptor: PostDescriptor,
     parserContext: PostCommentParserContext
   ) {
@@ -141,69 +139,66 @@ abstract class AbstractSitePostParser(
         append(" ")
       }
 
-      childTextParts.add(0, TextPartMut(text))
+      textPartBuilders.add(0, TextPartBuilder(text))
     }
 
-    childTextParts += TextPartMut("\n")
+    textPartBuilders += TextPartBuilder("\n")
   }
 
   @CallSuper
-  open fun parseSubscriptTag(childTextParts: MutableList<TextPartMut>) {
-    for (childTextPart in childTextParts) {
-      childTextPart.spans.add(TextPartSpan.Subscript)
-    }
+  open fun parseSubscriptTag(textPartBuilders: MutableList<TextPartBuilder>) {
+    TextPartBuilder.addMany(textPartBuilders, TextPartSpan.Subscript)
   }
 
   @CallSuper
-  open fun parseSuperscriptTag(childTextParts: MutableList<TextPartMut>) {
-    for (childTextPart in childTextParts) {
-      childTextPart.spans.add(TextPartSpan.Superscript)
-    }
+  open fun parseSuperscriptTag(textPartBuilders: MutableList<TextPartBuilder>) {
+    TextPartBuilder.addMany(textPartBuilders, TextPartSpan.Superscript)
   }
 
   @CallSuper
-  open fun parseEmphasizedTag(childTextParts: MutableList<TextPartMut>) {
-    for (childTextPart in childTextParts) {
-      childTextPart.spans.add(TextPartSpan.Italic)
-    }
+  open fun parseEmphasizedTag(textPartBuilders: MutableList<TextPartBuilder>) {
+    TextPartBuilder.addMany(textPartBuilders, TextPartSpan.Italic)
   }
 
   @CallSuper
-  open fun parseStrongTag(childTextParts: MutableList<TextPartMut>) {
-    for (childTextPart in childTextParts) {
-      childTextPart.spans.add(TextPartSpan.Bold)
-    }
+  open fun parseStrongTag(textPartBuilders: MutableList<TextPartBuilder>) {
+    TextPartBuilder.addMany(textPartBuilders, TextPartSpan.Bold)
   }
 
   @CallSuper
-  open fun parseSpanTag(htmlTag: HtmlTag, childTextParts: MutableList<TextPartMut>, postDescriptor: PostDescriptor) {
+  open fun parseSpanTag(
+    htmlTag: HtmlTag,
+    textPartBuilders: MutableList<TextPartBuilder>,
+    postDescriptor: PostDescriptor
+  ) {
     if (htmlTag.hasClass("u")) {
-      for (childTextPart in childTextParts) {
-        childTextPart.spans.add(TextPartSpan.Underline)
-      }
+      TextPartBuilder.addMany(textPartBuilders, TextPartSpan.Underline)
     }
   }
 
-  abstract fun parseLinkTag(htmlTag: HtmlTag, childTextParts: MutableList<TextPartMut>, postDescriptor: PostDescriptor)
-  abstract fun parseNewLineTag(childTextParts: MutableList<TextPartMut>)
-  abstract fun parseParagraphTag(childTextParts: MutableList<TextPartMut>)
-  abstract fun parseStrikethroughTag(childTextParts: MutableList<TextPartMut>)
-  abstract fun parseLinkable(className: String?, href: String, postDescriptor: PostDescriptor): TextPartSpan.Linkable?
-  abstract fun postProcessTextParts(textPartMut: TextPartMut): TextPartMut
+  abstract fun parseLinkTag(
+    htmlTag: HtmlTag,
+    textPartBuilders: MutableList<TextPartBuilder>,
+    postDescriptor: PostDescriptor
+  )
 
-  private fun parseAnyTagColorAttribute(htmlTag: HtmlTag, childTextParts: MutableList<TextPartMut>) {
+  abstract fun parseNewLineTag(textPartBuilders: MutableList<TextPartBuilder>)
+  abstract fun parseParagraphTag(textPartBuilders: MutableList<TextPartBuilder>)
+  abstract fun parseStrikethroughTag(textPartBuilders: MutableList<TextPartBuilder>)
+  abstract fun parseLinkable(className: String?, href: String, postDescriptor: PostDescriptor): TextPartSpan.Linkable?
+  abstract fun postProcessTextParts(textPartBuilder: TextPartBuilder): TextPartBuilder
+
+  private fun parseAnyTagColorAttribute(htmlTag: HtmlTag, textPartBuilders: MutableList<TextPartBuilder>) {
     val colorName = htmlTag.attrUnescapedOrNull("color")
       ?: return
 
     val color = staticHtmlColorRepository.colorByName(colorName)
       ?: return
 
-    for (childTextPart in childTextParts) {
-      childTextPart.spans.add(TextPartSpan.FgColor(color))
-    }
+    TextPartBuilder.addMany(textPartBuilders, TextPartSpan.FgColor(color))
   }
 
-  private fun parseAnyTagSizeAttribute(htmlTag: HtmlTag, childTextParts: MutableList<TextPartMut>) {
+  private fun parseAnyTagSizeAttribute(htmlTag: HtmlTag, textPartBuilders: MutableList<TextPartBuilder>) {
     val sizeAttribute = htmlTag.attrUnescapedOrNull("size")
       ?: return
 
@@ -214,14 +209,12 @@ abstract class AbstractSitePostParser(
       .takeIf { size -> size in minSize..maxSize }
       ?: return
 
-    for (childTextPart in childTextParts) {
-      childTextPart.spans.add(TextPartSpan.FontSize(fontSize))
-    }
+    TextPartBuilder.addMany(textPartBuilders, TextPartSpan.FontSize(fontSize))
   }
 
   private fun parseAnyTagStyleAttribute(
     htmlTag: HtmlTag,
-    childTextParts: MutableList<TextPartMut>
+    textPartBuilders: MutableList<TextPartBuilder>
   ) {
     val styleAttribute = htmlTag.attrUnescapedOrNull("style")
       ?: return
@@ -233,16 +226,12 @@ abstract class AbstractSitePostParser(
         val colorName = parameter.split(":").getOrNull(1)?.trim() ?: continue
         val colorRgb = staticHtmlColorRepository.colorByName(colorName) ?: continue
 
-        for (childTextPart in childTextParts) {
-          childTextPart.spans.add(TextPartSpan.FgColor(colorRgb))
-        }
+        TextPartBuilder.addMany(textPartBuilders, TextPartSpan.FgColor(colorRgb))
       } else if (parameter.startsWith("background-color:")) {
         val colorName = parameter.split(":").getOrNull(1)?.trim() ?: continue
         val colorRgb = staticHtmlColorRepository.colorByName(colorName) ?: continue
 
-        for (childTextPart in childTextParts) {
-          childTextPart.spans.add(TextPartSpan.BgColor(colorRgb))
-        }
+        TextPartBuilder.addMany(textPartBuilders, TextPartSpan.BgColor(colorRgb))
       }
     }
   }

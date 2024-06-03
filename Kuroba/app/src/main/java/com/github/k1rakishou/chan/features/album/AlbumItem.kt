@@ -43,6 +43,7 @@ import com.github.k1rakishou.chan.ui.compose.image.ImageLoaderRequestData
 import com.github.k1rakishou.chan.ui.compose.image.ImageLoaderRequestProvider
 import com.github.k1rakishou.chan.ui.compose.image.KurobaComposePostImageIndicators
 import com.github.k1rakishou.chan.ui.compose.image.KurobaComposePostImageThumbnail
+import com.github.k1rakishou.chan.ui.compose.image.KurobaThumbnailScaling
 import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.controller.base.ControllerKey
@@ -106,6 +107,7 @@ fun AlbumItem(
       postImageThumbnailKey = albumItemData.albumItemDataKey,
       requestProvider = requestProvider,
       mediaType = albumItemData.mediaType,
+      thumbnailScaling = KurobaThumbnailScaling.CenterCrop,
       isNsfwModeEnabled = isNsfwModeEnabled,
       displayErrorMessage = true,
       showShimmerEffectWhenLoading = true,

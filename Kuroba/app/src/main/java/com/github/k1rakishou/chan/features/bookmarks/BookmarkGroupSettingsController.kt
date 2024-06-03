@@ -110,7 +110,10 @@ class BookmarkGroupSettingsController(
         title = ToolbarText.Id(titleStringId)
       ),
       menuBuilder = {
-        withMenuItem(ACTION_SHOW_HELP, R.drawable.ic_help_outline_white_24dp) { showGroupMatcherHelp() }
+        withMenuItem(
+          id = ACTION_SHOW_HELP,
+          drawableId = R.drawable.ic_help_outline_white_24dp
+        ) { showGroupMatcherHelp() }
       }
     )
 

@@ -10,17 +10,20 @@ import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
+import com.github.k1rakishou.chan.core.parser.AppliedSpan
 import com.github.k1rakishou.chan.core.parser.MarkedPost
 import com.github.k1rakishou.chan.core.parser.MarkedPostType
 import com.github.k1rakishou.chan.core.parser.ParsedPostDataContext
-import com.github.k1rakishou.chan.core.parser.RevealedSpoiler
+import com.github.k1rakishou.chan.core.parser.ProcessedPostComment
 import com.github.k1rakishou.chan.core.parser.TextPart
 import com.github.k1rakishou.chan.core.parser.TextPartSpan
 import com.github.k1rakishou.chan.utils.buildAnnotatedString
 import com.github.k1rakishou.chan.utils.createAnnotationItem
+import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import kotlinx.collections.immutable.toPersistentList
 
 interface PostCommentApplier {
 
@@ -30,7 +33,7 @@ interface PostCommentApplier {
     markedPosts: Map<PostDescriptor, Set<MarkedPost>>,
     textParts: List<TextPart>,
     parsedPostDataContext: ParsedPostDataContext
-  ): AnnotatedString
+  ): ProcessedPostComment
 
   companion object {
     const val CROSS_THREAD_POSTFIX = "(CT) \u2192"
@@ -39,14 +42,12 @@ interface PostCommentApplier {
     const val YOU_POSTFIX = "(You)"
 
     const val ANNOTATION_POST_LINKABLE = "[post_linkable]"
-    const val ANNOTATION_POST_SPOILER_TEXT = "[spoiler_text]"
     const val ANNOTATION_INLINED_IMAGE = "[inlined_image]"
 
     const val INLINE_CONTENT_TAG = "androidx.compose.foundation.text.inlineContent"
 
     val ALL_TAGS = mutableSetOf(
       ANNOTATION_POST_LINKABLE,
-      ANNOTATION_POST_SPOILER_TEXT,
       ANNOTATION_INLINED_IMAGE
     )
   }
@@ -64,10 +65,12 @@ class PostCommentApplierImpl(
     markedPosts: Map<PostDescriptor, Set<MarkedPost>>,
     textParts: List<TextPart>,
     parsedPostDataContext: ParsedPostDataContext
-  ): AnnotatedString {
+  ): ProcessedPostComment {
     val capacity = textParts.sumOf { it.text.length }
+    val spansCount = textParts.sumOf { textPart -> textPart.spans.size }
+    val postCommentSpans = mutableListWithCap<AppliedSpan>(initialCapacity = spansCount)
 
-    return buildAnnotatedString(capacity = capacity) {
+    val annotatedString = buildAnnotatedString(capacity = capacity) {
       var totalLength = 0
 
       for (textPart in textParts) {
@@ -76,14 +79,23 @@ class PostCommentApplierImpl(
           markedPosts = markedPosts,
           chanTheme = chanTheme,
           textPart = textPart,
-          parsedPostDataContext = parsedPostDataContext,
-          totalLength = totalLength
+          parsedPostDataContext = parsedPostDataContext
         )
 
         append(text)
+
+        val spanStart = totalLength
+        val spanEnd = spanStart + text.length
+        postCommentSpans.addAll(textPart.mapToAppliedSpans(spanStart, spanEnd))
+
         totalLength += text.length
       }
     }
+
+    return ProcessedPostComment(
+      string = annotatedString,
+      spans = postCommentSpans.toPersistentList()
+    )
   }
 
   private suspend fun processTextPart(
@@ -91,8 +103,7 @@ class PostCommentApplierImpl(
     markedPosts: Map<PostDescriptor, Set<MarkedPost>>,
     chanTheme: ChanTheme,
     textPart: TextPart,
-    parsedPostDataContext: ParsedPostDataContext,
-    totalLength: Int,
+    parsedPostDataContext: ParsedPostDataContext
   ): AnnotatedString {
     // TODO: compose post cells.
 //    val appliedDataResult = postBindProcessorCoordinator.applyData(
@@ -133,8 +144,7 @@ class PostCommentApplierImpl(
           markedPosts = markedPosts,
           spans = textPart.spans,
           chanTheme = chanTheme,
-          parsedPostDataContext = parsedPostDataContext,
-          totalLength = totalLength
+          parsedPostDataContext = parsedPostDataContext
         )
       }
     }
@@ -147,8 +157,7 @@ class PostCommentApplierImpl(
     markedPosts: Map<PostDescriptor, Set<MarkedPost>>,
     spans: List<TextPartSpan>,
     chanTheme: ChanTheme,
-    parsedPostDataContext: ParsedPostDataContext,
-    totalLength: Int
+    parsedPostDataContext: ParsedPostDataContext
   ) {
     for (span in spans) {
       var bgColor: Color = Color.Unspecified
@@ -172,12 +181,12 @@ class PostCommentApplierImpl(
           end = span.end
           underline = true
 
-          when (span.linkSpan) {
+          when (span.textPartSpan) {
             is TextPartSpan.Linkable.Url -> {
               fgColor = chanTheme.postLinkColorCompose
             }
             else -> {
-              error("${span.linkSpan::class.java.simpleName} is not supported as a partial span")
+              error("${span.textPartSpan::class.java.simpleName} is not supported as a partial span")
             }
           }
 
@@ -185,7 +194,7 @@ class PostCommentApplierImpl(
             annotationTag = PostCommentApplier.ANNOTATION_POST_LINKABLE
           }
 
-          annotationValue = span.linkSpan.createAnnotationItem()
+          annotationValue = span.textPartSpan.createAnnotationItem()
         }
         is TextPartSpan.BgColor -> {
           bgColor = Color(span.color)
@@ -206,21 +215,8 @@ class PostCommentApplierImpl(
           currentFontSize = span.calculateNewFontSize(currentFontSize)
         }
         is TextPartSpan.Spoiler -> {
-          bgColor = chanTheme.postSpoilerColorCompose
-
-          val shouldRevealSpoiler = matchesOpenedSpoilerPosition(
-            startPos = totalLength,
-            endPos = totalLength + this.length,
-            revealedSpoilers = parsedPostDataContext.revealedSpoilers
-          )
-
-          fgColor = if (shouldRevealSpoiler) {
-            chanTheme.postSpoilerRevealTextColorCompose
-          } else {
-            chanTheme.postSpoilerColorCompose
-          }
-
-          annotationTag = PostCommentApplier.ANNOTATION_POST_SPOILER_TEXT
+          // No-op. We don't add Spoiler annotation into the comment AnnotatedString anymore.
+          // We handle it manually now.
         }
         is TextPartSpan.Underline -> {
           underline = true
@@ -378,18 +374,17 @@ class PostCommentApplierImpl(
     return textDecoration
   }
 
-  private fun matchesOpenedSpoilerPosition(
-    startPos: Int,
-    endPos: Int,
-    revealedSpoilers: Set<RevealedSpoiler>
-  ): Boolean {
-    for (position in revealedSpoilers) {
-      if (position.start == startPos && position.end == endPos) {
-        return true
-      }
+  private fun TextPart.mapToAppliedSpans(
+    spanStart: Int,
+    spanEnd: Int
+  ): List<AppliedSpan> {
+    return spans.map { textPartSpan ->
+      AppliedSpan(
+        start = spanStart,
+        end = spanEnd,
+        span = textPartSpan
+      )
     }
-
-    return false
   }
 
   private enum class Script {

@@ -6,6 +6,7 @@ import com.github.k1rakishou.chan.core.parser.usecase.PostCommentApplierImpl
 import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser
 import com.github.k1rakishou.chan.core.site.parser_v2.PostCommentParser
 import com.github.k1rakishou.chan.core.site.parser_v2.PostCommentParserImpl
+import com.github.k1rakishou.chan.core.site.parser_v2.TextPartBuilderMerger
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_parser.comment.HtmlParserPool
 import dagger.Module
@@ -31,11 +32,15 @@ class ParserModule {
 
   @Provides
   @Singleton
-  fun providePostCommentParser(siteManager: SiteManager, htmlParserPool: HtmlParserPool): PostCommentParser {
+  fun providePostCommentParser(
+    siteManager: SiteManager,
+    htmlParserPool: HtmlParserPool
+  ): PostCommentParser {
     Logger.deps("PostCommentParser")
     return PostCommentParserImpl(
       siteManager,
-      htmlParserPool
+      htmlParserPool,
+      TextPartBuilderMerger()
     )
   }
 

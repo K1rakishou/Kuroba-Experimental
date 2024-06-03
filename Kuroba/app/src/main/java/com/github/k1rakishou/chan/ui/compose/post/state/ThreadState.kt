@@ -1,27 +1,23 @@
 package com.github.k1rakishou.chan.ui.compose.post.state
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Stable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.Dp
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.parser.PostViewMode
-import com.github.k1rakishou.chan.core.parser.repository.ParsedPostDataRepository
 import com.github.k1rakishou.chan.core.parser.usecase.PostCommentApplier
 import com.github.k1rakishou.chan.ui.compose.data.ChanDescriptorUi
 import com.github.k1rakishou.chan.ui.compose.data.PostDescriptorUi
+import com.github.k1rakishou.chan.ui.compose.image.KurobaThumbnailScaling
 import com.github.k1rakishou.chan.ui.compose.image.PostImageThumbnailKey
 import com.github.k1rakishou.chan.ui.config.UiConfiguration
 import com.github.k1rakishou.chan.ui.controller.base.ControllerKey
 import com.github.k1rakishou.chan.ui.helper.AppResources
-import com.github.k1rakishou.chan.utils.appDependencies
 import com.github.k1rakishou.common.KurobaDispatchers
 import com.github.k1rakishou.common.bidirectionalSequenceIndexed
 import com.github.k1rakishou.common.mutableListWithCap
@@ -42,6 +38,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.reactive.asFlow
@@ -49,47 +46,36 @@ import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicInteger
 
-@Composable
-fun rememberThreadState(initialWindowSize: Int, controllerKey: ControllerKey): ThreadState {
-  val coroutineScope = rememberCoroutineScope()
-
-  return remember {
-    return@remember ThreadState(
-      initialWindowSize = initialWindowSize,
-      controllerKey = controllerKey,
-      coroutineScope = coroutineScope
-    )
-  }
-}
-
-@Stable
 class ThreadState(
+  val dependencies: ThreadCellStateDependencies,
+  val postDisplayOptions: PostDisplayOptions,
   val initialWindowSize: Int,
   val controllerKey: ControllerKey,
-  private val coroutineScope: CoroutineScope,
-  private val kurobaDispatchers: KurobaDispatchers = appDependencies().kurobaDispatchers,
-  private val appResources: AppResources = appDependencies().appResources,
-  private val uiConfiguration: UiConfiguration = appDependencies().uiConfiguration,
-  private val themeEngine: ThemeEngine = appDependencies().themeEngine,
-  private val parsedPostDataRepository: ParsedPostDataRepository = appDependencies().parsedPostDataRepository
 ) {
+  private val coroutineScope: CoroutineScope
+    get() = dependencies.coroutineScope
+  private val kurobaDispatchers: KurobaDispatchers
+    get() = dependencies.kurobaDispatchers
+  private val appResources: AppResources
+    get() = dependencies.appResources
+  private val uiConfiguration: UiConfiguration
+    get() = dependencies.uiConfiguration
+  private val themeEngine: ThemeEngine
+    get() = dependencies.themeEngine
+
   private val _postCellStates = mutableStateListOf<PostCellState>()
   val postCellStates: SnapshotStateList<PostCellState>
     get() = _postCellStates
 
   private val _postDescriptorToPostCellStateIndex = mutableMapWithCap<PostDescriptor, Int>(initialCapacity = 128)
 
+  private val _postDisplayOptionsState = mutableStateOf<PostDisplayOptions>(postDisplayOptions)
+  val postDisplayOptionsState: State<PostDisplayOptions>
+    get() = _postDisplayOptionsState
+
   private val _initialWindowLoaded = mutableStateOf(false)
   val initialWindowLoaded: State<Boolean>
     get() = _initialWindowLoaded
-
-  private val _detectLinkableClicks = mutableStateOf(true)
-  val detectLinkableClicks: State<Boolean>
-    get() = _detectLinkableClicks
-
-  private val _isInPostSelectionMode = mutableStateOf(false)
-  val isInPostSelectionMode: State<Boolean>
-    get() = _isInPostSelectionMode
 
   private val _isInTextSelectionMode = mutableStateOf(false)
   val isInTextSelectionMode: State<Boolean>
@@ -103,6 +89,12 @@ class ThreadState(
     .listenForChanges()
     .asFlow()
     .map { uiConfiguration.thumbnails.postThumbnailSizeDp() }
+    .stateIn(coroutineScope, SharingStarted.Lazily, null)
+
+  val thumbnailScaling: StateFlow<KurobaThumbnailScaling?> = ChanSettings.postThumbnailScaling
+    .listenForChanges()
+    .asFlow()
+    .map { postThumbnailScaling -> KurobaThumbnailScaling.from(postThumbnailScaling) }
     .stateIn(coroutineScope, SharingStarted.Lazily, null)
 
   val postMultipleImagesCompactMode: StateFlow<Boolean?> = ChanSettings.postMultipleImagesCompactMode
@@ -135,6 +127,21 @@ class ThreadState(
     .asFlow()
     .map { postAlignmentMode -> PostThumbnailAlignmentUi.from(postAlignmentMode) }
     .stateIn(coroutineScope, SharingStarted.Lazily, null)
+
+  val threadInitializationState: StateFlow<ThreadInitializationState?>
+    get() {
+      return combine(
+        snapshotFlow { _initialWindowLoaded.value },
+        thumbnailSize,
+        thumbnailScaling,
+        postMultipleImagesCompactMode,
+        postTitleFontSize,
+        postCommentFontSize,
+        catalogThumbnailAlignment,
+        threadThumbnailAlignment,
+        transform = { array -> ThreadInitializationState.fromArray(array) }
+      ).stateIn(coroutineScope, SharingStarted.Lazily, null)
+    }
 
   suspend fun updatePosts(
     chanDescriptor: ChanDescriptor,
@@ -243,9 +250,9 @@ class ThreadState(
     val postDescriptorUi = PostDescriptorUi(chanPost.postDescriptor)
 
     return PostCellState(
-      coroutineScope = coroutineScope,
-      parsedPostDataRepository = parsedPostDataRepository,
+      dependencies = PostCellStateDependenciesImpl(coroutineScope),
       postCellHighlightState = PostCellHighlightState(),
+      threadState = this,
       postIndex = postIndex,
       chanDescriptorUi = ChanDescriptorUi(chanDescriptor),
       postDescriptorUi = postDescriptorUi,
@@ -279,15 +286,16 @@ class ThreadState(
     // TODO: compose post cells.
   }
 
-  fun onTextSelectionModeChanged(postCellState: PostCellState, inSelectionMode: Boolean) {
+  fun onTextSelectionModeChanged(postCellState: PostCellState, isInTextSelectionMode: Boolean) {
+    // TODO: compose post cells.
+    _isInTextSelectionMode.value = isInTextSelectionMode
+  }
+
+  fun onTextAnnotationClicked(postCellState: PostCellState, text: AnnotatedString, offset: Int) {
     // TODO: compose post cells.
   }
 
-  fun onPostCellCommentClicked(postCellState: PostCellState, text: AnnotatedString, offset: Int) {
-    // TODO: compose post cells.
-  }
-
-  fun onPostCellCommentLongClicked(postCellState: PostCellState, text: AnnotatedString, offset: Int) {
+  fun onTextAnnotationLongClicked(postCellState: PostCellState, text: AnnotatedString, offset: Int) {
     // TODO: compose post cells.
   }
 
@@ -297,6 +305,15 @@ class ThreadState(
 
   fun onPostImageLongClicked(postImageThumbnailKey: PostImageThumbnailKey) {
     // TODO: compose post cells.
+  }
+
+  suspend fun onSpoilerClicked(postDescriptor: PostDescriptor, clickedSpoiler: PostCommentClickable.Spoiler) {
+    val index = _postCellStates.indexOfFirst { postCellState -> postCellState.postDescriptor == postDescriptor }
+    if (index < 0) {
+      return
+    }
+
+    _postCellStates[index].onSpoilerClicked(clickedSpoiler)
   }
 
 }

@@ -54,6 +54,8 @@ import com.github.k1rakishou.chan.core.manager.PrefetchStateManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.ReportManager
 import com.github.k1rakishou.chan.core.manager.RevealedSpoilerImagesManager
+import com.github.k1rakishou.chan.core.manager.RevealedTextSpoilersManager
+import com.github.k1rakishou.chan.core.manager.RevealedTextSpoilersManagerImpl
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.core.manager.SeenPostsManager
 import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager
@@ -1024,6 +1026,13 @@ class ManagerModule {
   fun provideRevealedSpoilerImagesManager(): RevealedSpoilerImagesManager {
     Logger.deps("RevealedSpoilerImagesManager")
     return RevealedSpoilerImagesManager()
+  }
+
+  @Singleton
+  @Provides
+  fun provideRevealedTextSpoilersManager(): RevealedTextSpoilersManager {
+    Logger.deps("RevealedTextSpoilersManager")
+    return RevealedTextSpoilersManagerImpl()
   }
 
   @Singleton

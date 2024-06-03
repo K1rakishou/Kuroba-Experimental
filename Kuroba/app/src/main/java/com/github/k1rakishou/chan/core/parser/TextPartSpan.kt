@@ -7,6 +7,12 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import okio.Buffer
 
 @Immutable
+data class TextPartSpanGroup(
+  val groupId: Long,
+  val spans: List<TextPartSpan>
+)
+
+@Immutable
 sealed class TextPartSpan {
   val isPartialSpan: Boolean
     get() = this is PartialSpan
@@ -31,14 +37,14 @@ sealed class TextPartSpan {
       is Monospace -> PriorityText
       is FgColor,
       is FgColorId -> PriorityForeground
-      Spoiler -> PrioritySpoiler
+      is Spoiler -> PrioritySpoiler
     }
   }
 
   data class PartialSpan(
     val start: Int,
     val end: Int,
-    val linkSpan: TextPartSpan
+    val textPartSpan: TextPartSpan
   ) : TextPartSpan()
 
   data class BgColor(val color: Int) : TextPartSpan()

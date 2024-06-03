@@ -89,6 +89,7 @@ fun KurobaComposePostImageThumbnail(
   postImageThumbnailKey: PostImageThumbnailKey,
   requestProvider: ImageLoaderRequestProvider,
   mediaType: KurobaMediaType,
+  thumbnailScaling: KurobaThumbnailScaling,
   backgroundColor: Color = LocalChanTheme.current.backColorSecondaryCompose,
   hasAudio: Boolean = false,
   isNsfwModeEnabled: Boolean = false,
@@ -104,6 +105,11 @@ fun KurobaComposePostImageThumbnail(
   val applicationVisibilityManager = activityDependencies().applicationVisibilityManager
 
   var size by remember { mutableStateOf<IntSize>(IntSize.Zero) }
+
+  val contentScale = when (thumbnailScaling) {
+    KurobaThumbnailScaling.FitCenter -> ContentScale.Fit
+    KurobaThumbnailScaling.CenterCrop -> ContentScale.Crop
+  }
 
   Box(
     modifier = Modifier
@@ -149,7 +155,7 @@ fun KurobaComposePostImageThumbnail(
           },
         painter = imageLoaderResult.painter,
         contentDescription = contentDescription,
-        contentScale = ContentScale.Crop
+        contentScale = contentScale
       )
     }
 

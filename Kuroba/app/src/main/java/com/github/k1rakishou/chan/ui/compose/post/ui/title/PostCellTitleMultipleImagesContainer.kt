@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -19,6 +18,7 @@ import com.github.k1rakishou.chan.ui.compose.Shimmer
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
 import com.github.k1rakishou.chan.ui.compose.image.KurobaComposePostImageThumbnail
+import com.github.k1rakishou.chan.ui.compose.image.KurobaThumbnailScaling
 import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.post.state.PostCellMediaState
 import com.github.k1rakishou.chan.ui.compose.post.state.PostCellState
@@ -28,16 +28,12 @@ import kotlinx.collections.immutable.ImmutableList
 @Composable
 internal fun PostCellTitleMultipleImagesContainer(
   modifier: Modifier,
+  thumbnailSize: Dp,
+  thumbnailScaling: KurobaThumbnailScaling,
   postCellState: PostCellState,
   threadState: ThreadState,
   postMediaList: ImmutableList<PostCellMediaState>
 ) {
-  val thumbnailSizeMut by threadState.thumbnailSize.collectAsState()
-  val thumbnailSize = thumbnailSizeMut
-  if (thumbnailSize == null) {
-    return
-  }
-
   Column(modifier = modifier) {
     PostCellTitleUi(
       modifier = Modifier.fillMaxWidth(),
@@ -61,10 +57,11 @@ internal fun PostCellTitleMultipleImagesContainer(
                 onClick = { threadState.onPostImageClicked(postCellMediaState.postCellMediaKey) },
                 onLongClick = { threadState.onPostImageLongClicked(postCellMediaState.postCellMediaKey) }
               ),
+            thumbnailSize = thumbnailSize,
+            thumbnailScaling = thumbnailScaling,
             postCellMediaState = postCellMediaState,
             postCellState = postCellState,
-            threadState = threadState,
-            thumbnailSize = thumbnailSize
+            threadState = threadState
           )
         }
       }
@@ -75,10 +72,11 @@ internal fun PostCellTitleMultipleImagesContainer(
 @Composable
 private fun Thumbnail(
   modifier: Modifier,
+  thumbnailSize: Dp,
+  thumbnailScaling: KurobaThumbnailScaling,
   postCellMediaState: PostCellMediaState,
   postCellState: PostCellState,
-  threadState: ThreadState,
-  thumbnailSize: Dp
+  threadState: ThreadState
 ) {
   val requestProvider = remember(key1 = postCellMediaState) {
     return@remember getImageLoaderRequestProvider(
@@ -104,6 +102,7 @@ private fun Thumbnail(
       postImageThumbnailKey = postCellMediaState.postCellMediaKey,
       requestProvider = requestProvider,
       mediaType = postCellMediaState.kurobaMediaType,
+      thumbnailScaling = thumbnailScaling,
       onClick = null,
       onLongClick = null
     )

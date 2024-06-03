@@ -7,6 +7,7 @@ import com.github.k1rakishou.chan.core.manager.DownloadedImagesManager
 import com.github.k1rakishou.chan.core.manager.OnDemandContentLoaderManager
 import com.github.k1rakishou.chan.core.manager.PrefetchStateManager
 import com.github.k1rakishou.chan.core.manager.RevealedSpoilerImagesManager
+import com.github.k1rakishou.chan.core.manager.RevealedTextSpoilersManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.ThirdEyeManager
 import com.github.k1rakishou.chan.core.parser.repository.ParsedPostDataRepository
@@ -37,5 +38,6 @@ interface ApplicationDependencies {
   val downloadedImagesManager: DownloadedImagesManager
   val cacheHandler: CacheHandler
   val revealedSpoilerImagesManager: RevealedSpoilerImagesManager
+  val revealedTextSpoilersManager: RevealedTextSpoilersManager
   val parsedPostDataRepository: ParsedPostDataRepository
 }

@@ -1,7 +1,7 @@
 package com.github.k1rakishou.chan.core.site.parser_v2
 
 import androidx.annotation.VisibleForTesting
-import com.github.k1rakishou.chan.core.parser.TextPartMut
+import com.github.k1rakishou.chan.core.parser.TextPartBuilder
 import com.github.k1rakishou.chan.core.parser.TextPartSpan
 import com.github.k1rakishou.chan.core.repository.StaticHtmlColorRepository
 import com.github.k1rakishou.chan.utils.decodeUrlOrNull
@@ -18,11 +18,11 @@ open class Chan4PostParser(
 
   override fun parsePreTag(
     htmlTag: HtmlTag,
-    childTextParts: MutableList<TextPartMut>,
+    textPartBuilders: MutableList<TextPartBuilder>,
     postDescriptor: PostDescriptor,
     parserContext: PostCommentParserContext
   ) {
-    super.parsePreTag(htmlTag, childTextParts, postDescriptor, parserContext)
+    super.parsePreTag(htmlTag, textPartBuilders, postDescriptor, parserContext)
 
     val tagClass = htmlTag.classAttrOrNull()
     if (tagClass == "prettyprint") {
@@ -30,49 +30,43 @@ open class Chan4PostParser(
     }
   }
 
-  override fun parseNewLineTag(childTextParts: MutableList<TextPartMut>) {
-    childTextParts += TextPartMut(text = "\n")
+  override fun parseNewLineTag(textPartBuilders: MutableList<TextPartBuilder>) {
+    textPartBuilders += TextPartBuilder(text = "\n")
   }
 
-  override fun parseParagraphTag(childTextParts: MutableList<TextPartMut>) {
+  override fun parseParagraphTag(textPartBuilders: MutableList<TextPartBuilder>) {
 
   }
 
-  override fun parseStrikethroughTag(childTextParts: MutableList<TextPartMut>) {
-    for (childTextPart in childTextParts) {
-      childTextPart.spans.add(TextPartSpan.Strikethrough)
-    }
+  override fun parseStrikethroughTag(textPartBuilders: MutableList<TextPartBuilder>) {
+    TextPartBuilder.addMany(textPartBuilders, TextPartSpan.Spoiler)
   }
 
   override fun parseSpanTag(
     htmlTag: HtmlTag,
-    childTextParts: MutableList<TextPartMut>,
+    textPartBuilders: MutableList<TextPartBuilder>,
     postDescriptor: PostDescriptor
   ) {
-    super.parseSpanTag(htmlTag, childTextParts, postDescriptor)
+    super.parseSpanTag(htmlTag, textPartBuilders, postDescriptor)
 
     if (htmlTag.hasClass("quote")) {
-      for (childTextPart in childTextParts) {
-        childTextPart.spans.add(TextPartSpan.FgColorId(ChanThemeColorId.PostInlineQuoteColor))
-      }
+      TextPartBuilder.addMany(textPartBuilders, TextPartSpan.FgColorId(ChanThemeColorId.PostInlineQuoteColor))
     }
 
     if (htmlTag.hasClass("s")) {
-      for (childTextPart in childTextParts) {
-        childTextPart.spans.add(TextPartSpan.Strikethrough)
-      }
+      TextPartBuilder.addMany(textPartBuilders, TextPartSpan.Spoiler)
     }
 
-    parseLinkTag(htmlTag, childTextParts, postDescriptor)
+    parseLinkTag(htmlTag, textPartBuilders, postDescriptor)
   }
 
   override fun parseLinkTag(
     htmlTag: HtmlTag,
-    childTextParts: MutableList<TextPartMut>,
+    textPartBuilders: MutableList<TextPartBuilder>,
     postDescriptor: PostDescriptor
   ) {
-    val childTextPart = if (childTextParts.size == 1) {
-      childTextParts.first()
+    val textPartBuilder = if (textPartBuilders.size == 1) {
+      textPartBuilders.first()
     } else {
       return
     }
@@ -80,7 +74,7 @@ open class Chan4PostParser(
     val isDeadLink = htmlTag.tagName == "span" && htmlTag.hasClass("deadlink")
 
     val href = if (isDeadLink) {
-      childTextPart.text
+      textPartBuilder.text
     } else {
       htmlTag.attrUnescapedOrNull("href")
     }
@@ -101,7 +95,7 @@ open class Chan4PostParser(
       linkable = TextPartSpan.Linkable.Url(href)
     }
 
-    childTextPart.spans += linkable
+    TextPartBuilder.add(textPartBuilder, linkable)
   }
 
   @VisibleForTesting
@@ -272,21 +266,23 @@ open class Chan4PostParser(
     return null
   }
 
-  override fun postProcessTextParts(textPartMut: TextPartMut): TextPartMut {
-    val text = textPartMut.text
+  override fun postProcessTextParts(textPartBuilder: TextPartBuilder): TextPartBuilder {
+    val text = textPartBuilder.text
     val links = LINK_EXTRACTOR.extractLinks(text)
 
     for (link in links) {
       val urlSpan = TextPartSpan.Linkable.Url(text.substring(link.beginIndex, link.endIndex))
 
-      textPartMut.spans += TextPartSpan.PartialSpan(
+      val partialSpan = TextPartSpan.PartialSpan(
         start = link.beginIndex,
         end = link.endIndex,
-        linkSpan = urlSpan
+        textPartSpan = urlSpan
       )
+
+      TextPartBuilder.add(textPartBuilder, partialSpan)
     }
 
-    return textPartMut
+    return textPartBuilder
   }
 
   protected fun preprocessHref(href: String): String {
