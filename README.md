@@ -1,8 +1,6 @@
 
 # Kuroba Experimental
 
-<p align="left"><a href="https://f-droid.org/packages/com.github.k1rakishou.chan.fdroid/"><img src="https://f-droid.org/assets/fdroid-logo-text.svg" width="250"></a></p> 
-
 [Latest beta version](https://github.com/K1rakishou/Kuroba-Experimental-beta/releases/latest)
 
 [All beta versions](https://github.com/K1rakishou/Kuroba-Experimental-beta/releases)
