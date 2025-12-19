@@ -29,7 +29,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
 class SiteFirewallBypassController(
@@ -204,22 +203,6 @@ class SiteFirewallBypassController(
   }
 
   private suspend fun waitAndHandleResult() {
-    val informationDialogJob = controllerScope.launch {
-      if (!informationDialogShown.compareAndSet(false, true)) {
-        // Dialog was already shown during this app launch
-        return@launch
-      }
-
-      delay(20_000L)
-      ensureActive()
-
-      dialogFactory.createSimpleInformationDialog(
-        context = context,
-        titleText = getString(R.string.firewall_check_takes_too_long_title),
-        descriptionText = getString(R.string.firewall_check_takes_too_long_description)
-      )
-    }
-
     val autoCloseJob = controllerScope.launch {
       delay(AppConstants.FIREWALL_SCREEN_AUTO_CLOSE_TIMEOUT_MILLIS)
       ensureActive()
@@ -231,7 +214,6 @@ class SiteFirewallBypassController(
     val cookieResult = try {
       cookieResultCompletableDeferred.await()
     } finally {
-      informationDialogJob.cancel()
       autoCloseJob.cancel()
     }
 
@@ -317,7 +299,5 @@ class SiteFirewallBypassController(
   companion object {
     private const val TAG = "SiteFirewallBypassController"
     const val MAX_PAGE_LOADS_COUNT = 10
-
-    private val informationDialogShown = AtomicBoolean(false)
   }
 }

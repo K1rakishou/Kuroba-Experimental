@@ -28,7 +28,6 @@ import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
-import com.github.k1rakishou.chan.core.manager.CaptchaImageCache
 import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
@@ -77,7 +76,6 @@ import com.github.k1rakishou.chan.core.watcher.BookmarkWatcherDelegate
 import com.github.k1rakishou.chan.core.watcher.FilterWatcherCoordinator
 import com.github.k1rakishou.chan.core.watcher.FilterWatcherDelegate
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2ServiceDelegate
-import com.github.k1rakishou.chan.features.posting.CaptchaDonation
 import com.github.k1rakishou.chan.features.posting.LastReplyRepository
 import com.github.k1rakishou.chan.features.posting.PostingServiceDelegate
 import com.github.k1rakishou.chan.features.posting.solvers.two_captcha.TwoCaptchaSolver
@@ -795,8 +793,7 @@ class ManagerModule {
     lastReplyRepository: Lazy<LastReplyRepository>,
     chanPostRepository: Lazy<ChanPostRepository>,
     twoCaptchaSolver: Lazy<TwoCaptchaSolver>,
-    captchaHolder: Lazy<CaptchaHolder>,
-    captchaDonation: Lazy<CaptchaDonation>
+    captchaHolder: Lazy<CaptchaHolder>
   ): PostingServiceDelegate {
     deps("PostingServiceDelegate")
     return PostingServiceDelegate(
@@ -811,8 +808,7 @@ class ManagerModule {
       lastReplyRepository,
       chanPostRepository,
       twoCaptchaSolver,
-      captchaHolder,
-      captchaDonation
+      captchaHolder
     )
   }
 
@@ -939,28 +935,6 @@ class ManagerModule {
       appScope,
       applicationVisibilityManager
     )
-  }
-
-  @Singleton
-  @Provides
-  fun provideCaptchaDonation(
-    appScope: CoroutineScope,
-    captchaImageCache: CaptchaImageCache,
-    proxiedOkHttpClient: RealProxiedOkHttpClient
-  ): CaptchaDonation {
-    deps("CaptchaDonation")
-    return CaptchaDonation(
-      appScope,
-      captchaImageCache,
-      proxiedOkHttpClient
-    )
-  }
-
-  @Singleton
-  @Provides
-  fun provideCaptchaImageCache(): CaptchaImageCache {
-    deps("CaptchaImageCache")
-    return CaptchaImageCache()
   }
 
   @Singleton

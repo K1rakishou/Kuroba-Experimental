@@ -509,10 +509,6 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="reply_mode_attempt_post_without_captcha">Attempt to post without captcha</string>
     <string name="reply_mode_post_with_captcha_solver">Post with captcha solver</string>
     <string name="reply_mode_post_with_passcode">Post with passcode</string>
-    <string name="reply_donate_captcha_title">Captcha donation</string>
-    <string name="reply_donate_captcha_description">Would you like to donate your solved captchas to train a new model for captcha solver?\nYou can change this setting on the \'Experimental settings\' screen at any time.\n\nYou can find more info here:\nhttps://github.com/moffatman/chan/issues/144</string>
-    <string name="reply_donate_captcha_positive_button_text">Donate</string>
-    <string name="reply_donate_captcha_negative_button_text">Do not</string>
     <string name="reply_layout_info_title">Information</string>
     <string name="reply_layout_info_title_ban_info">Ban info</string>
     <string name="reply_layout_info_title_warning_info">Warning info</string>
@@ -765,7 +761,6 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="setting_images_high_res_description">Make the album view and card catalog images higher resolution by pre-rescaling full size images (⚠ May become the reason of freezes while scrolling catalog/thread/album on old devices ⚠)</string>
     <string name="setting_custom_user_agent">Custom user agent</string>
     <string name="setting_custom_user_agent_description">By default, currently installed WebView\'s user-agent is used for all requests (and for CloudFlare bypass). But it may not work in some situations. So if you experience problems with bypassing CloudFlare try changing this setting. Set it to empty string to use the WebView\'s user agent again.</string>
-    <string name="setting_donate_captcha">Donate solved captcha to train captcha solver</string>
 
     <!-- Behavior general group -->
     <string name="settings_screen_behavior">Behavior</string>
@@ -951,8 +946,6 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="setting_cloudflare_preloading_dialog_description">This option will be forcing Cloudflare to preload all currently visible images in a thread. No images will be downloaded on your phone and no additional traffic will be used. Only HEAD requests will be sent for every image in the thread which will force Cloudflare to cache those images. This SHOULD make subsequent image downloads way faster because you will be loading them from Cloudflare servers, not 4chan\'s. This feature works similar to how media prefetching works (you don\'t need to click anything, just scroll through the thread like you always do).</string>
     <string name="setting_update_colors_for_text_selection_cursor">Colorize text selection cursors</string>
     <string name="setting_update_colors_for_text_selection_cursor_description">Some devices behave weirdly when text selection cursor colors are changed (for example on some xiaomi devices they become stretched vertically). Disabling this setting will make the text selection cursor use the default theme\'s color (which is gray)</string>
-    <string name="setting_remove_fake_ticket">Automatically remove fake 4chan captcha ticket</string>
-    <string name="setting_remove_fake_ticket_description">When fake captcha ticket is detected (ticket is present in captcha json but it\'s null, empty string, false or zero) it will be removed from local settings and won\'t be sent along with captcha requests anymore. This behavior is the same as what 4chan\'s frontend is currently doing so in theory it should remove all those annoying \'Please wait a while before making a post\' messages. Disable this setting if it gets worse.</string>
 
     <!-- Import/Export settings -->
     <string name="import_or_export_settings">Import/Export application backup</string>
@@ -1166,22 +1159,16 @@ If you ever log out or if the passcode expires you will have to change reply mod
 
     <string name="captcha_layout_reload">Reload</string>
     <string name="captcha_layout_copy">Copy</string>
-    <string name="captcha_layout_solve">Solve</string>
     <string name="captcha_layout_verify">Verify</string>
     <string name="captcha_layout_failed_to_find_solution">Failed to find captcha solution</string>
     <string name="captcha_layout_reload_captcha">Reload captcha to apply the setting</string>
     <string name="captcha_layout_contrast_bg_slider_captcha">Use contrast background for slider captcha</string>
     <string name="captcha_layout_remember_captcha_cookies">Remember captcha cookies for easy captcha</string>
-    <string name="captcha_layout_use_captcha_solver">Use captcha solver (If installed)</string>
     <string name="captcha_layout_show_captcha_help">Show captcha help</string>
     <string name="captcha_layout_help_title">Captcha help</string>
     <string name="captcha_layout_captcha_already_expired">The captcha has already expired</string>
     <string name="captcha_layout_verification_not_required">Verification is not required! Just click \"Verify\", it\'s free!</string>
     <string name="captcha_layout_help_text" tools:ignore="TypographyDashes">There are three captcha types:\nHard one (with slider), easy one (without slider) and NOOP (the one where you don\'t need to do anything).\n\nTo solve the hard captcha you need to adjust the slider until symbols on the image become readable. Then you need to enter those symbols into the input. You can either drag the slider or drag the image itself (they both do the same action). You can click the image to show/hide the background image. This may or may not help you to try to guess the captcha without using the slider whatsoever. The colored background is drawn to add contrast between two images (Can be disabled in the captcha settings).\n\nIn case of easy captcha you only need to enter the text displayed on the image.\n\nCaptcha detects multiple accesses from the same IP (?) and may rate–limit them for some time (like 15-120+ seconds).\n\nUPD: Captcha has been updated. Now whenever you change the captcha cookie there is a time window (approximately 12-24 hours) when you will only be receiving slider captcha by the 4chan server. I don\'t know why exactly it was changed to be like this but I have a hunch it\'s to make ban-evaders\' life more difficult. After 12-24 hours pass, you should see easy/noop captcha again.\n\nYou can change the cookies manually (for example you may want to import them from the browser). Cookies are stored for 180 days afterwards they are automatically updated the next time you make a post.</string>
-    <string name="captcha_layout_captcha_solver_not_installed_title">Captcha solver not installed</string>
-    <string name="captcha_layout_captcha_solver_not_installed_body">See https://github.com/K1rakishou/4chanCaptchaSolver for more info</string>
-    <string name="captcha_layout_captcha_solver_version_mismatch_title">Captcha solver versions mismatch!</string>
-    <string name="captcha_layout_captcha_solver_version_mismatch_body">Expected \'%1$d\' (currently supported version) version but got \'%2$d\' (installed captcha solver version). You need to either update the captcha solver application or KurobaEx or both. See https://github.com/K1rakishou/4chanCaptchaSolver for more info</string>
 
     <string name="captcha_layout_v2_you_have_to_select_at_least_one_image">You have to select at least one image (if you see a captcha that does not have any matching images, then it is probably a bug; fill an issue and use the old captcha)</string>
     <string name="captcha_layout_v2_verification_already_in_progress">Verification is already in progress</string>
@@ -1406,8 +1393,6 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="firewall_check_failure">Failed to pass %1$s checks, reason: %2$s</string>
     <string name="firewall_check_canceled">Failed to pass %1$s checks, reason: Canceled</string>
     <string name="firewall_check_not_supported">Firewall check %1$s for site %2$s is not supported</string>
-    <string name="firewall_check_takes_too_long_title">Firewall bypass takes longer than expected.</string>
-    <string name="firewall_check_takes_too_long_description">If a browser check seem to get stuck then make sure your system\'s time is correct and you don\'t have any self-signed certificates installed.</string>
     <string name="firewall_check_autoclosed">Firewall bypass screen was automatically closed because it seem to got completely stuck.</string>
     <string name="firewall_check_header_title">\'%1$s\' verification.</string>
 

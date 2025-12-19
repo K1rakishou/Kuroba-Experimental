@@ -383,9 +383,7 @@ public class ChanSettings {
     public static BooleanSetting useMpvVideoPlayer;
     public static BooleanSetting mpvUseConfigFile;
     public static BooleanSetting colorizeTextSelectionCursors;
-    public static BooleanSetting removeFakeTicket;
     public static StringSetting customUserAgent;
-    public static OptionsSetting<Tralse> donateSolvedCaptchaForGreaterGood;
     //endregion
 
     //region OTHER
@@ -619,13 +617,6 @@ public class ChanSettings {
         useMpvVideoPlayer = new BooleanSetting(provider, "use_mpv_video_player", false);
         mpvUseConfigFile = new BooleanSetting(provider, "mpv_use_config_file", false);
         colorizeTextSelectionCursors = new BooleanSetting(provider, "colorize_text_selection_cursors", true);
-        removeFakeTicket = new BooleanSetting(provider, "4chan_remove_fake_ticket", true);
-        donateSolvedCaptchaForGreaterGood = new OptionsSetting<>(
-                provider,
-                "donate_solved_captcha_for_greater_good",
-                Tralse.class,
-                Tralse.Undefined
-        );
         customUserAgent = new StringSetting(provider, "custom_user_agent", "");
         //endregion
 

@@ -2,14 +2,12 @@ package com.github.k1rakishou.chan.features.settings.screens
 
 import android.content.Context
 import com.github.k1rakishou.ChanSettings
-import com.github.k1rakishou.ChanSettings.Tralse
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.features.settings.ExperimentalScreen
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
 import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.InputSettingV2
-import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 
 class ExperimentalSettingsScreen(
@@ -94,32 +92,6 @@ class ExperimentalSettingsScreen(
           bottomDescriptionIdFunc = { R.string.setting_update_colors_for_text_selection_cursor_description },
           setting = ChanSettings.colorizeTextSelectionCursors,
           requiresRestart = true
-        )
-
-        group += BooleanSettingV2.createBuilder(
-          context = context,
-          identifier = ExperimentalScreen.MainSettingsGroup.RemoveFakeTicket,
-          topDescriptionIdFunc = { R.string.setting_remove_fake_ticket },
-          bottomDescriptionIdFunc = { R.string.setting_remove_fake_ticket_description },
-          setting = ChanSettings.removeFakeTicket,
-          requiresRestart = false
-        )
-
-        group += ListSettingV2.createBuilder(
-          context = context,
-          identifier = ExperimentalScreen.MainSettingsGroup.DonateCaptchaForGreaterGood,
-          items = listOf(Tralse.True, Tralse.False, Tralse.Undefined),
-          itemNameMapper = { value ->
-            return@createBuilder when (value) {
-              Tralse.True -> "True"
-              Tralse.False -> "False"
-              Tralse.Undefined -> "Not set"
-            }
-          },
-          topDescriptionIdFunc = { R.string.setting_donate_captcha },
-          bottomDescriptionStringFunc = { name -> name },
-          setting = ChanSettings.donateSolvedCaptchaForGreaterGood,
-          requiresRestart = false
         )
 
         group += InputSettingV2.createBuilder<String>(

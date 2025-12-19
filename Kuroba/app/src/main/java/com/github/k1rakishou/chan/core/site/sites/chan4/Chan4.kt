@@ -118,7 +118,7 @@ open class Chan4 : SiteBase() {
     check4chanPostAcknowledged = BooleanSetting(
       prefs,
       "chan_4chan_post_acknowledged",
-      true
+      false
     )
 
     chunkDownloaderSiteProperties = ChunkDownloaderSiteProperties(
