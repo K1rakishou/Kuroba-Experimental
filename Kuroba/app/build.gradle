@@ -246,11 +246,11 @@ android {
         compose = true
         buildConfig = true
     }
-
-    lintOptions {
-        checkReleaseBuilds false
+    lint {
         abortOnError false
+        checkReleaseBuilds false
     }
+
 }
 
 dependencies {
