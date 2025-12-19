@@ -56,7 +56,6 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ArchiveDescriptor
@@ -534,7 +533,7 @@ abstract class ThreadController(
   }
 
   override fun onLostFocus(nowFocused: ThreadControllerType) {
-    if (isDevBuild()) {
+    if (AppModuleAndroidUtils.isDevBuild) {
       check(nowFocused == threadControllerType) {
         "ThreadControllerTypes do not match! wasFocused=$nowFocused, current=$threadControllerType"
       }
@@ -544,7 +543,7 @@ abstract class ThreadController(
   }
 
   override fun onGainedFocus(wasFocused: ThreadControllerType) {
-    if (isDevBuild()) {
+    if (AppModuleAndroidUtils.isDevBuild) {
       check(wasFocused == threadControllerType) {
         "ThreadControllerTypes do not match! nowFocused: $wasFocused, current: $threadControllerType"
       }

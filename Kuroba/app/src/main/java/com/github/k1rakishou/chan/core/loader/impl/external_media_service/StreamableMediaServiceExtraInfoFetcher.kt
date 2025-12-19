@@ -7,7 +7,6 @@ import com.github.k1rakishou.chan.core.loader.impl.post_comment.ExtraLinkInfo
 import com.github.k1rakishou.chan.core.loader.impl.post_comment.LinkInfoRequest
 import com.github.k1rakishou.chan.core.loader.impl.post_comment.SpanUpdateBatch
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getRes
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.groupOrNull
@@ -88,7 +87,7 @@ internal class StreamableMediaServiceExtraInfoFetcher(
     private const val TAG = "StreamableMediaServiceExtraInfoFetcher"
 
     private val streamableLinkPattern = Pattern.compile("https:\\/\\/streamable\\.com\\/([a-zA-Z0-9]+)")
-    private val streamableIcon = BitmapFactory.decodeResource(getRes(), R.drawable.streamable_icon)
+    private val streamableIcon = BitmapFactory.decodeResource(AppModuleAndroidUtils.res, R.drawable.streamable_icon)
   }
 
 }

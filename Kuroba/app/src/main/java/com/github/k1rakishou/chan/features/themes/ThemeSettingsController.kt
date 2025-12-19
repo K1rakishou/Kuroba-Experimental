@@ -94,7 +94,7 @@ class ThemeSettingsController(context: Context) : Controller(context), WindowIns
         title = ToolbarText.Id(R.string.settings_screen_theme)
       ),
       menuBuilder = {
-        if (AndroidUtils.isAndroid10()) {
+        if (AndroidUtils.isAndroid10) {
           withOverflowMenu {
             withCheckableOverflowMenuItem(
               id = ACTION_IGNORE_DARK_NIGHT_MODE,
@@ -123,7 +123,7 @@ class ThemeSettingsController(context: Context) : Controller(context), WindowIns
       )
     }
 
-    if (AndroidUtils.isAndroid10()) {
+    if (AndroidUtils.isAndroid10) {
       showIgnoreDayNightModeDialog()
     }
 
@@ -301,7 +301,7 @@ class ThemeSettingsController(context: Context) : Controller(context), WindowIns
       else -> throw IllegalStateException("Unknown action: ${item.id}")
     }
 
-    val clipboardContent = AndroidUtils.getClipboardContent()
+    val clipboardContent = AndroidUtils.clipboardContent
     if (clipboardContent.isNullOrEmpty()) {
       val message = context.getString(
         R.string.theme_settings_controller_failed_to_import_theme,

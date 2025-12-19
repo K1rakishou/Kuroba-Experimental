@@ -7,7 +7,6 @@ import android.widget.TextView
 import androidx.core.text.parseAsHtml
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
-import com.github.k1rakishou.chan.core.di.component.controller.ControllerComponent
 import com.github.k1rakishou.chan.core.manager.PostingLimitationsInfoManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.Site
@@ -111,7 +110,7 @@ class LoginController(
     // Sanity check
     requireNotNull(parentController?.view?.windowToken) { "parentController.view not attached" }
 
-    waitForLayout(view.viewTreeObserver, view) {
+    waitForLayout(view) {
       crossfadeView.layoutParams.height = crossfadeView.height
       crossfadeView.requestLayout()
       crossfadeView.toggle(!loggedIn, false)

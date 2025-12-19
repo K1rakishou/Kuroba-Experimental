@@ -198,7 +198,7 @@ class CrashReportActivity :
     setContent {
       ComposeEntrypoint {
         Content(
-          isDebugCrash = isDebugCrash && !AppModuleAndroidUtils.isDevBuild(),
+          isDebugCrash = isDebugCrash && !AppModuleAndroidUtils.isDevBuild,
           exception = exception,
           className = className,
           message = message,

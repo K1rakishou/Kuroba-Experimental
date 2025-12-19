@@ -26,14 +26,13 @@ import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.receiver.ReplyNotificationDeleteIntentBroadcastReceiver
 import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser
 import com.github.k1rakishou.chan.ui.activity.StartActivity
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getFlavorType
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.NotificationConstants
 import com.github.k1rakishou.chan.utils.NotificationConstants.MAX_LINES_IN_NOTIFICATION
 import com.github.k1rakishou.chan.utils.NotificationConstants.MAX_VISIBLE_NOTIFICATIONS
 import com.github.k1rakishou.chan.utils.NotificationConstants.NOTIFICATION_THUMBNAIL_SIZE
 import com.github.k1rakishou.chan.utils.RequestCodes
 import com.github.k1rakishou.common.AndroidUtils
-import com.github.k1rakishou.common.AndroidUtils.getApplicationLabel
 import com.github.k1rakishou.common.ellipsizeEnd
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.parallelForEach
@@ -170,7 +169,7 @@ class ReplyNotificationsHelper(
       return emptyMap()
     }
 
-    if (!AndroidUtils.isAndroidO()) {
+    if (!AndroidUtils.isAndroidO) {
       return showNotificationsForAndroidNougatAndBelow(
         unreadNotificationsGrouped
       )
@@ -302,7 +301,7 @@ class ReplyNotificationsHelper(
     val preOreoNotificationBuilder = NotificationCompat.Builder(appContext)
       .setWhen(notificationTime.millis)
       .setShowWhen(true)
-      .setContentTitle(getApplicationLabel())
+      .setContentTitle(AndroidUtils.applicationLabel)
       .setContentText(titleText)
       .setSmallIcon(iconId)
       .setupClickOnNotificationIntent(
@@ -395,7 +394,7 @@ class ReplyNotificationsHelper(
     summaryNotificationBuilder
       .setWhen(notificationTime.millis)
       .setShowWhen(true)
-      .setContentTitle(getApplicationLabel())
+      .setContentTitle(AndroidUtils.applicationLabel)
       .setContentText(titleText)
       .setSmallIcon(iconId)
       .setupSoundAndVibration(hasNewReplies, useSoundForReplyNotifications)
@@ -841,7 +840,7 @@ class ReplyNotificationsHelper(
   private fun restoreNotificationIdMap(
     unreadNotificationsGrouped: MutableMap<ChanDescriptor.ThreadDescriptor, MutableSet<ThreadBookmarkReplyView>>
   ) {
-    if (!AndroidUtils.isAndroidO()) {
+    if (!AndroidUtils.isAndroidO) {
       return
     }
 
@@ -871,7 +870,7 @@ class ReplyNotificationsHelper(
   }
 
   private fun closeAllNotifications() {
-    if (!AndroidUtils.isAndroidO()) {
+    if (!AndroidUtils.isAndroidO) {
       notificationManagerCompat.cancel(
         NotificationConstants.ReplyNotifications.REPLIES_PRE_OREO_NOTIFICATION_TAG,
         NotificationConstants.REPLIES_PRE_OREO_NOTIFICATION_ID
@@ -905,7 +904,7 @@ class ReplyNotificationsHelper(
     private const val MAX_NOTIFICATION_LINE_LENGTH = 128
 
     // For Android O and above
-    private val notificationsGroup by lazy { "${TAG}_${BuildConfig.APPLICATION_ID}_${getFlavorType().name}" }
+    private val notificationsGroup by lazy { "${TAG}_${BuildConfig.APPLICATION_ID}_${AppModuleAndroidUtils.flavorType.name}" }
 
     private val REPLIES_COMPARATOR = Comparator<ThreadBookmarkReplyView> { o1, o2 ->
       o1.postDescriptor.postNo.compareTo(o2.postDescriptor.postNo)

@@ -133,7 +133,7 @@ class MpvVideoMediaView(
     mpvSettings = findViewById(R.id.mpv_settings)
     mpvErrorMessage = findViewById(R.id.error_message)
 
-    if (AppModuleAndroidUtils.isTablet()) {
+    if (AppModuleAndroidUtils.isTablet) {
       actionStrip = findViewById<MediaViewerBottomActionStrip?>(R.id.left_action_strip)
     } else {
       actionStrip = findViewById<MediaViewerBottomActionStrip?>(R.id.bottom_action_strip)

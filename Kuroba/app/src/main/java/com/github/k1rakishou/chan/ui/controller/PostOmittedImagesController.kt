@@ -35,7 +35,7 @@ import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
 import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.util.ChanPostUtils
 import java.util.Locale
@@ -77,7 +77,7 @@ class PostOmittedImagesController(
       remember(key1 = postImage) {
         val size = PostImageThumbnailViewsContainer.calculatePostCellSingleThumbnailSize().toDp()
 
-        if (isTablet()) {
+        if (AppModuleAndroidUtils.isTablet) {
           return@remember size * 1.5f
         }
 
@@ -85,7 +85,7 @@ class PostOmittedImagesController(
       }
     }
     val fontSize = remember {
-      if (isTablet()) {
+      if (AppModuleAndroidUtils.isTablet) {
         13.ktu
       } else {
         11.ktu

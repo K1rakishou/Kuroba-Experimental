@@ -13,7 +13,7 @@ import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
 import com.github.k1rakishou.chan.core.site.sites.kun8.Kun8
 import com.github.k1rakishou.chan.core.site.sites.lainchan.Lainchan
 import com.github.k1rakishou.chan.core.site.sites.wired7.Wired7
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.jsonArray
@@ -89,7 +89,7 @@ class KurobaSettingsImportUseCase(
   private suspend fun importFromKuroba(siteIdMap: Map<Int, Int>, jsonReader: JsonReader) {
     Logger.d(TAG, "importFromKuroba() called")
 
-    if (isDevBuild()) {
+    if (AppModuleAndroidUtils.isDevBuild) {
       siteIdMap.forEach { (databaseId, classId) ->
         Logger.d(TAG, "Mapped site databaseId=$databaseId to site classId=$classId")
       }
@@ -212,7 +212,7 @@ class KurobaSettingsImportUseCase(
   }
 
   private suspend fun createPostHides(postHides: MutableSet<ChanPostHide>) {
-    if (isDevBuild()) {
+    if (AppModuleAndroidUtils.isDevBuild) {
       postHides.forEach { chanPostHide ->
         Logger.d(TAG, "Creating post hide $chanPostHide")
       }
@@ -237,7 +237,7 @@ class KurobaSettingsImportUseCase(
     }
 
     boardsToActivateMap.forEach { (siteDescriptor, boardDescriptors) ->
-      if (isDevBuild()) {
+      if (AppModuleAndroidUtils.isDevBuild) {
         Logger.d(TAG, "Activating boards ${boardDescriptors}")
       }
 
@@ -248,7 +248,7 @@ class KurobaSettingsImportUseCase(
   private suspend fun activateSitesAndLoadBoardInfo(
     siteDescriptorsToActivate: Set<SiteDescriptor>
   ): Set<SiteDescriptor> {
-    if (isDevBuild()) {
+    if (AppModuleAndroidUtils.isDevBuild) {
       siteDescriptorsToActivate.forEach { siteDescriptor ->
         Logger.d(TAG, "activateSitesAndLoadBoardInfo() siteDescriptor=$siteDescriptor")
       }
@@ -678,7 +678,7 @@ class KurobaSettingsImportUseCase(
   private suspend fun createNewFilter(chanFilter: ChanFilter) {
     suspendCoroutine<Unit> { continuation ->
       filterManager.createOrUpdateFilter(chanFilter) {
-        if (isDevBuild()) {
+        if (AppModuleAndroidUtils.isDevBuild) {
           Logger.d(TAG, "Creating filter $chanFilter")
         }
 

@@ -59,7 +59,6 @@ import com.github.k1rakishou.chan.ui.view.insets.InsetAwareEpoxyRecyclerView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
 import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.common.AndroidUtils.getDisplaySize
@@ -698,7 +697,7 @@ class BookmarksController(
             }
           }
 
-          val isTablet = isTablet()
+          val isTablet = AppModuleAndroidUtils.isTablet
           updateTitleWithStats(state)
 
           state.groupedBookmarks.forEach { bookmarkGroup ->

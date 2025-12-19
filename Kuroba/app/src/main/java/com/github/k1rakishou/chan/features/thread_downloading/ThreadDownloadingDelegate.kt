@@ -194,7 +194,7 @@ class ThreadDownloadingDelegate(
     val isNetworkGoodForMediaDownload = if (ChanSettings.threadDownloaderDownloadMediaOnMeteredNetwork.get()) {
       true
     } else {
-      AppModuleAndroidUtils.isConnectionUnmetered()
+      AppModuleAndroidUtils.isConnectionUnmetered
     }
 
     val canProcessThreadMedia = threadDownload.downloadMedia
@@ -296,7 +296,7 @@ class ThreadDownloadingDelegate(
       val isNetworkGoodForMediaDownload = if (ChanSettings.threadDownloaderDownloadMediaOnMeteredNetwork.get()) {
         true
       } else {
-        AppModuleAndroidUtils.isConnectionUnmetered()
+        AppModuleAndroidUtils.isConnectionUnmetered
       }
 
       if (!isNetworkGoodForMediaDownload) {

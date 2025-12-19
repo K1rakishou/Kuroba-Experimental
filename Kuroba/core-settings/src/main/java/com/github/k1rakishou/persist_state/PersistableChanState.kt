@@ -92,7 +92,7 @@ object PersistableChanState {
 
   private fun initInternal() {
     try {
-      val provider = SharedPreferencesSettingProvider(AndroidUtils.getAppState())
+      val provider = SharedPreferencesSettingProvider(AndroidUtils.appState)
 
       applicationMigrationVersion = IntegerSetting(provider, "application_migration_version", 0)
       watchLastCount = IntegerSetting(provider, "watch_last_count", 0)

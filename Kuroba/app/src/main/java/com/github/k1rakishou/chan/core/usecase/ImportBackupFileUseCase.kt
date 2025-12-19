@@ -107,7 +107,7 @@ class ImportBackupFileUseCase(
   }
 
   private fun handleThemeFile(fileName: String, zipInputStream: ZipInputStream) {
-    val themeFile = File(AndroidUtils.getFilesDir(), fileName)
+    val themeFile = File(AndroidUtils.filesDir, fileName)
     if (!themeFile.exists()) {
       check(themeFile.createNewFile()) { "Failed to create ${themeFile.absolutePath}" }
     }
@@ -124,7 +124,7 @@ class ImportBackupFileUseCase(
 
       mainSharedPrefsFile.outputStream()
     } else {
-      val sharedPrefsDir = File(AndroidUtils.getAppDir(), ChanSettings.SHARED_PREFS_DIR_NAME)
+      val sharedPrefsDir = File(AndroidUtils.appDir, ChanSettings.SHARED_PREFS_DIR_NAME)
       if (!sharedPrefsDir.exists()) {
         check(sharedPrefsDir.mkdirs()) { "Failed to create ${sharedPrefsDir.absolutePath}" }
       }

@@ -189,7 +189,7 @@ object MediaUtils {
   @get:Throws(IOException::class)
   private val tempFile: File
     private get() {
-      val outputDir = AndroidUtils.getAppContext().cacheDir
+      val outputDir = AndroidUtils.appContext.cacheDir
       deleteOldTempFiles(outputDir.listFiles())
 
       return File.createTempFile(TEMP_FILE_NAME, TEMP_FILE_EXTENSION, outputDir)
@@ -463,7 +463,7 @@ object MediaUtils {
   }
 
   fun bitmapToDrawable(bitmap: Bitmap?): BitmapDrawable {
-    return BitmapDrawable(AppModuleAndroidUtils.getRes(), bitmap)
+    return BitmapDrawable(AppModuleAndroidUtils.res, bitmap)
   }
 
   // For testing

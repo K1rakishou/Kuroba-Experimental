@@ -1025,7 +1025,7 @@ class ReplyLayoutState(
   }
 
   private suspend fun requestPermissionIfNeededSuspend(): Boolean {
-    if (AndroidUtils.isAndroid13()) {
+    if (AndroidUtils.isAndroid13) {
       // Can't request READ_EXTERNAL_STORAGE on API 33+
       return true
     }

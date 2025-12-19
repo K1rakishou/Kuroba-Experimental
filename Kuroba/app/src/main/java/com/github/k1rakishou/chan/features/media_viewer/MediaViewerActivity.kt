@@ -89,7 +89,7 @@ class MediaViewerActivity :
     initView(findViewById(android.R.id.content))
 
     AndroidUtils.getWindow(this)
-      .addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+      ?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
     mediaViewerController = MediaViewerController(
       context = this,
@@ -167,7 +167,7 @@ class MediaViewerActivity :
     }
 
     AndroidUtils.getWindow(this)
-      .clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+      ?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
   }
 
   override fun finish() {

@@ -67,7 +67,7 @@ abstract class BaseFloatingComposeController(
             val availableWidth = maxWidth
 
             val horizPadding = remember {
-              if (AppModuleAndroidUtils.isTablet()) {
+              if (AppModuleAndroidUtils.isTablet) {
                 HPADDING_TABLET_COMPOSE
               } else {
                 HPADDING_COMPOSE
@@ -75,7 +75,7 @@ abstract class BaseFloatingComposeController(
             }
 
             val vertPadding = remember {
-              if (AppModuleAndroidUtils.isTablet()) {
+              if (AppModuleAndroidUtils.isTablet) {
                 VPADDING_TABLET_COMPOSE
               } else {
                 VPADDING_COMPOSE

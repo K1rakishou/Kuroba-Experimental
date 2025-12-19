@@ -1,670 +1,579 @@
-package com.github.k1rakishou.chan.utils;
+package com.github.k1rakishou.chan.utils
 
-import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
-import static android.content.res.Configuration.ORIENTATION_PORTRAIT;
-import static com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType.Debug;
-import static com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType.Release;
-import static com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType.Unknown;
-import static com.github.k1rakishou.common.AndroidUtils.getAppContext;
-import static com.github.k1rakishou.common.AndroidUtils.isAndroidP;
+import android.annotation.SuppressLint
+import android.app.Application
+import android.content.Context
+import android.content.ContextWrapper
+import android.content.Intent
+import android.content.SharedPreferences
+import android.content.pm.PackageManager
+import android.content.pm.Signature
+import android.content.res.Configuration
+import android.content.res.Resources
+import android.graphics.drawable.Drawable
+import android.net.ConnectivityManager
+import android.net.Uri
+import android.os.StatFs
+import android.provider.Settings
+import android.telephony.TelephonyManager
+import android.text.TextUtils
+import android.view.LayoutInflater
+import android.view.View
+import android.view.View.OnAttachStateChangeListener
+import android.view.ViewGroup
+import android.view.ViewTreeObserver
+import android.widget.Toast
+import androidx.annotation.DrawableRes
+import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
+import com.github.k1rakishou.ChanSettings.NetworkContentAutoLoadMode
+import com.github.k1rakishou.chan.BuildConfig
+import com.github.k1rakishou.chan.Chan.Companion.getComponent
+import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
+import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity
+import com.github.k1rakishou.chan.ui.activity.SharingActivity
+import com.github.k1rakishou.chan.ui.activity.StartActivity
+import com.github.k1rakishou.chan.ui.compose.snackbar.SnackbarManager
+import com.github.k1rakishou.chan.ui.compose.snackbar.SnackbarScope
+import com.github.k1rakishou.chan.utils.HashingUtil.byteArrayHashSha256HexString
+import com.github.k1rakishou.common.AndroidUtils.FlavorType
+import com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType
+import com.github.k1rakishou.common.AndroidUtils.appContext
+import com.github.k1rakishou.common.AndroidUtils.isAndroidP
+import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.core_logger.Logger.d
+import com.github.k1rakishou.core_logger.Logger.e
+import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
+import com.github.k1rakishou.persist_state.PersistableChanState
+import java.io.File
+import java.util.Locale
 
-import android.annotation.SuppressLint;
-import android.app.Application;
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.ContextWrapper;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
-import android.content.pm.Signature;
-import android.content.res.Resources;
-import android.content.res.TypedArray;
-import android.graphics.drawable.Drawable;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import android.net.Uri;
-import android.os.StatFs;
-import android.provider.Settings;
-import android.telephony.TelephonyManager;
-import android.text.TextUtils;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
-import android.widget.Toast;
+object AppModuleAndroidUtils {
+  private const val TAG = "AppModuleAndroidUtils"
 
-import androidx.annotation.DrawableRes;
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
+  @SuppressLint("StaticFieldLeak")
+  private lateinit var application: Application
 
-import com.github.k1rakishou.ChanSettings;
-import com.github.k1rakishou.chan.BuildConfig;
-import com.github.k1rakishou.chan.Chan;
-import com.github.k1rakishou.chan.R;
-import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
-import com.github.k1rakishou.chan.core.di.component.application.ApplicationComponent;
-import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity;
-import com.github.k1rakishou.chan.ui.activity.SharingActivity;
-import com.github.k1rakishou.chan.ui.activity.StartActivity;
-import com.github.k1rakishou.chan.ui.compose.snackbar.SnackbarManager;
-import com.github.k1rakishou.chan.ui.compose.snackbar.SnackbarScope;
-import com.github.k1rakishou.common.AndroidUtils;
-import com.github.k1rakishou.common.KotlinExtensionsKt;
-import com.github.k1rakishou.core_logger.Logger;
-import com.github.k1rakishou.model.data.descriptor.SiteDescriptor;
-import com.github.k1rakishou.persist_state.PersistableChanState;
+  const val SITE_PREFS_FILE_PREFIX: String = "site_preferences_"
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+  fun init(application: Application) {
+    if (!::application.isInitialized) {
+      this.application = application
+    }
+  }
 
-import kotlin.Lazy;
-
-public class AppModuleAndroidUtils {
-    private static final String TAG = "AppModuleAndroidUtils";
-
-    @Nullable
-    @SuppressLint("StaticFieldLeak")
-    private static Application application;
-
-    public static final String SITE_PREFS_FILE_PREFIX = "site_preferences_";
-
-    public static void init(Application application) {
-        if (AppModuleAndroidUtils.application == null) {
-            AppModuleAndroidUtils.application = application;
-        }
+  fun checkDontKeepActivitiesSettingEnabledForWarningDialog(context: Context): Boolean {
+    if (PersistableChanState.dontKeepActivitiesWarningShown.get()) {
+      return false
     }
 
-    public static boolean checkDontKeepActivitiesSettingEnabledForWarningDialog(Context context) {
-        if (PersistableChanState.dontKeepActivitiesWarningShown.get()) {
-          return false;
-        }
-
-        boolean settingEnabled = Settings.Global.getInt(
-                context.getContentResolver(),
-                Settings.Global.ALWAYS_FINISH_ACTIVITIES,
-                0
-        ) == 1;
-
-        if (settingEnabled) {
-            PersistableChanState.dontKeepActivitiesWarningShown.set(true);
-        }
-
-        return settingEnabled;
+    val settingEnabled = Settings.Global.getInt(context.contentResolver, Settings.Global.ALWAYS_FINISH_ACTIVITIES, 0) == 1
+    if (settingEnabled) {
+      PersistableChanState.dontKeepActivitiesWarningShown.set(true)
     }
 
-    public static AndroidUtils.VerifiedBuildType getVerifiedBuildType() {
-        try {
-            @SuppressLint("PackageManagerGetSignatures")
-            Signature sig = getApplicationSignature();
+    return settingEnabled
+  }
 
-            String signatureHexString =
-                    HashingUtil.byteArrayHashSha256HexString(sig.toByteArray()).toUpperCase();
+  fun verifiedBuildType(): VerifiedBuildType {
+    try {
+      @SuppressLint("PackageManagerGetSignatures") val sig = applicationSignature()
 
-            boolean isOfficialRelease = BuildConfig.RELEASE_SIGNATURE.equals(signatureHexString);
-            if (isOfficialRelease) {
-                return Release;
-            }
+      val signatureHexString =
+        byteArrayHashSha256HexString(sig.toByteArray()).uppercase(Locale.getDefault())
 
-            boolean isOfficialBeta = BuildConfig.DEBUG_SIGNATURE.equals(signatureHexString);
-            if (isOfficialBeta) {
-                return Debug;
-            }
+      val isOfficialRelease = BuildConfig.RELEASE_SIGNATURE == signatureHexString
+      if (isOfficialRelease) {
+        return VerifiedBuildType.Release
+      }
 
-            return Unknown;
-        } catch (Throwable error) {
-            Logger.e(TAG, "getVerifiedBuildType() error: " + KotlinExtensionsKt.errorMessageOrClassName(error));
-            return Unknown;
-        }
+      val isOfficialBeta = BuildConfig.DEBUG_SIGNATURE == signatureHexString
+      if (isOfficialBeta) {
+        return VerifiedBuildType.Debug
+      }
+
+      return VerifiedBuildType.Unknown
+    } catch (error: Throwable) {
+      e(TAG, "getVerifiedBuildType() error: " + error.errorMessageOrClassName())
+      return VerifiedBuildType.Unknown
+    }
+  }
+
+  @Throws(PackageManager.NameNotFoundException::class)
+  private fun applicationSignature(): Signature {
+    @SuppressLint("PackageManagerGetSignatures") val sig: Signature
+
+    if (isAndroidP) {
+      sig = application.packageManager.getPackageInfo(
+        AppModuleAndroidUtils.application.getPackageName(),
+        PackageManager.GET_SIGNING_CERTIFICATES
+      ).signingInfo!!.getApkContentsSigners()[0]
+    } else {
+      sig = application.packageManager.getPackageInfo(
+        AppModuleAndroidUtils.application.getPackageName(),
+        PackageManager.GET_SIGNATURES
+      ).signatures!![0]
+    }
+    return sig
+  }
+
+  val isStableBuild: Boolean
+    get() = flavorType == FlavorType.Stable
+
+  val isDevBuild: Boolean
+    get() = flavorType == FlavorType.Dev
+
+  val isBetaBuild: Boolean
+    get() = flavorType == FlavorType.Beta
+
+  val isFdroidBuild: Boolean
+    get() = flavorType == FlavorType.Fdroid
+
+  val flavorType: FlavorType
+    get() = when (BuildConfig.FLAVOR_TYPE) {
+      0 -> FlavorType.Stable
+      1 -> FlavorType.Beta
+      2 -> FlavorType.Dev
+      3 -> FlavorType.Fdroid
+      else -> throw RuntimeException("Unknown flavor type " + BuildConfig.FLAVOR_TYPE)
     }
 
-    private static Signature getApplicationSignature() throws PackageManager.NameNotFoundException {
-        @SuppressLint("PackageManagerGetSignatures")
-        Signature sig;
+  /**
+   * Tries to open an app that can open the specified URL.<br></br>
+   * If this app will open the link then show a chooser to the user without this app.<br></br>
+   * Else allow the default logic to run with startActivity.
+   *
+   * @param link url to open
+   */
+  @JvmStatic
+  fun openLink(link: String?) {
+    if (link == null || TextUtils.isEmpty(link)) {
+      d(TAG, "openLink() link is empty")
+      showToast(application, getString(R.string.open_link_failed_url, link), Toast.LENGTH_LONG)
+      return
+    }
 
-        if (isAndroidP()) {
-            sig = application.getPackageManager().getPackageInfo(
-                    application.getPackageName(),
-                    PackageManager.GET_SIGNING_CERTIFICATES
-            ).signingInfo.getApkContentsSigners()[0];
+    val pm = application.getPackageManager()
+    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(link))
+
+    val resolvedActivity = intent.resolveActivity(pm)
+    if (resolvedActivity == null) {
+      d(TAG, "openLink() resolvedActivity == null")
+
+      try {
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        application.startActivitySafe(intent)
+      } catch (e: Throwable) {
+        e(TAG, "openLink() application.startActivity() error, intent = " + intent, e)
+
+        val message = getString(R.string.open_link_failed_url_additional_info, link, e.message)
+        showErrorToast(message, Toast.LENGTH_SHORT)
+      }
+
+      return
+    }
+
+    val thisAppIsDefault = (resolvedActivity.packageName == application.packageName)
+    if (!thisAppIsDefault) {
+      d(TAG, "openLink() thisAppIsDefault == false")
+      openIntent(intent)
+      return
+    }
+
+    // Get all intents that match, and filter out this app
+    val resolveInfos = pm.queryIntentActivities(intent, 0)
+    val filteredIntents: MutableList<Intent?> = ArrayList<Intent?>(resolveInfos.size)
+
+    for (info in resolveInfos) {
+      if (info.activityInfo.packageName != application.packageName) {
+        val i = Intent(Intent.ACTION_VIEW, link.toUri())
+        i.setPackage(info.activityInfo.packageName)
+        filteredIntents.add(i)
+      }
+    }
+
+    if (filteredIntents.isEmpty()) {
+      d(TAG, "openLink() filteredIntents.size() <= 0")
+      val message = getString(
+        R.string.open_link_failed_url_additional_info,
+        link,
+        "filteredIntents count <= 0"
+      )
+
+      showToast(application, message, Toast.LENGTH_LONG)
+      return
+    }
+
+    if (filteredIntents.size == 1) {
+      d(TAG, "openLink() filteredIntents.size() == 1")
+      AppModuleAndroidUtils.openIntent(filteredIntents.get(0)!!)
+
+      return
+    }
+
+    // Create a chooser for the last app in the list, and add the rest with
+    // EXTRA_INITIAL_INTENTS that get placed above
+    val chooser = Intent.createChooser(
+      filteredIntents.removeAt(filteredIntents.size - 1),
+      null
+    )
+
+    chooser.putExtra(
+      Intent.EXTRA_INITIAL_INTENTS,
+      filteredIntents.toTypedArray<Intent?>()
+    )
+
+    d(TAG, "openLink() success")
+    openIntent(chooser)
+  }
+
+  fun shareLink(link: String?) {
+    val intent = Intent(Intent.ACTION_SEND)
+    intent.setType("text/plain")
+    intent.putExtra(Intent.EXTRA_TEXT, link)
+    val chooser = Intent.createChooser(intent, getString(R.string.action_share))
+    openIntent(chooser)
+  }
+
+  @JvmStatic
+  fun openIntent(intent: Intent) {
+    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+    try {
+      application.startActivitySafe(intent)
+    } catch (e: Throwable) {
+      e(TAG, "openIntent() application.startActivity() error, intent = " + intent, e)
+
+      val message: String = getString(R.string.open_intent_failed, intent.toString())
+      showErrorToast(message, Toast.LENGTH_SHORT)
+      return
+    }
+
+    d(TAG, "openIntent() success")
+  }
+
+  @JvmStatic
+  fun inflate(context: Context?, resId: Int, root: ViewGroup?): View? {
+    return LayoutInflater.from(context).inflate(resId, root)
+  }
+
+  @JvmStatic
+  fun inflate(context: Context?, resId: Int, root: ViewGroup?, attachToRoot: Boolean): View {
+    return LayoutInflater.from(context).inflate(resId, root, attachToRoot)
+  }
+
+  @JvmStatic
+  fun inflate(context: Context?, resId: Int): ViewGroup {
+    return LayoutInflater.from(context).inflate(resId, null) as ViewGroup
+  }
+
+  val res: Resources
+    get() = application.resources!!
+
+  @JvmStatic
+  fun dp(dp: Float): Int {
+    return (dp * res.getDisplayMetrics().density).toInt()
+  }
+
+  fun pxToDp(px: Float): Int {
+    return (px / res.getDisplayMetrics().density).toInt()
+  }
+
+  fun pxToDp(px: Int): Int {
+    return (px / res.getDisplayMetrics().density).toInt()
+  }
+
+  @JvmStatic
+  fun dp(context: Context, dp: Float): Int {
+    return (dp * context.getResources().getDisplayMetrics().density).toInt()
+  }
+
+  @JvmStatic
+  fun sp(sp: Int): Int {
+    return sp(sp.toFloat())
+  }
+
+  @JvmStatic
+  fun sp(sp: Float): Int {
+    return (sp * res.getDisplayMetrics().scaledDensity).toInt()
+  }
+
+  @JvmStatic
+  fun getString(res: Int): String {
+    return AppModuleAndroidUtils.res.getString(res)
+  }
+
+  @JvmStatic
+  fun getString(res: Int, vararg formatArgs: Any?): String {
+    return AppModuleAndroidUtils.res.getString(res, *formatArgs)
+  }
+
+  fun getQuantityString(res: Int, quantity: Int): String {
+    return AppModuleAndroidUtils.res.getQuantityString(res, quantity)
+  }
+
+  fun getQuantityString(res: Int, quantity: Int, vararg formatArgs: Any?): String {
+    return AppModuleAndroidUtils.res.getQuantityString(res, quantity, *formatArgs)
+  }
+
+  fun getDrawable(@DrawableRes res: Int): Drawable {
+    return ContextCompat.getDrawable(appContext, res)!!
+  }
+
+  @JvmStatic
+  val isTablet: Boolean
+    get() = res.getBoolean(R.bool.is_tablet)
+
+  fun getDimen(dimen: Int): Int {
+    return res.getDimensionPixelSize(dimen)
+  }
+
+  fun shouldLoadForNetworkType(networkType: NetworkContentAutoLoadMode?): Boolean {
+    if (networkType == NetworkContentAutoLoadMode.NONE) {
+      return false
+    } else if (networkType == NetworkContentAutoLoadMode.UNMETERED) {
+      return isConnectionUnmetered
+    } else {
+      return networkType == NetworkContentAutoLoadMode.ALL
+    }
+  }
+
+  val isConnectionUnmetered: Boolean
+    get() {
+      val connectivityManager =
+        application.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+
+      val networkInfo = connectivityManager.getActiveNetworkInfo()
+      if (networkInfo == null) {
+        return false
+      }
+
+      if (!networkInfo.isConnected()) {
+        return false
+      }
+
+      if (connectivityManager.isActiveNetworkMetered()) {
+        return false
+      }
+
+      return true
+    }
+
+  @JvmStatic
+  val screenOrientation: Int
+    get() {
+      val screenOrientation = appContext.getResources().getConfiguration().orientation
+      check(!(screenOrientation != Configuration.ORIENTATION_LANDSCAPE && screenOrientation != Configuration.ORIENTATION_PORTRAIT)) {
+        "Illegal screen orientation value! value = " + screenOrientation
+      }
+
+      return screenOrientation
+    }
+
+  /**
+   * Change to ConnectivityManager#registerDefaultNetworkCallback when minSdk == 24, basically never
+   */
+  fun networkClass(connectivityManager: ConnectivityManager): String {
+    val info = connectivityManager.getActiveNetworkInfo()
+    if (info == null || !info.isConnected()) {
+      return "No connected" // not connected
+    }
+
+    if (info.getType() == ConnectivityManager.TYPE_WIFI) {
+      return "WIFI"
+    }
+
+    if (info.getType() == ConnectivityManager.TYPE_MOBILE) {
+      val networkType = info.getSubtype()
+      when (networkType) {
+        TelephonyManager.NETWORK_TYPE_GPRS,
+        TelephonyManager.NETWORK_TYPE_EDGE,
+        TelephonyManager.NETWORK_TYPE_CDMA,
+        TelephonyManager.NETWORK_TYPE_1xRTT,
+        TelephonyManager.NETWORK_TYPE_IDEN,
+        TelephonyManager.NETWORK_TYPE_GSM -> return "2G"
+        TelephonyManager.NETWORK_TYPE_UMTS,
+        TelephonyManager.NETWORK_TYPE_EVDO_0,
+        TelephonyManager.NETWORK_TYPE_EVDO_A,
+        TelephonyManager.NETWORK_TYPE_HSDPA,
+        TelephonyManager.NETWORK_TYPE_HSUPA,
+        TelephonyManager.NETWORK_TYPE_HSPA,
+        TelephonyManager.NETWORK_TYPE_EVDO_B,
+        TelephonyManager.NETWORK_TYPE_EHRPD,
+        TelephonyManager.NETWORK_TYPE_HSPAP,
+        TelephonyManager.NETWORK_TYPE_TD_SCDMA -> return "3G"
+        TelephonyManager.NETWORK_TYPE_LTE,
+        TelephonyManager.NETWORK_TYPE_IWLAN, 19 -> return "4G"
+        TelephonyManager.NETWORK_TYPE_NR -> return "5G"
+      }
+    }
+
+    return "Unknown"
+  }
+
+  fun availableSpaceInBytes(file: File): Long {
+    val stat = StatFs(file.getPath())
+
+    return stat.getAvailableBlocksLong() * stat.getBlockSizeLong()
+  }
+
+  /**
+   * Always registers an onpredrawlistener.
+   * **Warning: the view you give must be attached to the view root!**
+   */
+  fun waitForLayout(view: View, callback: OnMeasuredCallback) {
+    if (view.getWindowToken() == null) {
+      // See comment above
+      view.addOnAttachStateChangeListener(object : OnAttachStateChangeListener {
+        override fun onViewAttachedToWindow(v: View) {
+          waitForLayoutInternal(true, view.getViewTreeObserver(), view, callback)
+          view.removeOnAttachStateChangeListener(this)
+        }
+
+        override fun onViewDetachedFromWindow(v: View) {
+          view.removeOnAttachStateChangeListener(this)
+        }
+      })
+      return
+    }
+
+    waitForLayoutInternal(false, view.getViewTreeObserver(), view, callback)
+  }
+
+  private fun waitForLayoutInternal(
+    returnIfNotZero: Boolean,
+    viewTreeObserver: ViewTreeObserver,
+    view: View,
+    callback: OnMeasuredCallback
+  ) {
+    val width = view.getWidth()
+    val height = view.getHeight()
+
+    if (returnIfNotZero && width > 0 && height > 0) {
+      callback.onMeasured(view)
+      return
+    }
+
+    viewTreeObserver.addOnPreDrawListener(object : ViewTreeObserver.OnPreDrawListener {
+      private var usingViewTreeObserver = viewTreeObserver
+
+      override fun onPreDraw(): Boolean {
+        if (usingViewTreeObserver != view.getViewTreeObserver()) {
+          e(
+            TAG, "view.getViewTreeObserver() is another viewtreeobserver! " +
+              "replacing with the new one"
+          )
+
+          usingViewTreeObserver = view.getViewTreeObserver()
+        }
+
+        if (usingViewTreeObserver.isAlive()) {
+          usingViewTreeObserver.removeOnPreDrawListener(this)
         } else {
-            sig = application.getPackageManager().getPackageInfo(
-                    application.getPackageName(),
-                    PackageManager.GET_SIGNATURES
-            ).signatures[0];
+          e(
+            TAG, "ViewTreeObserver not alive, could not remove onPreDrawListener! " +
+              "This will probably not end well"
+          )
         }
-        return sig;
-    }
 
-    public static void printApplicationSignatureHash() throws PackageManager.NameNotFoundException {
-        @SuppressLint("PackageManagerGetSignatures")
-        Signature sig = getApplicationSignature();
-
-        String signatureHexString =
-                HashingUtil.byteArrayHashSha256HexString(sig.toByteArray()).toUpperCase();
-
-        Logger.d(TAG, "Signature hash: " + signatureHexString);
-    }
-
-    public static boolean isStableBuild() {
-        return getFlavorType() == AndroidUtils.FlavorType.Stable;
-    }
-
-    public static boolean isDevBuild() {
-        return getFlavorType() == AndroidUtils.FlavorType.Dev;
-    }
-
-    public static boolean isBetaBuild() {
-        return getFlavorType() == AndroidUtils.FlavorType.Beta;
-    }
-
-    public static boolean isFdroidBuild() {
-        return getFlavorType() == AndroidUtils.FlavorType.Fdroid;
-    }
-
-    @SuppressWarnings("ConstantConditions")
-    public static AndroidUtils.FlavorType getFlavorType() {
-        switch (BuildConfig.FLAVOR_TYPE) {
-            case 0:
-                return AndroidUtils.FlavorType.Stable;
-            case 1:
-                return AndroidUtils.FlavorType.Beta;
-            case 2:
-                return AndroidUtils.FlavorType.Dev;
-            case 3:
-                return AndroidUtils.FlavorType.Fdroid;
-            default:
-                throw new RuntimeException("Unknown flavor type " + BuildConfig.FLAVOR_TYPE);
+        val ret: Boolean
+        try {
+          ret = callback.onMeasured(view)
+        } catch (e: Exception) {
+          e(TAG, "Exception in onMeasured", e)
+          throw e
         }
+
+        if (!ret) {
+          d(TAG, "waitForLayout requested a re-layout by returning false")
+        }
+
+        return ret
+      }
+    })
+  }
+
+  private val snackbarManagerLazy = lazy<SnackbarManager?> {
+    val applicationComponent = getComponent()
+    applicationComponent.snackbarManagerFactory.snackbarManager(SnackbarScope.Global())
+  }
+
+  @JvmStatic
+  fun showToast(context: Context?, resId: Int, duration: Int) {
+    AppModuleAndroidUtils.showToast(context, AppModuleAndroidUtils.getString(resId)!!, duration)
+  }
+
+  @JvmStatic
+  fun showToast(context: Context?, resId: Int) {
+    showToast(context, AppModuleAndroidUtils.getString(resId)!!)
+  }
+
+  @JvmStatic
+  @JvmOverloads
+  fun showToast(context: Context?, message: String, duration: Int = Toast.LENGTH_SHORT) {
+    val app = application
+    if (app == null) {
+      return
     }
 
+    snackbarManagerLazy.value!!.globalToast(message, duration)
+  }
+
+  fun showErrorToast(resId: Int, duration: Int) {
+    AppModuleAndroidUtils.showErrorToast(AppModuleAndroidUtils.getString(resId)!!, duration)
+  }
+
+  fun showErrorToast(resId: Int) {
+    showErrorToast(AppModuleAndroidUtils.getString(resId)!!)
+  }
+
+  @JvmOverloads
+  fun showErrorToast(message: String, duration: Int = Toast.LENGTH_SHORT) {
+    val app = application
+    if (app == null) {
+      return
+    }
+
+    snackbarManagerLazy.value!!.globalToast(message, duration)
+  }
+
+  fun getPreferencesForSite(siteDescriptor: SiteDescriptor): SharedPreferences? {
+    val preferencesFileName = SITE_PREFS_FILE_PREFIX + siteDescriptor.siteName
+
+    return application.getSharedPreferences(
+      preferencesFileName,
+      Context.MODE_PRIVATE
+    )
+  }
+
+  @JvmStatic
+  fun extractActivityComponent(context: Context?): ActivityComponent {
+    if (context is StartActivity) {
+      return context.activityComponent
+    } else if (context is SharingActivity) {
+      return context.activityComponent
+    } else if (context is MediaViewerActivity) {
+      return context.activityComponent
+    } else if (context is ContextWrapper) {
+      val baseContext = context.baseContext
+      if (baseContext != null) {
+        return extractActivityComponent(baseContext)
+      }
+    } else if (context == null) {
+      error("Context is null")
+    }
+
+    throw IllegalStateException("Unknown context wrapper " + context.javaClass.getName())
+  }
+
+  fun interface OnMeasuredCallback {
     /**
-     * Tries to open an app that can open the specified URL.<br>
-     * If this app will open the link then show a chooser to the user without this app.<br>
-     * Else allow the default logic to run with startActivity.
+     * Called when the layout is done.
      *
-     * @param link url to open
+     * @param view same view as the argument.
+     * @return true to continue with rendering, false to cancel and redo the layout.
      */
-    public static void openLink(String link) {
-        if (TextUtils.isEmpty(link)) {
-            Logger.d(TAG, "openLink() link is empty");
-            showToast(application, getString(R.string.open_link_failed_url, link), Toast.LENGTH_LONG);
-            return;
-        }
-
-        PackageManager pm = application.getPackageManager();
-        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(link));
-
-        ComponentName resolvedActivity = intent.resolveActivity(pm);
-        if (resolvedActivity == null) {
-            Logger.d(TAG, "openLink() resolvedActivity == null");
-
-            try {
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                KtExtensionsKt.startActivitySafe(application, intent);
-            } catch (Throwable e) {
-                Logger.e(TAG, "openLink() application.startActivity() error, intent = " + intent, e);
-
-                String message = getString(R.string.open_link_failed_url_additional_info, link, e.getMessage());
-                showErrorToast(message, Toast.LENGTH_SHORT);
-            }
-
-            return;
-        }
-
-        boolean thisAppIsDefault = resolvedActivity.getPackageName()
-                .equals(application.getPackageName());
-
-        if (!thisAppIsDefault) {
-            Logger.d(TAG, "openLink() thisAppIsDefault == false");
-            openIntent(intent);
-            return;
-        }
-
-        // Get all intents that match, and filter out this app
-        List<ResolveInfo> resolveInfos = pm.queryIntentActivities(intent, 0);
-        List<Intent> filteredIntents = new ArrayList<>(resolveInfos.size());
-
-        for (ResolveInfo info : resolveInfos) {
-            if (!info.activityInfo.packageName.equals(application.getPackageName())) {
-                Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(link));
-                i.setPackage(info.activityInfo.packageName);
-                filteredIntents.add(i);
-            }
-        }
-
-        if (filteredIntents.size() <= 0) {
-            Logger.d(TAG, "openLink() filteredIntents.size() <= 0");
-            String message = getString(
-                    R.string.open_link_failed_url_additional_info,
-                    link,
-                    "filteredIntents count <= 0"
-            );
-
-            showToast(application, message, Toast.LENGTH_LONG);
-            return;
-        }
-
-        if (filteredIntents.size() == 1) {
-            Logger.d(TAG, "openLink() filteredIntents.size() == 1");
-            openIntent(filteredIntents.get(0));
-
-            return;
-        }
-
-        // Create a chooser for the last app in the list, and add the rest with
-        // EXTRA_INITIAL_INTENTS that get placed above
-        Intent chooser = Intent.createChooser(
-                filteredIntents.remove(filteredIntents.size() - 1),
-                null
-        );
-
-        chooser.putExtra(
-                Intent.EXTRA_INITIAL_INTENTS,
-                filteredIntents.toArray(new Intent[0])
-        );
-
-        Logger.d(TAG, "openLink() success");
-        openIntent(chooser);
-    }
-
-    public static void shareLink(String link) {
-        Intent intent = new Intent(Intent.ACTION_SEND);
-        intent.setType("text/plain");
-        intent.putExtra(Intent.EXTRA_TEXT, link);
-        Intent chooser = Intent.createChooser(intent, getString(R.string.action_share));
-        openIntent(chooser);
-    }
-
-    public static void openIntent(Intent intent) {
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-
-        try {
-            KtExtensionsKt.startActivitySafe(application, intent);
-        } catch (Throwable e) {
-            Logger.e(TAG, "openIntent() application.startActivity() error, intent = " + intent, e);
-
-            String message = getString(R.string.open_intent_failed, intent.toString());
-            showErrorToast(message, Toast.LENGTH_SHORT);
-            return;
-        }
-
-        Logger.d(TAG, "openIntent() success");
-    }
-
-    public static int getAttrColor(Context context, int attr) {
-        TypedArray typedArray = context.getTheme().obtainStyledAttributes(new int[]{attr});
-        int color = typedArray.getColor(0, 0);
-        typedArray.recycle();
-        return color;
-    }
-
-    public static Drawable getAttrDrawable(Context context, int attr) {
-        TypedArray typedArray = context.obtainStyledAttributes(new int[]{attr});
-        Drawable drawable = typedArray.getDrawable(0);
-        typedArray.recycle();
-        return drawable;
-    }
-
-    public static View inflate(Context context, int resId, ViewGroup root) {
-        return LayoutInflater.from(context).inflate(resId, root);
-    }
-
-    public static View inflate(Context context, int resId, ViewGroup root, boolean attachToRoot) {
-        return LayoutInflater.from(context).inflate(resId, root, attachToRoot);
-    }
-
-    public static ViewGroup inflate(Context context, int resId) {
-        return (ViewGroup) LayoutInflater.from(context).inflate(resId, null);
-    }
-
-    public static Resources getRes() {
-        return application.getResources();
-    }
-
-    public static int dp(float dp) {
-        return (int) (dp * getRes().getDisplayMetrics().density);
-    }
-
-    public static int pxToDp(float px) {
-        return (int) (px / getRes().getDisplayMetrics().density);
-    }
-
-    public static int pxToDp(int px) {
-        return (int) (px / getRes().getDisplayMetrics().density);
-    }
-
-    public static int dp(Context context, float dp) {
-        return (int) (dp * context.getResources().getDisplayMetrics().density);
-    }
-
-    public static int sp(int sp) {
-        return sp((float) sp);
-    }
-
-    public static int sp(float sp) {
-        return (int) (sp * getRes().getDisplayMetrics().scaledDensity);
-    }
-
-    public static String getString(int res) {
-        try {
-            return getRes().getString(res);
-        } catch (Exception e) {
-            return null;
-        }
-    }
-
-    public static String getString(int res, Object... formatArgs) {
-        return getRes().getString(res, formatArgs);
-    }
-
-    public static String getQuantityString(int res, int quantity) {
-        return getRes().getQuantityString(res, quantity);
-    }
-
-    public static String getQuantityString(int res, int quantity, Object... formatArgs) {
-        return getRes().getQuantityString(res, quantity, formatArgs);
-    }
-
-    public static Drawable getDrawable(@DrawableRes int res) {
-        return ContextCompat.getDrawable(getAppContext(), res);
-    }
-
-    public static boolean isTablet() {
-        return getRes().getBoolean(R.bool.is_tablet);
-    }
-
-    public static int getDimen(int dimen) {
-        return getRes().getDimensionPixelSize(dimen);
-    }
-
-    public static boolean shouldLoadForNetworkType(ChanSettings.NetworkContentAutoLoadMode networkType) {
-        if (networkType == ChanSettings.NetworkContentAutoLoadMode.NONE) {
-            return false;
-        } else if (networkType == ChanSettings.NetworkContentAutoLoadMode.UNMETERED) {
-            return isConnectionUnmetered();
-        } else {
-            return networkType == ChanSettings.NetworkContentAutoLoadMode.ALL;
-        }
-    }
-
-    public static boolean isConnectionUnmetered() {
-        ConnectivityManager connectivityManager =
-                (ConnectivityManager) application.getSystemService(Context.CONNECTIVITY_SERVICE);
-
-        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
-        if (networkInfo == null) {
-            return false;
-        }
-
-        if (!networkInfo.isConnected()) {
-            return false;
-        }
-
-        if (connectivityManager.isActiveNetworkMetered()) {
-            return false;
-        }
-
-        return true;
-    }
-
-    public static int getScreenOrientation() {
-        int screenOrientation = getAppContext().getResources().getConfiguration().orientation;
-        if (screenOrientation != ORIENTATION_LANDSCAPE && screenOrientation != ORIENTATION_PORTRAIT) {
-            throw new IllegalStateException("Illegal screen orientation value! value = " + screenOrientation);
-        }
-
-        return screenOrientation;
-    }
-
-    /**
-     * Change to ConnectivityManager#registerDefaultNetworkCallback when minSdk == 24, basically never
-     */
-    public static String getNetworkClass(@NonNull ConnectivityManager connectivityManager) {
-        NetworkInfo info = connectivityManager.getActiveNetworkInfo();
-        if (info == null || !info.isConnected()) {
-            return "No connected"; // not connected
-        }
-
-        if (info.getType() == ConnectivityManager.TYPE_WIFI) {
-            return "WIFI";
-        }
-
-        if (info.getType() == ConnectivityManager.TYPE_MOBILE) {
-            int networkType = info.getSubtype();
-            switch (networkType) {
-                case TelephonyManager.NETWORK_TYPE_GPRS:
-                case TelephonyManager.NETWORK_TYPE_EDGE:
-                case TelephonyManager.NETWORK_TYPE_CDMA:
-                case TelephonyManager.NETWORK_TYPE_1xRTT:
-                case TelephonyManager.NETWORK_TYPE_IDEN:     // api< 8: replace by 11
-                case TelephonyManager.NETWORK_TYPE_GSM:      // api<25: replace by 16
-                    return "2G";
-                case TelephonyManager.NETWORK_TYPE_UMTS:
-                case TelephonyManager.NETWORK_TYPE_EVDO_0:
-                case TelephonyManager.NETWORK_TYPE_EVDO_A:
-                case TelephonyManager.NETWORK_TYPE_HSDPA:
-                case TelephonyManager.NETWORK_TYPE_HSUPA:
-                case TelephonyManager.NETWORK_TYPE_HSPA:
-                case TelephonyManager.NETWORK_TYPE_EVDO_B:   // api< 9: replace by 12
-                case TelephonyManager.NETWORK_TYPE_EHRPD:    // api<11: replace by 14
-                case TelephonyManager.NETWORK_TYPE_HSPAP:    // api<13: replace by 15
-                case TelephonyManager.NETWORK_TYPE_TD_SCDMA: // api<25: replace by 17
-                    return "3G";
-                case TelephonyManager.NETWORK_TYPE_LTE:      // api<11: replace by 13
-                case TelephonyManager.NETWORK_TYPE_IWLAN:    // api<25: replace by 18
-                case 19: // LTE_CA
-                    return "4G";
-                case TelephonyManager.NETWORK_TYPE_NR:       // api<29: replace by 20
-                    return "5G";
-            }
-        }
-
-        return "Unknown";
-    }
-
-    public static long getAvailableSpaceInBytes(File file) {
-        StatFs stat = new StatFs(file.getPath());
-
-        return stat.getAvailableBlocksLong() * stat.getBlockSizeLong();
-    }
-
-    /**
-     * Waits for a measure. Calls callback immediately if the view width and height are more than 0.
-     * Otherwise it registers an onpredrawlistener.
-     * <b>Warning: the view you give must be attached to the view root!</b>
-     */
-    public static void waitForMeasure(final View view, final OnMeasuredCallback callback) {
-        if (view.getWindowToken() == null) {
-            // If you call getViewTreeObserver on a view when it's not attached to a window will
-            // result in the creation of a temporarily viewtreeobserver.
-            view.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
-                @Override
-                public void onViewAttachedToWindow(View v) {
-                    waitForLayoutInternal(true, view.getViewTreeObserver(), view, callback);
-                    view.removeOnAttachStateChangeListener(this);
-                }
-
-                @Override
-                public void onViewDetachedFromWindow(View v) {
-                    view.removeOnAttachStateChangeListener(this);
-                }
-            });
-            return;
-        }
-
-        waitForLayoutInternal(true, view.getViewTreeObserver(), view, callback);
-    }
-
-    /**
-     * Always registers an onpredrawlistener.
-     * <b>Warning: the view you give must be attached to the view root!</b>
-     */
-    public static void waitForLayout(final View view, final OnMeasuredCallback callback) {
-        if (view.getWindowToken() == null) {
-            // See comment above
-            view.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
-                @Override
-                public void onViewAttachedToWindow(View v) {
-                    waitForLayoutInternal(true, view.getViewTreeObserver(), view, callback);
-                    view.removeOnAttachStateChangeListener(this);
-                }
-
-                @Override
-                public void onViewDetachedFromWindow(View v) {
-                    view.removeOnAttachStateChangeListener(this);
-                }
-            });
-            return;
-        }
-
-        waitForLayoutInternal(false, view.getViewTreeObserver(), view, callback);
-    }
-
-    /**
-     * Always registers an onpredrawlistener. The given ViewTreeObserver will be used.
-     */
-    public static void waitForLayout(
-            final ViewTreeObserver viewTreeObserver,
-            final View view,
-            final OnMeasuredCallback callback
-    ) {
-        waitForLayoutInternal(false, viewTreeObserver, view, callback);
-    }
-
-    private static void waitForLayoutInternal(
-            boolean returnIfNotZero,
-            final ViewTreeObserver viewTreeObserver,
-            final View view,
-            final OnMeasuredCallback callback
-    ) {
-        int width = view.getWidth();
-        int height = view.getHeight();
-
-        if (returnIfNotZero && width > 0 && height > 0) {
-            callback.onMeasured(view);
-            return;
-        }
-
-        viewTreeObserver.addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
-            private ViewTreeObserver usingViewTreeObserver = viewTreeObserver;
-
-            @Override
-            public boolean onPreDraw() {
-                if (usingViewTreeObserver != view.getViewTreeObserver()) {
-                    Logger.e(TAG, "view.getViewTreeObserver() is another viewtreeobserver! " +
-                            "replacing with the new one");
-
-                    usingViewTreeObserver = view.getViewTreeObserver();
-                }
-
-                if (usingViewTreeObserver.isAlive()) {
-                    usingViewTreeObserver.removeOnPreDrawListener(this);
-                } else {
-                    Logger.e(TAG, "ViewTreeObserver not alive, could not remove onPreDrawListener! " +
-                            "This will probably not end well");
-                }
-
-                boolean ret;
-                try {
-                    ret = callback.onMeasured(view);
-                } catch (Exception e) {
-                    Logger.e(TAG, "Exception in onMeasured", e);
-                    throw e;
-                }
-
-                if (!ret) {
-                    Logger.d(TAG, "waitForLayout requested a re-layout by returning false");
-                }
-
-                return ret;
-            }
-        });
-    }
-
-    private static final Lazy<SnackbarManager> snackbarManagerLazy = kotlin.LazyKt.lazy(() -> {
-        ApplicationComponent applicationComponent = Chan.Companion.getComponent();
-        return applicationComponent.getSnackbarManagerFactory().snackbarManager(new SnackbarScope.Global());
-    });
-
-    public static void showToast(Context context, String message) {
-        showToast(context, message, Toast.LENGTH_SHORT);
-    }
-
-    public static void showToast(Context context, int resId, int duration) {
-        showToast(context, getString(resId), duration);
-    }
-
-    public static void showToast(Context context, int resId) {
-        showToast(context, getString(resId));
-    }
-
-    public static void showToast(Context context, String message, int duration) {
-        Application app = application;
-        if (app == null) {
-            return;
-        }
-
-        snackbarManagerLazy.getValue().globalToast(message, duration);
-    }
-
-    public static void showErrorToast(String message) {
-        showErrorToast(message, Toast.LENGTH_SHORT);
-    }
-
-    public static void showErrorToast(int resId, int duration) {
-        showErrorToast(getString(resId), duration);
-    }
-
-    public static void showErrorToast(int resId) {
-        showErrorToast(getString(resId));
-    }
-
-    public static void showErrorToast(String message, int duration) {
-        Application app = application;
-        if (app == null) {
-            return;
-        }
-
-        snackbarManagerLazy.getValue().globalToast(message, duration);
-    }
-
-    public static SharedPreferences getPreferencesForSite(SiteDescriptor siteDescriptor) {
-        String preferencesFileName = SITE_PREFS_FILE_PREFIX + siteDescriptor.getSiteName();
-
-        return application.getSharedPreferences(
-                preferencesFileName,
-                Context.MODE_PRIVATE
-        );
-    }
-
-    public static ActivityComponent extractActivityComponent(Context context) {
-        if (context instanceof StartActivity) {
-            return ((StartActivity) context).getActivityComponent();
-        } else if (context instanceof SharingActivity) {
-            return ((SharingActivity) context).getActivityComponent();
-        } else if (context instanceof MediaViewerActivity) {
-            return ((MediaViewerActivity) context).getActivityComponent();
-        } else if (context instanceof ContextWrapper) {
-            Context baseContext = ((ContextWrapper) context).getBaseContext();
-            if (baseContext != null) {
-                return extractActivityComponent(baseContext);
-            }
-        }
-
-        throw new IllegalStateException("Unknown context wrapper " + context.getClass().getName());
-    }
-
-    public interface OnMeasuredCallback {
-        /**
-         * Called when the layout is done.
-         *
-         * @param view same view as the argument.
-         * @return true to continue with rendering, false to cancel and redo the layout.
-         */
-        boolean onMeasured(View view);
-    }
-
+    fun onMeasured(view: View): Boolean
+  }
 }

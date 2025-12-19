@@ -9,8 +9,8 @@ import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBias
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenu
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
 
 open class FloatingListMenuController @JvmOverloads constructor(
   context: Context,
@@ -47,7 +47,7 @@ open class FloatingListMenuController @JvmOverloads constructor(
 
     val innerContainer = view.findViewById<FrameLayout>(R.id.inner_container)
     innerContainer.updateLayoutParams<ConstraintLayout.LayoutParams> {
-      matchConstraintMaxWidth = if (isTablet()) {
+      matchConstraintMaxWidth = if (AppModuleAndroidUtils.isTablet) {
         TABLET_WIDTH
       } else {
         NORMAL_WIDTH

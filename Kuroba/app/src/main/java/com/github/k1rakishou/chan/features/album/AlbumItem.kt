@@ -324,7 +324,7 @@ private fun getImageLoaderRequestProvider(
 
         val revealSpoilerImage = revealedSpoilerImagesManager.isImageSpoilerImageRevealed(postImage)
 
-        val canUseHighResCells = if (AppModuleAndroidUtils.isTablet()) {
+        val canUseHighResCells = if (AppModuleAndroidUtils.isTablet) {
           albumSpanCount <= HighResCellsMaxSpanCountTablet
         } else {
           albumSpanCount <= HighResCellsMaxSpanCountPhone

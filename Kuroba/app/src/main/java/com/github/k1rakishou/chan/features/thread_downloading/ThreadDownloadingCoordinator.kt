@@ -70,7 +70,7 @@ class ThreadDownloadingCoordinator(
       appConstants: AppConstants,
       eager: Boolean
     ) {
-      if (AndroidUtils.isNotMainProcess()) {
+      if (AndroidUtils.isNotMainProcess) {
         return
       }
 
@@ -106,7 +106,7 @@ class ThreadDownloadingCoordinator(
       appContext: Context,
       appConstants: AppConstants,
     ) {
-      if (AndroidUtils.isNotMainProcess()) {
+      if (AndroidUtils.isNotMainProcess) {
         return
       }
 

@@ -40,7 +40,7 @@ import com.github.k1rakishou.chan.core.net.update.UpdateApiRequest
 import com.github.k1rakishou.chan.core.net.update.UpdateApiRequest.ReleaseUpdateApiResponse
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper.PermissionRequiredDialogCallback
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getFlavorType
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isBetaBuild
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
@@ -52,8 +52,6 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils.runOnMainThread
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AndroidUtils.FlavorType
-import com.github.k1rakishou.common.AndroidUtils.getAppFileProvider
-import com.github.k1rakishou.common.AndroidUtils.getApplicationLabel
 import com.github.k1rakishou.common.BadStatusResponseException
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.downloadIntoFile
@@ -117,12 +115,12 @@ class UpdateManager(
     BackgroundUtils.ensureMainThread()
     Logger.d(TAG, "autoUpdateCheck()")
 
-    if (isDevBuild()) {
+    if (AppModuleAndroidUtils.isDevBuild) {
       Logger.d(TAG, "autoUpdateCheck() Updater is disabled for dev builds!")
       return
     }
 
-    if (isFdroidBuild()) {
+    if (AppModuleAndroidUtils.isFdroidBuild) {
       Logger.d(TAG, "autoUpdateCheck() Updater is disabled for fdroid builds!")
       return
     }
@@ -130,11 +128,11 @@ class UpdateManager(
     val apkUpdateInfo = getAndResetApkUpdateInfo()
 
     Logger.d(TAG, "autoUpdateCheck() " +
-            "isStableBuild(): ${isStableBuild()}, " +
-            "isBetaBuild(): ${isBetaBuild()}, " +
+            "isStableBuild: ${AppModuleAndroidUtils.isStableBuild}, " +
+            "isBetaBuild: ${AppModuleAndroidUtils.isBetaBuild}, " +
             "apkUpdateInfo: ${apkUpdateInfo}")
 
-    if (isStableBuild() && apkUpdateInfo != null) {
+    if (AppModuleAndroidUtils.isStableBuild && apkUpdateInfo != null) {
       Logger.d(TAG, "autoUpdateCheck() isOnLatestRelease()")
       onReleaseAlreadyUpdated(apkUpdateInfo)
 
@@ -142,7 +140,7 @@ class UpdateManager(
       return
     }
 
-    if (isBetaBuild() && apkUpdateInfo != null) {
+    if (AppModuleAndroidUtils.isBetaBuild && apkUpdateInfo != null) {
       Logger.d(TAG, "autoUpdateCheck() isOnLatestBeta()")
       onBetaAlreadyUpdated(apkUpdateInfo)
 
@@ -155,12 +153,12 @@ class UpdateManager(
   fun manualUpdateCheck() {
     Logger.d(TAG, "manualUpdateCheck()")
 
-    if (isDevBuild()) {
+    if (AppModuleAndroidUtils.isDevBuild) {
       Logger.d(TAG, "Updater is disabled for dev builds!")
       return
     }
 
-    if (isFdroidBuild()) {
+    if (AppModuleAndroidUtils.isFdroidBuild) {
       Logger.d(TAG, "Updater is disabled for fdroid builds!")
       return
     }
@@ -190,7 +188,7 @@ class UpdateManager(
       PersistableChanState.updateCheckTime.set(now)
     }
 
-    when (val flavorType = getFlavorType()) {
+    when (val flavorType = AppModuleAndroidUtils.flavorType) {
       FlavorType.Stable,
       FlavorType.Beta -> {
         val updateUrl = when (flavorType) {
@@ -295,7 +293,7 @@ class UpdateManager(
       if (manual) {
         dialogFactory.get().createSimpleInformationDialog(
           context = context,
-          titleText = getString(R.string.update_none, getApplicationLabel()),
+          titleText = getString(R.string.update_none, AndroidUtils.applicationLabel),
         )
       }
 
@@ -313,7 +311,7 @@ class UpdateManager(
         responseRelease.body!!
       }
 
-      val dialogTitle = getApplicationLabel().toString() + " " +
+      val dialogTitle = AndroidUtils.applicationLabel.toString() + " " +
         responseRelease.versionCodeString + " available"
 
       dialogFactory.get().createSimpleConfirmationDialog(
@@ -354,9 +352,9 @@ class UpdateManager(
     BackgroundUtils.ensureMainThread()
 
     val toastMessage = if (apkUpdateInfo.versionName.isNotNullNorBlank()) {
-      "${getApplicationLabel()} was updated to the latest version: ${apkUpdateInfo.versionName}."
+      "${AndroidUtils.applicationLabel} was updated to the latest version: ${apkUpdateInfo.versionName}."
     } else {
-      "${getApplicationLabel()} was updated to the latest version."
+      "${AndroidUtils.applicationLabel} was updated to the latest version."
     }
 
     showToast(context, toastMessage)
@@ -370,10 +368,10 @@ class UpdateManager(
     BackgroundUtils.ensureMainThread()
 
     val text = if (apkUpdateInfo.versionName.isNotNullNorBlank()) {
-      "<h3> ${getApplicationLabel()} was updated to ${apkUpdateInfo.versionName}</h3>"
+      "<h3> ${AndroidUtils.applicationLabel} was updated to ${apkUpdateInfo.versionName}</h3>"
         .parseAsHtml()
     } else {
-      "<h3> ${getApplicationLabel()} was updated to the latest version</h3>"
+      "<h3> ${AndroidUtils.applicationLabel} was updated to the latest version</h3>"
         .parseAsHtml()
     }
 
@@ -401,13 +399,13 @@ class UpdateManager(
   private fun failedUpdate(manual: Boolean, error: Throwable) {
     Logger.e(TAG, "failedUpdate() manual=$manual", error)
 
-    val buildTag = if (getFlavorType() == FlavorType.Beta) {
+    val buildTag = if (AppModuleAndroidUtils.flavorType == FlavorType.Beta) {
       "beta"
     } else {
       "release"
     }
 
-    val manualUpdateUrl = if (getFlavorType() == FlavorType.Beta) {
+    val manualUpdateUrl = if (AppModuleAndroidUtils.flavorType == FlavorType.Beta) {
       "https://github.com/K1rakishou/Kuroba-Experimental-beta/releases/latest"
     } else {
       "https://github.com/K1rakishou/Kuroba-Experimental/releases/latest"
@@ -495,7 +493,7 @@ class UpdateManager(
       }
       is ModularResult.Value -> {
         Logger.d(TAG, "APK download success")
-        val fileName = getApplicationLabel().toString() + "_" + responseRelease.versionCodeString + ".apk"
+        val fileName = AndroidUtils.applicationLabel.toString() + "_" + responseRelease.versionCodeString + ".apk"
 
         suggestCopyingApkToAnotherDirectory(apkFile, fileName) {
           runOnMainThread({
@@ -597,19 +595,19 @@ class UpdateManager(
     dialogFactory.get().createSimpleConfirmationDialog(
       context = context,
       titleTextId = R.string.update_retry_title,
-      descriptionText = getString(R.string.update_retry, getApplicationLabel()),
+      descriptionText = getString(R.string.update_retry, AndroidUtils.applicationLabel),
       negativeButtonText = getString(R.string.cancel),
       positiveButtonText = getString(R.string.update_retry_button),
       onPositiveButtonClickListener = { installApk(apkFile, responseRelease, onUpdateClicked) }
     )
 
     try {
-      val intent = if (AndroidUtils.isAndroidN()) {
+      val intent = if (AndroidUtils.isAndroidN) {
         Logger.d(TAG, "installApk() AndroidN and above, apkFile=${apkFile.absolutePath}")
 
         Intent(Intent.ACTION_INSTALL_PACKAGE).apply {
           flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_GRANT_READ_URI_PERMISSION
-          val apkUri = FileProvider.getUriForFile(context, getAppFileProvider(), apkFile)
+          val apkUri = FileProvider.getUriForFile(context, AndroidUtils.appFileProvider, apkFile)
           setDataAndType(apkUri, "application/vnd.android.package-archive")
         }
       } else {
@@ -644,7 +642,7 @@ class UpdateManager(
 
       onUpdateClicked()
     } catch (error: Throwable) {
-      if (isDevBuild() || isBetaBuild()) {
+      if (AppModuleAndroidUtils.isDevBuild || AppModuleAndroidUtils.isBetaBuild) {
         throw error
       }
 
@@ -668,7 +666,7 @@ class UpdateManager(
     responseRelease: ReleaseUpdateApiResponse,
     onUpdateClicked: () -> Unit
   ) {
-    if (AndroidUtils.isAndroid13()) {
+    if (AndroidUtils.isAndroid13) {
       // Can't request WRITE_EXTERNAL_STORAGE on API 33+
       doUpdate(responseRelease, onUpdateClicked)
       return

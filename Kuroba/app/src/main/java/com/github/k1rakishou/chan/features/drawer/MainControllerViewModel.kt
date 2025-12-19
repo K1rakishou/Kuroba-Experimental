@@ -16,7 +16,7 @@ import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.PageRequestManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.features.drawer.data.NavigationHistoryEntry
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import dagger.Lazy
 import kotlinx.coroutines.delay
@@ -37,7 +37,7 @@ class MainControllerViewModel(
   private val compositeCatalogManagerLazy: Lazy<CompositeCatalogManager>,
   private val imageLoaderDeprecatedLazy: Lazy<ImageLoaderDeprecated>,
 ) : BaseViewModel() {
-  private val isDevFlavor = isDevBuild()
+  private val isDevFlavor = AppModuleAndroidUtils.isDevBuild
 
   private val historyNavigationManager: HistoryNavigationManager
     get() = historyNavigationManagerLazy.get()

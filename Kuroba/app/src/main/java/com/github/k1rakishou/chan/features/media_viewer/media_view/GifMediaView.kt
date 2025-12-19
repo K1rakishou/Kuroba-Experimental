@@ -92,7 +92,7 @@ class GifMediaView(
     actualGifView = findViewById(R.id.actual_gif_view)
     loadingBar = findViewById(R.id.loading_bar)
 
-    if (AppModuleAndroidUtils.isTablet()) {
+    if (AppModuleAndroidUtils.isTablet) {
       actionStrip = findViewById<MediaViewerBottomActionStrip?>(R.id.left_action_strip)
     } else {
       actionStrip = findViewById<MediaViewerBottomActionStrip?>(R.id.bottom_action_strip)

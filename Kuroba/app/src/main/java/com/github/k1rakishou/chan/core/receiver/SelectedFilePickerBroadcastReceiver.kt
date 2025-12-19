@@ -14,8 +14,8 @@ class SelectedFilePickerBroadcastReceiver : BroadcastReceiver() {
       return
     }
 
-    if (!AndroidUtils.isAndroidL_MR1()) {
-      Logger.d(TAG, "Not Api 22, current Api: ${AndroidUtils.getApiLevel()}")
+    if (!AndroidUtils.isAndroidL_MR1) {
+      Logger.d(TAG, "Not Api 22, current Api: ${AndroidUtils.apiLevel}")
       return
     }
 

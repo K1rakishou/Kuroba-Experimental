@@ -13,8 +13,8 @@ import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.base.Controller
 import com.github.k1rakishou.chan.ui.view.floating_menu.CheckableFloatingListMenuItem
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.persist_state.PersistableChanState
 
 class MediaViewerMenuHelper(
@@ -133,7 +133,7 @@ class MediaViewerMenuHelper(
       name = getString(R.string.setting_media_viewer_reorder_actions)
     )
 
-    if (isDevBuild()) {
+    if (AppModuleAndroidUtils.isDevBuild) {
       options += FloatingListMenuItem(
         key = ACTION_VIEW_PAGER_AUTO_SWIPE,
         name = getString(R.string.setting_media_viewer_auto_swipe)

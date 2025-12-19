@@ -26,7 +26,6 @@ import com.github.k1rakishou.chan.ui.helper.AppResources
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -286,7 +285,7 @@ class BottomMenuPanel @JvmOverloads constructor(
 
     AndroidUtils.setBoundlessRoundRippleBackground(linearLayout)
 
-    val padding = if (isTablet()) {
+    val padding = if (AppModuleAndroidUtils.isTablet) {
       MENU_ITEM_PADDING * 2
     } else {
       MENU_ITEM_PADDING

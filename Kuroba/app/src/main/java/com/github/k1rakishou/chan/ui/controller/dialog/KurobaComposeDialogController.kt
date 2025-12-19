@@ -33,7 +33,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
-import com.github.k1rakishou.chan.core.di.component.controller.ControllerComponent
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeCard
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextBarButton
@@ -42,7 +41,7 @@ import com.github.k1rakishou.chan.ui.compose.consumeClicks
 import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingComposeController
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import kotlinx.coroutines.CompletableDeferred
 
 class KurobaComposeDialogController(
@@ -90,7 +89,7 @@ class KurobaComposeDialogController(
       effect = { onDispose { keyboardController?.hide() } }
     )
 
-    val maxWidth = if (isTablet()) {
+    val maxWidth = if (AppModuleAndroidUtils.isTablet) {
       TABLET_WIDTH
     } else {
       NORMAL_WIDTH

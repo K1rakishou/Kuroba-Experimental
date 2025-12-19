@@ -38,8 +38,8 @@ import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationContro
 import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigationController
 import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
 import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupEdgeToEdge
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupStatusAndNavBarColors
 import com.github.k1rakishou.common.AndroidUtils
@@ -207,7 +207,7 @@ class StartActivity :
   }
 
   private fun createUi() {
-    if (isDevBuild()) {
+    if (AppModuleAndroidUtils.isDevBuild) {
       EpoxyController.setGlobalDebugLoggingEnabled(true)
     }
 
@@ -428,7 +428,7 @@ class StartActivity :
   override fun onConfigurationChanged(newConfig: Configuration) {
     super.onConfigurationChanged(newConfig)
 
-    if (AndroidUtils.isAndroid10() && !ChanSettings.ignoreDarkNightMode.get()) {
+    if (AndroidUtils.isAndroid10 && !ChanSettings.ignoreDarkNightMode.get()) {
       applyLightDarkThemeIfNeeded(newConfig)
     }
 

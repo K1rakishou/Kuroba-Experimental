@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.net.Uri
-import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
@@ -16,7 +15,6 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.RequestCodes
 import com.github.k1rakishou.common.AndroidUtils
-import com.github.k1rakishou.common.AndroidUtils.isAndroidL_MR1
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
@@ -200,7 +198,7 @@ class LocalFilePicker(
   }
 
   private fun collectIntents(): List<Intent> {
-    val pm = AndroidUtils.getAppContext().packageManager
+    val pm = AndroidUtils.appContext.packageManager
     val intent = Intent(Intent.ACTION_GET_CONTENT)
     intent.addCategory(Intent.CATEGORY_OPENABLE)
     intent.type = "*/*"
@@ -248,7 +246,7 @@ class LocalFilePicker(
       return
     }
 
-    val chooser = if (isAndroidL_MR1()) {
+    val chooser = if (AndroidUtils.isAndroidL_MR1) {
       val receiverIntent = Intent(
         activity,
         SelectedFilePickerBroadcastReceiver::class.java
@@ -261,7 +259,7 @@ class LocalFilePicker(
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
       )
 
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+      if (AndroidUtils.isAndroid13) {
         activity.registerReceiver(
           selectedFilePickerBroadcastReceiver,
           IntentFilter(Intent.ACTION_GET_CONTENT),

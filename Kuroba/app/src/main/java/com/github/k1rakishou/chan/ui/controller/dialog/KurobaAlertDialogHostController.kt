@@ -9,8 +9,8 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
 
 class KurobaAlertDialogHostController(
   context: Context,
@@ -37,7 +37,7 @@ class KurobaAlertDialogHostController(
 
     view.findViewById<FrameLayout>(R.id.inner_container).let { innerContainer ->
       innerContainer.updateLayoutParams<ConstraintLayout.LayoutParams> {
-        matchConstraintMaxWidth = if (isTablet()) {
+        matchConstraintMaxWidth = if (AppModuleAndroidUtils.isTablet) {
           TABLET_WIDTH
         } else {
           NORMAL_WIDTH

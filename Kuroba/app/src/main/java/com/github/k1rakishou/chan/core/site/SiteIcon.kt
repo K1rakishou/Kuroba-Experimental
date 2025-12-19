@@ -102,7 +102,7 @@ class SiteIcon private constructor(
           val drawable = AppModuleAndroidUtils.getDrawable(errorDrawableId!!)
 
           val errorDrawable = BitmapDrawable(
-            AppModuleAndroidUtils.getRes(),
+            AppModuleAndroidUtils.res,
             drawable.toBitmap()
           )
 
@@ -145,7 +145,7 @@ class SiteIcon private constructor(
       val drawable = AppModuleAndroidUtils.getDrawable(drawableId)
 
       siteIcon.drawable = BitmapDrawable(
-        AppModuleAndroidUtils.getRes(),
+        AppModuleAndroidUtils.res,
         drawable.toBitmap()
       )
 

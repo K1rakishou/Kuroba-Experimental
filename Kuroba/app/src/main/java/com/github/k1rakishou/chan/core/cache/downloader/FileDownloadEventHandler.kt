@@ -224,7 +224,7 @@ internal class FileDownloadEventHandler(
       is FileDownloadEvent.Success,
       FileDownloadEvent.Canceled,
       FileDownloadEvent.Stopped,
-      is FileDownloadEvent.Exception -> AppModuleAndroidUtils.getNetworkClass(connectivityManager)
+      is FileDownloadEvent.Exception -> AppModuleAndroidUtils.networkClass(connectivityManager)
 
       is FileDownloadEvent.UnknownException -> {
         "Unsupported result: ${result::class.java.simpleName}"

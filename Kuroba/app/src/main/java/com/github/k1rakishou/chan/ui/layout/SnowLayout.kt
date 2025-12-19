@@ -12,8 +12,8 @@ import android.widget.FrameLayout
 import androidx.core.graphics.ColorUtils
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.TimeUtils
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import kotlin.random.Random
@@ -229,7 +229,7 @@ class SnowLayout @JvmOverloads constructor(
     }
 
     private fun nextRespawnTime(): Int {
-      if (isDevBuild()) {
+      if (AppModuleAndroidUtils.isDevBuild) {
         return random.nextInt(1000, 4500)
       }
 

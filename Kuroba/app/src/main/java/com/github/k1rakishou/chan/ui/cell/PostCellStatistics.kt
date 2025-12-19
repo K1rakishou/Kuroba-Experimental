@@ -29,7 +29,7 @@ object PostCellStatistics {
 
   @OptIn(ExperimentalTime::class)
   fun onPostBound(postCellInterface: PostCellInterface?, time: Duration) {
-    if (!AppModuleAndroidUtils.isDevBuild() || !LOG_ENABLED) {
+    if (!AppModuleAndroidUtils.isDevBuild || !LOG_ENABLED) {
       return
     }
 
@@ -76,7 +76,7 @@ object PostCellStatistics {
 
   @OptIn(ExperimentalTime::class)
   fun onPostMeasured(postCellInterface: PostCellInterface?, time: Duration) {
-    if (!AppModuleAndroidUtils.isDevBuild() || !LOG_ENABLED) {
+    if (!AppModuleAndroidUtils.isDevBuild || !LOG_ENABLED) {
       return
     }
 

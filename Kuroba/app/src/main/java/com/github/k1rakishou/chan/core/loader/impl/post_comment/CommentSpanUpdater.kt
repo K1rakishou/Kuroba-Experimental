@@ -15,7 +15,8 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.video_service.MediaServiceType
 import org.joda.time.Period
 import org.joda.time.format.PeriodFormatterBuilder
-import java.util.*
+import java.util.NavigableMap
+import java.util.TreeMap
 
 internal object CommentSpanUpdater {
   private const val TAG = "CommentSpanUpdater"
@@ -138,7 +139,7 @@ internal object CommentSpanUpdater {
     BackgroundUtils.ensureBackgroundThread()
 
     // Create the icon span for the linkable
-    val iconSpan = ImageSpan(AndroidUtils.getAppContext(), icon)
+    val iconSpan = ImageSpan(AndroidUtils.appContext, icon)
     val height = ChanSettings.fontSize.get().toInt()
     val width = (sp(height.toFloat()) / (icon.height.toFloat() / icon.width.toFloat())).toInt()
 

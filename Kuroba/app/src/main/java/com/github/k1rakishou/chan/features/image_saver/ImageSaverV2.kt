@@ -9,8 +9,7 @@ import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openIntent
 import com.github.k1rakishou.chan.utils.HashingUtil
-import com.github.k1rakishou.common.AndroidUtils.getAppContext
-import com.github.k1rakishou.common.AndroidUtils.getAppFileProvider
+import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.doIoTaskWithAttempts
 import com.github.k1rakishou.common.isOutOfDiskSpaceError
@@ -255,7 +254,7 @@ class ImageSaverV2(
     withContext(Dispatchers.IO) {
       Logger.d(TAG, "shareInternal('${mediaUrl}')")
 
-      val shareFilesDir = File(getAppContext().cacheDir, SHARE_FILES_DIR_NAME)
+      val shareFilesDir = File(AndroidUtils.appContext.cacheDir, SHARE_FILES_DIR_NAME)
       if (!shareFilesDir.exists()) {
         if (!shareFilesDir.mkdirs()) {
           Logger.e(TAG, "shareInternal() failed to create share files dir, path=" + shareFilesDir.absolutePath)
@@ -313,8 +312,8 @@ class ImageSaverV2(
   suspend fun sendShareIntent(outputFile: File, mediaUrl: HttpUrl) {
     withContext(Dispatchers.Main) {
       val uri = FileProvider.getUriForFile(
-        getAppContext(),
-        getAppFileProvider(),
+        AndroidUtils.appContext,
+        AndroidUtils.appFileProvider,
         outputFile
       )
 

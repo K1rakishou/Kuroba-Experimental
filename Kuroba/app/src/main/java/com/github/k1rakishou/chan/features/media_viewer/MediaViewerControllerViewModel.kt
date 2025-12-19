@@ -65,7 +65,7 @@ class MediaViewerControllerViewModel(
 
   private val defaultMuteState: Boolean
     get() = ChanSettings.videoDefaultMuted.get()
-      && (ChanSettings.headsetDefaultMuted.get() || !AndroidUtils.getAudioManager().isWiredHeadsetOn)
+      && (ChanSettings.headsetDefaultMuted.get() || !AndroidUtils.audioManager.isWiredHeadsetOn)
 
   private var lastPagerIndex = -1
   private var _isSoundMuted = defaultMuteState

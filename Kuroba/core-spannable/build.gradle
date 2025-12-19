@@ -14,7 +14,7 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled true
+            minifyEnabled false
         }
         debug {
             minifyEnabled false

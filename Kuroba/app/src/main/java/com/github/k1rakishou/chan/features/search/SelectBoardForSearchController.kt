@@ -38,7 +38,7 @@ import com.github.k1rakishou.chan.ui.compose.lazylist.LazyVerticalGridWithFastSc
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.textAsFlow
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingComposeController
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.InputWithQuerySorter
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
@@ -70,7 +70,7 @@ class SelectBoardForSearchController(
   @Composable
   override fun BoxScope.BuildContent() {
     val chanTheme = LocalChanTheme.current
-    val isTablet = remember { isTablet() }
+    val isTablet = remember { AppModuleAndroidUtils.isTablet }
     val fraction = if (isTablet) {
       0.8f
     } else {

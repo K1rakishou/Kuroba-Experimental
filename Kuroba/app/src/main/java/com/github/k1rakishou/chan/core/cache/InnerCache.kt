@@ -19,7 +19,8 @@ import org.joda.time.format.ISODateTimeFormat
 import java.io.File
 import java.io.IOException
 import java.io.PrintWriter
-import java.util.*
+import java.util.Collections
+import java.util.Locale
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -337,7 +338,7 @@ internal class InnerCache(
     val trimTime = lastTrimTime.get()
     val now = System.currentTimeMillis()
 
-    val minTrimInterval = if (AppModuleAndroidUtils.isDevBuild()) {
+    val minTrimInterval = if (AppModuleAndroidUtils.isDevBuild) {
       0
     } else {
       // If the user scrolls through high-res images very fast we may end up in a situation
@@ -832,7 +833,7 @@ internal class InnerCache(
         continue
       }
 
-      val minCacheFileLifeTime = if (AppModuleAndroidUtils.isDevBuild()) {
+      val minCacheFileLifeTime = if (AppModuleAndroidUtils.isDevBuild) {
         0
       } else {
         // Do not delete fresh files because it may happen right at the time user switched
@@ -963,9 +964,9 @@ internal class InnerCache(
 
   private fun getAdditionalDebugInfo(file: File): String {
     val state = Environment.getExternalStorageState(file)
-    val externalCacheDir = AndroidUtils.getAppContext().externalCacheDir?.absolutePath ?: "<null>"
-    val internalCacheDir = AndroidUtils.getAppContext().cacheDir ?: "<null>"
-    val availableSpace = AppModuleAndroidUtils.getAvailableSpaceInBytes(file)
+    val externalCacheDir = AndroidUtils.appContext.externalCacheDir?.absolutePath ?: "<null>"
+    val internalCacheDir = AndroidUtils.appContext.cacheDir ?: "<null>"
+    val availableSpace = AppModuleAndroidUtils.availableSpaceInBytes(file)
 
     return "(exists = ${file.exists()}, " +
       "parent exists = ${file.parentFile?.exists()}, " +

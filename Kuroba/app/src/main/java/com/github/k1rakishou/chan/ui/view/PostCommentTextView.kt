@@ -39,7 +39,7 @@ class PostCommentTextView @JvmOverloads constructor(
   private val scope = KurobaCoroutineScope()
 
   init {
-    if (AndroidUtils.isAndroidO()) {
+    if (AndroidUtils.isAndroidO) {
       setTextClassifier(TextClassifier.NO_OP)
     }
   }

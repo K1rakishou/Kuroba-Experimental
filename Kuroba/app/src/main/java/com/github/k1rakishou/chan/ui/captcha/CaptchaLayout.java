@@ -19,7 +19,6 @@ package com.github.k1rakishou.chan.ui.captcha;
 import static android.view.View.MeasureSpec.AT_MOST;
 import static com.github.k1rakishou.ChanSettings.LayoutMode.AUTO;
 import static com.github.k1rakishou.ChanSettings.LayoutMode.SPLIT;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink;
 import static com.github.k1rakishou.common.AndroidUtils.getDisplaySize;
 import static com.github.k1rakishou.common.AndroidUtils.hideKeyboard;
@@ -198,7 +197,7 @@ public class CaptchaLayout
 
         Point displaySize = getDisplaySize(getContext());
         boolean isSplitMode = ChanSettings.layoutMode.get() == SPLIT
-                || (ChanSettings.layoutMode.get() == AUTO && isTablet());
+                || (ChanSettings.layoutMode.get() == AUTO && AppModuleAndroidUtils.isTablet());
 
         measure(
                 // 0.35 is from SplitNavigationControllerLayout for the smaller side; measure for the

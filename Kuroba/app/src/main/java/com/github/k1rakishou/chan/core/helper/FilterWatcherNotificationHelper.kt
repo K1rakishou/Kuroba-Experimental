@@ -76,7 +76,7 @@ class FilterWatcherNotificationHelper(
     summaryNotificationBuilder
       .setWhen(DateTime.now().millis)
       .setShowWhen(true)
-      .setContentTitle(AndroidUtils.getApplicationLabel())
+      .setContentTitle(AndroidUtils.applicationLabel)
       .setContentText(titleText)
       .setSmallIcon(R.drawable.ic_stat_notify_alert)
       .setupClickOnNotificationIntent(
@@ -112,7 +112,7 @@ class FilterWatcherNotificationHelper(
           appContext,
           NotificationConstants.FilterWatcherNotifications.FW_NOTIFICATION_CHANNEL_ID
         )
-          .setContentTitle(AndroidUtils.getApplicationLabel())
+          .setContentTitle(AndroidUtils.applicationLabel)
           .setContentText(titleText)
           .setWhen(DateTime.now().millis)
           .setShowWhen(true)
@@ -152,7 +152,7 @@ class FilterWatcherNotificationHelper(
     val notificationId = NotificationConstants.FilterWatcherNotifications.notificationId(notificationTag)
 
     val notificationBuilder = NotificationCompat.Builder(appContext)
-      .setContentTitle(AndroidUtils.getApplicationLabel())
+      .setContentTitle(AndroidUtils.applicationLabel)
       .setContentText(titleText)
       .setWhen(DateTime.now().millis)
       .setShowWhen(true)
@@ -269,7 +269,7 @@ class FilterWatcherNotificationHelper(
   companion object {
     private const val TAG = "FilterWatcherNotificationHelper"
 
-    private val notificationsGroup by lazy { "${TAG}_${BuildConfig.APPLICATION_ID}_${AppModuleAndroidUtils.getFlavorType().name}" }
+    private val notificationsGroup by lazy { "${TAG}_${BuildConfig.APPLICATION_ID}_${AppModuleAndroidUtils.flavorType.name}" }
   }
 
 }

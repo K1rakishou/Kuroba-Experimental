@@ -59,7 +59,7 @@ class WatcherSettingsScreen(
             getString(R.string.setting_thread_downloader_update_interval_description).toString() + "\n\n" + itemName
           },
           items = kotlin.run {
-            return@run if (AppModuleAndroidUtils.isDevBuild()) {
+            return@run if (AppModuleAndroidUtils.isDevBuild) {
               THREAD_DOWNLOADER_INTERVALS
             } else {
               THREAD_DOWNLOADER_INTERVALS.drop(1)
@@ -134,7 +134,7 @@ class WatcherSettingsScreen(
             getString(R.string.setting_filter_watcher_update_interval_description).toString() + "\n\n" + itemName
           },
           items = kotlin.run {
-            return@run if (AppModuleAndroidUtils.isDevBuild()) {
+            return@run if (AppModuleAndroidUtils.isDevBuild) {
               FILTER_WATCHER_INTERVALS
             } else {
               FILTER_WATCHER_INTERVALS.drop(1)
@@ -243,7 +243,7 @@ class WatcherSettingsScreen(
             getString(R.string.setting_watch_background_timeout_description).toString() + "\n\n" + itemName
           },
           items = kotlin.run {
-            if (AppModuleAndroidUtils.isDevBuild()) {
+            if (AppModuleAndroidUtils.isDevBuild) {
               THREAD_WATCHER_BACKGROUND_INTERVALS
             } else {
               THREAD_WATCHER_BACKGROUND_INTERVALS.drop(1)

@@ -154,7 +154,7 @@ abstract class ControllerHostActivity :
   }
 
   protected fun setupContext(context: Activity, chanTheme: ChanTheme) {
-    val taskDescription = if (AndroidUtils.isAndroidP()) {
+    val taskDescription = if (AndroidUtils.isAndroidP) {
       ActivityManager.TaskDescription(
         null,
         R.drawable.ic_stat_notify,

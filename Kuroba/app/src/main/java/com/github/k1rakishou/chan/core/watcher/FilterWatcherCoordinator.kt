@@ -134,7 +134,7 @@ class FilterWatcherCoordinator(
       appContext: Context,
       isCalledBySwipeToRefresh: Boolean
     ) {
-      if (AndroidUtils.isNotMainProcess()) {
+      if (AndroidUtils.isNotMainProcess) {
         return
       }
 
@@ -177,7 +177,7 @@ class FilterWatcherCoordinator(
       appConstants: AppConstants,
       appContext: Context
     ) {
-      if (AndroidUtils.isNotMainProcess()) {
+      if (AndroidUtils.isNotMainProcess) {
         return
       }
 
@@ -217,7 +217,7 @@ class FilterWatcherCoordinator(
       appConstants: AppConstants,
       appContext: Context
     ) {
-      if (AndroidUtils.isNotMainProcess()) {
+      if (AndroidUtils.isNotMainProcess) {
         return
       }
 

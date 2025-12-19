@@ -55,11 +55,8 @@ import com.github.k1rakishou.chan.ui.activity.CrashReportActivity
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
 import com.github.k1rakishou.chan.utils.TimeUtils
 import com.github.k1rakishou.common.AndroidUtils
-import com.github.k1rakishou.common.AndroidUtils.getApplicationLabel
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.dns.DnsOverHttpsSelector
 import com.github.k1rakishou.common.dns.DnsOverHttpsSelectorFactory
@@ -108,7 +105,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     onUnhandledException(exception)
   }
 
-  private val tagPrefix by lazy { getApplicationLabel().toString() + " | " }
+  private val tagPrefix by lazy { AndroidUtils.applicationLabel.toString() + " | " }
 
   private val applicationMigrationManager = ApplicationMigrationManager()
 
@@ -125,7 +122,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
   @Inject
   lateinit var applicationCrashNotifier: ApplicationCrashNotifier
 
-  private val normalDnsCreatorFactory: NormalDnsSelectorFactory = object : NormalDnsSelectorFactory {
+  class NormalDnsSelectorFactoryImpl : NormalDnsSelectorFactory {
     override fun createDnsSelector(okHttpClient: OkHttpClient): NormalDnsSelector {
       Logger.deps("NormalDnsSelectorFactory")
 
@@ -139,7 +136,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     }
   }
 
-  private val dnsOverHttpsCreatorFactory: DnsOverHttpsSelectorFactory = object : DnsOverHttpsSelectorFactory {
+  class DnsOverHttpsSelectorFactoryImpl : DnsOverHttpsSelectorFactory {
     override fun createDnsSelector(okHttpClient: OkHttpClient): DnsOverHttpsSelector {
       Logger.deps("DnsOverHttpsSelectorFactory")
 
@@ -180,7 +177,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
   override fun attachBaseContext(base: Context) {
     super.attachBaseContext(base)
 
-    val isDev = isDevBuild()
+    val isDev = AppModuleAndroidUtils.isDevBuild
     System.setProperty(
       DEBUG_PROPERTY_NAME,
       if (isDev) DEBUG_PROPERTY_VALUE_ON else DEBUG_PROPERTY_VALUE_OFF
@@ -189,7 +186,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     AndroidUtils.init(this)
     AppModuleAndroidUtils.init(this)
     ChanSettings.init(createChanSettingsInfo())
-    Logger.init(tagPrefix, isDevBuild(), ChanSettings.verboseLogs.get(), this)
+    Logger.init(tagPrefix, AppModuleAndroidUtils.isDevBuild, ChanSettings.verboseLogs.get(), this)
     PersistableChanState.init(createPersistableChanStateInfo())
     MpvSettings.init()
   }
@@ -210,8 +207,8 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     registerActivityLifecycleCallbacks(this)
     applicationScope = CoroutineScope(job + Dispatchers.Main + CoroutineName("Chan") + coroutineExceptionHandler)
 
-    val isDev = isDevBuild()
-    val flavorType = AppModuleAndroidUtils.getFlavorType()
+    val isDev = AppModuleAndroidUtils.isDevBuild
+    val flavorType = AppModuleAndroidUtils.flavorType
 
     if (isDev && ENABLE_STRICT_MODE) {
       StrictMode.setThreadPolicy(
@@ -231,7 +228,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     }
 
     val kurobaExUserAgent = buildString {
-      append(getApplicationLabel())
+      append(AndroidUtils.applicationLabel)
       append(" ")
       append(BuildConfig.VERSION_NAME)
     }
@@ -268,8 +265,8 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     val modelComponent = ModelModuleInjector.build(
       application = this,
       scope = applicationScope,
-      normalDnsSelectorFactory = normalDnsCreatorFactory,
-      dnsOverHttpsSelectorFactory = dnsOverHttpsCreatorFactory,
+      normalDnsSelectorFactory = NormalDnsSelectorFactoryImpl(),
+      dnsOverHttpsSelectorFactory = DnsOverHttpsSelectorFactoryImpl(),
       verboseLogs = ChanSettings.verboseLogs.get(),
       isDevFlavor = isDev,
       isLowRamDevice = ChanSettings.isLowRamDevice(),
@@ -290,8 +287,8 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       .threadDownloaderFileManagerWrapper(threadDownloaderFileManagerWrapper)
       .imageLoaderFileManagerWrapper(imageLoaderFileManagerWrapper)
       .applicationCoroutineScope(applicationScope)
-      .normalDnsSelectorFactory(normalDnsCreatorFactory)
-      .dnsOverHttpsSelectorFactory(dnsOverHttpsCreatorFactory)
+      .normalDnsSelectorFactory(NormalDnsSelectorFactoryImpl())
+      .dnsOverHttpsSelectorFactory(DnsOverHttpsSelectorFactoryImpl())
       .appConstants(appConstants)
       .modelMainComponent(modelComponent)
       .appModule(AppModule())
@@ -430,10 +427,10 @@ class Chan : Application(), ActivityLifecycleCallbacks {
   private fun createChanSettingsInfo(): ChanSettingsInfo {
     return ChanSettingsInfo(
       applicationId = BuildConfig.APPLICATION_ID,
-      isTablet = isTablet(),
+      isTablet = AppModuleAndroidUtils.isTablet,
       defaultFilterOrderName = PostsFilter.CatalogSortingOrder.BUMP.orderName,
-      isDevBuild = isDevBuild(),
-      isBetaBuild = AppModuleAndroidUtils.isBetaBuild(),
+      isDevBuild = AppModuleAndroidUtils.isDevBuild,
+      isBetaBuild = AppModuleAndroidUtils.isBetaBuild,
       bookmarkGridViewInfo = BookmarkGridViewInfo(
         getDimen(R.dimen.thread_grid_bookmark_view_default_width),
         getDimen(R.dimen.thread_grid_bookmark_view_min_width),

@@ -205,7 +205,7 @@ class PostingService : Service() {
   private fun setupChannels() {
     BackgroundUtils.ensureMainThread()
 
-    if (!AndroidUtils.isAndroidO()) {
+    if (!AndroidUtils.isAndroidO) {
       return
     }
 

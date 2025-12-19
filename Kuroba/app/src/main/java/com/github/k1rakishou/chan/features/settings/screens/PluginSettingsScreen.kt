@@ -22,7 +22,7 @@ import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getFlavorType
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.common.AndroidUtils
@@ -243,7 +243,7 @@ class PluginSettingsScreen(
   }
 
   private suspend fun installMpvLibrariesFromGithub() {
-    if (getFlavorType() == AndroidUtils.FlavorType.Fdroid) {
+    if (AppModuleAndroidUtils.flavorType == AndroidUtils.FlavorType.Fdroid) {
       showToast(context, getString(R.string.settings_plugins_libs_fdroid_github_error))
       return
     }

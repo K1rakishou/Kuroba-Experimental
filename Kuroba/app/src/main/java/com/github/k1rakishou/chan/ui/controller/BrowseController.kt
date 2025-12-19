@@ -50,7 +50,6 @@ import com.github.k1rakishou.chan.ui.layout.ThreadLayout.ThreadLayoutCallback
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.common.FirewallType
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.resumeValueSafe
@@ -934,7 +933,7 @@ class BrowseController(
     withOverflowMenuItem(
       id = ACTION_DEV_MENU,
       stringId = R.string.action_browse_dev_menu,
-      visible = isDevBuild(),
+      visible = AppModuleAndroidUtils.isDevBuild,
       builder = {
         withOverflowMenuItem(
           id = DEV_BOOKMARK_EVERY_THREAD,

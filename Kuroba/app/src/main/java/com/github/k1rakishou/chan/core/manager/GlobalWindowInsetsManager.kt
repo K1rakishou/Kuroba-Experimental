@@ -72,7 +72,7 @@ class GlobalWindowInsetsManager {
       val imeInsets = insets.getInsets(WindowInsetsCompat.Type.ime())
       val systemBarInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars())
 
-      val isGestureNavigationEnabledNow = if (AndroidUtils.isAndroid10()) {
+      val isGestureNavigationEnabledNow = if (AndroidUtils.isAndroid10) {
         val gestureInsets = insets.getInsets(WindowInsetsCompat.Type.systemGestures())
         gestureInsets.left > 0 || gestureInsets.right > 0
       } else {

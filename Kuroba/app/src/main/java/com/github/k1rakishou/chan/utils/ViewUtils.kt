@@ -35,7 +35,7 @@ object ViewUtils {
     )
 
     try {
-      if (AndroidUtils.isAndroid10()) {
+      if (AndroidUtils.isAndroid10) {
         textCursorDrawable?.mutate()?.let { cursor ->
           DrawableCompat.setTint(cursor, accentColorWithAlpha)
           textCursorDrawable = cursor
@@ -90,7 +90,7 @@ object ViewUtils {
     )
 
     try {
-      if (AndroidUtils.isAndroid10()) {
+      if (AndroidUtils.isAndroid10) {
         textSelectHandle?.mutate()?.let { handle ->
           DrawableCompat.setTint(handle, accentColorWithAlpha)
           setTextSelectHandle(handle)
@@ -149,7 +149,7 @@ object ViewUtils {
   fun AbsListView.changeEdgeEffect(theme: ChanTheme) {
     val color = theme.accentColor
 
-    if (AndroidUtils.isAndroid10()) {
+    if (AndroidUtils.isAndroid10) {
       bottomEdgeEffectColor = color
       topEdgeEffectColor = color
       return
@@ -175,7 +175,7 @@ object ViewUtils {
   fun ScrollView.changeEdgeEffect(theme: ChanTheme) {
     val color = theme.accentColor
 
-    if (AndroidUtils.isAndroid10()) {
+    if (AndroidUtils.isAndroid10) {
       setEdgeEffectColor(theme.accentColor)
       return
     }

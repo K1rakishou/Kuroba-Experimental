@@ -10,9 +10,9 @@ buildscript {
     }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:${versions.kotlin_version}"
-        classpath 'com.android.tools.build:gradle:8.13.2'
+        classpath 'com.android.tools.build:gradle:8.12.0'
         classpath "com.google.devtools.ksp:symbol-processing-gradle-plugin:${versions.ksp_version}"
-        classpath "org.jetbrains.compose:compose-gradle-plugin:1.7.0-beta02"
+        classpath "org.jetbrains.compose:compose-gradle-plugin:1.9.3"
     }
 }
 

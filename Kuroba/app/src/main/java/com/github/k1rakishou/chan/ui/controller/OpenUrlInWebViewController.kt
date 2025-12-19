@@ -2,13 +2,13 @@ package com.github.k1rakishou.chan.ui.controller
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.view.View
 import android.webkit.CookieManager
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
 import android.widget.ImageView
-import androidx.constraintlayout.widget.ConstraintLayout
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.site.SiteResolver
@@ -98,7 +98,7 @@ class OpenUrlInWebViewController(
 
     webViewContainer.addView(webView)
 
-    val clickableArea = view.findViewById<ConstraintLayout>(R.id.clickable_area)
+    val clickableArea = view.findViewById<View>(R.id.clickable_area)
     clickableArea.setOnClickListener { pop() }
 
     closeButton = view.findViewById(R.id.close_button)

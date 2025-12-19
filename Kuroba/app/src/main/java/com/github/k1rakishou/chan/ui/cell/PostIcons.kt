@@ -325,19 +325,19 @@ class PostIcons @JvmOverloads constructor(
     const val CYCLIC = 0x20
 
     private val stickyIcon = MediaUtils.bitmapToDrawable(
-      BitmapFactory.decodeResource(AppModuleAndroidUtils.getRes(), R.drawable.sticky_icon)
+      BitmapFactory.decodeResource(AppModuleAndroidUtils.res, R.drawable.sticky_icon)
     )
     private val closedIcon = MediaUtils.bitmapToDrawable(
-      BitmapFactory.decodeResource(AppModuleAndroidUtils.getRes(), R.drawable.closed_icon)
+      BitmapFactory.decodeResource(AppModuleAndroidUtils.res, R.drawable.closed_icon)
     )
     private val trashIcon = MediaUtils.bitmapToDrawable(
-      BitmapFactory.decodeResource(AppModuleAndroidUtils.getRes(), R.drawable.trash_icon)
+      BitmapFactory.decodeResource(AppModuleAndroidUtils.res, R.drawable.trash_icon)
     )
     private val archivedIcon = MediaUtils.bitmapToDrawable(
-      BitmapFactory.decodeResource(AppModuleAndroidUtils.getRes(), R.drawable.archived_icon)
+      BitmapFactory.decodeResource(AppModuleAndroidUtils.res, R.drawable.archived_icon)
     )
     private val cyclicIcon = MediaUtils.bitmapToDrawable(
-      BitmapFactory.decodeResource(AppModuleAndroidUtils.getRes(), R.drawable.cyclic_icon)
+      BitmapFactory.decodeResource(AppModuleAndroidUtils.res, R.drawable.cyclic_icon)
     )
   }
 

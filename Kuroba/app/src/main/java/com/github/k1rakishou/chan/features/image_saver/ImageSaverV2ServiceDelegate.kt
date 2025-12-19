@@ -564,7 +564,7 @@ class ImageSaverV2ServiceDelegate(
         activeNotificationIdQueue.push(uniqueId)
       }
 
-      val maxNotifications = if (AppModuleAndroidUtils.isDevBuild()) {
+      val maxNotifications = if (AppModuleAndroidUtils.isDevBuild) {
         MAX_VISIBLE_NOTIFICATIONS_TEST
       } else {
         MAX_VISIBLE_NOTIFICATIONS_PROD

@@ -100,7 +100,7 @@ class PostHideHelper(
           return@mutableIteration true
         }
 
-        if (AppModuleAndroidUtils.isDevBuild()) {
+        if (AppModuleAndroidUtils.isDevBuild) {
           resultMap.values.forEach { chanPostWithFilterResult ->
             val postDescriptor = chanPostWithFilterResult.chanPost.postDescriptor
             val postFilterResult = chanPostWithFilterResult.postFilterResult

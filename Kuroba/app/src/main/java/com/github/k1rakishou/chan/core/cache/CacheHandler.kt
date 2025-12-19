@@ -13,7 +13,6 @@ import com.github.k1rakishou.model.util.ChanPostUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.measureTime
@@ -46,7 +45,7 @@ class CacheHandler(
   }
 
   private fun init() {
-    if (AppModuleAndroidUtils.isDevBuild()) {
+    if (AppModuleAndroidUtils.isDevBuild) {
       CacheFileType.checkValid()
     }
 

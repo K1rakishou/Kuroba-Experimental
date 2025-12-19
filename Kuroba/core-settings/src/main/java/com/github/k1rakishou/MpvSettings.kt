@@ -14,7 +14,7 @@ object MpvSettings {
 
   fun init() {
     try {
-      val provider = SharedPreferencesSettingProvider(AndroidUtils.getMpvState())
+      val provider = SharedPreferencesSettingProvider(AndroidUtils.mpvState)
 
       hardwareDecoding = BooleanSetting(provider, "hardware_decoding", true)
       videoFastCode = BooleanSetting(provider, "video_fastdecode", false)

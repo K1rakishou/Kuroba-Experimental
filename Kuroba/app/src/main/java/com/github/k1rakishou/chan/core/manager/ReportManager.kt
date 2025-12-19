@@ -136,12 +136,12 @@ class ReportManager(
       appendLine("App Version: " + BuildConfig.VERSION_NAME)
       appendLine("Phone Model: " + Build.MANUFACTURER + " " + Build.MODEL)
 
-      if (AppModuleAndroidUtils.getFlavorType() != AndroidUtils.FlavorType.Fdroid) {
+      if (AppModuleAndroidUtils.flavorType != AndroidUtils.FlavorType.Fdroid) {
         // Do not log this for FDroid builds since it's always going to be "Unknown" which is confusing
-        appendLine("Build type: " + AppModuleAndroidUtils.getVerifiedBuildType().name)
+        appendLine("Build type: " + AppModuleAndroidUtils.verifiedBuildType().name)
       }
 
-      appendLine("Flavor type: " + AppModuleAndroidUtils.getFlavorType().name)
+      appendLine("Flavor type: " + AppModuleAndroidUtils.flavorType.name)
       appendLine("isLowRamDevice: ${ChanSettings.isLowRamDevice()}, isLowRamDeviceForced: ${ChanSettings.isLowRamDeviceForced.get()}")
       appendLine("MemoryClass: ${activityManager?.memoryClass}")
       appendLine("App running time: ${appRunningTime}")

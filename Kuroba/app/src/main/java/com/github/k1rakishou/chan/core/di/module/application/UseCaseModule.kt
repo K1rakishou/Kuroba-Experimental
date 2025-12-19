@@ -105,7 +105,7 @@ class UseCaseModule {
   ): FetchThreadBookmarkInfoUseCase {
     deps("FetchThreadBookmarkInfoUseCase")
     return FetchThreadBookmarkInfoUseCase(
-      AppModuleAndroidUtils.isDevBuild(),
+      AppModuleAndroidUtils.isDevBuild,
       ChanSettings.verboseLogs.get(),
       appScope,
       okHttpClient,

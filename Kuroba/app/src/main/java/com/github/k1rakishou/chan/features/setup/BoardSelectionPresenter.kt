@@ -10,7 +10,7 @@ import com.github.k1rakishou.chan.features.setup.data.BoardSelectionControllerSt
 import com.github.k1rakishou.chan.features.setup.data.CatalogCellData
 import com.github.k1rakishou.chan.features.setup.data.SiteCellData
 import com.github.k1rakishou.chan.features.setup.data.SiteEnableState
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.InputWithQuerySorter
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isNotNullNorBlank
@@ -162,7 +162,7 @@ class BoardSelectionPresenter(
       return sortedCatalogCellData
     }
 
-    val maxBoardsToShow = if (isTablet()) {
+    val maxBoardsToShow = if (AppModuleAndroidUtils.isTablet) {
       MAX_CATALOGS_TO_SHOW_IN_SEARCH_MODE_TABLET
     } else {
       MAX_CATALOGS_TO_SHOW_IN_SEARCH_MODE_PHONE
@@ -247,7 +247,7 @@ class BoardSelectionPresenter(
       return sortedBoards
     }
 
-    val maxBoardsToShow = if (isTablet()) {
+    val maxBoardsToShow = if (AppModuleAndroidUtils.isTablet) {
       MAX_CATALOGS_TO_SHOW_IN_SEARCH_MODE_TABLET
     } else {
       MAX_CATALOGS_TO_SHOW_IN_SEARCH_MODE_PHONE

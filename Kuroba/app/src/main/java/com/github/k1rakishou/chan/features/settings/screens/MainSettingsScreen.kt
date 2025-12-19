@@ -27,14 +27,13 @@ import com.github.k1rakishou.chan.features.setup.SitesSetupController
 import com.github.k1rakishou.chan.ui.controller.LicensesController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getQuantityString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getVerifiedBuildType
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isFdroidBuild
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.verifiedBuildType
+import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType
-import com.github.k1rakishou.common.AndroidUtils.getApplicationLabel
 import com.github.k1rakishou.persist_state.PersistableChanState
 
 class MainSettingsScreen(
@@ -72,7 +71,7 @@ class MainSettingsScreen(
           identifier = MainScreen.AboutAppGroup.AppVersion,
           topDescriptionStringFunc = { createAppVersionString() },
           bottomDescriptionStringFunc = {
-            if (isDevBuild() || isFdroidBuild()) {
+            if (AppModuleAndroidUtils.isDevBuild || AppModuleAndroidUtils.isFdroidBuild) {
               context.getString(R.string.settings_updates_are_disabled)
             } else {
               context.getString(R.string.settings_update_check)
@@ -80,8 +79,8 @@ class MainSettingsScreen(
           },
           callbackWithClickAction = {
             when {
-              isDevBuild() -> SettingClickAction.ShowToast(R.string.updater_is_disabled_for_dev_builds)
-              isFdroidBuild() -> SettingClickAction.ShowToast(R.string.updater_is_disabled_for_fdroid_builds)
+              AppModuleAndroidUtils.isDevBuild -> SettingClickAction.ShowToast(R.string.updater_is_disabled_for_dev_builds)
+              AppModuleAndroidUtils.isFdroidBuild -> SettingClickAction.ShowToast(R.string.updater_is_disabled_for_fdroid_builds)
               else -> {
                 updateManager.manualUpdateCheck()
                 SettingClickAction.NoAction
@@ -116,7 +115,7 @@ class MainSettingsScreen(
         group += LinkSettingV2.createBuilder(
           context = context,
           identifier = MainScreen.AboutAppGroup.FindAppOnGithub,
-          topDescriptionStringFunc = { getString(R.string.settings_find_app_on_github, getApplicationLabel()) },
+          topDescriptionStringFunc = { getString(R.string.settings_find_app_on_github, AndroidUtils.applicationLabel) },
           bottomDescriptionIdFunc = { R.string.settings_find_app_on_github_bottom },
           callback = { openLink(BuildConfig.GITHUB_ENDPOINT) }
         )
@@ -288,7 +287,7 @@ class MainSettingsScreen(
 
     return String.format(
       "%s %s.%d %s (commit %s)",
-      getApplicationLabel().toString(),
+      AndroidUtils.applicationLabel.toString(),
       BuildConfig.VERSION_NAME,
       buildNumber,
       getVerificationBadge(),
@@ -297,13 +296,13 @@ class MainSettingsScreen(
   }
 
   private fun getVerificationBadge(): String {
-    if (isFdroidBuild()) {
+    if (AppModuleAndroidUtils.isFdroidBuild) {
       // F-Droid releases are signed by their own keys so the build will always be considered
       // non-official so we just should not show the badge at all.
       return ""
     }
 
-    val verifiedBuildType = getVerifiedBuildType()
+    val verifiedBuildType = verifiedBuildType()
 
     val isVerified = verifiedBuildType == VerifiedBuildType.Release
       || verifiedBuildType == VerifiedBuildType.Debug

@@ -668,7 +668,7 @@ open class ViewThreadController(
           withOverflowMenuItem(
             id = ACTION_GO_TO_POST,
             stringId = R.string.action_go_to_post,
-            visible = isDevBuild(),
+            visible = AppModuleAndroidUtils.isDevBuild,
             onClick = { item -> onGoToPostClicked(item) }
           )
           withOverflowMenuItem(

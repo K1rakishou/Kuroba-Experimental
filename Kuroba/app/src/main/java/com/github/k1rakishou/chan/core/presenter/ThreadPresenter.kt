@@ -65,6 +65,7 @@ import com.github.k1rakishou.chan.ui.helper.PostPopupHelper
 import com.github.k1rakishou.chan.ui.layout.ThreadListLayout.ThreadListLayoutPresenterCallback
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.ui.view.floating_menu.HeaderFloatingListMenuItem
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink
@@ -292,7 +293,7 @@ class ThreadPresenter @Inject constructor(
   private val chanThreadTicker by lazy {
     ChanThreadTicker(
       scope = this,
-      isDevFlavor = isDevBuild(),
+      isDevFlavor = AppModuleAndroidUtils.isDevBuild,
       archivesManager = archivesManager,
       chanThreadManager = chanThreadManager,
       action = this::onChanTickerTick

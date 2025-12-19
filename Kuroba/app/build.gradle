@@ -9,7 +9,7 @@ plugins {
 android {
     namespace "com.github.k1rakishou.chan"
 
-    compileSdk 36
+    compileSdkVersion 36
 
     def getCommitHash = { ->
         def stdout = new ByteArrayOutputStream()

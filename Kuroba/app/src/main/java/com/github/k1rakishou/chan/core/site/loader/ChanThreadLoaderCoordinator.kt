@@ -33,7 +33,7 @@ import com.github.k1rakishou.chan.core.site.loader.internal.usecase.StorePostsIn
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.BadStatusResponseException
@@ -680,7 +680,7 @@ class ChanThreadLoaderCoordinator(
 
     // We want to fully update the threads posts once in a while to check for deleted posts.
     val lastUpdateTime = lastFullThreadUpdate[chanDescriptor] ?: 0
-    val timeout = if (isDevBuild()) { ONE_MINUTE } else { THREE_MINUTES }
+    val timeout = if (AppModuleAndroidUtils.isDevBuild) { ONE_MINUTE } else { THREE_MINUTES }
 
     if (currentTime - lastUpdateTime > timeout) {
       lastFullThreadUpdate.put(chanDescriptor, currentTime)

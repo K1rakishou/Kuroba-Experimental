@@ -26,7 +26,6 @@ import com.github.k1rakishou.chan.features.media_viewer.strip.MediaViewerBottomA
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableProgressBar
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
 import com.github.k1rakishou.chan.utils.setEnabledFast
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.ModularResult
@@ -111,7 +110,7 @@ class ExoPlayerVideoMediaView(
     actualVideoPlayerView = findViewById(R.id.actual_video_view)
     bufferingProgressView = findViewById(R.id.buffering_progress_view)
 
-    if (isTablet()) {
+    if (AppModuleAndroidUtils.isTablet) {
       actionStrip = findViewById<MediaViewerBottomActionStrip?>(R.id.left_action_strip)
     } else {
       actionStrip = findViewById<MediaViewerBottomActionStrip?>(R.id.bottom_action_strip)

@@ -22,7 +22,7 @@ import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.core_logger.Logger
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -34,7 +34,7 @@ class DebugRef(var value: Int)
 
 @Composable
 inline fun LogCompositions(tag: String) {
-  if (enableDebugCompositionLogs && isDevBuild()) {
+  if (enableDebugCompositionLogs && AppModuleAndroidUtils.isDevBuild) {
     val ref = remember { DebugRef(0) }
     SideEffect { ref.value++ }
 

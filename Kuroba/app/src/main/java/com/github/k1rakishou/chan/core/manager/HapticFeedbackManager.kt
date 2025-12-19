@@ -26,7 +26,7 @@ class HapticFeedbackManager {
     Logger.verbose(TAG) { "toggleOn()" }
     complainIfViewIsNull()
 
-    if (isAndroid14()) {
+    if (isAndroid14) {
       _view?.performHapticFeedback(HapticFeedbackConstants.TOGGLE_ON)
     } else {
       tapFallback()
@@ -37,7 +37,7 @@ class HapticFeedbackManager {
     Logger.verbose(TAG) { "toggleOff()" }
     complainIfViewIsNull()
 
-    if (isAndroid14()) {
+    if (isAndroid14) {
       _view?.performHapticFeedback(HapticFeedbackConstants.TOGGLE_OFF)
     } else {
       tapFallback()
@@ -48,7 +48,7 @@ class HapticFeedbackManager {
     Logger.verbose(TAG) { "gestureStart()" }
     complainIfViewIsNull()
 
-    if (isAndroid11()) {
+    if (isAndroid11) {
       _view?.performHapticFeedback(HapticFeedbackConstants.GESTURE_START)
     } else {
       tapFallback()
@@ -59,7 +59,7 @@ class HapticFeedbackManager {
     Logger.verbose(TAG) { "gestureEnd()" }
     complainIfViewIsNull()
 
-    if (isAndroid11()) {
+    if (isAndroid11) {
       _view?.performHapticFeedback(HapticFeedbackConstants.GESTURE_END)
     } else {
       tapFallback()

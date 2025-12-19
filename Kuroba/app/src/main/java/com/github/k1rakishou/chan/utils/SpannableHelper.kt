@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.utils
 
-import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.Typeface
 import android.text.Spannable
@@ -8,7 +7,6 @@ import android.text.method.LinkMovementMethod
 import android.text.style.BackgroundColorSpan
 import android.text.style.CharacterStyle
 import android.text.style.ClickableSpan
-import android.text.style.ImageSpan
 import android.text.style.StyleSpan
 import android.text.style.TypefaceSpan
 import android.view.MotionEvent
@@ -16,7 +14,6 @@ import android.view.View
 import android.widget.TextView
 import androidx.core.graphics.ColorUtils
 import androidx.core.text.getSpans
-import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.ELLIPSIS_SYMBOL
 import com.github.k1rakishou.common.setSpanSafe
 import com.github.k1rakishou.core_spannable.BackgroundColorSpanHashed
@@ -225,14 +222,6 @@ object SpannableHelper {
     val length: Int,
     val span: CharacterStyle
   )
-
-  private fun getIconSpan(icon: Bitmap, fontSizePx: Int): ImageSpan {
-    val iconSpan = ImageSpan(AndroidUtils.getAppContext(), icon)
-    val width = (fontSizePx.toFloat() / (icon.height.toFloat() / icon.width.toFloat())).toInt()
-
-    iconSpan.drawable.setBounds(0, 0, width, fontSizePx)
-    return iconSpan
-  }
 
 }
 

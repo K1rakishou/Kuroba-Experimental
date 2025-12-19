@@ -20,7 +20,7 @@ object FullScreenUtils {
   fun Window.setupStatusAndNavBarColors(theme: ChanTheme) {
     var newSystemUiVisibility = decorView.systemUiVisibility
 
-    if (AndroidUtils.isAndroidM()) {
+    if (AndroidUtils.isAndroidM) {
       newSystemUiVisibility = when {
         theme.lightStatusBar -> {
           newSystemUiVisibility and View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR.inv()
@@ -31,7 +31,7 @@ object FullScreenUtils {
       }
     }
 
-    if (AndroidUtils.isAndroidO()) {
+    if (AndroidUtils.isAndroidO) {
       newSystemUiVisibility = when {
         theme.lightNavBar -> {
           newSystemUiVisibility and View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR.inv()

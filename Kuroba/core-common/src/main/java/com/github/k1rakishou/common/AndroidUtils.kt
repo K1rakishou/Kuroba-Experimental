@@ -1,350 +1,322 @@
-/*
- * KurobaEx - *chan browser https://github.com/K1rakishou/Kuroba-Experimental/
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-package com.github.k1rakishou.common;
+package com.github.k1rakishou.common
 
-import static android.content.Context.AUDIO_SERVICE;
-import static android.content.Context.CLIPBOARD_SERVICE;
-import static android.content.Context.INPUT_METHOD_SERVICE;
-import static android.content.Context.JOB_SCHEDULER_SERVICE;
-import static android.content.Context.MODE_PRIVATE;
-import static android.content.Context.NOTIFICATION_SERVICE;
-import static android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT;
+import android.R
+import android.annotation.SuppressLint
+import android.app.Activity
+import android.app.ActivityManager
+import android.app.Application
+import android.app.Dialog
+import android.app.NotificationManager
+import android.app.job.JobScheduler
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.content.DialogInterface
+import android.content.DialogInterface.OnShowListener
+import android.content.SharedPreferences
+import android.graphics.Point
+import android.media.AudioManager
+import android.os.Build
+import android.text.TextUtils
+import android.util.DisplayMetrics
+import android.util.TypedValue
+import android.view.View
+import android.view.ViewGroup
+import android.view.Window
+import android.view.inputmethod.InputMethodManager
+import androidx.annotation.ChecksSdkIntAtLeast
+import androidx.preference.PreferenceManager
+import java.io.File
+import kotlin.math.max
+import kotlin.math.min
 
-import android.annotation.SuppressLint;
-import android.app.Activity;
-import android.app.ActivityManager;
-import android.app.Application;
-import android.app.Dialog;
-import android.app.NotificationManager;
-import android.app.job.JobScheduler;
-import android.content.ClipData;
-import android.content.ClipboardManager;
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.graphics.Point;
-import android.media.AudioManager;
-import android.os.Build;
-import android.text.TextUtils;
-import android.util.DisplayMetrics;
-import android.util.TypedValue;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
-import android.view.inputmethod.InputMethodManager;
+object AndroidUtils {
+  private const val TAG = "AndroidUtils"
+  const val CHAN_STATE_PREFS_NAME: String = "chan_state"
+  const val MPV_PREFS_NAME: String = "mpv_prefs"
 
-import androidx.annotation.ChecksSdkIntAtLeast;
-import androidx.preference.PreferenceManager;
+  @SuppressLint("StaticFieldLeak")
+  private lateinit var application: Application
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+  fun init(application: Application) {
+    if (!::application.isInitialized) {
+      this.application = application
+    }
+  }
 
-public class AndroidUtils {
-    private static final String TAG = "AndroidUtils";
-    public static final String CHAN_STATE_PREFS_NAME = "chan_state";
-    public static final String MPV_PREFS_NAME = "mpv_prefs";
+  @JvmStatic
+  val appDir: File
+    get() = application.filesDir.getParentFile()
 
-    @SuppressLint("StaticFieldLeak")
-    private static Application application;
+  val filesDir: File
+    get() = application.filesDir
 
-    public static void init(Application application) {
-        if (AndroidUtils.application == null) {
-            AndroidUtils.application = application;
+  @JvmStatic
+  val appContext: Context
+    get() = application
+
+  val applicationLabel: CharSequence
+    get() = application.packageManager
+      .getApplicationLabel(application.applicationInfo)
+
+  val appFileProvider: String
+    get() = application.packageName + ".fileprovider"
+
+  val isNotMainProcess: Boolean
+    get() = false
+
+  @JvmStatic
+  val appMainPreferences: SharedPreferences
+    get() = PreferenceManager.getDefaultSharedPreferences(application)
+
+  val appState: SharedPreferences
+    get() = appContext.getSharedPreferences(
+      CHAN_STATE_PREFS_NAME,
+      Context.MODE_PRIVATE
+    )
+
+  val mpvState: SharedPreferences
+    get() = appContext.getSharedPreferences(
+      MPV_PREFS_NAME,
+      Context.MODE_PRIVATE
+    )
+
+  @JvmStatic
+  fun requestKeyboardFocus(dialog: Dialog, view: View) {
+    view.requestFocus()
+    dialog.setOnShowListener(OnShowListener { dialog1: DialogInterface? -> requestKeyboardFocus(view) })
+  }
+
+  @JvmStatic
+  fun requestKeyboardFocus(view: View?) {
+    inputManager.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT)
+  }
+
+  @JvmStatic
+  fun hideKeyboard(view: View?) {
+    if (view != null) {
+      inputManager.hideSoftInputFromWindow(view.windowToken, 0)
+    }
+  }
+
+  fun requestViewAndKeyboardFocus(view: View) {
+    view.setFocusable(false)
+    view.setFocusableInTouchMode(true)
+    if (view.requestFocus()) {
+      inputManager.showSoftInput(view, InputMethodManager.SHOW_IMPLICIT)
+    }
+  }
+
+  fun updatePaddings(view: View, left: Int, right: Int, top: Int, bottom: Int) {
+    var newLeft = left
+    if (newLeft < 0) {
+      newLeft = view.getPaddingLeft()
+    }
+
+    var newRight = right
+    if (newRight < 0) {
+      newRight = view.getPaddingRight()
+    }
+
+    var newTop = top
+    if (newTop < 0) {
+      newTop = view.getPaddingTop()
+    }
+
+    var newBottom = bottom
+    if (newBottom < 0) {
+      newBottom = view.getPaddingBottom()
+    }
+
+    view.setPadding(newLeft, newTop, newRight, newBottom)
+  }
+
+  fun setBoundlessRoundRippleBackground(view: View) {
+    val outValue = TypedValue()
+    view.getContext().getTheme().resolveAttribute(
+      R.attr.selectableItemBackgroundBorderless,
+      outValue,
+      true
+    )
+
+    view.setBackgroundResource(outValue.resourceId)
+  }
+
+  fun setRippleBackground(view: View) {
+    val outValue = TypedValue()
+    view.getContext().getTheme().resolveAttribute(
+      R.attr.selectableItemBackground,
+      outValue,
+      true
+    )
+
+    view.setBackgroundResource(outValue.resourceId)
+  }
+
+  fun findViewsById(root: ViewGroup, id: Int): MutableList<View?> {
+    val views: MutableList<View?> = ArrayList<View?>()
+    val childCount = root.getChildCount()
+    for (i in 0..<childCount) {
+      val child = root.getChildAt(i)
+      if (child is ViewGroup) {
+        views.addAll(findViewsById(child, id))
+      }
+
+      if (child.getId() == id) {
+        views.add(child)
+      }
+    }
+
+    return views
+  }
+
+  @JvmStatic
+  fun removeFromParentView(view: View): Boolean {
+    if (view.getParent() is ViewGroup && (view.getParent() as ViewGroup).indexOfChild(view) >= 0) {
+      (view.getParent() as ViewGroup).removeView(view)
+      return true
+    } else {
+      return false
+    }
+  }
+
+  @JvmStatic
+  fun getDisplaySize(context: Context): Point {
+    val displayMetrics = DisplayMetrics()
+    val windowManager = (context as Activity).getWindowManager()
+    windowManager.getDefaultDisplay().getMetrics(displayMetrics)
+
+    return Point(displayMetrics.widthPixels, displayMetrics.heightPixels)
+  }
+
+  fun getRealDisplaySize(context: Context): Point {
+    val displayMetrics = DisplayMetrics()
+    val windowManager = (context as Activity).getWindowManager()
+    windowManager.getDefaultDisplay().getRealMetrics(displayMetrics)
+
+    return Point(displayMetrics.widthPixels, displayMetrics.heightPixels)
+  }
+
+  /**
+   * These two methods get the screen size ignoring the current screen orientation.
+   */
+  fun getScreenWidth(context: Context): Int {
+    val displaySize = getDisplaySize(context)
+    return displaySize.x
+  }
+
+  fun getRealMinScreenSize(context: Context): Int {
+    val displaySize = getRealDisplaySize(context)
+    return min(displaySize.x, displaySize.y)
+  }
+
+  fun getRealMaxScreenSize(context: Context): Int {
+    val displaySize = getRealDisplaySize(context)
+    return max(displaySize.x, displaySize.y)
+  }
+
+  fun getWindow(context: Context?): Window? {
+    if (context is Activity) {
+      return context.getWindow()
+    } else {
+      return null
+    }
+  }
+
+  @JvmStatic
+  private val inputManager: InputMethodManager
+    get() = application.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+
+  @JvmStatic
+  val clipboardManager: ClipboardManager
+    get() = application.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+
+  @JvmStatic
+  val activityManager: ActivityManager
+    get() = application.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+
+  val notificationManager: NotificationManager
+    get() = (application.getSystemService(Context.NOTIFICATION_SERVICE)) as NotificationManager
+
+  val jobScheduler: JobScheduler
+    get() = application.getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
+
+  val audioManager: AudioManager
+    get() = appContext.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+
+  val clipboardContent: String
+    get() {
+      val primary: ClipData? = clipboardManager.getPrimaryClip()
+      if (primary != null && primary.getItemCount() > 0) {
+        val text = primary.getItemAt(0).getText()
+        if (!TextUtils.isEmpty(text)) {
+          return primary.getItemAt(0).getText().toString()
         }
+      }
+
+      return ""
     }
 
-    public static File getAppDir() {
-        return application.getFilesDir().getParentFile();
-    }
+  fun setClipboardContent(label: String?, content: String?) {
+    clipboardManager.setPrimaryClip(ClipData.newPlainText(label, content))
+  }
 
-    public static File getFilesDir() {
-        return application.getFilesDir();
-    }
+  val apiLevel: Int
+    get() = Build.VERSION.SDK_INT
 
-    public static Context getAppContext() {
-        return application;
-    }
+  @get:ChecksSdkIntAtLeast(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+  val isAndroid14: Boolean
+    get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
 
-    public static CharSequence getApplicationLabel() {
-        return application.getPackageManager().getApplicationLabel(application.getApplicationInfo());
-    }
+  @get:ChecksSdkIntAtLeast(api = Build.VERSION_CODES.TIRAMISU)
+  val isAndroid13: Boolean
+    get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
 
-    public static String getAppFileProvider() {
-        return application.getPackageName() + ".fileprovider";
-    }
+  @get:ChecksSdkIntAtLeast(api = Build.VERSION_CODES.R)
+  val isAndroid11: Boolean
+    get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
 
-    public static boolean isNotMainProcess() {
-        return false;
-    }
+  @get:ChecksSdkIntAtLeast(api = Build.VERSION_CODES.Q)
+  val isAndroid10: Boolean
+    get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
 
-    public static SharedPreferences getAppMainPreferences() {
-        return PreferenceManager.getDefaultSharedPreferences(application);
-    }
+  @JvmStatic
+  @get:ChecksSdkIntAtLeast(api = Build.VERSION_CODES.O)
+  val isAndroidO: Boolean
+    get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
 
-    public static SharedPreferences getAppState() {
-        return getAppContext().getSharedPreferences(CHAN_STATE_PREFS_NAME, MODE_PRIVATE);
-    }
+  @get:ChecksSdkIntAtLeast(api = Build.VERSION_CODES.LOLLIPOP_MR1)
+  val isAndroidL_MR1: Boolean
+    get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1
 
-    public static SharedPreferences getMpvState() {
-        return getAppContext().getSharedPreferences(MPV_PREFS_NAME, MODE_PRIVATE);
-    }
+  @JvmStatic
+  @get:ChecksSdkIntAtLeast(api = Build.VERSION_CODES.P)
+  val isAndroidP: Boolean
+    get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P
 
-    public static void requestKeyboardFocus(Dialog dialog, final View view) {
-        view.requestFocus();
-        dialog.setOnShowListener(dialog1 -> requestKeyboardFocus(view));
-    }
+  @get:ChecksSdkIntAtLeast(api = Build.VERSION_CODES.M)
+  val isAndroidM: Boolean
+    get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
 
-    public static void requestKeyboardFocus(final View view) {
-        getInputManager().showSoftInput(view, SHOW_IMPLICIT);
-    }
+  @JvmStatic
+  @get:ChecksSdkIntAtLeast(api = Build.VERSION_CODES.N)
+  val isAndroidN: Boolean
+    get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N
 
-    public static void hideKeyboard(View view) {
-        if (view != null) {
-            getInputManager().hideSoftInputFromWindow(view.getWindowToken(), 0);
-        }
-    }
+  @get:ChecksSdkIntAtLeast(api = Build.VERSION_CODES.N_MR1)
+  val isAndroidNMR1: Boolean
+    get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1
 
-    public static void requestViewAndKeyboardFocus(View view) {
-        view.setFocusable(false);
-        view.setFocusableInTouchMode(true);
-        if (view.requestFocus()) {
-            getInputManager().showSoftInput(view, SHOW_IMPLICIT);
-        }
-    }
+  enum class FlavorType {
+    Stable,
+    Beta,
+    Dev,
+    Fdroid
+  }
 
-    public static void updatePaddings(View view, int left, int right, int top, int bottom) {
-        int newLeft = left;
-        if (newLeft < 0) {
-            newLeft = view.getPaddingLeft();
-        }
-
-        int newRight = right;
-        if (newRight < 0) {
-            newRight = view.getPaddingRight();
-        }
-
-        int newTop = top;
-        if (newTop < 0) {
-            newTop = view.getPaddingTop();
-        }
-
-        int newBottom = bottom;
-        if (newBottom < 0) {
-            newBottom = view.getPaddingBottom();
-        }
-
-        view.setPadding(newLeft, newTop, newRight, newBottom);
-    }
-
-    public static void setBoundlessRoundRippleBackground(View view) {
-        TypedValue outValue = new TypedValue();
-        view.getContext().getTheme().resolveAttribute(
-                android.R.attr.selectableItemBackgroundBorderless,
-                outValue,
-                true
-        );
-
-        view.setBackgroundResource(outValue.resourceId);
-    }
-
-    public static void setRippleBackground(View view) {
-        TypedValue outValue = new TypedValue();
-        view.getContext().getTheme().resolveAttribute(
-                android.R.attr.selectableItemBackground,
-                outValue,
-                true
-        );
-
-        view.setBackgroundResource(outValue.resourceId);
-    }
-
-    public static List<View> findViewsById(ViewGroup root, int id) {
-        List<View> views = new ArrayList<>();
-        int childCount = root.getChildCount();
-        for (int i = 0; i < childCount; i++) {
-            View child = root.getChildAt(i);
-            if (child instanceof ViewGroup) {
-                views.addAll(findViewsById((ViewGroup) child, id));
-            }
-
-            if (child.getId() == id) {
-                views.add(child);
-            }
-        }
-
-        return views;
-    }
-
-    public static boolean removeFromParentView(View view) {
-        if (view.getParent() instanceof ViewGroup && ((ViewGroup) view.getParent()).indexOfChild(view) >= 0) {
-            ((ViewGroup) view.getParent()).removeView(view);
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    public static Point getDisplaySize(Context context) {
-        DisplayMetrics displayMetrics = new DisplayMetrics();
-        WindowManager windowManager = ((Activity) context).getWindowManager();
-        windowManager.getDefaultDisplay().getMetrics(displayMetrics);
-
-        return new Point(displayMetrics.widthPixels, displayMetrics.heightPixels);
-    }
-
-    public static Point getRealDisplaySize(Context context) {
-        DisplayMetrics displayMetrics = new DisplayMetrics();
-        WindowManager windowManager = ((Activity) context).getWindowManager();
-        windowManager.getDefaultDisplay().getRealMetrics(displayMetrics);
-
-        return new Point(displayMetrics.widthPixels, displayMetrics.heightPixels);
-    }
-
-    /**
-     * These two methods get the screen size ignoring the current screen orientation.
-     */
-    public static int getScreenWidth(Context context) {
-        Point displaySize = getDisplaySize(context);
-        return displaySize.x;
-    }
-
-    public static int getRealMinScreenSize(Context context) {
-        Point displaySize = getRealDisplaySize(context);
-        return Math.min(displaySize.x, displaySize.y);
-    }
-
-    public static int getRealMaxScreenSize(Context context) {
-        Point displaySize = getRealDisplaySize(context);
-        return Math.max(displaySize.x, displaySize.y);
-    }
-
-    public static Window getWindow(Context context) {
-        if (context instanceof Activity) {
-            return ((Activity) context).getWindow();
-        } else {
-            return null;
-        }
-    }
-
-    private static InputMethodManager getInputManager() {
-        return (InputMethodManager) application.getSystemService(INPUT_METHOD_SERVICE);
-    }
-
-    public static ClipboardManager getClipboardManager() {
-        return (ClipboardManager) application.getSystemService(CLIPBOARD_SERVICE);
-    }
-
-    public static ActivityManager getActivityManager() {
-        return (ActivityManager) application.getSystemService(Context.ACTIVITY_SERVICE);
-    }
-
-    public static String getClipboardContent() {
-        ClipData primary = getClipboardManager().getPrimaryClip();
-        if (primary != null && primary.getItemCount() > 0) {
-            CharSequence text = primary.getItemAt(0).getText();
-            if (!TextUtils.isEmpty(text)) {
-                return primary.getItemAt(0).getText().toString();
-            }
-        }
-
-        return "";
-    }
-
-    public static void setClipboardContent(String label, String content) {
-        getClipboardManager().setPrimaryClip(ClipData.newPlainText(label, content));
-    }
-
-    public static NotificationManager getNotificationManager() {
-        return (NotificationManager) application.getSystemService(NOTIFICATION_SERVICE);
-    }
-
-    public static JobScheduler getJobScheduler() {
-        return (JobScheduler) application.getSystemService(JOB_SCHEDULER_SERVICE);
-    }
-
-    public static AudioManager getAudioManager() {
-        return (AudioManager) getAppContext().getSystemService(AUDIO_SERVICE);
-    }
-
-    public static int getApiLevel() {
-        return Build.VERSION.SDK_INT;
-    }
-
-    @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-    public static boolean isAndroid14() {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE;
-    }
-
-    @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.TIRAMISU)
-    public static boolean isAndroid13() {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU;
-    }
-
-    @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.R)
-    public static boolean isAndroid11() {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.R;
-    }
-
-    @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.Q)
-    public static boolean isAndroid10() {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q;
-    }
-
-    @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.O)
-    public static boolean isAndroidO() {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.O;
-    }
-
-    @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.LOLLIPOP_MR1)
-    public static boolean isAndroidL_MR1() {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1;
-    }
-
-    @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.P)
-    public static boolean isAndroidP() {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.P;
-    }
-
-    @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.M)
-    public static boolean isAndroidM() {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.M;
-    }
-
-    @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.N)
-    public static boolean isAndroidN() {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.N;
-    }
-
-    @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.N_MR1)
-    public static boolean isAndroidNMR1() {
-        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1;
-    }
-
-    public enum FlavorType {
-        Stable,
-        Beta,
-        Dev,
-        Fdroid
-    }
-
-    public enum VerifiedBuildType {
-        Debug,
-        Release,
-        Unknown
-    }
+  enum class VerifiedBuildType {
+    Debug,
+    Release,
+    Unknown
+  }
 }

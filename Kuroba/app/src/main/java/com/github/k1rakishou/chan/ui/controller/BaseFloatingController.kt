@@ -4,9 +4,9 @@ import android.content.Context
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.ui.controller.base.Controller
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
 import com.github.k1rakishou.common.updatePaddings
 import javax.inject.Inject
 
@@ -40,13 +40,13 @@ abstract class BaseFloatingController(
   }
 
   private fun updatePaddings() {
-    val horizPadding = if (isTablet()) {
+    val horizPadding = if (AppModuleAndroidUtils.isTablet) {
       HPADDING_TABLET
     } else {
       HPADDING
     }
 
-    val vertPadding = if (isTablet()) {
+    val vertPadding = if (AppModuleAndroidUtils.isTablet) {
       VPADDING_TABLET
     } else {
       VPADDING

@@ -7,7 +7,6 @@ import com.github.k1rakishou.chan.core.loader.impl.post_comment.ExtraLinkInfo
 import com.github.k1rakishou.chan.core.loader.impl.post_comment.LinkInfoRequest
 import com.github.k1rakishou.chan.core.loader.impl.post_comment.SpanUpdateBatch
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getRes
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.model.data.media.GenericVideoId
@@ -131,6 +130,6 @@ internal class SoundCloudMediaServiceExtraInfoFetcher(
     private val soundCloudAlbumLinkPattern = Pattern.compile("https:\\/\\/(?:m\\.)?soundcloud\\.com\\/([a-zA-Z\\-\\_0-9]+\\/sets\\/[a-zA-Z\\-\\_0-9]+)")
     private val soundCloudTrackLinkPattern = Pattern.compile("https:\\/\\/(?:m\\.)?soundcloud\\.com\\/([a-zA-Z\\-\\_0-9]+\\/[a-zA-Z\\-\\_0-9]+)")
 
-    private val soundCloudIcon = BitmapFactory.decodeResource(getRes(), R.drawable.soundcloud_icon)
+    private val soundCloudIcon = BitmapFactory.decodeResource(AppModuleAndroidUtils.res, R.drawable.soundcloud_icon)
   }
 }

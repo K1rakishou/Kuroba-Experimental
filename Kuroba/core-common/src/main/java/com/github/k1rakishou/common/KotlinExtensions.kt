@@ -1561,7 +1561,7 @@ fun TextView.getTextBounds(text: CharSequence, availableWidth: Int): TextBounds 
     return TextBounds.EMPTY
   }
 
-  val staticLayout = if (AndroidUtils.isAndroidM()) {
+  val staticLayout = if (AndroidUtils.isAndroidM) {
     StaticLayout.Builder
       .obtain(text, 0, text.length, paint, availableWidth)
       .setBreakStrategy(breakStrategy)
@@ -1594,7 +1594,7 @@ fun TextView.getTextBounds(text: CharSequence, availableWidth: Int): TextBounds 
 }
 
 private fun StaticLayout.Builder.justificationModeTextView(textView: TextView): StaticLayout.Builder {
-  if (AndroidUtils.isAndroid10()) {
+  if (AndroidUtils.isAndroid10) {
     return setJustificationMode(textView.justificationMode)
   }
 

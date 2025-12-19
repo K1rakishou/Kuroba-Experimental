@@ -137,7 +137,7 @@ class ManagerModule {
     deps("SiteManager")
     return SiteManager(
       appScope,
-      AppModuleAndroidUtils.isDevBuild(),
+      AppModuleAndroidUtils.isDevBuild,
       ChanSettings.verboseLogs.get(),
       siteRepository,
       SiteRegistry
@@ -154,7 +154,7 @@ class ManagerModule {
     deps("BoardManager")
     return BoardManager(
       appScope,
-      AppModuleAndroidUtils.isDevBuild(),
+      AppModuleAndroidUtils.isDevBuild,
       boardRepository,
       currentOpenedDescriptorStateManager
     )
@@ -357,7 +357,7 @@ class ManagerModule {
   ): BookmarksManager {
     deps("BookmarksManager")
     return BookmarksManager(
-      AppModuleAndroidUtils.isDevBuild(),
+      AppModuleAndroidUtils.isDevBuild,
       ChanSettings.verboseLogs.get(),
       appScope,
       applicationVisibilityManager,
@@ -395,7 +395,7 @@ class ManagerModule {
   ): BookmarkWatcherDelegate {
     deps("BookmarkWatcherDelegate")
     return BookmarkWatcherDelegate(
-      AppModuleAndroidUtils.isDevBuild(),
+      AppModuleAndroidUtils.isDevBuild,
       ChanSettings.verboseLogs.get(),
       bookmarksManager,
       archivesManager,
@@ -476,12 +476,12 @@ class ManagerModule {
   ): ReplyNotificationsHelper {
     deps("ReplyNotificationsHelper")
     return ReplyNotificationsHelper(
-      AppModuleAndroidUtils.isDevBuild(),
+      AppModuleAndroidUtils.isDevBuild,
       ChanSettings.verboseLogs.get(),
       appContext,
       appScope,
       notificationManagerCompat,
-      AndroidUtils.getNotificationManager(),
+      AndroidUtils.notificationManager,
       bookmarksManager,
       chanPostRepository,
       imageLoaderDeprecated,
@@ -517,7 +517,7 @@ class ManagerModule {
   ): LastPageNotificationsHelper {
     deps("LastPageNotificationsHelper")
     return LastPageNotificationsHelper(
-      AppModuleAndroidUtils.isDevBuild(),
+      AppModuleAndroidUtils.isDevBuild,
       appContext,
       notificationManagerCompat,
       pageRequestManager,
@@ -585,7 +585,7 @@ class ManagerModule {
   ): ChanFilterManager {
     deps("ChanFilterManager")
     return ChanFilterManager(
-      AppModuleAndroidUtils.isDevBuild(),
+      AppModuleAndroidUtils.isDevBuild,
       appScope,
       chanFilterRepository,
       chanPostRepository,
@@ -715,7 +715,7 @@ class ManagerModule {
   ): FilterWatcherDelegate {
     deps("FilterWatcherDelegate")
     return FilterWatcherDelegate(
-      AppModuleAndroidUtils.isDevBuild(),
+      AppModuleAndroidUtils.isDevBuild,
       appScope,
       boardManager,
       bookmarksManager,
@@ -772,7 +772,7 @@ class ManagerModule {
   ): TwoCaptchaSolver {
     deps("TwoCaptchaSolver")
     return TwoCaptchaSolver(
-      AppModuleAndroidUtils.isDevBuild(),
+      AppModuleAndroidUtils.isDevBuild,
       gson,
       siteManager,
       proxiedOkHttpClient
