@@ -9,10 +9,10 @@ plugins {
 android {
     namespace "com.github.k1rakishou.chan"
 
-    compileSdk 34
+    compileSdk 36
 
     defaultConfig {
-        minSdkVersion 21
+        minSdkVersion 23
     }
 
     buildTypes {

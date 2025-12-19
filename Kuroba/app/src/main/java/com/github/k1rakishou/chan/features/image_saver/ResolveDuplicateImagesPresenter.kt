@@ -29,7 +29,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
-import java.util.*
+import java.util.Locale
 import java.util.concurrent.atomic.AtomicReference
 
 internal class ResolveDuplicateImagesPresenter(
@@ -336,7 +336,7 @@ internal class ResolveDuplicateImagesPresenter(
     return LocalImage(
       uri = duplicateFileUri,
       fileName = fileName,
-      extension = extension?.toUpperCase(Locale.ENGLISH),
+      extension = extension?.uppercase(Locale.ENGLISH),
       size = fileLength
     )
   }

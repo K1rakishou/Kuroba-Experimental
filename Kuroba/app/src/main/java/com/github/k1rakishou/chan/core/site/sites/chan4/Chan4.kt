@@ -207,7 +207,7 @@ open class Chan4 : SiteBase() {
           val countryCode = requireNotNull(arg?.get("country_code")) { "Bad arg map: $arg" }
 
           b.addPathSegment("country")
-          b.addPathSegment(countryCode.toLowerCase(Locale.ENGLISH) + ".gif")
+          b.addPathSegment(countryCode.lowercase(Locale.ENGLISH) + ".gif")
         }
         "board_flag" -> {
           val boardFlagCode = requireNotNull(arg?.get("board_flag_code")) { "Bad arg map: $arg" }
@@ -215,7 +215,7 @@ open class Chan4 : SiteBase() {
 
           b.addPathSegment("flags")
           b.addPathSegment(boardCode)
-          b.addPathSegment(boardFlagCode.toLowerCase(Locale.ENGLISH) + ".gif")
+          b.addPathSegment(boardFlagCode.lowercase(Locale.ENGLISH) + ".gif")
         }
         "since4pass" -> b.addPathSegment("minileaf.gif")
       }

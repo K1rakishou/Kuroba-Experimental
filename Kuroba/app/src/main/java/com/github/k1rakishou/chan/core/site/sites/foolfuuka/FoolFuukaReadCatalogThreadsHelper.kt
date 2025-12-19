@@ -17,7 +17,7 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import java.io.InputStream
 import java.nio.charset.StandardCharsets
-import java.util.*
+import java.util.Locale
 import java.util.regex.Pattern
 
 class FoolFuukaReadCatalogThreadsHelper {
@@ -210,7 +210,7 @@ class FoolFuukaReadCatalogThreadsHelper {
     val width = matcher.groupOrNull(3)?.toIntOrNull() ?: 0
     val height = matcher.groupOrNull(4)?.toIntOrNull() ?: 0
 
-    val multiplier = when (sizeType.toUpperCase(Locale.ENGLISH)) {
+    val multiplier = when (sizeType.uppercase(Locale.ENGLISH)) {
       "KB" -> 1000
       "KIB" -> 1024
       "MB" -> 1000 * 1000

@@ -9,6 +9,7 @@ import android.graphics.Matrix
 import android.graphics.drawable.BitmapDrawable
 import android.media.MediaMetadataRetriever
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.graphics.createBitmap
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.math.MathUtils
 import androidx.core.util.Pair
@@ -435,7 +436,7 @@ object MediaUtils {
           ?.toBitmap(audioIconBitmapSize, audioIconBitmapSize)
           ?: return null
 
-        result = Bitmap.createBitmap(newWidth, newHeight, frameBitmap.config)
+        result = createBitmap(newWidth, newHeight, frameBitmap.config ?: Bitmap.Config.ARGB_8888)
 
         val canvas = Canvas(result)
         canvas.drawBitmap(frameBitmap, Matrix(), null)

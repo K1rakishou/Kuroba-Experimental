@@ -96,7 +96,6 @@ class ThreadDownloadingCoordinator(
       WorkManager
         .getInstance(appContext)
         .enqueueUniqueWork(tag, ExistingWorkPolicy.REPLACE, workRequest)
-        .result
         .await()
 
       Logger.d(TAG, "startOrRestartThreadDownloading() enqueued work with tag=$tag, eager=$eager, " +
@@ -117,7 +116,6 @@ class ThreadDownloadingCoordinator(
       WorkManager
         .getInstance(appContext)
         .cancelUniqueWork(tag)
-        .result
         .await()
 
       Logger.d(TAG, "cancelThreadDownloading() work with tag $tag canceled")

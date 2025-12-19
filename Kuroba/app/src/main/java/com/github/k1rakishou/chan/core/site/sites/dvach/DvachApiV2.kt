@@ -613,7 +613,7 @@ class DvachApiV2(
       }
 
       val originalFileName = if (fullname.isNullOrEmpty()) {
-        serverFileName
+        serverFileName ?: ""
       } else {
         StringUtils.removeExtensionFromFileName(fullname)
       }

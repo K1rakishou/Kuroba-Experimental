@@ -217,7 +217,7 @@ class PostSearchPopupController(
     val (width, _) = postsView.awaitUntilGloballyLaidOutAndGetSize(waitForWidth = true)
 
     val resultPosts = withContext(Dispatchers.Default) {
-      val searchQuery = query.toLowerCase(Locale.ENGLISH)
+      val searchQuery = query.lowercase(Locale.ENGLISH)
       val resultPosts = mutableListWithCap<ChanPost>(128)
 
       chanThreadManager.get().iteratePostsWhile(data.descriptor) { chanPost ->
@@ -319,7 +319,7 @@ class PostSearchPopupController(
       }
 
       if (chanPostImage.extension.isNotNullNorBlank()) {
-        append(chanPostImage.extension!!.toUpperCase(Locale.ENGLISH))
+        append(chanPostImage.extension!!.uppercase(Locale.ENGLISH))
         append(' ')
       }
 

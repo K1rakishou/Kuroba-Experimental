@@ -11,6 +11,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.core.graphics.createBitmap
 import androidx.core.graphics.withTranslation
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
@@ -467,7 +468,7 @@ class Chan4CaptchaLayoutViewModel(
       }
     }
 
-    val result = Bitmap.createBitmap(width, height, src.config)
+    val result = createBitmap(width, height, src.config ?: Bitmap.Config.ARGB_8888)
     result.setPixels(pixels, 0, width, 0, 0, width, height)
     return result
   }

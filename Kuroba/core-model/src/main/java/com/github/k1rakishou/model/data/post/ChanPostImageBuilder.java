@@ -60,7 +60,10 @@ public class ChanPostImageBuilder {
     }
 
     public ChanPostImageBuilder filename(String filename) {
-        this.filename = filename;
+        if (!TextUtils.isEmpty(filename)) {
+          this.filename = filename;
+        }
+
         return this;
     }
 

@@ -2,9 +2,9 @@ package com.github.k1rakishou.chan.utils
 
 import android.graphics.Color
 import com.github.k1rakishou.common.groupOrNull
-import okhttp3.internal.and
-import java.util.*
+import java.util.Locale
 import java.util.regex.Pattern
+import kotlin.experimental.and
 
 
 object ConversionUtils {
@@ -69,18 +69,18 @@ object ConversionUtils {
 
   @JvmStatic
   fun byteArrayToInt(bytes: ByteArray): Int {
-    return (bytes[0] and 0xFF) shl 24 or
-      ((bytes[1] and 0xFF) shl 16) or
-      ((bytes[2] and 0xFF) shl 8) or
-      ((bytes[3] and 0xFF) shl 0)
+    return (bytes[0] and 0xFF.toByte()).toInt() shl 24 or
+      ((bytes[1] and 0xFF.toByte()).toInt() shl 16) or
+      ((bytes[2] and 0xFF.toByte()).toInt() shl 8) or
+      ((bytes[3] and 0xFF.toByte()).toInt() shl 0)
   }
 
   @JvmStatic
   fun charArrayToInt(bytes: CharArray): Int {
-    return (bytes[0].toByte() and 0xFF) shl 24 or
-      ((bytes[1].toByte() and 0xFF) shl 16) or
-      ((bytes[2].toByte() and 0xFF) shl 8) or
-      ((bytes[3].toByte() and 0xFF) shl 0)
+    return (bytes[0].toByte() and 0xFF.toByte()).toInt() shl 24 or
+      ((bytes[1].toByte() and 0xFF.toByte()).toInt() shl 16) or
+      ((bytes[2].toByte() and 0xFF.toByte()).toInt() shl 8) or
+      ((bytes[3].toByte() and 0xFF.toByte()).toInt() shl 0)
   }
 
   @JvmOverloads

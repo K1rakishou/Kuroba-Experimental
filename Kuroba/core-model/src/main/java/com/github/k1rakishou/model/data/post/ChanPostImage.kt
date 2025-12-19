@@ -177,7 +177,7 @@ class ChanPostImage(
     return buildString {
       if (extension.isNotNullNorBlank()) {
         append(' ')
-        append(extension.toUpperCase(Locale.ENGLISH))
+        append(extension.uppercase(Locale.ENGLISH))
       }
 
       if (imageWidth > 0 || imageHeight > 0) {

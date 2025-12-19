@@ -28,7 +28,6 @@ import org.jsoup.parser.Parser
 import java.io.IOException
 import java.io.InputStream
 import java.io.InputStreamReader
-import java.util.*
 import kotlin.math.max
 
 open class VichanApi(
@@ -84,7 +83,7 @@ open class VichanApi(
     var fileHeight = 0
     var fileSize: Long = 0
     var fileSpoiler = false
-    var fileName: String? = null
+    var fileName: String = ""
     var fileHash: String? = null
     val files: MutableList<ChanPostImage> = ArrayList()
 

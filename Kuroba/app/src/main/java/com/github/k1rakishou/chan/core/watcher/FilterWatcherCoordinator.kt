@@ -168,7 +168,6 @@ class FilterWatcherCoordinator(
       WorkManager
         .getInstance(appContext)
         .enqueueUniqueWork(tag, ExistingWorkPolicy.REPLACE, workRequest)
-        .result
         .await()
 
       Logger.d(TAG, "startFilterWatchingRightAway() enqueued work with tag $tag")
@@ -208,7 +207,6 @@ class FilterWatcherCoordinator(
       WorkManager
         .getInstance(appContext)
         .enqueueUniqueWork(tag, ExistingWorkPolicy.REPLACE, workRequest)
-        .result
         .await()
 
       Logger.d(TAG, "startFilterWatching() enqueued work with tag $tag, " +
@@ -229,7 +227,6 @@ class FilterWatcherCoordinator(
       WorkManager
         .getInstance(appContext)
         .cancelUniqueWork(tag)
-        .result
         .await()
 
       Logger.d(TAG, "cancelFilterWatching() work with tag $tag canceled")

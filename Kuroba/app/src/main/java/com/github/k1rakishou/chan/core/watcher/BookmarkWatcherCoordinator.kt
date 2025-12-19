@@ -212,7 +212,6 @@ class BookmarkWatcherCoordinator(
       WorkManager
         .getInstance(appContext)
         .enqueueUniqueWork(tag, ExistingWorkPolicy.REPLACE, workRequest)
-        .result
         .await()
 
       Logger.d(TAG, "restartBackgroundWork() enqueued work with tag $tag, " +
@@ -233,7 +232,6 @@ class BookmarkWatcherCoordinator(
       WorkManager
         .getInstance(appContext)
         .cancelUniqueWork(tag)
-        .result
         .await()
 
       Logger.d(TAG, "cancelBackgroundBookmarkWatching() work with tag $tag canceled")

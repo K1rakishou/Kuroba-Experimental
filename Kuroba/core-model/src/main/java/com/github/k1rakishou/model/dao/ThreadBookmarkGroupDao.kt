@@ -32,12 +32,12 @@ abstract class ThreadBookmarkGroupDao {
   @RewriteQueriesToDropUnusedColumns
   @Query("""
     SELECT *
-    FROM ${ThreadBookmarkGroupEntity.TABLE_NAME} groups
+    FROM ${ThreadBookmarkGroupEntity.TABLE_NAME} g
     INNER JOIN ${ThreadBookmarkGroupEntryEntity.TABLE_NAME} entries
-        ON groups.${ThreadBookmarkGroupEntity.GROUP_ID_COLUMN_NAME} = entries.${ThreadBookmarkGroupEntryEntity.OWNER_GROUP_ID_COLUMN_NAME}
+        ON g.${ThreadBookmarkGroupEntity.GROUP_ID_COLUMN_NAME} = entries.${ThreadBookmarkGroupEntryEntity.OWNER_GROUP_ID_COLUMN_NAME}
     WHERE entries.${ThreadBookmarkGroupEntryEntity.OWNER_BOOKMARK_ID_COLUMN_NAME}
-    GROUP BY groups.${ThreadBookmarkGroupEntity.GROUP_ID_COLUMN_NAME}
-    ORDER BY groups.${ThreadBookmarkGroupEntity.GROUP_ORDER_COLUMN_NAME} ASC
+    GROUP BY g.${ThreadBookmarkGroupEntity.GROUP_ID_COLUMN_NAME}
+    ORDER BY g.${ThreadBookmarkGroupEntity.GROUP_ORDER_COLUMN_NAME} ASC
   """)
   abstract suspend fun selectGroupsWithEntries(): List<ThreadBookmarkGroupWithEntries>
 
