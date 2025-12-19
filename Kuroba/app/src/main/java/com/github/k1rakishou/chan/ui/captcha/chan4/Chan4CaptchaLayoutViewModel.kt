@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.ui.captcha.chan4
 
-import android.content.Context
 import android.graphics.BitmapFactory
 import android.util.Base64
 import androidx.compose.runtime.State
@@ -14,6 +13,7 @@ import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.shared.ViewModelAssistedFactory
+import com.github.k1rakishou.chan.core.manager.HapticFeedbackManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
@@ -41,6 +41,7 @@ class Chan4CaptchaLayoutViewModel(
   private val siteManager: SiteManager,
   private val loadChan4CaptchaUseCase: LoadChan4CaptchaUseCase,
   private val refreshChan4CaptchaTicketUseCase: RefreshChan4CaptchaTicketUseCase,
+  private val hapticFeedbackManager: HapticFeedbackManager
 ) : BaseViewModel() {
 
   private var activeJob: Job? = null
@@ -96,7 +97,7 @@ class Chan4CaptchaLayoutViewModel(
     }
   }
 
-  fun requestCaptcha(context: Context, chanDescriptor: ChanDescriptor, forced: Boolean) {
+  fun requestCaptcha(chanDescriptor: ChanDescriptor, forced: Boolean) {
     activeJob?.cancel()
     activeJob = null
 
@@ -104,7 +105,6 @@ class Chan4CaptchaLayoutViewModel(
     captchaTtlUpdateJob = null
 
     val prevCaptchaInfo = getCachedCaptchaInfoOrNull(chanDescriptor)
-    val appContext = context
 
     if (!forced
       && prevCaptchaInfo != null
@@ -146,7 +146,7 @@ class Chan4CaptchaLayoutViewModel(
           if (error is CaptchaCooldownError) {
             waitUntilCaptchaRateLimitPassed(error.cooldownMs)
 
-            withContext(Dispatchers.Main) { requestCaptcha(appContext, chanDescriptor, forced = true) }
+            withContext(Dispatchers.Main) { requestCaptcha(chanDescriptor, forced = true) }
             return@launch
           }
         }
@@ -179,6 +179,7 @@ class Chan4CaptchaLayoutViewModel(
       .mapIndexed { index, image -> image.copy(isSelected = index == imageIndex) }
 
     captchaInfo.tasks[taskIndex] = task.copy(images = updatedImages)
+    hapticFeedbackManager.tap()
   }
 
   private suspend fun CoroutineScope.waitUntilCaptchaRateLimitPassed(initialCooldownMs: Long) {
@@ -471,13 +472,15 @@ class Chan4CaptchaLayoutViewModel(
     private val siteManager: SiteManager,
     private val loadChan4CaptchaUseCase: LoadChan4CaptchaUseCase,
     private val refreshChan4CaptchaTicketUseCase: RefreshChan4CaptchaTicketUseCase,
+    private val hapticFeedbackManager: HapticFeedbackManager
   ) : ViewModelAssistedFactory<Chan4CaptchaLayoutViewModel> {
     override fun create(handle: SavedStateHandle): Chan4CaptchaLayoutViewModel {
       return Chan4CaptchaLayoutViewModel(
         savedStateHandle = handle,
         siteManager = siteManager,
         loadChan4CaptchaUseCase = loadChan4CaptchaUseCase,
-        refreshChan4CaptchaTicketUseCase = refreshChan4CaptchaTicketUseCase
+        refreshChan4CaptchaTicketUseCase = refreshChan4CaptchaTicketUseCase,
+        hapticFeedbackManager = hapticFeedbackManager,
       )
     }
   }

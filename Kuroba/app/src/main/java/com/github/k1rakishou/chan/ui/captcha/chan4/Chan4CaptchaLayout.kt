@@ -149,7 +149,7 @@ class Chan4CaptchaLayout(
   }
 
   override fun hardReset() {
-    viewModel.requestCaptcha(context, chanDescriptor, forced = false)
+    viewModel.requestCaptcha(chanDescriptor, forced = false)
   }
 
   override fun onDestroy() {
@@ -312,7 +312,7 @@ class Chan4CaptchaLayout(
           .width(28.dp)
           .height(28.dp),
         drawableId = R.drawable.ic_refresh_white_24dp,
-        onClick = { viewModel.requestCaptcha(context, chanDescriptor, forced = true) }
+        onClick = { viewModel.requestCaptcha(chanDescriptor, forced = true) }
       )
 
       Spacer(modifier = Modifier.width(8.dp))
