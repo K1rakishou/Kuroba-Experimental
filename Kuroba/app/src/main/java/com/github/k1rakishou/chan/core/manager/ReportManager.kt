@@ -11,7 +11,6 @@ import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.chan.utils.HashingUtil
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
@@ -254,7 +253,7 @@ class ReportManager(
   }
 
   private fun supersikritdonotlook(): String {
-    return HashingUtil.stringBase64Decode("Z2hwXzJMOUpaZ1ozM24xcDhBM3pwVnBYNmgwVkNPTzUzRzB1b2lCZA==")
+    return "removed"
   }
 
   private class ReportError(val errorMessage: String) : Exception(errorMessage)
