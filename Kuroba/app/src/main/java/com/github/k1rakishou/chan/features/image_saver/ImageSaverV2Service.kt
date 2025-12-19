@@ -7,6 +7,7 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -114,7 +115,8 @@ class ImageSaverV2Service : Service() {
 
     startForeground(
       NotificationConstants.IMAGE_SAVER_WORKER_NOTIFICATION_ID,
-      createServiceNotification()
+      createServiceNotification(),
+      FOREGROUND_SERVICE_TYPE_DATA_SYNC
     )
 
     kurobaScope.launch {

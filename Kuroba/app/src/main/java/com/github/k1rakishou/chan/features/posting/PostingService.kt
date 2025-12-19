@@ -7,6 +7,7 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -118,7 +119,8 @@ class PostingService : Service() {
 
     startForeground(
       NotificationConstants.POSTING_SERVICE_NOTIFICATION_ID,
-      createMainNotification(mainNotificationInfo = null)
+      createMainNotification(mainNotificationInfo = null),
+      FOREGROUND_SERVICE_TYPE_DATA_SYNC
     )
 
     val chanDescriptor = intent.getParcelableExtra<DescriptorParcelable>(REPLY_CHAN_DESCRIPTOR)

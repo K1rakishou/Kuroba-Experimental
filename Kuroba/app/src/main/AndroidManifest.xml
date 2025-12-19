@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC"/>
 
     <uses-permission-sdk-23 android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
@@ -198,10 +199,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
         <service
             android:name=".features.image_saver.ImageSaverV2Service"
-            android:exported="false" />
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
         <service
             android:name=".features.posting.PostingService"
-            android:exported="false" />
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
 
         <receiver
             android:name=".core.receiver.SelectedFilePickerBroadcastReceiver"
@@ -225,7 +228,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             <intent-filter>
                 <action android:name="com.github.k1rakishou.chan.perform_thread_stack_dump"/>
             </intent-filter>
-
         </receiver>
 
         <provider
