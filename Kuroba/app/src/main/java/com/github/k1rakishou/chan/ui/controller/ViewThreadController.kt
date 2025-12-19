@@ -674,7 +674,6 @@ open class ViewThreadController(
           withOverflowMenuItem(
             id = ACTION_THREAD_MORE_OPTIONS,
             stringId = R.string.action_thread_options,
-            visible = isDevBuild(),
             builder = { withMoreThreadOptions() }
           )
           withOverflowMenuItem(
