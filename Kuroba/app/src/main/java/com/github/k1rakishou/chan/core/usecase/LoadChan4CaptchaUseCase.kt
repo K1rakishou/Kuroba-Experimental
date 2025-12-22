@@ -285,6 +285,8 @@ class LoadChan4CaptchaUseCase(
 
   @JsonClass(generateAdapter = true)
   data class CaptchaTaskRaw(
+    @field:Json(name = "str")
+    val title: String?,
     @field:Json(name = "items")
     val items: List<String>
   )

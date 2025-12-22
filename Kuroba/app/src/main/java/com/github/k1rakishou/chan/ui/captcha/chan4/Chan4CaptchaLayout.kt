@@ -12,11 +12,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
@@ -37,6 +38,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
@@ -195,18 +197,26 @@ class Chan4CaptchaLayout(
   @Composable
   private fun BuildCaptchaImageRows() {
     val chanTheme = LocalChanTheme.current
+    val density = LocalDensity.current
     val captchaInfoAsync by viewModel.captchaInfoToShow
 
     val captchaInfo = when (val captchaInfo = captchaInfoAsync) {
       is AsyncData.Data<Chan4CaptchaLayoutViewModel.CaptchaInfo> -> captchaInfo
       is AsyncData.Error -> {
         KurobaComposeErrorMessage(
+          modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 8.dp),
           error = captchaInfo.throwable
         )
         return
       }
       AsyncData.Loading -> {
-        KurobaComposeProgressIndicator()
+        KurobaComposeProgressIndicator(
+          modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 8.dp),
+        )
         return
       }
       AsyncData.NotInitialized -> {
@@ -223,8 +233,6 @@ class Chan4CaptchaLayout(
         .padding(horizontal = 8.dp, vertical = 4.dp)
     ) {
       Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        KurobaComposeText(text = "In each row, select an image that is not like the others")
-
         if (captchaTtlMillis >= 0L) {
           KurobaComposeText(
             modifier = Modifier
@@ -245,18 +253,35 @@ class Chan4CaptchaLayout(
             )
           }
 
+          KurobaComposeText(text = task.title)
+
+          Spacer(
+            modifier = Modifier
+              .wrapContentWidth()
+              .height(8.dp)
+          )
+
           FlowRow(
-            modifier = Modifier.wrapContentSize(),
-            horizontalArrangement = Arrangement.spacedBy(space = 4.dp),
-            verticalArrangement = Arrangement.spacedBy(space = 4.dp)
+            modifier = Modifier
+              .fillMaxWidth()
+              .wrapContentHeight(),
+            horizontalArrangement = Arrangement.spacedBy(
+              space = 4.dp,
+              alignment = Alignment.CenterHorizontally
+            ),
+            verticalArrangement = Arrangement.spacedBy(space = 4.dp),
+            maxItemsInEachRow = task.maxImagesInEachRow
           ) {
             for ((imageIndex, taskImage) in task.images.withIndex()) {
+              val imageWidth = with(density) { taskImage.imageBitmap.width.toDp() * 2f }
+              val imageHeight = with(density) { taskImage.imageBitmap.height.toDp() * 2f }
+
               val scale by animateFloatAsState(targetValue = if (taskImage.isSelected) 0.8f else 1.0f)
 
               Image(
                 modifier = Modifier
                   .background(chanTheme.backColorCompose)
-                  .sizeIn(minWidth = 64.dp, minHeight = 64.dp, maxWidth = 128.dp, maxHeight = 128.dp)
+                  .size(imageWidth, imageHeight)
                   .kurobaClickable(
                     onClick = { viewModel.onCaptchaImageClicked(taskIndex, imageIndex) }
                   )

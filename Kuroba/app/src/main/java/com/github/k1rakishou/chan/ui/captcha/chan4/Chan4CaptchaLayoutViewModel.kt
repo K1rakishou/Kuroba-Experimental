@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.core.base.BaseViewModel
@@ -34,6 +35,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.Locale
 import javax.inject.Inject
 
 class Chan4CaptchaLayoutViewModel(
@@ -176,7 +178,13 @@ class Chan4CaptchaLayoutViewModel(
     val task = captchaInfo.tasks.getOrNull(taskIndex) ?: return
 
     val updatedImages = task.images
-      .mapIndexed { index, image -> image.copy(isSelected = index == imageIndex) }
+      .mapIndexed { index, image ->
+        if (index == imageIndex) {
+          image.copy(isSelected = !image.isSelected)
+        } else {
+          image.copy(isSelected = false)
+        }
+      }
 
     captchaInfo.tasks[taskIndex] = task.copy(images = updatedImages)
     hapticFeedbackManager.tap()
@@ -321,16 +329,30 @@ class Chan4CaptchaLayoutViewModel(
     }
 
     val tasks = captchaInfoRaw.tasks?.map { captchaTaskRaw ->
-      CaptchaInfo.Task(
-        images = captchaTaskRaw.items.map { imageBase64 ->
-          val bgByteArray = Base64.decode(imageBase64, Base64.DEFAULT)
-          val imageBitmap = BitmapFactory.decodeByteArray(bgByteArray, 0, bgByteArray.size).asImageBitmap()
+      val images = captchaTaskRaw.items.map { imageBase64 ->
+        val bgByteArray = Base64.decode(imageBase64, Base64.DEFAULT)
+        val imageBitmap = BitmapFactory.decodeByteArray(bgByteArray, 0, bgByteArray.size).asImageBitmap()
 
-          return@map CaptchaInfo.TaskImage(
-            imageBitmap = imageBitmap,
-            isSelected = false
-          )
-        }
+        return@map CaptchaInfo.TaskImage(
+          imageBitmap = imageBitmap,
+          isSelected = false
+        )
+      }
+
+      val hasWideImages = images.any { image ->
+        val bitmap = image.imageBitmap
+        val aspectRatio = bitmap.width.toFloat() / bitmap.height.toFloat()
+        println("TTTAAA bitmap.width: ${bitmap.width}, bitmap.height: ${bitmap.height}")
+
+        return@any aspectRatio > 1.5f
+      }
+
+      val title = formatTitle(captchaTaskRaw)
+
+      CaptchaInfo.Task(
+        title = title,
+        maxImagesInEachRow = if (hasWideImages) 2 else Int.MAX_VALUE,
+        images = images
       )
     }
 
@@ -341,6 +363,18 @@ class Chan4CaptchaLayoutViewModel(
       ttlSeconds = captchaInfoRaw.ttl,
       newTasks = tasks ?: emptyList(),
     )
+  }
+
+  private fun formatTitle(captchaTaskRaw: LoadChan4CaptchaUseCase.CaptchaTaskRaw): AnnotatedString {
+    var title = captchaTaskRaw.title
+      ?: "Use the scroll bar below to find the image that is not like the others, then click Next."
+
+    title = title.removePrefix("Use the scroll bar below to ")
+    title = title.replaceFirstChar { ch -> if (ch.isLowerCase()) ch.titlecase(Locale.ENGLISH) else ch.toString() }
+    title = title.removeSuffix(", then click Next.")
+    title += "."
+
+    return AnnotatedString(title)
   }
 
   private suspend fun getCachedCaptchaOrLoadFresh(
@@ -440,6 +474,8 @@ class Chan4CaptchaLayoutViewModel(
     }
 
     data class Task(
+      val title: AnnotatedString,
+      val maxImagesInEachRow: Int,
       val images: List<TaskImage>
     )
 
