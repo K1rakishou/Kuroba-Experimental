@@ -351,7 +351,7 @@ class ReplyLayoutView @JvmOverloads constructor(
     }
   }
 
-  fun onPickLocalMediaButtonClicked() {
+  override fun onPickLocalMediaButtonClicked() {
     replyLayoutViewModel.onPickLocalMediaButtonClicked()
   }
 

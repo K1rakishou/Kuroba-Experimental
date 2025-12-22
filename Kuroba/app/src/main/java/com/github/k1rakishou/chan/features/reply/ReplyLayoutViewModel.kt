@@ -654,6 +654,10 @@ class ReplyLayoutViewModel(
     replyLayoutViewCallbacks?.onReplyLayoutOptionsButtonClicked()
   }
 
+  fun onReplyLayoutPickFileButtonClicked() {
+    replyLayoutViewCallbacks?.onPickLocalMediaButtonClicked()
+  }
+
   fun allReplyLayoutsCollapsed(): Boolean {
     return globalUiStateHolder.replyLayout.allReplyLayoutCollapsed()
   }
@@ -856,6 +860,7 @@ class ReplyLayoutViewModel(
     fun hideDialog()
     fun hideBanDialog()
 
+    fun onPickLocalMediaButtonClicked()
     fun onReplyLayoutOptionsButtonClicked()
     fun onAttachedMediaClicked(attachedMedia: ReplyFileAttachable, isFileSupportedForReencoding: Boolean)
     suspend fun onAttachedMediaLongClicked(attachedMedia: ReplyFileAttachable)

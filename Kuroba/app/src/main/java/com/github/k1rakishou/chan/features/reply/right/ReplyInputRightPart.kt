@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -22,8 +23,11 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.features.reply.ReplyLayoutViewModel
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutState
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeIcon
+import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 
@@ -39,7 +43,8 @@ internal fun ReplyInputRightPart(
   onCancelReplySendClicked: () -> Unit,
   onSendReplyClicked: (ChanDescriptor) -> Unit,
   onPresolveCaptchaButtonClicked: () -> Unit,
-  onReplyLayoutOptionsButtonClicked: () -> Unit
+  onReplyLayoutPickFileButtonClicked: () -> Unit,
+  onReplyLayoutOptionsButtonClicked: () -> Unit,
 ) {
   val chanTheme = LocalChanTheme.current
   val density = LocalDensity.current
@@ -101,6 +106,20 @@ internal fun ReplyInputRightPart(
         onPresolveCaptchaButtonClicked = onPresolveCaptchaButtonClicked
       )
     }
+
+    Spacer(modifier = Modifier.height(6.dp))
+
+    KurobaComposeIcon(
+      modifier = Modifier
+        .size(iconSize)
+        .padding(4.dp)
+        .kurobaClickable(
+          bounded = false,
+          enabled = newReplyLayoutTutorialFinished,
+          onClick = onReplyLayoutPickFileButtonClicked
+        ),
+      drawableId = R.drawable.ic_baseline_attach_file_24
+    )
 
     Spacer(modifier = Modifier.height(6.dp))
 
