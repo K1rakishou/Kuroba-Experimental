@@ -33,8 +33,8 @@ class B4k : BaseFoolFuukaSite() {
   }
 
   companion object {
-    val FAVICON_URL: HttpUrl = "https://b4k.co/assets/favicons/luna-alt.png".toHttpUrl()
-    val ROOT: String = "https://arch.b4k.co/"
+    val FAVICON_URL: HttpUrl = "https://b4k.dev/assets/favicons/luna-alt.png".toHttpUrl()
+    val ROOT: String = "https://arch.b4k.dev/"
     val ROOT_URL: HttpUrl =  ROOT.toHttpUrl()
     val SITE_NAME: String = ArchiveType.B4k.domain
     val MEDIA_HOSTS: Array<HttpUrl> = arrayOf(ROOT_URL)

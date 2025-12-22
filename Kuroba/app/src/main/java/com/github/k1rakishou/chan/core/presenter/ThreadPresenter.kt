@@ -67,7 +67,6 @@ import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.ui.view.floating_menu.HeaderFloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shareLink
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
@@ -2490,18 +2489,28 @@ class ThreadPresenter @Inject constructor(
       return
     }
 
-    val threadDescriptor = currentChanDescriptor as? ChanDescriptor.ThreadDescriptor
+    val chanDescriptor = currentChanDescriptor
       ?: return
 
-    val currentThread = chanThreadManager.getChanThread(threadDescriptor)
-      ?: return
+    when (chanDescriptor) {
+      is ChanDescriptor.ICatalogDescriptor -> {
+        normalLoad(
+          showLoading = true,
+          chanCacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache
+        )
+      }
+      is ChanDescriptor.ThreadDescriptor -> {
+        val currentThread = chanThreadManager.getChanThread(chanDescriptor)
+          ?: return
 
-    val canRequestMore = !currentThread.isArchived() && !currentThread.isDeleted()
-    if (canRequestMore) {
-      chanThreadTicker.resetEverythingAndKickTicker()
+        val canRequestMore = !currentThread.isArchived() && !currentThread.isDeleted()
+        if (canRequestMore) {
+          chanThreadTicker.resetEverythingAndKickTicker()
 
-      // put in a "request" for a page update whenever the next set of data comes in
-      forcePageUpdate = true
+          // put in a "request" for a page update whenever the next set of data comes in
+          forcePageUpdate = true
+        }
+      }
     }
 
     threadPresenterCallback?.showToolbar()

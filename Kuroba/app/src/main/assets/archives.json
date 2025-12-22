@@ -26,8 +26,8 @@
   "files": ["cm", "co", "ic", "sci", "tg", "vip", "y"],
   "search": ["cm", "co", "ic", "sci", "tg", "y"]
 }, {
-  "name": "arch.b4k.co",
-  "domain": "arch.b4k.co",
+  "name": "arch.b4k.dev",
+  "domain": "arch.b4k.dev",
   "boards": ["g", "mlp", "qb", "v", "vg", "vm", "vmg", "vp", "vrpg", "vst"],
   "files": ["qb", "v", "vg", "vm", "vmg", "vrpg", "vst"],
   "search": ["qb", "v", "vg", "vm", "vmg", "vrpg", "vst"]

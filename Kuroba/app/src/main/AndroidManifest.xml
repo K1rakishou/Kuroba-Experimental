@@ -133,8 +133,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 <data android:host="archiveofsins.com" />
                 <data android:host="www.archiveofsins.com" />
 
-                <data android:host="arch.b4k.co" />
-                <data android:host="www.arch.b4k.co" />
+                <data android:host="arch.b4k.dev" />
+                <data android:host="www.arch.b4k.dev" />
 
                 <data android:host="desuarchive.org" />
                 <data android:host="www.desuarchive.org" />

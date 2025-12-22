@@ -8,7 +8,7 @@ enum class ArchiveType(
     Warosu("warosu.org"),
     DesuArchive("desuarchive.org"),
     Fireden("boards.fireden.net"),
-    B4k("arch.b4k.co"),
+    B4k("arch.b4k.dev"),
     Bstats("archive.b-stats.org"),
     ArchivedMoe("archived.moe"),
     TheBarchive("thebarchive.com"),

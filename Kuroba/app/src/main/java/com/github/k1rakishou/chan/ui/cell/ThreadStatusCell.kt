@@ -157,17 +157,24 @@ class ThreadStatusCell(
       ?: return
 
     if (chanDescriptor.isCatalogDescriptor()) {
-      if (isClickable) {
-        isClickable = false
-      }
-
-      if (isFocusable) {
-        isFocusable = false
-      }
-
-      return
+      unschedule()
+      updateCatalogStatusCell(chanDescriptor, callback)
+    } else {
+      updateThreadStatusCell(chanDescriptor, callback)
     }
+  }
 
+  private suspend fun updateCatalogStatusCell(
+    chanDescriptor: ChanDescriptor,
+    callback: Callback?
+  ) {
+    statusCellText.text = getString(R.string.catalog_refresh_title)
+  }
+
+  private suspend fun updateThreadStatusCell(
+    chanDescriptor: ChanDescriptor,
+    callback: Callback?
+  ) {
     if (error != null) {
       statusCellText.text = buildString {
         appendLine(getString(R.string.thread_refresh_error_text_title))
