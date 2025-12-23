@@ -119,8 +119,6 @@ class OpenUrlInWebViewController(
     webSettings.useWideViewPort = true
     webSettings.loadWithOverviewMode = true
     webSettings.cacheMode = WebSettings.LOAD_DEFAULT
-    // TODO: do I really need to do this? Doesn't make sense, tbh
-    webSettings.userAgentString = appConstants.userAgentMightBeOverridden
 
     val siteRequestModifier = siteResolver.findSiteForUrl(urlToOpen)?.requestModifier()
     if (siteRequestModifier != null) {
