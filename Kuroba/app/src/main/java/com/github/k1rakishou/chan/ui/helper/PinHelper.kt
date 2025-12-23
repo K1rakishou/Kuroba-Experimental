@@ -4,16 +4,25 @@ object PinHelper {
 
   @JvmStatic
   fun getShortUnreadCount(value: Int): String {
-    if (value < 1000) {
-      return value.toString()
+    if (value < 0) {
+      return "???"
     }
 
-    val thousands = value.toFloat() / 1000f
-    if (thousands >= 1000f) {
-      return thousands.toString() + "kk"
+    val notations = "kmb"
+    var currentNotationIndex = -1
+    var valueLocal = value.toFloat()
+
+    while (valueLocal >= 1000f) {
+      valueLocal /= 1000f
+      ++currentNotationIndex
     }
 
-    return "%.${1}f".format(thousands) + "k"
+    if (currentNotationIndex < 0) {
+      return valueLocal.toInt().toString()
+    }
+
+    val notation = notations[currentNotationIndex]
+    return String.format("%.${1}f${notation}", valueLocal)
   }
 
 }
