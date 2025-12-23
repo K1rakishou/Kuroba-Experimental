@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.OutputTransformation
 import androidx.compose.material.ContentAlpha
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -19,9 +20,6 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.OffsetMapping
-import androidx.compose.ui.text.input.TransformedText
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.features.reply.ReplyLayoutViewModel
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutState
@@ -52,17 +50,14 @@ internal fun ReplyTextField(
 
   val disabledAlpha = ContentAlpha.disabled
 
-  // TODO: New reply layout. Implement this thing once it's supported.
-  val replyInputVisualTransformation = remember(key1 = chanTheme, key2 = replyLayoutEnabled, key3 = disabledAlpha) {
-    return@remember VisualTransformation { text ->
-      val spannedText = ReplyTextFieldHelpers.colorizeReplyInputText(
+  val replyInputOutputTransformation = remember(key1 = chanTheme, key2 = replyLayoutEnabled, key3 = disabledAlpha) {
+    return@remember OutputTransformation {
+      ReplyTextFieldHelpers.colorizeTextBufferReplyInputText(
         disabledAlpha = disabledAlpha,
-        text = text,
+        text = this,
         replyLayoutEnabled = replyLayoutEnabled,
         chanTheme = chanTheme
       )
-
-      return@VisualTransformation TransformedText(spannedText, OffsetMapping.Identity)
     }
   }
 
@@ -135,7 +130,7 @@ internal fun ReplyTextField(
       .then(heightModifier),
     enabled = replyLayoutEnabled,
     state = replyTextState,
-//    visualTransformation = replyInputVisualTransformation,
+    outputTransformation = replyInputOutputTransformation,
     keyboardOptions = KeyboardOptions(
       capitalization = KeyboardCapitalization.Sentences,
       autoCorrectEnabled = true,

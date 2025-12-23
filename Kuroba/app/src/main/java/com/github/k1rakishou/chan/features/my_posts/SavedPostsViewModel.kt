@@ -199,9 +199,9 @@ class SavedPostsViewModel(
         val comment = savedReply.comment
           ?.takeIf { comment -> comment.isNotBlank() }
           ?.let { comment ->
-            return@let ReplyTextFieldHelpers.colorizeReplyInputText(
+            return@let ReplyTextFieldHelpers.colorizeTextAsReplyInputText(
+              text = comment,
               disabledAlpha = 1f,
-              text = AnnotatedString(comment),
               replyLayoutEnabled = true,
               chanTheme = themeEngine.chanTheme
             )
