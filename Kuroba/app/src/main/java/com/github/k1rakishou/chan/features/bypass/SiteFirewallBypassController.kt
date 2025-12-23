@@ -185,7 +185,7 @@ class SiteFirewallBypassController(
     webSettings.useWideViewPort = true
     webSettings.loadWithOverviewMode = true
     webSettings.cacheMode = WebSettings.LOAD_DEFAULT
-    webSettings.userAgentString = appConstants.userAgent
+    webSettings.userAgentString = appConstants.userAgentMightBeOverridden
 
     val siteRequestModifier = siteResolver.findSiteForUrl(urlToOpen)?.requestModifier()
     if (siteRequestModifier != null) {

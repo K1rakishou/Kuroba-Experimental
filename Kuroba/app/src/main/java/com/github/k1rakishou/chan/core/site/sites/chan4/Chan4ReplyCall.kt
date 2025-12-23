@@ -44,7 +44,7 @@ import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
 import org.jsoup.nodes.TextNode
 import java.io.IOException
-import java.util.*
+import java.util.Objects
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -151,10 +151,10 @@ class Chan4ReplyCall(
     val replyUrl = site.endpoints().reply(replyChanDescriptor)
 
     requestBuilder.addHeader("Host", "sys.4chan.org")
-    requestBuilder.addHeader("User-Agent", appConstants.userAgent)
-    requestBuilder.addHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
-    requestBuilder.addHeader("Accept-Language", "en-US,en;q=0.5")
+    requestBuilder.addHeader("User-Agent", appConstants.userAgentMightBeOverridden)
     requestBuilder.addHeader("Accept-Encoding", "gzip")
+    requestBuilder.addHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7")
+    requestBuilder.addHeader("Accept-Language", "en-US,en;q=0.5")
     requestBuilder.addHeader("Content-Type", "multipart/form-data; boundary=${boundary}")
     requestBuilder.addHeader("Origin", "https://boards.4chan.org")
     requestBuilder.addHeader("Connection", "Keep-Alive")
@@ -162,7 +162,7 @@ class Chan4ReplyCall(
     requestBuilder.addHeader("Cookie", readCookies(replyUrl))
     requestBuilder.addHeader("Sec-Fetch-Dest", "document")
     requestBuilder.addHeader("Sec-Fetch-Mode", "navigate")
-    requestBuilder.addHeader("Sec-Fetch-Site", "same-site")
+    requestBuilder.addHeader("Sec-Fetch-Site", "none")
     requestBuilder.addHeader("Sec-Fetch-User", "?1")
 
     site.requestModifier().modifyHttpCall(this, requestBuilder)

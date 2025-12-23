@@ -244,7 +244,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     )
 
     // Preload user-agent on a background thread
-    applicationScope.launch(Dispatchers.IO) { appConstants.userAgent }
+    applicationScope.launch(Dispatchers.IO) { appConstants.userAgentMightBeOverridden }
 
     applicationMigrationManager.performMigration(this)
 
@@ -378,7 +378,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
 
     val bundle = Bundle()
       .apply {
-        putString(CrashReportActivity.USER_AGENT_KEY, appConstants.get().userAgent)
+        putString(CrashReportActivity.USER_AGENT_KEY, appConstants.get().userAgentMightBeOverridden)
         putString(CrashReportActivity.APP_LIFE_TIME_KEY, formatAppRunningTime())
       }
 

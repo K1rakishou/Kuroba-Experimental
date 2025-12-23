@@ -20,8 +20,8 @@ import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4CaptchaSettings
 import com.github.k1rakishou.chan.core.usecase.LoadChan4CaptchaUseCase
-import com.github.k1rakishou.chan.core.usecase.RefreshChan4CaptchaTicketUseCase
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.prefs.GsonJsonSetting
@@ -42,7 +42,6 @@ class Chan4CaptchaLayoutViewModel(
   private val savedStateHandle: SavedStateHandle,
   private val siteManager: SiteManager,
   private val loadChan4CaptchaUseCase: LoadChan4CaptchaUseCase,
-  private val refreshChan4CaptchaTicketUseCase: RefreshChan4CaptchaTicketUseCase,
   private val hapticFeedbackManager: HapticFeedbackManager
 ) : BaseViewModel() {
 
@@ -342,8 +341,6 @@ class Chan4CaptchaLayoutViewModel(
       val hasWideImages = images.any { image ->
         val bitmap = image.imageBitmap
         val aspectRatio = bitmap.width.toFloat() / bitmap.height.toFloat()
-        println("TTTAAA bitmap.width: ${bitmap.width}, bitmap.height: ${bitmap.height}")
-
         return@any aspectRatio > 1.5f
       }
 
@@ -381,18 +378,9 @@ class Chan4CaptchaLayoutViewModel(
     chanDescriptor: ChanDescriptor,
     ticket: String?
   ): Pair<LoadChan4CaptchaUseCase.CaptchaInfoRaw, String> {
-    val lastRefreshedCaptcha = refreshChan4CaptchaTicketUseCase.lastRefreshedCaptcha
-
-    if (lastRefreshedCaptcha != null && lastRefreshedCaptcha.chanDescriptor == chanDescriptor) {
-      Logger.debug(TAG) { "getCachedCaptchaOrLoadFresh(${chanDescriptor}) using cached captcha" }
-
-      val captchaInfoRaw = lastRefreshedCaptcha.captchaResult.captchaInfoRaw
-      val captchaInfoRawString = lastRefreshedCaptcha.captchaResult.captchaInfoRawString
-
-      return captchaInfoRaw to captchaInfoRawString
+    Logger.debug(TAG) {
+      "getCachedCaptchaOrLoadFresh(${chanDescriptor}, ${StringUtils.formatToken(ticket)}) requesting fresh captcha"
     }
-
-    Logger.debug(TAG) { "getCachedCaptchaOrLoadFresh(${chanDescriptor}) requesting fresh captcha" }
 
     val captchaResult = loadChan4CaptchaUseCase.await(
       chanDescriptor = chanDescriptor,
@@ -507,7 +495,6 @@ class Chan4CaptchaLayoutViewModel(
   class ViewModelFactory @Inject constructor(
     private val siteManager: SiteManager,
     private val loadChan4CaptchaUseCase: LoadChan4CaptchaUseCase,
-    private val refreshChan4CaptchaTicketUseCase: RefreshChan4CaptchaTicketUseCase,
     private val hapticFeedbackManager: HapticFeedbackManager
   ) : ViewModelAssistedFactory<Chan4CaptchaLayoutViewModel> {
     override fun create(handle: SavedStateHandle): Chan4CaptchaLayoutViewModel {
@@ -515,7 +502,6 @@ class Chan4CaptchaLayoutViewModel(
         savedStateHandle = handle,
         siteManager = siteManager,
         loadChan4CaptchaUseCase = loadChan4CaptchaUseCase,
-        refreshChan4CaptchaTicketUseCase = refreshChan4CaptchaTicketUseCase,
         hapticFeedbackManager = hapticFeedbackManager,
       )
     }

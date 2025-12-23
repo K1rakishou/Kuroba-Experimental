@@ -761,7 +761,7 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="setting_images_high_res">High resolution cells</string>
     <string name="setting_images_high_res_description">Make the album view and card catalog images higher resolution by pre-rescaling full size images (⚠ May become the reason of freezes while scrolling catalog/thread/album on old devices ⚠)</string>
     <string name="setting_custom_user_agent">Custom user agent</string>
-    <string name="setting_custom_user_agent_description">By default, currently installed WebView\'s user-agent is used for all requests (and for CloudFlare bypass). But it may not work in some situations. So if you experience problems with bypassing CloudFlare try changing this setting. Set it to empty string to use the WebView\'s user agent again.</string>
+    <string name="setting_custom_user_agent_description">By default, currently installed WebView\'s user-agent is used for all requests (and for CloudFlare bypass). But it may not work in some situations. So if you experience problems with bypassing CloudFlare try changing this setting. Set it to empty string to use the WebView\'s user agent again.\n\nCurrent WebView user agent:\n\'%1$s\'</string>
 
     <!-- Behavior general group -->
     <string name="settings_screen_behavior">Behavior</string>

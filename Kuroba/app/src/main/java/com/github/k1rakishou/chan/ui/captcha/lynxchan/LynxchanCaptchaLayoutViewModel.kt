@@ -163,7 +163,11 @@ class LynxchanCaptchaLayoutViewModel(
 
       val site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
       if (site != null) {
-        site.requestModifier().modifyCaptchaGetRequest(site = site, requestBuilder = requestBuilder)
+        site.requestModifier().modifyCaptchaGetRequest(
+          site = site,
+          requestBuilder = requestBuilder,
+          chanDescriptor = chanDescriptor
+        )
       }
 
       val response = proxiedOkHttpClient.okHttpClient().suspendCall(request = requestBuilder.build())
@@ -224,7 +228,11 @@ class LynxchanCaptchaLayoutViewModel(
 
         val site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
         if (site != null) {
-          site.requestModifier().modifyCaptchaGetRequest(site = site, requestBuilder = requestBuilder)
+          site.requestModifier().modifyCaptchaGetRequest(
+            site = site,
+            requestBuilder = requestBuilder,
+            chanDescriptor = chanDescriptor
+          )
         }
 
         val response = proxiedOkHttpClient.okHttpClient().suspendCall(request = requestBuilder.build())

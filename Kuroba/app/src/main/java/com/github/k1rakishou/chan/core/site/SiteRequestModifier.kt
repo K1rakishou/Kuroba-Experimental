@@ -68,7 +68,7 @@ abstract class SiteRequestModifier<T : Site>(
     site: T,
     requestBuilder: Request.Builder
   ) {
-    requestBuilder.addHeaderIfNotExists(userAgentHeaderKey, appConstants.userAgent)
+    requestBuilder.addHeaderIfNotExists(UserAgentHeaderKey, appConstants.userAgentMightBeOverridden)
     addCloudFlareCookie(requestBuilder)
   }
 
@@ -95,8 +95,8 @@ abstract class SiteRequestModifier<T : Site>(
     site: T,
     requestProperties: MutableMap<String, String>
   ) {
-    requestProperties.put(userAgentHeaderKey, appConstants.userAgent)
-    requestProperties.put(acceptEncodingHeaderKey, gzipHeaderValue)
+    requestProperties.put(UserAgentHeaderKey, appConstants.userAgentMightBeOverridden)
+    requestProperties.put(AcceptEncodingHeaderKey, AcceptEncodingHeaderValue)
   }
 
   @CallSuper
@@ -112,7 +112,7 @@ abstract class SiteRequestModifier<T : Site>(
   }
 
   @CallSuper
-  open fun modifyCaptchaGetRequest(site: T, requestBuilder: Request.Builder) {
+  open fun modifyCaptchaGetRequest(site: T, requestBuilder: Request.Builder, chanDescriptor: ChanDescriptor?) {
     requestBuilder.addDefaultHeaders(appConstants)
     addCloudFlareCookie(requestBuilder)
   }
@@ -164,13 +164,19 @@ abstract class SiteRequestModifier<T : Site>(
   companion object {
     private const val TAG = "SiteRequestModifier"
 
-    val userAgentHeaderKey = "User-Agent"
-    val acceptEncodingHeaderKey = "Accept-Encoding"
-    val gzipHeaderValue = "gzip"
+    const val UserAgentHeaderKey = "User-Agent"
+    const val AcceptLanagugeHeaderKey = "Accept-Language"
+    const val AcceptLanagugeHeaderValue = "en-US,en;q=0.5"
+    const val AcceptEncodingHeaderKey = "Accept-Encoding"
+    const val AcceptEncodingHeaderValue = "gzip"
+    const val AcceptHeaderKey = "Accept"
+    const val AcceptHeaderValue = "application/json"
 
     fun Request.Builder.addDefaultHeaders(appConstants: AppConstants): Request.Builder {
-      this.addHeaderIfNotExists(userAgentHeaderKey, appConstants.userAgent)
-      this.addHeaderIfNotExists(acceptEncodingHeaderKey, gzipHeaderValue)
+      this.addHeaderIfNotExists(UserAgentHeaderKey, appConstants.userAgentMightBeOverridden)
+      this.addHeaderIfNotExists(AcceptLanagugeHeaderKey, AcceptLanagugeHeaderValue)
+      this.addHeaderIfNotExists(AcceptEncodingHeaderKey, AcceptEncodingHeaderValue)
+      this.addHeaderIfNotExists(AcceptHeaderKey, AcceptHeaderValue)
 
       return this
     }

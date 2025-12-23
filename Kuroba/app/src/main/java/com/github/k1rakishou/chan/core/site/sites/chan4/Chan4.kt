@@ -492,8 +492,9 @@ open class Chan4 : SiteBase() {
 
     override fun clearPostingCookies() {
       chan4CaptchaCookie.setSync("")
-      cloudFlareClearanceCookieMap.clear()
-      chan4CaptchaSettings.update(sync = false) { chan4CaptchaSetting ->
+      // TODO: this will clear cloudflare cookies for all sites, which is incorrect. Let's leave it like this for now.
+//      cloudFlareClearanceCookieMap.clear()
+      chan4CaptchaSettings.update(sync = true) { chan4CaptchaSetting ->
         chan4CaptchaSetting.copy(captchaTicket = null)
       }
     }
@@ -674,8 +675,8 @@ open class Chan4 : SiteBase() {
       Logger.d(TAG, "modifyWebView() full cookie: ${cookieManager.getCookie(domain)}")
     }
 
-    override fun modifyCaptchaGetRequest(site: Chan4, requestBuilder: Request.Builder) {
-      super.modifyCaptchaGetRequest(site, requestBuilder)
+    override fun modifyCaptchaGetRequest(site: Chan4, requestBuilder: Request.Builder, chanDescriptor: ChanDescriptor?) {
+      super.modifyCaptchaGetRequest(site, requestBuilder, chanDescriptor)
 
       addChan4CookieHeader(site, requestBuilder)
     }

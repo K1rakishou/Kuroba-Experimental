@@ -4,6 +4,7 @@ import com.github.k1rakishou.chan.core.site.SiteRequestModifier
 import com.github.k1rakishou.chan.core.site.http.HttpCall
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.addOrReplaceCookieHeader
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import okhttp3.Request
 
 open class LynxchanRequestModifier(
@@ -17,8 +18,12 @@ open class LynxchanRequestModifier(
     addCookies(requestBuilder)
   }
 
-  override fun modifyCaptchaGetRequest(site: LynxchanSite, requestBuilder: Request.Builder) {
-    super.modifyCaptchaGetRequest(site, requestBuilder)
+  override fun modifyCaptchaGetRequest(
+    site: LynxchanSite,
+    requestBuilder: Request.Builder,
+    chanDescriptor: ChanDescriptor?
+  ) {
+    super.modifyCaptchaGetRequest(site, requestBuilder, chanDescriptor)
 
     addCookies(requestBuilder)
   }

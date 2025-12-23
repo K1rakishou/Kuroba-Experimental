@@ -489,11 +489,11 @@ class Dvach : CommonSite() {
 
       // For 2ch.hk we want to use our custom user-agent because when using the WebView's one the
       // videos do not load with 403 status.
-      requestProperties.put(userAgentHeaderKey, appConstants.kurobaExCustomUserAgent)
+      requestProperties.put(UserAgentHeaderKey, appConstants.kurobaExCustomUserAgent)
     }
 
-    override fun modifyCaptchaGetRequest(site: Dvach, requestBuilder: Request.Builder) {
-      super.modifyCaptchaGetRequest(site, requestBuilder)
+    override fun modifyCaptchaGetRequest(site: Dvach, requestBuilder: Request.Builder, chanDescriptor: ChanDescriptor?) {
+      super.modifyCaptchaGetRequest(site, requestBuilder, chanDescriptor)
 
       addAntiSpamCookie(requestBuilder)
       addUserCodeCookie(site, requestBuilder)

@@ -9,9 +9,11 @@ import com.github.k1rakishou.chan.features.settings.SettingsGroup
 import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.InputSettingV2
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
+import com.github.k1rakishou.common.AppConstants
 
 class ExperimentalSettingsScreen(
   context: Context,
+  private val appConstants: AppConstants,
 ) : BaseSettingsScreen(
   context,
   ExperimentalScreen,
@@ -112,7 +114,12 @@ class ExperimentalSettingsScreen(
                 appendLine()
               }
 
-              append(getString(R.string.setting_custom_user_agent_description))
+              append(
+                getString(
+                  R.string.setting_custom_user_agent_description,
+                  appConstants.actualWebViewUserAgent(context)
+                )
+              )
             }
           },
           setting = ChanSettings.customUserAgent,

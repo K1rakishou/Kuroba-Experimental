@@ -29,27 +29,32 @@ open class AppConstants(
   val filterWatchWorkUniqueTag = "FilterWatcherController_${flavorType.name}"
   val threadDownloadWorkUniqueTag = "ThreadDownloadController_${flavorType.name}"
 
-  val userAgent by lazy {
+  val userAgentMightBeOverridden by lazy {
     val overriddenUserAgent = overrideUserAgent()
     if (overriddenUserAgent.isNotBlank()) {
       Logger.d(TAG, "userAgent() Using overridden user agent: \'${overriddenUserAgent}\'")
       return@lazy overriddenUserAgent
     }
 
+    return@lazy actualWebViewUserAgent(context)
+  }
+
+  fun actualWebViewUserAgent(context: Context): String {
     try {
-      // TODO: cache this value in sharedprefs. For some reason, sometimes, when accessing this thing it deadlocks.
-      //  Not sure if it only happens on an emulator (emulator bug or whatever).
-
-      Logger.d(TAG, "userAgent() WebSettings.getDefaultUserAgent() start...")
+      Logger.d(TAG, "actualWebViewUserAgent() WebSettings.getDefaultUserAgent() start...")
       val webViewUserAgent = WebSettings.getDefaultUserAgent(context)
-      Logger.d(TAG, "userAgent() WebSettings.getDefaultUserAgent() end. Using default WebView user agent: '${webViewUserAgent}'")
+      Logger.d(TAG, "actualWebViewUserAgent() WebSettings.getDefaultUserAgent() end. Got WebView user agent: '${webViewUserAgent}'")
 
-      return@lazy webViewUserAgent
+      return webViewUserAgent
     } catch (error: Throwable) {
       // Who knows what may happen if the user deletes webview from the system so just in case
       // switch to a default user agent in case of a crash
-      Logger.e(TAG, "userAgent() WebSettings.getDefaultUserAgent() error", error)
-      return@lazy String.format(USER_AGENT_FORMAT, Build.VERSION.RELEASE, Build.MODEL)
+      Logger.error(TAG, error) {
+        "actualWebViewUserAgent() error! Using a fallback user agent. " +
+          "This will most likely make the captcha harder and will prevent you from posting on some websites. " +
+          "If you see this then check that you have a webview installed."
+      }
+      return String.format(USER_AGENT_FORMAT, Build.VERSION.RELEASE, Build.MODEL)
     }
   }
 
@@ -219,7 +224,7 @@ open class AppConstants(
     private const val MAX_POSTS_CACHE_COUNT = 16000L
 
     private const val USER_AGENT_FORMAT =
-      "Mozilla/5.0 (Linux; Android %s; %s) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.127 Mobile Safari/537.36"
+      "Mozilla/5.0 (Linux; Android %s; %s; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/133.0.6943.137 Mobile Safari/537.36"
 
     private const val PROXIES_FILE_NAME = "kuroba_proxies.json"
     private const val THIRD_EYE_SETTINGS_FILE_NAME = "third_eye_settings.json"

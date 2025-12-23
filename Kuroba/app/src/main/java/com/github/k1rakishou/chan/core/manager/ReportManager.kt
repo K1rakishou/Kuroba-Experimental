@@ -125,7 +125,7 @@ class ReportManager(
   fun getReportFooter(context: Context): String {
     val appRunningTime = (((appContext as? Chan)?.appRunningTime) ?: -1L).toString()
 
-    return getReportFooter(context, appRunningTime, appConstants.userAgent)
+    return getReportFooter(context, appRunningTime, appConstants.userAgentMightBeOverridden)
   }
 
   fun getReportFooter(context: Context, appRunningTime: String, userAgent: String): String {

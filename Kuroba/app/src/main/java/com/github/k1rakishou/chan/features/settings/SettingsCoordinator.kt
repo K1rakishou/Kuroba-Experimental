@@ -65,7 +65,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.withContext
-import java.util.*
+import java.util.Stack
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -178,7 +178,7 @@ class SettingsCoordinator(
   }
 
   private val experimentalSettingsScreen by lazy {
-    ExperimentalSettingsScreen(context)
+    ExperimentalSettingsScreen(context, appConstants)
   }
 
   private val developerSettingsScreen by lazy {

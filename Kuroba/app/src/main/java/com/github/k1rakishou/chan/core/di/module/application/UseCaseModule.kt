@@ -45,7 +45,6 @@ import com.github.k1rakishou.chan.core.usecase.KurobaSettingsImportUseCase
 import com.github.k1rakishou.chan.core.usecase.LoadBoardFlagsUseCase
 import com.github.k1rakishou.chan.core.usecase.LoadChan4CaptchaUseCase
 import com.github.k1rakishou.chan.core.usecase.ParsePostRepliesUseCase
-import com.github.k1rakishou.chan.core.usecase.RefreshChan4CaptchaTicketUseCase
 import com.github.k1rakishou.chan.core.usecase.SearxImageSearchUseCase
 import com.github.k1rakishou.chan.core.usecase.ThreadDataPreloader
 import com.github.k1rakishou.chan.core.usecase.ThreadDownloaderPersistPostsInDatabaseUseCase
@@ -533,16 +532,6 @@ class UseCaseModule {
   ): LoadChan4CaptchaUseCase {
     deps("LoadChan4CaptchaUseCase")
     return LoadChan4CaptchaUseCase(moshi, siteManager, proxiedOkHttpClient)
-  }
-
-  @Provides
-  @Singleton
-  fun provideRefreshChan4CaptchaTicketUseCase(
-    siteManager: SiteManager,
-    loadChan4CaptchaUseCase: LoadChan4CaptchaUseCase
-  ): RefreshChan4CaptchaTicketUseCase {
-    deps("RefreshChan4CaptchaTicketUseCase")
-    return RefreshChan4CaptchaTicketUseCase(siteManager, loadChan4CaptchaUseCase)
   }
 
   @Provides

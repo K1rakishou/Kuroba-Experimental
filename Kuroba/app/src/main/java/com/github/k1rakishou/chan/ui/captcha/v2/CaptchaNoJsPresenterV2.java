@@ -131,7 +131,7 @@ public class CaptchaNoJsPresenterV2 {
                     Request request = new Request.Builder().url(recaptchaUrl)
                             .post(body)
                             .header("Referer", recaptchaUrl)
-                            .header("User-Agent", appConstants.getUserAgent())
+                            .header("User-Agent", appConstants.getUserAgentMightBeOverridden())
                             .header("Accept", acceptHeader)
                             .header("Accept-Encoding", acceptEncodingHeader)
                             .header("Accept-Language", acceptLanguageHeader)
@@ -231,7 +231,7 @@ public class CaptchaNoJsPresenterV2 {
 
         Request request = new Request.Builder().url(recaptchaUrl)
                 .header("Referer", baseUrl)
-                .header("User-Agent", appConstants.getUserAgent())
+                .header("User-Agent", appConstants.getUserAgentMightBeOverridden())
                 .header("Accept", acceptHeader)
                 .header("Accept-Encoding", acceptEncodingHeader)
                 .header("Accept-Language", acceptLanguageHeader)

@@ -44,10 +44,7 @@ import com.github.k1rakishou.chan.core.site.http.DeleteRequest
 import com.github.k1rakishou.chan.core.site.http.report.PostReportData
 import com.github.k1rakishou.chan.core.site.http.report.PostReportResult
 import com.github.k1rakishou.chan.core.site.loader.ChanLoaderException
-import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
 import com.github.k1rakishou.chan.core.site.loader.UnknownClientException
-import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
-import com.github.k1rakishou.chan.core.usecase.RefreshChan4CaptchaTicketUseCase
 import com.github.k1rakishou.chan.features.drawer.data.NavigationHistoryEntry
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerGoToPostHelper
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter.PostAdapterCallback
@@ -150,7 +147,6 @@ class ThreadPresenter @Inject constructor(
   private val currentOpenedDescriptorStateManagerLazy: Lazy<CurrentOpenedDescriptorStateManager>,
   private val chanCatalogSnapshotCacheLazy: Lazy<ChanCatalogSnapshotCache>,
   private val compositeCatalogManagerLazy: Lazy<CompositeCatalogManager>,
-  private val refreshChan4CaptchaTicketUseCaseLazy: Lazy<RefreshChan4CaptchaTicketUseCase>,
   private val revealedSpoilerImagesManagerLazy: Lazy<RevealedSpoilerImagesManager>
 ) : PostAdapterCallback,
   PostCellCallback,
@@ -210,8 +206,6 @@ class ThreadPresenter @Inject constructor(
     get() = compositeCatalogManagerLazy.get()
   private val mediaViewerGoToPostHelper: MediaViewerGoToPostHelper
     get() = mediaViewerGoToPostHelperLazy.get()
-  private val refreshChan4CaptchaTicketUseCase: RefreshChan4CaptchaTicketUseCase
-    get() = refreshChan4CaptchaTicketUseCaseLazy.get()
   private val revealedSpoilerImagesManager: RevealedSpoilerImagesManager
     get() = revealedSpoilerImagesManagerLazy.get()
 
@@ -304,7 +298,6 @@ class ThreadPresenter @Inject constructor(
   private val alreadyCreatedNavElement = AtomicBoolean(false)
   private var currentNormalLoadThreadJob: Job? = null
   private var currentFullLoadThreadJob: Job? = null
-  private var refreshChan4CaptchaTicketJob: Job? = null
 
   var chanThreadLoadingState = ChanThreadLoadingState.Uninitialized
     private set
@@ -458,17 +451,6 @@ class ThreadPresenter @Inject constructor(
 
     Logger.d(TAG, "chanThreadTicker.startTicker($chanDescriptor)")
     chanThreadTicker.startTicker(chanDescriptor)
-
-    if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
-      refreshChan4CaptchaTicketJob?.cancel()
-      refreshChan4CaptchaTicketJob = launch {
-        siteManager.awaitUntilInitialized()
-
-        if (siteManager.isSiteActive(Chan4.SITE_DESCRIPTOR)) {
-          refreshChan4CaptchaTicketUseCase.await(chanDescriptor)
-        }
-      }
-    }
   }
 
   fun unbindChanDescriptor(isDestroying: Boolean) {

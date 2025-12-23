@@ -77,7 +77,7 @@ class LoadChan4CaptchaUseCase(
       .get()
 
     siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())?.let { chan4 ->
-      chan4.requestModifier().modifyCaptchaGetRequest(chan4, requestBuilder)
+      chan4.requestModifier().modifyCaptchaGetRequest(chan4, requestBuilder, chanDescriptor)
     }
 
     val request = requestBuilder.build()
@@ -137,6 +137,32 @@ class LoadChan4CaptchaUseCase(
     val chan4CaptchaSettingsSetting = siteManager.bySiteDescriptor(Chan4.SITE_DESCRIPTOR)
       ?.getSettingBySettingId<GsonJsonSetting<Chan4CaptchaSettings>>(SiteSetting.SiteSettingId.Chan4CaptchaSettings)
       ?: return
+
+    if (captchaResult.captchaInfoRaw.ticketNeedsToBeRemoved) {
+      Logger.debug(TAG) {
+        "updateCaptchaTicket($chanDescriptor) ticket is false which means it needs to be removed. " +
+          "Actual ticket value: '${captchaResult.captchaInfoRaw.ticket}'"
+      }
+
+      var previousTicket: String? = null
+
+      chan4CaptchaSettingsSetting.update(sync = true) { chan4CaptchaSettings ->
+        previousTicket = chan4CaptchaSettings.captchaTicket
+
+        chan4CaptchaSettings.copy(
+          captchaTicket = null,
+          lastRefreshTime = 0L
+        )
+      }
+
+      if (previousTicket.isNullOrEmpty()) {
+        Logger.debug(TAG) { "updateCaptchaTicket($chanDescriptor) ticket was already removed" }
+      } else {
+        Logger.debug(TAG) { "updateCaptchaTicket($chanDescriptor) removed ticket '${previousTicket}'" }
+      }
+
+      return
+    }
 
     val newTicket = captchaResult.captchaInfoRaw.ticketAsString
     if (newTicket.isNullOrBlank()) {
@@ -269,6 +295,8 @@ class LoadChan4CaptchaUseCase(
 
     val ticketAsString: String?
       get() = ticket as? String
+    val ticketNeedsToBeRemoved: Boolean
+      get() = (ticket as? Boolean) == false
 
     fun ttlMillis(): Int {
       return ttlSeconds() * 1000
