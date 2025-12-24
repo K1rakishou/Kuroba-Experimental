@@ -97,13 +97,15 @@ fun ReplyLayoutBottomSheet(
         ReplyLayoutAnimationState.Expanded to minPositionY
       )
     }
-    val anchorsUpdated = rememberUpdatedState(newValue = anchors)
 
     var currentReplyLayoutAnimationState by remember { mutableStateOf<ReplyLayoutAnimationState>(replyLayoutAnimationState) }
     val dragStartPositionY = remember { mutableIntStateOf(0) }
     val lastDragPosition = remember { mutableIntStateOf(0) }
     val isCurrentlyDragging = remember { mutableStateOf(false) }
     val performingFlingAnimation = remember { mutableStateOf(false) }
+
+    val anchorsUpdated = rememberUpdatedState(newValue = anchors)
+    val currentReplyLayoutAnimationStateUpdated = rememberUpdatedState(newValue = currentReplyLayoutAnimationState)
 
     val dragOffsetAnimatable = remember {
       Animatable(
@@ -141,7 +143,7 @@ fun ReplyLayoutBottomSheet(
           flow2 = snapshotFlow { anchorsUpdated.value },
           transform = { t1, t2 -> Pair(t1, t2) }
         ).collect { (replyLayoutAnimationState, anchors) ->
-          if (replyLayoutAnimationState == currentReplyLayoutAnimationState && anchors == prevAnchors) {
+          if (replyLayoutAnimationState == currentReplyLayoutAnimationStateUpdated.value && anchors == prevAnchors) {
             return@collect
           }
 
@@ -161,13 +163,13 @@ fun ReplyLayoutBottomSheet(
           val target = anchors[newReplyLayoutAnimationState]
             ?: return@collect
 
-          dragRequests.emit(DragRequest.Animate(newReplyLayoutAnimationState, target))
           currentReplyLayoutAnimationState = newReplyLayoutAnimationState
-
           if (anchors != prevAnchors) {
             prevAnchors.clear()
             prevAnchors.putAll(anchors)
           }
+
+          dragRequests.emit(DragRequest.Animate(newReplyLayoutAnimationState, target))
         }
       }
     )

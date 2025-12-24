@@ -431,7 +431,7 @@ class ReplyLayoutState(
 
   fun expandReplyLayout() {
     if (_replyLayoutAnimationState.value != ReplyLayoutAnimationState.Expanding) {
-      _replyLayoutAnimationState.value = ReplyLayoutAnimationState.Expanded
+      _replyLayoutAnimationState.value = ReplyLayoutAnimationState.Expanding
     }
   }
 

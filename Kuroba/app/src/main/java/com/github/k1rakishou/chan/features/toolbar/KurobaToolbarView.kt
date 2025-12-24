@@ -101,8 +101,7 @@ class KurobaToolbarView @JvmOverloads constructor(
         globalUiStateHolder.toolbar.currentToolbarStates,
         currentOpenedDescriptorStateManager.currentFocusedControllers,
         controller.topControllerState.flatMapLatest { controller -> mapTopControllerIntoKeys(controller) }
-      ) { _, _, replyLayoutVisibilityStates, isDraggingFastScroller, scrollProgress,
-          currentToolbarStates, currentFocusedControllers, topControllerKeys ->
+      ) { _, _, replyLayoutVisibilityStates, isDraggingFastScroller, scrollProgress, currentToolbarStates, currentFocusedControllers, topControllerKeys ->
         return@combineMany ToolbarVisibilityState(
           replyLayoutVisibilityStates = replyLayoutVisibilityStates,
           isDraggingFastScroller = isDraggingFastScroller,
