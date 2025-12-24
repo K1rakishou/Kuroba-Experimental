@@ -948,7 +948,7 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="setting_update_colors_for_text_selection_cursor">Colorize text selection cursors</string>
     <string name="setting_update_colors_for_text_selection_cursor_description">Some devices behave weirdly when text selection cursor colors are changed (for example on some xiaomi devices they become stretched vertically). Disabling this setting will make the text selection cursor use the default theme\'s color (which is gray)</string>
     <string name="setting_only_remove_expired_webview_cookies">Only remove expired WebView cookies</string>
-    <string name="setting_only_remove_expired_webview_cookies_description">Previously, whenever you had to do a CloudFlare (or a similar) WebView challenge, all stored WebView cookies would be removed. This, potentially, could be the cause of 4chan always showing the hardest captcha. Now, you can try disabling the old behavior. The new behavior will only remove the expired cookies (Which the WebViews already do by default).</string>
+    <string name="setting_only_remove_expired_webview_cookies_description">Previously, whenever you had to do a CloudFlare (or a similar) WebView challenge, all stored WebView cookies would be removed. This, potentially, could be the cause of 4chan always showing the hardest captcha. Now, you can try disabling the old behavior. The new behavior will only remove the expired cookies (Which the WebViews already do by default). This can also make it harder to ban away, as the cookies will be cached until they expire.</string>
 
     <!-- Import/Export settings -->
     <string name="import_or_export_settings">Import/Export application backup</string>
