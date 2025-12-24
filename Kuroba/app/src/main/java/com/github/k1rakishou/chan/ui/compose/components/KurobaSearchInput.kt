@@ -25,6 +25,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.ui.compose.clearFocusOnKeyboardDismiss
 import com.github.k1rakishou.chan.ui.compose.clearText
 import com.github.k1rakishou.chan.ui.compose.forEachTextValue
 import com.github.k1rakishou.chan.ui.compose.ktu
@@ -96,6 +97,7 @@ fun KurobaSearchInput(
           contentAlignment = Alignment.CenterStart
         ) {
           TextFieldWithHint(
+            modifier = Modifier.clearFocusOnKeyboardDismiss(),
             isSearchQueryEmpty = isSearchQueryEmpty,
             chanTheme = chanTheme,
             searchQueryState = searchQueryState,
@@ -110,6 +112,7 @@ fun KurobaSearchInput(
 
 @Composable
 private fun TextFieldWithHint(
+  modifier: Modifier = Modifier,
   isSearchQueryEmpty: Boolean,
   chanTheme: ChanTheme,
   searchQueryState: TextFieldState,
@@ -117,9 +120,11 @@ private fun TextFieldWithHint(
   interactionSource: MutableInteractionSource
 ) {
   KurobaComposeTextFieldV2(
-    modifier = Modifier
-      .wrapContentHeight()
-      .fillMaxWidth(),
+    modifier = modifier.then(
+      Modifier
+        .wrapContentHeight()
+        .fillMaxWidth()
+    ),
     state = searchQueryState,
     fontSize = 16.ktu,
     textStyle = remember(key1 = textColor) { TextStyle.Default.copy(color = textColor) },

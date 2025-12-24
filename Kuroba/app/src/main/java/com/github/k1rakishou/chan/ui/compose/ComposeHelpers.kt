@@ -9,6 +9,7 @@ import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -16,13 +17,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.onFocusEvent
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.Measurable
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.activityDependencies
 import com.github.k1rakishou.core_logger.Logger
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
@@ -149,4 +154,32 @@ suspend fun TextFieldState.forEachTextValue(block: (CharSequence) -> Unit): Noth
     .collectLatest { text -> block(text) }
 
   error("forEachTextValue doesn't return normally")
+}
+
+@Stable
+fun Modifier.clearFocusOnKeyboardDismiss(): Modifier = composed {
+  var isFocused by remember { mutableStateOf(false) }
+  var keyboardAppearedSinceLastFocused by remember { mutableStateOf(false) }
+
+  if (isFocused) {
+    val imeIsVisible = activityDependencies().globalWindowInsetsManager.isKeyboardOpened
+    val focusManager = LocalFocusManager.current
+
+    LaunchedEffect(imeIsVisible) {
+      if (imeIsVisible) {
+        keyboardAppearedSinceLastFocused = true
+      } else if (keyboardAppearedSinceLastFocused) {
+        focusManager.clearFocus()
+      }
+    }
+  }
+
+  onFocusEvent { focusState ->
+    if (isFocused != focusState.isFocused) {
+      isFocused = focusState.isFocused
+      if (isFocused) {
+        keyboardAppearedSinceLastFocused = false
+      }
+    }
+  }
 }

@@ -106,18 +106,20 @@ fun KurobaComposeTextFieldV2(
 
     BasicTextField(
       state = state,
-      modifier = modifier
-        .background(backgroundColor, shape)
-        .animatedHorizontalLine(
-          enabled = enabled,
-          isError = false,
-          isFocused = isFocused,
-          lineWidth = 2.dp
-        )
-        .defaultMinSize(
-          minWidth = KurobaComposeDefaults.TextField.MinWidth,
-          minHeight = KurobaComposeDefaults.TextField.MinHeight
-        ),
+      modifier = modifier.then(
+        Modifier
+          .background(backgroundColor, shape)
+          .animatedHorizontalLine(
+            enabled = enabled,
+            isError = false,
+            isFocused = isFocused,
+            lineWidth = 2.dp
+          )
+          .defaultMinSize(
+            minWidth = KurobaComposeDefaults.TextField.MinWidth,
+            minHeight = KurobaComposeDefaults.TextField.MinHeight
+          )
+      ),
       enabled = enabled,
       readOnly = readOnly,
       inputTransformation = inputTransformation,
