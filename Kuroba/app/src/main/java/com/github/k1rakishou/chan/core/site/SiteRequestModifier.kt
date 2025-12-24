@@ -1,19 +1,3 @@
-/*
- * KurobaEx - *chan browser https://github.com/K1rakishou/Kuroba-Experimental/
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 package com.github.k1rakishou.chan.core.site
 
 import android.webkit.WebView
@@ -28,6 +12,7 @@ import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.prefs.MapSetting
+import okhttp3.HttpUrl
 import okhttp3.Request
 
 abstract class SiteRequestModifier<T : Site>(
@@ -93,10 +78,12 @@ abstract class SiteRequestModifier<T : Site>(
   @CallSuper
   open fun modifyVideoStreamRequest(
     site: T,
-    requestProperties: MutableMap<String, String>
+    requestProperties: MutableMap<String, String>,
+    url: HttpUrl
   ) {
     requestProperties.put(UserAgentHeaderKey, appConstants.userAgentMightBeOverridden)
     requestProperties.put(AcceptEncodingHeaderKey, AcceptEncodingHeaderValue)
+    requestProperties.put(AcceptLanagugeHeaderKey, AcceptLanagugeHeaderValue)
   }
 
   @CallSuper

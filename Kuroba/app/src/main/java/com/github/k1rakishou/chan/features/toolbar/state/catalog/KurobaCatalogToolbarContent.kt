@@ -116,7 +116,7 @@ fun KurobaCatalogToolbarContent(
           ToolbarClickableIcon(
             toolbarMenuItem = rightIcon,
             chanTheme = chanTheme,
-            enabled = toolbarContentState.isLoaded,
+            enabled = rightIcon.forceEnabled || toolbarContentState.isLoaded,
             onClick = {
               val iconClickInterceptor = state.iconClickInterceptor
 

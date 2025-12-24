@@ -18,10 +18,12 @@ class ToolbarMenuBuilder {
   fun withMenuItem(
     id: Int? = null,
     @DrawableRes drawableId: Int,
+    forceEnabled: Boolean = false,
     onClick: (ToolbarMenuItem) -> Unit
   ): ToolbarMenuBuilder {
     val toolbarMenuItem = ToolbarMenuItem(
       id = id,
+      forceEnabled = forceEnabled,
       drawableId = drawableId,
       onClick = onClick
     )

@@ -451,25 +451,12 @@ class Dvach : CommonSite() {
 
     override fun modifyVideoStreamRequest(
       site: Dvach,
-      requestProperties: MutableMap<String, String>
+      requestProperties: MutableMap<String, String>,
+      url: HttpUrl
     ) {
-      super.modifyVideoStreamRequest(site, requestProperties)
+      super.modifyVideoStreamRequest(site, requestProperties, url)
 
       val fullCookie = buildString {
-        val userCodeCookie = site.userCodeCookie.get()
-        if (userCodeCookie.isNotEmpty()) {
-          append("${USER_CODE_COOKIE_KEY}=${userCodeCookie}")
-        }
-
-        val antiSpamCookie = site.antiSpamCookie.get()
-        if (antiSpamCookie.isNotEmpty()) {
-          if (isNotEmpty()) {
-            append("; ")
-          }
-
-          append(antiSpamCookie)
-        }
-
         site.getSettingBySettingId<MapSetting>(SiteSetting.SiteSettingId.CloudFlareClearanceCookie)
           ?.get()
           ?.let { cookiesMap ->
@@ -483,6 +470,24 @@ class Dvach : CommonSite() {
               append(cookieForDomain)
             }
           }
+
+        val userCodeCookie = site.userCodeCookie.get()
+        if (userCodeCookie.isNotEmpty()) {
+          if (isNotEmpty()) {
+            append("; ")
+          }
+
+          append("${USER_CODE_COOKIE_KEY}=${userCodeCookie}")
+        }
+
+        val antiSpamCookie = site.antiSpamCookie.get()
+        if (antiSpamCookie.isNotEmpty()) {
+          if (isNotEmpty()) {
+            append("; ")
+          }
+
+          append(antiSpamCookie)
+        }
       }
 
       requestProperties.put("Cookie", fullCookie)
@@ -620,6 +625,7 @@ class Dvach : CommonSite() {
       val dvachEndpoints = endpoints() as DvachEndpoints
 
       return DvachBoardsRequest(
+        dvach = this@Dvach,
         siteDescriptor = siteDescriptor(),
         boardManager = boardManager,
         proxiedOkHttpClient = proxiedOkHttpClient,
@@ -627,7 +633,6 @@ class Dvach : CommonSite() {
       ).execute()
     }
 
-    @Suppress("MoveVariableDeclarationIntoWhen")
     override suspend fun <T : AbstractLoginRequest> login(loginRequest: T): SiteActions.LoginResult {
       val dvachLoginRequest = loginRequest as DvachLoginRequest
       passCode.set(dvachLoginRequest.passcode)
@@ -638,8 +643,7 @@ class Dvach : CommonSite() {
 
       when (loginResult) {
         is HttpCall.HttpCallResult.Success -> {
-          val loginResponse =
-            requireNotNull(loginResult.httpCall.loginResponse) { "loginResponse is null" }
+          val loginResponse = requireNotNull(loginResult.httpCall.loginResponse) { "loginResponse is null" }
 
           return when (loginResponse) {
             is DvachLoginResponse.Success -> {
@@ -899,7 +903,7 @@ class Dvach : CommonSite() {
 
   companion object {
     private const val TAG = "Dvach"
-    private val DEFAULT_DOMAIN = "https://2ch.hk".toHttpUrl()
+    private val DEFAULT_DOMAIN = "https://2ch.life".toHttpUrl()
 
     const val SITE_NAME = "2ch.hk"
 

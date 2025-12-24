@@ -28,6 +28,7 @@ data class ToolbarMenu(
 open class ToolbarMenuItem(
   val id: Int? = null,
   drawableId: Int,
+  val forceEnabled: Boolean = false,
   visible: Boolean = true,
   val onClick: (ToolbarMenuItem) -> Unit
 ) {

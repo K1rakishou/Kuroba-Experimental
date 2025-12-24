@@ -64,7 +64,7 @@ class DvachAntiSpamCheckBypassWebClient(
   ) {
     super.onReceivedError(view, errorCode, description, failingUrl)
 
-    val error = description ?: "Unknown error while trying to load 2ch.hk page"
+    val error = description ?: "Unknown error while trying to load 2ch.life page"
     fail(BypassException(error))
   }
 

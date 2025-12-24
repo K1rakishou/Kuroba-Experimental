@@ -855,6 +855,15 @@ class MediaViewerController(
   }
 
   private fun createRequestProperties(viewableMediaList: List<ViewableMedia>): Map<String, String> {
+    if (viewableMediaList.isEmpty()) {
+      return emptyMap()
+    }
+
+    val remoteMediaLocation = viewableMediaList
+      .firstOrNull { media -> media.mediaLocation is MediaLocation.Remote }
+      ?.mediaLocation as? MediaLocation.Remote
+      ?: return emptyMap()
+
     val siteDescriptors = hashSetOf<SiteDescriptor>()
 
     viewableMediaList.forEach { viewableMedia ->
@@ -873,7 +882,7 @@ class MediaViewerController(
     siteDescriptors.forEach { siteDescriptor ->
       val site = siteManager.bySiteDescriptor(siteDescriptor)
       if (site != null) {
-        site.requestModifier().modifyVideoStreamRequest(site, requestProps)
+        site.requestModifier().modifyVideoStreamRequest(site, requestProps, remoteMediaLocation.url)
       }
     }
 

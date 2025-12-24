@@ -21,6 +21,7 @@ import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
 
 class DvachBoardsRequest internal constructor(
+  private val dvach: Dvach,
   private val siteDescriptor: SiteDescriptor,
   private val boardManager: BoardManager,
   private val proxiedOkHttpClient: RealProxiedOkHttpClient,
@@ -43,6 +44,7 @@ class DvachBoardsRequest internal constructor(
     val request = Request.Builder()
       .url(url)
       .get()
+      .also { requestBuilder -> dvach.requestModifier().modifyBoardsGetRequest(requestBuilder) }
       .build()
 
     val response = proxiedOkHttpClient.okHttpClient().suspendCall(request)
@@ -55,7 +57,7 @@ class DvachBoardsRequest internal constructor(
     }
 
     try {
-      return response.body!!.use { body ->
+      return response.body.use { body ->
         return@use body.byteStream().use { inputStream ->
           return@use JsonReader(InputStreamReader(inputStream, StandardCharsets.UTF_8)).use { jsonReader ->
             return@use readJsonFunc(jsonReader)

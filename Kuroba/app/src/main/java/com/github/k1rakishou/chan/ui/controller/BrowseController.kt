@@ -850,7 +850,11 @@ class BrowseController(
       },
       menuBuilder = {
         withMenuItem(drawableId = R.drawable.ic_search_white_24dp, onClick = { item -> searchClicked(item) })
-        withMenuItem(drawableId = R.drawable.ic_refresh_white_24dp, onClick = { item -> reloadClicked(item) })
+        withMenuItem(
+          forceEnabled = true,
+          drawableId = R.drawable.ic_refresh_white_24dp,
+          onClick = { item -> reloadClicked(item) }
+        )
 
         withOverflowMenu {
           withOverflowMenuItem(id = ACTION_REPLY, stringId = R.string.action_reply, onClick = { item -> replyClicked(item) })

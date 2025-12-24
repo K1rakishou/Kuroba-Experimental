@@ -662,17 +662,24 @@ open class Chan4 : SiteBase() {
         return
       }
 
-      val cookieStringBuilder = StringBuilder()
-      cookieParts.forEachIndexed { index, cookiePart ->
-        cookieStringBuilder.append(cookiePart)
+      val additionalCookies = buildString {
+        cookieParts.forEachIndexed { index, cookiePart ->
+          append(cookiePart)
 
-        if (index != cookieParts.lastIndex) {
-          cookieStringBuilder.append("; ")
+          if (index != cookieParts.lastIndex) {
+            append("; ")
+          }
         }
       }
 
-      cookieManager.setCookie(domain, cookieStringBuilder.toString())
-      Logger.d(TAG, "modifyWebView() full cookie: ${cookieManager.getCookie(domain)}")
+      val prevCookies = cookieManager.getCookie(domain).takeIf { cookie -> cookie.isNotBlank() } ?: ""
+      if (prevCookies.contains(additionalCookies)) {
+        Logger.d(TAG, "modifyWebView() prevCookies already contains additional cookies, full cookie: '${cookieManager.getCookie(domain)}'")
+        return
+      }
+
+      cookieManager.setCookie(domain, "${prevCookies}; ${additionalCookies}")
+      Logger.d(TAG, "modifyWebView() full cookie: '${cookieManager.getCookie(domain)}'")
     }
 
     override fun modifyCaptchaGetRequest(site: Chan4, requestBuilder: Request.Builder, chanDescriptor: ChanDescriptor?) {
