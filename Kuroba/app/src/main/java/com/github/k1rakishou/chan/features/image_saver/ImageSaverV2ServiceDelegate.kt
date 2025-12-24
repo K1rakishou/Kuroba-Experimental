@@ -229,6 +229,7 @@ class ImageSaverV2ServiceDelegate(
     val hasResultDirAccessErrors = AtomicBoolean(false)
     val hasOutOfDiskSpaceErrors = AtomicBoolean(false)
     val hasRequestsThatCanBeRetried = AtomicBoolean(false)
+    val tooManyRequests = AtomicBoolean(false)
     val completedRequests = AtomicInteger(0)
     val failedRequests = AtomicInteger(0)
     val duplicates = AtomicInteger(0)
@@ -295,8 +296,20 @@ class ImageSaverV2ServiceDelegate(
 
       supervisorScope {
         imageDownloadRequests
-          .chunked(appConstants.processorsCount * 2)
+          .chunked(appConstants.processorsCount)
           .forEach { imageDownloadRequestBatch ->
+            if (tooManyRequests.get()) {
+              Logger.debug(TAG) { "Detected 429 (Too many requests) from the server, waiting..." }
+
+              try {
+                delay(10_000L)
+              } finally {
+                tooManyRequests.set(false)
+              }
+
+              Logger.debug(TAG) { "Waiting done, trying to continue" }
+            }
+
             val updatedImageDownloadRequestBatch = imageDownloadRequestBatch.map { imageDownloadRequest ->
               return@map appScope.async(Dispatchers.IO) {
                 val (outImageDownloadRequest, duration) = measureTimedValue {
@@ -306,6 +319,7 @@ class ImageSaverV2ServiceDelegate(
                     hasResultDirAccessErrors = hasResultDirAccessErrors,
                     hasOutOfDiskSpaceErrors = hasOutOfDiskSpaceErrors,
                     hasRequestsThatCanBeRetried = hasRequestsThatCanBeRetried,
+                    tooManyRequests = tooManyRequests,
                     currentChanPostImage = currentChanPostImage,
                     canceledRequests = canceledRequests,
                     duplicates = duplicates,
@@ -442,6 +456,7 @@ class ImageSaverV2ServiceDelegate(
     hasResultDirAccessErrors: AtomicBoolean,
     hasOutOfDiskSpaceErrors: AtomicBoolean,
     hasRequestsThatCanBeRetried: AtomicBoolean,
+    tooManyRequests: AtomicBoolean,
     currentChanPostImage: AtomicReference<ChanPostImage>,
     canceledRequests: AtomicInteger,
     duplicates: AtomicInteger,
@@ -482,6 +497,9 @@ class ImageSaverV2ServiceDelegate(
           hasRequestsThatCanBeRetried.set(true)
         }
       }
+      is DownloadImageResult.TooManyRequestsError -> {
+        tooManyRequests.set(true)
+      }
       is DownloadImageResult.Success -> {
         // Image successfully downloaded
         if (!outputDirUri.compareAndSet(null, downloadImageResult.outputDirUri)) {
@@ -521,7 +539,8 @@ class ImageSaverV2ServiceDelegate(
       is DownloadImageResult.DuplicateFound,
       is DownloadImageResult.Failure,
       is DownloadImageResult.OutOfDiskSpaceError,
-      is DownloadImageResult.ResultDirectoryError -> {
+      is DownloadImageResult.ResultDirectoryError,
+      is DownloadImageResult.TooManyRequestsError -> {
         val downloadingImageState = DownloadingImageState(
           uniqueId = imageDownloadRequest.uniqueId,
           imageFullUrl = imageDownloadRequest.imageFullUrl,
@@ -633,7 +652,8 @@ class ImageSaverV2ServiceDelegate(
       is DownloadImageResult.Success -> ImageDownloadRequest.Status.Downloaded
       is DownloadImageResult.Failure,
       is DownloadImageResult.ResultDirectoryError,
-      is DownloadImageResult.OutOfDiskSpaceError -> ImageDownloadRequest.Status.DownloadFailed
+      is DownloadImageResult.OutOfDiskSpaceError,
+      is DownloadImageResult.TooManyRequestsError -> ImageDownloadRequest.Status.DownloadFailed
     }
   }
 
@@ -993,6 +1013,7 @@ class ImageSaverV2ServiceDelegate(
           }
           is NotFoundException -> DownloadImageResult.Failure(error, false)
           is IOException -> DownloadImageResult.Failure(error, true)
+          is TooManyRequests -> DownloadImageResult.TooManyRequestsError(imageDownloadRequest)
           else -> throw error
         }
       }
@@ -1068,6 +1089,10 @@ class ImageSaverV2ServiceDelegate(
         throw NotFoundException()
       }
 
+      if (response.code == 429) {
+        throw TooManyRequests()
+      }
+
       throw BadStatusResponseException(response.code)
     }
 
@@ -1083,6 +1108,7 @@ class ImageSaverV2ServiceDelegate(
 
   class ResultFileAccessError(val resultFileUri: String) : Exception("Failed to access result file: $resultFileUri")
   class NotFoundException : Exception("Not found on server")
+  class TooManyRequests : Exception("Too many requests")
   class OutOfDiskSpaceException : Exception("Out of disk space")
 
   data class DownloadingImageState(
@@ -1129,6 +1155,8 @@ class ImageSaverV2ServiceDelegate(
     data class DuplicateFound(val duplicate: DuplicateImage) : DownloadImageResult()
 
     data class OutOfDiskSpaceError(val imageDownloadRequest: ImageDownloadRequest) : DownloadImageResult()
+
+    data class TooManyRequestsError(val imageDownloadRequest: ImageDownloadRequest) : DownloadImageResult()
 
     data class ResultDirectoryError(
       val path: String,

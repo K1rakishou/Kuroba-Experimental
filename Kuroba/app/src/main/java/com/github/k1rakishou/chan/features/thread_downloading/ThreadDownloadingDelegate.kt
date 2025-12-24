@@ -31,6 +31,7 @@ import dagger.Lazy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -286,6 +287,7 @@ class ThreadDownloadingDelegate(
     // "* 2" because thumbnails and full images
     val progressIncrement = (1f - POSTS_PROCESSED_PROGRESS) / (chanPostImages.size.toFloat() * 2)
     val mutex = Mutex()
+    val tooManyRequests = AtomicBoolean(false)
     var totalProgress = POSTS_PROCESSED_PROGRESS
 
     parallelForEach(
@@ -311,6 +313,18 @@ class ThreadDownloadingDelegate(
         return@parallelForEach
       }
 
+      if (tooManyRequests.get()) {
+        Logger.debug(TAG) { "Detected 429 (Too many requests) from the server, waiting..." }
+
+        try {
+          delay(10_000L)
+        } finally {
+          tooManyRequests.set(false)
+        }
+
+        Logger.debug(TAG) { "Waiting done, trying to continue" }
+      }
+
       val thumbnailUrl = postImage.actualThumbnailUrl
       val thumbnailName = postImage.actualThumbnailUrl?.extractFileName()
 
@@ -321,7 +335,8 @@ class ThreadDownloadingDelegate(
           name = thumbnailName,
           imageUrl = thumbnailUrl,
           outOfDiskSpaceError = outOfDiskSpaceError,
-          outputDirError = outputDirError
+          outputDirError = outputDirError,
+          tooManyRequests = tooManyRequests,
         )
       }
 
@@ -344,7 +359,8 @@ class ThreadDownloadingDelegate(
           name = fullImageName,
           imageUrl = fullImageUrl,
           outOfDiskSpaceError = outOfDiskSpaceError,
-          outputDirError = outputDirError
+          outputDirError = outputDirError,
+          tooManyRequests = tooManyRequests,
         )
       }
 
@@ -368,6 +384,7 @@ class ThreadDownloadingDelegate(
     imageUrl: HttpUrl,
     outOfDiskSpaceError: AtomicBoolean,
     outputDirError: AtomicBoolean,
+    tooManyRequests: AtomicBoolean,
   ) {
     var outputFile = fileManager.findFile(outputDirectory, name)
     if (outputFile == null) {
@@ -403,12 +420,19 @@ class ThreadDownloadingDelegate(
     if (!response.isSuccessful) {
       Logger.e(TAG, "downloadImage(isThumbnail=$isThumbnail, name=$name, imageUrl=$imageUrl) " +
         "bad response code: ${response.code}")
+      fileManager.delete(outputFile)
+
+      if (response.code == 429) {
+        tooManyRequests.set(true)
+      }
+
       return
     }
 
     val responseBody = if (response.body == null) {
       Logger.e(TAG, "downloadImage(isThumbnail=$isThumbnail, name=$name, imageUrl=$imageUrl) " +
         "response body is null")
+      fileManager.delete(outputFile)
       return
     } else {
       response.body!!
