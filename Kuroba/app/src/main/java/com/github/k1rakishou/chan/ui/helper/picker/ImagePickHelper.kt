@@ -58,7 +58,6 @@ class ImagePickHelper(
   val syntheticFilesUpdatesFlow: SharedFlow<SyntheticReplyAttachable>
     get() = _syntheticFilesUpdatesFlow.asSharedFlow()
 
-  // TODO: New reply layout. Implement this for compose EditText once it supports this thing.
   suspend fun pickFilesFromIncomingShare(
     filePickerInput: ShareFilePicker.ShareFilePickerInput
   ): ModularResult<PickedFile> {

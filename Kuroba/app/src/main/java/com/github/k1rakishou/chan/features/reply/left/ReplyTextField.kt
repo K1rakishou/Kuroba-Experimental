@@ -1,5 +1,10 @@
 package com.github.k1rakishou.chan.features.reply.left
 
+import androidx.compose.foundation.content.MediaType
+import androidx.compose.foundation.content.ReceiveContentListener
+import androidx.compose.foundation.content.consume
+import androidx.compose.foundation.content.contentReceiver
+import androidx.compose.foundation.content.hasMediaType
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -30,6 +35,10 @@ import com.github.k1rakishou.chan.ui.compose.freeFocusSafe
 import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.requestFocusSafe
+import com.github.k1rakishou.core_logger.Logger
+
+private const val TAG = "ReplyTextField"
+private val VideoMediaType = MediaType("video/*")
 
 @Composable
 internal fun ReplyTextField(
@@ -121,12 +130,32 @@ internal fun ReplyTextField(
     Modifier.height(defaultHeight)
   }
 
+  val receiveContentListener = remember {
+    ReceiveContentListener { transferableContent ->
+      if (transferableContent.hasMediaType(MediaType.Image) || transferableContent.hasMediaType(VideoMediaType)) {
+        return@ReceiveContentListener transferableContent.consume { item ->
+          val uri = item.uri
+          if (uri != null) {
+              Logger.debug(TAG) { "Enqueueing an shared media for reply attach '${uri}'" }
+              replyLayoutState.pickMediaFromShareAction(uri)
+              return@consume true
+          }
+
+          return@consume false
+        }
+      }
+
+      return@ReceiveContentListener transferableContent
+    }
+  }
+
   // TODO: New reply layout. Try using LookaheadLayout.
   KurobaComposeTextFieldV2(
     modifier = Modifier
       .fillMaxWidth()
       .padding(vertical = 4.dp)
       .focusRequester(focusRequester)
+      .contentReceiver(receiveContentListener)
       .then(heightModifier),
     enabled = replyLayoutEnabled,
     state = replyTextState,

@@ -84,8 +84,8 @@ class ShareFilePicker(
   data class ShareFilePickerInput(
     val notifyListeners: Boolean,
     val dataUri: Uri?,
-    val clipData: ClipData?,
-    val inputContentInfo: InputContentInfoCompat?,
+    val clipData: ClipData? = null,
+    val inputContentInfo: InputContentInfoCompat? = null,
     val showLoadingViewFunc: ((Int) -> Unit)? = null,
     val hideLoadingViewFunc: (() -> Unit)? = null
   )

@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.features.reply.data
 
 import android.Manifest
+import android.net.Uri
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.placeCursorAtEnd
 import androidx.compose.runtime.IntState
@@ -42,6 +43,7 @@ import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
 import com.github.k1rakishou.chan.ui.helper.picker.LocalFilePicker
 import com.github.k1rakishou.chan.ui.helper.picker.PickedFile
 import com.github.k1rakishou.chan.ui.helper.picker.RemoteFilePicker
+import com.github.k1rakishou.chan.ui.helper.picker.ShareFilePicker
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.ModularResult
@@ -836,6 +838,50 @@ class ReplyLayoutState(
         Logger.error(TAG) { "pickRemoteMedia() error: ${error.errorMessageOrClassName()}" }
         showToast(
           appResources.string(R.string.reply_layout_remote_file_pick_error, error.errorMessageOrClassName())
+        )
+      }
+    }
+  }
+
+  fun pickMediaFromShareAction(uri: Uri) {
+    filePickerExecutor.post {
+      try {
+        val input = ShareFilePicker.ShareFilePickerInput(
+          notifyListeners = true,
+          dataUri = uri
+        )
+
+        val pickedFileResult = withContext(Dispatchers.IO) { imagePickHelper.pickFilesFromIncomingShare(input) }
+          .unwrap()
+
+        val replyFiles = when (pickedFileResult) {
+          is PickedFile.Failure -> throw pickedFileResult.reason
+          is PickedFile.Result -> pickedFileResult.replyFiles
+        }
+
+        replyFiles.forEach { replyFile ->
+          val replyFileMeta = replyFile.getReplyFileMeta().safeUnwrap { error ->
+            Logger.e(TAG, "pickMediaFromShareAction() imagePickHelper.pickRemoteMedia($chanDescriptor) getReplyFileMeta() error", error)
+            showErrorToast(error)
+            return@forEach
+          }
+
+          val maxAllowedFilesPerPost = replyLayoutHelper.getMaxAllowedFilesPerPost(chanDescriptor)
+          if (maxAllowedFilesPerPost != null && canAutoSelectFile(maxAllowedFilesPerPost).unwrap()) {
+            replyManager.updateFileSelection(
+              fileUuid = replyFileMeta.fileUuid,
+              selected = true,
+              notifyListeners = true
+            )
+          }
+        }
+
+        Logger.d(TAG, "pickMediaFromShareAction() success")
+        showToast(appResources.string(R.string.reply_layout_share_file_pick_success))
+      } catch (error: Throwable) {
+        Logger.error(TAG) { "pickMediaFromShareAction() error: ${error.errorMessageOrClassName()}" }
+        showToast(
+          appResources.string(R.string.reply_layout_share_file_pick_error, error.errorMessageOrClassName())
         )
       }
     }
