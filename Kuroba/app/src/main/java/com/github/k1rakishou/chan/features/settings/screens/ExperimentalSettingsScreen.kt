@@ -126,6 +126,15 @@ class ExperimentalSettingsScreen(
           requiresRestart = true
         )
 
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = ExperimentalScreen.MainSettingsGroup.OnlyRemoveExpiredWebviewCookies,
+          topDescriptionIdFunc = { R.string.setting_only_remove_expired_webview_cookies },
+          bottomDescriptionIdFunc = { R.string.setting_only_remove_expired_webview_cookies_description },
+          setting = ChanSettings.onlyRemoveExpiredWebviewCookies,
+          requiresRestart = false
+        )
+
         group
       }
     )

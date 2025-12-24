@@ -9,13 +9,16 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
 import android.widget.ImageView
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import javax.inject.Inject
 
 class OpenUrlInWebViewController(
@@ -81,7 +84,7 @@ class OpenUrlInWebViewController(
   }
 
   @SuppressLint("SetJavaScriptEnabled")
-  private fun onCreateInternal() {
+  private suspend fun onCreateInternal() {
     val webViewContainer = view.findViewById<FrameLayout>(R.id.web_view_container)
 
     themeEngine.addListener(this)
@@ -108,7 +111,19 @@ class OpenUrlInWebViewController(
 
     webView.stopLoading()
 
-    cookieManager.removeAllCookie()
+    if (ChanSettings.onlyRemoveExpiredWebviewCookies.get()) {
+      Logger.debug(TAG) { "Removing expired cookies" }
+      cookieManager.removeExpiredCookie()
+    } else {
+      Logger.debug(TAG) { "Removing all cookies" }
+      suspendCancellableCoroutine { cont ->
+        cookieManager.removeAllCookies { removed ->
+          Logger.debug(TAG) { "cookieManager.removeAllCookies -> ${removed}" }
+          cont.resumeValueSafe(Unit)
+        }
+      }
+    }
+
     cookieManager.setAcceptCookie(true)
     cookieManager.setAcceptThirdPartyCookies(webView, true)
 
@@ -119,6 +134,10 @@ class OpenUrlInWebViewController(
     webSettings.useWideViewPort = true
     webSettings.loadWithOverviewMode = true
     webSettings.cacheMode = WebSettings.LOAD_DEFAULT
+
+    ChanSettings.customUserAgent.get()
+      .takeIf { customUserAgent -> customUserAgent.isNotBlank() }
+      ?.let { customUserAgent -> webSettings.userAgentString = customUserAgent }
 
     val siteRequestModifier = siteResolver.findSiteForUrl(urlToOpen)?.requestModifier()
     if (siteRequestModifier != null) {

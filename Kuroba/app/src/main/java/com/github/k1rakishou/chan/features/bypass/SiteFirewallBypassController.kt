@@ -9,6 +9,7 @@ import android.webkit.WebView
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.DialogFactory
@@ -20,6 +21,7 @@ import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.FirewallType
 import com.github.k1rakishou.common.domain
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.prefs.MapSetting
@@ -28,6 +30,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import javax.inject.Inject
 
@@ -139,7 +142,7 @@ class SiteFirewallBypassController(
   }
 
   @SuppressLint("SetJavaScriptEnabled")
-  private fun onCreateInternal() {
+  private suspend fun onCreateInternal() {
     val webViewContainer = view.findViewById<FrameLayout>(R.id.web_view_container)
 
     themeEngine.addListener(this)
@@ -174,7 +177,19 @@ class SiteFirewallBypassController(
 
     webView.stopLoading()
 
-    cookieManager.removeAllCookie()
+    if (ChanSettings.onlyRemoveExpiredWebviewCookies.get()) {
+      Logger.debug(TAG) { "Removing expired cookies" }
+      cookieManager.removeExpiredCookie()
+    } else {
+      Logger.debug(TAG) { "Removing all cookies" }
+      suspendCancellableCoroutine { cont ->
+        cookieManager.removeAllCookies { removed ->
+          Logger.debug(TAG) { "cookieManager.removeAllCookies -> ${removed}" }
+          cont.resumeValueSafe(Unit)
+        }
+      }
+    }
+
     cookieManager.setAcceptCookie(true)
     cookieManager.setAcceptThirdPartyCookies(webView, true)
 
@@ -185,7 +200,10 @@ class SiteFirewallBypassController(
     webSettings.useWideViewPort = true
     webSettings.loadWithOverviewMode = true
     webSettings.cacheMode = WebSettings.LOAD_DEFAULT
-    webSettings.userAgentString = appConstants.userAgentMightBeOverridden
+
+    ChanSettings.customUserAgent.get()
+      .takeIf { customUserAgent -> customUserAgent.isNotBlank() }
+      ?.let { customUserAgent -> webSettings.userAgentString = customUserAgent }
 
     val siteRequestModifier = siteResolver.findSiteForUrl(urlToOpen)?.requestModifier()
     if (siteRequestModifier != null) {
