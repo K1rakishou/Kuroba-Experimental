@@ -1005,8 +1005,12 @@ class ThreadListLayout @JvmOverloads constructor(
   private fun openOrCloseReplyLayout(open: Boolean) {
     val chanDescriptor = currentChanDescriptorOrNull()
 
-    if (chanDescriptor == null || replyLayoutView.isOpenedOrExpanded() == open) {
-      return
+    when {
+      chanDescriptor == null -> return
+      // Already opened/expanded
+      open && (replyLayoutView.isOpened() || replyLayoutView.isExpanded()) -> return
+      // Already collapsed
+      !open && replyLayoutView.isCollapsed() -> return
     }
 
     Logger.d(TAG, "openOrCloseReplyLayout() open: ${open}")
