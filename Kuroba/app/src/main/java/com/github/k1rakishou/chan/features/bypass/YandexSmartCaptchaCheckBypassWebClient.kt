@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.features.bypass
 
 import android.webkit.CookieManager
 import android.webkit.WebView
+import com.github.k1rakishou.common.isNotNullNorBlank
 import kotlinx.coroutines.CompletableDeferred
 
 class YandexSmartCaptchaCheckBypassWebClient(
@@ -20,6 +21,8 @@ class YandexSmartCaptchaCheckBypassWebClient(
     }
 
     val cookie = cookieManager.getCookie(originalRequestUrlHost)
+      ?.takeIf { cookie -> cookie.isNotNullNorBlank() }
+      ?: return
 
     if (url.contains("https://yandex.com/showcaptcha")) {
       captchaPageLoaded = true

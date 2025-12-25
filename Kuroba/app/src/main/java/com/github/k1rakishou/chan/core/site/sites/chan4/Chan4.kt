@@ -672,7 +672,10 @@ open class Chan4 : SiteBase() {
         }
       }
 
-      val prevCookies = cookieManager.getCookie(domain).takeIf { cookie -> cookie.isNotBlank() } ?: ""
+      val prevCookies = cookieManager.getCookie(domain)
+        ?.takeIf { cookie -> cookie.isNotBlank() }
+        ?: ""
+
       if (prevCookies.contains(additionalCookies)) {
         Logger.d(TAG, "modifyWebView() prevCookies already contains additional cookies, full cookie: '${cookieManager.getCookie(domain)}'")
         return
