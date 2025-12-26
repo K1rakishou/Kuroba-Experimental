@@ -273,7 +273,7 @@ class Chan4CaptchaLayout(
             maxItemsInEachRow = task.maxImagesInEachRow
           ) {
             for ((imageIndex, taskImage) in task.images.withIndex()) {
-              val imageWidth = with(density) { taskImage.imageBitmap.width.toDp() * 2f }
+              val imageWidth = with(density) { taskImage.imageBitmap.width.toDp() * 1.8f }
               val imageHeight = with(density) { taskImage.imageBitmap.height.toDp() * 2f }
 
               val scale by animateFloatAsState(targetValue = if (taskImage.isSelected) 0.8f else 1.0f)
@@ -283,6 +283,7 @@ class Chan4CaptchaLayout(
                   .background(chanTheme.backColorCompose)
                   .size(imageWidth, imageHeight)
                   .kurobaClickable(
+                    bounded = true,
                     onClick = { viewModel.onCaptchaImageClicked(taskIndex, imageIndex) }
                   )
                   .scale(scale)

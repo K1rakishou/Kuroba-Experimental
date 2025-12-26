@@ -8,6 +8,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.core.base.BaseViewModel
@@ -377,7 +381,65 @@ class Chan4CaptchaLayoutViewModel(
     title = title.removeSuffix(", then click Next.")
     title += "."
 
-    return AnnotatedString(title)
+    val annotatedTitle = addAnnotations(title)
+    return annotatedTitle
+  }
+
+  private fun addAnnotations(input: String): AnnotatedString {
+    val openTag = "<b>"
+    val closeTag = "</b>"
+
+    val span = SpanStyle(
+      fontWeight = FontWeight.Bold,
+      textDecoration = TextDecoration.Underline
+    )
+
+    return buildAnnotatedString {
+      val boldStack = ArrayDeque<Int>()
+      var offset = 0
+      var removedChars = 0
+      var firstTagSkipped = false
+
+      while (offset < input.length) {
+        when {
+          input.startsWith(openTag, offset) -> {
+            boldStack.add(offset)
+            offset += openTag.length
+          }
+
+          input.startsWith(closeTag, offset) -> {
+            var start = boldStack.removeLastOrNull()
+            if (start != null) {
+              if (!firstTagSkipped) {
+                firstTagSkipped = true
+              } else {
+                start -= removedChars
+              }
+
+              val end = offset - removedChars - openTag.length
+              if (end < offset && end <= length && start < end) {
+                addStyle(span, start, end)
+              }
+            }
+
+            offset += closeTag.length
+            removedChars += (openTag.length + closeTag.length)
+          }
+
+          else -> {
+            append(input[offset])
+            offset += 1
+          }
+        }
+      }
+
+      while (boldStack.isNotEmpty()) {
+        val start = boldStack.removeLast()
+        if (start <= length) {
+          addStyle(span, start, length)
+        }
+      }
+    }
   }
 
   private suspend fun getCachedCaptchaOrLoadFresh(
