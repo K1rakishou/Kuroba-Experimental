@@ -621,6 +621,7 @@ public class ChanSettings {
         customUserAgent = new StringSetting(provider, "custom_user_agent", "");
         onlyRemoveExpiredWebviewCookies = new BooleanSetting(provider, "only_remove_expired_webview_cookies", true);
         //endregion
+      
 
         //region OTHER
         historyEnabled = new BooleanSetting(provider, "preference_history_enabled", true);
