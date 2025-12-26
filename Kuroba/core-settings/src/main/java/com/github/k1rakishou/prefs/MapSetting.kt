@@ -42,14 +42,18 @@ class MapSetting(
     return func(_cache)
   }
 
-  fun put(key: String, value: String) {
+  fun put(key: String, value: String, sync: Boolean = false) {
     val cacheCopy = withCache {
       val copy = toMutableMap()
-      copy.put(key, value)
+      copy[key] = value
       return@withCache copy
     }
 
-    set(cacheCopy)
+    if (sync) {
+      setSync(cacheCopy)
+    } else {
+      set(cacheCopy)
+    }
   }
 
   fun get(key: String): String? {

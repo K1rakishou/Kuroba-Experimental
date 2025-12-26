@@ -3,10 +3,11 @@ package com.github.k1rakishou.chan.features.bypass
 import android.webkit.CookieManager
 import android.webkit.WebView
 import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
+import com.github.k1rakishou.common.CookieBuilder
 import kotlinx.coroutines.CompletableDeferred
 
 class CloudFlareCheckBypassWebClient(
-  private val originalRequestUrlHost: String,
+  private val originalRequestUrl: String,
   private val cookieManager: CookieManager,
   cookieResultCompletableDeferred: CompletableDeferred<CookieResult>
 ) : BypassWebClient(cookieResultCompletableDeferred) {
@@ -15,7 +16,7 @@ class CloudFlareCheckBypassWebClient(
   override fun onPageFinished(view: WebView?, url: String?) {
     super.onPageFinished(view, url)
 
-    val cookie = cookieManager.getCookie(originalRequestUrlHost) ?: ""
+    val cookie = cookieManager.getCookie(originalRequestUrl) ?: ""
 
     val expectedCookies = listOf(
       CloudFlareHandlerInterceptor.COOKIE_CF_CLEARANCE,
@@ -33,7 +34,12 @@ class CloudFlareCheckBypassWebClient(
       return
     }
 
-    success(cookie)
+    val allCookies = with(CookieBuilder(cookie)) {
+      retainAllIn(expectedCookies)
+      build()
+    }
+
+    success(allCookies)
   }
 
   @Deprecated("Deprecated in Java")

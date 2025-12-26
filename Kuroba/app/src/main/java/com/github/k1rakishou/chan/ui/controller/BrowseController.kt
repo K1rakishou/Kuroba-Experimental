@@ -666,7 +666,7 @@ class BrowseController(
         context = context,
         firewallType = firewallType,
         headerTitleText = getString(R.string.firewall_check_header_title, firewallType.name),
-        urlToOpen = urlToOpen.toString(),
+        urlToOpen = urlToOpen,
         onResult = { cookieResult ->
           continuation.resumeValueSafe(cookieResult)
           onBypassControllerClosed(cookieResult is CookieResult.CookieValue)

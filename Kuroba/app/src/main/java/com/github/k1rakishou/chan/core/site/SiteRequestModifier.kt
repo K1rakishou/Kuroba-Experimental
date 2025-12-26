@@ -27,7 +27,7 @@ abstract class SiteRequestModifier<T : Site>(
   }
 
   @CallSuper
-  open fun modifyWebView(webView: WebView) {
+  open fun modifyWebView(webView: WebView, urlToOpen: HttpUrl) {
 
   }
 

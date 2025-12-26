@@ -40,7 +40,6 @@ import com.github.k1rakishou.common.CookieBuilder
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.StringUtils.formatToken
 import com.github.k1rakishou.common.addOrReplaceCookieHeader
-import com.github.k1rakishou.common.domainOrHost
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.core_logger.Logger
@@ -636,18 +635,18 @@ open class Chan4 : SiteBase() {
       }
     }
 
-    override fun modifyWebView(webView: WebView) {
-      super.modifyWebView(webView)
+    override fun modifyWebView(webView: WebView, urlToOpen: HttpUrl) {
+      super.modifyWebView(webView, urlToOpen)
 
-      val host = "4chan.org"
       val cookieBuilder = CookieBuilder()
+      val urlToOpenString = urlToOpen.toString()
 
       if (site.actions().isLoggedIn()) {
         cookieBuilder.addOrReplace("pass_enabled", "1")
         cookieBuilder.addOrReplace("pass_id", site.passToken.get())
       }
 
-      val captchaCookie = get4chanPassCookie(site, host)
+      val captchaCookie = get4chanPassCookie(site)
       if (captchaCookie.isNotNullNorBlank()) {
         cookieBuilder.addOrReplace(CAPTCHA_COOKIE_KEY, captchaCookie)
       }
@@ -658,16 +657,16 @@ open class Chan4 : SiteBase() {
       }
 
       val cookieManager = CookieManager.getInstance()
-      cookieBuilder.addOrReplace(cookieManager.getCookie(host))
+      cookieBuilder.addOrReplace(cookieManager.getCookie(urlToOpenString))
 
       val builtCookies = cookieBuilder.build()
-      cookieManager.setCookie(host, builtCookies)
+      cookieManager.setCookie(urlToOpenString, builtCookies)
 
       val cookieParts = cookieBuilder.cookieParts()
-      Logger.debug(TAG) { "modifyWebView('${host}') cookieParts size: '${cookieParts.size}'" }
+      Logger.debug(TAG) { "modifyWebView('${urlToOpen}') cookieParts size: '${cookieParts.size}'" }
 
       cookieParts.forEach { cookiePart ->
-        Logger.debug(TAG) { "modifyWebView('${host}') '${cookiePart.key}'='${cookiePart.value}'" }
+        Logger.debug(TAG) { "modifyWebView('${urlToOpen}') '${cookiePart.key}'='${cookiePart.value}'" }
       }
     }
 
@@ -689,12 +688,12 @@ open class Chan4 : SiteBase() {
     }
 
     private fun addChan4CookieHeader(site: Chan4, requestBuilder: Request.Builder) {
-      val domainOrHost = requestBuilder.build().url.domainOrHost()
-      val captchaCookie = get4chanPassCookie(site, domainOrHost)
+      val url = requestBuilder.build().url
+      val captchaCookie = get4chanPassCookie(site)
 
       if (captchaCookie.isNullOrEmpty()) {
         Logger.error(TAG) {
-          "addChan4CookieHeader() ${CAPTCHA_COOKIE_KEY} for domainOrHost '${domainOrHost}' " +
+          "addChan4CookieHeader() ${CAPTCHA_COOKIE_KEY} for url '${url}' " +
             "is null or empty captchaCookie: '${formatToken(captchaCookie)}'"
         }
 
@@ -702,13 +701,13 @@ open class Chan4 : SiteBase() {
       }
 
       Logger.debug(TAG) {
-        "addChan4CookieHeader(), domainOrHost: '${domainOrHost}', ${CAPTCHA_COOKIE_KEY}: '${formatToken(captchaCookie)}'"
+        "addChan4CookieHeader(), url: '${url}', ${CAPTCHA_COOKIE_KEY}: '${formatToken(captchaCookie)}'"
       }
 
       requestBuilder.addOrReplaceCookieHeader("$CAPTCHA_COOKIE_KEY=${captchaCookie}")
     }
 
-    private fun get4chanPassCookie(site: Chan4, host: String): String? {
+    private fun get4chanPassCookie(site: Chan4): String? {
       val rememberCaptchaCookies = site
         .getSettingBySettingId<GsonJsonSetting<Chan4CaptchaSettings>>(SiteSetting.SiteSettingId.Chan4CaptchaSettings)
         ?.get()

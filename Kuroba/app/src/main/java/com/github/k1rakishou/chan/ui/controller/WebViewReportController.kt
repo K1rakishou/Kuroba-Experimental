@@ -113,7 +113,11 @@ class WebViewReportController(
   }
 
   private suspend fun initUi() {
-    val url = site.endpoints().report(post)
+    val urlToOpen = site.endpoints().report(post)
+    if (urlToOpen == null) {
+      requireNavController().popController()
+      return
+    }
 
     frameLayout = FrameLayout(context)
     frameLayout.setLayoutParams(
@@ -141,13 +145,13 @@ class WebViewReportController(
       }
 
       if (siteRequestModifier != null) {
-        siteRequestModifier.modifyWebView(webView)
+        siteRequestModifier.modifyWebView(webView, urlToOpen)
       }
 
       val settings = webView.getSettings()
       settings.javaScriptEnabled = true
       settings.domStorageEnabled = true
-      webView.loadUrl(url.toString())
+      webView.loadUrl(urlToOpen.toString())
 
       frameLayout.addView(
         webView,

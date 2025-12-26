@@ -8,11 +8,15 @@ class CookieBuilder(
   init {
     if (initialCookies.isNotNullNorBlank()) {
       parseCookies(initialCookies)
-        .forEach { cookie -> _cookieParts.add(cookie) }
+        .forEach { cookie -> addOrReplace(cookie.key, cookie.value) }
     }
   }
 
   fun addOrReplace(key: String, value: String) {
+    if (value.isEmpty()) {
+      return
+    }
+
     if (key.contains("=") || key.contains(";") || value.contains("=") || value.contains(";")) {
       error("Invalid cookie! key: '${key}', value: '${value}'")
     }
@@ -40,6 +44,19 @@ class CookieBuilder(
 
   fun cookieParts(): List<Cookie> {
     return _cookieParts
+  }
+
+  fun retainAllIn(keys: Collection<String>) {
+    val retained = mutableListOf<Cookie>()
+
+    _cookieParts.forEach { cookie ->
+      if (keys.any { key -> key.equals(cookie.key, ignoreCase = true) }) {
+        retained.add(cookie)
+      }
+    }
+
+    _cookieParts.clear()
+    _cookieParts.addAll(retained)
   }
 
   fun build(): String {

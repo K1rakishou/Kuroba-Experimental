@@ -4,7 +4,6 @@ import android.text.SpannableStringBuilder
 import android.text.TextUtils
 import androidx.core.text.set
 import com.github.k1rakishou.ChanSettings
-import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.repository.BoardFlagInfoRepository
 import com.github.k1rakishou.chan.core.site.Site
@@ -398,7 +397,6 @@ class Chan4ReplyCall(
 
   private fun readCookies(requestUrl: HttpUrl): String {
     val domainOrHost = requestUrl.domainOrHost()
-    val host = requestUrl.host
 
     val cloudflareCookie = site
       .getSettingBySettingId<MapSetting>(SiteSetting.SiteSettingId.CloudFlareClearanceCookie)
@@ -407,7 +405,7 @@ class Chan4ReplyCall(
     return buildString {
       if (cloudflareCookie.isNotNullNorEmpty()) {
         Logger.d(TAG, "readCookies() domainOrHost: ${domainOrHost}, cf_clearance: ${formatToken(cloudflareCookie)}")
-        append("${CloudFlareHandlerInterceptor.COOKIE_CF_CLEARANCE}=$cloudflareCookie")
+        append(cloudflareCookie)
       }
 
       val chan4SiteSettings = (site as Chan4).chan4CaptchaSettings.get()

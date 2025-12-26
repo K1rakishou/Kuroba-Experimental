@@ -169,7 +169,6 @@ class CloudFlareHandlerInterceptor(
 
   private fun requireCloudFlareCookie(request: Request): Boolean {
     val host = request.url.host
-    val domainOrHost = request.url.domainOrHost()
 
     val alreadyCheckedSite = synchronized(this) { host in sitesThatRequireCloudFlareCache }
     if (alreadyCheckedSite) {
@@ -201,7 +200,7 @@ class CloudFlareHandlerInterceptor(
       return false
     }
 
-    return cloudFlareClearanceCookieSetting.get(domainOrHost).isNotNullNorEmpty()
+    return cloudFlareClearanceCookieSetting.get(request.url.domainOrHost()).isNotNullNorEmpty()
   }
 
   private fun addCloudFlareCookie(prevRequest: Request): Request? {
@@ -223,15 +222,14 @@ class CloudFlareHandlerInterceptor(
       return null
     }
 
-    val domainOrHost = prevRequest.url.domainOrHost()
-    val cookieValue = cloudFlareClearanceCookieSetting.get(domainOrHost)
+    val cookieValue = cloudFlareClearanceCookieSetting.get(prevRequest.url.domainOrHost())
     if (cookieValue.isNullOrEmpty()) {
       Logger.e(TAG, "[$okHttpType] addCloudFlareCookie() cookieValue is null or empty")
       return null
     }
 
     return prevRequest.newBuilder()
-      .addOrReplaceCookieHeader("$COOKIE_CF_CLEARANCE=$cookieValue")
+      .addOrReplaceCookieHeader(cookieValue)
       .build()
   }
 

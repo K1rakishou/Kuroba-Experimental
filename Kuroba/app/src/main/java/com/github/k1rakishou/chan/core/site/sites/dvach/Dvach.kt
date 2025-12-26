@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.core.site.sites.dvach
 
 import com.github.k1rakishou.OptionSettingItem
 import com.github.k1rakishou.Setting
-import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.ChunkDownloaderSiteProperties
 import com.github.k1rakishou.chan.core.site.ResolvedChanDescriptor
@@ -38,8 +37,10 @@ import com.github.k1rakishou.chan.core.site.sites.search.SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
 import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
 import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.common.CookieBuilder
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.addOrReplaceCookieHeader
+import com.github.k1rakishou.common.domainOrHost
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.groupOrNull
 import com.github.k1rakishou.core_logger.Logger
@@ -456,41 +457,16 @@ class Dvach : CommonSite() {
     ) {
       super.modifyVideoStreamRequest(site, requestProperties, url)
 
-      val fullCookie = buildString {
-        site.getSettingBySettingId<MapSetting>(SiteSetting.SiteSettingId.CloudFlareClearanceCookie)
-          ?.get()
-          ?.let { cookiesMap ->
-            cookiesMap.values.forEachIndexed { index, cookieForDomain ->
-              if (isNotEmpty() && index < cookiesMap.size) {
-                append("; ")
-              }
+      val cloudflareCookies = site
+        .getSettingBySettingId<MapSetting>(SiteSetting.SiteSettingId.CloudFlareClearanceCookie)
+        ?.get(url.domainOrHost())
 
-              append(CloudFlareHandlerInterceptor.COOKIE_CF_CLEARANCE)
-              append('=')
-              append(cookieForDomain)
-            }
-          }
-
-        val userCodeCookie = site.userCodeCookie.get()
-        if (userCodeCookie.isNotEmpty()) {
-          if (isNotEmpty()) {
-            append("; ")
-          }
-
-          append("${USER_CODE_COOKIE_KEY}=${userCodeCookie}")
-        }
-
-        val antiSpamCookie = site.antiSpamCookie.get()
-        if (antiSpamCookie.isNotEmpty()) {
-          if (isNotEmpty()) {
-            append("; ")
-          }
-
-          append(antiSpamCookie)
-        }
+      val cookies = with(CookieBuilder(cloudflareCookies)) {
+        addOrReplace(USER_CODE_COOKIE_KEY, site.userCodeCookie.get())
+        build()
       }
 
-      requestProperties.put("Cookie", fullCookie)
+      requestProperties["Cookie"] = cookies
 
       // For 2ch.hk we want to use our custom user-agent because when using the WebView's one the
       // videos do not load with 403 status.

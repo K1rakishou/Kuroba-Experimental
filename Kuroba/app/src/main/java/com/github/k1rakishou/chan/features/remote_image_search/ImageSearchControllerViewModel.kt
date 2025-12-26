@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import javax.inject.Inject
 
@@ -50,8 +51,8 @@ class ImageSearchControllerViewModel(
   val searchResults: Map<ImageSearchInstanceType, AsyncData<ImageResults>>
     get() = _searchResults
 
-  private val _solvingCaptcha = MutableStateFlow<String?>(null)
-  val solvingCaptcha: StateFlow<String?>
+  private val _solvingCaptcha = MutableStateFlow<HttpUrl?>(null)
+  val solvingCaptcha: StateFlow<HttpUrl?>
     get() = _solvingCaptcha.asStateFlow()
 
   val baseUrlError = mutableStateOf<String?>(null)
@@ -255,7 +256,7 @@ class ImageSearchControllerViewModel(
         val error = foundImagesResult.error
 
         if (error is FirewallDetectedException && error.firewallType == FirewallType.YandexSmartCaptcha) {
-          _solvingCaptcha.emit(error.requestUrl.toString())
+          _solvingCaptcha.emit(error.requestUrl)
           return@launch
         }
 

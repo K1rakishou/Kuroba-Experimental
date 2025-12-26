@@ -19,11 +19,12 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import okhttp3.HttpUrl
 import javax.inject.Inject
 
 class OpenUrlInWebViewController(
   context: Context,
-  val urlToOpen: String
+  val urlToOpen: HttpUrl
 ) : BaseFloatingController(context), ThemeEngine.ThemeChangesListener {
 
   @Inject
@@ -139,13 +140,15 @@ class OpenUrlInWebViewController(
       .takeIf { customUserAgent -> customUserAgent.isNotBlank() }
       ?.let { customUserAgent -> webSettings.userAgentString = customUserAgent }
 
-    val siteRequestModifier = siteResolver.findSiteForUrl(urlToOpen)?.requestModifier()
+    val urlToOpenString = urlToOpen.toString()
+
+    val siteRequestModifier = siteResolver.findSiteForUrl(urlToOpenString)?.requestModifier()
     if (siteRequestModifier != null) {
-      siteRequestModifier.modifyWebView(webView)
+      siteRequestModifier.modifyWebView(webView, urlToOpen)
     }
 
     webView.webViewClient = webViewClient
-    webView.loadUrl(urlToOpen)
+    webView.loadUrl(urlToOpenString)
 
     onThemeChanged()
   }

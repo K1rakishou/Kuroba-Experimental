@@ -31,14 +31,14 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.HttpUrl
 import javax.inject.Inject
 
 class SiteFirewallBypassController(
   context: Context,
   val firewallType: FirewallType,
   private val headerTitleText: String?,
-  private val urlToOpen: String,
+  private val urlToOpen: HttpUrl,
   private val onResult: (CookieResult) -> Unit
 ) : BaseFloatingController(context), ThemeEngine.ThemeChangesListener {
 
@@ -60,26 +60,26 @@ class SiteFirewallBypassController(
   private val cookieResultCompletableDeferred = CompletableDeferred<CookieResult>()
   private val cookieManager by lazy { CookieManager.getInstance() }
   private val webClient by lazy { createWebClient(firewallType) }
+  private val originalRequestUrlString = urlToOpen.toString()
 
   private fun createWebClient(mode: FirewallType): BypassWebClient {
     return when (mode) {
       FirewallType.Cloudflare -> {
         CloudFlareCheckBypassWebClient(
-          originalRequestUrlHost = urlToOpen,
+          originalRequestUrl = originalRequestUrlString,
           cookieManager = cookieManager,
           cookieResultCompletableDeferred = cookieResultCompletableDeferred
         )
       }
       FirewallType.YandexSmartCaptcha -> {
         YandexSmartCaptchaCheckBypassWebClient(
-          originalRequestUrlHost = urlToOpen,
+          originalRequestUrlHost = originalRequestUrlString,
           cookieManager = cookieManager,
           cookieResultCompletableDeferred = cookieResultCompletableDeferred
         )
       }
       FirewallType.DvachAntiSpam -> {
         DvachAntiSpamCheckBypassWebClient(
-          originalRequestUrlHost = urlToOpen,
           cookieManager = cookieManager,
           cookieResultCompletableDeferred = cookieResultCompletableDeferred
         )
@@ -205,13 +205,13 @@ class SiteFirewallBypassController(
       .takeIf { customUserAgent -> customUserAgent.isNotBlank() }
       ?.let { customUserAgent -> webSettings.userAgentString = customUserAgent }
 
-    val siteRequestModifier = siteResolver.findSiteForUrl(urlToOpen)?.requestModifier()
+    val siteRequestModifier = siteResolver.findSiteForUrl(originalRequestUrlString)?.requestModifier()
     if (siteRequestModifier != null) {
-      siteRequestModifier.modifyWebView(webView)
+      siteRequestModifier.modifyWebView(webView, urlToOpen)
     }
 
     webView.webViewClient = webClient
-    webView.loadUrl(urlToOpen)
+    webView.loadUrl(originalRequestUrlString)
 
     onThemeChanged()
 
@@ -257,9 +257,9 @@ class SiteFirewallBypassController(
   }
 
   private fun addCookieToSiteSettings(cookie: String): Boolean {
-    val site = siteResolver.findSiteForUrl(urlToOpen)
+    val site = siteResolver.findSiteForUrl(urlToOpen.toString())
     if (site == null) {
-      Logger.e(TAG, "Failed to find site for url: '$urlToOpen'")
+      Logger.e(TAG, "Failed to find site for url: '${urlToOpen}'")
       return false
     }
 
@@ -274,15 +274,12 @@ class SiteFirewallBypassController(
           return false
         }
 
-        val domainOrHost = urlToOpen.toHttpUrlOrNull()
-          ?.domainOrHost()
-
-        if (domainOrHost.isNullOrEmpty()) {
+        if (originalRequestUrlString.isEmpty()) {
           Logger.e(TAG, "Failed to extract neither domain not host from url '${urlToOpen}'")
           return false
         }
 
-        cloudFlareClearanceCookieSetting.put(domainOrHost, cookie)
+        cloudFlareClearanceCookieSetting.put(key = urlToOpen.domainOrHost(), value = cookie, sync = true)
       }
       FirewallType.DvachAntiSpam -> {
         val dvachAntiSpamCookieSetting = site.getSettingBySettingId<StringSetting>(
@@ -294,7 +291,7 @@ class SiteFirewallBypassController(
           return false
         }
 
-        dvachAntiSpamCookieSetting.set(cookie)
+        dvachAntiSpamCookieSetting.setSync(cookie)
       }
       FirewallType.YandexSmartCaptcha -> {
         // no-op

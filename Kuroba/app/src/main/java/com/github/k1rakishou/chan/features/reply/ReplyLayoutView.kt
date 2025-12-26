@@ -50,6 +50,7 @@ import com.github.k1rakishou.persist_state.ReplyMode
 import com.github.k1rakishou.prefs.BooleanSetting
 import com.github.k1rakishou.prefs.OptionsSetting
 import kotlinx.coroutines.suspendCancellableCoroutine
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
@@ -186,11 +187,17 @@ class ReplyLayoutView @JvmOverloads constructor(
   }
 
   override fun onWebViewLinkClick(type: WebViewLink.Type, link: String) {
+    val clickedUrl = link.toHttpUrlOrNull()
+    if (clickedUrl == null) {
+      Logger.error(TAG) { "onWebViewLinkClick '${link}' is not a HttpUrl" }
+      return
+    }
+
     Logger.d(TAG, "onWebViewLinkClick type: ${type}, link: ${link}")
 
     when (type) {
       WebViewLink.Type.BanMessage -> {
-        replyLayoutCallbacks.presentController(OpenUrlInWebViewController(context, link))
+        replyLayoutCallbacks.presentController(OpenUrlInWebViewController(context, clickedUrl))
       }
     }
   }

@@ -6,7 +6,6 @@ import kotlinx.coroutines.CompletableDeferred
 import java.util.regex.Pattern
 
 class DvachAntiSpamCheckBypassWebClient(
-  private val originalRequestUrlHost: String,
   private val cookieManager: CookieManager,
   cookieResultCompletableDeferred: CompletableDeferred<CookieResult>
 ) : BypassWebClient(cookieResultCompletableDeferred) {
