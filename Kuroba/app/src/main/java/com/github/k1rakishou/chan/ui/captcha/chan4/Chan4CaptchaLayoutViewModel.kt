@@ -14,6 +14,7 @@ import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.shared.ViewModelAssistedFactory
+import com.github.k1rakishou.chan.core.manager.FirewallBypassManager
 import com.github.k1rakishou.chan.core.manager.HapticFeedbackManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteSetting
@@ -42,7 +43,8 @@ class Chan4CaptchaLayoutViewModel(
   private val savedStateHandle: SavedStateHandle,
   private val siteManager: SiteManager,
   private val loadChan4CaptchaUseCase: LoadChan4CaptchaUseCase,
-  private val hapticFeedbackManager: HapticFeedbackManager
+  private val hapticFeedbackManager: HapticFeedbackManager,
+  private val firewallBypassManager: FirewallBypassManager,
 ) : BaseViewModel() {
 
   private var activeJob: Job? = null
@@ -132,6 +134,10 @@ class Chan4CaptchaLayoutViewModel(
       _captchaInfoToShow.value = AsyncData.Loading
 
       val result = ModularResult.Try {
+        if (forced) {
+          firewallBypassManager.removeHostTimeCheckByChanDescriptor(chanDescriptor)
+        }
+
         requestCaptchaInternal(
           chanDescriptor = chanDescriptor,
           ticket = chan4CaptchaSettingsJson.get().captchaTicket
@@ -384,8 +390,7 @@ class Chan4CaptchaLayoutViewModel(
 
     val captchaResult = loadChan4CaptchaUseCase.await(
       chanDescriptor = chanDescriptor,
-      ticket = ticket,
-      isRefreshing = false
+      ticket = ticket
     ).unwrap()
 
     val captchaInfoRaw = captchaResult.captchaInfoRaw
@@ -495,7 +500,8 @@ class Chan4CaptchaLayoutViewModel(
   class ViewModelFactory @Inject constructor(
     private val siteManager: SiteManager,
     private val loadChan4CaptchaUseCase: LoadChan4CaptchaUseCase,
-    private val hapticFeedbackManager: HapticFeedbackManager
+    private val hapticFeedbackManager: HapticFeedbackManager,
+    private val firewallBypassManager: FirewallBypassManager,
   ) : ViewModelAssistedFactory<Chan4CaptchaLayoutViewModel> {
     override fun create(handle: SavedStateHandle): Chan4CaptchaLayoutViewModel {
       return Chan4CaptchaLayoutViewModel(
@@ -503,6 +509,7 @@ class Chan4CaptchaLayoutViewModel(
         siteManager = siteManager,
         loadChan4CaptchaUseCase = loadChan4CaptchaUseCase,
         hapticFeedbackManager = hapticFeedbackManager,
+        firewallBypassManager = firewallBypassManager,
       )
     }
   }

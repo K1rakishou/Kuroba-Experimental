@@ -48,12 +48,18 @@ class ToolbarGlobalState : IToolbarGlobalState.Readable, IToolbarGlobalState.Wri
     get() = _toolbarBadges.asStateFlow()
 
   override fun updateToolbarVisibilityState(visible: Boolean) {
-    Logger.verbose(TAG) { "updateToolbarVisibilityState() visible: ${visible}" }
+    if (toolbarShown.value != visible) {
+      Logger.verbose(TAG) { "updateToolbarVisibilityState() visible: ${visible}" }
+    }
+
     _toolbarShown.value = visible
   }
 
   override fun updateToolbarHeightState(height: Dp) {
-    Logger.verbose(TAG) { "updateToolbarHeightState() height: ${height}" }
+    if (toolbarHeight.value != height) {
+      Logger.verbose(TAG) { "updateToolbarHeightState() height: ${height}" }
+    }
+
     _toolbarHeight.value = height
   }
 

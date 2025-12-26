@@ -21,7 +21,7 @@ import com.github.k1rakishou.chan.utils.WebViewLink
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.StringUtils.formatToken
-import com.github.k1rakishou.common.domain
+import com.github.k1rakishou.common.domainOrHost
 import com.github.k1rakishou.common.fixUrlOrNull
 import com.github.k1rakishou.common.groupOrNull
 import com.github.k1rakishou.common.isNotNullNorBlank
@@ -397,7 +397,7 @@ class Chan4ReplyCall(
   }
 
   private fun readCookies(requestUrl: HttpUrl): String {
-    val domainOrHost = requestUrl.domain() ?: requestUrl.host
+    val domainOrHost = requestUrl.domainOrHost()
     val host = requestUrl.host
 
     val cloudflareCookie = site
@@ -406,8 +406,8 @@ class Chan4ReplyCall(
 
     return buildString {
       if (cloudflareCookie.isNotNullNorEmpty()) {
-        Logger.d(TAG, "readCookies() domainOrHost=${domainOrHost}, cf_clearance=${formatToken(cloudflareCookie)}")
-        append("${CloudFlareHandlerInterceptor.CF_CLEARANCE}=$cloudflareCookie")
+        Logger.d(TAG, "readCookies() domainOrHost: ${domainOrHost}, cf_clearance: ${formatToken(cloudflareCookie)}")
+        append("${CloudFlareHandlerInterceptor.COOKIE_CF_CLEARANCE}=$cloudflareCookie")
       }
 
       val chan4SiteSettings = (site as Chan4).chan4CaptchaSettings.get()
@@ -416,7 +416,7 @@ class Chan4ReplyCall(
       if (rememberCaptchaCookies) {
         val captchaCookie = site.chan4CaptchaCookie.get()
         if (captchaCookie.isNotBlank()) {
-          Logger.d(TAG, "readCookies() host=${host}, captchaCookie=${formatToken(captchaCookie)}")
+          Logger.d(TAG, "readCookies() domainOrHost: ${domainOrHost}, captchaCookie: ${formatToken(captchaCookie)}")
 
           if (isNotEmpty()) {
             append("; ")

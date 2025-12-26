@@ -1341,18 +1341,19 @@ suspend fun <T, R> parallelForEachIndexed(
 suspend fun <T, R> parallelForEachOrdered(
   dataList: Collection<T>,
   parallelization: Int = Runtime.getRuntime().availableProcessors(),
-  dispatcher: CoroutineDispatcher,
+  dispatcher: CoroutineDispatcher = Dispatchers.Default,
+  rethrowErrors: Boolean = false,
   processFunc: suspend (Int, T) -> R?
 ): List<R> {
   if (dataList.isEmpty()) {
     return emptyList()
   }
 
-  return supervisorScope {
+  return newScope(rethrowErrors) {
     val dataListIndexed = mutableListWithCap<DataIndexed<T>>(dataList.size)
     dataList.forEachIndexed { order, data -> dataListIndexed += DataIndexed(data, order)  }
 
-    return@supervisorScope dataListIndexed
+    return@newScope dataListIndexed
       .chunked(parallelization)
       .flatMap { dataChunk ->
         val deferredWithOrderPairs = dataChunk
@@ -1393,6 +1394,19 @@ private suspend fun <R> newScope(rethrowErrors: Boolean, block: suspend Coroutin
 private const val COOKIE_HEADER_NAME = "Cookie"
 
 fun Request.Builder.addOrReplaceCookieHeader(newCookie: String): Request.Builder {
+  if (newCookie.isBlank()) {
+    return this
+  }
+
+  if (newCookie.contains(";")) {
+    newCookie
+      .split(";")
+      .map { subcookie -> subcookie.trim() }
+      .forEach { subcookie -> addOrReplaceCookieHeader(subcookie) }
+
+    return this
+  }
+
   val request = build()
 
   val oldCookies = request.header(COOKIE_HEADER_NAME)
@@ -1400,32 +1414,28 @@ fun Request.Builder.addOrReplaceCookieHeader(newCookie: String): Request.Builder
     return addHeader(COOKIE_HEADER_NAME, newCookie)
   }
 
-  if (!newCookie.contains(";")) {
-    val cookieParts = newCookie.indexOfFirstOrNull { char -> char == '=' }
-      ?.let { indexOfSeparator ->
-        return@let listOf(
-          newCookie.substringSafe(0, indexOfSeparator),
-          newCookie.substringSafe(indexOfSeparator + 1)
+  val cookieParts = newCookie.indexOfFirstOrNull { char -> char == '=' }
+    ?.let { indexOfSeparator ->
+      return@let listOf(
+        newCookie.substringSafe(0, indexOfSeparator),
+        newCookie.substringSafe(indexOfSeparator + 1)
+      )
+    }
+
+  if (cookieParts != null) {
+    val separateCookies = oldCookies.split(";").map { it.trim() }
+    val key = cookieParts.get(0)?.takeIf { it.isNotBlank() }
+
+    if (key != null) {
+      val cookieAlreadyAdded = separateCookies.any { cookie -> cookie.startsWith("${key}=") }
+      if (cookieAlreadyAdded) {
+        return replaceCookieValue(
+          separateCookies = separateCookies,
+          key = key,
+          newCookie = newCookie
         )
       }
-
-    if (cookieParts != null) {
-      val separateCookies = oldCookies.split(";").map { it.trim() }
-      val key = cookieParts.get(0)?.takeIf { it.isNotBlank() }
-
-      if (key != null) {
-        val cookieAlreadyAdded = separateCookies.any { cookie -> cookie.startsWith("${key}=") }
-        if (cookieAlreadyAdded) {
-          return replaceCookieValue(
-            separateCookies = separateCookies,
-            key = key,
-            newCookie = newCookie
-          )
-        }
-      }
     }
-  } else {
-    Logger.e(TAG, "newCookie contains ';' separate cookies! newCookie: '${newCookie}'")
   }
 
   return removeHeader(COOKIE_HEADER_NAME)
@@ -1838,6 +1848,10 @@ fun HttpUrl.domain(): String? {
   }
 
   return host.substring(indexOfDomainSeparator + 1, host.length)
+}
+
+fun HttpUrl.domainOrHost(): String {
+  return domain() ?: host
 }
 
 fun unreachable(message: String? = null): Nothing = error(message ?: "Unreachable!")

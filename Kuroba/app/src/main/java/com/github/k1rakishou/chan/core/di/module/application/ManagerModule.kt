@@ -928,11 +928,13 @@ class ManagerModule {
   @Provides
   fun provideFirewallBypassManager(
     appScope: CoroutineScope,
+    siteManager: SiteManager,
     applicationVisibilityManager: ApplicationVisibilityManager
   ): FirewallBypassManager {
     deps("FirewallBypassManager")
     return FirewallBypassManager(
       appScope,
+      siteManager,
       applicationVisibilityManager
     )
   }

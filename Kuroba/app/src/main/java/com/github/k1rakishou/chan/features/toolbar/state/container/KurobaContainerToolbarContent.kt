@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.remember
@@ -34,7 +34,7 @@ fun KurobaContainerToolbarContent(
   val totalToolbarHeight = windowInsets.top + toolbarHeight
 
   if (!isThemeOverridden) {
-    LaunchedEffect(totalToolbarHeight) {
+    SideEffect {
       kurobaToolbarState.onToolbarHeightChanged(totalToolbarHeight)
     }
   }

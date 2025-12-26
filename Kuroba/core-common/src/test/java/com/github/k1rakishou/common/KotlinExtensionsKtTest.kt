@@ -6,33 +6,63 @@ import org.junit.Test
 
 class KotlinExtensionsKtTest {
 
-    @Test
-    fun testAddOrReplaceCookieHeader() {
-        val requestBuilder = Request.Builder()
-            .url("http://test.com")
-            .get()
+  @Test
+  fun testSingleCookie() {
+    val requestBuilder = Request.Builder()
+      .url("http://test.com")
+      .get()
 
-        requestBuilder
-            .addOrReplaceCookieHeader("aaabbb=abc")
-            .addOrReplaceCookieHeader("test_cookie=123")
+    requestBuilder
+      .addOrReplaceCookieHeader("aaabbb=abc")
+      .addOrReplaceCookieHeader("test_cookie=123")
 
-        assertEquals("aaabbb=abc; test_cookie=123", requestBuilder.build().header("Cookie"))
+    assertEquals("aaabbb=abc; test_cookie=123", requestBuilder.build().header("Cookie"))
 
-        requestBuilder
-            .addOrReplaceCookieHeader("test_cookie=124")
+    requestBuilder
+      .addOrReplaceCookieHeader("test_cookie=124")
 
-        assertEquals("aaabbb=abc; test_cookie=124", requestBuilder.build().header("Cookie"))
+    assertEquals("aaabbb=abc; test_cookie=124", requestBuilder.build().header("Cookie"))
 
-        requestBuilder
-            .addOrReplaceCookieHeader("aaabbb=aaa")
+    requestBuilder
+      .addOrReplaceCookieHeader("aaabbb=aaa")
 
-        assertEquals("aaabbb=aaa; test_cookie=124", requestBuilder.build().header("Cookie"))
+    assertEquals("aaabbb=aaa; test_cookie=124", requestBuilder.build().header("Cookie"))
 
-        requestBuilder
-            .addOrReplaceCookieHeader("test_cookie=125")
-            .addOrReplaceCookieHeader("aaabbb=bbb")
+    requestBuilder
+      .addOrReplaceCookieHeader("test_cookie=125")
+      .addOrReplaceCookieHeader("aaabbb=bbb")
 
-        assertEquals("aaabbb=bbb; test_cookie=125", requestBuilder.build().header("Cookie"))
-    }
+    assertEquals("aaabbb=bbb; test_cookie=125", requestBuilder.build().header("Cookie"))
+  }
+
+  @Test
+  fun testMultipleCookies() {
+    val requestBuilder = Request.Builder()
+      .url("http://test.com")
+      .get()
+
+    requestBuilder
+      .addOrReplaceCookieHeader("a=1; b=2; c=3")
+      .addOrReplaceCookieHeader("d=4; e=5; f=777")
+
+    assertEquals("a=1; b=2; c=3; d=4; e=5; f=777", requestBuilder.build().header("Cookie"))
+
+    requestBuilder
+      .addOrReplaceCookieHeader("a=10; b=20; c=33")
+
+    assertEquals("a=10; b=20; c=33; d=4; e=5; f=777", requestBuilder.build().header("Cookie"))
+  }
+
+  @Test
+  fun testInvalidCookie() {
+    val requestBuilder = Request.Builder()
+      .url("http://test.com")
+      .get()
+
+    requestBuilder
+      .addOrReplaceCookieHeader("a=1; b=2; c=3")
+
+    assertEquals("a=1; b=2; c=3", requestBuilder.build().header("Cookie"))
+  }
 
 }

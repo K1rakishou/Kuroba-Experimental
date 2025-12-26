@@ -15,8 +15,15 @@ class CloudFlareCheckBypassWebClient(
   override fun onPageFinished(view: WebView?, url: String?) {
     super.onPageFinished(view, url)
 
-    val cookie = cookieManager.getCookie(originalRequestUrlHost)
-    if (cookie.isNullOrEmpty() || !cookie.contains(CloudFlareHandlerInterceptor.CF_CLEARANCE)) {
+    val cookie = cookieManager.getCookie(originalRequestUrlHost) ?: ""
+
+    val expectedCookies = listOf(
+      CloudFlareHandlerInterceptor.COOKIE_CF_CLEARANCE,
+      CloudFlareHandlerInterceptor.COOKIE_TCS,
+      CloudFlareHandlerInterceptor.COOKIE_CF_BM,
+    )
+
+    if (!cookie.containsAll(expectedCookies)) {
       ++pageLoadsCounter
 
       if (pageLoadsCounter > SiteFirewallBypassController.MAX_PAGE_LOADS_COUNT) {
@@ -26,18 +33,7 @@ class CloudFlareCheckBypassWebClient(
       return
     }
 
-    val actualCookie = cookie
-      .split(";")
-      .map { cookiePart -> cookiePart.trim() }
-      .firstOrNull { cookiePart -> cookiePart.startsWith(CloudFlareHandlerInterceptor.CF_CLEARANCE) }
-      ?.removePrefix("${CloudFlareHandlerInterceptor.CF_CLEARANCE}=")
-
-    if (actualCookie == null) {
-      fail(BypassException("No cf_clearance cookie found in result"))
-      return
-    }
-
-    success(actualCookie)
+    success(cookie)
   }
 
   @Deprecated("Deprecated in Java")
@@ -51,6 +47,10 @@ class CloudFlareCheckBypassWebClient(
 
     val error = description ?: "Unknown error while trying to load CloudFlare page"
     fail(BypassException(error))
+  }
+
+  private fun String.containsAll(others: List<String>): Boolean {
+    return others.all { other -> this.contains(other) }
   }
 
 }

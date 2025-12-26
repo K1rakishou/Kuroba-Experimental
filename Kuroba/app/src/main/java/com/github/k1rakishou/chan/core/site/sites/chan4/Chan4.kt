@@ -36,9 +36,11 @@ import com.github.k1rakishou.chan.core.site.sites.search.SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
 import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
 import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.common.CookieBuilder
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.StringUtils.formatToken
 import com.github.k1rakishou.common.addOrReplaceCookieHeader
+import com.github.k1rakishou.common.domainOrHost
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.core_logger.Logger
@@ -637,52 +639,36 @@ open class Chan4 : SiteBase() {
     override fun modifyWebView(webView: WebView) {
       super.modifyWebView(webView)
 
-      val sys = HttpUrl.Builder()
-        .scheme("https")
-        .host("sys.4chan.org")
-        .build()
-
-      val cookieManager = CookieManager.getInstance()
-
-      val domain = sys.scheme + "://" + sys.host + "/"
-      val cookieParts = mutableListOf<String>()
+      val host = "4chan.org"
+      val cookieBuilder = CookieBuilder()
 
       if (site.actions().isLoggedIn()) {
-        cookieParts += "pass_enabled=1"
-        cookieParts += "pass_id=${site.passToken.get()}"
+        cookieBuilder.addOrReplace("pass_enabled", "1")
+        cookieBuilder.addOrReplace("pass_id", site.passToken.get())
       }
 
-      val captchaCookie = getCaptchaCookie(site, sys.host)
+      val captchaCookie = get4chanPassCookie(site, host)
       if (captchaCookie.isNotNullNorBlank()) {
-        cookieParts += "4chan_pass=${captchaCookie}"
+        cookieBuilder.addOrReplace(CAPTCHA_COOKIE_KEY, captchaCookie)
       }
 
-      if (cookieParts.isEmpty()) {
+      if (cookieBuilder.isEmpty()) {
         Logger.d(TAG, "modifyWebView() full cookie is empty")
         return
       }
 
-      val additionalCookies = buildString {
-        cookieParts.forEachIndexed { index, cookiePart ->
-          append(cookiePart)
+      val cookieManager = CookieManager.getInstance()
+      cookieBuilder.addOrReplace(cookieManager.getCookie(host))
 
-          if (index != cookieParts.lastIndex) {
-            append("; ")
-          }
-        }
+      val builtCookies = cookieBuilder.build()
+      cookieManager.setCookie(host, builtCookies)
+
+      val cookieParts = cookieBuilder.cookieParts()
+      Logger.debug(TAG) { "modifyWebView('${host}') cookieParts size: '${cookieParts.size}'" }
+
+      cookieParts.forEach { cookiePart ->
+        Logger.debug(TAG) { "modifyWebView('${host}') '${cookiePart.key}'='${cookiePart.value}'" }
       }
-
-      val prevCookies = cookieManager.getCookie(domain)
-        ?.takeIf { cookie -> cookie.isNotBlank() }
-        ?: ""
-
-      if (prevCookies.contains(additionalCookies)) {
-        Logger.d(TAG, "modifyWebView() prevCookies already contains additional cookies, full cookie: '${cookieManager.getCookie(domain)}'")
-        return
-      }
-
-      cookieManager.setCookie(domain, "${prevCookies}; ${additionalCookies}")
-      Logger.d(TAG, "modifyWebView() full cookie: '${cookieManager.getCookie(domain)}'")
     }
 
     override fun modifyCaptchaGetRequest(site: Chan4, requestBuilder: Request.Builder, chanDescriptor: ChanDescriptor?) {
@@ -703,19 +689,26 @@ open class Chan4 : SiteBase() {
     }
 
     private fun addChan4CookieHeader(site: Chan4, requestBuilder: Request.Builder) {
-      val host = requestBuilder.build().url.host
-      val captchaCookie = getCaptchaCookie(site, host)
+      val domainOrHost = requestBuilder.build().url.domainOrHost()
+      val captchaCookie = get4chanPassCookie(site, domainOrHost)
 
       if (captchaCookie.isNullOrEmpty()) {
-        Logger.e(TAG, "addChan4CookieHeader() captchaCookie for host '${host}' is null or empty captchaCookie: '${captchaCookie}'")
+        Logger.error(TAG) {
+          "addChan4CookieHeader() ${CAPTCHA_COOKIE_KEY} for domainOrHost '${domainOrHost}' " +
+            "is null or empty captchaCookie: '${formatToken(captchaCookie)}'"
+        }
+
         return
       }
 
-      Logger.d(TAG, "addChan4CookieHeader(), host=${host}, captchaCookie=${formatToken(captchaCookie)}")
+      Logger.debug(TAG) {
+        "addChan4CookieHeader(), domainOrHost: '${domainOrHost}', ${CAPTCHA_COOKIE_KEY}: '${formatToken(captchaCookie)}'"
+      }
+
       requestBuilder.addOrReplaceCookieHeader("$CAPTCHA_COOKIE_KEY=${captchaCookie}")
     }
 
-    private fun getCaptchaCookie(site: Chan4, host: String): String? {
+    private fun get4chanPassCookie(site: Chan4, host: String): String? {
       val rememberCaptchaCookies = site
         .getSettingBySettingId<GsonJsonSetting<Chan4CaptchaSettings>>(SiteSetting.SiteSettingId.Chan4CaptchaSettings)
         ?.get()

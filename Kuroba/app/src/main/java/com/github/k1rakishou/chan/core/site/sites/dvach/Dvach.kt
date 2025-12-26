@@ -465,7 +465,7 @@ class Dvach : CommonSite() {
                 append("; ")
               }
 
-              append(CloudFlareHandlerInterceptor.CF_CLEARANCE)
+              append(CloudFlareHandlerInterceptor.COOKIE_CF_CLEARANCE)
               append('=')
               append(cookieForDomain)
             }

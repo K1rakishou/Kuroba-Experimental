@@ -19,7 +19,7 @@ import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.FirewallType
-import com.github.k1rakishou.common.domain
+import com.github.k1rakishou.common.domainOrHost
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.core_logger.Logger
@@ -239,17 +239,17 @@ class SiteFirewallBypassController(
 
     when (cookieResult) {
       is CookieResult.CookieValue -> {
-        Logger.d(TAG, "Success: ${cookieResult.cookie}")
+        Logger.d(TAG, "Success('${urlToOpen}') got cookie: '${cookieResult.cookie}'")
         addCookieToSiteSettings(cookieResult.cookie)
       }
       is CookieResult.Error -> {
-        Logger.e(TAG, "Error: ${cookieResult.exception.errorMessageOrClassName()}")
+        Logger.e(TAG, "Error('${urlToOpen}'): ${cookieResult.exception.errorMessageOrClassName()}")
       }
       CookieResult.Canceled -> {
-        Logger.e(TAG, "Canceled")
+        Logger.e(TAG, "Canceled('${urlToOpen}')")
       }
       CookieResult.NotSupported -> {
-        Logger.e(TAG, "NotSupported")
+        Logger.e(TAG, "NotSupported('${urlToOpen}')")
       }
     }
 
@@ -274,9 +274,8 @@ class SiteFirewallBypassController(
           return false
         }
 
-        val domainOrHost = urlToOpen.toHttpUrlOrNull()?.let { httpUrl ->
-          httpUrl.domain() ?: httpUrl.host
-        }
+        val domainOrHost = urlToOpen.toHttpUrlOrNull()
+          ?.domainOrHost()
 
         if (domainOrHost.isNullOrEmpty()) {
           Logger.e(TAG, "Failed to extract neither domain not host from url '${urlToOpen}'")

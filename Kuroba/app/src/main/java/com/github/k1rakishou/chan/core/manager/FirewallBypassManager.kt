@@ -3,9 +3,11 @@ package com.github.k1rakishou.chan.core.manager
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.common.FirewallType
+import com.github.k1rakishou.common.domainOrHost
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.rethrowCancellationException
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -14,10 +16,12 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.util.concurrent.atomic.AtomicBoolean
 
 class FirewallBypassManager(
   private val appScope: CoroutineScope,
+  private val siteManager: SiteManager,
   private val applicationVisibilityManager: ApplicationVisibilityManager
 ) {
   @GuardedBy("itself")
@@ -33,6 +37,24 @@ class FirewallBypassManager(
   )
   val showFirewallControllerEvents: SharedFlow<ShowFirewallControllerInfo>
     get() = _showFirewallControllerEvents.asSharedFlow()
+
+  suspend fun removeHostTimeCheckByChanDescriptor(chanDescriptor: ChanDescriptor) {
+    siteManager.awaitUntilInitialized()
+
+    val domainOrHost = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+      ?.resolvable()
+      ?.desktopUrl(chanDescriptor, null)
+      ?.toHttpUrlOrNull()
+      ?.domainOrHost()
+
+    Logger.debug(TAG) { "removeHostTimeCheckByChanDescriptor(${chanDescriptor}) -> '${domainOrHost}'" }
+
+    if (domainOrHost.isNullOrBlank()) {
+      return
+    }
+
+    synchronized(hostLastTimeCheck) { hostLastTimeCheck.remove(domainOrHost) }
+  }
 
   fun onFirewallDetected(
     firewallType: FirewallType,
@@ -50,22 +72,22 @@ class FirewallBypassManager(
       return
     }
 
-    val host = urlToOpen.host
+    val domainOrHost = urlToOpen.domainOrHost()
 
     val showShowFirewallBypassScreen = synchronized(firewallSiteInfoMap) {
-      val isCurrentlyShowing = firewallSiteInfoMap.get(host)?.currentlyShowing == true
+      val isCurrentlyShowing = firewallSiteInfoMap.get(domainOrHost)?.currentlyShowing == true
 
       if (isCurrentlyShowing) {
-        firewallSiteInfoMap.get(host)?.addWaiter(onFinished)
+        firewallSiteInfoMap.get(domainOrHost)?.addWaiter(onFinished)
         return@synchronized ShowShowFirewallBypassScreen.WaitForExistingOne
       }
 
       val firewallSiteInfo = FirewallSiteInfo(onFinished)
-      firewallSiteInfoMap[host] = firewallSiteInfo
+      firewallSiteInfoMap[domainOrHost] = firewallSiteInfo
 
       val now = System.currentTimeMillis()
       val lastTimeChecked = synchronized(hostLastTimeCheck) {
-        hostLastTimeCheck[host] ?: 0L
+        hostLastTimeCheck[domainOrHost] ?: 0L
       }
 
       if (now - lastTimeChecked < FIREWALL_CHECK_TIMEOUT_MS) {
@@ -74,7 +96,7 @@ class FirewallBypassManager(
                   "(timeDelta: ${now - lastTimeChecked})"
         }
 
-        firewallSiteInfoMap.remove(host)
+        firewallSiteInfoMap.remove(domainOrHost)
         return@synchronized ShowShowFirewallBypassScreen.DoNotShow
       }
 
@@ -103,7 +125,7 @@ class FirewallBypassManager(
 
       try {
         synchronized(firewallSiteInfoMap) {
-          firewallSiteInfoMap[host]?.onStarted()
+          firewallSiteInfoMap[domainOrHost]?.onStarted()
         }
 
         val completableDeferred = CompletableDeferred<Boolean>()
@@ -140,12 +162,11 @@ class FirewallBypassManager(
         error.rethrowCancellationException()
       } finally {
         synchronized(firewallSiteInfoMap) {
-          firewallSiteInfoMap.remove(host)?.onFinished(
-            success = success
-          )
+          firewallSiteInfoMap.remove(domainOrHost)
+            ?.onFinished(success)
 
           synchronized(hostLastTimeCheck) {
-            hostLastTimeCheck[host] = System.currentTimeMillis()
+            hostLastTimeCheck[domainOrHost] = System.currentTimeMillis()
           }
         }
       }

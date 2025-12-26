@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.core.usecase
 
-import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteSetting
@@ -35,14 +34,12 @@ class LoadChan4CaptchaUseCase(
 
   suspend fun await(
     chanDescriptor: ChanDescriptor,
-    ticket: String?,
-    isRefreshing: Boolean
+    ticket: String?
   ): ModularResult<CaptchaResult> {
     return ModularResult.Try {
       val captchaResult = loadCaptcha(
         chanDescriptor = chanDescriptor,
-        ticket = ticket,
-        isRefreshing = isRefreshing
+        ticket = ticket
       )
 
       updateCaptchaTicket(
@@ -56,8 +53,7 @@ class LoadChan4CaptchaUseCase(
 
   private suspend fun loadCaptcha(
     chanDescriptor: ChanDescriptor,
-    ticket: String?,
-    isRefreshing: Boolean
+    ticket: String?
   ): CaptchaResult {
     val boardCode = chanDescriptor.boardDescriptor().boardCode
     val urlRaw = formatCaptchaUrl(chanDescriptor, boardCode, ticket)
@@ -66,14 +62,6 @@ class LoadChan4CaptchaUseCase(
 
     val requestBuilder = Request.Builder()
       .url(urlRaw)
-      .also { builder ->
-        if (isRefreshing) {
-          builder.tag(
-            CloudFlareHandlerInterceptor.IgnoreCloudFlareBotDetectionErrors::class.java,
-            CloudFlareHandlerInterceptor.IgnoreCloudFlareBotDetectionErrors
-          )
-        }
-      }
       .get()
 
     siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())?.let { chan4 ->

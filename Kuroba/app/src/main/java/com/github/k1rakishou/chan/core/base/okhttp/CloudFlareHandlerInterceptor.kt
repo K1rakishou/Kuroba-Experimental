@@ -9,7 +9,7 @@ import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.FirewallDetectedException
 import com.github.k1rakishou.common.FirewallType
 import com.github.k1rakishou.common.addOrReplaceCookieHeader
-import com.github.k1rakishou.common.domain
+import com.github.k1rakishou.common.domainOrHost
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.prefs.MapSetting
@@ -169,9 +169,7 @@ class CloudFlareHandlerInterceptor(
 
   private fun requireCloudFlareCookie(request: Request): Boolean {
     val host = request.url.host
-
-    val domainOrHost = request.url.domain()
-      ?: request.url.host
+    val domainOrHost = request.url.domainOrHost()
 
     val alreadyCheckedSite = synchronized(this) { host in sitesThatRequireCloudFlareCache }
     if (alreadyCheckedSite) {
@@ -207,14 +205,10 @@ class CloudFlareHandlerInterceptor(
   }
 
   private fun addCloudFlareCookie(prevRequest: Request): Request? {
-    val url = prevRequest.url
-
     siteResolver.waitUntilInitialized()
+
+    val url = prevRequest.url
     val site = siteResolver.findSiteForUrl(url.toString())
-
-    val domainOrHost = prevRequest.url.domain()
-      ?: prevRequest.url.host
-
     if (site == null) {
       Logger.e(TAG, "[$okHttpType] addCloudFlareCookie() siteResolver.findSiteForUrl(${url}) returned null")
       return null
@@ -229,6 +223,7 @@ class CloudFlareHandlerInterceptor(
       return null
     }
 
+    val domainOrHost = prevRequest.url.domainOrHost()
     val cookieValue = cloudFlareClearanceCookieSetting.get(domainOrHost)
     if (cookieValue.isNullOrEmpty()) {
       Logger.e(TAG, "[$okHttpType] addCloudFlareCookie() cookieValue is null or empty")
@@ -236,7 +231,7 @@ class CloudFlareHandlerInterceptor(
     }
 
     return prevRequest.newBuilder()
-      .addOrReplaceCookieHeader("$CF_CLEARANCE=$cookieValue")
+      .addOrReplaceCookieHeader("$COOKIE_CF_CLEARANCE=$cookieValue")
       .build()
   }
 
@@ -254,11 +249,10 @@ class CloudFlareHandlerInterceptor(
 
     // Slow path, load first READ_BYTES_COUNT bytes of the body
     val responseBody = response.body
-      ?: return false
 
     return responseBody.use { body ->
       return@use body.byteStream().use { inputStream ->
-        val bytes = ByteArray(READ_BYTES_COUNT) { 0x00 }
+        val bytes = ByteArray(READ_BYTES_COUNT)
         val read = inputStream.read(bytes)
         if (read <= 0) {
           return@use false
@@ -299,7 +293,9 @@ class CloudFlareHandlerInterceptor(
     private const val TAG = "CloudFlareHandlerInterceptor"
     private const val READ_BYTES_COUNT = 24 * 1024 // 24KB
 
-    const val CF_CLEARANCE = "cf_clearance"
+    const val COOKIE_CF_CLEARANCE = "cf_clearance"
+    const val COOKIE_TCS = "_tcs"
+    const val COOKIE_CF_BM = "__cf_bm"
 
     private val cloudFlareHeaders = arrayOf("cloudflare-nginx", "cloudflare")
 

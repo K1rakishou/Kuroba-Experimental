@@ -3,10 +3,12 @@ package com.github.k1rakishou.chan.ui.controller
 import android.annotation.SuppressLint
 import android.content.Context
 import android.util.AndroidRuntimeException
+import android.webkit.CookieManager
 import android.webkit.WebView
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
@@ -17,13 +19,16 @@ import com.github.k1rakishou.chan.features.toolbar.ToolbarMiddleContent
 import com.github.k1rakishou.chan.features.toolbar.ToolbarText
 import com.github.k1rakishou.chan.ui.controller.base.Controller
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.common.updatePaddings
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.util.ChanPostUtils.getTitle
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import javax.inject.Inject
 
 class WebViewReportController(
@@ -34,6 +39,8 @@ class WebViewReportController(
 
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
+
+  private val cookieManager by lazy { CookieManager.getInstance() }
 
   private lateinit var frameLayout: FrameLayout
 
@@ -54,19 +61,28 @@ class WebViewReportController(
       )
     )
 
-    initUi()
-
     controllerScope.launch {
-      combine(
-        globalUiStateHolder.toolbar.toolbarHeight,
-        globalUiStateHolder.bottomPanel.bottomPanelHeight
-      ) { t1, t2 -> t1 to t2 }
-        .onEach { onInsetsChanged() }
-        .collect()
-    }
+      try {
+        // Some users may have no WebView installed
+        initUi()
+      } catch (error: Throwable) {
+        Logger.e(TAG, "Error when trying to create the view", error)
+        requireNavController().popController()
+        return@launch
+      }
 
-    onInsetsChanged()
-    globalWindowInsetsManager.addInsetsUpdatesListener(this)
+      controllerScope.launch {
+        combine(
+          globalUiStateHolder.toolbar.toolbarHeight,
+          globalUiStateHolder.bottomPanel.bottomPanelHeight
+        ) { t1, t2 -> t1 to t2 }
+          .onEach { onInsetsChanged() }
+          .collect()
+      }
+
+      onInsetsChanged()
+      globalWindowInsetsManager.addInsetsUpdatesListener(this@WebViewReportController)
+    }
   }
 
   override fun onDestroy() {
@@ -96,7 +112,7 @@ class WebViewReportController(
     )
   }
 
-  private fun initUi() {
+  private suspend fun initUi() {
     val url = site.endpoints().report(post)
 
     frameLayout = FrameLayout(context)
@@ -110,6 +126,19 @@ class WebViewReportController(
     try {
       val webView = WebView(context)
       val siteRequestModifier = site.requestModifier()
+
+      if (ChanSettings.onlyRemoveExpiredWebviewCookies.get()) {
+        Logger.debug(TAG) { "Removing expired cookies" }
+        cookieManager.removeExpiredCookie()
+      } else {
+        Logger.debug(TAG) { "Removing all cookies" }
+        suspendCancellableCoroutine { cont ->
+          cookieManager.removeAllCookies { removed ->
+            Logger.debug(TAG) { "cookieManager.removeAllCookies -> ${removed}" }
+            cont.resumeValueSafe(Unit)
+          }
+        }
+      }
 
       if (siteRequestModifier != null) {
         siteRequestModifier.modifyWebView(webView)
@@ -149,6 +178,10 @@ class WebViewReportController(
       view = AppModuleAndroidUtils.inflate(context, R.layout.layout_webview_error)
       view.findViewById<TextView>(R.id.text).text = errmsg
     }
+  }
+
+  companion object {
+    private const val TAG = "WebViewReportController"
   }
 
 }

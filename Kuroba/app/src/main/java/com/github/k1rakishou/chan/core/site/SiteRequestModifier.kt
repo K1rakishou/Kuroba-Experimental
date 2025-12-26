@@ -2,12 +2,11 @@ package com.github.k1rakishou.chan.core.site
 
 import android.webkit.WebView
 import androidx.annotation.CallSuper
-import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
 import com.github.k1rakishou.chan.core.site.http.HttpCall
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.addHeaderIfNotExists
 import com.github.k1rakishou.common.addOrReplaceCookieHeader
-import com.github.k1rakishou.common.domain
+import com.github.k1rakishou.common.domainOrHost
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -135,16 +134,18 @@ abstract class SiteRequestModifier<T : Site>(
   }
 
   private fun addCloudFlareCookie(requestBuilder: Request.Builder) {
-    val domainOrHost = requestBuilder.build().url.let { url -> url.domain() ?: url.host }
+    val domainOrHost = requestBuilder.build().url.domainOrHost()
 
     val cookieForDomain = site
       .getSettingBySettingId<MapSetting>(SiteSetting.SiteSettingId.CloudFlareClearanceCookie)
       ?.get(domainOrHost)
 
+    Logger.d(TAG, "addCloudFlareCookie('${domainOrHost}') '${cookieForDomain}'")
+
     if (cookieForDomain.isNotNullNorEmpty()) {
-      requestBuilder.addOrReplaceCookieHeader("${CloudFlareHandlerInterceptor.CF_CLEARANCE}=$cookieForDomain")
+      requestBuilder.addOrReplaceCookieHeader(cookieForDomain)
     } else {
-      Logger.w(TAG, "addCloudFlareCookie() cookieForDomain '${domainOrHost}' is null or empty: '${cookieForDomain}'")
+      Logger.w(TAG, "addCloudFlareCookie('${domainOrHost}') cookie is null or empty: '${cookieForDomain}'")
     }
   }
 
