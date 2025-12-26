@@ -83,27 +83,37 @@ def get_new_tag_name(repo):
 def get_commits_since(commit_hash, repo_path=None):
     if repo_path:
         os.chdir(repo_path)
-    
-    cmd = ["git", "log", f"{commit_hash}..HEAD", "--pretty=format:%s", "--date=local"]
+
+    cmd = [
+        "git", "log",
+        f"{commit_hash}..HEAD",
+        "--pretty=format:%B%x1e"
+    ]
+
     all_commits = ""
-    
+
     try:
         output = subprocess.check_output(cmd, stderr=subprocess.STDOUT, text=True)
-        
-        commits = output.strip().split('\n')
+
+        commits = output.strip().split('\x1e')
         commit_counter = 0
 
         for commit in commits:
+            commit = commit.strip()
+            if not commit:
+                continue
+
+            if commit.startswith("Merge"):
+                continue
+
             if commit_counter > 10:
                 break
 
-            if commit.startswith('Merge'):
-                continue
-
-            all_commits += f"- {commit}\n"
+            all_commits += f"- {commit}\n\n"
             commit_counter += 1
 
         return all_commits
+
     except subprocess.CalledProcessError as e:
         print(f"Failed to get commits: {e.output}")
         return ""
