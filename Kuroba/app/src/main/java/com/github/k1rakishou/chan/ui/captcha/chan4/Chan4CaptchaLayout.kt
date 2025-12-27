@@ -144,6 +144,8 @@ class Chan4CaptchaLayout(
     )
 
     addView(view)
+
+    viewModel.onCaptchaViewInitialized()
   }
 
   override fun reset() {
@@ -161,7 +163,7 @@ class Chan4CaptchaLayout(
     scope.cancelChildren()
 
     viewModel.resetCaptchaIfCaptchaIsAlmostDead(chanDescriptor)
-    viewModel.cleanup()
+    viewModel.onCaptchaViewDestroyed()
   }
 
   @Composable

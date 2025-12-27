@@ -1,11 +1,13 @@
 package com.github.k1rakishou.chan.core.di.module.application
 
 import android.content.Context
+import androidx.core.app.NotificationManagerCompat
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.helper.AppRestarter
 import com.github.k1rakishou.chan.core.helper.ChanLoadProgressNotifier
+import com.github.k1rakishou.chan.core.helper.KurobaSystemNotifications
 import com.github.k1rakishou.chan.core.helper.SitesSetupControllerOpenNotifier
 import com.github.k1rakishou.chan.core.image.ImageLoaderDeprecated
 import com.github.k1rakishou.chan.core.manager.BoardManager
@@ -38,6 +40,7 @@ import com.github.k1rakishou.chan.ui.helper.picker.RemoteFilePicker
 import com.github.k1rakishou.chan.ui.helper.picker.ShareFilePicker
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
@@ -295,6 +298,21 @@ class HelperModule {
   fun provideAlbumThreadControllerHelpers(): AlbumThreadControllerHelpers {
     Logger.deps("AlbumThreadControllerHelpers")
     return AlbumThreadControllerHelpers()
+  }
+
+  @Provides
+  @Singleton
+  fun provideKurobaSystemNotifications(
+    appContext: Context,
+    themeEngine: ThemeEngine,
+    notificationManagerCompat: NotificationManagerCompat
+  ): KurobaSystemNotifications {
+    Logger.deps("KurobaSystemNotifications")
+    return KurobaSystemNotifications(
+      appContext = appContext,
+      themeEngine = themeEngine,
+      notificationManagerCompat = notificationManagerCompat
+    )
   }
 
 }

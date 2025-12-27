@@ -14,6 +14,11 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
+interface IPostFilterManager {
+  fun countMatchedFilters(postDescriptors: List<PostDescriptor>): Int
+  fun getManyPostFilters(postDescriptors: Collection<PostDescriptor>): Map<PostDescriptor, PostFilter>
+}
+
 open class PostFilterManager(
   private val verboseLogsEnabled: Boolean,
   private val appScope: CoroutineScope,

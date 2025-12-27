@@ -18,6 +18,7 @@ import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.shared.ViewModelAssistedFactory
+import com.github.k1rakishou.chan.core.manager.Chan4CaptchaNotifierManager
 import com.github.k1rakishou.chan.core.manager.FirewallBypassManager
 import com.github.k1rakishou.chan.core.manager.HapticFeedbackManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
@@ -30,7 +31,6 @@ import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.prefs.GsonJsonSetting
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -40,6 +40,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.lang.ref.WeakReference
 import java.util.Locale
 import javax.inject.Inject
 
@@ -49,6 +50,7 @@ class Chan4CaptchaLayoutViewModel(
   private val loadChan4CaptchaUseCase: LoadChan4CaptchaUseCase,
   private val hapticFeedbackManager: HapticFeedbackManager,
   private val firewallBypassManager: FirewallBypassManager,
+  private val chan4CaptchaNotifierManager: Chan4CaptchaNotifierManager,
 ) : BaseViewModel() {
 
   private var activeJob: Job? = null
@@ -80,7 +82,11 @@ class Chan4CaptchaLayoutViewModel(
   override suspend fun onViewModelReady() {
   }
 
-  fun cleanup() {
+  fun onCaptchaViewInitialized() {
+    chan4CaptchaNotifierManager.onCaptchaViewInitialized()
+  }
+
+  fun onCaptchaViewDestroyed() {
     activeJob?.cancel()
     activeJob = null
 
@@ -88,6 +94,7 @@ class Chan4CaptchaLayoutViewModel(
     captchaTtlUpdateJob = null
 
     _captchaTtlMillisFlow.value = -1L
+    chan4CaptchaNotifierManager.onCaptchaViewDestroyed()
   }
 
   fun resetCaptchaForced(chanDescriptor: ChanDescriptor) {
@@ -155,7 +162,38 @@ class Chan4CaptchaLayoutViewModel(
           _captchaInfoToShow.value = AsyncData.Error(error)
 
           if (error is CaptchaCooldownError) {
-            waitUntilCaptchaRateLimitPassed(error.cooldownMs)
+            val lambda: (Long) -> Boolean = start@{ remainingCooldownMs ->
+              if (_captchaInfoToShow.value is AsyncData.NotInitialized) {
+                return@start false
+              }
+
+              val previousError = (_captchaInfoToShow.value as? AsyncData.Error)?.throwable
+                ?: return@start true
+
+              when (previousError) {
+                is CaptchaGenericRateLimitError -> {
+                  _captchaInfoToShow.value = AsyncData.Error(CaptchaGenericRateLimitError(remainingCooldownMs))
+                }
+                is CaptchaThreadRateLimitError -> {
+                  _captchaInfoToShow.value = AsyncData.Error(CaptchaThreadRateLimitError(remainingCooldownMs))
+                }
+                is CaptchaPostRateLimitError -> {
+                  _captchaInfoToShow.value = AsyncData.Error(CaptchaPostRateLimitError(remainingCooldownMs))
+                }
+                else -> {
+                  return@start true
+                }
+              }
+
+              return@start false
+            }
+
+            val lambdaWeak = WeakReference(lambda)
+            chan4CaptchaNotifierManager.start(chanDescriptor, error.cooldownMs, lambdaWeak)
+
+            if (!chan4CaptchaNotifierManager.wait()) {
+              return@launch
+            }
 
             withContext(Dispatchers.Main) { requestCaptcha(chanDescriptor, forced = true) }
             return@launch
@@ -197,38 +235,6 @@ class Chan4CaptchaLayoutViewModel(
 
     captchaInfo.tasks[taskIndex] = task.copy(images = updatedImages)
     hapticFeedbackManager.tap()
-  }
-
-  private suspend fun CoroutineScope.waitUntilCaptchaRateLimitPassed(initialCooldownMs: Long) {
-    var remainingCooldownMs = initialCooldownMs
-
-    while (isActive) {
-      if (remainingCooldownMs <= 0) {
-        break
-      }
-
-      delay(1000L)
-
-      val previousError = (_captchaInfoToShow.value as? AsyncData.Error)?.throwable
-        ?: break
-
-      when (previousError) {
-        is CaptchaGenericRateLimitError -> {
-          _captchaInfoToShow.value = AsyncData.Error(CaptchaGenericRateLimitError(remainingCooldownMs))
-        }
-        is CaptchaThreadRateLimitError -> {
-          _captchaInfoToShow.value = AsyncData.Error(CaptchaThreadRateLimitError(remainingCooldownMs))
-        }
-        is CaptchaPostRateLimitError -> {
-          _captchaInfoToShow.value = AsyncData.Error(CaptchaPostRateLimitError(remainingCooldownMs))
-        }
-        else -> {
-          break
-        }
-      }
-
-      remainingCooldownMs -= 1000L
-    }
   }
 
   private fun startOrRestartCaptchaTtlUpdateTask(chanDescriptor: ChanDescriptor) {
@@ -564,6 +570,7 @@ class Chan4CaptchaLayoutViewModel(
     private val loadChan4CaptchaUseCase: LoadChan4CaptchaUseCase,
     private val hapticFeedbackManager: HapticFeedbackManager,
     private val firewallBypassManager: FirewallBypassManager,
+    private val chan4CaptchaNotifierManager: Chan4CaptchaNotifierManager,
   ) : ViewModelAssistedFactory<Chan4CaptchaLayoutViewModel> {
     override fun create(handle: SavedStateHandle): Chan4CaptchaLayoutViewModel {
       return Chan4CaptchaLayoutViewModel(
@@ -572,6 +579,7 @@ class Chan4CaptchaLayoutViewModel(
         loadChan4CaptchaUseCase = loadChan4CaptchaUseCase,
         hapticFeedbackManager = hapticFeedbackManager,
         firewallBypassManager = firewallBypassManager,
+        chan4CaptchaNotifierManager = chan4CaptchaNotifierManager,
       )
     }
   }

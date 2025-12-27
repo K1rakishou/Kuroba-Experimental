@@ -18,6 +18,12 @@ import kotlin.concurrent.read
 import kotlin.concurrent.write
 import kotlin.time.measureTime
 
+interface IPostHideManager {
+  fun createOrUpdateMany(chanPostHideList: Collection<ChanPostHide>)
+  fun countPostHides(postDescriptors: List<PostDescriptor>): Int
+  fun getHiddenPostsMap(postDescriptors: Set<PostDescriptor>): Map<PostDescriptor, ChanPostHide>
+}
+
 open class PostHideManager(
   private val verboseLogsEnabled: Boolean,
   private val appScope: CoroutineScope,

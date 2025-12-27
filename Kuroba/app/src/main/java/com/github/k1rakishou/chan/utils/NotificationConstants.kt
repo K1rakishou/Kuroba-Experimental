@@ -18,7 +18,12 @@ object NotificationConstants {
   const val IMAGE_SAVER_WORKER_NOTIFICATION_ID = 3
   const val POSTING_SERVICE_NOTIFICATION_ID = 4
   const val FILTER_SUMMARY_NOTIFICATION_ID = 5
-  const val FILTER_WATCHER_NOTIFICATION_ID = 6
+
+  private const val ReplyNotificationsIdCounterStart = 1_000_000
+  private const val ImageSaverNotificationsIdCounterStart = 2_000_000
+  private const val PostingServiceNotificationsIdCounterStart = 3_000_000
+  private const val FilterWatcherNotificationsIdCounterStart = 4_000_000
+  private const val GenericNotificationsIdCounterStart = 999_000_000
 
   const val REPLY_NOTIFICATION_ACTION = "${BuildConfig.APPLICATION_ID}_reply_notification_action"
   const val LAST_PAGE_NOTIFICATION_ACTION = "${BuildConfig.APPLICATION_ID}_last_page_notification_action"
@@ -26,7 +31,7 @@ object NotificationConstants {
   const val FILTER_WATCHER_NOTIFICATION_ACTION = "${BuildConfig.APPLICATION_ID}_filter_watcher_notification_action"
 
   object ReplyNotifications {
-    val notificationIdCounter = AtomicInteger(1000000)
+    val notificationIdCounter = AtomicInteger(ReplyNotificationsIdCounterStart)
     val notificationIdMap = mutableMapOf<ChanDescriptor.ThreadDescriptor, Int>()
 
     fun notificationId(threadDescriptor: ChanDescriptor.ThreadDescriptor): Int {
@@ -70,7 +75,7 @@ object NotificationConstants {
   }
 
   object ImageSaverNotifications {
-    private val notificationIdCounter = AtomicInteger(2000000)
+    private val notificationIdCounter = AtomicInteger(ImageSaverNotificationsIdCounterStart)
     private val notificationIdMap = mutableMapOf<String, Int>()
 
     fun notificationId(uniqueDownloadId: String): Int {
@@ -90,7 +95,7 @@ object NotificationConstants {
   }
 
   object PostingServiceNotifications {
-    private val notificationIdCounter = AtomicInteger(3000000)
+    private val notificationIdCounter = AtomicInteger(PostingServiceNotificationsIdCounterStart)
     private val notificationIdMap = mutableMapOf<ChanDescriptor, Int>()
 
     fun notificationId(chanDescriptor: ChanDescriptor): Int {
@@ -115,7 +120,7 @@ object NotificationConstants {
   }
 
   object FilterWatcherNotifications {
-    private val notificationIdCounter = AtomicInteger(4000000)
+    private val notificationIdCounter = AtomicInteger(FilterWatcherNotificationsIdCounterStart)
     private val notificationIdMap = mutableMapOf<String, Int>()
 
     fun notificationId(pattern: String): Int {
@@ -140,6 +145,28 @@ object NotificationConstants {
     const val FW_NOTIFICATION_CHANNEL_NAME = "Notification channel for filter watcher"
 
     const val FW_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY = "filter_watcher_notification_click_thread_descriptors"
+  }
+
+  object Generic {
+    private val notificationIdCounter = AtomicInteger(GenericNotificationsIdCounterStart)
+    private val notificationIdMap = mutableMapOf<String, Int>()
+
+    fun notificationId(notificationId: String): Int {
+      val prevNotificationId = notificationIdMap[notificationId]
+      if (prevNotificationId != null) {
+        return prevNotificationId
+      }
+
+      val newNotificationId = notificationIdCounter.incrementAndGet()
+      notificationIdMap[notificationId] = newNotificationId
+
+      return newNotificationId
+    }
+
+    const val CHANNEL_ID = "${BuildConfig.APPLICATION_ID}_generic"
+    const val CHANNEL_NAME = "Notification channel for generic app events"
+
+    val TAG = "GENERIC_TAG_${AppModuleAndroidUtils.flavorType.name}"
   }
 
 }

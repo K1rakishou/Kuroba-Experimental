@@ -11,6 +11,7 @@ import com.github.k1rakishou.chan.core.helper.ChanLoadProgressNotifier
 import com.github.k1rakishou.chan.core.helper.FilterEngine
 import com.github.k1rakishou.chan.core.helper.FilterWatcherNotificationHelper
 import com.github.k1rakishou.chan.core.helper.ImageSaverFileManagerWrapper
+import com.github.k1rakishou.chan.core.helper.KurobaSystemNotifications
 import com.github.k1rakishou.chan.core.helper.LastPageNotificationsHelper
 import com.github.k1rakishou.chan.core.helper.LastViewedPostNoInfoHolder
 import com.github.k1rakishou.chan.core.helper.PostHideHelper
@@ -28,6 +29,7 @@ import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
+import com.github.k1rakishou.chan.core.manager.Chan4CaptchaNotifierManager
 import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
@@ -86,6 +88,7 @@ import com.github.k1rakishou.chan.features.toolbar.KurobaToolbarStateManager
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder
 import com.github.k1rakishou.chan.ui.compose.snackbar.manager.SnackbarManagerFactory
 import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
+import com.github.k1rakishou.chan.ui.helper.AppResources
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AppConstants
@@ -1013,6 +1016,25 @@ class ManagerModule {
   fun provideHapticFeedbackManager(): HapticFeedbackManager {
     Logger.deps("HapticFeedbackManager")
     return HapticFeedbackManager()
+  }
+
+  @Singleton
+  @Provides
+  fun provideChan4CaptchaNotifierManager(
+    appScope: CoroutineScope,
+    appResources: AppResources,
+    kurobaSystemNotifications: KurobaSystemNotifications,
+    siteManager: SiteManager,
+    chanThreadManager: ChanThreadManager
+  ): Chan4CaptchaNotifierManager {
+    Logger.deps("Chan4CaptchaNotifierManager")
+    return Chan4CaptchaNotifierManager(
+      appScope = appScope,
+      appResources = appResources,
+      kurobaSystemNotifications = kurobaSystemNotifications,
+      siteManager = siteManager,
+      chanThreadManager = chanThreadManager
+    )
   }
 
 }
