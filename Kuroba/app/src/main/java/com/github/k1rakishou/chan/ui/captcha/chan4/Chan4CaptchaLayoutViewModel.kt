@@ -358,7 +358,7 @@ class Chan4CaptchaLayoutViewModel(
 
       CaptchaInfo.Task(
         title = title,
-        maxImagesInEachRow = if (hasWideImages) 2 else Int.MAX_VALUE,
+        hasWideImages = hasWideImages,
         images = images
       )
     }
@@ -530,7 +530,7 @@ class Chan4CaptchaLayoutViewModel(
 
     data class Task(
       val title: AnnotatedString,
-      val maxImagesInEachRow: Int,
+      val hasWideImages: Boolean,
       val images: List<TaskImage>
     )
 

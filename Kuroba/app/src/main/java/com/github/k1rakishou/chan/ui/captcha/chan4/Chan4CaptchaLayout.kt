@@ -12,12 +12,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
@@ -270,18 +270,19 @@ class Chan4CaptchaLayout(
               alignment = Alignment.CenterHorizontally
             ),
             verticalArrangement = Arrangement.spacedBy(space = 4.dp),
-            maxItemsInEachRow = task.maxImagesInEachRow
+            maxItemsInEachRow = if (task.hasWideImages) 2 else Int.MAX_VALUE
           ) {
             for ((imageIndex, taskImage) in task.images.withIndex()) {
-              val imageWidth = with(density) { taskImage.imageBitmap.width.toDp() * 1.8f }
-              val imageHeight = with(density) { taskImage.imageBitmap.height.toDp() * 2f }
+              val aspectRatio = taskImage.imageBitmap.width.toFloat() / taskImage.imageBitmap.height.toFloat()
+              val isWideImage = aspectRatio > 1.5f
 
               val scale by animateFloatAsState(targetValue = if (taskImage.isSelected) 0.8f else 1.0f)
 
               Image(
                 modifier = Modifier
                   .background(chanTheme.backColorCompose)
-                  .size(imageWidth, imageHeight)
+                  .weight(if (isWideImage) 1f else 0.5f)
+                  .aspectRatio(aspectRatio)
                   .kurobaClickable(
                     bounded = true,
                     onClick = { viewModel.onCaptchaImageClicked(taskIndex, imageIndex) }
@@ -301,6 +302,10 @@ class Chan4CaptchaLayout(
                 bitmap = taskImage.imageBitmap,
                 contentDescription = "Captcha task image"
               )
+            }
+
+            if (task.images.size % 2 != 0 && task.hasWideImages) {
+              Spacer(modifier = Modifier.weight(1f))
             }
           }
         }
