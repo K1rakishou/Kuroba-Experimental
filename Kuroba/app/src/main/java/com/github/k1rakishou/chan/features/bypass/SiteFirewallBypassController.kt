@@ -33,6 +33,7 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.HttpUrl
+import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 
 class SiteFirewallBypassController(
@@ -61,6 +62,7 @@ class SiteFirewallBypassController(
   private val cookieResultCompletableDeferred = CompletableDeferred<CookieResult>()
   private val cookieManager by lazy { CookieManager.getInstance() }
   private val webClient by lazy { createWebClient(firewallType) }
+  private val initialCookies = AtomicReference<String>("")
   private val originalRequestUrlString = urlToOpen.toString()
 
   private fun createWebClient(mode: FirewallType): BypassWebClient {
@@ -69,7 +71,8 @@ class SiteFirewallBypassController(
         CloudFlareCheckBypassWebClient(
           originalRequestUrl = originalRequestUrlString,
           cookieManager = cookieManager,
-          cookieResultCompletableDeferred = cookieResultCompletableDeferred
+          cookieResultCompletableDeferred = cookieResultCompletableDeferred,
+          initialCookies = initialCookies
         )
       }
       FirewallType.YandexSmartCaptcha -> {
@@ -191,6 +194,12 @@ class SiteFirewallBypassController(
       }
     }
 
+    val siteRequestModifier = siteResolver.findSiteForUrl(originalRequestUrlString)?.requestModifier()
+    if (siteRequestModifier != null) {
+      siteRequestModifier.modifyWebView(webView, urlToOpen)
+      initialCookies.set(cookieManager.getCookie(urlToOpen.toString()))
+    }
+
     cookieManager.setAcceptCookie(true)
     cookieManager.setAcceptThirdPartyCookies(webView, true)
 
@@ -205,11 +214,6 @@ class SiteFirewallBypassController(
     ChanSettings.customUserAgent.get()
       .takeIf { customUserAgent -> customUserAgent.isNotBlank() }
       ?.let { customUserAgent -> webSettings.userAgentString = customUserAgent }
-
-    val siteRequestModifier = siteResolver.findSiteForUrl(originalRequestUrlString)?.requestModifier()
-    if (siteRequestModifier != null) {
-      siteRequestModifier.modifyWebView(webView, urlToOpen)
-    }
 
     webView.webViewClient = webClient
     webView.loadUrl(originalRequestUrlString)

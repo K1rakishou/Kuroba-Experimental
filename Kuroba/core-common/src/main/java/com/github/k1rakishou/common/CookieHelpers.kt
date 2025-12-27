@@ -38,6 +38,16 @@ class CookieBuilder(
       .forEach { cookiesPart -> addOrReplace(cookiesPart.key, cookiesPart.value) }
   }
 
+  fun get(key: String): Cookie? {
+    return _cookieParts.firstOrNull { cookie -> cookie.key.equals(key, ignoreCase = true) }
+  }
+
+  fun containsAll(keys: List<String>): Boolean {
+    return keys.all { key ->
+      _cookieParts.any { cookie -> cookie.key.equals(key, ignoreCase = true) }
+    }
+  }
+
   fun isEmpty(): Boolean {
     return _cookieParts.isEmpty()
   }
