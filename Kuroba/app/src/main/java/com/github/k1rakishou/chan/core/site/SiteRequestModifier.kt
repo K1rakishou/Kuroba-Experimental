@@ -134,19 +134,24 @@ abstract class SiteRequestModifier<T : Site>(
   }
 
   private fun addCloudFlareCookie(requestBuilder: Request.Builder) {
-    val domainOrHost = requestBuilder.build().url.domainOrHost()
+    val url = requestBuilder.build().url
+    val cloudFlareCookies = getCloudFlareCookies(url)
 
-    val cookieForDomain = site
+    Logger.d(TAG, "addCloudFlareCookie('${url}') '${cloudFlareCookies}'")
+
+    if (cloudFlareCookies.isNotNullNorEmpty()) {
+      requestBuilder.addOrReplaceCookieHeader(cloudFlareCookies)
+    } else {
+      Logger.w(TAG, "addCloudFlareCookie('${url}') cookie is null or empty: '${cloudFlareCookies}'")
+    }
+  }
+
+  fun getCloudFlareCookies(url: HttpUrl): String? {
+    val domainOrHost = url.domainOrHost()
+
+    return site
       .getSettingBySettingId<MapSetting>(SiteSetting.SiteSettingId.CloudFlareClearanceCookie)
       ?.get(domainOrHost)
-
-    Logger.d(TAG, "addCloudFlareCookie('${domainOrHost}') '${cookieForDomain}'")
-
-    if (cookieForDomain.isNotNullNorEmpty()) {
-      requestBuilder.addOrReplaceCookieHeader(cookieForDomain)
-    } else {
-      Logger.w(TAG, "addCloudFlareCookie('${domainOrHost}') cookie is null or empty: '${cookieForDomain}'")
-    }
   }
 
   companion object {

@@ -18,13 +18,7 @@ class CloudFlareCheckBypassWebClient(
 
     val cookie = cookieManager.getCookie(originalRequestUrl) ?: ""
 
-    val expectedCookies = listOf(
-      CloudFlareHandlerInterceptor.COOKIE_CF_CLEARANCE,
-      CloudFlareHandlerInterceptor.COOKIE_TCS,
-      CloudFlareHandlerInterceptor.COOKIE_CF_BM,
-    )
-
-    if (!cookie.containsAll(expectedCookies)) {
+    if (!cookie.containsAll(CloudFlareHandlerInterceptor.EXPECTED_CLOUDFLARE_COOKIES)) {
       ++pageLoadsCounter
 
       if (pageLoadsCounter > SiteFirewallBypassController.MAX_PAGE_LOADS_COUNT) {
@@ -35,7 +29,7 @@ class CloudFlareCheckBypassWebClient(
     }
 
     val allCookies = with(CookieBuilder(cookie)) {
-      retainAllIn(expectedCookies)
+      retainAllIn(CloudFlareHandlerInterceptor.EXPECTED_CLOUDFLARE_COOKIES)
       build()
     }
 

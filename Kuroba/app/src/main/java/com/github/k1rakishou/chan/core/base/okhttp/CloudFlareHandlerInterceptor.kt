@@ -168,6 +168,16 @@ class CloudFlareHandlerInterceptor(
   }
 
   private fun requireCloudFlareCookie(request: Request): Boolean {
+    val alreadyContainsAllHeaders = CloudFlareHandlerInterceptor.EXPECTED_CLOUDFLARE_COOKIES.all { expectedCookieKey ->
+      request.headers.any { requestHeader ->
+        requestHeader.first.equals(expectedCookieKey, ignoreCase = true)
+      }
+    }
+
+    if (alreadyContainsAllHeaders) {
+      return false
+    }
+
     val host = request.url.host
 
     val alreadyCheckedSite = synchronized(this) { host in sitesThatRequireCloudFlareCache }
@@ -294,6 +304,12 @@ class CloudFlareHandlerInterceptor(
     const val COOKIE_CF_CLEARANCE = "cf_clearance"
     const val COOKIE_TCS = "_tcs"
     const val COOKIE_CF_BM = "__cf_bm"
+
+    val EXPECTED_CLOUDFLARE_COOKIES = listOf(
+      CloudFlareHandlerInterceptor.COOKIE_CF_CLEARANCE,
+      CloudFlareHandlerInterceptor.COOKIE_TCS,
+      CloudFlareHandlerInterceptor.COOKIE_CF_BM,
+    )
 
     private val cloudFlareHeaders = arrayOf("cloudflare-nginx", "cloudflare")
 

@@ -619,7 +619,7 @@ public class ChanSettings {
         mpvUseConfigFile = new BooleanSetting(provider, "mpv_use_config_file", false);
         colorizeTextSelectionCursors = new BooleanSetting(provider, "colorize_text_selection_cursors", true);
         customUserAgent = new StringSetting(provider, "custom_user_agent", "");
-        onlyRemoveExpiredWebviewCookies = new BooleanSetting(provider, "only_remove_expired_webview_cookies", true);
+        onlyRemoveExpiredWebviewCookies = new BooleanSetting(provider, "only_remove_expired_webview_cookies", false);
         //endregion
       
 

@@ -186,7 +186,7 @@ class Chan4ReplyCall(
 
     if (forgotCaptcha || mistypedCaptcha) {
       replyResponse.requireAuthentication = true
-      Logger.e(TAG, "process() requireAuthentication (forgotCaptcha=$forgotCaptcha, mistypedCaptcha=$mistypedCaptcha)")
+      Logger.e(TAG, "process() requireAuthentication (forgotCaptcha: ${forgotCaptcha}, mistypedCaptcha: ${mistypedCaptcha})")
       return
     }
 
@@ -196,7 +196,7 @@ class Chan4ReplyCall(
       replyResponse.errorMessage = errorMessage
       replyResponse.banInfo = checkIfBanned()
 
-      Logger.e(TAG, "process() error (errorMessage=${errorMessage})")
+      Logger.e(TAG, "process() error (errorMessage: '${errorMessage}')")
 
       if (replyChanDescriptor is ThreadDescriptor) {
         // Only check for rate limits when replying in threads. Do not do this when creating new
@@ -212,9 +212,15 @@ class Chan4ReplyCall(
       return
     }
 
+    if (!response.isSuccessful) {
+      Logger.e(TAG, "process() Bad status code! code: '${response.code}'")
+      replyResponse.errorMessage = "Bad response status code: ${response.code}"
+      return
+    }
+
     val threadNoMatcher = THREAD_NO_PATTERN.matcher(result)
     if (!threadNoMatcher.find()) {
-      Logger.e(TAG, "process() Couldn't handle server response! response = \"$result\"")
+      Logger.e(TAG, "process() Couldn't handle server response! response: '$result'")
       replyResponse.errorMessage = "Error trying to parse server response"
       return
     }
@@ -291,7 +297,7 @@ class Chan4ReplyCall(
 
           val link = fixUrlOrNull(node.attr("href").takeIf { it.isNotBlank() })
           if (end > start && link.isNotNullNorBlank()) {
-            builder.set(start, end, WebViewLink(WebViewLink.Type.BanMessage, link.toString()))
+            builder.set(start, end, WebViewLink(WebViewLink.Type.BanMessage, link))
           }
         } else if (tagName == "br") {
           builder.append("\n")

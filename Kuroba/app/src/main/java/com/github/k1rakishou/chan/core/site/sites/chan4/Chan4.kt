@@ -493,8 +493,7 @@ open class Chan4 : SiteBase() {
 
     override fun clearPostingCookies() {
       chan4CaptchaCookie.setSync("")
-      // TODO: this will clear cloudflare cookies for all sites, which is incorrect. Let's leave it like this for now.
-//      cloudFlareClearanceCookieMap.clear()
+      cloudFlareClearanceCookieMap.clear()
       chan4CaptchaSettings.update(sync = true) { chan4CaptchaSetting ->
         chan4CaptchaSetting.copy(captchaTicket = null)
       }
@@ -649,6 +648,11 @@ open class Chan4 : SiteBase() {
       val captchaCookie = get4chanPassCookie(site)
       if (captchaCookie.isNotNullNorBlank()) {
         cookieBuilder.addOrReplace(CAPTCHA_COOKIE_KEY, captchaCookie)
+      }
+
+      val cloudFlareCookies = getCloudFlareCookies(urlToOpen)
+      if (cloudFlareCookies.isNotNullNorBlank()) {
+        cookieBuilder.addOrReplace(cloudFlareCookies)
       }
 
       if (cookieBuilder.isEmpty()) {

@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.features.reply.data
 
 import android.Manifest
 import android.net.Uri
+import android.text.Spannable
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.placeCursorAtEnd
 import androidx.compose.runtime.IntState
@@ -1326,6 +1327,9 @@ class ReplyLayoutState(
     val errorMessage = when {
       additionalErrorMessage != null -> {
         appResources.string(R.string.reply_error_message, additionalErrorMessage)
+      }
+      replyResponse.errorMessage != null && replyResponse.errorMessage is Spannable -> {
+        replyResponse.errorMessage!!
       }
       replyResponse.errorMessageShort != null -> {
         appResources.string(R.string.reply_error_message, replyResponse.errorMessageShort!!)

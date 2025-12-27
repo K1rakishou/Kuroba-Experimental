@@ -18,6 +18,7 @@ import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.common.CookieBuilder
 import com.github.k1rakishou.common.FirewallType
 import com.github.k1rakishou.common.domainOrHost
 import com.github.k1rakishou.common.errorMessageOrClassName
@@ -239,17 +240,26 @@ class SiteFirewallBypassController(
 
     when (cookieResult) {
       is CookieResult.CookieValue -> {
-        Logger.d(TAG, "Success('${urlToOpen}') got cookie: '${cookieResult.cookie}'")
+        val cookieBuilder = CookieBuilder(cookieResult.cookie)
+
+        val cookieParts = cookieBuilder.cookieParts()
+        Logger.debug(TAG) { "waitAndHandleResult('${urlToOpen}') Success. cookieParts size: '${cookieParts.size}'" }
+
+        cookieParts.forEach { cookiePart ->
+          Logger.debug(TAG) { "waitAndHandleResult('${urlToOpen}') '${cookiePart.key}'='${cookiePart.value}'" }
+        }
+
         addCookieToSiteSettings(cookieResult.cookie)
+        delay(1000)
       }
       is CookieResult.Error -> {
-        Logger.e(TAG, "Error('${urlToOpen}'): ${cookieResult.exception.errorMessageOrClassName()}")
+        Logger.e(TAG, "waitAndHandleResult('${urlToOpen}') Error: ${cookieResult.exception.errorMessageOrClassName()}")
       }
       CookieResult.Canceled -> {
-        Logger.e(TAG, "Canceled('${urlToOpen}')")
+        Logger.e(TAG, "waitAndHandleResult('${urlToOpen}') Canceled")
       }
       CookieResult.NotSupported -> {
-        Logger.e(TAG, "NotSupported('${urlToOpen}')")
+        Logger.e(TAG, "waitAndHandleResult('${urlToOpen}') NotSupported")
       }
     }
 
