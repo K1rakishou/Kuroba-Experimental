@@ -27,6 +27,7 @@ import kotlin.math.max
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
+// This class holds user created filters
 class ChanFilterManager(
   private val isDevBuild: Boolean,
   private val appScope: CoroutineScope,
@@ -403,9 +404,9 @@ class ChanFilterManager(
     return lock.read { filters.size }
   }
 
-  fun getEnabledFiltersSorted(): List<ChanFilter> {
+  fun allFiltersSorted(): List<ChanFilter> {
     return lock.read {
-      return@read filters.filter { filter -> filter.enabled }
+      return@read filters
         .map { filter -> filter.copy() }
     }
   }

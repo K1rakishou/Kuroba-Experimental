@@ -278,6 +278,7 @@ object ChanPostUtils {
     // remove it to not show it to the user).
     // Instead, we calculate a hash of a raw post comment (+ subject, name, tripcode, posterId and
     // moderatorCapcode) and then compare them instead.
+
     if (postImagesDiffer(chanPostBuilder.postImages, chanPostFromCache.postImages)) {
       return true
     }

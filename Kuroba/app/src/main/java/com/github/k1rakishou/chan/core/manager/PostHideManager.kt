@@ -21,9 +21,12 @@ import kotlin.time.measureTime
 interface IPostHideManager {
   fun createOrUpdateMany(chanPostHideList: Collection<ChanPostHide>)
   fun countPostHides(postDescriptors: List<PostDescriptor>): Int
+  fun countMatchedPosts(filterDatabaseId: Long): Int
   fun getHiddenPostsMap(postDescriptors: Set<PostDescriptor>): Map<PostDescriptor, ChanPostHide>
 }
 
+// This class hold hidden/unhidden/removed posts as well as some other information, like what to do with replies to
+// such posts.
 open class PostHideManager(
   private val verboseLogsEnabled: Boolean,
   private val appScope: CoroutineScope,
@@ -59,6 +62,25 @@ open class PostHideManager(
 
         if (chanPostHide != null && !chanPostHide.manuallyRestored) {
           ++counter
+        }
+      }
+
+      return@read counter
+    }
+  }
+
+  override fun countMatchedPosts(filterDatabaseId: Long): Int {
+    return lock.read {
+      var counter = 0
+
+      postHideMap.values.forEach { chanPostHideMap ->
+        chanPostHideMap.values.forEach { chanPostHide ->
+          val filterInfo = chanPostHide.filterInfo
+            ?: return@forEach
+
+          if (!chanPostHide.manuallyRestored && filterInfo.filterDatabaseId == filterDatabaseId) {
+            ++counter
+          }
         }
       }
 
@@ -206,6 +228,14 @@ open class PostHideManager(
 
   fun contains(postDescriptor: PostDescriptor): Boolean {
     return lock.read { postHideMap[postDescriptor.descriptor]?.containsKey(postDescriptor) == true }
+  }
+
+  fun filterDatabaseId(postDescriptor: PostDescriptor): Long? {
+    return lock.read { postHideMap[postDescriptor.descriptor]?.get(postDescriptor)?.filterInfo?.filterDatabaseId }
+  }
+
+  fun isManuallyRestored(postDescriptor: PostDescriptor): Boolean {
+    return lock.read { postHideMap[postDescriptor.descriptor]?.get(postDescriptor)?.manuallyRestored == true }
   }
 
   fun remove(postDescriptor: PostDescriptor) {

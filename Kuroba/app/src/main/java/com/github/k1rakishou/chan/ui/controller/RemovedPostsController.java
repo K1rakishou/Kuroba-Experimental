@@ -124,6 +124,12 @@ public class RemovedPostsController
         return true;
     }
 
+    // TODO:
+    //  First of all rewrite this piece of shit in Jetpack Compose.
+    //  Second of all, we need to check whether or not the loaded ChanPostHides have filterDatabaseId.
+    //  If so, then we need to check if those filters are enabled or not.
+    //  If they are enabled, we need to disallow restoring those posts and somehow tell the user that there is an active
+    //  filter which matches this post so it's not possible to restore it.
     public void showRemovePosts(List<RemovedPostsHelper.HiddenOrRemovedPost> removedPosts) {
         BackgroundUtils.ensureMainThread();
 

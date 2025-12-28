@@ -7,6 +7,8 @@ import com.github.k1rakishou.model.entity.chan.post.ChanPostHideEntity
 object ChanPostHideMapper {
 
   fun toEntity(chanPostHide: ChanPostHide): ChanPostHideEntity {
+    check(chanPostHide.filterInfo == null) { "Persisting ChanPostHides created by filters is not allowed!" }
+
     return ChanPostHideEntity(
       siteName = chanPostHide.postDescriptor.boardDescriptor().siteName(),
       boardCode = chanPostHide.postDescriptor.boardDescriptor().boardCode,
@@ -22,6 +24,7 @@ object ChanPostHideMapper {
 
   fun fromEntity(chanPostHideEntity: ChanPostHideEntity): ChanPostHide {
     return ChanPostHide(
+      filterInfo = null,
       postDescriptor = PostDescriptor.create(
         siteName = chanPostHideEntity.siteName,
         boardCode = chanPostHideEntity.boardCode,

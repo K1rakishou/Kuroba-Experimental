@@ -194,8 +194,7 @@ class FiltersController(
 
     controllerScope.launch {
       viewModel.reloadFilters()
-
-      controllerScope.launch { viewModel.reloadFilterMatchedPosts() }
+      viewModel.reloadFilterMatchedPosts()
     }
 
     controllerScope.launch {

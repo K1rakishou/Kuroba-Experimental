@@ -905,6 +905,7 @@ class ThreadLayout @JvmOverloads constructor(
       // hideRepliesToThisPost is false here because we don't have posts in the catalog mode so there
       // is no point in hiding replies to a thread
       val postHide = ChanPostHide(
+        filterInfo = null,
         postDescriptor = post.postDescriptor,
         onlyHide = hide,
         applyToWholeThread = true,
@@ -958,6 +959,7 @@ class ThreadLayout @JvmOverloads constructor(
         }
 
         hideList += ChanPostHide(
+          filterInfo = null,
           postDescriptor = postDescriptor,
           onlyHide = hide,
           applyToWholeThread = false,
@@ -1008,6 +1010,7 @@ class ThreadLayout @JvmOverloads constructor(
           updater = { postDescriptor, oldChanPostHide ->
             if (oldChanPostHide == null) {
               return@update ChanPostHide(
+                filterInfo = null,
                 postDescriptor = postDescriptor,
                 onlyHide = true,
                 applyToWholeThread = false,
@@ -1016,7 +1019,10 @@ class ThreadLayout @JvmOverloads constructor(
               )
             }
 
-            return@update oldChanPostHide.copy(manuallyRestored = true)
+            return@update oldChanPostHide.copy(
+              filterInfo = null,
+              manuallyRestored = true
+            )
           }
         )
       }

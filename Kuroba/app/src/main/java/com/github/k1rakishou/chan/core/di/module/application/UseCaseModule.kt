@@ -544,6 +544,7 @@ class UseCaseModule {
   @Provides
   @Singleton
   fun provideClearSiteCookies(siteManager: SiteManager): ClearPostingCookies {
+    deps("ClearPostingCookies")
     return ClearPostingCookies(siteManager)
   }
 

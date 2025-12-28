@@ -105,6 +105,30 @@ abstract class AbstractParsePostsUseCase(
     }
 
     if (postHideManager.contains(postDescriptor)) {
+      val filterDatabaseId = postHideManager.filterDatabaseId(postDescriptor)
+      if (filterDatabaseId != null) {
+        val chanFilterForPostHide = filters.firstOrNull { chanFilter -> chanFilter.getDatabaseId() == filterDatabaseId }
+        if (chanFilterForPostHide != null) {
+          if (chanFilterForPostHide.enabled) {
+            // Filter is enabled, hide/remove the post
+            return
+          }
+
+          if (!postHideManager.isManuallyRestored(postDescriptor)) {
+            // Filter is disabled, remove ChanPostHide
+            // TODO: ideally, this needs batching
+            postHideManager.remove(postDescriptor)
+            return
+          }
+
+          // ChanPostHide was manually restored. We don't want to remove such ChanPostHides otherwise the posts that
+          // the user has restored manually will get hidden again on the next thread refresh.
+        }
+
+        // Failed to find ChanFilter for this ChanPostHide. Most likely it's filterDatabaseId is null which means it
+        // wasn't created by a ChanFilter
+      }
+
       // Do not create a filter for post hides. When we remove a post filter manually (unhide/unremove)
       // we create a post hide with `manuallyRestored` flag set to true. We use that when opening
       // medias to not filter out such posts/threads.
@@ -112,11 +136,6 @@ abstract class AbstractParsePostsUseCase(
     }
 
     for (filter in filters) {
-      if (filter.isWatchFilter() || filter.isAvoidWatchFilter()) {
-        // Do not auto create watch filters, this may end up pretty bad
-        continue
-      }
-
       if (filterEngine.matches(filter, postToParse)) {
         postFilterManager.insert(postDescriptor, createPostFilter(filter))
         return
@@ -184,7 +203,7 @@ abstract class AbstractParsePostsUseCase(
   protected fun loadFilters(chanDescriptor: ChanDescriptor): List<ChanFilter> {
     BackgroundUtils.ensureBackgroundThread()
 
-    return filterEngine.enabledFilters
+    return filterEngine.allFiltersSorted
       .filter { filter -> filterEngine.matchesBoard(filter, chanDescriptor.boardDescriptor()) }
   }
 

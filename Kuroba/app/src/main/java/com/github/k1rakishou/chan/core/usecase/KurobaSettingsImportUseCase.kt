@@ -423,7 +423,15 @@ class KurobaSettingsImportUseCase(
             PostDescriptor.create(siteName, boardCode, threadNo.toLong(), postNo.toLong())
           }
 
-          val postHide = ChanPostHide(postDescriptor, hide, wholeThread, hideRepliesToThisPost, false)
+          val postHide = ChanPostHide(
+            filterInfo = null,
+            postDescriptor = postDescriptor,
+            onlyHide = hide,
+            applyToWholeThread = wholeThread,
+            applyToReplies = hideRepliesToThisPost,
+            manuallyRestored = false
+          )
+
           func(postHide)
         }
       }

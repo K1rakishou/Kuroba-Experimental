@@ -33,8 +33,8 @@ class FilterEngine @Inject constructor(
     chanFilterManager.createOrUpdateFilter(chanFilterMutable.toChanFilter(), onUpdated)
   }
 
-  val enabledFilters: List<ChanFilter>
-    get() = chanFilterManager.getEnabledFiltersSorted()
+  val allFiltersSorted: List<ChanFilter>
+    get() = chanFilterManager.allFiltersSorted()
 
   fun matchesBoard(filter: ChanFilter, boardDescriptor: BoardDescriptor): Boolean {
     return filter.matchesBoard(boardDescriptor)
@@ -83,6 +83,15 @@ class FilterEngine @Inject constructor(
    */
   @AnyThread
   fun matches(filter: ChanFilter, post: ChanPostBuilder): Boolean {
+    if (!filter.enabled) {
+      return false
+    }
+
+    if (filter.isWatchFilter() || filter.isAvoidWatchFilter()) {
+      // Do not auto create watch filters, this may end up pretty bad
+      return false
+    }
+
     if (post.moderatorCapcode.isNotEmpty() || post.sticky) {
       return false
     }

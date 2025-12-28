@@ -19,6 +19,7 @@ import com.github.k1rakishou.chan.core.di.module.shared.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
+import com.github.k1rakishou.chan.core.manager.PostHideManager
 import com.github.k1rakishou.chan.core.site.parser.CommentParserHelper
 import com.github.k1rakishou.chan.ui.compose.reorder.move
 import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanelItem
@@ -50,6 +51,7 @@ class FiltersControllerViewModel(
   private val savedStateHandle: SavedStateHandle,
   private val chanFilterManager: ChanFilterManager,
   private val postFilterManager: PostFilterManager,
+  private val postHideManager: PostHideManager,
   private val boardManager: BoardManager,
   private val themeEngine: ThemeEngine,
 ) : BaseViewModel() {
@@ -240,12 +242,16 @@ class FiltersControllerViewModel(
 
       val chanFilters = chanFilterManager.getAllFilters()
 
+      // TODO: multithreading?
       for (chanFilter in chanFilters) {
         if (!chanFilter.hasDatabaseId()) {
           continue
         }
 
-        val postsCount = postFilterManager.countMatchedPosts(chanFilter.getDatabaseId())
+        var postsCount = 0
+        postsCount += postFilterManager.countMatchedPosts(chanFilter.getDatabaseId())
+        postsCount += postHideManager.countMatchedPosts(chanFilter.getDatabaseId())
+
         _filterMatchedPostCountMap[chanFilter.getDatabaseId()] = postsCount
       }
     }
@@ -475,6 +481,7 @@ class FiltersControllerViewModel(
   class ViewModelFactory @Inject constructor(
     private val chanFilterManager: ChanFilterManager,
     private val postFilterManager: PostFilterManager,
+    private val postHideManager: PostHideManager,
     private val boardManager: BoardManager,
     private val themeEngine: ThemeEngine,
   ) : ViewModelAssistedFactory<FiltersControllerViewModel> {
@@ -483,6 +490,7 @@ class FiltersControllerViewModel(
         savedStateHandle = handle,
         chanFilterManager = chanFilterManager,
         postFilterManager = postFilterManager,
+        postHideManager = postHideManager,
         boardManager = boardManager,
         themeEngine = themeEngine
       )

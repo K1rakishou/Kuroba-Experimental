@@ -38,7 +38,12 @@ class ChanPostHideLocalSource(
   suspend fun createOrUpdateMany(chanPostHideList: Collection<ChanPostHide>) {
     ensureInTransaction()
 
-    val entities = chanPostHideList.map { chanPostHide -> ChanPostHideMapper.toEntity(chanPostHide) }
+    val entities = chanPostHideList
+      // Do not persist ChanPostHides created by filters. It's very hard to keep track of them/update/delete/etc when
+      // filters change. It's easier to just recalculate them every time filters change and store that information in RAM.
+      .filter { chanPostHide -> !chanPostHide.createdByFilter() }
+      .map { chanPostHide -> ChanPostHideMapper.toEntity(chanPostHide) }
+
     chanPostHideDao.insertManyOrUpdate(entities)
   }
 

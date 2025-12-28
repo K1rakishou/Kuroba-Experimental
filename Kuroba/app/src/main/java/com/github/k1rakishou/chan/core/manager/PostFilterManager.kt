@@ -19,6 +19,9 @@ interface IPostFilterManager {
   fun getManyPostFilters(postDescriptors: Collection<PostDescriptor>): Map<PostDescriptor, PostFilter>
 }
 
+// When a filter matches a post, we create a PostFilter which hold the information about what to do with the post
+// afterwards, like hide/remove/highlight/etc. This information is only stored in RAM and recalculated all the time
+// when ChanFilters change.
 open class PostFilterManager(
   private val verboseLogsEnabled: Boolean,
   private val appScope: CoroutineScope,
