@@ -2,7 +2,7 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
 android {
-    namespace "com.github.k1rakishou.chan"
+    namespace "com.github.k1rakishou.chan.core.parser"
     compileSdk 36
 
     defaultConfig {

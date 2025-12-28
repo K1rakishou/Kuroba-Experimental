@@ -3,11 +3,11 @@ plugins {
     id 'kotlin-android'
     id 'kotlin-parcelize'
     id 'com.google.devtools.ksp'
-    id 'org.jetbrains.kotlin.plugin.compose' version "2.0.20"
+    id 'org.jetbrains.kotlin.plugin.compose' version "2.3.0"
 }
 
 android {
-    namespace "com.github.k1rakishou.chan"
+    namespace "com.github.k1rakishou.chan.core.theme"
 
     compileSdk 36
 

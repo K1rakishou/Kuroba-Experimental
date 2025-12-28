@@ -4,7 +4,7 @@ apply plugin: 'kotlin-parcelize'
 apply plugin: 'com.google.devtools.ksp'
 
 android {
-    namespace "com.github.k1rakishou.chan"
+    namespace "com.github.k1rakishou.chan.core.spannable"
 
     compileSdk 36
 
