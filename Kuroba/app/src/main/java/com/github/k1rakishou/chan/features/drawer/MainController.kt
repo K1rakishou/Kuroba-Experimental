@@ -1014,7 +1014,7 @@ class MainController(
       return
     }
 
-    val fromVersion = appliedMigrations.min()
+    val fromVersion = (appliedMigrations.min() - 1).coerceAtLeast(0)
     val toVersion = appliedMigrations.max()
 
     val changelog = buildString {
