@@ -6,6 +6,7 @@ import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.di.scope.PerActivity
 import com.github.k1rakishou.chan.core.helper.DialogFactory
+import com.github.k1rakishou.chan.core.helper.KurobaSystemNotifications
 import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
 import com.github.k1rakishou.chan.core.helper.ThumbnailLongtapOptionsHelper
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
@@ -43,6 +44,7 @@ class ActivityModule {
     cacheHandler: Lazy<CacheHandler>,
     fileManager: Lazy<FileManager>,
     settingsNotificationManager: SettingsNotificationManager,
+    kurobaSystemNotifications: KurobaSystemNotifications,
     fileChooser: Lazy<FileChooser>,
     proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>,
     dialogFactory: Lazy<DialogFactory>
@@ -53,6 +55,7 @@ class ActivityModule {
       cacheHandler,
       fileManager,
       settingsNotificationManager,
+      kurobaSystemNotifications,
       fileChooser,
       proxiedOkHttpClient,
       dialogFactory

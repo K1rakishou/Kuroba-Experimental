@@ -307,11 +307,11 @@ object AndroidUtils {
   val isAndroidNMR1: Boolean
     get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1
 
-  enum class FlavorType {
-    Stable,
-    Beta,
-    Dev,
-    Fdroid
+  enum class FlavorType(val tag: String) {
+    Stable("Stable"),
+    Beta("Beta"),
+    Dev("Dev"),
+    Fdroid("Fdroid")
   }
 
   enum class VerifiedBuildType {

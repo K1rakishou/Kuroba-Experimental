@@ -151,6 +151,10 @@ object NotificationConstants {
     private val notificationIdCounter = AtomicInteger(GenericNotificationsIdCounterStart)
     private val notificationIdMap = mutableMapOf<String, Int>()
 
+    enum class Ids {
+      NewAppVersionAvailable
+    }
+
     fun notificationId(notificationId: String): Int {
       val prevNotificationId = notificationIdMap[notificationId]
       if (prevNotificationId != null) {

@@ -1,19 +1,3 @@
-/*
- * KurobaEx - *chan browser https://github.com/K1rakishou/Kuroba-Experimental/
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 package com.github.k1rakishou.chan.core.manager
 
 import android.Manifest
@@ -35,6 +19,7 @@ import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.helper.DialogFactory
+import com.github.k1rakishou.chan.core.helper.KurobaSystemNotifications
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.net.update.UpdateApiRequest
 import com.github.k1rakishou.chan.core.net.update.UpdateApiRequest.ReleaseUpdateApiResponse
@@ -42,16 +27,14 @@ import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper.PermissionR
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isBetaBuild
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isFdroidBuild
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isStableBuild
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openIntent
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils.runOnMainThread
+import com.github.k1rakishou.chan.utils.NotificationConstants
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AndroidUtils.FlavorType
+import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.BadStatusResponseException
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.downloadIntoFile
@@ -76,6 +59,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import java.io.File
 import java.util.concurrent.TimeUnit
@@ -92,6 +76,7 @@ class UpdateManager(
   private val cacheHandler: Lazy<CacheHandler>,
   private val fileManager: Lazy<FileManager>,
   private val settingsNotificationManager: SettingsNotificationManager,
+  private val kurobaSystemNotifications: KurobaSystemNotifications,
   private val fileChooser: Lazy<FileChooser>,
   private val proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>,
   private val dialogFactory: Lazy<DialogFactory>
@@ -172,7 +157,7 @@ class UpdateManager(
     if (PersistableChanState.hasNewApkUpdate.get()) {
       // If we noticed that there was an apk update on the previous check - show the
       // notification
-      notifyNewApkUpdate()
+      notifyNewApkUpdate(responseRelease = null)
     }
 
     if (!manual) {
@@ -256,7 +241,7 @@ class UpdateManager(
     }
   }
 
-  private fun processUpdateApiResponse(
+  private suspend fun processUpdateApiResponse(
     responseRelease: ReleaseUpdateApiResponse,
     manual: Boolean,
     isRelease: Boolean
@@ -344,7 +329,7 @@ class UpdateManager(
       // (In case of the dev build we check whether the apk hashes differ or not beforehand,
       // so if they are the same this method won't even get called. In case of the release
       // build this method will be called in both cases so we do the check in this method)
-      notifyNewApkUpdate()
+      notifyNewApkUpdate(responseRelease)
     }
   }
 
@@ -386,9 +371,36 @@ class UpdateManager(
     cancelApkUpdateNotification()
   }
 
-  private fun notifyNewApkUpdate() {
+  private suspend fun notifyNewApkUpdate(responseRelease: ReleaseUpdateApiResponse?) {
     PersistableChanState.hasNewApkUpdate.set(true)
     settingsNotificationManager.notify(SettingNotificationType.ApkUpdate)
+
+    if (responseRelease != null) {
+      val versionCode = responseRelease.versionCode
+      val buildNumber = responseRelease.buildNumber
+
+      kurobaSystemNotifications.showNotification(
+        notificationData = KurobaSystemNotifications.NotificationData(
+          id = NotificationConstants.Generic.Ids.NewAppVersionAvailable.name,
+          priority = KurobaSystemNotifications.NotificationData.Priority.High,
+          largeIcon = KurobaSystemNotifications.NotificationData.LargeIcon.RemoteUrl(
+            url = (AppConstants.RESOURCES_ENDPOINT + "ic_launcher_release_round.png").toHttpUrl()
+          ),
+          autoCancel = false,
+          style = KurobaSystemNotifications.NotificationData.Style.Default(
+            title = "Application update is available!",
+            content = buildString {
+              append("New app version is available.")
+
+              if (versionCode > 0) {
+                append(" ")
+                append("(v${versionCode}.${buildNumber}-${AppModuleAndroidUtils.flavorType.tag}")
+              }
+            }
+          ),
+        )
+      )
+    }
   }
 
   private fun cancelApkUpdateNotification() {
@@ -399,19 +411,13 @@ class UpdateManager(
   private fun failedUpdate(manual: Boolean, error: Throwable) {
     Logger.e(TAG, "failedUpdate() manual=$manual", error)
 
-    val buildTag = if (AppModuleAndroidUtils.flavorType == FlavorType.Beta) {
-      "beta"
-    } else {
-      "release"
-    }
-
     val manualUpdateUrl = if (AppModuleAndroidUtils.flavorType == FlavorType.Beta) {
       "https://github.com/K1rakishou/Kuroba-Experimental-beta/releases/latest"
     } else {
       "https://github.com/K1rakishou/Kuroba-Experimental/releases/latest"
     }
 
-    Logger.e(TAG, "Failed to process $buildTag API call for updating")
+    Logger.e(TAG, "Failed to process ${AppModuleAndroidUtils.flavorType.tag} API call for updating")
 
     if (manual && BackgroundUtils.isInForeground()) {
       dialogFactory.get().createSimpleInformationDialog(
