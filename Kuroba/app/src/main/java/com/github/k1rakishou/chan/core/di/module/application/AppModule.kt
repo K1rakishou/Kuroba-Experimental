@@ -8,6 +8,7 @@ import coil.request.CachePolicy
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.AppDependenciesInitializer
 import com.github.k1rakishou.chan.core.base.okhttp.CoilOkHttpClient
+import com.github.k1rakishou.chan.core.helper.migration.ApplicationMigrationHelper
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
@@ -32,16 +33,6 @@ import javax.inject.Singleton
 
 @Module
 class AppModule {
-
-  private val defaultAvailableMemoryPercentage: Double
-    get() {
-      var defaultMemoryPercentage = 0.2
-      if (ChanSettings.isLowRamDevice()) {
-        defaultMemoryPercentage /= 2.0
-      }
-
-      return defaultMemoryPercentage
-    }
 
   @Provides
   @Singleton
@@ -92,7 +83,14 @@ class AppModule {
   ): ImageLoader {
     val isLowRamDevice = ChanSettings.isLowRamDevice()
     val allowHardware = !isLowRamDevice
-    val availableMemoryPercentage = defaultAvailableMemoryPercentage
+    val availableMemoryPercentage = run {
+      var defaultMemoryPercentage = 0.2
+      if (ChanSettings.isLowRamDevice()) {
+        defaultMemoryPercentage /= 2.0
+      }
+
+      return@run defaultMemoryPercentage
+    }
 
     deps(
       "ImageLoader() availableMemoryPercentage: " + availableMemoryPercentage +
@@ -145,8 +143,14 @@ class AppModule {
   @Singleton
   fun provideCaptchaHolder(appScope: CoroutineScope): CaptchaHolder {
     deps("CaptchaHolder")
-
     return CaptchaHolder(appScope)
+  }
+
+  @Provides
+  @Singleton
+  fun provideApplicationMigrationHelper(): ApplicationMigrationHelper {
+    deps("ApplicationMigrationHelper")
+    return ApplicationMigrationHelper()
   }
 
 }

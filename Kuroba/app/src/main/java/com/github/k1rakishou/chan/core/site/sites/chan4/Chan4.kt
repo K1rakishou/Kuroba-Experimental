@@ -493,7 +493,7 @@ open class Chan4 : SiteBase() {
 
     override fun clearPostingCookies() {
       chan4CaptchaCookie.setSync("")
-      cloudFlareClearanceCookieMap.clear()
+      cloudFlareClearanceCookieMap.clear(sync = true)
       chan4CaptchaSettings.update(sync = true) { chan4CaptchaSetting ->
         chan4CaptchaSetting.copy(captchaTicket = null)
       }

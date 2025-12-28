@@ -18,8 +18,10 @@ import com.github.k1rakishou.BottomNavViewButton
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
+import com.github.k1rakishou.chan.core.helper.AppRestarter
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
+import com.github.k1rakishou.chan.core.helper.migration.ApplicationMigrationHelper
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
@@ -100,6 +102,10 @@ class MainController(
   lateinit var imageSaverV2Lazy: Lazy<ImageSaverV2>
   @Inject
   lateinit var threadDownloadManagerLazy: Lazy<ThreadDownloadManager>
+  @Inject
+  lateinit var applicationMigrationHelper: ApplicationMigrationHelper
+  @Inject
+  lateinit var appRestarter: AppRestarter
 
   private val themeEngine: ThemeEngine
     get() = themeEngineLazy.get()
@@ -253,6 +259,10 @@ class MainController(
       settingsNotificationManager.listenForNotificationUpdates()
         .subscribe { onSettingsNotificationChanged() }
     )
+
+    controllerScope.launch {
+      restartTheAppAfterMigration()
+    }
 
     controllerScope.launch {
       mainControllerViewModel.bookmarksBadgeState
@@ -995,6 +1005,40 @@ class MainController(
     )
 
     presentController(floatingListMenuController)
+  }
+
+  private fun restartTheAppAfterMigration() {
+    val appliedMigrations = applicationMigrationHelper.appliedMigrations
+    if (appliedMigrations.isEmpty()) {
+      Logger.debug(TAG) { "appliedMigrations are empty, nothing to do" }
+      return
+    }
+
+    val fromVersion = appliedMigrations.min()
+    val toVersion = appliedMigrations.max()
+
+    val changelog = buildString {
+      appendLine("Migrated app data from version ${fromVersion} to ${toVersion}.")
+      appendLine("Changelog:")
+
+      for (migrationVersion in fromVersion..toVersion) {
+        val changelog = applicationMigrationHelper.changelog(migrationVersion)
+          ?: "No changelog provided"
+
+        append("- (v${migrationVersion}): ")
+        appendLine(changelog)
+      }
+    }
+
+    dialogFactory.createSimpleInformationDialog(
+      context = context,
+      titleText = "Application restart is required.",
+      descriptionText = "Application's internal data has been migrated so now the application needs to be restarted to ensure there are no inconsistencies.\n\n${changelog}",
+      cancelable = false,
+      checkAppVisibility = true,
+      positiveButtonTextId = com.github.k1rakishou.chan.R.string.restart_the_app,
+      onPositiveButtonClickListener = { appRestarter.restart() }
+    )
   }
 
   companion object {

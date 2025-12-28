@@ -71,8 +71,12 @@ class MapSetting(
     return value
   }
 
-  fun clear() {
-    set(emptyMap())
+  fun clear(sync: Boolean) {
+    if (sync) {
+      setSync(emptyMap())
+    } else {
+      set(emptyMap())
+    }
   }
 
   override fun get(): Map<String, String> {
