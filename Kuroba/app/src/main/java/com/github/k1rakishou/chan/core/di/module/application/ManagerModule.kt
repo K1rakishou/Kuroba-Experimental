@@ -7,14 +7,12 @@ import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.base.okhttp.RealDownloaderOkHttpClient
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.cache.CacheHandler
-import com.github.k1rakishou.chan.core.helper.ChanLoadProgressNotifier
 import com.github.k1rakishou.chan.core.helper.FilterEngine
 import com.github.k1rakishou.chan.core.helper.FilterWatcherNotificationHelper
 import com.github.k1rakishou.chan.core.helper.ImageSaverFileManagerWrapper
 import com.github.k1rakishou.chan.core.helper.KurobaSystemNotifications
 import com.github.k1rakishou.chan.core.helper.LastPageNotificationsHelper
 import com.github.k1rakishou.chan.core.helper.LastViewedPostNoInfoHolder
-import com.github.k1rakishou.chan.core.helper.PostHideHelper
 import com.github.k1rakishou.chan.core.helper.ReplyNotificationsHelper
 import com.github.k1rakishou.chan.core.helper.ThreadDownloaderFileManagerWrapper
 import com.github.k1rakishou.chan.core.image.ImageLoaderDeprecated
@@ -595,21 +593,6 @@ class ManagerModule {
       chanFilterWatchRepository,
       postFilterHighlightManager,
       postFilterManager
-    )
-  }
-
-  @Singleton
-  @Provides
-  fun providePostHideHelper(
-    postHideManager: PostHideManager,
-    postFilterManager: PostFilterManager,
-    chanLoadProgressNotifier: ChanLoadProgressNotifier
-  ): PostHideHelper {
-    deps("PostHideHelper")
-    return PostHideHelper(
-      postHideManager,
-      postFilterManager,
-      chanLoadProgressNotifier
     )
   }
 

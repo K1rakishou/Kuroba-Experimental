@@ -1,9 +1,12 @@
 package com.github.k1rakishou.chan.core.helper
 
 import androidx.annotation.VisibleForTesting
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.IPostFilterManager
 import com.github.k1rakishou.chan.core.manager.IPostHideManager
+import com.github.k1rakishou.chan.core.manager.ThreadPostSearchManager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.common.linkedMapWithCap
@@ -23,6 +26,7 @@ import kotlinx.coroutines.withContext
 class PostHideHelper(
   private val postHideManager: IPostHideManager,
   private val postFilterManager: IPostFilterManager,
+  private val threadPostSearchManager: ThreadPostSearchManager,
   private val chanLoadProgressNotifier: ChanLoadProgressNotifier
 ) {
 
@@ -43,6 +47,17 @@ class PostHideHelper(
     posts: List<ChanPost>,
     additionalPostsToReparse: MutableSet<PostDescriptor>
   ): ModularResult<List<ChanPost>> {
+    val searchQuery = threadPostSearchManager.currentSearchQuery(chanDescriptor)
+
+    val filterOutPostsNotMatchingSearchQueryEnabled = when (chanDescriptor) {
+      is ChanDescriptor.ICatalogDescriptor -> {
+        ChanSettings.catalogSearchMode.get() == ChanSettings.CatalogOrThreadSearchMode.Filter
+      }
+      is ChanDescriptor.ThreadDescriptor -> {
+        ChanSettings.threadSearchMode.get() == ChanSettings.CatalogOrThreadSearchMode.Filter
+      }
+    }
+
     return withContext(Dispatchers.IO) {
       return@withContext ModularResult.Try {
         val postDescriptorSet = posts.map { post -> post.postDescriptor }.toSet()
@@ -94,8 +109,20 @@ class PostHideHelper(
 
         resultMap.mutableIteration { mutableIterator, entry ->
           val chanPostWithFilterResult = entry.value
+          val postDescriptor = chanPostWithFilterResult.chanPost.postDescriptor
+
           if (chanPostWithFilterResult.postFilterResult == PostFilterResult.Remove) {
             mutableIterator.remove()
+            return@mutableIteration true
+          }
+
+          if (filterOutPostsNotMatchingSearchQueryEnabled
+            && searchQuery != null
+            && searchQuery.length >= AppConstants.MIN_QUERY_LENGTH
+            && !threadPostSearchManager.postMatchesSearchQuery(chanDescriptor, postDescriptor, searchQuery)
+          ) {
+            mutableIterator.remove()
+            return@mutableIteration true
           }
 
           return@mutableIteration true

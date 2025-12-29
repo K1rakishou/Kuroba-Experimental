@@ -22,7 +22,10 @@ class ThreadPostSearchManager(
   private val postFilterManager: PostFilterManager,
   private val postHideManager: PostHideManager
 ) {
-  private val _activeSearches = GenericCacheSource<ChanDescriptor, ActiveSearch>()
+  private val _activeSearches = GenericCacheSource<ChanDescriptor, ActiveSearch>(
+    capacity = 8,
+    maxSize = 8
+  )
 
   fun listenForSearchQueryUpdates(chanDescriptor: ChanDescriptor): StateFlow<String?> {
     return getOrCreateSearch(chanDescriptor).searchQuery
@@ -80,27 +83,11 @@ class ThreadPostSearchManager(
       dataList = postDescriptors,
       dispatcher = Dispatchers.IO
     ) { _, postDescriptor ->
-      if (postFilterManager.contains(postDescriptor)) {
-        if (postFilterManager.getPostFilter(postDescriptor)?.isPostHiddenOrRemoved != true) {
-          // Post is hidden or removed. Skip it.
-          return@parallelForEachOrdered null
-        }
-
-        // Post is neither hidden nor removed. Process it further.
+      if (postMatchesSearchQuery(chanDescriptor, postDescriptor, searchQuery)) {
+        return@parallelForEachOrdered postDescriptor
       }
 
-      if (postHideManager.contains(postDescriptor)) {
-        return@parallelForEachOrdered null
-      }
-
-      val chanPost = chanThreadsCache.getPostFromCache(chanDescriptor, postDescriptor)
-        ?: return@parallelForEachOrdered null
-
-      if (!checkMatchesQuery(chanPost, searchQuery)) {
-        return@parallelForEachOrdered null
-      }
-
-      return@parallelForEachOrdered postDescriptor
+      return@parallelForEachOrdered null
     }.filterNotNull()
 
     getOrCreateSearch(chanDescriptor).updateSearchQuery(
@@ -109,6 +96,34 @@ class ThreadPostSearchManager(
     )
 
     return matchedPostDescriptors.isNotEmpty()
+  }
+
+  fun postMatchesSearchQuery(
+    chanDescriptor: ChanDescriptor,
+    postDescriptor: PostDescriptor,
+    searchQuery: String
+  ): Boolean {
+    if (postFilterManager.contains(postDescriptor)) {
+      if (postFilterManager.getPostFilter(postDescriptor)?.isPostHiddenOrRemoved != true) {
+        // Post is hidden or removed. Skip it.
+        return false
+      }
+
+      // Post is neither hidden nor removed. Process it further.
+    }
+
+    if (postHideManager.contains(postDescriptor) && !postHideManager.isManuallyRestored(postDescriptor)) {
+      return false
+    }
+
+    val chanPost = chanThreadsCache.getPostFromCache(chanDescriptor, postDescriptor)
+      ?: return false
+
+    if (!checkMatchesQuery(chanPost, searchQuery)) {
+      return false
+    }
+
+    return true
   }
 
   private fun checkMatchesQuery(chanPost: ChanPost, searchQuery: String): Boolean {

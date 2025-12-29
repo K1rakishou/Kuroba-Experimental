@@ -271,6 +271,12 @@ fun View.setEnabledFast(newEnabled: Boolean) {
   }
 }
 
+fun View.setClickableFast(newClickable: Boolean) {
+  if (isClickable != newClickable) {
+    isClickable = newClickable
+  }
+}
+
 fun View.setVisibilityFast(newVisibility: Int) {
   if (visibility != newVisibility) {
     visibility = newVisibility

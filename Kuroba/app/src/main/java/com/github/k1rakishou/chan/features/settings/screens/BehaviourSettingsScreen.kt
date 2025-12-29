@@ -7,10 +7,12 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.PostHideManager
 import com.github.k1rakishou.chan.features.settings.BehaviorScreen
+import com.github.k1rakishou.chan.features.settings.MediaScreen
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
 import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.InputSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
+import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
 import com.github.k1rakishou.chan.features.setup.SitesSetupController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.controller.settings.captcha.JsCaptchaCookiesEditorController
@@ -62,6 +64,38 @@ class BehaviourSettingsScreen(
           topDescriptionIdFunc = { R.string.settings_show_copy_apk_dialog_title },
           bottomDescriptionIdFunc = { R.string.settings_show_copy_apk_dialog_message },
           setting = ChanSettings.showCopyApkUpdateDialog
+        )
+
+        group += ListSettingV2.createBuilder<ChanSettings.CatalogOrThreadSearchMode>(
+          context = context,
+          identifier = MediaScreen.MiscGroup.CatalogSearchMode,
+          setting = ChanSettings.catalogSearchMode,
+          topDescriptionIdFunc = { R.string.setting_catalog_search_mode_title },
+          bottomDescriptionStringFunc = { itemName -> itemName },
+          items = ChanSettings.CatalogOrThreadSearchMode.entries,
+          groupId = "catalog_search_mode",
+          itemNameMapper = { item ->
+            when (item) {
+              ChanSettings.CatalogOrThreadSearchMode.Filter -> "${item.name} (Posts are filtered out)"
+              ChanSettings.CatalogOrThreadSearchMode.Highlight -> "${item.name} (Posts are highlighted)"
+            }
+          }
+        )
+
+        group += ListSettingV2.createBuilder<ChanSettings.CatalogOrThreadSearchMode>(
+          context = context,
+          identifier = MediaScreen.MiscGroup.ThreadSearchMode,
+          setting = ChanSettings.threadSearchMode,
+          topDescriptionIdFunc = { R.string.setting_thread_search_mode_title },
+          bottomDescriptionStringFunc = { itemName -> itemName },
+          items = ChanSettings.CatalogOrThreadSearchMode.entries,
+          groupId = "thread_search_mode",
+          itemNameMapper = { item ->
+            when (item) {
+              ChanSettings.CatalogOrThreadSearchMode.Filter -> "${item.name} (Posts are filtered out)"
+              ChanSettings.CatalogOrThreadSearchMode.Highlight -> "${item.name} (Posts are highlighted)"
+            }
+          }
         )
 
         group

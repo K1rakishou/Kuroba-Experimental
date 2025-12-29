@@ -8,15 +8,19 @@ import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.helper.AppRestarter
 import com.github.k1rakishou.chan.core.helper.ChanLoadProgressNotifier
 import com.github.k1rakishou.chan.core.helper.KurobaSystemNotifications
+import com.github.k1rakishou.chan.core.helper.PostHideHelper
 import com.github.k1rakishou.chan.core.helper.SitesSetupControllerOpenNotifier
 import com.github.k1rakishou.chan.core.image.ImageLoaderDeprecated
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManager
+import com.github.k1rakishou.chan.core.manager.PostFilterManager
+import com.github.k1rakishou.chan.core.manager.PostHideManager
 import com.github.k1rakishou.chan.core.manager.PostingLimitationsInfoManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
+import com.github.k1rakishou.chan.core.manager.ThreadPostSearchManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ParsePostsV1UseCase
@@ -40,6 +44,7 @@ import com.github.k1rakishou.chan.ui.helper.picker.RemoteFilePicker
 import com.github.k1rakishou.chan.ui.helper.picker.ShareFilePicker
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_logger.Logger.deps
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
@@ -312,6 +317,23 @@ class HelperModule {
       appContext = appContext,
       themeEngine = themeEngine,
       notificationManagerCompat = notificationManagerCompat
+    )
+  }
+
+  @Singleton
+  @Provides
+  fun providePostHideHelper(
+    postHideManager: PostHideManager,
+    postFilterManager: PostFilterManager,
+    threadPostSearchManager: ThreadPostSearchManager,
+    chanLoadProgressNotifier: ChanLoadProgressNotifier
+  ): PostHideHelper {
+    deps("PostHideHelper")
+    return PostHideHelper(
+      postHideManager = postHideManager,
+      postFilterManager = postFilterManager,
+      threadPostSearchManager = threadPostSearchManager,
+      chanLoadProgressNotifier = chanLoadProgressNotifier
     )
   }
 

@@ -839,6 +839,8 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="setting_image_auto_load_none">Never</string>
     <string name="setting_auto_load_thread_images">Enable media prefetching</string>
     <string name="setting_auto_load_thread_images_description">Loads all images or videos in a thread immediately. Uses it\'s own setting for the cache size which is greater than the regular cache size. (⚠ May become the reason of high battery/network traffic/disk consumption ⚠)</string>
+    <string name="setting_catalog_search_mode_title">Catalog search mode</string>
+    <string name="setting_thread_search_mode_title">Thread search mode</string>
 
     <!-- Misc group -->
     <string name="settings_group_misc">Misc settings</string>

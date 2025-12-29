@@ -740,6 +740,15 @@ abstract class ThreadController(
     chanDescriptor: ChanDescriptor,
     threadSearchData: ThreadSearchData
   ) {
+    val filterOutPostsNotMatchingSearchQueryEnabled = when (chanDescriptor) {
+      is ChanDescriptor.ICatalogDescriptor -> {
+        ChanSettings.catalogSearchMode.get() == ChanSettings.CatalogOrThreadSearchMode.Filter
+      }
+      is ChanDescriptor.ThreadDescriptor -> {
+        ChanSettings.threadSearchMode.get() == ChanSettings.CatalogOrThreadSearchMode.Filter
+      }
+    }
+
     if (!threadSearchData.searchToolbarCreated) {
       threadPostSearchManager.updateSearchQuery(
         chanDescriptor = chanDescriptor,
@@ -761,6 +770,14 @@ abstract class ThreadController(
       postDescriptors = threadLayout.displayingPostDescriptorsInThread,
       searchQuery = threadSearchData.searchQuery
     )
+
+    if (filterOutPostsNotMatchingSearchQueryEnabled) {
+      threadLayout.hideThreadSearchNavigationButtonsView()
+
+      // Need to reload from memory to update the posts (remove/restore)
+      threadLayout.presenter.quickReloadFromMemoryCache()
+      return
+    }
 
     if (hasMatchedPostDescriptors) {
       threadLayout.showThreadSearchNavigationButtonsView()

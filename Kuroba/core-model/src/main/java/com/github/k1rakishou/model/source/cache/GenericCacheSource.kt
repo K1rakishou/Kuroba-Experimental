@@ -7,9 +7,9 @@ import kotlin.concurrent.read
 import kotlin.concurrent.write
 
 open class GenericCacheSource<Key, Value>(
-  private val capacity: Int = DEFAULT_CAPACITY,
-  private val maxSize: Int = DEFAULT_MAX_SIZE,
-  private val cacheEntriesToRemovePerTrim: Int = (maxSize.toFloat() * 0.3f).toInt()
+  private val capacity: Int,
+  private val maxSize: Int,
+  private val cacheEntriesToRemovePerTrim: Int = (maxSize.toFloat() * 0.25f).toInt()
 ) : CacheSource<Key, Value> {
   protected val lock = ReentrantReadWriteLock()
   protected val actualCache = LinkedHashMap<Key, Value>(capacity)
@@ -155,10 +155,5 @@ open class GenericCacheSource<Key, Value>(
       iterator.next()
       iterator.remove()
     }
-  }
-
-  companion object {
-    private const val DEFAULT_CAPACITY = 128
-    private const val DEFAULT_MAX_SIZE = 1024
   }
 }

@@ -539,6 +539,8 @@ sealed class MediaScreen(
     MediaScreen(groupIdentifier, SettingIdentifier(settingsId)) {
 
     object AlwaysRandomizeFileNameWhenPickingFiles : MiscGroup("always_randomize_file_name_when_picking_files")
+    object CatalogSearchMode : LoadingGroup("catalog_search_mode")
+    object ThreadSearchMode : LoadingGroup("thread_search_mode")
 
     companion object : IGroupIdentifier() {
       override fun screenIdentifier(): ScreenIdentifier = MediaScreen.screenIdentifier()

@@ -161,6 +161,22 @@ public class ChanSettings {
         }
     }
 
+    public enum CatalogOrThreadSearchMode implements OptionSettingItem {
+      Filter("Filter"),
+      Highlight("Highlight");
+
+      String name;
+
+      CatalogOrThreadSearchMode(String name) {
+        this.name = name;
+      }
+
+      @Override
+      public String getKey() {
+        return name;
+      }
+    }
+
     public enum BoardPostViewMode implements OptionSettingItem {
         LIST("list"),
         GRID("grid"),
@@ -334,6 +350,8 @@ public class ChanSettings {
     // Other options
     public static BooleanSetting fullUserRotationEnable;
     public static BooleanSetting showCopyApkUpdateDialog;
+    public static OptionsSetting<CatalogOrThreadSearchMode> catalogSearchMode;
+    public static OptionsSetting<CatalogOrThreadSearchMode> threadSearchMode;
     //endregion
 
     //region MEDIA
@@ -563,6 +581,8 @@ public class ChanSettings {
         // Other options
         fullUserRotationEnable = new BooleanSetting(provider, "full_user_rotation_enable", true);
         showCopyApkUpdateDialog = new BooleanSetting(provider, "show_copy_apk_update_dialog", true);
+        catalogSearchMode = new OptionsSetting<>(provider, "catalog_search_mode", CatalogOrThreadSearchMode.class, CatalogOrThreadSearchMode.Highlight);
+        threadSearchMode = new OptionsSetting<>(provider, "thread_search_mode", CatalogOrThreadSearchMode.class, CatalogOrThreadSearchMode.Highlight);
         //endregion
 
         //region MEDIA
