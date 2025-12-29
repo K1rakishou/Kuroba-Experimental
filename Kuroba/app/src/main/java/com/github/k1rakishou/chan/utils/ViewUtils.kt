@@ -5,6 +5,7 @@ import android.app.ProgressDialog
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.os.SystemClock
+import android.view.InputDevice
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
@@ -252,6 +253,7 @@ object ViewUtils {
 
   fun View.emulateMotionEvent(downTime: Long, action: Int, x: Float, y: Float) {
     val motionEvent = MotionEvent.obtain(downTime, SystemClock.uptimeMillis(), action, x, y, 0)
+    motionEvent.source = InputDevice.SOURCE_TOUCHSCREEN
     onTouchEvent(motionEvent)
     motionEvent.recycle()
   }
