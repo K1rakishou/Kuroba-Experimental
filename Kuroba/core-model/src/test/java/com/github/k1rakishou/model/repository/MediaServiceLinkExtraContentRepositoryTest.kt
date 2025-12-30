@@ -51,7 +51,7 @@ class MediaServiceLinkExtraContentRepositoryTest {
     )
   }
 
-  @Test
+  @Test(timeout = 10_000)
   fun `test repository when cache hit should not get data from neither local source nor remote source`() {
     runTest {
       val requestUrl = "youtube.com/test_url"
@@ -75,7 +75,7 @@ class MediaServiceLinkExtraContentRepositoryTest {
     }
   }
 
-  @Test
+  @Test(timeout = 10_000)
   fun `test repository when cache miss but local source hit should not get data from remote source`() {
     runTest {
       val requestUrl = "youtube.com/test_url"
@@ -102,7 +102,7 @@ class MediaServiceLinkExtraContentRepositoryTest {
     }
   }
 
-  @Test
+  @Test(timeout = 10_000)
   fun `test when both are empty get data from the remote source`() {
     runTest {
       val requestUrl = "youtube.com/test_url"

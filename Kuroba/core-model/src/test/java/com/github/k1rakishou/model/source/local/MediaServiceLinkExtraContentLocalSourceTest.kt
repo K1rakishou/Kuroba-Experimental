@@ -8,8 +8,7 @@ import com.github.k1rakishou.model.data.media.GenericVideoId
 import com.github.k1rakishou.model.data.video_service.MediaServiceLinkExtraContent
 import com.github.k1rakishou.model.data.video_service.MediaServiceType
 import com.github.k1rakishou.model.entity.MediaServiceLinkExtraContentEntity
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.joda.time.DateTime
 import org.joda.time.Period
 import org.junit.Assert.assertEquals
@@ -35,9 +34,9 @@ class MediaServiceLinkExtraContentLocalSourceTest {
     localSource = testDatabaseModuleComponent.provideMediaServiceLinkExtraContentLocalSource()
   }
 
-  @Test
+  @Test(timeout = 10_000)
   fun `test shouldn't update old entity with the new one if they are the same`() {
-    runBlocking(Dispatchers.Default) {
+    runTest {
       val linkExtraContent = MediaServiceLinkExtraContent(
         GenericVideoId("test.com/123"),
         MediaServiceType.Youtube,
@@ -56,9 +55,9 @@ class MediaServiceLinkExtraContentLocalSourceTest {
     }
   }
 
-  @Test
+  @Test(timeout = 10_000)
   fun `test delete old entries`() {
-    runBlocking(Dispatchers.Default) {
+    runTest {
       val oneSecondAgo = DateTime.now().minus(Period.seconds(1))
       val oneMinuteAgo = DateTime.now().minus(Period.minutes(1))
 

@@ -2,16 +2,16 @@ package com.github.k1rakishou.model.source.cache
 
 import junit.framework.Assert.assertEquals
 import junit.framework.Assert.assertTrue
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 class GenericCacheSourceTest {
 
-  @Test
+  @Test(timeout = 10_000)
   fun `test cache trim`() {
     val cache = GenericSuspendableCacheSource<String, String>(2, 4, 2)
 
-    runBlocking {
+    runTest {
       cache.store("1", "a")
       cache.store("2", "b")
       assertEquals(2, cache.size())
