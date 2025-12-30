@@ -22,7 +22,7 @@ jobs:
       run: |
         cd Kuroba
         chmod +x ./gradlew
-        ./gradlew test --stacktrace --info --no-daemon
+        ./gradlew test --stacktrace --info --no-daemon -Pandroid.enableAapt2Daemon=false
 
     - name: Check user permission
       id: check
