@@ -22,8 +22,7 @@ jobs:
       run: |
         cd Kuroba
         chmod +x ./gradlew
-        ./gradlew test
-        echo "Running tests"
+        ./gradlew test --stacktrace --info --no-daemon
 
     - name: Check user permission
       id: check
