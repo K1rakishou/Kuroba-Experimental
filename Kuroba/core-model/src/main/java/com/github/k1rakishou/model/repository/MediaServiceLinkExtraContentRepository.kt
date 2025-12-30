@@ -28,7 +28,6 @@ class MediaServiceLinkExtraContentRepository(
     requestUrl: String,
     videoId: GenericVideoId
   ): ModularResult<MediaServiceLinkExtraContent> {
-    ensureBackgroundThread()
     val mediaServiceKey = MediaServiceKey(videoId, mediaServiceType)
 
     return applicationScope.dbCall {

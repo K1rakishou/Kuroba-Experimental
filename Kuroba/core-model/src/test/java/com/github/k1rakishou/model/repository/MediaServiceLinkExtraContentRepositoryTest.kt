@@ -14,10 +14,9 @@ import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.times
 import com.nhaarman.mockitokotlin2.verify
 import com.nhaarman.mockitokotlin2.whenever
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.runTest
 import org.joda.time.Period
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -54,7 +53,7 @@ class MediaServiceLinkExtraContentRepositoryTest {
 
   @Test
   fun `test repository when cache hit should not get data from neither local source nor remote source`() {
-    runBlocking(Dispatchers.Default) {
+    runTest {
       val requestUrl = "youtube.com/test_url"
       val videoId = GenericVideoId("testVideoId234234234")
       val serviceType = MediaServiceType.Youtube
@@ -78,7 +77,7 @@ class MediaServiceLinkExtraContentRepositoryTest {
 
   @Test
   fun `test repository when cache miss but local source hit should not get data from remote source`() {
-    runBlocking(Dispatchers.Default) {
+    runTest {
       val requestUrl = "youtube.com/test_url"
       val videoId = GenericVideoId("testVideoId234234234")
       val serviceType = MediaServiceType.Youtube
@@ -105,7 +104,7 @@ class MediaServiceLinkExtraContentRepositoryTest {
 
   @Test
   fun `test when both are empty get data from the remote source`() {
-    runBlocking(Dispatchers.Default) {
+    runTest {
       val requestUrl = "youtube.com/test_url"
       val videoId = GenericVideoId("testVideoId234234234")
       val serviceType = MediaServiceType.Youtube
