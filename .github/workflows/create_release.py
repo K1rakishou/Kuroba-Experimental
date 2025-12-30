@@ -3,6 +3,7 @@ import requests
 import json
 import re
 import subprocess
+import sys
 
 def create_github_release(token, repo, tag_name, release_name, body, asset_path):
     url = f"https://api.github.com/repos/{repo}/releases"
