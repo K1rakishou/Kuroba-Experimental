@@ -4,7 +4,7 @@ import androidx.annotation.VisibleForTesting
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.IPostFilterManager
 import com.github.k1rakishou.chan.core.manager.IPostHideManager
-import com.github.k1rakishou.chan.core.manager.ThreadPostSearchManager
+import com.github.k1rakishou.chan.core.manager.IThreadPostSearchManager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
@@ -26,7 +26,7 @@ import kotlinx.coroutines.withContext
 class PostHideHelper(
   private val postHideManager: IPostHideManager,
   private val postFilterManager: IPostFilterManager,
-  private val threadPostSearchManager: ThreadPostSearchManager,
+  private val threadPostSearchManager: IThreadPostSearchManager,
   private val chanLoadProgressNotifier: ChanLoadProgressNotifier
 ) {
 

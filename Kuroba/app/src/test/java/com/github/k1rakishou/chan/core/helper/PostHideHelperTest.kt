@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.core.helper
 
 import com.github.k1rakishou.chan.core.manager.IPostFilterManager
 import com.github.k1rakishou.chan.core.manager.IPostHideManager
+import com.github.k1rakishou.chan.core.manager.IThreadPostSearchManager
 import com.github.k1rakishou.common.toHashMapBy
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
@@ -21,9 +22,10 @@ class PostHideHelperTest {
   private val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(catalogDescriptor, 1L)
 
   private var postHideHelper = PostHideHelper(
-    Mockito.mock(IPostHideManager::class.java),
-    Mockito.mock(IPostFilterManager::class.java),
-    ChanLoadProgressNotifier()
+    postHideManager = Mockito.mock(IPostHideManager::class.java),
+    postFilterManager = Mockito.mock(IPostFilterManager::class.java),
+    threadPostSearchManager = Mockito.mock(IThreadPostSearchManager::class.java),
+    chanLoadProgressNotifier = ChanLoadProgressNotifier()
   )
 
   @Test

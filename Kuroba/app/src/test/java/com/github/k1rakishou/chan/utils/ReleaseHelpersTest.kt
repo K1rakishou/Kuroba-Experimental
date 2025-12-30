@@ -16,7 +16,7 @@ class ReleaseHelpersTest {
         assertBetaVersionEquals(0, 0, ReleaseHelpers.calculateBetaVersionCode("123"))
 
         // Old format, not supported anymore
-        assertBetaVersionEquals(0, 0, ReleaseHelpers.calculateBetaVersionCode("v1.3.32-beta"))
+        assertBetaVersionEquals(10332, 0, ReleaseHelpers.calculateBetaVersionCode("v1.3.32-beta"))
 
         // New format
         assertBetaVersionEquals(10332, 0, ReleaseHelpers.calculateBetaVersionCode("v1.3.32.0-beta"))

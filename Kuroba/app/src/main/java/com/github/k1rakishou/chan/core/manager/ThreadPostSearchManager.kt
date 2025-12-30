@@ -17,11 +17,16 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
 
+interface IThreadPostSearchManager {
+  fun currentSearchQuery(chanDescriptor: ChanDescriptor): String?
+  fun postMatchesSearchQuery(chanDescriptor: ChanDescriptor, postDescriptor: PostDescriptor, searchQuery: String): Boolean
+}
+
 class ThreadPostSearchManager(
   private val chanThreadsCache: ChanThreadsCache,
   private val postFilterManager: PostFilterManager,
   private val postHideManager: PostHideManager
-) {
+) : IThreadPostSearchManager {
   private val _activeSearches = GenericCacheSource<ChanDescriptor, ActiveSearch>(
     capacity = 8,
     maxSize = 8
@@ -49,7 +54,7 @@ class ThreadPostSearchManager(
     }.filterNotNull()
   }
 
-  fun currentSearchQuery(chanDescriptor: ChanDescriptor): String? {
+  override fun currentSearchQuery(chanDescriptor: ChanDescriptor): String? {
     return getOrCreateSearch(chanDescriptor).searchQuery.value
   }
 
@@ -98,7 +103,7 @@ class ThreadPostSearchManager(
     return matchedPostDescriptors.isNotEmpty()
   }
 
-  fun postMatchesSearchQuery(
+  override fun postMatchesSearchQuery(
     chanDescriptor: ChanDescriptor,
     postDescriptor: PostDescriptor,
     searchQuery: String

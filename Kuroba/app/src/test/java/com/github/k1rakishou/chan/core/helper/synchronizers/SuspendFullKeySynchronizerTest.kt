@@ -12,7 +12,7 @@ import org.junit.Test
 
 class SuspendFullKeySynchronizerTest {
 
-  @Test
+  @Test(timeout = 10_000L)
   fun `should not deadlock when locking with different keys`() = runTest {
     var value = 0
     val cacheHandlerSynchronizer = SuspendKeySynchronizer<String>()
@@ -31,7 +31,7 @@ class SuspendFullKeySynchronizerTest {
     Assert.assertTrue(cacheHandlerSynchronizer.getActiveSynchronizerKeys().isEmpty())
   }
 
-  @Test
+  @Test(timeout = 10_000L)
   fun `should not deadlock when nested locking with the same key`() = runTest {
     var value = 0
     val cacheHandlerSynchronizer = SuspendKeySynchronizer<String>()
@@ -46,7 +46,7 @@ class SuspendFullKeySynchronizerTest {
     Assert.assertTrue(cacheHandlerSynchronizer.getActiveSynchronizerKeys().isEmpty())
   }
 
-  @Test
+  @Test(timeout = 10_000L)
   fun `should not deadlock when nested locking with global lock`() = runTest {
     var value = 0
     val cacheHandlerSynchronizer = SuspendKeySynchronizer<String>()
@@ -61,7 +61,7 @@ class SuspendFullKeySynchronizerTest {
     Assert.assertTrue(cacheHandlerSynchronizer.getActiveSynchronizerKeys().isEmpty())
   }
 
-  @Test
+  @Test(timeout = 10_000L)
   fun `should not deadlock when mixing local and global locks`() = runTest {
     var value = 0
     val cacheHandlerSynchronizer = SuspendKeySynchronizer<String>()
@@ -86,7 +86,7 @@ class SuspendFullKeySynchronizerTest {
     Assert.assertTrue(cacheHandlerSynchronizer.getActiveSynchronizerKeys().isEmpty())
   }
 
-  @Test
+  @Test(timeout = 10_000L)
   fun `should not allow locking a local lock when a global lock is already locked`() = runTest {
     var value = 0
     val startTime = System.currentTimeMillis()
@@ -112,7 +112,7 @@ class SuspendFullKeySynchronizerTest {
     Assert.assertEquals(value, 1)
   }
 
-  @Test
+  @Test(timeout = 10_000L)
   fun `concurrent access from multiple threads only local`() = runTest {
     val values = IntArray(50) { 0 }
     val cacheHandlerSynchronizer = SuspendKeySynchronizer<String>()
@@ -131,7 +131,7 @@ class SuspendFullKeySynchronizerTest {
     Assert.assertTrue(cacheHandlerSynchronizer.getActiveSynchronizerKeys().isEmpty())
   }
 
-  @Test
+  @Test(timeout = 10_000L)
   fun `concurrent access from multiple threads only global`() = runTest {
     var value = 0
     val cacheHandlerSynchronizer = SuspendKeySynchronizer<String>()
@@ -150,7 +150,7 @@ class SuspendFullKeySynchronizerTest {
     Assert.assertTrue(cacheHandlerSynchronizer.getActiveSynchronizerKeys().isEmpty())
   }
 
-  @Test
+  @Test(timeout = 10_000L)
   fun `concurrent access from multiple threads mixed 1`() = runTest {
     var value = 0
     val cacheHandlerSynchronizer = SuspendKeySynchronizer<String>()
@@ -171,7 +171,7 @@ class SuspendFullKeySynchronizerTest {
     Assert.assertTrue(cacheHandlerSynchronizer.getActiveSynchronizerKeys().isEmpty())
   }
 
-  @Test
+  @Test(timeout = 10_000L)
   fun `concurrent access from multiple threads mixed 2`() = runTest {
     var value = 0
     val cacheHandlerSynchronizer = SuspendKeySynchronizer<String>()
