@@ -22,7 +22,7 @@ jobs:
       run: |
         cd Kuroba
         chmod +x ./gradlew
-        # TODO: uncomment this
+        # TODO: uncomment this 123
         # ./gradlew test
         echo "Running tests"
 
