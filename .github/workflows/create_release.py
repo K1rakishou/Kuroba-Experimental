@@ -139,9 +139,9 @@ def get_latest_release_commit_hash(repo, access_token=None):
 if __name__ == "__main__":
     release_type = sys.argv[1]
 
-    if (release_type == "beta"):
+    if release_type == "beta":
         print(f"Creating beta APK")
-    else (if release_type == "stable"):
+    else if release_type == "stable":
         print(f"Creating stable APK")
     else:
         print(f"Unknown release_type: {release_type}")
