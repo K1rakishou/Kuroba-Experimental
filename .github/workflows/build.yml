@@ -12,17 +12,17 @@ jobs:
       with:
         fetch-depth: '0'
         
-    - name: Set up JDK 17
+    - name: Set up JDK 21
       uses: actions/setup-java@v2
       with:
-        java-version: '17'
+        java-version: '21'
         distribution: 'adopt'
         
     - name: Build and run tests
       run: |
         cd Kuroba
         chmod +x ./gradlew
-        ./gradlew test --stacktrace --info --no-daemon -Pandroid.enableAapt2Daemon=false
+        ./gradlew test --stacktrace --info --no-daemon
 
     - name: Check user permission
       id: check
