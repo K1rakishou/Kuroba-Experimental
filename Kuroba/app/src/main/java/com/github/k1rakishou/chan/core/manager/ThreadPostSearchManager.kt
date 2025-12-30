@@ -127,11 +127,23 @@ class ThreadPostSearchManager(
   }
 
   private fun checkMatchesQuery(chanPost: ChanPost, searchQuery: String): Boolean {
+    if (chanPost.postNo().toString().contains(other = searchQuery, ignoreCase = true)) {
+      return true
+    }
+
     if (chanPost.postComment.comment().contains(other = searchQuery, ignoreCase = true)) {
       return true
     }
 
     if (chanPost.subject?.contains(other = searchQuery, ignoreCase = true) == true) {
+      return true
+    }
+
+    if (chanPost.name?.contains(other = searchQuery, ignoreCase = true) == true) {
+      return true
+    }
+
+    if (chanPost.tripcode?.contains(other = searchQuery, ignoreCase = true) == true) {
       return true
     }
 
