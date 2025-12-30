@@ -22,7 +22,10 @@ jobs:
       run: |
         cd Kuroba
         chmod +x ./gradlew
-        ./gradlew test --stacktrace --info --no-daemon
+        ./gradlew test --no-daemon --stacktrace \
+              -Pandroid.enableAapt2Daemon=false \
+              -Dorg.gradle.jvmargs="-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError -XX:+UseParallelGC" \
+              --no-build-cache
 
     - name: Check user permission
       id: check
