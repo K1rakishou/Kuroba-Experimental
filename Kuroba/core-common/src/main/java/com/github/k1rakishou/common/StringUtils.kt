@@ -4,6 +4,7 @@ import android.util.Base64
 import java.nio.charset.StandardCharsets
 import java.util.Locale
 import java.util.Random
+import kotlin.math.roundToLong
 
 object StringUtils {
   private val RANDOM = Random()
@@ -177,5 +178,33 @@ object StringUtils {
 
     return null
   }
+
+  // Parses time in formats like "01:11:12" or just "11:12" or even with fractional seconds part like "12:34.999"
+  fun String.parseTimeStringAsMillis(): Long {
+    if (this.isBlank()) {
+      return 0L
+    }
+
+    val parts = this.trim().split(":")
+    var hours = 0L
+    var minutes = 0L
+    var seconds = 0.0
+
+    when (parts.size) {
+      1 -> seconds = parts[0].toDouble()
+      2 -> {
+        minutes = parts[0].toLong()
+        seconds = parts[1].toDouble()
+      }
+      else -> {
+        hours = parts[0].toLong()
+        minutes = parts[1].toLong()
+        seconds = parts[2].toDouble()
+      }
+    }
+    return hours * 3600_000L + minutes * 60_000L + (seconds * 1000.0).roundToLong()
+  }
+
+  fun String.parseTimeStringAsSeconds() = parseTimeStringAsMillis() / 1000L
 
 }

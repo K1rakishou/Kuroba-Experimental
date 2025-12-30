@@ -1,105 +1,72 @@
 package com.github.k1rakishou.model.source.parser
 
-import com.github.k1rakishou.core_parser.html.KurobaHtmlParserCollector
-import com.github.k1rakishou.core_parser.html.KurobaHtmlParserCommandBufferBuilder
-import com.github.k1rakishou.core_parser.html.KurobaHtmlParserCommandExecutor
-import com.github.k1rakishou.core_parser.html.KurobaMatcher
-import com.github.k1rakishou.core_parser.html.commands.KurobaParserCommand
 import com.github.k1rakishou.model.data.media.GenericVideoId
 import com.github.k1rakishou.model.data.media.MediaServiceLinkExtraInfo
 import com.github.k1rakishou.model.data.video_service.MediaServiceType
+import com.squareup.moshi.JsonReader
 import okhttp3.ResponseBody
-import org.joda.time.Period
+import okio.Buffer
+import org.joda.time.Duration
 import org.jsoup.Jsoup
 
 object StreamableLinkExtractContentParser : IExtractContentParser {
-  private val parserCommandBuffer = createParserCommandBuffer()
-
   override fun parse(
     url: String,
     mediaServiceType: MediaServiceType,
     videoId: GenericVideoId,
     responseBody: ResponseBody
   ): MediaServiceLinkExtraInfo {
-    val parserCommandExecutor =
-      KurobaHtmlParserCommandExecutor<StreamableLinkContentCollector>()
-
-    val collector = StreamableLinkContentCollector()
-
-    responseBody.use { body ->
+    val titleAndDuration = responseBody.use { body ->
       val document = Jsoup.parse(
         body.byteStream(),
         Charsets.UTF_8.name(),
         ""
       )
 
-      parserCommandExecutor.executeCommands(
-        document,
-        parserCommandBuffer,
-        collector,
-        url
-      )
+      return@use document.selectFirst("script[type=application/ld+json][data-testid=structured-metadata]")
+        ?.html()
+        ?.trim()
+        ?.let { metadataJson ->
+          val reader = JsonReader.of(Buffer().writeUtf8(metadataJson))
+          var description: String? = null
+          var duration: String? = null
+
+          reader.beginObject()
+          while (reader.hasNext()) {
+            val name: String? = reader.nextName()
+            if ("description" == name) {
+              description = reader.nextString()
+            }
+            else if ("duration" == name) {
+              duration = reader.nextString()
+            }
+            else {
+              reader.skipValue()
+            }
+          }
+          reader.endObject()
+
+          val videoDescription = description
+            ?.removePrefix("Watch \"")
+            ?.removeSuffix("\" on Streamable.")
+
+          val videoDuration = duration?.let { Duration.parse(it).toPeriod().normalizedStandard() }
+
+          return@let videoDescription to videoDuration
+        }
     }
 
-    if (collector.isEmpty()) {
+    val videoTitle = titleAndDuration?.first
+    val videoDuration = titleAndDuration?.second
+
+    if (videoTitle.isNullOrEmpty() && videoDuration == null) {
       return MediaServiceLinkExtraInfo.empty()
     }
 
-    val period = collector.videoDuration
-      ?.toFloatOrNull()
-      ?.toInt()
-      ?.let { seconds -> Period(seconds * 1000L) }
-
     return MediaServiceLinkExtraInfo(
-      collector.videoTitle,
-      period
+      videoTitle = videoTitle,
+      videoDuration = videoDuration
     )
-  }
-
-  private fun createParserCommandBuffer():  List<KurobaParserCommand<StreamableLinkContentCollector>> {
-    return KurobaHtmlParserCommandBufferBuilder<StreamableLinkContentCollector>()
-      .start {
-        html()
-
-        nest {
-          body()
-
-          nest {
-            div(matchableBuilderFunc = {
-              className(KurobaMatcher.PatternMatcher.stringEquals("container"))
-              attr("id", KurobaMatcher.PatternMatcher.stringEquals("player"))
-            })
-
-            nest {
-              script(
-                matchableBuilderFunc = { attr("data-id", KurobaMatcher.PatternMatcher.stringEquals("player-instream")) },
-                attrExtractorBuilderFunc = {
-                  extractAttrValueByKey("data-duration")
-                  extractAttrValueByKey("data-title")
-                },
-                extractorFunc = { _, extractAttributeValues, collector ->
-                  collector.videoTitle = extractAttributeValues.getAttrValue("data-title")
-                  collector.videoDuration = extractAttributeValues.getAttrValue("data-duration")
-                }
-              )
-            }
-          }
-        }
-      }
-      .build()
-  }
-
-  private data class StreamableLinkContentCollector(
-    var videoTitle: String? = null,
-    // Streamable's duration is a float value representing seconds
-    var videoDuration: String? = null
-  ) : KurobaHtmlParserCollector {
-
-    fun isEmpty(): Boolean {
-      return videoTitle.isNullOrEmpty()
-        && videoDuration.isNullOrEmpty()
-    }
-
   }
 
 }
