@@ -13,7 +13,6 @@ import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.mock
 import com.nhaarman.mockitokotlin2.times
 import com.nhaarman.mockitokotlin2.verify
-import com.nhaarman.mockitokotlin2.verifyZeroInteractions
 import com.nhaarman.mockitokotlin2.whenever
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -24,6 +23,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.mockito.Mockito.verifyNoInteractions
 import org.robolectric.RobolectricTestRunner
 
 @ExperimentalCoroutinesApi
@@ -72,7 +72,7 @@ class MediaServiceLinkExtraContentRepositoryTest {
       assertEquals(duration, linkExtraContent.videoDuration)
 
       verify(localSource, times(1)).deleteOlderThan(any())
-      verifyZeroInteractions(remoteSource)
+      verifyNoInteractions(remoteSource)
     }
   }
 
@@ -99,7 +99,7 @@ class MediaServiceLinkExtraContentRepositoryTest {
 
       verify(localSource, times(1)).deleteOlderThan(any())
       verify(localSource, times(1)).selectByMediaServiceKey(videoId, mediaServiceKey)
-      verifyZeroInteractions(remoteSource)
+      verifyNoInteractions(remoteSource)
     }
   }
 
