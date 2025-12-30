@@ -141,7 +141,7 @@ if __name__ == "__main__":
 
     if release_type == "beta":
         print(f"Creating beta APK")
-    else if release_type == "stable":
+    elif release_type == "stable":
         print(f"Creating stable APK")
     else:
         print(f"Unknown release_type: {release_type}")
