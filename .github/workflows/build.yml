@@ -22,8 +22,7 @@ jobs:
       run: |
         cd Kuroba
         chmod +x ./gradlew
-        # TODO: uncomment this
-        # ./gradlew test
+        ./gradlew test
         echo "Running tests"
 
     - name: Check user permission
@@ -60,13 +59,11 @@ jobs:
         
         if [[ "${{ github.event.head_commit.message }}" == "[beta]"* ]]; then
           echo "Building beta release"
-          # TODO: uncomment this
-          # ./gradlew assembleBetaRelease -Pandroid.injected.signing.store.file=${{ github.workspace }}/kurobaex.jks -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
+          ./gradlew assembleBetaRelease -Pandroid.injected.signing.store.file=${{ github.workspace }}/kurobaex.jks -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
           python ${{ github.workspace }}/.github/workflows/create_release.py beta
         elif [[ "${{ github.event.head_commit.message }}" == "[stable]"* ]]; then
           echo "Building stable release"
-          # TODO: uncomment this
-          # ./gradlew assembleStableRelease -Pandroid.injected.signing.store.file=${{ github.workspace }}/kurobaex.jks -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
+          ./gradlew assembleStableRelease -Pandroid.injected.signing.store.file=${{ github.workspace }}/kurobaex.jks -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
           python ${{ github.workspace }}/.github/workflows/create_release.py stable
         fi
       env:

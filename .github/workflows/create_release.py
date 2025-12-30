@@ -137,46 +137,55 @@ def get_latest_release_commit_hash(repo, access_token=None):
 
     return ""
 
+def publish_beta():
+    print(f"Publishing beta release")
+
+    tag_name = get_new_tag_name('K1rakishou/Kuroba-Experimental-beta')
+    if (len(tag_name) == 0):
+        print("Failed to get the release tag.")
+        exit(-1)
+
+    latest_release_commit_hash = get_latest_release_commit_hash('K1rakishou/Kuroba-Experimental')
+    if (len(latest_release_commit_hash) == 0):
+         print("Failed to get latest release commit hash.")
+         exit(-1)
+
+    commits = get_commits_since(latest_release_commit_hash)
+
+    print(f'tag_name: {tag_name}')
+    print(f'commits:\n{commits}')
+
+    repo = 'K1rakishou/Kuroba-Experimental-beta'
+    release_name = f'KurobaEx-beta release {tag_name}'
+
+    body = ""
+    if (len(commits) > 0):
+        body = f'New release available. It includes the following commits:\n{commits}'
+    else:
+        body = f'New release available.'
+
+    asset_path = 'Kuroba/app/build/outputs/apk/beta/release/KurobaEx-beta.apk'
+
+    token = os.getenv('PAT')
+    if (len(token) == 0):
+        print("Token is empty.")
+        exit(-1)
+
+    create_github_release(token, repo, tag_name, release_name, body, asset_path)
+
+def publish_stable():
+    print(f"Publishing stable release")
+    print(f"TODO: Stable release is not supported yet!")
+    exit(-1)
+
 if __name__ == "__main__":
     release_type = sys.argv[1]
 
     if release_type == "beta":
-        print(f"Creating beta APK")
+        publish_beta()
     elif release_type == "stable":
-        print(f"Creating stable APK")
+        publish_stable()
     else:
         print(f"Unknown release_type: {release_type}")
         exit(-1)
     
-    # tag_name = get_new_tag_name('K1rakishou/Kuroba-Experimental-beta')
-    # if (len(tag_name) == 0):
-    #     print("Failed to get the release tag.")
-    #     exit(-1)
-
-    # latest_release_commit_hash = get_latest_release_commit_hash('K1rakishou/Kuroba-Experimental')
-    # if (len(latest_release_commit_hash) == 0):
-    #      print("Failed to get latest release commit hash.")
-    #      exit(-1)
-
-    # commits = get_commits_since(latest_release_commit_hash)
-
-    # print(f'tag_name: {tag_name}')
-    # print(f'commits:\n{commits}')
-
-    # repo = 'K1rakishou/Kuroba-Experimental-beta'
-    # release_name = f'KurobaEx-beta release {tag_name}'
-
-    # body = ""
-    # if (len(commits) > 0):
-    #     body = f'New release available. It includes the following commits:\n{commits}'
-    # else:
-    #     body = f'New release available.'
-
-    # asset_path = 'Kuroba/app/build/outputs/apk/beta/release/KurobaEx-beta.apk'
-
-    # token = os.getenv('PAT')
-    # if (len(token) == 0):
-    #     print("Token is empty.")
-    #     exit(-1)
-
-    # create_github_release(token, repo, tag_name, release_name, body, asset_path)
