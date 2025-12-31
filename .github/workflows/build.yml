@@ -22,7 +22,7 @@ jobs:
       run: |
         cd Kuroba
         chmod +x ./gradlew
-        ./gradlew testDevDebugUnitTest --no-daemon --stacktrace --max-workers=2 -Dorg.gradle.jvmargs="-Xmx4096m"
+        ./gradlew testDevDebugUnitTest --stacktrace -Dorg.gradle.jvmargs="-Xmx4096m"
 
     - name: Check user permission
       id: check
