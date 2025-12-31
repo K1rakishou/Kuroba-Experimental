@@ -180,6 +180,8 @@ def publish_stable():
 
 if __name__ == "__main__":
     release_type = sys.argv[1]
+    workspace_dir = sys.argv[1]
+    print(f"workspace_dir: {workspace_dir}")
 
     if release_type == "beta":
         publish_beta()
@@ -189,3 +191,4 @@ if __name__ == "__main__":
         print(f"Unknown release_type: {release_type}")
         exit(-1)
     
+    print('Success!')
