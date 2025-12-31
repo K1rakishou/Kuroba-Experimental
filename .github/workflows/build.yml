@@ -62,21 +62,21 @@ jobs:
         
         if [[ "${{ github.event.head_commit.message }}" == "[beta]"* ]]; then
           echo "Building beta release"
-          # ./gradlew assembleBetaRelease \
-          #   -Pandroid.injected.signing.store.file=${{ github.workspace }}/kurobaex.jks \
-          #   -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
-          #   -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
-          #   -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }} \
-          #   -Dorg.gradle.jvmargs="-Xmx4096m"
+          ./gradlew assembleBetaRelease \
+            -Pandroid.injected.signing.store.file=${{ github.workspace }}/kurobaex.jks \
+            -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
+            -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
+            -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }} \
+            -Dorg.gradle.jvmargs="-Xmx4096m"
           python ${{ github.workspace }}/.github/workflows/create_release.py beta ${{ github.workspace }}
         elif [[ "${{ github.event.head_commit.message }}" == "[stable]"* ]]; then
           echo "Building stable release"
-          # ./gradlew assembleStableRelease \
-          #   -Pandroid.injected.signing.store.file=${{ github.workspace }}/kurobaex.jks \
-          #   -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
-          #   -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
-          #   -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }} \
-          #   -Dorg.gradle.jvmargs="-Xmx4096m"
+          ./gradlew assembleStableRelease \
+            -Pandroid.injected.signing.store.file=${{ github.workspace }}/kurobaex.jks \
+            -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
+            -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
+            -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }} \
+            -Dorg.gradle.jvmargs="-Xmx4096m"
           python ${{ github.workspace }}/.github/workflows/create_release.py stable ${{ github.workspace }}
         fi
       env:
