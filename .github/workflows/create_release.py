@@ -164,7 +164,7 @@ def publish_beta(workspace_dir):
     else:
         body = f'New release available.'
 
-    asset_path = workspace_dir + '/Kuroba/app/build/outputs/apk/beta/release/KurobaEx-beta.apk'
+    asset_path = workspace_dir + "/Kuroba/app/build/outputs/apk/beta/release/KurobaEx-beta.apk"
     print(f"workspace_dir: {workspace_dir}")
     
     token = os.getenv('PAT')
