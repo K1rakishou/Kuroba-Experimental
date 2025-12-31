@@ -137,7 +137,7 @@ def get_latest_release_commit_hash(repo, access_token=None):
 
     return ""
 
-def publish_beta():
+def publish_beta(workspace_dir):
     print(f"Publishing beta release")
 
     tag_name = get_new_tag_name('K1rakishou/Kuroba-Experimental-beta')
@@ -164,8 +164,9 @@ def publish_beta():
     else:
         body = f'New release available.'
 
-    asset_path = 'Kuroba/app/build/outputs/apk/beta/release/KurobaEx-beta.apk'
-
+    asset_path = workspace_dir + '/Kuroba/app/build/outputs/apk/beta/release/KurobaEx-beta.apk'
+    print(f"workspace_dir: {workspace_dir}")
+    
     token = os.getenv('PAT')
     if (len(token) == 0):
         print("Token is empty.")
@@ -173,7 +174,7 @@ def publish_beta():
 
     create_github_release(token, repo, tag_name, release_name, body, asset_path)
 
-def publish_stable():
+def publish_stable(workspace_dir):
     print(f"Publishing stable release")
     print(f"TODO: Stable release is not supported yet!")
     exit(-1)
@@ -181,12 +182,11 @@ def publish_stable():
 if __name__ == "__main__":
     release_type = sys.argv[1]
     workspace_dir = sys.argv[2]
-    print(f"workspace_dir: {workspace_dir}")
 
     if release_type == "beta":
-        publish_beta()
+        publish_beta(workspace_dir)
     elif release_type == "stable":
-        publish_stable()
+        publish_stable(workspace_dir)
     else:
         print(f"Unknown release_type: {release_type}")
         exit(-1)
