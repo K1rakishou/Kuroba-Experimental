@@ -416,6 +416,7 @@ class Chan4CaptchaLayoutViewModel(
     return parsed
   }
 
+
   private fun addAnnotations(input: String): AnnotatedString {
     val openTag = "<b>"
     val closeTag = "</b>"
