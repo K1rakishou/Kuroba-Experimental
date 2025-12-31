@@ -3,6 +3,8 @@ name: Build and Sign Android APK
 on:
   push:
     branches: [ develop ]
+  pull_request:
+    branches: [ develop ]
 
 jobs:
   build:
