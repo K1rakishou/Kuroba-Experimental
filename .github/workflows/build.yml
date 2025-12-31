@@ -28,7 +28,9 @@ jobs:
 
     - name: Check user permission
       id: check
-      if: startsWith(github.event.head_commit.message, '[beta]') || startsWith(github.event.head_commit.message, '[stable]')
+      if: |
+        github.event_name == 'push' &&
+        (startsWith(github.event.head_commit.message, '[beta]') || startsWith(github.event.head_commit.message, '[stable]'))
       uses: scherermichael-oss/action-has-permission@master
       with:
         required-permission: write
