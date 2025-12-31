@@ -20,12 +20,13 @@ jobs:
         
     - name: Build and run tests
       run: |
-        cd Kuroba
-        chmod +x ./gradlew
-        ./gradlew test --no-daemon --stacktrace \
-              -Pandroid.enableAapt2Daemon=false \
-              -Dorg.gradle.jvmargs="-Xmx2048m -XX:+HeapDumpOnOutOfMemoryError -XX:+UseParallelGC" \
-              --no-build-cache
+          cd Kuroba
+          chmod +x ./gradlew
+          ./gradlew test --no-daemon --stacktrace \
+            -Pandroid.enableAapt2Daemon=false \
+            -Dorg.gradle.jvmargs="-Xmx4096m -XX:MaxMetaspaceSize=512m -XX:+UseParallelGC"
+        env:
+          GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4096m"
 
     - name: Check user permission
       id: check
