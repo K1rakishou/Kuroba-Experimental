@@ -40,6 +40,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jsoup.Jsoup
 import java.lang.ref.WeakReference
 import java.util.Locale
 import javax.inject.Inject
@@ -387,8 +388,32 @@ class Chan4CaptchaLayoutViewModel(
     title = title.removeSuffix(", then click Next.")
     title += "."
 
-    val annotatedTitle = addAnnotations(title)
+    val parsed = removeTags(title)
+    val annotatedTitle = addAnnotations(parsed)
+
     return annotatedTitle
+  }
+
+  private fun removeTags(title: String): String {
+    val document = Jsoup.parseBodyFragment(title)
+    for (element in document.select("*")) {
+      val style = element.attr("style")
+      if (style.contains(":")) {
+        val parts = style.split(":")
+        if (parts.size == 2) {
+          val key = parts[0]
+          val value = parts[1]
+
+          if (key.equals("display", ignoreCase = true) && value.equals("none", ignoreCase = true)) {
+            element.remove()
+            continue
+          }
+        }
+      }
+    }
+
+    val parsed = document.body().html()
+    return parsed
   }
 
   private fun addAnnotations(input: String): AnnotatedString {
