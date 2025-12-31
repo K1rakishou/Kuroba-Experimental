@@ -1,8 +1,9 @@
-package com.github.k1rakishou.core_themes
+package com.github.k1rakishou.core_themes.themes
 
 import android.graphics.Color
+import com.github.k1rakishou.core_themes.ChanTheme
 
-class DefaultDarkTheme(
+class Kuroneko(
   name: String = "Kuroneko",
   isLightTheme: Boolean = false,
   lightStatusBar: Boolean = true,

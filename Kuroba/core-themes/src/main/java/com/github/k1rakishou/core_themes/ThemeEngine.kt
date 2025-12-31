@@ -18,6 +18,8 @@ import androidx.core.graphics.drawable.DrawableCompat
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.colors.HSL
+import com.github.k1rakishou.core_themes.themes.Kuroneko
+import com.github.k1rakishou.core_themes.themes.Shironeko
 import com.github.k1rakishou.fsaf.file.ExternalFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -67,8 +69,8 @@ open class ThemeEngine(
     this.isHalloweenToday = isHalloweenToday
     this.density = context.resources.displayMetrics.density
 
-    defaultDarkTheme = DefaultDarkTheme()
-    defaultLightTheme = DefaultLightTheme()
+    defaultDarkTheme = Kuroneko()
+    defaultLightTheme = Shironeko()
 
     actualDarkTheme = themeParser.readThemeFromDisk(defaultDarkTheme)
     actualLightTheme = themeParser.readThemeFromDisk(defaultLightTheme)
