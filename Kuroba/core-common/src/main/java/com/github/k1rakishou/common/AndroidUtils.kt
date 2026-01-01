@@ -294,6 +294,11 @@ object AndroidUtils {
   val isAndroidP: Boolean
     get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P
 
+  @JvmStatic
+  @get:ChecksSdkIntAtLeast(api = Build.VERSION_CODES.Q)
+  val isAndroidQ: Boolean
+    get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+
   @get:ChecksSdkIntAtLeast(api = Build.VERSION_CODES.M)
   val isAndroidM: Boolean
     get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M

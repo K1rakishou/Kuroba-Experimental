@@ -113,11 +113,13 @@ class ImageSaverV2Service : Service() {
       return START_NOT_STICKY
     }
 
-    startForeground(
-      NotificationConstants.IMAGE_SAVER_WORKER_NOTIFICATION_ID,
-      createServiceNotification(),
-      FOREGROUND_SERVICE_TYPE_DATA_SYNC
-    )
+    if (AndroidUtils.isAndroidQ) {
+      startForeground(
+        NotificationConstants.IMAGE_SAVER_WORKER_NOTIFICATION_ID,
+        createServiceNotification(),
+        FOREGROUND_SERVICE_TYPE_DATA_SYNC
+      )
+    }
 
     kurobaScope.launch {
       val imageSaverInputData = convertInputData(intent)

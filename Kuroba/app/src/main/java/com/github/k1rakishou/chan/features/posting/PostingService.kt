@@ -117,11 +117,13 @@ class PostingService : Service() {
       return START_NOT_STICKY
     }
 
-    startForeground(
-      NotificationConstants.POSTING_SERVICE_NOTIFICATION_ID,
-      createMainNotification(mainNotificationInfo = null),
-      FOREGROUND_SERVICE_TYPE_DATA_SYNC
-    )
+    if (AndroidUtils.isAndroidQ) {
+      startForeground(
+        NotificationConstants.POSTING_SERVICE_NOTIFICATION_ID,
+        createMainNotification(mainNotificationInfo = null),
+        FOREGROUND_SERVICE_TYPE_DATA_SYNC
+      )
+    }
 
     val chanDescriptor = intent.getParcelableExtra<DescriptorParcelable>(REPLY_CHAN_DESCRIPTOR)
       ?.toChanDescriptor()
