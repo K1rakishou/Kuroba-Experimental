@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.core.helper
 
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -320,11 +321,14 @@ class ReplyNotificationsHelper(
       .setGroup(notificationsGroup)
       .setGroupSummary(true)
 
-    notificationManagerCompat.notify(
-      NotificationConstants.ReplyNotifications.REPLIES_PRE_OREO_NOTIFICATION_TAG,
-      NotificationConstants.REPLIES_PRE_OREO_NOTIFICATION_ID,
-      preOreoNotificationBuilder.build()
-    )
+    if (AppModuleAndroidUtils.hasPostNotificationsPermission(appContext)) {
+      @SuppressLint("MissingPermission")
+      notificationManagerCompat.notify(
+        NotificationConstants.ReplyNotifications.REPLIES_PRE_OREO_NOTIFICATION_TAG,
+        NotificationConstants.REPLIES_PRE_OREO_NOTIFICATION_ID,
+        preOreoNotificationBuilder.build()
+      )
+    }
 
     Logger.d(TAG, "showNotificationsForAndroidNougatAndBelow() notificationManagerCompat.notify() called")
     return unreadNotificationsGrouped
@@ -412,11 +416,14 @@ class ReplyNotificationsHelper(
       .setGroup(notificationsGroup)
       .setGroupSummary(true)
 
-    notificationManagerCompat.notify(
-      NotificationConstants.ReplyNotifications.SUMMARY_NOTIFICATION_TAG,
-      NotificationConstants.REPLIES_SUMMARY_NOTIFICATION_ID,
-      summaryNotificationBuilder.build()
-    )
+    if (AppModuleAndroidUtils.hasPostNotificationsPermission(appContext)) {
+      @SuppressLint("MissingPermission")
+      notificationManagerCompat.notify(
+        NotificationConstants.ReplyNotifications.SUMMARY_NOTIFICATION_TAG,
+        NotificationConstants.REPLIES_SUMMARY_NOTIFICATION_ID,
+        summaryNotificationBuilder.build()
+      )
+    }
 
     Logger.d(TAG, "showSummaryNotification() notificationManagerCompat.notify() called")
     return true
@@ -484,11 +491,14 @@ class ReplyNotificationsHelper(
         .setGroup(notificationsGroup)
         .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
 
-      notificationManagerCompat.notify(
-        notificationTag,
-        notificationId,
-        notificationBuilder.build()
-      )
+      if (AppModuleAndroidUtils.hasPostNotificationsPermission(appContext)) {
+        @SuppressLint("MissingPermission")
+        notificationManagerCompat.notify(
+          notificationTag,
+          notificationId,
+          notificationBuilder.build()
+        )
+      }
 
       Logger.d(
         TAG, "showNotificationsForAndroidOreoAndAbove() notificationManagerCompat.notify() " +

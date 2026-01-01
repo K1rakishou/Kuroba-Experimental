@@ -67,7 +67,7 @@ class PostingService : Service() {
         .collect { mainNotificationInfo ->
           Logger.d(TAG, "mainNotificationUpdates() activeRepliesCount=${mainNotificationInfo.activeRepliesCount}")
 
-          if (hasPostNotificationsPermission()) {
+          if (hasPostNotificationsPermission(this@PostingService)) {
             @SuppressLint("MissingPermission")
             notificationManagerCompat.notify(
               NotificationConstants.POSTING_SERVICE_NOTIFICATION_ID,
@@ -87,7 +87,7 @@ class PostingService : Service() {
           val chanDescriptor = childNotificationInfo.chanDescriptor
           val notificationId = NotificationConstants.PostingServiceNotifications.notificationId(chanDescriptor)
 
-          if (hasPostNotificationsPermission()) {
+          if (hasPostNotificationsPermission(this@PostingService)) {
             @SuppressLint("MissingPermission")
             notificationManagerCompat.notify(
               CHILD_NOTIFICATION_TAG,

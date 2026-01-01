@@ -31,7 +31,7 @@ import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.RandomAccessFile
-import java.util.*
+import java.util.Random
 import kotlin.math.abs
 import kotlin.math.min
 
@@ -337,7 +337,8 @@ object MediaUtils {
 
     try {
       return runInterruptible {
-        MediaMetadataRetriever().use { metadataRetriever ->
+        val metadataRetriever = MediaMetadataRetriever()
+        try {
           when (inputFile) {
             is InputFile.FileUri -> {
               metadataRetriever.setDataSource(
@@ -355,6 +356,8 @@ object MediaUtils {
           return@runInterruptible metadataRetriever.extractMetadata(
             MediaMetadataRetriever.METADATA_KEY_MIMETYPE
           )
+        } finally {
+          metadataRetriever.release()
         }
       }
     } catch (exception: Throwable) {

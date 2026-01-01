@@ -580,13 +580,13 @@ object AppModuleAndroidUtils {
     fun onMeasured(view: View): Boolean
   }
 
-  fun Context.hasPostNotificationsPermission(): Boolean {
+  fun hasPostNotificationsPermission(context: Context): Boolean {
     if (!AndroidUtils.isAndroidT) {
       return true
     }
 
     return ActivityCompat.checkSelfPermission(
-      this,
+      context,
       Manifest.permission.POST_NOTIFICATIONS
     ) == PackageManager.PERMISSION_GRANTED
   }

@@ -116,11 +116,11 @@ class FilterBoardSelectorControllerViewModel(
 
     if (!allBoardsSelected) {
       displayedBoardsDescriptors.forEach { boardDescriptor ->
-        _currentlySelectedBoards.put(boardDescriptor, Unit)
+        _currentlySelectedBoards[boardDescriptor] = Unit
       }
     } else {
       displayedBoardsDescriptors.forEach { boardDescriptor ->
-        _currentlySelectedBoards.remove(boardDescriptor, Unit)
+        _currentlySelectedBoards.remove(boardDescriptor)
       }
     }
   }

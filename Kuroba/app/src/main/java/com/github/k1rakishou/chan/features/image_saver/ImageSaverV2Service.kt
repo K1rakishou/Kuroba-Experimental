@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.features.image_saver
 
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -19,6 +20,7 @@ import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.manager.NotificationAutoDismissManager
 import com.github.k1rakishou.chan.core.receiver.ImageSaverBroadcastReceiver
 import com.github.k1rakishou.chan.ui.activity.StartActivity
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.NotificationConstants
 import com.github.k1rakishou.chan.utils.RequestCodes
@@ -314,7 +316,12 @@ class ImageSaverV2Service : Service() {
       .addResolveDuplicateImagesAction(imageSaverDelegateResult)
       .build()
 
-    showNotification(notificationManagerCompat, imageSaverDelegateResult.uniqueId, notification)
+    showNotification(
+      context = this,
+      notificationManagerCompat = notificationManagerCompat,
+      uniqueId = imageSaverDelegateResult.uniqueId,
+      notification = notification
+    )
 
     // Wait some time for the notification to actually get updated (since this process
     // is async and sometimes race conditions occur)
@@ -657,15 +664,19 @@ class ImageSaverV2Service : Service() {
     const val RESTART_UNCOMPLETED_DOWNLOAD_TYPE = 2
 
     fun showNotification(
+      context: Context,
       notificationManagerCompat: NotificationManagerCompat,
       uniqueId: String,
       notification: Notification
     ) {
-      notificationManagerCompat.notify(
-        IMAGE_SAVER_NOTIFICATIONS_TAG,
-        NotificationConstants.ImageSaverNotifications.notificationId(uniqueId),
-        notification
-      )
+      if (AppModuleAndroidUtils.hasPostNotificationsPermission(context)) {
+        @SuppressLint("MissingPermission")
+        notificationManagerCompat.notify(
+          IMAGE_SAVER_NOTIFICATIONS_TAG,
+          NotificationConstants.ImageSaverNotifications.notificationId(uniqueId),
+          notification
+        )
+      }
     }
 
     fun startService(context: Context, uniqueId: String, downloadType: Int, imageSaverV2OptionsJson: String) {

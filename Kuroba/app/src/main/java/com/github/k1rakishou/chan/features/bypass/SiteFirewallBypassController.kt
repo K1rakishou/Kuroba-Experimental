@@ -181,16 +181,10 @@ class SiteFirewallBypassController(
 
     webView.stopLoading()
 
-    if (ChanSettings.onlyRemoveExpiredWebviewCookies.get()) {
-      Logger.debug(TAG) { "Removing expired cookies" }
-      cookieManager.removeExpiredCookie()
-    } else {
-      Logger.debug(TAG) { "Removing all cookies" }
-      suspendCancellableCoroutine { cont ->
-        cookieManager.removeAllCookies { removed ->
-          Logger.debug(TAG) { "cookieManager.removeAllCookies -> ${removed}" }
-          cont.resumeValueSafe(Unit)
-        }
+    suspendCancellableCoroutine { cont ->
+      cookieManager.removeAllCookies { removed ->
+        Logger.debug(TAG) { "cookieManager.removeAllCookies -> ${removed}" }
+        cont.resumeValueSafe(Unit)
       }
     }
 

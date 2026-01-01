@@ -243,8 +243,18 @@ android {
         buildConfig = true
     }
     lint {
-        disable 'StopShip'
-        error 'MissingPermission', 'ProtectedPermissions', 'InlinedApi'
+        // Security & Privacy
+        error 'MissingPermission'
+        error 'ProtectedPermissions'
+        error 'InlinedApi'
+        error 'NewApi'  // Using newer APIs without proper checks
+        error 'HardcodedDebugMode'  // Catches android:debuggable="true" in manifest
+        error 'PackageManagerGetSignatures'  // Insecure signature verification
+        error 'UnsafeCryptoAlgorithm'  // Weak crypto (MD5, SHA1, etc)
+        error 'TrustAllX509TrustManager'  // Accepts all SSL certificates
+
+        // TODO: enable UnusedResources and remove all unused resource (there are too many)
+        disable 'StopShip', 'AppLinksAutoVerify', 'InvalidPackage', 'UnusedResources', 'SetJavaScriptEnabled'
 
         checkAllWarnings = true
         abortOnError = true

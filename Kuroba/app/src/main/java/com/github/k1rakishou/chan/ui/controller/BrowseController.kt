@@ -768,7 +768,7 @@ class BrowseController(
       return
     }
 
-    if (context.hasPostNotificationsPermission()) {
+    if (hasPostNotificationsPermission(context)) {
       return
     }
 

@@ -8,7 +8,6 @@ import android.webkit.WebView
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
@@ -131,16 +130,10 @@ class WebViewReportController(
       val webView = WebView(context)
       val siteRequestModifier = site.requestModifier()
 
-      if (ChanSettings.onlyRemoveExpiredWebviewCookies.get()) {
-        Logger.debug(TAG) { "Removing expired cookies" }
-        cookieManager.removeExpiredCookie()
-      } else {
-        Logger.debug(TAG) { "Removing all cookies" }
-        suspendCancellableCoroutine { cont ->
-          cookieManager.removeAllCookies { removed ->
-            Logger.debug(TAG) { "cookieManager.removeAllCookies -> ${removed}" }
-            cont.resumeValueSafe(Unit)
-          }
+      suspendCancellableCoroutine { cont ->
+        cookieManager.removeAllCookies { removed ->
+          Logger.debug(TAG) { "cookieManager.removeAllCookies -> ${removed}" }
+          cont.resumeValueSafe(Unit)
         }
       }
 

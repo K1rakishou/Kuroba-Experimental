@@ -90,7 +90,7 @@ class FilterWatcherNotificationHelper(
       .setGroup(notificationsGroup)
       .setGroupSummary(true)
 
-    if (appContext.hasPostNotificationsPermission()) {
+    if (hasPostNotificationsPermission(appContext)) {
       @SuppressLint("MissingPermission")
       notificationManagerCompat.notify(
         NotificationConstants.FilterWatcherNotifications.SUMMARY_NOTIFICATION_TAG,
@@ -133,7 +133,7 @@ class FilterWatcherNotificationHelper(
           .setGroup(notificationsGroup)
           .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
 
-        if (appContext.hasPostNotificationsPermission()) {
+        if (hasPostNotificationsPermission(appContext)) {
           @SuppressLint("MissingPermission")
           notificationManagerCompat.notify(
             notificationTag,
@@ -174,7 +174,7 @@ class FilterWatcherNotificationHelper(
       .setPriority(NotificationCompat.PRIORITY_MAX)
       .setCategory(Notification.CATEGORY_MESSAGE)
 
-    if (appContext.hasPostNotificationsPermission()) {
+    if (hasPostNotificationsPermission(appContext)) {
       @SuppressLint("MissingPermission")
       notificationManagerCompat.notify(
         notificationTag,

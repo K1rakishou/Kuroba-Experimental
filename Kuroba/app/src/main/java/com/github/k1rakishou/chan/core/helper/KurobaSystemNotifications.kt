@@ -16,6 +16,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.image.InputFile
 import com.github.k1rakishou.chan.core.image.loader.KurobaImageSize
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.NotificationConstants
 import com.github.k1rakishou.chan.utils.appDependencies
 import com.github.k1rakishou.common.AndroidUtils
@@ -36,14 +37,15 @@ class KurobaSystemNotifications(
     setupChannels()
   }
 
-  // We ask for notification permission at the startup
-  @SuppressLint("MissingPermission")
   suspend fun showNotification(notificationData: NotificationData) {
-    notificationManagerCompat.notify(
-      NotificationConstants.Generic.TAG,
-      NotificationConstants.Generic.notificationId(notificationData.id),
-      notificationData.build(appContext, themeEngine)
-    )
+    if (AppModuleAndroidUtils.hasPostNotificationsPermission(appContext)) {
+      @SuppressLint("MissingPermission")
+      notificationManagerCompat.notify(
+        NotificationConstants.Generic.TAG,
+        NotificationConstants.Generic.notificationId(notificationData.id),
+        notificationData.build(appContext, themeEngine)
+      )
+    }
   }
 
   fun hideNotification(notificationId: String) {

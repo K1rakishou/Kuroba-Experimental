@@ -775,7 +775,6 @@ sealed class ExperimentalScreen(
     object HighResCells : MainSettingsGroup("high_res_cells")
     object ColorizeTextSelectionCursors : MainSettingsGroup("colorize_text_selection_cursors")
     object CustomUserAgent : MainSettingsGroup("override_user_agent")
-    object OnlyRemoveExpiredWebviewCookies : MainSettingsGroup("only_remove_expired_webview_cookies")
 
     companion object : IGroupIdentifier() {
       override fun screenIdentifier(): ScreenIdentifier = ExperimentalScreen.screenIdentifier()

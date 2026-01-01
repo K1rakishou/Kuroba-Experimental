@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.core.helper
 
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -18,6 +19,7 @@ import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManager
 import com.github.k1rakishou.chan.core.manager.PageRequestManager
 import com.github.k1rakishou.chan.ui.activity.StartActivity
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.NotificationConstants
 import com.github.k1rakishou.chan.utils.RequestCodes
 import com.github.k1rakishou.core_logger.Logger
@@ -25,7 +27,6 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable
 import dagger.Lazy
-import java.util.*
 
 class LastPageNotificationsHelper(
   private val isDevFlavor: Boolean,
@@ -83,11 +84,14 @@ class LastPageNotificationsHelper(
 
     setupChannels()
 
-    notificationManagerCompat.notify(
-      NotificationConstants.LastPageNotifications.LAST_PAGE_NOTIFICATION_TAG,
-      NotificationConstants.LAST_PAGE_NOTIFICATION_ID,
-      getNotification(threadsWithTitles)
-    )
+    if (AppModuleAndroidUtils.hasPostNotificationsPermission(appContext)) {
+      @SuppressLint("MissingPermission")
+      notificationManagerCompat.notify(
+        NotificationConstants.LastPageNotifications.LAST_PAGE_NOTIFICATION_TAG,
+        NotificationConstants.LAST_PAGE_NOTIFICATION_ID,
+        getNotification(threadsWithTitles)
+      )
+    }
 
     Logger.d(TAG, "notificationManagerCompat.notify() called")
   }

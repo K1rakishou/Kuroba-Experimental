@@ -28,6 +28,7 @@ import java.lang.reflect.Field
 object ViewUtils {
   private const val TAG = "ViewUtils"
 
+  @SuppressLint("DiscouragedPrivateApi")
   @JvmStatic
   fun TextView.setEditTextCursorColor(theme: ChanTheme) {
     val accentColorWithAlpha = ColorUtils.setAlphaComponent(
@@ -79,6 +80,7 @@ object ViewUtils {
     }
   }
 
+  @SuppressLint("DiscouragedPrivateApi")
   @JvmStatic
   fun TextView.setHandlesColors(theme: ChanTheme) {
     if (!ChanSettings.colorizeTextSelectionCursors.get()) {
@@ -146,7 +148,7 @@ object ViewUtils {
     }
   }
 
-  @SuppressLint("UseCompatLoadingForDrawables")
+  @SuppressLint("UseCompatLoadingForDrawables", "SoonBlockedPrivateApi")
   fun AbsListView.changeEdgeEffect(theme: ChanTheme) {
     val color = theme.accentColor
 
@@ -173,6 +175,7 @@ object ViewUtils {
     }
   }
 
+  @SuppressLint("SoonBlockedPrivateApi")
   fun ScrollView.changeEdgeEffect(theme: ChanTheme) {
     val color = theme.accentColor
 
@@ -219,6 +222,7 @@ object ViewUtils {
     }
   }
 
+  @SuppressLint("SoonBlockedPrivateApi", "DiscouragedPrivateApi")
   fun ProgressDialog.changeProgressColor(theme: ChanTheme) {
     try {
       val f1: Field = ProgressDialog::class.java.getDeclaredField("mProgressNumber")

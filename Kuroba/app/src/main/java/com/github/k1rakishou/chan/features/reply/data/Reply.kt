@@ -22,7 +22,7 @@ import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable
-import java.util.*
+import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -142,7 +142,7 @@ class Reply(
   @Synchronized
   fun threadNo(): Long {
     if (chanDescriptor is ThreadDescriptor) {
-      chanDescriptor.threadNo
+      return chanDescriptor.threadNo
     }
 
     return 0
