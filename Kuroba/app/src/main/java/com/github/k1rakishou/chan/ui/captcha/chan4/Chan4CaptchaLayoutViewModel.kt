@@ -397,15 +397,26 @@ class Chan4CaptchaLayoutViewModel(
   private fun removeTags(title: String): String {
     val document = Jsoup.parseBodyFragment(title)
     for (element in document.select("*")) {
-      val style = element.attr("style")
+      var style = element.attr("style")
+      if (style.contains(";")) {
+        style = style.split(";").last().trim()
+      }
+
       if (style.contains(":")) {
         val parts = style.split(":")
         if (parts.size == 2) {
           val key = parts[0]
           val value = parts[1]
 
-          if (key.equals("display", ignoreCase = true) && value.equals("none", ignoreCase = true)) {
+          if (!key.equals("display", ignoreCase = true)) {
+            continue
+          }
+
+          if (value.equals("none", ignoreCase = true)) {
             element.remove()
+            continue
+          } else if (value.equals("inline", ignoreCase = true)) {
+            element.unwrap()
             continue
           }
         }
