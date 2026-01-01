@@ -1571,20 +1571,16 @@ fun TextView.getTextBounds(text: CharSequence, availableWidth: Int): TextBounds 
     return TextBounds.EMPTY
   }
 
-  val staticLayout = if (AndroidUtils.isAndroidM) {
-    StaticLayout.Builder
-      .obtain(text, 0, text.length, paint, availableWidth)
-      .setBreakStrategy(breakStrategy)
-      .justificationModeTextView(this)
-      .setHyphenationFrequency(hyphenationFrequency)
-      .setAlignment(Layout.Alignment.ALIGN_NORMAL)
-      .setMaxLines(maxLines)
-      .setIncludePad(true)
-      .setLineSpacing(0f, 1f)
-      .build()
-  } else {
-    StaticLayout(text, paint, availableWidth, Layout.Alignment.ALIGN_NORMAL, 1f, 0f, true)
-  }
+  val staticLayout = StaticLayout.Builder
+    .obtain(text, 0, text.length, paint, availableWidth)
+    .setBreakStrategy(breakStrategy)
+    .justificationModeTextView(this)
+    .setHyphenationFrequency(hyphenationFrequency)
+    .setAlignment(Layout.Alignment.ALIGN_NORMAL)
+    .setMaxLines(maxLines)
+    .setIncludePad(true)
+    .setLineSpacing(0f, 1f)
+    .build()
 
   val lineBounds = (0 until staticLayout.lineCount)
     .map { line ->
@@ -1604,7 +1600,7 @@ fun TextView.getTextBounds(text: CharSequence, availableWidth: Int): TextBounds 
 }
 
 private fun StaticLayout.Builder.justificationModeTextView(textView: TextView): StaticLayout.Builder {
-  if (AndroidUtils.isAndroid10) {
+  if (AndroidUtils.isAndroidQ) {
     return setJustificationMode(textView.justificationMode)
   }
 

@@ -2,11 +2,11 @@ package com.github.k1rakishou.chan.ui.helper.picker
 
 import android.app.Activity
 import android.app.PendingIntent
-import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.ReplyManager
@@ -29,7 +29,6 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArraySet
 import java.util.concurrent.atomic.AtomicInteger
@@ -246,7 +245,7 @@ class LocalFilePicker(
       return
     }
 
-    val chooser = if (AndroidUtils.isAndroidL_MR1) {
+    val chooser = run {
       val receiverIntent = Intent(
         activity,
         SelectedFilePickerBroadcastReceiver::class.java
@@ -259,28 +258,17 @@ class LocalFilePicker(
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
       )
 
-      if (AndroidUtils.isAndroid13) {
-        activity.registerReceiver(
-          selectedFilePickerBroadcastReceiver,
-          IntentFilter(Intent.ACTION_GET_CONTENT),
-          Context.RECEIVER_NOT_EXPORTED
-        )
-      } else {
-        activity.registerReceiver(
-          selectedFilePickerBroadcastReceiver,
-          IntentFilter(Intent.ACTION_GET_CONTENT),
-        )
-      }
+      ContextCompat.registerReceiver(
+        activity,
+        selectedFilePickerBroadcastReceiver,
+        IntentFilter(Intent.ACTION_GET_CONTENT),
+        ContextCompat.RECEIVER_NOT_EXPORTED
+      )
 
       Intent.createChooser(
         intents.last(),
         getString(R.string.image_pick_delegate_select_file_picker),
         pendingIntent.intentSender
-      )
-    } else {
-      Intent.createChooser(
-        intents.last(),
-        getString(R.string.image_pick_delegate_select_file_picker)
       )
     }
 

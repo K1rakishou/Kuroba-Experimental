@@ -428,7 +428,7 @@ class StartActivity :
   override fun onConfigurationChanged(newConfig: Configuration) {
     super.onConfigurationChanged(newConfig)
 
-    if (AndroidUtils.isAndroid10 && !ChanSettings.ignoreDarkNightMode.get()) {
+    if (AndroidUtils.isAndroidQ && !ChanSettings.ignoreDarkNightMode.get()) {
       applyLightDarkThemeIfNeeded(newConfig)
     }
 

@@ -49,6 +49,7 @@ import com.github.k1rakishou.chan.ui.layout.ThreadLayout
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout.ThreadLayoutCallback
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.hasPostNotificationsPermission
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.common.FirewallType
 import com.github.k1rakishou.common.errorMessageOrClassName
@@ -767,7 +768,7 @@ class BrowseController(
       return
     }
 
-    if (runtimePermissionsHelper.hasPermission(Manifest.permission.POST_NOTIFICATIONS)) {
+    if (context.hasPostNotificationsPermission()) {
       return
     }
 

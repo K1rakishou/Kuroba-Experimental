@@ -4,6 +4,7 @@ plugins {
     id 'kotlin-parcelize'
     id 'com.google.devtools.ksp'
     id 'org.jetbrains.kotlin.plugin.compose' version "2.3.0"
+    id 'io.gitlab.arturbosch.detekt'
 }
 
 android {
@@ -11,16 +12,11 @@ android {
 
     compileSdkVersion 36
 
-    def getCommitHash = { ->
-        def stdout = new ByteArrayOutputStream()
-        exec {
-            commandLine 'git', 'rev-parse', 'HEAD'
-            standardOutput = stdout
-        }
-        return stdout.toString().trim()
-    }
+    def gitHashProvider = providers.exec {
+        commandLine("git", "rev-parse", "HEAD")
+    }.standardOutput.asText.map { it.trim() }
 
-    productFlavors.all {
+    productFlavors.configureEach {
         ext.apkVersionNameSuffix = null
     }
 
@@ -45,7 +41,7 @@ android {
         buildConfigField "String", "RELEASE_SIGNATURE", "\"86242978CF53C34361A8C962D0A57107AEB70E10631AE13EB5B006C0CF673FA9\""
         // this is the default dev signing signature, update it if you change the dev keystore
         buildConfigField "String", "DEBUG_SIGNATURE", "\"DC5195CC40E42B95267D500B6E93E46EC51028C67BDD3D09BBB9C208BF20C8FE\""
-        buildConfigField "String", "COMMIT_HASH", "\"" + getCommitHash() + "\""
+        buildConfigField "String", "COMMIT_HASH", "\"" + gitHashProvider.get() + "\""
 
         //          M -> Major version
         //          m -> Minor version
@@ -225,12 +221,12 @@ android {
 
     compileOptions {
         encoding = 'UTF-8'
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
     }
 
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = "21"
         freeCompilerArgs = [
                 "-Xopt-in=kotlin.RequiresOptIn",
                 "-Xopt-in=androidx.compose.foundation.ExperimentalFoundationApi",
@@ -247,10 +243,20 @@ android {
         buildConfig = true
     }
     lint {
-        abortOnError false
-        checkReleaseBuilds false
-    }
+        disable 'StopShip'
+        error 'MissingPermission', 'ProtectedPermissions', 'InlinedApi'
 
+        checkAllWarnings = true
+        abortOnError = true
+        checkReleaseBuilds = true
+    }
+}
+
+detekt {
+    buildUponDefaultConfig = true
+    allRules = false
+    config.setFrom("$projectDir/config/detekt.yml")
+    baseline = file("$projectDir/config/detekt-baseline.xml")
 }
 
 dependencies {
@@ -284,7 +290,7 @@ dependencies {
     implementation "com.squareup.okhttp3:okhttp-dnsoverhttps:${versions.okhttp}"
     implementation "com.squareup.okhttp3:logging-interceptor:${versions.okhttp}"
     implementation "org.jsoup:jsoup:${versions.jsoup}"
-    implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.29'
+    implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.30'
     implementation 'com.davemorrissey.labs:subsampling-scale-image-view:3.10.0'
     implementation 'org.nibor.autolink:autolink:0.12.0'
     implementation "com.google.code.gson:gson:${versions.gson}"
@@ -302,6 +308,7 @@ dependencies {
     implementation "cafe.adriel.voyager:voyager-core:${versions.voyager}"
     implementation "cafe.adriel.voyager:voyager-navigator:${versions.voyager}"
     implementation "cafe.adriel.voyager:voyager-transitions:${versions.voyager}"
+    detektPlugins "io.gitlab.arturbosch.detekt:detekt-formatting:${versions.detekt}"
 
     // noinspection GradleDependency wants to upgrade to older version
     implementation "com.github.K1rakishou:Fuck-Storage-Access-Framework:${versions.fsaf}"

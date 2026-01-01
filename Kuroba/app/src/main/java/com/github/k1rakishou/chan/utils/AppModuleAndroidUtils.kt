@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.utils
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
@@ -24,6 +25,7 @@ import android.view.ViewGroup
 import android.view.ViewTreeObserver
 import android.widget.Toast
 import androidx.annotation.DrawableRes
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import com.github.k1rakishou.ChanSettings.NetworkContentAutoLoadMode
@@ -37,6 +39,7 @@ import com.github.k1rakishou.chan.ui.activity.StartActivity
 import com.github.k1rakishou.chan.ui.compose.snackbar.SnackbarManager
 import com.github.k1rakishou.chan.ui.compose.snackbar.SnackbarScope
 import com.github.k1rakishou.chan.utils.HashingUtil.byteArrayHashSha256HexString
+import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AndroidUtils.FlavorType
 import com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType
 import com.github.k1rakishou.common.AndroidUtils.appContext
@@ -575,5 +578,16 @@ object AppModuleAndroidUtils {
      * @return true to continue with rendering, false to cancel and redo the layout.
      */
     fun onMeasured(view: View): Boolean
+  }
+
+  fun Context.hasPostNotificationsPermission(): Boolean {
+    if (!AndroidUtils.isAndroidT) {
+      return true
+    }
+
+    return ActivityCompat.checkSelfPermission(
+      this,
+      Manifest.permission.POST_NOTIFICATIONS
+    ) == PackageManager.PERMISSION_GRANTED
   }
 }

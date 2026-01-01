@@ -265,29 +265,20 @@ object AndroidUtils {
     get() = Build.VERSION.SDK_INT
 
   @get:ChecksSdkIntAtLeast(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
-  val isAndroid14: Boolean
+  val isAndroidU: Boolean
     get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
 
   @get:ChecksSdkIntAtLeast(api = Build.VERSION_CODES.TIRAMISU)
-  val isAndroid13: Boolean
+  val isAndroidT: Boolean
     get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
 
   @get:ChecksSdkIntAtLeast(api = Build.VERSION_CODES.R)
-  val isAndroid11: Boolean
+  val isAndroidR: Boolean
     get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
 
   @get:ChecksSdkIntAtLeast(api = Build.VERSION_CODES.Q)
-  val isAndroid10: Boolean
+  val isAndroidQ: Boolean
     get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
-
-  @JvmStatic
-  @get:ChecksSdkIntAtLeast(api = Build.VERSION_CODES.O)
-  val isAndroidO: Boolean
-    get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
-
-  @get:ChecksSdkIntAtLeast(api = Build.VERSION_CODES.LOLLIPOP_MR1)
-  val isAndroidL_MR1: Boolean
-    get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1
 
   @JvmStatic
   @get:ChecksSdkIntAtLeast(api = Build.VERSION_CODES.P)
@@ -295,22 +286,14 @@ object AndroidUtils {
     get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P
 
   @JvmStatic
-  @get:ChecksSdkIntAtLeast(api = Build.VERSION_CODES.Q)
-  val isAndroidQ: Boolean
-    get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
-
-  @get:ChecksSdkIntAtLeast(api = Build.VERSION_CODES.M)
-  val isAndroidM: Boolean
-    get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
+  @get:ChecksSdkIntAtLeast(api = Build.VERSION_CODES.O)
+  val isAndroidO: Boolean
+    get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
 
   @JvmStatic
   @get:ChecksSdkIntAtLeast(api = Build.VERSION_CODES.N)
   val isAndroidN: Boolean
     get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N
-
-  @get:ChecksSdkIntAtLeast(api = Build.VERSION_CODES.N_MR1)
-  val isAndroidNMR1: Boolean
-    get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1
 
   enum class FlavorType(val tag: String) {
     Stable("Stable"),

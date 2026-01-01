@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.core.helper
 
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -18,6 +19,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.activity.StartActivity
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.hasPostNotificationsPermission
 import com.github.k1rakishou.chan.utils.NotificationConstants
 import com.github.k1rakishou.chan.utils.RequestCodes
 import com.github.k1rakishou.common.AndroidUtils
@@ -88,11 +90,14 @@ class FilterWatcherNotificationHelper(
       .setGroup(notificationsGroup)
       .setGroupSummary(true)
 
-    notificationManagerCompat.notify(
-      NotificationConstants.FilterWatcherNotifications.SUMMARY_NOTIFICATION_TAG,
-      NotificationConstants.FILTER_SUMMARY_NOTIFICATION_ID,
-      summaryNotificationBuilder.build()
-    )
+    if (appContext.hasPostNotificationsPermission()) {
+      @SuppressLint("MissingPermission")
+      notificationManagerCompat.notify(
+        NotificationConstants.FilterWatcherNotifications.SUMMARY_NOTIFICATION_TAG,
+        NotificationConstants.FILTER_SUMMARY_NOTIFICATION_ID,
+        summaryNotificationBuilder.build()
+      )
+    }
 
     Logger.d(TAG, "showSummaryNotification() notificationManagerCompat.notify() called")
     return true
@@ -128,11 +133,14 @@ class FilterWatcherNotificationHelper(
           .setGroup(notificationsGroup)
           .setGroupAlertBehavior(NotificationCompat.GROUP_ALERT_SUMMARY)
 
-        notificationManagerCompat.notify(
-          notificationTag,
-          notificationId,
-          notificationBuilder.build()
-        )
+        if (appContext.hasPostNotificationsPermission()) {
+          @SuppressLint("MissingPermission")
+          notificationManagerCompat.notify(
+            notificationTag,
+            notificationId,
+            notificationBuilder.build()
+          )
+        }
       }
   }
 
@@ -166,11 +174,14 @@ class FilterWatcherNotificationHelper(
       .setPriority(NotificationCompat.PRIORITY_MAX)
       .setCategory(Notification.CATEGORY_MESSAGE)
 
-    notificationManagerCompat.notify(
-      notificationTag,
-      notificationId,
-      notificationBuilder.build()
-    )
+    if (appContext.hasPostNotificationsPermission()) {
+      @SuppressLint("MissingPermission")
+      notificationManagerCompat.notify(
+        notificationTag,
+        notificationId,
+        notificationBuilder.build()
+      )
+    }
   }
 
   private fun NotificationCompat.Builder.setupClickOnNotificationIntent(

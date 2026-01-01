@@ -76,7 +76,7 @@ import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
-import java.util.*
+import java.util.UUID
 
 @Stable
 class ReplyLayoutState(
@@ -1072,7 +1072,7 @@ class ReplyLayoutState(
   }
 
   private suspend fun requestPermissionIfNeededSuspend(): Boolean {
-    if (AndroidUtils.isAndroid13) {
+    if (AndroidUtils.isAndroidT) {
       // Can't request READ_EXTERNAL_STORAGE on API 33+
       return true
     }

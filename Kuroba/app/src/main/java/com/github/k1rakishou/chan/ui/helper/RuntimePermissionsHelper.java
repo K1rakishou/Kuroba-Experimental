@@ -1,19 +1,3 @@
-/*
- * KurobaEx - *chan browser https://github.com/K1rakishou/Kuroba-Experimental/
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 package com.github.k1rakishou.chan.ui.helper;
 
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openIntent;
@@ -38,15 +22,15 @@ import kotlin.Unit;
 public class RuntimePermissionsHelper {
     private static final int RUNTIME_PERMISSION_RESULT_ID = 3;
 
-    private ActivityCompat.OnRequestPermissionsResultCallback callbackActvity;
+    private ActivityCompat.OnRequestPermissionsResultCallback callbackActivity;
     private DialogFactory dialogFactory;
     private CallbackHolder pendingCallback;
 
     public RuntimePermissionsHelper(
-            ActivityCompat.OnRequestPermissionsResultCallback callbackActvity,
+            ActivityCompat.OnRequestPermissionsResultCallback callbackActivity,
             DialogFactory dialogFactory
     ) {
-        this.callbackActvity = callbackActvity;
+        this.callbackActivity = callbackActivity;
         this.dialogFactory = dialogFactory;
     }
 
@@ -60,7 +44,7 @@ public class RuntimePermissionsHelper {
             pendingCallback.callback = callback;
             pendingCallback.permission = permission;
 
-            ActivityCompat.requestPermissions((Activity) callbackActvity,
+            ActivityCompat.requestPermissions((Activity) callbackActivity,
                     new String[]{permission},
                     RUNTIME_PERMISSION_RESULT_ID
             );

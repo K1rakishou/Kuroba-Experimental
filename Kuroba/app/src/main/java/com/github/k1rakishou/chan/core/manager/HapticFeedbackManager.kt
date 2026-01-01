@@ -2,8 +2,8 @@ package com.github.k1rakishou.chan.core.manager
 
 import android.view.HapticFeedbackConstants
 import android.view.View
-import com.github.k1rakishou.common.AndroidUtils.isAndroid11
-import com.github.k1rakishou.common.AndroidUtils.isAndroid14
+import com.github.k1rakishou.common.AndroidUtils.isAndroidR
+import com.github.k1rakishou.common.AndroidUtils.isAndroidU
 import com.github.k1rakishou.core_logger.Logger
 
 class HapticFeedbackManager {
@@ -26,7 +26,7 @@ class HapticFeedbackManager {
     Logger.verbose(TAG) { "toggleOn()" }
     complainIfViewIsNull()
 
-    if (isAndroid14) {
+    if (isAndroidU) {
       _view?.performHapticFeedback(HapticFeedbackConstants.TOGGLE_ON)
     } else {
       tapFallback()
@@ -37,7 +37,7 @@ class HapticFeedbackManager {
     Logger.verbose(TAG) { "toggleOff()" }
     complainIfViewIsNull()
 
-    if (isAndroid14) {
+    if (isAndroidU) {
       _view?.performHapticFeedback(HapticFeedbackConstants.TOGGLE_OFF)
     } else {
       tapFallback()
@@ -48,7 +48,7 @@ class HapticFeedbackManager {
     Logger.verbose(TAG) { "gestureStart()" }
     complainIfViewIsNull()
 
-    if (isAndroid11) {
+    if (isAndroidR) {
       _view?.performHapticFeedback(HapticFeedbackConstants.GESTURE_START)
     } else {
       tapFallback()
@@ -59,7 +59,7 @@ class HapticFeedbackManager {
     Logger.verbose(TAG) { "gestureEnd()" }
     complainIfViewIsNull()
 
-    if (isAndroid11) {
+    if (isAndroidR) {
       _view?.performHapticFeedback(HapticFeedbackConstants.GESTURE_END)
     } else {
       tapFallback()

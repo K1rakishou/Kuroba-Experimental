@@ -672,7 +672,7 @@ class UpdateManager(
     responseRelease: ReleaseUpdateApiResponse,
     onUpdateClicked: () -> Unit
   ) {
-    if (AndroidUtils.isAndroid13) {
+    if (AndroidUtils.isAndroidT) {
       // Can't request WRITE_EXTERNAL_STORAGE on API 33+
       doUpdate(responseRelease, onUpdateClicked)
       return

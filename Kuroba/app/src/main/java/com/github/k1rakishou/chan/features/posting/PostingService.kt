@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.features.posting
 
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -17,6 +18,7 @@ import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.manager.NotificationAutoDismissManager
 import com.github.k1rakishou.chan.core.receiver.PostingServiceBroadcastReceiver
 import com.github.k1rakishou.chan.ui.activity.StartActivity
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.hasPostNotificationsPermission
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.NotificationConstants
 import com.github.k1rakishou.chan.utils.RequestCodes
@@ -65,10 +67,13 @@ class PostingService : Service() {
         .collect { mainNotificationInfo ->
           Logger.d(TAG, "mainNotificationUpdates() activeRepliesCount=${mainNotificationInfo.activeRepliesCount}")
 
-          notificationManagerCompat.notify(
-            NotificationConstants.POSTING_SERVICE_NOTIFICATION_ID,
-            createMainNotification(mainNotificationInfo)
-          )
+          if (hasPostNotificationsPermission()) {
+            @SuppressLint("MissingPermission")
+            notificationManagerCompat.notify(
+              NotificationConstants.POSTING_SERVICE_NOTIFICATION_ID,
+              createMainNotification(mainNotificationInfo)
+            )
+          }
         }
     }
 
@@ -82,11 +87,14 @@ class PostingService : Service() {
           val chanDescriptor = childNotificationInfo.chanDescriptor
           val notificationId = NotificationConstants.PostingServiceNotifications.notificationId(chanDescriptor)
 
-          notificationManagerCompat.notify(
-            CHILD_NOTIFICATION_TAG,
-            notificationId,
-            createChildNotification(childNotificationInfo)
-          )
+          if (hasPostNotificationsPermission()) {
+            @SuppressLint("MissingPermission")
+            notificationManagerCompat.notify(
+              CHILD_NOTIFICATION_TAG,
+              notificationId,
+              createChildNotification(childNotificationInfo)
+            )
+          }
         }
     }
 

@@ -438,7 +438,7 @@ class ImageSaverV2Service : Service() {
     // The documentsui default Android application crashes on Android 9 and below, when attempting
     // to start it with Intent.ACTION_VIEW intent, somewhere inside the logging code trying
     // to extract rootId from the passed uri (for logging, it doesn't even use it afterwards).
-    if (AndroidUtils.isAndroid10 && imageSaverDelegateResult.downloadedImages.outputDirUri != null) {
+    if (AndroidUtils.isAndroidQ && imageSaverDelegateResult.downloadedImages.outputDirUri != null) {
       val downloadedImages = imageSaverDelegateResult.downloadedImages
 
       val intent = Intent(applicationContext, StartActivity::class.java).apply {

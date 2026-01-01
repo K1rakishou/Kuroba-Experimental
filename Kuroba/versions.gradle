@@ -26,4 +26,5 @@ versions.jsoup = "1.21.2"
 versions.rxjava = "2.2.21"
 versions.rxandroid = "2.1.1"
 versions.fsaf = "v1.1.2"
+versions.detekt = "1.23.8"
 ext.versions = versions

@@ -94,7 +94,7 @@ class ThemeSettingsController(context: Context) : Controller(context), WindowIns
         title = ToolbarText.Id(R.string.settings_screen_theme)
       ),
       menuBuilder = {
-        if (AndroidUtils.isAndroid10) {
+        if (AndroidUtils.isAndroidQ) {
           withOverflowMenu {
             withCheckableOverflowMenuItem(
               id = ACTION_IGNORE_DARK_NIGHT_MODE,
@@ -123,7 +123,7 @@ class ThemeSettingsController(context: Context) : Controller(context), WindowIns
       )
     }
 
-    if (AndroidUtils.isAndroid10) {
+    if (AndroidUtils.isAndroidQ) {
       showIgnoreDayNightModeDialog()
     }
 
