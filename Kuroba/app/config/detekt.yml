@@ -617,7 +617,7 @@ style:
     ignoreActualFunction: true
     excludedFunctions: []
   LoopWithTooManyJumpStatements:
-    active: true
+    active: false
     maxJumpCount: 1
   MagicNumber:
     active: true
@@ -686,7 +686,7 @@ style:
   RedundantVisibilityModifierRule:
     active: false
   ReturnCount:
-    active: true
+    active: false
     max: 2
     excludedFunctions:
       - 'equals'

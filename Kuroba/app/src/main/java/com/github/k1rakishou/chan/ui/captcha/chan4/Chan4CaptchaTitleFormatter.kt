@@ -15,7 +15,6 @@ class Chan4CaptchaTitleFormatter {
     title = title.removePrefix("Use the scroll bar below to ")
     title = title.replaceFirstChar { ch -> if (ch.isLowerCase()) ch.titlecase(Locale.ENGLISH) else ch.toString() }
     title = title.removeSuffix(", then click Next.")
-    title += "."
 
     val processed = processHtmlTags(title)
     val annotated = addAnnotations(processed)
@@ -25,6 +24,7 @@ class Chan4CaptchaTitleFormatter {
 
   private fun processHtmlTags(title: String): String {
     val document = Jsoup.parseBodyFragment(title)
+
     for (element in document.select("*")) {
       var style = element.attr("style")
       if (style.contains(";")) {
@@ -43,11 +43,11 @@ class Chan4CaptchaTitleFormatter {
 
           if (value.equals("none", ignoreCase = true)) {
             element.remove()
-            continue
-          } else if (value.equals("inline", ignoreCase = true)) {
+          } else {
             element.unwrap()
-            continue
           }
+
+          // If you see this: please do not add CSS inheritance shit in captcha challenge title...
         }
       }
     }

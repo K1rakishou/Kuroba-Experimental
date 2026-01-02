@@ -32,7 +32,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
@@ -76,7 +75,6 @@ import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.requireComponentActivity
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
-import java.util.*
 import javax.inject.Inject
 
 @SuppressLint("ViewConstructor")
@@ -241,7 +239,6 @@ class Chan4CaptchaLayout(
               .wrapContentWidth()
               .padding(vertical = 4.dp),
             text = "Captcha TTL: ${captchaTtlMillis / 1000L} sec",
-            color = Color.White,
             fontSize = 14.ktu
           )
         }
