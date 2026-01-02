@@ -75,7 +75,8 @@ jobs:
 
       - name: Lint
         if: steps.check.outputs.has-permission
-      - run: |
+        run: |
+          cd Kuroba
           ./gradlew lintDevDebug
 
       - name: Set up Python
