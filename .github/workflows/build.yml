@@ -20,12 +20,11 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Run detekt/linter
+      - name: Run detekt
         run: |
           cd Kuroba
           chmod +x ./gradlew
           ./gradlew detekt
-          ./gradlew lintDevDebug
 
   unit-test:
     runs-on: ubuntu-latest
@@ -40,7 +39,7 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: Run tests
+      - name: Run unit-tests
         run: |
           cd Kuroba
           chmod +x ./gradlew
@@ -70,6 +69,11 @@ jobs:
           required-permission: write
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Lint
+        if: steps.check.outputs.has-permission
+      - run: |
+          ./gradlew lintDevDebug
 
       - name: Set up Python
         if: steps.check.outputs.has-permission

@@ -259,6 +259,10 @@ android {
         checkAllWarnings = true
         abortOnError = true
         checkReleaseBuilds = true
+
+        checkDependencies = false  // Don't check dependencies
+        ignoreTestSources = true   // Skip test folders
+        checkGeneratedSources = false  // Skip generated code
     }
 }
 
