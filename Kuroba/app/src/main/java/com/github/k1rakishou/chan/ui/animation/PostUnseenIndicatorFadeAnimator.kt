@@ -17,15 +17,19 @@ object PostUnseenIndicatorFadeAnimator {
   }
 
   class UnseenPostIndicatorFadeAnimation : BaseAnimation() {
-
-    fun start(remainingTime: Int, alphaFunc: (Float) -> Unit, onAnimationEndFunc: () -> Unit) {
+    fun start(
+      remainingTime: Int,
+      alphaFunc: (Float) -> Unit,
+      onAnimationEndFunc: (() -> Unit)? = null,
+      onAnimationCancelFunc: (() -> Unit)? = null,
+    ) {
       end()
 
       val startAlpha = calcAlphaFromRemainingTime(remainingTime)
 
       if (startAlpha <= 0f || remainingTime <= 0) {
         alphaFunc.invoke(0f)
-        onAnimationEndFunc.invoke()
+        onAnimationEndFunc?.invoke()
         return
       }
 
@@ -36,7 +40,11 @@ object PostUnseenIndicatorFadeAnimator {
           }
           addListener(object : SimpleAnimatorListener() {
             override fun onAnimationEnd(animation: Animator) {
-              onAnimationEndFunc.invoke()
+              onAnimationEndFunc?.invoke()
+            }
+
+            override fun onAnimationCancel(animation: Animator) {
+              onAnimationCancelFunc?.invoke()
             }
           })
 

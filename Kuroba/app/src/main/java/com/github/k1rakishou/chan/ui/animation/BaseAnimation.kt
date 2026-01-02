@@ -17,6 +17,12 @@ abstract class BaseAnimation {
     animatorSet = null
   }
 
+  fun cancel() {
+    animatorSet?.apply {
+      cancelAnimations()
+    }
+  }
+
   fun isRunning(): Boolean {
     return animatorSet?.isRunning ?: false
   }

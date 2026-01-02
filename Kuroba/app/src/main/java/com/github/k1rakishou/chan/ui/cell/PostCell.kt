@@ -771,9 +771,13 @@ class PostCell @JvmOverloads constructor(
 
     if (seenPostFadeOutAnimRemainingTimeMs > 0) {
       unseenPostIndicatorFadeOutAnimation.value.start(
-        seenPostFadeOutAnimRemainingTimeMs,
-        { alpha -> postAttentionLabel.setAlphaFast(alpha) },
-        { postAttentionLabel.setVisibilityFast(View.INVISIBLE) }
+        remainingTime = seenPostFadeOutAnimRemainingTimeMs,
+        alphaFunc = { alpha ->
+          postAttentionLabel.setAlphaFast(alpha)
+        },
+        onAnimationEndFunc = {
+          postAttentionLabel.setVisibilityFast(View.INVISIBLE)
+        }
       )
     }
   }
@@ -799,7 +803,7 @@ class PostCell @JvmOverloads constructor(
       return
     }
 
-    unseenPostIndicatorFadeOutAnimation.value.end()
+    unseenPostIndicatorFadeOutAnimation.value.cancel()
     postAttentionLabel.setVisibilityFast(View.VISIBLE)
 
     if (isReplyToSavedReply && !isSavedReply) {
