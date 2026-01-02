@@ -394,7 +394,7 @@ class UpdateManager(
 
               if (versionCode > 0) {
                 append(" ")
-                append("(v${versionCode}.${buildNumber}-${AppModuleAndroidUtils.flavorType.tag}")
+                append("(v${versionCode}.${buildNumber}-${AppModuleAndroidUtils.flavorType.tag})")
               }
             }
           ),
