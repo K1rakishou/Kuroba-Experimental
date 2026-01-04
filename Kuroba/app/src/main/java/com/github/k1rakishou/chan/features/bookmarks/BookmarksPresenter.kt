@@ -215,7 +215,11 @@ class BookmarksPresenter(
     }
   }
 
-  fun onSearchEntered(query: String) {
+  fun onSearchEntered(query: String?) {
+    if (query == null) {
+      return
+    }
+
     searchFlow.value = SearchQuery.Searching(query)
   }
 

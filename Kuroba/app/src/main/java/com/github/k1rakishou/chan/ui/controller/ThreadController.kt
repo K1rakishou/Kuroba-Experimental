@@ -162,6 +162,7 @@ abstract class ThreadController(
 
   private lateinit var swipeRefreshLayout: SwipeRefreshLayout
   private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
+  private var _prevThreadSearchData: ThreadSearchData? = null
 
   val chanDescriptor: ChanDescriptor?
     get() = threadLayout.presenter.currentChanDescriptor
@@ -740,6 +741,18 @@ abstract class ThreadController(
     chanDescriptor: ChanDescriptor,
     threadSearchData: ThreadSearchData
   ) {
+    val prevThreadSearchData = _prevThreadSearchData
+    _prevThreadSearchData = threadSearchData
+
+    val wasCreated = prevThreadSearchData?.searchToolbarCreated == true
+    val isCreated = threadSearchData.searchToolbarCreated
+    val searchQueryChanged = prevThreadSearchData?.searchQuery != threadSearchData.searchQuery
+
+    val wasDestroyedNowDestroyed = !wasCreated && !isCreated
+    if (wasDestroyedNowDestroyed) {
+      return
+    }
+
     val filterOutPostsNotMatchingSearchQueryEnabled = when (chanDescriptor) {
       is ChanDescriptor.ICatalogDescriptor -> {
         ChanSettings.catalogSearchMode.get() == ChanSettings.CatalogOrThreadSearchMode.Filter
@@ -749,40 +762,21 @@ abstract class ThreadController(
       }
     }
 
-    if (!threadSearchData.searchToolbarCreated) {
-      threadPostSearchManager.updateSearchQuery(
-        chanDescriptor = chanDescriptor,
-        postDescriptors = emptyList(),
-        searchQuery = null
-      )
-
-      threadLayout.hideThreadSearchNavigationButtonsView()
-      return
-    }
-
-    if (!threadSearchData.searchToolbarVisible) {
-      threadLayout.hideThreadSearchNavigationButtonsView()
-      return
-    }
-
     val hasMatchedPostDescriptors = threadPostSearchManager.updateSearchQuery(
       chanDescriptor = chanDescriptor,
       postDescriptors = threadLayout.displayingPostDescriptorsInThread,
       searchQuery = threadSearchData.searchQuery
     )
 
-    if (filterOutPostsNotMatchingSearchQueryEnabled) {
-      threadLayout.hideThreadSearchNavigationButtonsView()
-
-      // Need to reload from memory to update the posts (remove/restore)
+    if (searchQueryChanged) {
+      // Need to reload to update posts (mark them + filter out when the setting is enabled)
       threadLayout.presenter.quickReloadFromMemoryCache()
-      return
     }
 
-    if (hasMatchedPostDescriptors) {
-      threadLayout.showThreadSearchNavigationButtonsView()
-    } else {
+    if (!threadSearchData.searchToolbarVisible || filterOutPostsNotMatchingSearchQueryEnabled || !hasMatchedPostDescriptors) {
       threadLayout.hideThreadSearchNavigationButtonsView()
+    } else {
+      threadLayout.showThreadSearchNavigationButtonsView()
     }
   }
 
@@ -906,7 +900,7 @@ abstract class ThreadController(
   protected data class ThreadSearchData(
     val searchToolbarCreated: Boolean,
     val searchToolbarVisible: Boolean,
-    val searchQuery: String
+    val searchQuery: String?
   )
 
   companion object {

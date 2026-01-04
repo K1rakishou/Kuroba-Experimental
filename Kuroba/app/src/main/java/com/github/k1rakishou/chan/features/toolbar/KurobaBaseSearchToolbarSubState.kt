@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 
 abstract class KurobaBaseSearchToolbarSubState(
@@ -78,10 +77,16 @@ abstract class KurobaBaseSearchToolbarSubState(
     _totalFoundItems.value = totalFound
   }
 
-  fun listenForSearchQueryUpdates(): Flow<String> {
+  fun listenForSearchQueryUpdates(): Flow<String?> {
     return _searchQueryState.textAsFlow()
       .map { textFieldCharSequence -> textFieldCharSequence.toString() }
-      .filter { isInSearchMode() }
+      .map { searchQuery ->
+        if (isInSearchMode()) {
+          return@map searchQuery
+        }
+
+        return@map null
+      }
   }
 
   fun listenForSearchCreationUpdates(): Flow<Boolean> {

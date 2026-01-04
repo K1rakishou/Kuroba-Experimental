@@ -415,7 +415,11 @@ class SettingsCoordinator(
     }
   }
 
-  fun onSearchEntered(query: String) {
+  fun onSearchEntered(query: String?) {
+    if (query == null) {
+      return
+    }
+
     onSearchEnteredSubject.onNext(query)
   }
 
