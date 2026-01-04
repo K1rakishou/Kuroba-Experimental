@@ -6,9 +6,18 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import org.jsoup.Jsoup
+import org.jsoup.nodes.Element
+import org.jsoup.nodes.Node
+import org.jsoup.nodes.TextNode
 import java.util.Locale
 
 class Chan4CaptchaTitleFormatter {
+  private val styleMatchers = listOf(
+    DisplayIsNone(),
+    OpacityIntIsZero(),
+    WidthIsTooSmall(),
+  )
+
   fun format(rawTitle: String?): AnnotatedString {
     var title = rawTitle ?: "Captcha has no title (probably json structure got changed)"
 
@@ -16,100 +25,143 @@ class Chan4CaptchaTitleFormatter {
     title = title.replaceFirstChar { ch -> if (ch.isLowerCase()) ch.titlecase(Locale.ENGLISH) else ch.toString() }
     title = title.removeSuffix(", then click Next.")
 
-    val processed = processHtmlTags(title)
-    val annotated = addAnnotations(processed)
-
-    return annotated
-  }
-
-  private fun processHtmlTags(title: String): String {
     val document = Jsoup.parseBodyFragment(title)
+    val nodes = document.childNodes()
 
-    for (element in document.select("*")) {
-      var style = element.attr("style")
-      if (style.contains(";")) {
-        style = style.split(";").last().trim()
-      }
-
-      if (style.contains(":")) {
-        val parts = style.split(":")
-        if (parts.size == 2) {
-          val key = parts[0]
-          val value = parts[1]
-
-          if (!key.equals("display", ignoreCase = true)) {
-            continue
-          }
-
-          if (value.equals("none", ignoreCase = true)) {
-            element.remove()
-          } else {
-            element.unwrap()
-          }
-
-          // If you see this: please do not add CSS inheritance shit in captcha challenge title...
+    return buildAnnotatedString {
+      for (node in nodes) {
+        val processed = processNode(node)
+        if (processed != null) {
+          append(processed)
         }
       }
     }
-
-    val parsed = document.body().html()
-    return parsed
   }
 
-  private fun addAnnotations(input: String): AnnotatedString {
-    val openTag = "<b>"
-    val closeTag = "</b>"
+  private fun processNode(node: Node): AnnotatedString? {
+    if (node is TextNode) {
+      return AnnotatedString(node.text())
+    }
 
-    val span = SpanStyle(
-      fontWeight = FontWeight.Bold,
-      textDecoration = TextDecoration.Underline
-    )
+    if (node is Element) {
+      val childNodes = node.childNodes()
 
-    return buildAnnotatedString {
-      val boldStack = ArrayDeque<Int>()
-      var offset = 0
-      var removedChars = 0
-      var firstTagSkipped = false
-
-      while (offset < input.length) {
-        when {
-          input.startsWith(openTag, offset) -> {
-            boldStack.add(offset)
-            offset += openTag.length
-          }
-
-          input.startsWith(closeTag, offset) -> {
-            var start = boldStack.removeLastOrNull()
-            if (start != null) {
-              if (!firstTagSkipped) {
-                firstTagSkipped = true
-              } else {
-                start -= removedChars
-              }
-
-              val end = offset - removedChars - openTag.length
-              if (end < offset && end <= length && start < end) {
-                addStyle(span, start, end)
-              }
-            }
-
-            offset += closeTag.length
-            removedChars += (openTag.length + closeTag.length)
-          }
-
-          else -> {
-            append(input[offset])
-            offset += 1
+      val allInnerText = buildAnnotatedString {
+        for (childNode in childNodes) {
+          val processed = processNode(childNode)
+          if (processed != null) {
+            append(processed)
           }
         }
       }
 
-      while (boldStack.isNotEmpty()) {
-        val start = boldStack.removeLast()
-        if (start <= length) {
-          addStyle(span, start, length)
+      val styleHandledText = handleStyle(node, allInnerText)
+      if (styleHandledText == null) {
+        return null
+      }
+
+      return handleNode(node, styleHandledText)
+    }
+
+    return null
+  }
+
+  private fun handleNode(
+    node: Element,
+    text: AnnotatedString
+  ): AnnotatedString? {
+    val tagName = node.tagName()
+
+    if (tagName.equals("b", ignoreCase = true)) {
+      return buildAnnotatedString {
+        pushStyle(
+          SpanStyle(
+            fontWeight = FontWeight.Bold,
+            textDecoration = TextDecoration.Underline
+          )
+        )
+
+        append(text)
+      }
+    }
+
+    return text
+  }
+
+  private fun handleStyle(
+    node: Element,
+    allInnerText: AnnotatedString
+  ): AnnotatedString? {
+    val styles = node.attr("style")
+      .split(";")
+      .map { part -> part.trim() }
+
+    for (style in styles) {
+      if (!style.contains(":")) {
+        continue
+      }
+
+      val parts = style.split(":")
+      if (parts.size != 2) {
+        continue
+      }
+
+      val key = parts[0]
+      val value = parts[1]
+
+      val anyMatches = styleMatchers.any { styleProcessor ->
+        styleProcessor.matches(key, value)
+      }
+
+      if (anyMatches) {
+        return null
+      }
+    }
+
+    return allInnerText
+  }
+
+  interface StyleProcessor {
+    fun matches(name: String, value: String): Boolean
+  }
+
+  class DisplayIsNone : StyleProcessor {
+    override fun matches(name: String, value: String): Boolean {
+      if (!name.equals("display", ignoreCase = true)) {
+        return false
+      }
+
+      return value.equals("none", ignoreCase = true)
+    }
+  }
+
+  class OpacityIntIsZero : StyleProcessor {
+    override fun matches(name: String, value: String): Boolean {
+      if (!name.equals("opacity", ignoreCase = true)) {
+        return false
+      }
+
+      return value.toIntOrNull() == 0
+    }
+  }
+
+  class WidthIsTooSmall : StyleProcessor {
+    override fun matches(name: String, value: String): Boolean {
+      if (!name.equals("width", ignoreCase = true)) {
+        return false
+      }
+
+      if (value.contains("px")) {
+        val width = value.removeSuffix("px")
+          .toIntOrNull()
+          ?: return false
+
+        if (width < 3) {
+          return true
         }
       }
+
+      return false
     }
   }
 }
