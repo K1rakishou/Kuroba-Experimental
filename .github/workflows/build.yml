@@ -77,6 +77,7 @@ jobs:
         if: steps.check.outputs.has-permission
         run: |
           cd Kuroba
+          chmod +x ./gradlew
           ./gradlew lintDevDebug
 
       - name: Set up Python
