@@ -98,7 +98,7 @@ abstract class SiteRequestModifier<T : Site>(
   }
 
   @CallSuper
-  open fun modifyCaptchaGetRequest(site: T, requestBuilder: Request.Builder, chanDescriptor: ChanDescriptor?) {
+  open fun modifyCaptchaGetRequest(site: T, requestBuilder: Request.Builder) {
     requestBuilder.addDefaultHeaders(appConstants)
     addCloudFlareCookie(requestBuilder)
   }

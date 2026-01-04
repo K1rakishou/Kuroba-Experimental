@@ -136,7 +136,7 @@ class DvachCaptchaLayoutViewModel(
       .url("${dvach.domainString}/api/captcha/emoji/click")
       .post(clickEmojiRequestJson.toRequestBody("application/json".toMediaType()))
 
-    dvach.requestModifier().modifyCaptchaGetRequest(dvach, requestBuilder, null)
+    dvach.requestModifier().modifyCaptchaGetRequest(dvach, requestBuilder)
 
     val emojiCaptchaInfo = proxiedOkHttpClient.okHttpClient().suspendConvertIntoJsonObjectWithAdapter(
       request = requestBuilder.build(),
@@ -202,7 +202,7 @@ class DvachCaptchaLayoutViewModel(
       throw DvachCaptchaError("Site ${Dvach.SITE_DESCRIPTOR} is not supported")
     }
 
-    dvach.requestModifier().modifyCaptchaGetRequest(dvach, requestBuilder, null)
+    dvach.requestModifier().modifyCaptchaGetRequest(dvach, requestBuilder)
 
     val request = requestBuilder.build()
 
@@ -236,7 +236,7 @@ class DvachCaptchaLayoutViewModel(
       .url("${dvach.domainString}/api/captcha/emoji/show?id=${captchaInfoData.id}")
       .get()
 
-    dvach.requestModifier().modifyCaptchaGetRequest(dvach, requestBuilder, null)
+    dvach.requestModifier().modifyCaptchaGetRequest(dvach, requestBuilder)
 
     val emojiCaptchaInfo = proxiedOkHttpClient.okHttpClient().suspendConvertIntoJsonObjectWithAdapter(
       request = requestBuilder.build(),

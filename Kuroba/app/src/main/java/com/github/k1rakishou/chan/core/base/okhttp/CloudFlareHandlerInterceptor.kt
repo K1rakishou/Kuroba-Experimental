@@ -8,9 +8,7 @@ import com.github.k1rakishou.chan.utils.containsPattern
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.FirewallDetectedException
 import com.github.k1rakishou.common.FirewallType
-import com.github.k1rakishou.common.addOrReplaceCookieHeader
 import com.github.k1rakishou.common.domainOrHost
-import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.prefs.MapSetting
 import okhttp3.Interceptor
@@ -44,11 +42,9 @@ class CloudFlareHandlerInterceptor(
     var request = chain.request()
     val host = request.url.host
 
-    if (requireCloudFlareCookie(request)) {
-      val updatedRequest = addCloudFlareCookie(chain.request())
-      if (updatedRequest != null) {
-        request = updatedRequest
-      }
+    val updatedRequest = addCloudFlareCookie(chain.request())
+    if (updatedRequest != null) {
+      request = updatedRequest
     }
 
     val response = chain.proceed(request)
@@ -167,52 +163,6 @@ class CloudFlareHandlerInterceptor(
     )
   }
 
-  private fun requireCloudFlareCookie(request: Request): Boolean {
-    val alreadyContainsAllHeaders = CloudFlareHandlerInterceptor.EXPECTED_CLOUDFLARE_COOKIES.all { expectedCookieKey ->
-      request.headers.any { requestHeader ->
-        requestHeader.first.equals(expectedCookieKey, ignoreCase = true)
-      }
-    }
-
-    if (alreadyContainsAllHeaders) {
-      return false
-    }
-
-    val host = request.url.host
-
-    val alreadyCheckedSite = synchronized(this) { host in sitesThatRequireCloudFlareCache }
-    if (alreadyCheckedSite) {
-      return true
-    }
-
-    siteResolver.waitUntilInitialized()
-
-    val url = request.url
-    val site = siteResolver.findSiteForUrl(url.toString())
-
-    if (site == null) {
-      Logger.error(TAG) {
-        "[$okHttpType] requireCloudFlareCookie() siteResolver.findSiteForUrl(${url}) returned null"
-      }
-
-      return false
-    }
-
-    val cloudFlareClearanceCookieSetting = site.getSettingBySettingId<MapSetting>(
-      SiteSetting.SiteSettingId.CloudFlareClearanceCookie
-    )
-
-    if (cloudFlareClearanceCookieSetting == null) {
-      Logger.error(TAG) {
-        "[$okHttpType] requireCloudFlareCookie() CloudFlareClearanceCookie setting was not found (url: ${url}, site: ${site.name()})"
-      }
-
-      return false
-    }
-
-    return cloudFlareClearanceCookieSetting.get(request.url.domainOrHost()).isNotNullNorEmpty()
-  }
-
   private fun addCloudFlareCookie(prevRequest: Request): Request? {
     siteResolver.waitUntilInitialized()
 
@@ -238,9 +188,9 @@ class CloudFlareHandlerInterceptor(
       return null
     }
 
-    return prevRequest.newBuilder()
-      .addOrReplaceCookieHeader(cookieValue)
-      .build()
+    val newBuilder = prevRequest.newBuilder()
+    site.requestModifier().modifyCaptchaGetRequest(site, newBuilder)
+    return newBuilder.build()
   }
 
   private fun tryDetectCloudFlareNeedle(response: Response): Boolean {

@@ -165,8 +165,7 @@ class LynxchanCaptchaLayoutViewModel(
       if (site != null) {
         site.requestModifier().modifyCaptchaGetRequest(
           site = site,
-          requestBuilder = requestBuilder,
-          chanDescriptor = chanDescriptor
+          requestBuilder = requestBuilder
         )
       }
 
@@ -230,8 +229,7 @@ class LynxchanCaptchaLayoutViewModel(
         if (site != null) {
           site.requestModifier().modifyCaptchaGetRequest(
             site = site,
-            requestBuilder = requestBuilder,
-            chanDescriptor = chanDescriptor
+            requestBuilder = requestBuilder
           )
         }
 

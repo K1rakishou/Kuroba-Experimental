@@ -473,8 +473,8 @@ class Dvach : CommonSite() {
       requestProperties.put(UserAgentHeaderKey, appConstants.kurobaExCustomUserAgent)
     }
 
-    override fun modifyCaptchaGetRequest(site: Dvach, requestBuilder: Request.Builder, chanDescriptor: ChanDescriptor?) {
-      super.modifyCaptchaGetRequest(site, requestBuilder, chanDescriptor)
+    override fun modifyCaptchaGetRequest(site: Dvach, requestBuilder: Request.Builder) {
+      super.modifyCaptchaGetRequest(site, requestBuilder)
 
       addAntiSpamCookie(requestBuilder)
       addUserCodeCookie(site, requestBuilder)

@@ -20,20 +20,15 @@ class CloudFlareCheckBypassWebClient(
 
     val newCookies = cookieManager.getCookie(originalRequestUrl) ?: ""
 
-    val newCookiesBuilder = CookieBuilder(newCookies).apply {
-      retainAllIn(CloudFlareHandlerInterceptor.EXPECTED_CLOUDFLARE_COOKIES)
-    }
-
-    val prevCookiesBuilder = CookieBuilder(initialCookies.get()).apply {
-      retainAllIn(CloudFlareHandlerInterceptor.EXPECTED_CLOUDFLARE_COOKIES)
-    }
+    val newCookiesBuilder = CookieBuilder(newCookies)
+    val prevCookiesBuilder = CookieBuilder(initialCookies.get())
 
     val prevCfClearanceCookie = prevCookiesBuilder.get(CloudFlareHandlerInterceptor.COOKIE_CF_CLEARANCE)?.value
     val newCfClearanceCookie = newCookiesBuilder.get(CloudFlareHandlerInterceptor.COOKIE_CF_CLEARANCE)?.value
 
     if (newCfClearanceCookie.isNullOrBlank()
       || prevCfClearanceCookie == newCfClearanceCookie
-      || !newCookiesBuilder.containsAll(CloudFlareHandlerInterceptor.EXPECTED_CLOUDFLARE_COOKIES)) {
+      || !newCookiesBuilder.containsAll(listOf(CloudFlareHandlerInterceptor.COOKIE_CF_CLEARANCE))) {
       ++pageLoadsCounter
 
       if (pageLoadsCounter > SiteFirewallBypassController.MAX_PAGE_LOADS_COUNT) {
@@ -43,6 +38,7 @@ class CloudFlareCheckBypassWebClient(
       return
     }
 
+    newCookiesBuilder.retainAllIn(CloudFlareHandlerInterceptor.EXPECTED_CLOUDFLARE_COOKIES)
     success(newCookiesBuilder.build())
   }
 

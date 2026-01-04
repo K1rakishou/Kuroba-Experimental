@@ -674,8 +674,8 @@ open class Chan4 : SiteBase() {
       }
     }
 
-    override fun modifyCaptchaGetRequest(site: Chan4, requestBuilder: Request.Builder, chanDescriptor: ChanDescriptor?) {
-      super.modifyCaptchaGetRequest(site, requestBuilder, chanDescriptor)
+    override fun modifyCaptchaGetRequest(site: Chan4, requestBuilder: Request.Builder) {
+      super.modifyCaptchaGetRequest(site, requestBuilder)
 
       addChan4CookieHeader(site, requestBuilder)
     }

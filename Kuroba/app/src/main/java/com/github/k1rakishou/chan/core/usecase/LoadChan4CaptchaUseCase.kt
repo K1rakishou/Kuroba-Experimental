@@ -65,7 +65,7 @@ class LoadChan4CaptchaUseCase(
       .get()
 
     siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())?.let { chan4 ->
-      chan4.requestModifier().modifyCaptchaGetRequest(chan4, requestBuilder, chanDescriptor)
+      chan4.requestModifier().modifyCaptchaGetRequest(chan4, requestBuilder)
     }
 
     val request = requestBuilder.build()
