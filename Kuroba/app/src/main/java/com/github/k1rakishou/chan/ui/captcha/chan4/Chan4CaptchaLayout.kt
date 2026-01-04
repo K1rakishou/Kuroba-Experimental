@@ -20,13 +20,13 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -39,6 +39,10 @@ import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
@@ -224,15 +228,16 @@ class Chan4CaptchaLayout(
       }
     }
 
-    val tasks = captchaInfo.data.tasks
     val captchaTtlMillis by viewModel.captchaTtlMillisFlow.collectAsState()
+    val tasks = captchaInfo.data.tasks
 
     Box(
       modifier = Modifier
-        .wrapContentSize()
+        .fillMaxWidth()
+        .wrapContentHeight()
         .padding(horizontal = 8.dp, vertical = 4.dp)
     ) {
-      Column(horizontalAlignment = Alignment.CenterHorizontally) {
+      Column(modifier = Modifier.fillMaxWidth()) {
         if (captchaTtlMillis >= 0L) {
           KurobaComposeText(
             modifier = Modifier
@@ -243,68 +248,97 @@ class Chan4CaptchaLayout(
           )
         }
 
-        for ((taskIndex, task) in tasks.withIndex()) {
-          if (taskIndex > 0) {
+        if (captchaInfo.data.isNoopChallenge()) {
+          val text = stringResource(id = R.string.captcha_layout_verification_not_required)
+
+          val annotatedText = remember {
+            buildAnnotatedString {
+              pushStyle(
+                SpanStyle(
+                  fontWeight = FontWeight.SemiBold,
+                  textDecoration = TextDecoration.Underline
+                )
+              )
+
+              append(text)
+            }
+          }
+
+          Box(
+            modifier = Modifier
+              .fillMaxWidth()
+              .height(42.dp),
+            contentAlignment = Alignment.Center
+          ) {
+            KurobaComposeText(
+              text = annotatedText,
+              fontSize = 18.ktu
+            )
+          }
+        } else {
+          for ((taskIndex, task) in tasks.withIndex()) {
+            if (taskIndex > 0) {
+              Spacer(
+                modifier = Modifier
+                  .wrapContentWidth()
+                  .height(8.dp)
+              )
+            }
+
+            KurobaComposeText(text = task.title)
+
             Spacer(
               modifier = Modifier
                 .wrapContentWidth()
                 .height(8.dp)
             )
-          }
 
-          KurobaComposeText(text = task.title)
+            FlowRow(
+              modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight(),
+              horizontalArrangement = Arrangement.spacedBy(
+                space = 4.dp,
+                alignment = Alignment.CenterHorizontally
+              ),
+              verticalArrangement = Arrangement.spacedBy(space = 4.dp),
+              maxItemsInEachRow = if (task.hasWideImages) 2 else Int.MAX_VALUE
+            ) {
+              for ((imageIndex, taskImage) in task.images.withIndex()) {
+                val aspectRatio = taskImage.imageBitmap.width.toFloat() / taskImage.imageBitmap.height.toFloat()
+                val isWideImage = aspectRatio > 1.5f
 
-          Spacer(
-            modifier = Modifier
-              .wrapContentWidth()
-              .height(8.dp)
-          )
+                val scale by animateFloatAsState(targetValue = if (taskImage.isSelected) 0.8f else 1.0f)
 
-          FlowRow(
-            modifier = Modifier
-              .fillMaxWidth()
-              .wrapContentHeight(),
-            horizontalArrangement = Arrangement.spacedBy(
-              space = 4.dp,
-              alignment = Alignment.CenterHorizontally
-            ),
-            verticalArrangement = Arrangement.spacedBy(space = 4.dp),
-            maxItemsInEachRow = if (task.hasWideImages) 2 else Int.MAX_VALUE
-          ) {
-            for ((imageIndex, taskImage) in task.images.withIndex()) {
-              val aspectRatio = taskImage.imageBitmap.width.toFloat() / taskImage.imageBitmap.height.toFloat()
-              val isWideImage = aspectRatio > 1.5f
-
-              val scale by animateFloatAsState(targetValue = if (taskImage.isSelected) 0.8f else 1.0f)
-
-              Image(
-                modifier = Modifier
-                  .background(chanTheme.backColorCompose)
-                  .weight(if (isWideImage) 1f else 0.5f)
-                  .aspectRatio(aspectRatio)
-                  .kurobaClickable(
-                    bounded = true,
-                    onClick = { viewModel.onCaptchaImageClicked(taskIndex, imageIndex) }
-                  )
-                  .scale(scale)
-                  .drawBehind {
-                    if (taskImage.isSelected) {
-                      drawRect(
-                        color = chanTheme.accentColorCompose,
-                        style = Stroke(
-                          width = 12.0f,
-                          pathEffect = PathEffect.dashPathEffect(floatArrayOf(24f, 24f), 0f)
+                Image(
+                  modifier = Modifier
+                    .background(chanTheme.backColorCompose)
+                    .weight(if (isWideImage) 1f else 0.5f)
+                    .aspectRatio(aspectRatio)
+                    .kurobaClickable(
+                      bounded = true,
+                      onClick = { viewModel.onCaptchaImageClicked(taskIndex, imageIndex) }
+                    )
+                    .scale(scale)
+                    .drawBehind {
+                      if (taskImage.isSelected) {
+                        drawRect(
+                          color = chanTheme.accentColorCompose,
+                          style = Stroke(
+                            width = 12.0f,
+                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(24f, 24f), 0f)
+                          )
                         )
-                      )
-                    }
-                  },
-                bitmap = taskImage.imageBitmap,
-                contentDescription = "Captcha task image"
-              )
-            }
+                      }
+                    },
+                  bitmap = taskImage.imageBitmap,
+                  contentDescription = "Captcha task image"
+                )
+              }
 
-            if (task.images.size % 2 != 0 && task.hasWideImages) {
-              Spacer(modifier = Modifier.weight(1f))
+              if (task.images.size % 2 != 0 && task.hasWideImages) {
+                Spacer(modifier = Modifier.weight(1f))
+              }
             }
           }
         }
