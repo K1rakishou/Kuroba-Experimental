@@ -773,7 +773,9 @@ abstract class ThreadController(
       threadLayout.presenter.quickReloadFromMemoryCache()
     }
 
-    if (!threadSearchData.searchToolbarVisible || filterOutPostsNotMatchingSearchQueryEnabled || !hasMatchedPostDescriptors) {
+    if (!threadSearchData.searchToolbarVisible
+      || filterOutPostsNotMatchingSearchQueryEnabled
+      || !hasMatchedPostDescriptors) {
       threadLayout.hideThreadSearchNavigationButtonsView()
     } else {
       threadLayout.showThreadSearchNavigationButtonsView()
