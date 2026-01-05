@@ -37,7 +37,7 @@ class B4k : BaseFoolFuukaSite() {
     val ROOT: String = "https://arch.b4k.dev/"
     val ROOT_URL: HttpUrl =  ROOT.toHttpUrl()
     val SITE_NAME: String = ArchiveType.B4k.domain
-    val MEDIA_HOSTS: Array<HttpUrl> = arrayOf(ROOT_URL)
+    val MEDIA_HOSTS: Array<HttpUrl> = arrayOf(ROOT_URL, "https://arch-img.b4k.dev".toHttpUrl())
     val NAMES: Array<String> = arrayOf("b4k")
     val CLASS: Class<out Site> = B4k::class.java
 

@@ -111,9 +111,9 @@ class ExoPlayerVideoMediaView(
     bufferingProgressView = findViewById(R.id.buffering_progress_view)
 
     if (AppModuleAndroidUtils.isTablet) {
-      actionStrip = findViewById<MediaViewerBottomActionStrip?>(R.id.left_action_strip)
+      actionStrip = findViewById<MediaViewerBottomActionStrip>(R.id.left_action_strip)
     } else {
-      actionStrip = findViewById<MediaViewerBottomActionStrip?>(R.id.bottom_action_strip)
+      actionStrip = findViewById<MediaViewerBottomActionStrip>(R.id.bottom_action_strip)
     }
 
     val placeholderView = findViewById<FrameLayout>(R.id.view_player_controls_placeholder)

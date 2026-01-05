@@ -4,6 +4,8 @@ import android.webkit.WebView
 import androidx.annotation.CallSuper
 import com.github.k1rakishou.chan.core.site.http.HttpCall
 import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.common.COOKIE_HEADER_NAME
+import com.github.k1rakishou.common.CookieBuilder
 import com.github.k1rakishou.common.addHeaderIfNotExists
 import com.github.k1rakishou.common.addOrReplaceCookieHeader
 import com.github.k1rakishou.common.domainOrHost
@@ -80,9 +82,11 @@ abstract class SiteRequestModifier<T : Site>(
     requestProperties: MutableMap<String, String>,
     url: HttpUrl
   ) {
-    requestProperties.put(UserAgentHeaderKey, appConstants.userAgentMightBeOverridden)
-    requestProperties.put(AcceptEncodingHeaderKey, AcceptEncodingHeaderValue)
-    requestProperties.put(AcceptLanagugeHeaderKey, AcceptLanagugeHeaderValue)
+    requestProperties[UserAgentHeaderKey] = appConstants.userAgentMightBeOverridden
+    requestProperties[AcceptEncodingHeaderKey] = AcceptEncodingHeaderValue
+    requestProperties[AcceptLanagugeHeaderKey] = AcceptLanagugeHeaderValue
+
+    addCloudFlareCookie(requestProperties, url)
   }
 
   @CallSuper
@@ -133,6 +137,24 @@ abstract class SiteRequestModifier<T : Site>(
     addCloudFlareCookie(requestBuilder)
   }
 
+  fun getCloudFlareCookies(url: HttpUrl): String? {
+    val domainOrHost = url.domainOrHost()
+
+    return site
+      .getSettingBySettingId<MapSetting>(SiteSetting.SiteSettingId.CloudFlareClearanceCookie)
+      ?.get(domainOrHost)
+  }
+
+  private fun addCloudFlareCookie(
+    requestProperties: MutableMap<String, String>,
+    url: HttpUrl
+  ) {
+    val cloudflareCookies = getCloudFlareCookies(url)
+    if (cloudflareCookies.isNotNullNorEmpty()) {
+      requestProperties.updateCookieHeader(cloudflareCookies)
+    }
+  }
+
   private fun addCloudFlareCookie(requestBuilder: Request.Builder) {
     val url = requestBuilder.build().url
     val cloudFlareCookies = getCloudFlareCookies(url)
@@ -146,12 +168,19 @@ abstract class SiteRequestModifier<T : Site>(
     }
   }
 
-  fun getCloudFlareCookies(url: HttpUrl): String? {
-    val domainOrHost = url.domainOrHost()
+  protected fun MutableMap<String, String>.updateCookieHeader(value: String) {
+    val previous = this[COOKIE_HEADER_NAME]
+    if (previous == null) {
+      this[COOKIE_HEADER_NAME] = value
+      return
+    }
 
-    return site
-      .getSettingBySettingId<MapSetting>(SiteSetting.SiteSettingId.CloudFlareClearanceCookie)
-      ?.get(domainOrHost)
+    val newCookies = with(CookieBuilder(value)) {
+      addOrReplace(previous)
+      build()
+    }
+
+    this[COOKIE_HEADER_NAME] = newCookies
   }
 
   companion object {

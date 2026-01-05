@@ -37,10 +37,8 @@ import com.github.k1rakishou.chan.core.site.sites.search.SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
 import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
 import com.github.k1rakishou.common.AppConstants
-import com.github.k1rakishou.common.CookieBuilder
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.addOrReplaceCookieHeader
-import com.github.k1rakishou.common.domainOrHost
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.groupOrNull
 import com.github.k1rakishou.core_logger.Logger
@@ -53,7 +51,6 @@ import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
 import com.github.k1rakishou.persist_state.ReplyMode
 import com.github.k1rakishou.prefs.GsonJsonSetting
-import com.github.k1rakishou.prefs.MapSetting
 import com.github.k1rakishou.prefs.OptionsSetting
 import com.github.k1rakishou.prefs.StringSetting
 import kotlinx.coroutines.flow.Flow
@@ -457,16 +454,7 @@ class Dvach : CommonSite() {
     ) {
       super.modifyVideoStreamRequest(site, requestProperties, url)
 
-      val cloudflareCookies = site
-        .getSettingBySettingId<MapSetting>(SiteSetting.SiteSettingId.CloudFlareClearanceCookie)
-        ?.get(url.domainOrHost())
-
-      val cookies = with(CookieBuilder(cloudflareCookies)) {
-        addOrReplace(USER_CODE_COOKIE_KEY, site.userCodeCookie.get())
-        build()
-      }
-
-      requestProperties["Cookie"] = cookies
+      requestProperties.updateCookieHeader("${USER_CODE_COOKIE_KEY}=${site.userCodeCookie.get()}")
 
       // For 2ch.hk we want to use our custom user-agent because when using the WebView's one the
       // videos do not load with 403 status.

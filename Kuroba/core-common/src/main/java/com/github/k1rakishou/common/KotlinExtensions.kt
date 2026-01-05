@@ -82,6 +82,7 @@ import kotlin.coroutines.resumeWithException
 
 private const val TAG = "KotlinExntesions"
 val ELLIPSIS_SYMBOL: CharSequence = "…"
+const val COOKIE_HEADER_NAME = "Cookie"
 
 suspend fun OkHttpClient.suspendCall(request: Request): Response {
   return suspendCancellableCoroutine { continuation ->
@@ -1390,8 +1391,6 @@ private suspend fun <R> newScope(rethrowErrors: Boolean, block: suspend Coroutin
     supervisorScope(block)
   }
 }
-
-private const val COOKIE_HEADER_NAME = "Cookie"
 
 fun Request.Builder.addOrReplaceCookieHeader(newCookie: String): Request.Builder {
   if (newCookie.isBlank()) {

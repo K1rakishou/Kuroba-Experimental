@@ -16,6 +16,8 @@
  */
 package com.github.k1rakishou.chan.ui.captcha.v2;
 
+import static com.github.k1rakishou.common.KotlinExtensionsKt.COOKIE_HEADER_NAME;
+
 import android.content.Context;
 
 import androidx.annotation.Nullable;
@@ -135,7 +137,7 @@ public class CaptchaNoJsPresenterV2 {
                             .header("Accept", acceptHeader)
                             .header("Accept-Encoding", acceptEncodingHeader)
                             .header("Accept-Language", acceptLanguageHeader)
-                            .header("Cookie", defaultGoogleCookies)
+                            .header(COOKIE_HEADER_NAME, defaultGoogleCookies)
                             .build();
 
                     try (Response response = proxiedOkHttpClient.okHttpClient().newCall(request).execute()) {
@@ -235,7 +237,7 @@ public class CaptchaNoJsPresenterV2 {
                 .header("Accept", acceptHeader)
                 .header("Accept-Encoding", acceptEncodingHeader)
                 .header("Accept-Language", acceptLanguageHeader)
-                .header("Cookie", defaultGoogleCookies)
+                .header(COOKIE_HEADER_NAME, defaultGoogleCookies)
                 .build();
 
         try (Response response = proxiedOkHttpClient.okHttpClient().newCall(request).execute()) {

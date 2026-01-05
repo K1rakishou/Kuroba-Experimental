@@ -98,7 +98,7 @@ complexity:
     threshold: 15
   ComplexCondition:
     active: true
-    threshold: 4
+    threshold: 8
   ComplexInterface:
     active: false
     threshold: 10
