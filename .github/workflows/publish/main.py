@@ -13,7 +13,7 @@ if __name__ == "__main__":
     if release_type == "beta":
         beta.publish_beta(workspace_dir, version_code)
     elif release_type == "stable":
-        stable.publish_stable(workspace_dir)
+        stable.publish_stable(workspace_dir, version_code)
     else:
         print(f"Unknown release_type: {release_type}")
         exit(-1)

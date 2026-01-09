@@ -1,5 +1,4 @@
 import os
-import re
 import helpers
 import github
 
@@ -21,7 +20,6 @@ def publish_beta(workspace_dir, version_code: helpers.VersionCode):
     print(f'tag_name: {tag_name}')
     print(f'commits:\n{commits}')
 
-    repo = 'K1rakishou/Kuroba-Experimental-beta'
     release_name = f'KurobaEx-beta release {tag_name}'
     body = commits
     asset_path = workspace_dir + "/Kuroba/app/build/outputs/apk/beta/release/KurobaEx-beta.apk"
@@ -31,5 +29,5 @@ def publish_beta(workspace_dir, version_code: helpers.VersionCode):
         print("Token is empty.")
         exit(-1)
 
-    github.create_github_release(token, repo, tag_name, release_name, body, asset_path)
+    github.create_github_release(token, helpers.BetaRepoName, tag_name, release_name, body, asset_path)
 
