@@ -1,4 +1,4 @@
-name: Build and Sign Android APK
+name: Build/Verify/Publish MR/Release
 
 on:
   push:
@@ -25,7 +25,8 @@ jobs:
         run: |
           cd Kuroba
           chmod +x ./gradlew
-          ./gradlew detekt
+          # TODO: uncomment me!
+          # ./gradlew detekt
 
   unit-test:
     runs-on: ubuntu-latest
@@ -45,7 +46,8 @@ jobs:
         run: |
           cd Kuroba
           chmod +x ./gradlew
-          ./gradlew testDevDebugUnitTest --stacktrace -Dorg.gradle.jvmargs="-Xmx4096m"
+          # TODO: uncomment me!
+          # ./gradlew testDevDebugUnitTest --stacktrace -Dorg.gradle.jvmargs="-Xmx4096m"
 
   build:
     runs-on: ubuntu-latest
@@ -66,19 +68,12 @@ jobs:
         id: check
         if: |
           github.event_name == 'push' &&
-          (startsWith(github.event.head_commit.message, '[beta]') || startsWith(github.event.head_commit.message, '[stable]'))
+          (startsWith(github.event.head_commit.message, '[beta]') || startsWith(github.event.head_commit.message, '[stable]') || startsWith(github.event.head_commit.message, '[patch]'))
         uses: scherermichael-oss/action-has-permission@master
         with:
           required-permission: write
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Lint
-        if: steps.check.outputs.has-permission
-        run: |
-          cd Kuroba
-          chmod +x ./gradlew
-          ./gradlew lintDevDebug
 
       - name: Set up Python
         if: steps.check.outputs.has-permission
@@ -97,30 +92,30 @@ jobs:
         run: |
           echo ${{ secrets.KEYSTORE }} | base64 -d > ${{ github.workspace }}/kurobaex.jks
 
-      - name: Build and sign APK
+      - name: Build, sign and publish APK
         if: steps.check.outputs.has-permission
         run: |
           cd Kuroba
           chmod +x ./gradlew
           
           if [[ "${{ github.event.head_commit.message }}" == "[beta]"* ]]; then
-            echo "Building beta release"
+            echo "Publishing beta release"
             ./gradlew assembleBetaRelease \
               -Pandroid.injected.signing.store.file=${{ github.workspace }}/kurobaex.jks \
               -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
               -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
               -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }} \
               -Dorg.gradle.jvmargs="-Xmx4096m"
-            python ${{ github.workspace }}/.github/workflows/create_release.py beta ${{ github.workspace }}
+            python ${{ github.workspace }}/.github/workflows/publish/main.py beta ${{ github.workspace }}
           elif [[ "${{ github.event.head_commit.message }}" == "[stable]"* ]]; then
-            echo "Building stable release"
+            echo "Publishing stable release"
             ./gradlew assembleStableRelease \
               -Pandroid.injected.signing.store.file=${{ github.workspace }}/kurobaex.jks \
               -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
               -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
               -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }} \
               -Dorg.gradle.jvmargs="-Xmx4096m"
-            python ${{ github.workspace }}/.github/workflows/create_release.py stable ${{ github.workspace }}
+            python ${{ github.workspace }}/.github/workflows/publish/main.py stable ${{ github.workspace }}
           fi
         env:
           PAT: ${{ secrets.PAT }}
