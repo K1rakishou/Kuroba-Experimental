@@ -2,6 +2,14 @@ import os
 import helpers
 import github
 
+ApkNames = [
+    "KurobaEx-beta-arm64-v8a.apk",
+    "KurobaEx-beta-x86_64.apk",
+    "KurobaEx-beta-armeabi-v7a.apk",
+    "KurobaEx-beta-x86.apk",
+    "KurobaEx-beta.apk"
+]
+
 def publish_beta(token, workspace_dir, version_code: helpers.VersionCode):
     print(f"Publishing beta release")
 
@@ -20,5 +28,5 @@ def publish_beta(token, workspace_dir, version_code: helpers.VersionCode):
     body = commits
     assets_path = workspace_dir + helpers.BetaApkRelativePath
     
-    github.create_github_release(token, helpers.BetaRepoName, tag_name, release_name, body, assets_path)
+    github.create_github_release(token, helpers.BetaRepoName, tag_name, release_name, body, assets_path, ApkNames)
 

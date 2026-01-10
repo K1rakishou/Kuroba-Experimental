@@ -3,15 +3,10 @@ import requests
 import json
 import helpers
 
-ApkNames = [
-    "KurobaEx-beta-arm64-v8a.apk",
-    "KurobaEx-beta-x86_64.apk",
-    "KurobaEx-beta-armeabi-v7a.apk",
-    "KurobaEx-beta-x86.apk",
-    "KurobaEx-beta.apk"
-]
-
-def create_github_release(token, repo, tag_name, release_name, body, assets_path):
+def create_github_release(token, repo, tag_name, release_name, body, assets_path, apk_names: list[str]):
+    if len(apk_names) == 0:
+        raise helpers.BuildCreationError("apk_names is empty")
+    
     url = f"https://api.github.com/repos/{repo}/releases"
 
     headers = {
@@ -38,7 +33,7 @@ def create_github_release(token, repo, tag_name, release_name, body, assets_path
     release_id = response_json["id"]
     print(f'create_github_release() release_id: {release_id}, upload_url: \'{upload_url}\'')
     
-    for apk_name in ApkNames:
+    for apk_name in apk_names:
         apk_path = f"{assets_path}/{apk_name}"
         print(f'create_github_release() uploading \'{apk_path}\'...')
 

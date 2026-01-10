@@ -1,6 +1,13 @@
 import github
 import helpers
 
+ApkNames = [
+    "KurobaEx-arm64-v8a.apk",
+    "KurobaEx-x86_64.apk",
+    "KurobaEx-armeabi-v7a.apk",
+    "KurobaEx-x86.apk",
+    "KurobaEx.apk"
+]
 def publish_stable(token, workspace_dir, version_code: helpers.VersionCode):
     print(f"Publishing stable release")
     
@@ -15,5 +22,5 @@ def publish_stable(token, workspace_dir, version_code: helpers.VersionCode):
     body = commits
     asset_path = workspace_dir + helpers.StableApkRelativePath
     
-    github.create_github_release(token, helpers.StableRepoName, tag_name, release_name, body, asset_path)
+    github.create_github_release(token, helpers.StableRepoName, tag_name, release_name, body, asset_path, ApkNames)
 
