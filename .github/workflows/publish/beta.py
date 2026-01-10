@@ -11,10 +11,6 @@ def publish_beta(token, workspace_dir, version_code: helpers.VersionCode):
         exit(-1)
 
     latest_release_commit_hash = github.get_latest_release_commit_hash(helpers.StableRepoName)
-    if (len(latest_release_commit_hash) == 0):
-         print("Failed to get latest release commit hash.")
-         exit(-1)
-
     commits = helpers.get_commits_since(latest_release_commit_hash)
 
     print(f'tag_name: {tag_name}')

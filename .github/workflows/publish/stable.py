@@ -5,10 +5,6 @@ def publish_stable(token, workspace_dir, version_code: helpers.VersionCode):
     print(f"Publishing stable release")
     
     latest_release_commit_hash = github.get_latest_release_commit_hash(helpers.StableRepoName)
-    if (len(latest_release_commit_hash) == 0):
-         print("Failed to get latest release commit hash.")
-         exit(-1)
-
     commits = helpers.get_commits_since(latest_release_commit_hash)
     tag_name = f'v{version_code.major}.{version_code.minor}.{version_code.patch}-release'
     

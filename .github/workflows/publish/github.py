@@ -49,6 +49,7 @@ def create_github_release(token, repo, tag_name, release_name, body, assets_path
             print(f'create_github_release() uploading \'{apk_path}\'... ERROR ({e})!')
             print(f'create_github_release() deleting release {release_id}...')
             delete_github_release(token, repo, release_id)
+            delete_github_tag(token, repo, tag_name)
             print(f'create_github_release() deleting release {release_id}... Success.')
             raise e
 
@@ -69,6 +70,21 @@ def delete_github_release(token, repo, release_id):
     else:
         print(f"Failed to delete release. Status: {response.status_code}, Message: {response.content}")
     
+def delete_github_tag(token, repo, tag_name):
+    url = f"https://api.github.com/repos/{repo}/git/refs/tags/{tag_name}"
+    
+    headers = {
+        "Authorization": f"token {token}",
+        "Accept": "application/vnd.github.v3+json"
+    }
+    
+    response = requests.delete(url, headers=headers)
+    
+    if response.status_code == 204:
+        print(f"Tag {tag_name} deleted successfully.")
+    else:
+        print(f"Failed to delete tag. Status: {response.status_code}, Message: {response.content}")
+
 def upload_asset(upload_url, apk_path, headers):
     headers["Content-Type"] = "application/vnd.android.package-archive"
 
@@ -84,8 +100,8 @@ def upload_asset(upload_url, apk_path, headers):
         raise helpers.BuildCreationError(f'Failed to upload asset. StatusCode: {response.status_code}. Message: \'{response.content}\'')
 
 
-def get_latest_release_tag(owner_repo):
-    url = f"https://api.github.com/repos/{owner_repo}/releases/latest"
+def get_latest_release_tag(repo):
+    url = f"https://api.github.com/repos/{repo}/releases/latest"
     response = requests.get(url)
     if response.status_code == 200:
         return response.json()['tag_name']
@@ -106,6 +122,6 @@ def get_latest_release_commit_hash(repo):
         if tag_response.status_code == 200:
             tag_data = tag_response.json()
             commit_hash = tag_data['object']['sha']
-            return commit_hash
+            return str(commit_hash)
 
-    return ""
+    raise helpers.BuildCreationError("Failed to get latest release commit hash")
