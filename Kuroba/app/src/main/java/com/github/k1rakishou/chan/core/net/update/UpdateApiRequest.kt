@@ -1,13 +1,16 @@
 package com.github.k1rakishou.chan.core.net.update
 
+import android.os.Build
 import android.text.Spanned
 import androidx.core.text.toSpanned
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.net.update.UpdateApiRequest.ReleaseUpdateApiResponse
 import com.github.k1rakishou.chan.utils.ReleaseHelpers
+import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.jsonArray
 import com.github.k1rakishou.common.jsonObject
+import com.github.k1rakishou.core_logger.Logger
 import com.google.gson.stream.JsonReader
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -51,27 +54,58 @@ class UpdateApiRequest(
   }
   
   private fun readApkUrl(reader: JsonReader, responseRelease: ReleaseUpdateApiResponse) {
+    val supportedAbis = Build.SUPPORTED_ABIS
+    Logger.debug(TAG) { "supportedAbis: ${supportedAbis.joinToString()}" }
+
+    val apkUrls = mutableListOf<HttpUrl>()
+
     try {
       reader.jsonArray {
         while (hasNext()) {
-          if (responseRelease.apkURL == null) {
-            jsonObject {
-              while (hasNext()) {
-                if ("browser_download_url" == nextName()) {
-                  responseRelease.apkURL = nextString().toHttpUrl()
-                } else {
-                  skipValue()
-                }
+          jsonObject {
+            while (hasNext()) {
+              if ("browser_download_url" == nextName()) {
+                apkUrls += nextString().toHttpUrl()
+              } else {
+                skipValue()
               }
             }
-          } else {
-            skipValue()
           }
         }
       }
     } catch (e: Exception) {
+      throw UpdateRequestError("No APK URL! (error: ${e.errorMessageOrClassName()})")
+    }
+
+    Logger.debug(TAG) { "apkUrls: ${apkUrls.joinToString()}" }
+    if (apkUrls.isEmpty()) {
       throw UpdateRequestError("No APK URL!")
     }
+
+    var apkUrl: HttpUrl? = null
+
+    for (abi in supportedAbis) {
+      apkUrl = apkUrls.firstOrNull { apkUrl ->
+        val apkFileName = apkUrl.pathSegments.last()
+        return@firstOrNull apkFileName.contains(abi, ignoreCase = true)
+      }
+
+      if (apkUrl != null) {
+        // Found apk for the current ABI
+        break
+      }
+    }
+
+    if (apkUrl == null) {
+      Logger.warning(TAG) {
+        "Failed to find an apk for abis: '${supportedAbis.joinToString()}', using the last one (should be universal apk)"
+      }
+
+      apkUrl = apkUrls.last()
+    }
+
+    Logger.debug(TAG) { "Got apkUrl: '${apkUrl}'" }
+    responseRelease.apkURL = apkUrl
   }
   
   private fun readVersionCode(responseRelease: ReleaseUpdateApiResponse, reader: JsonReader) {
@@ -108,5 +142,9 @@ class UpdateApiRequest(
       return "ReleaseUpdateApiResponse{versionCode=$versionCode, versionCodeString=${versionCodeString}, " +
         "updateTitle={$updateTitle}, apkURL=${apkURL}, body=${body?.take(60)}"
     }
+  }
+
+  companion object {
+    private const val TAG = "UpdateApiRequest"
   }
 }
