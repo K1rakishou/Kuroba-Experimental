@@ -9,6 +9,9 @@ StableRepoName = 'K1rakishou/Kuroba-Experimental'
 BetaTagPattern = r'v(\d+?)\.(\d{1,2})\.(\d{1,2})\.(\d+)-beta$'
 VersionNamePattern = r'versionName\s+\"v(\d+)\.(\d{1,2})\.(\d{1,2})\"'
 
+BetaApkRelativePath = "/Kuroba/app/build/outputs/apk/beta/release"
+StableApkRelativePath = "/Kuroba/app/build/outputs/apk/stable/release"
+
 class BuildCreationError(Exception):
     pass
 

@@ -1,8 +1,17 @@
 import os
 import requests
 import json
+import helpers
 
-def create_github_release(token, repo, tag_name, release_name, body, asset_path):
+ApkNames = [
+    "KurobaEx-beta-arm64-v8a.apk",
+    "KurobaEx-beta-x86_64.apk"
+    "KurobaEx-beta-armeabi-v7a.apk",
+    "KurobaEx-beta-x86.apk",
+    "KurobaEx-beta.apk",
+]
+
+def create_github_release(token, repo, tag_name, release_name, body, assets_path):
     url = f"https://api.github.com/repos/{repo}/releases"
 
     headers = {
@@ -19,35 +28,61 @@ def create_github_release(token, repo, tag_name, release_name, body, asset_path)
     }
 
     response = requests.post(url, headers=headers, data=json.dumps(payload))
-
     if response.status_code != 201:
-        print("Failed to create release.")
-        print(response.status_code)
-        print(response.content)
-        exit(-1)
+        raise helpers.BuildCreationError(f'Failed create release. StatusCode: {response.status_code}. Message: \'{response.content}\'')
 
-    print("Release created successfully.")
-    upload_url = response.json()["upload_url"].split("{")[0]
-    upload_asset(upload_url, asset_path, headers)
+    print("create_github_release() Release created successfully.")
 
-def upload_asset(upload_url, asset_path, headers):
-    headers["Content-Type"] = "application/octet-stream"
+    response_json = response.json()
+    upload_url = response_json["upload_url"].split("{")[0]
+    release_id = response_json["id"]
+    print(f'create_github_release() release_id: {release_id}, upload_url: \'{upload_url}\'')
+    
+    for apk_name in ApkNames:
+        apk_path = f"{assets_path}/{apk_name}"
+        print(f'create_github_release() uploading \'{apk_path}\'...')
 
-    file_name = os.path.basename(asset_path)
+        try:
+            upload_asset(upload_url, apk_path, headers.copy())
+            print(f'create_github_release() uploading \'{apk_path}\'... Success!')
+        except Exception as e:
+            print(f'create_github_release() uploading \'{apk_path}\'... ERROR ({e})!')
+            print(f'create_github_release() deleting release {release_id}...')
+            delete_github_release(token, repo, release_id)
+            print(f'create_github_release() deleting release {release_id}... Success.')
+            raise e
+
+    print("create_github_release() Apks uploaded successfully!")
+
+def delete_github_release(token, repo, release_id):
+    url = f"https://api.github.com/repos/{repo}/releases/{release_id}"
+    
+    headers = {
+        "Authorization": f"token {token}",
+        "Accept": "application/vnd.github.v3+json"
+    }
+    
+    response = requests.delete(url, headers=headers)
+    
+    if response.status_code == 204:
+        print(f"Release {release_id} deleted successfully.")
+    else:
+        print(f"Failed to delete release. Status: {response.status_code}, Message: {response.content}")
+    
+def upload_asset(upload_url, apk_path, headers):
+    headers["Content-Type"] = "application/vnd.android.package-archive"
+
+    file_name = os.path.basename(apk_path)
     asset_url = f"{upload_url}?name={file_name}"
-
-    with open(asset_path, "rb") as file:
+    
+    with open(apk_path, "rb") as file:
         file_data = file.read()
 
     response = requests.post(asset_url, headers=headers, data=file_data)
 
     if response.status_code != 201:
-        print("Failed to upload asset.")
-        print(response.status_code)
-        print(response.content)
-        exit(-1)
+        raise helpers.BuildCreationError(f'Failed to upload asset. StatusCode: {response.status_code}. Message: \'{response.content}\'')
 
-    print("Asset uploaded successfully.")
 
 def get_latest_release_tag(owner_repo):
     url = f"https://api.github.com/repos/{owner_repo}/releases/latest"
@@ -57,7 +92,7 @@ def get_latest_release_tag(owner_repo):
     else:
         return f"Error: {response.status_code}"
 
-def get_latest_release_commit_hash(repo, access_token=None):
+def get_latest_release_commit_hash(repo):
     releases_url = f"https://api.github.com/repos/{repo}/releases/latest"
     release_response = requests.get(releases_url)
 

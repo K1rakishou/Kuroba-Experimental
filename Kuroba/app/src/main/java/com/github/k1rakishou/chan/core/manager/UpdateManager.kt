@@ -194,9 +194,7 @@ class UpdateManager(
         updateApk(manual, flavorType, updateUrl)
       }
       FlavorType.Fdroid,
-      FlavorType.Dev -> {
-        throw RuntimeException("Updater should be disabled for dev builds")
-      }
+      FlavorType.Dev -> error("Updater should be disabled for dev builds")
     }.exhaustive
   }
 

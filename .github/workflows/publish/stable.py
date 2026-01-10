@@ -1,11 +1,10 @@
-import os
 import github
 import helpers
 
-def publish_stable(workspace_dir, version_code: helpers.VersionCode):
+def publish_stable(token, workspace_dir, version_code: helpers.VersionCode):
     print(f"Publishing stable release")
     
-    latest_release_commit_hash = github.get_latest_release_commit_hash('K1rakishou/Kuroba-Experimental')
+    latest_release_commit_hash = github.get_latest_release_commit_hash(helpers.StableRepoName)
     if (len(latest_release_commit_hash) == 0):
          print("Failed to get latest release commit hash.")
          exit(-1)
@@ -18,12 +17,7 @@ def publish_stable(workspace_dir, version_code: helpers.VersionCode):
 
     release_name = f'KurobaEx release {tag_name}'
     body = commits
-    asset_path = workspace_dir + "/Kuroba/app/build/outputs/apk/stable/release/KurobaEx.apk"
+    asset_path = workspace_dir + helpers.StableApkRelativePath
     
-    token = os.getenv('PAT') or ""
-    if (len(token) == 0):
-        print("Token is empty.")
-        exit(-1)
-
     github.create_github_release(token, helpers.StableRepoName, tag_name, release_name, body, asset_path)
 

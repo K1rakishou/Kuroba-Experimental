@@ -20,6 +20,15 @@ android {
         ext.apkVersionNameSuffix = null
     }
 
+    splits {
+        abi {
+            enable true
+            reset()
+            include 'armeabi-v7a', 'arm64-v8a', 'x86', 'x86_64'
+            universalApk true
+        }
+    }
+
     defaultConfig {
         minSdkVersion 23
         targetSdkVersion 35
@@ -49,12 +58,6 @@ android {
         //          MmmPP
         versionCode 10335
         versionName "v1.3.35"
-
-        applicationVariants.all { variant ->
-            variant.outputs.all {
-                outputFileName = manifestPlaceholders.get("appName").toString() + ".apk"
-            }
-        }
 
         configurations.configureEach {
             resolutionStrategy { force 'androidx.emoji2:emoji2:1.3.0' }
@@ -148,18 +151,23 @@ android {
     }
 
     buildTypes {
-        // manifestPlaceholders do not work here for some reason so here is a little hack.
-        // We need to iterate each build variant and for each build variant we need to find it's
-        // flavor then we need to extract the versionNameSuffix from the flavor and update the output
-        // apk name with it.
         android.applicationVariants.all { variant ->
-            variant.outputs.all {
+            variant.outputs.all { output ->
                 Object flavor = getCurrentFlavor(variant.flavorName)
                 if (flavor == null) {
-                    throw new GradleException("Couldn't find flavor by variant.flavorName = ${variant.flavorName}")
+                    throw new GradleException("Couldn't find flavor by variant.flavorName: '${variant.flavorName}'")
                 }
 
-                outputFileName = "KurobaEx${flavor.apkVersionNameSuffix}.apk"
+                def abiFilter = output.getFilter(com.android.build.OutputFile.ABI)
+                def baseName = "KurobaEx${flavor.apkVersionNameSuffix}"
+
+                if (abiFilter != null) {
+                    // Split apk with ABI in it's name
+                    outputFileName = "${baseName}-${abiFilter}.apk"
+                } else {
+                    // Universal APK or no splits
+                    outputFileName = "${baseName}.apk"
+                }
             }
         }
 
@@ -242,6 +250,7 @@ android {
         compose = true
         buildConfig = true
     }
+
     lint {
         // Security & Privacy
         error 'MissingPermission'

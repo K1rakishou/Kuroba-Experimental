@@ -1,3 +1,4 @@
+import os
 import sys
 import beta
 import stable
@@ -10,10 +11,15 @@ if __name__ == "__main__":
     version_code = helpers.parse_project_version_name(workspace_dir)
     print(f'version_code: {version_code}')
 
+    token = os.getenv('PAT') or ""
+    if (len(token) == 0):
+        print("Token is empty or wasn't set.")
+        exit(-1)
+
     if release_type == "beta":
-        beta.publish_beta(workspace_dir, version_code)
+        beta.publish_beta(token, workspace_dir, version_code)
     elif release_type == "stable":
-        stable.publish_stable(workspace_dir, version_code)
+        stable.publish_stable(token, workspace_dir, version_code)
     else:
         print(f"Unknown release_type: {release_type}")
         exit(-1)
