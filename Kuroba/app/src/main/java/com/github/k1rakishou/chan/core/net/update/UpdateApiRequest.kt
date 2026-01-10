@@ -98,7 +98,8 @@ class UpdateApiRequest(
 
     if (apkUrl == null) {
       Logger.warning(TAG) {
-        "Failed to find an apk for abis: '${supportedAbis.joinToString()}', using the last one (should be universal apk)"
+        "Failed to find an apk for abis: '${supportedAbis.joinToString()}', " +
+          "using the last one (should be universal apk)"
       }
 
       apkUrl = apkUrls.last()

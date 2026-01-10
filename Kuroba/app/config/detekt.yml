@@ -808,7 +808,7 @@ formatting:
     active: true
     autoCorrect: true
   ArgumentListWrapping:
-    active: true
+    active: false
     autoCorrect: true
     indentSize: 4
     maxLineLength: 120
@@ -1030,7 +1030,7 @@ formatting:
     active: true
     autoCorrect: true
   StringTemplate:
-    active: true
+    active: false
     autoCorrect: true
   StringTemplateIndent:
     active: false
