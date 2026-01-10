@@ -5,10 +5,10 @@ import helpers
 
 ApkNames = [
     "KurobaEx-beta-arm64-v8a.apk",
-    "KurobaEx-beta-x86_64.apk"
+    "KurobaEx-beta-x86_64.apk",
     "KurobaEx-beta-armeabi-v7a.apk",
     "KurobaEx-beta-x86.apk",
-    "KurobaEx-beta.apk",
+    "KurobaEx-beta.apk"
 ]
 
 def create_github_release(token, repo, tag_name, release_name, body, assets_path):
