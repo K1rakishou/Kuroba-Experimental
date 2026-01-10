@@ -265,7 +265,8 @@ class UpdateManager(
               "actuallyHasUpdate: $continueWithUpdate, " +
               "releaseVersionCode: ${responseRelease.versionCode}, " +
               "releaseBuildNumber: ${responseRelease.buildNumber}, " +
-              "appVersionCode=${BuildConfig.VERSION_CODE}"
+              "apkURL: ${responseRelease.apkURL}, " +
+              "appVersionCode: ${BuildConfig.VERSION_CODE}"
     )
 
     Logger.d(TAG, "processUpdateApiResponse() responseRelease=${responseRelease}")
