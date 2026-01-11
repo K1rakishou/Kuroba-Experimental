@@ -68,7 +68,7 @@ class Chan4ReportPostControllerViewModel(
         return@Try fromCache
       }
 
-      val site = siteManager.bySiteDescriptor(postDescriptor.siteDescriptor())
+      val site = siteManager.bySiteDescriptorAndActive(postDescriptor.siteDescriptor())
         ?: throw CommonClientException("Site is not active")
 
       val endpoints = site.endpoints() as? Chan4.Chan4Endpoints
@@ -144,7 +144,7 @@ class Chan4ReportPostControllerViewModel(
     _reporting.value = true
 
     return ModularResult.Try {
-      val site = siteManager.bySiteDescriptor(postDescriptor.siteDescriptor())
+      val site = siteManager.bySiteDescriptorAndActive(postDescriptor.siteDescriptor())
         ?: return@Try PostReportResult.NotSupported
 
       return@Try site.actions().reportPost(

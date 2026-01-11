@@ -74,7 +74,7 @@ import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import java.util.*
+import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
@@ -408,7 +408,7 @@ class ReplyLayoutViewModel(
 
           var actualReplyMode = replyMode
           if (actualReplyMode == null) {
-            actualReplyMode = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+            actualReplyMode = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
               ?.getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
               ?.get()
               ?: ReplyMode.Unknown
@@ -576,7 +576,7 @@ class ReplyLayoutViewModel(
   fun onFlagSelectorClicked(chanDescriptor: ChanDescriptor) {
     withReplyLayoutState { replyLayoutState ->
       flagSelectorClickExecutor.post(500) {
-        val lastUsedCountryFlagPerBoardSetting = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+        val lastUsedCountryFlagPerBoardSetting = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
           ?.getSettingBySettingId<StringSetting>(SiteSetting.SiteSettingId.LastUsedCountryFlagPerBoard)
 
         val selectedFlag = replyLayoutViewCallbacks?.promptUserToSelectFlag(chanDescriptor)

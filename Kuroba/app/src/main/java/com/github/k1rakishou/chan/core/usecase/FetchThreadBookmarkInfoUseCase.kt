@@ -45,7 +45,7 @@ class FetchThreadBookmarkInfoUseCase(
       .coerceAtLeast(MIN_BATCHES_COUNT)
 
     return parallelForEach(watchingBookmarkDescriptors, batchSize, Dispatchers.IO) { threadDescriptor ->
-      val site = siteManager.bySiteDescriptor(threadDescriptor.siteDescriptor())
+      val site = siteManager.bySiteDescriptorAndActive(threadDescriptor.siteDescriptor())
       if (site == null) {
         Logger.e(TAG, "Site with descriptor ${threadDescriptor.siteDescriptor()} " +
           "not found in siteRepository!")
@@ -71,7 +71,7 @@ class FetchThreadBookmarkInfoUseCase(
       .url(threadJsonEndpoint)
       .get()
 
-    siteManager.bySiteDescriptor(threadDescriptor.siteDescriptor())?.let { site ->
+    siteManager.bySiteDescriptorAndActive(threadDescriptor.siteDescriptor())?.let { site ->
       site.requestModifier().modifyCatalogOrThreadGetRequest(
         site = site,
         chanDescriptor = threadDescriptor,

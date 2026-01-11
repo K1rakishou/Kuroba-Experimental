@@ -39,7 +39,7 @@ class BoardsSetupPresenter(
       siteManager.awaitUntilInitialized()
       boardManager.awaitUntilInitialized()
 
-      val siteIsSynthetic = siteManager.bySiteDescriptor(siteDescriptor)?.isSynthetic
+      val siteIsSynthetic = siteManager.bySiteDescriptorAndActive(siteDescriptor)?.isSynthetic
         ?: false
 
       val boardsCount = boardManager.boardsCount(siteDescriptor)
@@ -69,7 +69,7 @@ class BoardsSetupPresenter(
       boardManager.awaitUntilInitialized()
       siteManager.awaitUntilInitialized()
 
-      val site = siteManager.bySiteDescriptor(siteDescriptor)
+      val site = siteManager.bySiteDescriptorAndActive(siteDescriptor)
       if (site == null) {
         setState(BoardsSetupControllerState.Error("No sites found by descriptor: ${siteDescriptor}"))
         return@launch
@@ -165,7 +165,7 @@ class BoardsSetupPresenter(
   }
 
   private suspend fun displayActiveBoardsInternal() {
-    val site = siteManager.bySiteDescriptor(siteDescriptor)
+    val site = siteManager.bySiteDescriptorAndActive(siteDescriptor)
     if (site == null) {
       setState(BoardsSetupControllerState.Error("Site with descriptor ${siteDescriptor} does not exist!"))
       return

@@ -96,7 +96,7 @@ class FutabaChanReader(
 
     builder.boardDescriptor(boardDescriptor)
 
-    val site = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
+    val site = siteManager.bySiteDescriptorAndActive(boardDescriptor.siteDescriptor)
       ?: return
 
     val board = boardManager.byBoardDescriptor(boardDescriptor)
@@ -414,7 +414,7 @@ class FutabaChanReader(
     requestUrl: String,
     responseBodyStream: InputStream,
   ): ModularResult<FilterWatchCatalogInfoObject> {
-    val endpoints = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
+    val endpoints = siteManager.bySiteDescriptorAndActive(boardDescriptor.siteDescriptor)
       ?.endpoints()
       ?: return ModularResult.error(SiteManager.SiteNotFoundException(boardDescriptor.siteDescriptor))
 

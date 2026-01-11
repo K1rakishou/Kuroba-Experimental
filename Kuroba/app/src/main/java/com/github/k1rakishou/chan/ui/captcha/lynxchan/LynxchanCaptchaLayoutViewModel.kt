@@ -105,7 +105,7 @@ class LynxchanCaptchaLayoutViewModel(
       return
     }
 
-    val site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+    val site = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
       ?: return
 
     if (site !is LynxchanSite) {
@@ -161,7 +161,7 @@ class LynxchanCaptchaLayoutViewModel(
         .url(verifyCaptchaEndpoint)
         .post(requestBody)
 
-      val site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+      val site = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
       if (site != null) {
         site.requestModifier().modifyCaptchaGetRequest(
           site = site,
@@ -225,7 +225,7 @@ class LynxchanCaptchaLayoutViewModel(
           .url(lynxchanCaptcha.bypassEndpoint)
           .get()
 
-        val site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+        val site = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
         if (site != null) {
           site.requestModifier().modifyCaptchaGetRequest(
             site = site,

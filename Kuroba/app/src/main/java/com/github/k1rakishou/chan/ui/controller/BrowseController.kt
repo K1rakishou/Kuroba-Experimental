@@ -1313,7 +1313,7 @@ class BrowseController(
       return
     }
 
-    val site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+    val site = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
     if (site == null) {
       Logger.e(TAG, "handleShareOrOpenInBrowser() site == null " +
         "(siteDescriptor = ${chanDescriptor.siteDescriptor()})")

@@ -173,7 +173,7 @@ class PostingServiceDelegate(
         return@withReentrantLock activeReplyDescriptors[chanDescriptor]!!.statusUpdates
       }
 
-      val replyMode = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+      val replyMode = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
         ?.getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
         ?.get()
         ?: ReplyMode.ReplyModeSolveCaptchaManually
@@ -398,7 +398,7 @@ class PostingServiceDelegate(
     Logger.d(TAG, "makeSubmitCall() chanDescriptor=${chanDescriptor}")
 
     val siteDescriptor = chanDescriptor.siteDescriptor()
-    val site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+    val site = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
 
     if (site == null) {
       Logger.e(TAG, "makeSubmitCall() siteManager.bySiteDescriptor($siteDescriptor) -> null")
@@ -839,7 +839,7 @@ class PostingServiceDelegate(
     chanDescriptor: ChanDescriptor,
     responsePostDescriptor: PostDescriptor
   ): Boolean {
-    val check4chanPostAcknowledged = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+    val check4chanPostAcknowledged = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
       ?.getSettingBySettingId<BooleanSetting>(SiteSetting.SiteSettingId.Check4chanPostAcknowledged)
       ?.get()
 
@@ -848,7 +848,7 @@ class PostingServiceDelegate(
       return true
     }
 
-    val site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+    val site = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
     if (site == null) {
       throw UnknownClientException("Unknown site: '${chanDescriptor.siteName()}'")
     }
@@ -1280,7 +1280,7 @@ class PostingServiceDelegate(
     // if the thread being presented has changed in the time waiting for this call to
     // complete, the loadable field in ReplyPresenter will be incorrect; reconstruct
     // the loadable (local to this method) from the reply response
-    val localSite = siteManager.bySiteDescriptor(siteDescriptor)
+    val localSite = siteManager.bySiteDescriptorAndActive(siteDescriptor)
     if (localSite == null) {
       Logger.e(TAG, "onPostedSuccessfully() localSite==null")
       return

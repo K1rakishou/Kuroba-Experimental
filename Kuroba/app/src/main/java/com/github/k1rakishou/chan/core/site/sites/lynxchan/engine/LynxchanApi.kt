@@ -59,7 +59,7 @@ open class LynxchanApi(
   ) {
     Logger.d(TAG, "loadThreadFresh($requestUrl)")
 
-    val site = siteManager.bySiteDescriptor(chanReaderProcessor.chanDescriptor.siteDescriptor())
+    val site = siteManager.bySiteDescriptorAndActive(chanReaderProcessor.chanDescriptor.siteDescriptor())
       ?: return
     val board = boardManager.byBoardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
       ?: return
@@ -98,7 +98,7 @@ open class LynxchanApi(
   ) {
     Logger.d(TAG, "loadCatalog($requestUrl)")
 
-    val site = siteManager.bySiteDescriptor(chanReaderProcessor.chanDescriptor.siteDescriptor())
+    val site = siteManager.bySiteDescriptorAndActive(chanReaderProcessor.chanDescriptor.siteDescriptor())
       ?: return
     val board = boardManager.byBoardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
       ?: return

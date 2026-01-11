@@ -96,7 +96,7 @@ open class VichanActions(
   ): ModularResult<Unit> {
     val siteDescriptor = replyChanDescriptor.siteDescriptor()
 
-    val site = siteManager.bySiteDescriptor(siteDescriptor)
+    val site = siteManager.bySiteDescriptorAndActive(siteDescriptor)
       ?: return ModularResult.error(CommonClientException("Site ${siteDescriptor} is disabled or not active"))
 
     val desktopUrl = site.resolvable().desktopUrl(replyChanDescriptor, null)?.toHttpUrl()

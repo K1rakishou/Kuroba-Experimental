@@ -165,7 +165,7 @@ internal class GlobalSearchPresenter(
     val selectedSiteDescriptor = selectedSiteDescriptor
       ?: sitesSupportingSearch.first()
 
-    val site = siteManager.bySiteDescriptor(selectedSiteDescriptor)
+    val site = siteManager.bySiteDescriptorAndActive(selectedSiteDescriptor)
     if (site == null) {
       setState(GlobalSearchControllerState.Error("Failed to find site for descriptor: ${selectedSiteDescriptor}"))
       return
@@ -197,7 +197,7 @@ internal class GlobalSearchPresenter(
   }
 
   private fun getDefaultSearchParameters(siteDescriptor: SiteDescriptor): SearchParameters? {
-    val searchType = siteManager.bySiteDescriptor(siteDescriptor)?.siteGlobalSearchType()
+    val searchType = siteManager.bySiteDescriptorAndActive(siteDescriptor)?.siteGlobalSearchType()
       ?: return null
 
     when (searchType) {

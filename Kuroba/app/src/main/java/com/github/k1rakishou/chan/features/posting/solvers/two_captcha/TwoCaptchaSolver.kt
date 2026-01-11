@@ -56,7 +56,7 @@ class TwoCaptchaSolver(
   }
 
   fun isSiteCurrentCaptchaTypeSupported(siteDescriptor: SiteDescriptor): Boolean {
-    val site = siteManager.bySiteDescriptor(siteDescriptor)
+    val site = siteManager.bySiteDescriptorAndActive(siteDescriptor)
     if (site == null) {
       return false
     }
@@ -98,7 +98,7 @@ class TwoCaptchaSolver(
 
       val siteDescriptor = chanDescriptor.siteDescriptor()
 
-      val site = siteManager.bySiteDescriptor(siteDescriptor)
+      val site = siteManager.bySiteDescriptorAndActive(siteDescriptor)
       if (site == null) {
         Logger.d(TAG, "solve() failed to find site by descriptor ${siteDescriptor}")
         return@Try TwoCaptchaResult.NotSupported(solverName = name, siteDescriptor = siteDescriptor)

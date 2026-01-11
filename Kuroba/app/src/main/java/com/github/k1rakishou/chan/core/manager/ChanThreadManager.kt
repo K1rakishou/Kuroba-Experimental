@@ -531,7 +531,7 @@ class ChanThreadManager(
       is ChanDescriptor.CompositeCatalogDescriptor -> error("Cannot use CompositeCatalogDescriptor here")
     }
 
-    val site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+    val site = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
     if (site == null) {
       val error = CommonClientException("Couldn't find site ${chanDescriptor.siteDescriptor()}")
       return ThreadLoadResult.Error(chanDescriptor, ChanLoaderException(error))
@@ -608,7 +608,7 @@ class ChanThreadManager(
       is ChanDescriptor.ThreadDescriptor -> {
         val siteDescriptor = chanDescriptor.siteDescriptor()
 
-        val postParser = siteManager.bySiteDescriptor(siteDescriptor)
+        val postParser = siteManager.bySiteDescriptorAndActive(siteDescriptor)
           ?.chanReader()
           ?.getParser()
 
@@ -656,7 +656,7 @@ class ChanThreadManager(
       is ChanDescriptor.CatalogDescriptor -> {
         val siteDescriptor = chanDescriptor.siteDescriptor()
 
-        val postParser = siteManager.bySiteDescriptor(siteDescriptor)
+        val postParser = siteManager.bySiteDescriptorAndActive(siteDescriptor)
           ?.chanReader()
           ?.getParser()
 

@@ -262,7 +262,7 @@ class ReplyLayoutState(
     }
 
     compositeJob += coroutineScope.launch {
-      val replyModeSetting = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+      val replyModeSetting = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
         ?.getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
 
       if (replyModeSetting == null) {
@@ -1032,7 +1032,7 @@ class ReplyLayoutState(
   fun updateCaptchaButtonVisibility() {
     val descriptor = chanDescriptor
 
-    val site = siteManager.bySiteDescriptor(descriptor.siteDescriptor())
+    val site = siteManager.bySiteDescriptorAndActive(descriptor.siteDescriptor())
       ?: return
 
     val replyMode = site
@@ -1375,7 +1375,7 @@ class ReplyLayoutState(
     // if the thread being presented has changed in the time waiting for this call to
     // complete, the loadable field in ReplyPresenter will be incorrect; reconstruct
     // the loadable (local to this method) from the reply response
-    val localSite = siteManager.bySiteDescriptor(siteDescriptor)
+    val localSite = siteManager.bySiteDescriptorAndActive(siteDescriptor)
     if (localSite == null) {
       Logger.error(TAG) {
         "onPostedSuccessfully(${prevChanDescriptor}) localSite is null"

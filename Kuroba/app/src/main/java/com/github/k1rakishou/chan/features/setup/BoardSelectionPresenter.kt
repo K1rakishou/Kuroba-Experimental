@@ -82,7 +82,7 @@ class BoardSelectionPresenter(
     }
 
     siteCellDataList.forEach { siteCellData ->
-      val site = siteManager.bySiteDescriptor(siteCellData.siteDescriptor)
+      val site = siteManager.bySiteDescriptorAndActive(siteCellData.siteDescriptor)
         ?: return@forEach
 
       val collectedCatalogCellData = if (site.siteFeature(Site.SiteFeature.CATALOG_COMPOSITION)) {

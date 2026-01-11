@@ -9,7 +9,7 @@ object SharingUtils {
 
   @JvmStatic
   fun getUrlForSharing(siteManager: SiteManager, chanDescriptor: ChanDescriptor): String? {
-    val site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+    val site = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
     if (site == null) {
       Logger.e(TAG, "getUrlForSharing() site == null (siteDescriptor = ${chanDescriptor.siteDescriptor()})")
       return null

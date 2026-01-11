@@ -86,7 +86,7 @@ class BoardArchiveViewModel(
     _state.value = AsyncData.Loading
     Logger.d(TAG, "loadPageOfArchiveThreads() catalogDescriptor: ${catalogDescriptor} page: ${page.value}")
 
-    val nativeArchivePostListResult = siteManager.bySiteDescriptor(catalogDescriptor.siteDescriptor())
+    val nativeArchivePostListResult = siteManager.bySiteDescriptorAndActive(catalogDescriptor.siteDescriptor())
       ?.actions()
       ?.archive(catalogDescriptor.boardDescriptor, page.value)
 

@@ -259,13 +259,13 @@ class KurobaSettingsImportUseCase(
 
       activateSiteSuspend(siteDescriptor)
 
-      val siteEnabled = siteManager.bySiteDescriptor(siteDescriptor)!!.enabled()
+      val siteEnabled = siteManager.bySiteDescriptorAndActive(siteDescriptor)!!.enabled()
       val active = siteManager.isSiteActive(siteDescriptor)
 
       Logger.d(TAG, "activateSitesAndLoadBoardInfo() $siteDescriptor activated " +
         "(siteEnabled=$siteEnabled, active=$active), loading boards")
 
-      val site = requireNotNull(siteManager.bySiteDescriptor(siteDescriptor)) {
+      val site = requireNotNull(siteManager.bySiteDescriptorAndActive(siteDescriptor)) {
         "siteManager.bySiteDescriptor returned null for $siteDescriptor"
       }
 

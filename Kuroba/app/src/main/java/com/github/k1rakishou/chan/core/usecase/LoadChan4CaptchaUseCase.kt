@@ -64,7 +64,7 @@ class LoadChan4CaptchaUseCase(
       .url(urlRaw)
       .get()
 
-    siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())?.let { chan4 ->
+    siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())?.let { chan4 ->
       chan4.requestModifier().modifyCaptchaGetRequest(chan4, requestBuilder)
     }
 
@@ -122,7 +122,7 @@ class LoadChan4CaptchaUseCase(
     chanDescriptor: ChanDescriptor,
     captchaResult: CaptchaResult
   ) {
-    val chan4CaptchaSettingsSetting = siteManager.bySiteDescriptor(Chan4.SITE_DESCRIPTOR)
+    val chan4CaptchaSettingsSetting = siteManager.bySiteDescriptorAndActive(Chan4.SITE_DESCRIPTOR)
       ?.getSettingBySettingId<GsonJsonSetting<Chan4CaptchaSettings>>(SiteSetting.SiteSettingId.Chan4CaptchaSettings)
       ?: return
 

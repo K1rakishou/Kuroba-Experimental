@@ -56,7 +56,7 @@ class DvachSearchRequest(
       return SearchResult.Success(searchParams, emptyList(), PageCursor.End, null)
     }
 
-    val endpoints = siteManager.bySiteDescriptor(Dvach.SITE_DESCRIPTOR)?.endpoints()
+    val endpoints = siteManager.bySiteDescriptorAndActive(Dvach.SITE_DESCRIPTOR)?.endpoints()
     val boardDescriptor = BoardDescriptor.create(Dvach.SITE_DESCRIPTOR, searchParams.boardCode)
 
     val searchPosts = dvachSearchResult.posts.map { dvachSearchPost ->

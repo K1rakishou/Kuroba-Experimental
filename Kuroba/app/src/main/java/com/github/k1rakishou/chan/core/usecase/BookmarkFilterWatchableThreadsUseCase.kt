@@ -462,7 +462,7 @@ class BookmarkFilterWatchableThreadsUseCase(
       .coerceAtLeast(MIN_BATCHES_COUNT)
 
     return parallelForEach(boardDescriptorsToCheck, batchSize, Dispatchers.IO) { boardDescriptor ->
-      val site = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
+      val site = siteManager.bySiteDescriptorAndActive(boardDescriptor.siteDescriptor)
       if (site == null) {
         Logger.e(TAG, "Site with descriptor ${boardDescriptor.siteDescriptor} " +
           "not found in siteRepository!")
@@ -492,7 +492,7 @@ class BookmarkFilterWatchableThreadsUseCase(
       .url(catalogJsonEndpoint)
       .get()
 
-    siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)?.let { site ->
+    siteManager.bySiteDescriptorAndActive(boardDescriptor.siteDescriptor)?.let { site ->
       site.requestModifier().modifyCatalogOrThreadGetRequest(
         site = site,
         chanDescriptor = ChanDescriptor.CatalogDescriptor.create(boardDescriptor),

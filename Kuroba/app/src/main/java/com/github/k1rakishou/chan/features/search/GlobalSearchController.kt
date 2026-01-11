@@ -256,7 +256,7 @@ class GlobalSearchController(
       subject: String,
       searchBoard: SearchBoard?,
     ): SearchParameters.AdvancedSearchParameters? {
-      val searchType = siteManager.bySiteDescriptor(siteDescriptor)?.siteGlobalSearchType()
+      val searchType = siteManager.bySiteDescriptorAndActive(siteDescriptor)?.siteGlobalSearchType()
         ?: return null
 
       when (searchType) {

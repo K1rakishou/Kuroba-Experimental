@@ -41,7 +41,7 @@ class GlobalSearchUseCase(
   private suspend fun doSearch(parameter: SearchParams): SearchResult {
     siteManager.awaitUntilInitialized()
 
-    val site = siteManager.bySiteDescriptor(parameter.siteDescriptor)
+    val site = siteManager.bySiteDescriptorAndActive(parameter.siteDescriptor)
     if (site == null) {
       Logger.e(TAG, "doSearch() Failed to find ${parameter.siteDescriptor}")
       return SearchResult.Failure(SearchError.SiteNotFound(parameter.siteDescriptor))

@@ -52,7 +52,7 @@ class Chan4CaptchaLayoutViewModel(
   private var captchaTtlUpdateJob: Job? = null
 
   val chan4CaptchaSettingsJson by lazy {
-    siteManager.bySiteDescriptor(Chan4.SITE_DESCRIPTOR)!!
+    siteManager.bySiteDescriptorAndActive(Chan4.SITE_DESCRIPTOR)!!
       .getSettingBySettingId<GsonJsonSetting<Chan4CaptchaSettings>>(SiteSetting.SiteSettingId.Chan4CaptchaSettings)!!
   }
 

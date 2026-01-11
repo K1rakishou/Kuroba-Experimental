@@ -83,7 +83,7 @@ class CaptchaContainerController(
   }
 
   private fun initAuthenticationInternal(useV2NoJsCaptcha: Boolean) {
-    val site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+    val site = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
     if (site == null) {
       showToast("Failed to find site by site descriptor ${chanDescriptor.siteDescriptor()}")
       pop()

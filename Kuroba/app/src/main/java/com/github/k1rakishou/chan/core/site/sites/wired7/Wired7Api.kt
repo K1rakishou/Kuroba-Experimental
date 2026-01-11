@@ -70,7 +70,7 @@ class Wired7Api(
     val builder = ChanPostBuilder()
     builder.boardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
 
-    val site = siteManager.bySiteDescriptor(chanReaderProcessor.chanDescriptor.siteDescriptor())
+    val site = siteManager.bySiteDescriptorAndActive(chanReaderProcessor.chanDescriptor.siteDescriptor())
       ?: return
     val board = boardManager.byBoardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
 
@@ -305,7 +305,7 @@ class Wired7Api(
     requestUrl: String,
     responseBodyStream: InputStream,
   ): ModularResult<FilterWatchCatalogInfoObject> {
-    val endpoints = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
+    val endpoints = siteManager.bySiteDescriptorAndActive(boardDescriptor.siteDescriptor)
       ?.endpoints()
       ?: return ModularResult.error(SiteManager.SiteNotFoundException(boardDescriptor.siteDescriptor))
 

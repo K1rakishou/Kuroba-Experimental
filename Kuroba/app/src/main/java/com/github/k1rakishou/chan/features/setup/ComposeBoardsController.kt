@@ -302,7 +302,7 @@ class ComposeBoardsController(
                 ) {
                   val imageLoaderRequest = remember(key1 = catalogCompositionSlot) {
                     val siteDescriptor = catalogCompositionSlot.catalogDescriptor.siteDescriptor()
-                    val iconUrl = siteManager.bySiteDescriptor(siteDescriptor)?.icon()?.url!!
+                    val iconUrl = siteManager.bySiteDescriptorAndActive(siteDescriptor)?.icon()?.url!!
 
                     val data = ImageLoaderRequestData.Url(
                       httpUrl = iconUrl,

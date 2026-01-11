@@ -48,7 +48,7 @@ class DvachApiV2(
   ) {
     Logger.d(TAG, "loadThreadFresh($requestUrl)")
 
-    val site = siteManager.bySiteDescriptor(chanReaderProcessor.chanDescriptor.siteDescriptor())
+    val site = siteManager.bySiteDescriptorAndActive(chanReaderProcessor.chanDescriptor.siteDescriptor())
       ?: return
     val board = boardManager.byBoardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
       ?: return
@@ -106,7 +106,7 @@ class DvachApiV2(
   ) {
     Logger.d(TAG, "loadThreadIncremental($requestUrl)")
 
-    val site = siteManager.bySiteDescriptor(chanReaderProcessor.chanDescriptor.siteDescriptor())
+    val site = siteManager.bySiteDescriptorAndActive(chanReaderProcessor.chanDescriptor.siteDescriptor())
       ?: return
     val board = boardManager.byBoardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
       ?: return
@@ -158,7 +158,7 @@ class DvachApiV2(
   ) {
     Logger.d(TAG, "loadCatalog($requestUrl)")
 
-    val site = siteManager.bySiteDescriptor(chanReaderProcessor.chanDescriptor.siteDescriptor())
+    val site = siteManager.bySiteDescriptorAndActive(chanReaderProcessor.chanDescriptor.siteDescriptor())
       ?: return
     val board = boardManager.byBoardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
 

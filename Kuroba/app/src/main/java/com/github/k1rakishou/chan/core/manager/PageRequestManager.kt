@@ -34,7 +34,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
-import java.util.*
+import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.TimeUnit
@@ -197,7 +197,7 @@ class PageRequestManager(
     launch {
       siteManager.awaitUntilInitialized()
 
-      val site = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
+      val site = siteManager.bySiteDescriptorAndActive(boardDescriptor.siteDescriptor)
       if (site == null) {
         Logger.e(TAG, "Couldn't find site by siteDescriptor (${boardDescriptor.siteDescriptor})")
         return@launch
@@ -240,7 +240,7 @@ class PageRequestManager(
 
       siteManager.awaitUntilInitialized()
 
-      val site = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
+      val site = siteManager.bySiteDescriptorAndActive(boardDescriptor.siteDescriptor)
       if (site == null) {
         Logger.e(TAG, "Couldn't find site by siteDescriptor (${boardDescriptor.siteDescriptor})")
         return

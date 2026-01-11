@@ -119,7 +119,7 @@ class ParsePostRepliesUseCase(
       return emptyMap()
     }
 
-    if (siteManager.bySiteDescriptor(threadDescriptor.siteDescriptor()) == null) {
+    if (siteManager.bySiteDescriptorAndActive(threadDescriptor.siteDescriptor()) == null) {
       return emptyMap()
     }
 

@@ -59,7 +59,7 @@ class AddBoardsPresenter(
       boardManager.awaitUntilInitialized()
       siteManager.awaitUntilInitialized()
 
-      val site = siteManager.bySiteDescriptor(siteDescriptor)
+      val site = siteManager.bySiteDescriptorAndActive(siteDescriptor)
       if (site == null) {
         loadingJob.cancel()
         setState(AddBoardsControllerState.Error("No site found by descriptor: ${siteDescriptor}"))

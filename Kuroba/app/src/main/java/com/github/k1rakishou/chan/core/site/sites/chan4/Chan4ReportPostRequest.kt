@@ -24,7 +24,7 @@ class Chan4ReportPostRequest(
     val selectedCategoryId = postReportData.catId
     val captchaInfo = postReportData.captchaInfo
 
-    val site = siteManager.bySiteDescriptor(postDescriptor.siteDescriptor())
+    val site = siteManager.bySiteDescriptorAndActive(postDescriptor.siteDescriptor())
       ?: return PostReportResult.Error("Site is not active")
 
     val endpoints = site.endpoints() as? Chan4.Chan4Endpoints

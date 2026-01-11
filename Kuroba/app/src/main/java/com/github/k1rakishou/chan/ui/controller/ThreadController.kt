@@ -369,7 +369,7 @@ abstract class ThreadController(
   }
 
   override fun openReportController(post: ChanPost) {
-    val site = siteManager.bySiteDescriptor(post.boardDescriptor.siteDescriptor)
+    val site = siteManager.bySiteDescriptorAndActive(post.boardDescriptor.siteDescriptor)
     if (site == null || navigationController == null) {
       return
     }
@@ -573,10 +573,7 @@ abstract class ThreadController(
       ?: return
 
     val supportedArchiveDescriptors = archivesManager.getSupportedArchiveDescriptors(descriptor)
-      .filter { archiveDescriptor ->
-        return@filter siteManager.bySiteDescriptor(archiveDescriptor.siteDescriptor)?.enabled()
-          ?: false
-      }
+      .filter { ad -> siteManager.bySiteDescriptor(ad.siteDescriptor)?.enabled() ?: false }
 
     if (supportedArchiveDescriptors.isEmpty()) {
       Logger.d(TAG, "showAvailableArchives($descriptor) supportedThreadDescriptors is empty")
@@ -723,6 +720,10 @@ abstract class ThreadController(
       postDescriptor.getThreadNo(),
       postDescriptor.postNo
     )
+
+    if (!siteManager.isSiteActive(externalArchivePostDescriptor.siteDescriptor())) {
+      siteManager.activateOrDeactivateSite(externalArchivePostDescriptor.siteDescriptor(), true)
+    }
 
     if (preview) {
       showPostsInExternalThread(

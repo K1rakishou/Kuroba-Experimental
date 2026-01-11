@@ -92,7 +92,7 @@ class ProxyEditorController(
     enableForFullMedia = view.findViewById(R.id.enable_for_full_media)
 
     siteRegistry.SITE_CLASSES_MAP.keys.forEach { siteDescriptor ->
-      if (siteManager.bySiteDescriptor(siteDescriptor)?.isSynthetic == true) {
+      if (siteManager.bySiteDescriptorAndActive(siteDescriptor)?.isSynthetic == true) {
         return@forEach
       }
 

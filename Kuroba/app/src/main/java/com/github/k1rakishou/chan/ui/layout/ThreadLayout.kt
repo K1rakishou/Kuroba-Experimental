@@ -100,7 +100,8 @@ import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl
-import java.util.*
+import java.util.Locale
+import java.util.UUID
 import javax.inject.Inject
 import kotlin.time.measureTimedValue
 
@@ -412,7 +413,7 @@ class ThreadLayout @JvmOverloads constructor(
     }
 
     val supportsPosting = chanDescriptor?.siteDescriptor()?.let { siteDescriptor ->
-      return@let siteManager.bySiteDescriptor(siteDescriptor)?.siteFeature(Site.SiteFeature.POSTING)
+      return@let siteManager.bySiteDescriptorAndActive(siteDescriptor)?.siteFeature(Site.SiteFeature.POSTING)
     } ?: false
 
     if (!supportsPosting) {

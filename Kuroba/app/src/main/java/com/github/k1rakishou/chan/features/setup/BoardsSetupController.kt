@@ -128,7 +128,7 @@ class BoardsSetupController(
   override fun onCreate() {
     super.onCreate()
 
-    val site = siteManager.bySiteDescriptor(siteDescriptor)!!
+    val site = siteManager.bySiteDescriptorAndActive(siteDescriptor)!!
     val syntheticSite = site.isSynthetic
 
     updateNavigationFlags(

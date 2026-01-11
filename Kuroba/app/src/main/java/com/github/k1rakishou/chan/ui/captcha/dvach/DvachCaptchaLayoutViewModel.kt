@@ -90,7 +90,7 @@ class DvachCaptchaLayoutViewModel(
   }
 
   suspend fun onEmojiKeyboardKeyClicked(keyIndex: Int, captchaInfo: CaptchaInfo.Emoji): String? {
-    val dvach = siteManager.bySiteDescriptor(Dvach.SITE_DESCRIPTOR) as? Dvach
+    val dvach = siteManager.bySiteDescriptorAndActive(Dvach.SITE_DESCRIPTOR) as? Dvach
     if (dvach == null) {
       return null
     }
@@ -197,7 +197,7 @@ class DvachCaptchaLayoutViewModel(
       .url(captchaUrl)
       .get()
 
-    val dvach = siteManager.bySiteDescriptor(Dvach.SITE_DESCRIPTOR) as? Dvach
+    val dvach = siteManager.bySiteDescriptorAndActive(Dvach.SITE_DESCRIPTOR) as? Dvach
     if (dvach == null) {
       throw DvachCaptchaError("Site ${Dvach.SITE_DESCRIPTOR} is not supported")
     }
@@ -350,7 +350,7 @@ class DvachCaptchaLayoutViewModel(
     ) : CaptchaInfo {
 
       fun fullRequestUrl(siteManager: SiteManager): HttpUrl? {
-        val dvach = siteManager.bySiteDescriptor(Dvach.SITE_DESCRIPTOR) as? Dvach
+        val dvach = siteManager.bySiteDescriptorAndActive(Dvach.SITE_DESCRIPTOR) as? Dvach
           ?: return null
 
         return "${dvach.domainString}/api/captcha/2chcaptcha/show?id=$id".toHttpUrl()

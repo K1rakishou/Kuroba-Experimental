@@ -11,7 +11,7 @@ class ClearPostingCookies(
   fun perform(siteDescriptor: SiteDescriptor) {
     Logger.debug(TAG) { "perform(${siteDescriptor})" }
 
-    siteManager.bySiteDescriptor(siteDescriptor)
+    siteManager.bySiteDescriptorAndActive(siteDescriptor)
       ?.actions()
       ?.clearPostingCookies()
   }

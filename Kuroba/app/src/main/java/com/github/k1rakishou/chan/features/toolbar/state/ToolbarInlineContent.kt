@@ -49,7 +49,7 @@ internal fun ResolveInlinedContent(
 
       val siteDescriptor = SiteDescriptor.create(siteName)
 
-      if (siteManager.bySiteDescriptor(siteDescriptor) == null) {
+      if (siteManager.bySiteDescriptorAndActive(siteDescriptor) == null) {
         return@mapNotNull null
       }
 
@@ -91,7 +91,7 @@ private fun SiteIconInlinedContent(
     initialValue = null,
     key1 = siteDescriptor,
     producer = {
-      val site = siteManager.bySiteDescriptor(siteDescriptor)
+      val site = siteManager.bySiteDescriptorAndActive(siteDescriptor)
       if (site == null) {
         value = null
         return@produceState

@@ -47,7 +47,7 @@ class PasscodeDependantMaxAttachablesTotalSize(
   override suspend fun getMaxTotalAttachablesSize(params: PostAttachlesMaxTotalSize.Params): Long? {
     val boardDescriptor = params.boardDescriptor
 
-    val site = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
+    val site = siteManager.bySiteDescriptorAndActive(boardDescriptor.siteDescriptor)
     if (site != null && site.actions().isLoggedIn()) {
       val getPasscodeInfoResult = site.actions().getOrRefreshPasscodeInfo(resetCached = false)
       if (getPasscodeInfoResult !is SiteActions.GetPasscodeInfoResult.Success) {
@@ -98,7 +98,7 @@ class PasscodeDependantAttachablesCount(
   override suspend fun getMaxAllowedAttachablesPerPost(params: PostAttachableLimitation.Params): Int {
     val siteDescriptor = params.boardDescriptor.siteDescriptor
 
-    val site = siteManager.bySiteDescriptor(siteDescriptor)
+    val site = siteManager.bySiteDescriptorAndActive(siteDescriptor)
     if (site == null) {
       Logger.d(TAG, "Site not found by siteDescriptor='$siteDescriptor'")
       return defaultMaxAttachablesPerPost

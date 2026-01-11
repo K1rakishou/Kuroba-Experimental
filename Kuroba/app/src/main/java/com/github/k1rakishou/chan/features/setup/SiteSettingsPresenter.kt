@@ -44,7 +44,7 @@ class SiteSettingsPresenter(
       siteManager.awaitUntilInitialized()
       boardManager.awaitUntilInitialized()
 
-      val site = siteManager.bySiteDescriptor(siteDescriptor)
+      val site = siteManager.bySiteDescriptorAndActive(siteDescriptor)
       if (site == null) {
         withView {
           val message = context.getString(R.string.site_settings_not_site_found, siteDescriptor.siteName)
@@ -252,7 +252,7 @@ class SiteSettingsPresenter(
           identifier = SiteSettingsScreen.GeneralGroup.SetUpBoards,
           topDescriptionStringFunc = { "Set up boards" },
           bottomDescriptionStringFunc = {
-            val isCatalogCompositionSite = siteManager.bySiteDescriptor(siteDescriptor)
+            val isCatalogCompositionSite = siteManager.bySiteDescriptorAndActive(siteDescriptor)
               ?.siteFeature(Site.SiteFeature.CATALOG_COMPOSITION) == true
 
             if (isCatalogCompositionSite) {
@@ -262,7 +262,7 @@ class SiteSettingsPresenter(
             }
           },
           callback = {
-            val site = siteManager.bySiteDescriptor(siteDescriptor)
+            val site = siteManager.bySiteDescriptorAndActive(siteDescriptor)
             if (site == null) {
               Logger.d(TAG, "Site ${siteDescriptor} does not exist")
               return@createBuilder

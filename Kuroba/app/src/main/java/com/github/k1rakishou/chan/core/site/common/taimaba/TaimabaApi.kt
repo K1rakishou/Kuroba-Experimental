@@ -26,7 +26,6 @@ import org.jsoup.parser.Parser
 import java.io.IOException
 import java.io.InputStream
 import java.io.InputStreamReader
-import java.util.*
 import kotlin.math.max
 
 @Suppress("BlockingMethodInNonBlockingContext")
@@ -69,7 +68,7 @@ class TaimabaApi(
     val builder = ChanPostBuilder()
     builder.boardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
 
-    val site = siteManager.bySiteDescriptor(chanReaderProcessor.chanDescriptor.siteDescriptor())
+    val site = siteManager.bySiteDescriptorAndActive(chanReaderProcessor.chanDescriptor.siteDescriptor())
       ?: return
     val board = boardManager.byBoardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
 
@@ -311,7 +310,7 @@ class TaimabaApi(
     requestUrl: String,
     responseBodyStream: InputStream,
   ): ModularResult<FilterWatchCatalogInfoObject> {
-    val endpoints = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
+    val endpoints = siteManager.bySiteDescriptorAndActive(boardDescriptor.siteDescriptor)
       ?.endpoints()
       ?: return ModularResult.error(SiteManager.SiteNotFoundException(boardDescriptor.siteDescriptor))
 

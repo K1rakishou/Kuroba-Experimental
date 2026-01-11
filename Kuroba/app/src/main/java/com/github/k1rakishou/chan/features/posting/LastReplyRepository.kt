@@ -137,7 +137,7 @@ class LastReplyRepository(
   ): Long {
     Logger.d(TAG, "getTimeUntilNextThreadCreationOrReply($chanDescriptor, $replyMode)")
 
-    val ignoreReplyCooldowns = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+    val ignoreReplyCooldowns = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
       ?.getSettingBySettingId<BooleanSetting>(SiteSetting.SiteSettingId.IgnoreReplyCooldowns)
       ?.get()
 
@@ -173,7 +173,7 @@ class LastReplyRepository(
       return 0L
     }
 
-    val site = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
+    val site = siteManager.bySiteDescriptorAndActive(boardDescriptor.siteDescriptor)
     if (site == null) {
       Logger.d(TAG, "getTimeUntilReply($boardDescriptor, $replyMode) site (${boardDescriptor.siteDescriptor}) == null")
       return 0L
@@ -238,7 +238,7 @@ class LastReplyRepository(
       return 0L
     }
 
-    val site = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
+    val site = siteManager.bySiteDescriptorAndActive(boardDescriptor.siteDescriptor)
     if (site == null) {
       Logger.d(TAG, "getTimeUntilNewThread($boardDescriptor, $replyMode) " +
         "site (${boardDescriptor.siteDescriptor}) == null")

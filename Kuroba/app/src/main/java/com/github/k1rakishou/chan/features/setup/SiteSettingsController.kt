@@ -66,7 +66,7 @@ class SiteSettingsController(
       newNavigationFlags = DeprecatedNavigationFlags()
     )
 
-    val siteName = siteManager.bySiteDescriptor(siteDescriptor)
+    val siteName = siteManager.bySiteDescriptorAndActive(siteDescriptor)
       ?.name()
       ?: siteDescriptor.siteName
 

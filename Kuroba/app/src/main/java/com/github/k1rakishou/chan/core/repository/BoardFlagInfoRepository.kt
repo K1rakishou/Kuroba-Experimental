@@ -77,7 +77,7 @@ class BoardFlagInfoRepository(
   }
 
   fun getLastUsedFlagKey(boardDescriptor: BoardDescriptor): String? {
-    val lastUsedCountryFlagPerBoardSetting = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
+    val lastUsedCountryFlagPerBoardSetting = siteManager.bySiteDescriptorAndActive(boardDescriptor.siteDescriptor)
       ?.getSettingBySettingId<StringSetting>(SiteSetting.SiteSettingId.LastUsedCountryFlagPerBoard)
       ?: return null
 
@@ -88,7 +88,7 @@ class BoardFlagInfoRepository(
   }
 
   fun getLastUsedFlagInfo(boardDescriptor: BoardDescriptor): LoadBoardFlagsUseCase.FlagInfo? {
-    val lastUsedCountryFlagPerBoardSetting = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
+    val lastUsedCountryFlagPerBoardSetting = siteManager.bySiteDescriptorAndActive(boardDescriptor.siteDescriptor)
       ?.getSettingBySettingId<StringSetting>(SiteSetting.SiteSettingId.LastUsedCountryFlagPerBoard)
       ?: return null
 

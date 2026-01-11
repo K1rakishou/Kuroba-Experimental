@@ -41,7 +41,7 @@ class FirewallBypassManager(
   suspend fun removeHostTimeCheckByChanDescriptor(chanDescriptor: ChanDescriptor) {
     siteManager.awaitUntilInitialized()
 
-    val domainOrHost = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+    val domainOrHost = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
       ?.resolvable()
       ?.desktopUrl(chanDescriptor, null)
       ?.toHttpUrlOrNull()

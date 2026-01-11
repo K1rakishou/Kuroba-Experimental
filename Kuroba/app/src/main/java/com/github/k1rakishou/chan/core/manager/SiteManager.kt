@@ -193,6 +193,13 @@ open class SiteManager(
     }
   }
 
+  fun isSiteEnabled(siteDescriptor: SiteDescriptor): Boolean {
+    check(isReady()) { "SiteManager is not ready yet! Use awaitUntilInitialized()" }
+    ensureSitesAndOrdersConsistency()
+
+    return lock.read { siteMap[siteDescriptor]?.enabled() ?: false }
+  }
+
   fun areSitesSetup(): Boolean {
     check(isReady()) { "SiteManager is not ready yet! Use awaitUntilInitialized()" }
     ensureSitesAndOrdersConsistency()
@@ -215,7 +222,7 @@ open class SiteManager(
     }
   }
 
-  open fun bySiteDescriptor(siteDescriptor: SiteDescriptor): Site? {
+  fun bySiteDescriptorAndActive(siteDescriptor: SiteDescriptor): Site? {
     check(isReady()) { "SiteManager is not ready yet! Use awaitUntilInitialized()" }
     ensureSitesAndOrdersConsistency()
 
@@ -226,6 +233,13 @@ open class SiteManager(
 
       return@read siteMap[siteDescriptor]
     }
+  }
+
+  fun bySiteDescriptor(siteDescriptor: SiteDescriptor): Site? {
+    check(isReady()) { "SiteManager is not ready yet! Use awaitUntilInitialized()" }
+    ensureSitesAndOrdersConsistency()
+
+    return lock.read { siteMap[siteDescriptor] }
   }
 
   fun viewSitesOrdered(viewer: (ChanSiteData, Site) -> Boolean) {

@@ -115,7 +115,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
-import java.util.*
+import java.util.Locale
+import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
@@ -1343,7 +1344,7 @@ class ThreadPresenter @Inject constructor(
     // Create new
     when (localChanDescriptor) {
       is ChanDescriptor.CatalogDescriptor -> {
-        val site = siteManager.bySiteDescriptor(localChanDescriptor.siteDescriptor())
+        val site = siteManager.bySiteDescriptorAndActive(localChanDescriptor.siteDescriptor())
           ?: return
 
         val siteIconUrl = site.icon().url!!
@@ -1371,7 +1372,7 @@ class ThreadPresenter @Inject constructor(
           ?.actualThumbnailUrl
 
         if (opThumbnailUrl == null) {
-          opThumbnailUrl = siteManager.bySiteDescriptor(localChanDescriptor.siteDescriptor())?.icon()?.url
+          opThumbnailUrl = siteManager.bySiteDescriptorAndActive(localChanDescriptor.siteDescriptor())?.icon()?.url
         }
 
         val title = ChanPostUtils.getTitle(
@@ -1715,7 +1716,7 @@ class ThreadPresenter @Inject constructor(
     val chanDescriptor = currentChanDescriptor
       ?: return
 
-    val site = siteManager.bySiteDescriptor(post.postDescriptor.siteDescriptor())
+    val site = siteManager.bySiteDescriptorAndActive(post.postDescriptor.siteDescriptor())
 
     if (chanDescriptor is ChanDescriptor.ICatalogDescriptor) {
       val threadDescriptor = post.postDescriptor.threadDescriptor()
@@ -1759,7 +1760,7 @@ class ThreadPresenter @Inject constructor(
     }
 
     val siteDescriptor = post.postDescriptor.boardDescriptor().siteDescriptor
-    val containsSite = siteManager.bySiteDescriptor(siteDescriptor) != null
+    val containsSite = siteManager.bySiteDescriptorAndActive(siteDescriptor) != null
 
     if (site?.siteFeature(Site.SiteFeature.POST_DELETE) == true) {
       if (containsSite && !post.isOP()) {
@@ -1914,7 +1915,7 @@ class ThreadPresenter @Inject constructor(
           )
         }
         POST_OPTION_OPEN_BROWSER -> if (isBound) {
-          val site = siteManager.bySiteDescriptor(post.postDescriptor.siteDescriptor())
+          val site = siteManager.bySiteDescriptorAndActive(post.postDescriptor.siteDescriptor())
             ?: return@post
 
           val url = site.resolvable().desktopUrl(post.postDescriptor.descriptor, post.postNo())
@@ -1931,7 +1932,7 @@ class ThreadPresenter @Inject constructor(
           }
         }
         POST_OPTION_SHARE -> if (isBound) {
-          val site = siteManager.bySiteDescriptor(post.postDescriptor.siteDescriptor())
+          val site = siteManager.bySiteDescriptorAndActive(post.postDescriptor.siteDescriptor())
             ?: return@post
 
           val url = site.resolvable().desktopUrl(post.postDescriptor.descriptor, post.postNo())
@@ -2069,7 +2070,7 @@ class ThreadPresenter @Inject constructor(
 
       Logger.d(TAG, "onPostLinkableLongClicked, postDescriptor: ${post.postDescriptor}, linkable: '${linkable}'")
 
-      val site = siteManager.bySiteDescriptor(post.postDescriptor.siteDescriptor())
+      val site = siteManager.bySiteDescriptorAndActive(post.postDescriptor.siteDescriptor())
         ?: return@post
 
       val floatingListMenuItems = mutableListOf<FloatingListMenuItem>()
@@ -2557,7 +2558,7 @@ class ThreadPresenter @Inject constructor(
   }
 
   private fun requestDeletePost(post: ChanPost) {
-    if (siteManager.bySiteDescriptor(post.postDescriptor.boardDescriptor().siteDescriptor) == null) {
+    if (siteManager.bySiteDescriptorAndActive(post.postDescriptor.boardDescriptor().siteDescriptor) == null) {
       return
     }
 
@@ -2570,7 +2571,7 @@ class ThreadPresenter @Inject constructor(
   @Suppress("MoveVariableDeclarationIntoWhen")
   fun deletePostConfirmed(post: ChanPost, onlyImageDelete: Boolean) {
     launch {
-      val site = siteManager.bySiteDescriptor(post.postDescriptor.boardDescriptor().siteDescriptor)
+      val site = siteManager.bySiteDescriptorAndActive(post.postDescriptor.boardDescriptor().siteDescriptor)
         ?: return@launch
 
       threadPresenterCallback?.showDeleting()
@@ -2652,7 +2653,7 @@ class ThreadPresenter @Inject constructor(
       }
     }
 
-    siteManager.bySiteDescriptor(post.postDescriptor.siteDescriptor())?.let { site ->
+    siteManager.bySiteDescriptorAndActive(post.postDescriptor.siteDescriptor())?.let { site ->
       text
         .append("Full post link: ")
         .append(site.resolvable().desktopUrl(descriptor, post.postDescriptor.postNo))
@@ -2939,7 +2940,7 @@ class ThreadPresenter @Inject constructor(
   }
 
   fun replyModeForChanDescriptor(chanDescriptor: ChanDescriptor): ReplyMode? {
-    return siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+    return siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
       ?.getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
       ?.get()
   }

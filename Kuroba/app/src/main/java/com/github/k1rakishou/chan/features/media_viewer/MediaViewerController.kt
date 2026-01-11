@@ -880,7 +880,7 @@ class MediaViewerController(
     val requestProps = mutableMapOf<String, String>()
 
     siteDescriptors.forEach { siteDescriptor ->
-      val site = siteManager.bySiteDescriptor(siteDescriptor)
+      val site = siteManager.bySiteDescriptorAndActive(siteDescriptor)
       if (site != null) {
         site.requestModifier().modifyVideoStreamRequest(site, requestProps, remoteMediaLocation.url)
       }

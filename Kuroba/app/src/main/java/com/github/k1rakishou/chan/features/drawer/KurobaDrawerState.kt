@@ -331,7 +331,7 @@ class KurobaDrawerState(
     }
 
     val siteThumbnailUrl = if (descriptor is ChanDescriptor.ThreadDescriptor) {
-      siteManager.bySiteDescriptor(descriptor.siteDescriptor())?.icon()?.url
+      siteManager.bySiteDescriptorAndActive(descriptor.siteDescriptor())?.icon()?.url
     } else {
       null
     }

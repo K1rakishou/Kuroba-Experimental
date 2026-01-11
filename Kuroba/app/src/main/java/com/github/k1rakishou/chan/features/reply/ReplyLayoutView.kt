@@ -51,7 +51,7 @@ import com.github.k1rakishou.prefs.BooleanSetting
 import com.github.k1rakishou.prefs.OptionsSetting
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import java.util.*
+import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 
@@ -379,7 +379,7 @@ class ReplyLayoutView @JvmOverloads constructor(
     val chanDescriptor = replyLayoutViewModel.boundChanDescriptor.value
       ?: return
 
-    val prevReplyMode = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+    val prevReplyMode = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
       ?.getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
       ?.get()
       ?: ReplyMode.Unknown
@@ -597,11 +597,11 @@ class ReplyLayoutView @JvmOverloads constructor(
     val menuItems = mutableListOf<FloatingListMenuItem>()
     val availableReplyModes = buildReplyModeOptions(chanDescriptor, prevReplyMode)
 
-    val ignoreReplyCooldowns = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+    val ignoreReplyCooldowns = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
       ?.getSettingBySettingId<BooleanSetting>(SiteSetting.SiteSettingId.IgnoreReplyCooldowns)
-    val lastUsedReplyMode = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+    val lastUsedReplyMode = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
       ?.getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
-    val check4chanPostAcknowledgedSetting = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+    val check4chanPostAcknowledgedSetting = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
       ?.getSettingBySettingId<BooleanSetting>(SiteSetting.SiteSettingId.Check4chanPostAcknowledged)
 
     menuItems += FloatingListMenuItem(
@@ -666,7 +666,7 @@ class ReplyLayoutView @JvmOverloads constructor(
     prevReplyMode: ReplyMode
   ): MutableList<FloatingListMenuItem> {
     val availableReplyModes = mutableListOf<FloatingListMenuItem>()
-    val site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+    val site = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
     val groupId = "reply_mode"
 
     if (site?.actions()?.postAuthenticate()?.type != SiteAuthentication.Type.NONE) {

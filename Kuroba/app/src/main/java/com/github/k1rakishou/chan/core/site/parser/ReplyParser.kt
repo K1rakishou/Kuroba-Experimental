@@ -62,7 +62,7 @@ class ReplyParser(
   }
 
   private fun getQuotePatterns(siteDescriptor: SiteDescriptor): QuotePatterns? {
-    val site = siteManager.bySiteDescriptor(siteDescriptor)
+    val site = siteManager.bySiteDescriptorAndActive(siteDescriptor)
       ?: return null
 
     val commentParser = parserRepository.getCommentParser(site.commentParserType())

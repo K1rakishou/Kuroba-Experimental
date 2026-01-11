@@ -45,7 +45,7 @@ class ThreadDownloaderPersistPostsInDatabaseUseCase(
   ): DownloadResult {
     Logger.d(TAG, "downloadThreadPosts($ownerThreadDatabaseId, $threadDescriptor, $isReloadingAfter404)")
 
-    val site = siteManager.bySiteDescriptor(threadDescriptor.siteDescriptor())
+    val site = siteManager.bySiteDescriptorAndActive(threadDescriptor.siteDescriptor())
       ?: throw ThreadDownloadException("No site found by siteDescriptor ${threadDescriptor.siteDescriptor()}")
 
     val chanLoadUrl = chanThreadLoaderCoordinator.get().getChanUrl(

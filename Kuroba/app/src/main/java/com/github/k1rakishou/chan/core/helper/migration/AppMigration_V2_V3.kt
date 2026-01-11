@@ -26,7 +26,7 @@ class AppMigration_V2_V3 : ApplicationMigration {
     countDownLatch.await()
 
     for (siteDescriptor in SiteRegistry.SITE_CLASSES_MAP.keys) {
-      val site = siteManager.bySiteDescriptor(siteDescriptor)
+      val site = siteManager.bySiteDescriptorAndActive(siteDescriptor)
       if (site == null || site.isSynthetic) {
         Logger.debug(TAG) { "Skipping ${siteDescriptor} site." }
         continue

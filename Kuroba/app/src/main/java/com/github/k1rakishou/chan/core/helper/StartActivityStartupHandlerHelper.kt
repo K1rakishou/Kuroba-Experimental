@@ -201,7 +201,7 @@ class StartActivityStartupHandlerHelper(
         return null
       }
 
-      val isCompositeCatalogsSite = siteManager.bySiteDescriptor(siteDescriptor)
+      val isCompositeCatalogsSite = siteManager.bySiteDescriptorAndActive(siteDescriptor)
         ?.siteFeature(Site.SiteFeature.CATALOG_COMPOSITION) == true
 
       if (isCompositeCatalogsSite) {
@@ -239,7 +239,7 @@ class StartActivityStartupHandlerHelper(
     if (catalogDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
       Logger.d(TAG, "getCatalogToOpen() -> catalogDescriptor is CompositeCatalogDescriptor")
 
-      val siteEnabled = siteManager.bySiteDescriptor(CompositeCatalogSite.SITE_DESCRIPTOR)
+      val siteEnabled = siteManager.bySiteDescriptorAndActive(CompositeCatalogSite.SITE_DESCRIPTOR)
         ?.enabled()
         ?: false
 
@@ -277,7 +277,7 @@ class StartActivityStartupHandlerHelper(
   private suspend fun checkSiteExistsAndActive(tag: String, boardDescriptor: BoardDescriptor): Boolean {
     siteManager.awaitUntilInitialized()
 
-    val site = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
+    val site = siteManager.bySiteDescriptorAndActive(boardDescriptor.siteDescriptor)
     if (site == null) {
       Logger.d(TAG, "$tag siteManager.bySiteDescriptor(${boardDescriptor.siteDescriptor}) == null")
       return false
@@ -491,7 +491,7 @@ class StartActivityStartupHandlerHelper(
 
     siteManager.awaitUntilInitialized()
 
-    siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+    siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
       ?: return null
 
     boardManager.awaitUntilInitialized()

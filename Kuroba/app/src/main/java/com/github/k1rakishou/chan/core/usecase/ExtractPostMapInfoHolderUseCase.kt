@@ -252,7 +252,7 @@ class ExtractPostMapInfoHolderUseCase(
     }
 
     val siteDescriptor = postDescriptors.first().siteDescriptor()
-    if (siteManager.bySiteDescriptor(siteDescriptor) == null) {
+    if (siteManager.bySiteDescriptorAndActive(siteDescriptor) == null) {
       return emptyList()
     }
 
@@ -299,7 +299,7 @@ class ExtractPostMapInfoHolderUseCase(
     }
 
     val siteDescriptor = postDescriptors.first().siteDescriptor()
-    if (siteManager.bySiteDescriptor(siteDescriptor) == null) {
+    if (siteManager.bySiteDescriptorAndActive(siteDescriptor) == null) {
       return emptyList()
     }
 

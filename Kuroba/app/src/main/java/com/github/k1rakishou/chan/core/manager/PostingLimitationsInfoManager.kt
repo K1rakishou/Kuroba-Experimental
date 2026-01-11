@@ -12,7 +12,7 @@ class PostingLimitationsInfoManager(
 ) {
 
   suspend fun refresh(siteDescriptor: SiteDescriptor): ModularResult<Boolean> {
-    val site = siteManager.bySiteDescriptor(siteDescriptor)
+    val site = siteManager.bySiteDescriptorAndActive(siteDescriptor)
     if (site == null) {
       return ModularResult.value(false)
     }
@@ -40,7 +40,7 @@ class PostingLimitationsInfoManager(
   }
 
   suspend fun getMaxAllowedFilesPerPost(boardDescriptor: BoardDescriptor): Int? {
-    val site = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
+    val site = siteManager.bySiteDescriptorAndActive(boardDescriptor.siteDescriptor)
     if (site == null) {
       return null
     }
@@ -52,7 +52,7 @@ class PostingLimitationsInfoManager(
   }
 
   suspend fun getMaxAllowedTotalFilesSizePerPost(boardDescriptor: BoardDescriptor): Long? {
-    val site = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
+    val site = siteManager.bySiteDescriptorAndActive(boardDescriptor.siteDescriptor)
     if (site == null) {
       return null
     }
