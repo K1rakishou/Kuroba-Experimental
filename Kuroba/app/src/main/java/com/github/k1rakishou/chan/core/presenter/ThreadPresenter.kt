@@ -1525,6 +1525,13 @@ class ThreadPresenter @Inject constructor(
   }
 
   fun scrollToPost(needle: PostDescriptor) {
+    val displayingChanDescriptor = threadPresenterCallback?.chanDescriptor
+    if (displayingChanDescriptor == null || displayingChanDescriptor != needle.descriptor) {
+      Logger.d(TAG, "scrollToPost($needle) chanDescriptors do not match " +
+        "(displaying: ${displayingChanDescriptor}, needle.descriptor: ${needle.descriptor})")
+      return
+    }
+
     val posts = threadPresenterCallback?.displayingPostDescriptorsInThread
     if (posts == null || posts.isEmpty()) {
       Logger.e(TAG, "scrollToPost($needle) posts are null or empty")
@@ -2952,6 +2959,7 @@ class ThreadPresenter @Inject constructor(
   }
 
   interface ThreadPresenterCallback {
+    val chanDescriptor: ChanDescriptor?
     val displayingPostDescriptors: List<PostDescriptor>
     val displayingPostDescriptorsInThread: List<PostDescriptor>
     val currentPosition: IndexAndTop?
