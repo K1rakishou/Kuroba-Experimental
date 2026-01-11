@@ -118,7 +118,9 @@ fun <ItemInfo : LazyItemInfoWrapper, LayoutInfo : LazyLayoutInfoWrapper<ItemInfo
   scrollbarThumbColorDragged: Color,
   contentPadding: PaddingValues,
   scrollbarManualDragProgress: Float? = null,
-  isScrollInProgress: (LazyStateWrapper<ItemInfo, LayoutInfo>) -> Boolean = { lazyListState -> lazyListState.isScrollInProgress }
+  isScrollInProgress: (LazyStateWrapper<ItemInfo, LayoutInfo>) -> Boolean = { lazyListState ->
+    lazyListState.isScrollInProgress
+  }
 ): Modifier {
   return composed(
     inspectorInfo = debugInspectorInfo {
@@ -201,7 +203,8 @@ fun <ItemInfo : LazyItemInfoWrapper, LayoutInfo : LazyLayoutInfoWrapper<ItemInfo
 
       val scrollbarSizeAnimatedState = when (scrollbarDimens) {
         is ScrollbarDimens.Horizontal -> {
-          val scrollbarHeightPx = if (isScrollInProgress(lazyStateWrapper) || isScrollbarDragged) scrollbarDimens.height else 0
+          val scrollbarHeightPx =
+            if (isScrollInProgress(lazyStateWrapper) || isScrollbarDragged) scrollbarDimens.height else 0
 
           animateIntAsState(
             targetValue = scrollbarHeightPx,
@@ -212,7 +215,8 @@ fun <ItemInfo : LazyItemInfoWrapper, LayoutInfo : LazyLayoutInfoWrapper<ItemInfo
           )
         }
         is ScrollbarDimens.Vertical -> {
-          val scrollbarWidthPx = if (isScrollInProgress(lazyStateWrapper) || isScrollbarDragged) scrollbarDimens.width else 0
+          val scrollbarWidthPx =
+            if (isScrollInProgress(lazyStateWrapper) || isScrollbarDragged) scrollbarDimens.width else 0
 
           animateIntAsState(
             targetValue = scrollbarWidthPx,
@@ -269,7 +273,10 @@ fun <ItemInfo : LazyItemInfoWrapper, LayoutInfo : LazyLayoutInfoWrapper<ItemInfo
               drawRect(
                 color = scrollbarTrackColor,
                 topLeft = Offset(leftPaddingPx, offsetY),
-                size = Size(this.size.width - (leftPaddingPx + rightPaddingPx), scrollbarSizeAnimatedState.value.toFloat()),
+                size = Size(
+                  width = this.size.width - (leftPaddingPx + rightPaddingPx),
+                  height = scrollbarSizeAnimatedState.value.toFloat()
+                ),
                 alpha = trackAlphaAnimated.value
               )
 
@@ -403,7 +410,10 @@ fun Modifier.scrollbar(
   }
 }
 
-private fun <ItemInfo : LazyItemInfoWrapper, LayoutInfo : LazyLayoutInfoWrapper<ItemInfo>> ContentDrawScope.calculateDynamicScrollbarWidth(
+private fun <
+  ItemInfo : LazyItemInfoWrapper,
+  LayoutInfo : LazyLayoutInfoWrapper<ItemInfo>
+> ContentDrawScope.calculateDynamicScrollbarWidth(
   leftPaddingPx: Float,
   rightPaddingPx: Float,
   lazyStateWrapper: LazyStateWrapper<ItemInfo, LayoutInfo>,
@@ -431,7 +441,10 @@ private fun <ItemInfo : LazyItemInfoWrapper, LayoutInfo : LazyLayoutInfoWrapper<
   return Pair(scrollbarOffsetX, scrollbarWidthAdjusted)
 }
 
-private fun <ItemInfo : LazyItemInfoWrapper, LayoutInfo : LazyLayoutInfoWrapper<ItemInfo>> ContentDrawScope.calculateDynamicScrollbarHeight(
+private fun <
+  ItemInfo : LazyItemInfoWrapper,
+  LayoutInfo : LazyLayoutInfoWrapper<ItemInfo>
+> ContentDrawScope.calculateDynamicScrollbarHeight(
   topPaddingPx: Float,
   bottomPaddingPx: Float,
   lazyStateWrapper: LazyStateWrapper<ItemInfo, LayoutInfo>,
@@ -460,7 +473,10 @@ private fun <ItemInfo : LazyItemInfoWrapper, LayoutInfo : LazyLayoutInfoWrapper<
 }
 
 @Suppress("IfThenToElvis")
-private fun <ItemInfo : LazyItemInfoWrapper, LayoutInfo : LazyLayoutInfoWrapper<ItemInfo>> ContentDrawScope.calculateStaticScrollbarWidth(
+private fun <
+  ItemInfo : LazyItemInfoWrapper,
+  LayoutInfo : LazyLayoutInfoWrapper<ItemInfo>
+> ContentDrawScope.calculateStaticScrollbarWidth(
   leftPaddingPx: Float,
   rightPaddingPx: Float,
   scrollbarManualDragProgress: Float?,
@@ -482,7 +498,10 @@ private fun <ItemInfo : LazyItemInfoWrapper, LayoutInfo : LazyLayoutInfoWrapper<
 }
 
 @Suppress("IfThenToElvis")
-private fun <ItemInfo : LazyItemInfoWrapper, LayoutInfo : LazyLayoutInfoWrapper<ItemInfo>> ContentDrawScope.calculateStaticScrollbarHeight(
+private fun <
+  ItemInfo : LazyItemInfoWrapper,
+  LayoutInfo : LazyLayoutInfoWrapper<ItemInfo>
+> ContentDrawScope.calculateStaticScrollbarHeight(
   topPaddingPx: Float,
   bottomPaddingPx: Float,
   scrollbarManualDragProgress: Float?,

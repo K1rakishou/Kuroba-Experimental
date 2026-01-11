@@ -83,7 +83,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import java.util.*
+import java.util.UUID
 import javax.inject.Inject
 import kotlin.math.max
 import kotlin.math.roundToInt
@@ -1187,7 +1187,7 @@ class ThreadListLayout @JvmOverloads constructor(
     }
   }
 
-  data class ShowPostsResult constructor(
+  data class ShowPostsResult(
     val result: Boolean,
     val applyFilterDuration: Duration,
     val setThreadPostsDuration: Duration

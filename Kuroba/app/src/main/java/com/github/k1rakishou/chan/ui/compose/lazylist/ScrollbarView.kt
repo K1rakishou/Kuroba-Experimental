@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.ui.compose.lazylist
 
 import android.content.Context
 import android.util.AttributeSet
-import android.view.View.OnLayoutChangeListener
 import android.widget.FrameLayout
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -42,6 +41,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.platform.debugInspectorInfo
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -157,7 +157,7 @@ class ScrollbarView @JvmOverloads constructor(
 
     val isScrollbarDraggable by _isScrollbarDraggable
 
-    val scrollbarHeight = DEFAULT_SCROLLBAR_HEIGHT
+    val desiredScrollbarHeight = DEFAULT_SCROLLBAR_HEIGHT
     val coroutineScope = rememberCoroutineScope()
 
     val recyclerViewPaddingsState = remember { mutableStateOf<PaddingValues>(PaddingValues()) }
@@ -174,7 +174,7 @@ class ScrollbarView @JvmOverloads constructor(
         .scrollbar(
           recyclerView = attachedRecyclerView,
           scrollbarWidth = scrollbarWidth,
-          scrollbarHeight = scrollbarHeight,
+          desiredScrollbarHeight = desiredScrollbarHeight,
           scrollbarManualDragProgressState = scrollbarManualDragProgressState,
           recyclerViewPaddingsState = recyclerViewPaddingsState
         )
@@ -227,7 +227,7 @@ class ScrollbarView @JvmOverloads constructor(
   private fun Modifier.scrollbar(
     recyclerView: RecyclerView,
     scrollbarWidth: Dp,
-    scrollbarHeight: Dp,
+    desiredScrollbarHeight: Dp,
     scrollbarManualDragProgressState: State<Float?>,
     recyclerViewPaddingsState: MutableState<PaddingValues>
   ): Modifier {
@@ -236,7 +236,7 @@ class ScrollbarView @JvmOverloads constructor(
         name = "scrollbar"
         properties["recyclerView"] = recyclerView
         properties["scrollbarWidth"] = scrollbarWidth
-        properties["scrollbarHeight"] = scrollbarHeight
+        properties["desiredScrollbarHeight"] = desiredScrollbarHeight
         properties["scrollbarManualDragProgress"] = scrollbarManualDragProgressState.value
         properties["recyclerViewPaddings"] = recyclerViewPaddingsState.value
       },
@@ -244,6 +244,8 @@ class ScrollbarView @JvmOverloads constructor(
         val density = LocalDensity.current
         val layoutDirection = LocalLayoutDirection.current
         val chanTheme = LocalChanTheme.current
+
+        val layoutManager = recyclerView.layoutManager
 
         val recyclerViewScrollExtent = remember { mutableIntStateOf(0) }
         val recyclerViewScrollRange = remember { mutableIntStateOf(0) }
@@ -253,9 +255,21 @@ class ScrollbarView @JvmOverloads constructor(
         val scrollbarManualDragProgress by scrollbarManualDragProgressState
 
         val isScrollbarDragged = scrollbarManualDragProgress != null
-        val targetThumbAlpha = when {
+        val targetStaticThumbAlpha = when {
           isScrollbarDragged -> 1f
           recyclerViewScrollState == RecyclerViewScrollState.Scrolling -> 0.8f
+          else -> 0f
+        }
+
+        val targetRealThumbAlpha = when {
+          isScrollbarDragged -> 0.8f
+          recyclerViewScrollState == RecyclerViewScrollState.Scrolling -> 0.8f
+          else -> 0f
+        }
+
+        val targetMarksAlpha = when {
+          isScrollbarDragged -> 1f
+          recyclerViewScrollState == RecyclerViewScrollState.Scrolling -> 1f
           else -> 0f
         }
 
@@ -270,8 +284,32 @@ class ScrollbarView @JvmOverloads constructor(
         val delay = if (isBeingScrolledOrDragged) 0 else 1500
         val scrollbarWidthPx = with(density) { if (isBeingScrolledOrDragged) scrollbarWidth.roundToPx() else 0 }
 
-        val thumbAlphaAnimatedState = animateFloatAsState(
-          targetValue = targetThumbAlpha,
+        val tempArray = remember(key1 = layoutManager) {
+          if (layoutManager is StaggeredGridLayoutManager) {
+            IntArray(layoutManager.spanCount)
+          } else {
+            IntArray(0)
+          }
+        }
+
+        val staticThumbAlphaAnimatedState = animateFloatAsState(
+          targetValue = targetStaticThumbAlpha,
+          animationSpec = tween(
+            durationMillis = duration,
+            delayMillis = delay
+          )
+        )
+
+        val realThumbAlphaAnimatedState = animateFloatAsState(
+          targetValue = targetRealThumbAlpha,
+          animationSpec = tween(
+            durationMillis = duration,
+            delayMillis = delay
+          )
+        )
+
+        val marksAlphaAnimatedState = animateFloatAsState(
+          targetValue = targetMarksAlpha,
           animationSpec = tween(
             durationMillis = duration,
             delayMillis = delay
@@ -365,17 +403,19 @@ class ScrollbarView @JvmOverloads constructor(
             drawContent()
 
             if (needToDrawScrollbar) {
-              drawScrollbar(
+              val desiredScrollbarHeightPx = with(density) { desiredScrollbarHeight.toPx() }
+
+              drawStaticScrollbar(
                 density = density,
                 chanTheme = chanTheme,
                 scrollbarWidthAnimatedState = scrollbarWidthAnimatedState,
-                scrollbarHeight = with(density) { scrollbarHeight.toPx() },
+                desiredScrollbarHeightPx = desiredScrollbarHeightPx,
                 scrollbarManualDragProgress = scrollbarManualDragProgress,
                 recyclerViewPaddingsState = recyclerViewPaddingsState,
                 recyclerViewScrollExtent = recyclerViewScrollExtent,
                 recyclerViewScrollRange = recyclerViewScrollRange,
                 recyclerViewScrollOffset = recyclerViewScrollOffset,
-                thumbAlphaAnimatedState = thumbAlphaAnimatedState,
+                thumbAlphaAnimatedState = staticThumbAlphaAnimatedState,
                 trackAlphaAnimatedState = trackAlphaAnimatedState,
                 thumbColorAnimatedState = thumbColorAnimatedState,
               )
@@ -392,8 +432,19 @@ class ScrollbarView @JvmOverloads constructor(
                   .calculateBottomPadding()
                   .toPx(),
                 recyclerView = recyclerView,
-                alpha = thumbAlphaAnimatedState.value.quantize(precision = 0.33f)
+                alpha = marksAlphaAnimatedState.value.quantize(precision = 0.33f)
               )
+
+              if (layoutManager != null) {
+                drawRealDynamicScrollbar(
+                  tempArray = tempArray,
+                  recyclerViewLayoutManager = layoutManager,
+                  scrollbarWidthAnimatedState = scrollbarWidthAnimatedState,
+                  recyclerViewPaddingsState = recyclerViewPaddingsState,
+                  color = chanTheme.scrollbarTrackColorCompose,
+                  alpha = realThumbAlphaAnimatedState.value.quantize(precision = 0.33f)
+                )
+              }
             }
           }
         )
@@ -401,11 +452,60 @@ class ScrollbarView @JvmOverloads constructor(
     )
   }
 
-  private fun ContentDrawScope.drawScrollbar(
+  private fun ContentDrawScope.drawRealDynamicScrollbar(
+    tempArray: IntArray,
+    recyclerViewLayoutManager: LayoutManager,
+    scrollbarWidthAnimatedState: State<Int>,
+    recyclerViewPaddingsState: State<PaddingValues>,
+    color: Color,
+    alpha: Float
+  ) {
+    val scrollbarWidthAnimated by scrollbarWidthAnimatedState
+    val recyclerViewPaddings by recyclerViewPaddingsState
+
+    val topPaddingPx = recyclerViewPaddings.calculateTopPadding().toPx()
+    val bottomPaddingPx = recyclerViewPaddings.calculateBottomPadding().toPx()
+
+    val totalItemsCount = recyclerViewLayoutManager.itemCount
+    val minPostsInThread = 100
+
+    if (totalItemsCount < minPostsInThread) {
+      // To avoid real scrollbar flickering constantly in short threads
+      return
+    }
+
+    val visibleItemsCount = recyclerViewLayoutManager.fullyVisibleItemsCount(tempArray)
+    val firstVisibleElementIndex = recyclerViewLayoutManager.firstVisibleElementIndex(tempArray)
+
+    val (realScrollbarOffsetY, realScrollbarHeight) = with(density) {
+      calculateRealScrollbarHeight(
+        topPaddingPx = topPaddingPx,
+        bottomPaddingPx = bottomPaddingPx,
+        visibleItemsCount = visibleItemsCount,
+        totalItemsCount = totalItemsCount,
+        firstVisibleElementIndex = firstVisibleElementIndex,
+        scrollbarMinHeight = 1.dp.toPx(),
+        realScrollbarHeightDiff = null
+      )
+    }
+
+    val desiredHeight = 2.dp.toPx()
+    val offsetY = topPaddingPx + realScrollbarOffsetY + ((realScrollbarHeight - desiredHeight) / 2f)
+    val offsetX = this.size.width - scrollbarWidthAnimated
+
+    drawRect(
+      color = color,
+      topLeft = Offset(offsetX, offsetY),
+      size = Size(scrollbarWidthAnimated.toFloat(), desiredHeight),
+      alpha = alpha
+    )
+  }
+
+  private fun ContentDrawScope.drawStaticScrollbar(
     density: Density,
     chanTheme: ChanTheme,
     scrollbarWidthAnimatedState: State<Int>,
-    scrollbarHeight: Float,
+    desiredScrollbarHeightPx: Float,
     scrollbarManualDragProgress: Float?,
     recyclerViewPaddingsState: State<PaddingValues>,
     recyclerViewScrollExtent: IntState,
@@ -424,15 +524,19 @@ class ScrollbarView @JvmOverloads constructor(
     val topPaddingPx = recyclerViewPaddings.calculateTopPadding().toPx()
     val bottomPaddingPx = recyclerViewPaddings.calculateBottomPadding().toPx()
 
+    val recyclerViewScrollExtent = recyclerViewScrollExtent.intValue.toFloat()
+    val recyclerViewScrollRange = recyclerViewScrollRange.intValue.toFloat()
+    val recyclerViewScrollOffset = recyclerViewScrollOffset.intValue.toFloat()
+
     val (scrollbarOffsetY, scrollbarHeightAdjusted) = with(density) {
       calculateStaticScrollbarHeight(
         topPaddingPx = topPaddingPx,
         bottomPaddingPx = bottomPaddingPx,
         scrollbarManualDragProgress = scrollbarManualDragProgress,
-        recyclerViewScrollExtent = recyclerViewScrollExtent.intValue.toFloat(),
-        recyclerViewScrollRange = recyclerViewScrollRange.intValue.toFloat(),
-        recyclerViewScrollOffset = recyclerViewScrollOffset.intValue.toFloat(),
-        scrollbarHeight = scrollbarHeight
+        recyclerViewScrollExtent = recyclerViewScrollExtent,
+        recyclerViewScrollRange = recyclerViewScrollRange,
+        recyclerViewScrollOffset = recyclerViewScrollOffset,
+        desiredScrollbarHeightPx = desiredScrollbarHeightPx
       )
     }
 
@@ -452,14 +556,12 @@ class ScrollbarView @JvmOverloads constructor(
       alpha = trackAlphaAnimated
     )
 
-    kotlin.run {
-      drawRect(
-        color = thumbColorAnimated,
-        topLeft = Offset(offsetX, offsetY),
-        size = Size(scrollbarWidthAnimated.toFloat(), scrollbarHeightAdjusted),
-        alpha = thumbAlphaAnimated
-      )
-    }
+    drawRect(
+      color = thumbColorAnimated,
+      topLeft = Offset(offsetX, offsetY),
+      size = Size(scrollbarWidthAnimated.toFloat(), scrollbarHeightAdjusted),
+      alpha = thumbAlphaAnimated
+    )
   }
 
   private fun ContentDrawScope.calculateStaticScrollbarHeight(
@@ -469,7 +571,7 @@ class ScrollbarView @JvmOverloads constructor(
     recyclerViewScrollExtent: Float,
     recyclerViewScrollRange: Float,
     recyclerViewScrollOffset: Float,
-    scrollbarHeight: Float
+    desiredScrollbarHeightPx: Float
   ): Pair<Float, Float> {
     val scrollProgress = if (scrollbarManualDragProgress == null) {
       val adjustedScrollRange = recyclerViewScrollRange - recyclerViewScrollExtent
@@ -482,10 +584,40 @@ class ScrollbarView @JvmOverloads constructor(
       scrollbarManualDragProgress
     }
 
-    val totalHeight = this.size.height - scrollbarHeight - topPaddingPx - bottomPaddingPx
+    val totalHeight = this.size.height - desiredScrollbarHeightPx - topPaddingPx - bottomPaddingPx
     val scrollbarOffsetY = (scrollProgress * totalHeight)
 
-    return Pair(scrollbarOffsetY, scrollbarHeight)
+    return Pair(scrollbarOffsetY, desiredScrollbarHeightPx)
+  }
+
+  private fun ContentDrawScope.calculateRealScrollbarHeight(
+    topPaddingPx: Float,
+    bottomPaddingPx: Float,
+    visibleItemsCount: Int,
+    totalItemsCount: Int,
+    firstVisibleElementIndex: Int,
+    scrollbarMinHeight: Float,
+    realScrollbarHeightDiff: Float?
+  ): Pair<Float, Float> {
+    val totalHeightWithoutPaddings = this.size.height - (realScrollbarHeightDiff ?: 0f) - topPaddingPx - bottomPaddingPx
+    val elementHeight = totalHeightWithoutPaddings / totalItemsCount
+    val scrollbarOffsetY = firstVisibleElementIndex * elementHeight
+    val scrollbarHeightReal = (visibleItemsCount * elementHeight)
+    val scrollbarHeightAdjusted = scrollbarHeightReal.coerceAtLeast(scrollbarMinHeight)
+
+    if (scrollbarHeightAdjusted > scrollbarHeightReal && realScrollbarHeightDiff == null) {
+      return calculateRealScrollbarHeight(
+        topPaddingPx = topPaddingPx,
+        bottomPaddingPx = bottomPaddingPx,
+        visibleItemsCount = visibleItemsCount,
+        totalItemsCount = totalItemsCount,
+        firstVisibleElementIndex = firstVisibleElementIndex,
+        scrollbarMinHeight = scrollbarMinHeight,
+        realScrollbarHeightDiff = (scrollbarHeightAdjusted - scrollbarHeightReal)
+      )
+    }
+
+    return Pair(scrollbarOffsetY, scrollbarHeightAdjusted)
   }
 
   private suspend fun PointerInputScope.processFastScrollerInputs(
@@ -616,6 +748,15 @@ class ScrollbarView @JvmOverloads constructor(
       is StaggeredGridLayoutManager -> {
         findLastCompletelyVisibleItemPositions(tempArray).max() - findFirstCompletelyVisibleItemPositions(tempArray).min()
       }
+      else -> error("Unexpected layout manager: ${this::class.java.name}")
+    }
+  }
+
+  private fun LayoutManager.firstVisibleElementIndex(tempArray: IntArray): Int {
+    return when (this) {
+      is GridLayoutManager -> findFirstCompletelyVisibleItemPosition()
+      is LinearLayoutManager -> findFirstCompletelyVisibleItemPosition()
+      is StaggeredGridLayoutManager -> findFirstCompletelyVisibleItemPositions(tempArray).min()
       else -> error("Unexpected layout manager: ${this::class.java.name}")
     }
   }
