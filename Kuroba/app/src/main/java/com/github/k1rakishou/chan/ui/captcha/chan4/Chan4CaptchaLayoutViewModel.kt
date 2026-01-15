@@ -7,7 +7,6 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.core.base.BaseViewModel
@@ -36,7 +35,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.lang.ref.WeakReference
 import javax.inject.Inject
 
 class Chan4CaptchaLayoutViewModel(
@@ -46,7 +44,7 @@ class Chan4CaptchaLayoutViewModel(
   private val hapticFeedbackManager: HapticFeedbackManager,
   private val firewallBypassManager: FirewallBypassManager,
   private val chan4CaptchaNotifierManager: Chan4CaptchaNotifierManager,
-) : BaseViewModel() {
+) : BaseViewModel(), Chan4CaptchaNotifierManager.CaptchaViewModelCallbacks {
 
   private var activeJob: Job? = null
   private var captchaTtlUpdateJob: Job? = null
@@ -77,8 +75,16 @@ class Chan4CaptchaLayoutViewModel(
   override suspend fun onViewModelReady() {
   }
 
+  override fun readCurrentCaptchaInfo(): AsyncData<CaptchaInfo> {
+    return _captchaInfoToShow.value
+  }
+
+  override fun updateCurrentCaptchaInfo(captchaInfo: AsyncData<CaptchaInfo>) {
+    _captchaInfoToShow.value = captchaInfo
+  }
+
   fun onCaptchaViewInitialized() {
-    chan4CaptchaNotifierManager.onCaptchaViewInitialized()
+    chan4CaptchaNotifierManager.onCaptchaViewInitialized(this)
   }
 
   fun onCaptchaViewDestroyed() {
@@ -157,36 +163,16 @@ class Chan4CaptchaLayoutViewModel(
           _captchaInfoToShow.value = AsyncData.Error(error)
 
           if (error is CaptchaCooldownError) {
-            val lambda: (Long) -> Boolean = start@{ remainingCooldownMs ->
-              if (_captchaInfoToShow.value is AsyncData.NotInitialized) {
-                return@start false
-              }
-
-              val previousError = (_captchaInfoToShow.value as? AsyncData.Error)?.throwable
-                ?: return@start true
-
-              when (previousError) {
-                is CaptchaGenericRateLimitError -> {
-                  _captchaInfoToShow.value = AsyncData.Error(CaptchaGenericRateLimitError(remainingCooldownMs))
-                }
-                is CaptchaThreadRateLimitError -> {
-                  _captchaInfoToShow.value = AsyncData.Error(CaptchaThreadRateLimitError(remainingCooldownMs))
-                }
-                is CaptchaPostRateLimitError -> {
-                  _captchaInfoToShow.value = AsyncData.Error(CaptchaPostRateLimitError(remainingCooldownMs))
-                }
-                else -> {
-                  return@start true
-                }
-              }
-
-              return@start false
+            Logger.debug(TAG) {
+              "requestCaptcha() error is CaptchaCooldownError, starting the waiter for ${chanDescriptor}"
             }
-
-            val lambdaWeak = WeakReference(lambda)
-            chan4CaptchaNotifierManager.start(chanDescriptor, error.cooldownMs, lambdaWeak)
+            chan4CaptchaNotifierManager.start(chanDescriptor, error.cooldownEndTimeMs)
 
             if (!chan4CaptchaNotifierManager.wait()) {
+              Logger.debug(TAG) {
+                "requestCaptcha() chan4CaptchaNotifierManager.wait() was canceled for ${chanDescriptor}"
+              }
+
               return@launch
             }
 
@@ -234,8 +220,6 @@ class Chan4CaptchaLayoutViewModel(
 
   private fun startOrRestartCaptchaTtlUpdateTask(chanDescriptor: ChanDescriptor) {
     captchaTtlUpdateJob?.cancel()
-    captchaTtlUpdateJob = null
-
     captchaTtlUpdateJob = viewModelScope.launch(Dispatchers.Main) {
       while (isActive) {
         val captchaInfoAsyncData = _captchaInfoToShow.value
@@ -273,6 +257,7 @@ class Chan4CaptchaLayoutViewModel(
     )
 
     _captchaDataJson.value = captchaInfoRawString.takeIf { it.isNotBlank() }
+    val now = System.currentTimeMillis()
 
     if (captchaInfoRaw.pcdMsg != null) {
       if (captchaInfoRaw.pcd == null) {
@@ -287,11 +272,17 @@ class Chan4CaptchaLayoutViewModel(
         }
         is ChanDescriptor.CatalogDescriptor -> {
           Logger.debug(TAG) { "requestCaptchaInternal($chanDescriptor) new thread creation rate limited! cooldownMs=$cooldownMs" }
-          throw CaptchaThreadRateLimitError(cooldownMs)
+          throw CaptchaThreadRateLimitError(
+            cooldownEndTimeMs = now + cooldownMs,
+            cooldownMs = cooldownMs
+          )
         }
         is ChanDescriptor.ThreadDescriptor -> {
           Logger.d(TAG, "requestCaptchaInternal($chanDescriptor) new post creation rate limited! cooldownMs=$cooldownMs")
-          throw CaptchaPostRateLimitError(cooldownMs)
+          throw CaptchaPostRateLimitError(
+            cooldownEndTimeMs = now + cooldownMs,
+            cooldownMs = cooldownMs
+          )
         }
       }
     }
@@ -305,7 +296,10 @@ class Chan4CaptchaLayoutViewModel(
             ?: DEFAULT_COOLDOWN_MS
 
           Logger.d(TAG, "requestCaptchaInternal($chanDescriptor) rate limited! cooldownMs=$cooldownMs")
-          throw CaptchaGenericRateLimitError(cooldownMs)
+          throw CaptchaGenericRateLimitError(
+            cooldownEndTimeMs = now + cooldownMs,
+            cooldownMs = cooldownMs
+          )
         }
         else -> {
           // Some unknown captcha error
@@ -460,7 +454,7 @@ class Chan4CaptchaLayoutViewModel(
     }
 
     data class Task(
-      val title: AnnotatedString,
+      val title: Chan4CaptchaTitleFormatter.Title,
       val hasWideImages: Boolean,
       val images: List<TaskImage>
     )
@@ -473,18 +467,28 @@ class Chan4CaptchaLayoutViewModel(
   }
 
   interface CaptchaCooldownError {
+    val cooldownEndTimeMs: Long
     val cooldownMs: Long
   }
 
-  class CaptchaGenericRateLimitError(override val cooldownMs: Long) :
+  class CaptchaGenericRateLimitError(
+    override val cooldownEndTimeMs: Long,
+    override val cooldownMs: Long
+  ) :
     Exception("4chan captcha rate-limit detected!\nCaptcha will be reloaded automatically in ${cooldownMs / 1000L}s"),
     CaptchaCooldownError
 
-  class CaptchaThreadRateLimitError(override val cooldownMs: Long) :
+  class CaptchaThreadRateLimitError(
+    override val cooldownEndTimeMs: Long,
+    override val cooldownMs: Long
+  ) :
     Exception("4chan captcha rate-limit detected!\nPlease wait ${cooldownMs / 1000L} seconds before making a thread."),
     CaptchaCooldownError
 
-  class CaptchaPostRateLimitError(override val cooldownMs: Long) :
+  class CaptchaPostRateLimitError(
+    override val cooldownEndTimeMs: Long,
+    override val cooldownMs: Long
+  ) :
     Exception("4chan captcha rate-limit detected!\nPlease wait ${cooldownMs / 1000L} seconds before making a post."),
     CaptchaCooldownError
 

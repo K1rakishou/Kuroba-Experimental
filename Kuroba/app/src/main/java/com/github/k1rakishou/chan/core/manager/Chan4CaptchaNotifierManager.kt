@@ -1,7 +1,12 @@
 package com.github.k1rakishou.chan.core.manager
 
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.helper.KurobaSystemNotifications
+import com.github.k1rakishou.chan.ui.captcha.chan4.Chan4CaptchaLayoutViewModel
+import com.github.k1rakishou.chan.ui.captcha.chan4.Chan4CaptchaLayoutViewModel.CaptchaGenericRateLimitError
+import com.github.k1rakishou.chan.ui.captcha.chan4.Chan4CaptchaLayoutViewModel.CaptchaPostRateLimitError
+import com.github.k1rakishou.chan.ui.captcha.chan4.Chan4CaptchaLayoutViewModel.CaptchaThreadRateLimitError
 import com.github.k1rakishou.chan.ui.helper.AppResources
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -11,7 +16,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import java.lang.ref.WeakReference
 
 class Chan4CaptchaNotifierManager(
   private val appScope: CoroutineScope,
@@ -23,57 +27,87 @@ class Chan4CaptchaNotifierManager(
   private var _waitJob: Job? = null
   private var _waiter = CompletableDeferred<Unit>()
   private var _captchaViewShown = false
+  private var _captchaViewModelCallbacks: CaptchaViewModelCallbacks? = null
 
-  fun onCaptchaViewInitialized() {
+  fun onCaptchaViewInitialized(callbacks: CaptchaViewModelCallbacks) {
     _captchaViewShown = true
+    _captchaViewModelCallbacks = callbacks
     Logger.debug(TAG) { "onCaptchaViewInitialized()" }
   }
 
   fun onCaptchaViewDestroyed() {
     _captchaViewShown = false
+    _captchaViewModelCallbacks = null
     Logger.debug(TAG) { "onCaptchaViewDestroyed()" }
   }
 
   fun start(
     waitDescriptor: ChanDescriptor,
-    initialCooldownMs: Long,
-    onTick: WeakReference<(Long) -> Boolean>
+    cooldownEndTimeMs: Long
   ) {
     if (waitDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
       // Shouldn't be possible
       return
     }
 
-    Logger.debug(TAG) { "start() waitDescriptor: ${waitDescriptor}, initialCooldownMs: ${initialCooldownMs}" }
+    Logger.debug(TAG) { "start() waitDescriptor: ${waitDescriptor}, cooldownEndTimeMs: ${cooldownEndTimeMs}" }
 
     _waitJob?.cancel()
     _waiter.cancel()
     _waiter = CompletableDeferred()
 
     _waitJob = appScope.launch {
-      var currentTime = System.currentTimeMillis()
-      val endTime = currentTime + (initialCooldownMs.coerceAtLeast(0))
+      var currentTime: Long
+      val oneSecond = 1000L
 
       try {
         while (isActive) {
-          if (currentTime >= endTime) {
-            break
-          }
-
           delay(1000L)
 
           currentTime = System.currentTimeMillis()
-          val remainingCooldownMs = (endTime - currentTime).coerceAtLeast(0)
-
-          val func = onTick.get()
-            ?: continue
-
-          if (func(remainingCooldownMs)) {
+          if (currentTime >= cooldownEndTimeMs) {
             break
           }
+
+          val callbacks = _captchaViewModelCallbacks
+            ?: continue
+
+          val currentCaptchaInfo = callbacks.readCurrentCaptchaInfo()
+          if (currentCaptchaInfo is AsyncData.NotInitialized) {
+            continue
+          }
+
+          val previousError = (currentCaptchaInfo as? AsyncData.Error)?.throwable
+            ?: break
+
+          val updatedError = when (previousError) {
+            is CaptchaGenericRateLimitError -> {
+              CaptchaGenericRateLimitError(
+                cooldownEndTimeMs = previousError.cooldownEndTimeMs,
+                cooldownMs = previousError.cooldownMs - oneSecond
+              )
+            }
+            is CaptchaThreadRateLimitError -> {
+              CaptchaThreadRateLimitError(
+                cooldownEndTimeMs = previousError.cooldownEndTimeMs,
+                cooldownMs = previousError.cooldownMs - oneSecond
+              )
+            }
+            is CaptchaPostRateLimitError -> {
+              CaptchaPostRateLimitError(
+                cooldownEndTimeMs = previousError.cooldownEndTimeMs,
+                cooldownMs = previousError.cooldownMs - oneSecond
+              )
+            }
+            else -> {
+              break
+            }
+          }
+
+          callbacks.updateCurrentCaptchaInfo(AsyncData.Error(updatedError))
         }
 
-        if (isActive && !_captchaViewShown) {
+        if (!_captchaViewShown) {
           val chanDescriptorReadable = waitDescriptor.userReadableString()
 
           val largeIconUrl = when (waitDescriptor) {
@@ -113,6 +147,11 @@ class Chan4CaptchaNotifierManager(
     } catch (ignored: Throwable) {
       return false
     }
+  }
+  
+  interface CaptchaViewModelCallbacks {
+    fun readCurrentCaptchaInfo(): AsyncData<Chan4CaptchaLayoutViewModel.CaptchaInfo>
+    fun updateCurrentCaptchaInfo(captchaInfo: AsyncData<Chan4CaptchaLayoutViewModel.CaptchaInfo>)
   }
 
   companion object {

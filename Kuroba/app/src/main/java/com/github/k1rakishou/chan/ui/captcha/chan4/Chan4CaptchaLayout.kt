@@ -6,10 +6,12 @@ import android.widget.FrameLayout
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -19,6 +21,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
@@ -56,6 +59,7 @@ import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutInterface
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder
 import com.github.k1rakishou.chan.ui.captcha.CaptchaSolution
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeClickableIcon
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeDivider
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeErrorMessage
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeProgressIndicator
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
@@ -276,16 +280,53 @@ class Chan4CaptchaLayout(
             )
           }
         } else {
+          val dividerColor = remember(key1 = chanTheme.dividerColorCompose) {
+            chanTheme.dividerColorCompose.copy(alpha = 0.2f)
+          }
+
           for ((taskIndex, task) in tasks.withIndex()) {
             if (taskIndex > 0) {
-              Spacer(
+              KurobaComposeDivider(
                 modifier = Modifier
-                  .wrapContentWidth()
-                  .height(8.dp)
+                  .fillMaxWidth()
+                  .padding(vertical = 8.dp),
+                color = dividerColor
               )
             }
 
-            KurobaComposeText(text = task.title)
+            val title = task.title
+            if (title.images.isEmpty()) {
+              KurobaComposeText(text = title.annotated)
+            } else {
+              Row(
+                modifier = Modifier
+                  .fillMaxWidth()
+                  .height(IntrinsicSize.Max),
+                verticalAlignment = Alignment.CenterVertically
+              ) {
+                KurobaComposeText(
+                  modifier = Modifier.weight(1f),
+                  text = title.annotated
+                )
+
+                title.images.forEach { imageBitmap ->
+                  Spacer(modifier = Modifier.width(4.dp))
+
+                  val ratio = imageBitmap.width.toFloat() / imageBitmap.height.toFloat()
+
+                  Image(
+                    modifier = Modifier
+                      .aspectRatio(ratio = ratio)
+                      .widthIn(min = 52.dp)
+                      .border(width = 2.dp, color = chanTheme.accentColorCompose),
+                    bitmap = imageBitmap,
+                    contentDescription = null
+                  )
+                }
+
+                Spacer(modifier = Modifier.width(4.dp))
+              }
+            }
 
             Spacer(
               modifier = Modifier
