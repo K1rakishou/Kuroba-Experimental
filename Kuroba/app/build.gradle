@@ -81,7 +81,7 @@ android {
             apkVersionNameSuffix = ""
 
             buildConfigField "int", "FLAVOR_TYPE", "0"
-            buildConfigField "int", "UPDATE_DELAY", "5"
+            buildConfigField "int", "UPDATE_DELAY", "1"
 
             // These are manifest placeholders for the application name, icon location and file
             // provider authority (the file provider authority should differ for different flavors
