@@ -148,7 +148,7 @@ class Chan4CaptchaNotifierManager(
       return false
     }
   }
-  
+
   interface CaptchaViewModelCallbacks {
     fun readCurrentCaptchaInfo(): AsyncData<Chan4CaptchaLayoutViewModel.CaptchaInfo>
     fun updateCurrentCaptchaInfo(captchaInfo: AsyncData<Chan4CaptchaLayoutViewModel.CaptchaInfo>)

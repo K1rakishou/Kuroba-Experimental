@@ -31,7 +31,7 @@ class Chan4CaptchaTitleFormatter {
 
       titleBuilder.indexOf(text)
         .takeIf { index -> index >= 0 }
-        ?.let { index -> titleBuilder.deleteRange(index, index+text.length) }
+        ?.let { index -> titleBuilder.deleteRange(index, index + text.length) }
     }
     run {
       titleBuilder.indexOf("find the image that")
@@ -49,7 +49,7 @@ class Chan4CaptchaTitleFormatter {
 
       titleBuilder.indexOf(text)
         .takeIf { index -> index >= 0 }
-        ?.let { index -> titleBuilder.deleteRange(index, index+text.length) }
+        ?.let { index -> titleBuilder.deleteRange(index, index + text.length) }
     }
 
     val document = Jsoup.parseBodyFragment(titleBuilder.toString())
