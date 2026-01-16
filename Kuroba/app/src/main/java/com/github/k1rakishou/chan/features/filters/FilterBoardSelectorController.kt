@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
@@ -25,17 +25,22 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheFileType
@@ -106,153 +111,174 @@ class FilterBoardSelectorController(
         .align(Alignment.Center)
         .background(chanTheme.backColorCompose)
     ) {
-      BuildContentInternal(
-        searchState = searchState
+      val cellDataList = viewModel.cellDataList
+      if (cellDataList.isEmpty()) {
+        KurobaComposeText(
+          modifier = Modifier
+            .height(256.dp)
+            .fillMaxWidth()
+            .padding(8.dp),
+          textAlign = TextAlign.Center,
+          text = stringResource(id = R.string.search_nothing_to_display_make_sure_sites_boards_active)
+        )
+
+        return
+      }
+
+      val chanTheme = LocalChanTheme.current
+      val listState = rememberLazyGridState()
+
+      val kurobaSearchInputColor = if (ThemeEngine.isDarkColor(chanTheme.backColor)) {
+        Color.LightGray
+      } else {
+        Color.DarkGray
+      }
+
+      KurobaSearchInput(
+        modifier = Modifier
+          .wrapContentHeight()
+          .fillMaxWidth()
+          .padding(start = 4.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
+        color = kurobaSearchInputColor,
+        searchQueryState = searchState.textFieldState
       )
 
-      Row(modifier = Modifier
-        .fillMaxWidth()
-        .wrapContentHeight()
-      ) {
-        KurobaComposeTextBarButton(
+      LaunchedEffect(
+        key1 = searchState,
+        key2 = cellDataList,
+        block = {
+          searchState.textFieldState.textAsFlow()
+            .onEach { query ->
+              delay(125)
+
+              if (query.isEmpty()) {
+                searchState.results.value = cellDataList
+                return@onEach
+              }
+
+              withContext(Dispatchers.Default) {
+                searchState.results.value = processSearchQuery(searchState.searchQuery, cellDataList)
+              }
+            }
+            .collect()
+        }
+      )
+
+      val searchResults by searchState.results
+      if (searchResults.isEmpty()) {
+        KurobaComposeText(
           modifier = Modifier
-            .wrapContentSize()
-            .padding(horizontal = 8.dp, vertical = 4.dp),
-          onClick = { viewModel.toggleSelectUnselectAll(searchState.results.value) },
-          text = stringResource(id = R.string.filter_toggle_select_unselect_all_boards)
+            .height(256.dp)
+            .fillMaxWidth()
+            .padding(8.dp),
+          textAlign = TextAlign.Center,
+          text = stringResource(id = R.string.search_nothing_found_with_query, searchState.searchQuery)
         )
 
-        Spacer(modifier = Modifier.weight(1f))
+        return
+      }
 
-        KurobaComposeTextBarButton(
+      Box {
+        var lazyGridPaddings by remember { mutableStateOf(PaddingValues.Zero) }
+
+        LazyVerticalGridWithFastScroller(
           modifier = Modifier
-            .wrapContentSize()
-            .padding(horizontal = 8.dp, vertical = 4.dp),
-          onClick = { pop() },
-          text = stringResource(id = R.string.close)
+            .fillMaxWidth()
+            .wrapContentHeight()
+            .defaultMinSize(minHeight = 256.dp),
+          state = listState,
+          columns = GridCells.Adaptive(CELL_WIDTH),
+          draggableScrollbar = false,
+          contentPadding = lazyGridPaddings,
+          content = {
+            items(
+              count = searchResults.size,
+              key = { index -> searchResults[index].catalogCellData.catalogDescriptor }
+            ) { index ->
+              val cellData = searchResults[index]
+
+              BuildBoardCell(
+                chanTheme = chanTheme,
+                cellData = cellData,
+                onCellClicked = { clickedCellData ->
+                  viewModel.onBoardSelectionToggled(clickedCellData.catalogCellData.boardDescriptorOrNull!!)
+                }
+              )
+            }
+          }
         )
 
-        val currentlySelectedBoards = remember { viewModel.currentlySelectedBoards }
-
-        KurobaComposeTextBarButton(
-          modifier = Modifier
-            .wrapContentSize()
-            .padding(horizontal = 8.dp, vertical = 4.dp),
-          enabled = currentlySelectedBoards.isNotEmpty(),
-          onClick = {
-            if (viewModel.currentlySelectedBoards.isEmpty()) {
-              return@KurobaComposeTextBarButton
-            }
-
-            val selectedBoards = if (viewModel.currentlySelectedBoards.size == viewModel.cellDataList.size) {
-              SelectedBoards.AllBoards
-            } else {
-              SelectedBoards.Boards(viewModel.currentlySelectedBoards.keys)
-            }
-
-            onBoardsSelected(selectedBoards)
-            pop()
-          },
-          text = stringResource(id = R.string.filter_select_n_boards, currentlySelectedBoards.size)
+        BottomButtons(
+          searchState = searchState,
+          onSizeChanged = { heightInDp -> lazyGridPaddings = PaddingValues(bottom = heightInDp) }
         )
       }
     }
   }
 
   @Composable
-  private fun ColumnScope.BuildContentInternal(
+  private fun BoxScope.BottomButtons(
     searchState: SimpleSearchStateV2<FilterBoardSelectorControllerViewModel.CellData>,
+    onSizeChanged: (Dp) -> Unit
   ) {
-    val cellDataList = viewModel.cellDataList
-    if (cellDataList.isEmpty()) {
-      KurobaComposeText(
-        modifier = Modifier
-          .height(256.dp)
-          .fillMaxWidth()
-          .padding(8.dp),
-        textAlign = TextAlign.Center,
-        text = stringResource(id = R.string.search_nothing_to_display_make_sure_sites_boards_active)
-      )
-
-      return
-    }
-
-
     val chanTheme = LocalChanTheme.current
-    val listState = rememberLazyGridState()
+    val density = LocalDensity.current
 
-    val kurobaSearchInputColor = if (ThemeEngine.isDarkColor(chanTheme.backColor)) {
-      Color.LightGray
-    } else {
-      Color.DarkGray
-    }
-
-    KurobaSearchInput(
+    Row(
       modifier = Modifier
-        .wrapContentHeight()
         .fillMaxWidth()
-        .padding(start = 4.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
-      color = kurobaSearchInputColor,
-      searchQueryState = searchState.textFieldState
-    )
-
-    LaunchedEffect(
-      key1 = searchState,
-      key2 = cellDataList,
-      block = {
-        searchState.textFieldState.textAsFlow()
-          .onEach { query ->
-            delay(125)
-
-            if (query.isEmpty()) {
-              searchState.results.value = cellDataList
-              return@onEach
-            }
-
-            withContext(Dispatchers.Default) {
-              searchState.results.value = processSearchQuery(searchState.searchQuery, cellDataList)
-            }
-          }
-          .collect()
-      }
-    )
-
-    val searchResults by searchState.results
-    if (searchResults.isEmpty()) {
-      KurobaComposeText(
+        .wrapContentHeight()
+        .background(chanTheme.backColorCompose)
+        .align(Alignment.BottomCenter)
+        .onSizeChanged { intSize ->
+          val heightInDp = with(density) { intSize.height.toDp() }
+          onSizeChanged(heightInDp)
+        }
+        .padding(vertical = 8.dp),
+      verticalAlignment = Alignment.CenterVertically
+    ) {
+      KurobaComposeTextBarButton(
         modifier = Modifier
-          .height(256.dp)
-          .fillMaxWidth()
-          .padding(8.dp),
-        textAlign = TextAlign.Center,
-        text = stringResource(id = R.string.search_nothing_found_with_query, searchState.searchQuery)
+          .wrapContentSize()
+          .padding(horizontal = 8.dp, vertical = 4.dp),
+        onClick = { viewModel.toggleSelectUnselectAll(searchState.results.value) },
+        text = stringResource(id = R.string.filter_toggle_select_unselect_all_boards)
       )
 
-      return
+      Spacer(modifier = Modifier.weight(1f))
+
+      KurobaComposeTextBarButton(
+        modifier = Modifier
+          .wrapContentSize()
+          .padding(horizontal = 8.dp, vertical = 4.dp),
+        onClick = { pop() },
+        text = stringResource(id = R.string.close)
+      )
+
+      val currentlySelectedBoards = remember { viewModel.currentlySelectedBoards }
+
+      KurobaComposeTextBarButton(
+        modifier = Modifier
+          .wrapContentSize()
+          .padding(horizontal = 8.dp, vertical = 4.dp),
+        enabled = currentlySelectedBoards.isNotEmpty(),
+        onClick = {
+          if (viewModel.currentlySelectedBoards.isEmpty()) {
+            return@KurobaComposeTextBarButton
+          }
+
+          val selectedBoards = if (viewModel.currentlySelectedBoards.size == viewModel.cellDataList.size) {
+            SelectedBoards.AllBoards
+          } else {
+            SelectedBoards.Boards(viewModel.currentlySelectedBoards.keys)
+          }
+
+          onBoardsSelected(selectedBoards)
+          pop()
+        },
+        text = stringResource(id = R.string.filter_select_n_boards, currentlySelectedBoards.size)
+      )
     }
-
-    LazyVerticalGridWithFastScroller(
-      modifier = Modifier
-        .fillMaxWidth()
-        .weight(1f)
-        .defaultMinSize(minHeight = 256.dp),
-      state = listState,
-      columns = GridCells.Adaptive(CELL_WIDTH),
-      draggableScrollbar = false,
-      content = {
-        items(searchResults.size) { index ->
-          val cellData = searchResults[index]
-
-          BuildBoardCell(
-            chanTheme = chanTheme,
-            cellData = cellData,
-            onCellClicked = { clickedCellData ->
-              viewModel.onBoardSelectionToggled(clickedCellData.catalogCellData.boardDescriptorOrNull!!)
-            }
-          )
-        }
-      }
-    )
   }
 
   private fun processSearchQuery(

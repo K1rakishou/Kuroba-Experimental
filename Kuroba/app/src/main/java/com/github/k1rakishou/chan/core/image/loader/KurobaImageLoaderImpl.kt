@@ -131,7 +131,7 @@ class KurobaImageLoaderImpl(
         }
         is ModularResult.Value -> {
           val bitmapDrawable = loadFromDiskResult.value
-          Logger.error(TAG) { "loadFromDiskResult('${url}') success: ${bitmapDrawable}" }
+          Logger.debug(TAG) { "loadFromDiskResult('${url}') success: ${bitmapDrawable}" }
 
           if (bitmapDrawable != null) {
             mutex.withLock { _activeRequests.remove(requestKey)?.activeRequestAwaitable?.complete(Unit) }
