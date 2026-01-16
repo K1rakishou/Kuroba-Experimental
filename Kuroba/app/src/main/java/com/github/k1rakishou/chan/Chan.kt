@@ -4,7 +4,6 @@ import android.app.Activity
 import android.app.Application
 import android.app.Application.ActivityLifecycleCallbacks
 import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import android.os.StrictMode
 import android.os.SystemClock
@@ -39,6 +38,7 @@ import com.github.k1rakishou.chan.ui.activity.CrashReportActivity
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
+import com.github.k1rakishou.chan.utils.CrashStorage
 import com.github.k1rakishou.chan.utils.TimeUtils
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AppConstants
@@ -74,6 +74,7 @@ import org.joda.time.format.PeriodFormatterBuilder
 import java.io.IOException
 import java.net.InetAddress
 import javax.inject.Inject
+import kotlin.system.exitProcess
 
 class Chan : Application(), ActivityLifecycleCallbacks {
   private var activityForegroundCounter = 0
@@ -356,22 +357,19 @@ class Chan : Application(), ActivityLifecycleCallbacks {
   }
 
   private fun onUnhandledException(exception: Throwable) {
-    // Apparently there is no other way around it because when trying to deserialize the stacktrace as a string it crashes.
-    CrashReportActivity.exception = exception
+    try {
+      CrashStorage.saveCrash(
+        context = this,
+        exception = exception,
+        userAgent = appConstants.get().userAgentMightBeOverridden,
+        appLifeTime = formatAppRunningTime()
+      )
 
-    val bundle = Bundle()
-      .apply {
-        putString(CrashReportActivity.USER_AGENT_KEY, appConstants.get().userAgentMightBeOverridden)
-        putString(CrashReportActivity.APP_LIFE_TIME_KEY, formatAppRunningTime())
-      }
-
-    val intent = Intent(this, CrashReportActivity::class.java)
-    intent.putExtra(CrashReportActivity.EXCEPTION_BUNDLE_KEY, bundle)
-    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-    startActivity(intent)
-
-    applicationCrashNotifier.onApplicationCrashed()
+      CrashReportActivity.launch(this)
+    } finally {
+      android.os.Process.killProcess(android.os.Process.myPid())
+      exitProcess(-1)
+    }
   }
 
   private fun activityEnteredForeground() {

@@ -283,14 +283,7 @@ class ScrollbarView @JvmOverloads constructor(
         val duration = if (isBeingScrolledOrDragged) 150 else 500
         val delay = if (isBeingScrolledOrDragged) 0 else 1500
         val scrollbarWidthPx = with(density) { if (isBeingScrolledOrDragged) scrollbarWidth.roundToPx() else 0 }
-
-        val tempArray = remember(key1 = layoutManager) {
-          if (layoutManager is StaggeredGridLayoutManager) {
-            IntArray(layoutManager.spanCount)
-          } else {
-            IntArray(0)
-          }
-        }
+        val tempArray = remember(key1 = layoutManager) { IntArray(32) }
 
         val staticThumbAlphaAnimatedState = animateFloatAsState(
           targetValue = targetStaticThumbAlpha,

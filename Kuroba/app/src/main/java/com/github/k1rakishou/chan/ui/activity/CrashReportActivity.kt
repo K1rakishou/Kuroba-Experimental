@@ -67,6 +67,7 @@ import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showErrorToast
+import com.github.k1rakishou.chan.utils.CrashStorage
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupEdgeToEdge
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupStatusAndNavBarColors
 import com.github.k1rakishou.chan.utils.IHasViewModelScope
@@ -93,7 +94,6 @@ import org.joda.time.Duration
 import org.joda.time.format.DateTimeFormatterBuilder
 import org.joda.time.format.ISODateTimeFormat
 import java.io.IOException
-import java.util.*
 import javax.inject.Inject
 import kotlin.system.exitProcess
 
@@ -149,31 +149,18 @@ class CrashReportActivity :
 
     Logger.d(TAG, "CrashReportActivity launched")
 
-    val bundle = intent.getBundleExtra(EXCEPTION_BUNDLE_KEY)
-    if (bundle == null) {
-      Logger.e(TAG, "Bundle is null")
-
-      finish()
+    val crashData = CrashStorage.loadCrash(context = this)
+    if (crashData == null) {
       return
     }
 
-    val exception = CrashReportActivity.exception
-    CrashReportActivity.exception = null
+    val className = crashData.errorClassName
+    val errorMessage = crashData.errorMessage
+    val stackTrace = crashData.stackTrace
+    val userAgent = crashData.userAgent
+    val appLifetime = crashData.appLifeTime
 
-    val userAgent = bundle.getString(USER_AGENT_KEY) ?: "No user-agent"
-    val appLifetime = bundle.getString(APP_LIFE_TIME_KEY) ?: "-1"
-
-    if (exception == null) {
-      Logger.e(TAG, "Bad bundle params. Exception is null")
-
-      finish()
-      return
-    }
-
-    val message = extractExceptionMessage(exception) ?: "<No message>"
-    val isDebugCrash = message == "java.lang.RuntimeException: Debug crash"
-    val stacktrace = exception.stackTraceToString()
-    val className = exception::class.java.name
+    CrashStorage.clearCrash(this)
 
     activityComponent = Chan.getComponent()
       .activityComponentBuilder()
@@ -198,11 +185,9 @@ class CrashReportActivity :
     setContent {
       ComposeEntrypoint {
         Content(
-          isDebugCrash = isDebugCrash && !AppModuleAndroidUtils.isDevBuild,
-          exception = exception,
           className = className,
-          message = message,
-          stacktrace = stacktrace,
+          message = errorMessage,
+          stacktrace = stackTrace,
           userAgent = userAgent,
           appLifetime = appLifetime
         )
@@ -245,8 +230,6 @@ class CrashReportActivity :
 
   @Composable
   private fun Content(
-    isDebugCrash: Boolean,
-    exception: Throwable,
     className: String,
     message: String,
     stacktrace: String,
@@ -716,48 +699,8 @@ class CrashReportActivity :
       .ignore()
   }
 
-  private fun extractExceptionMessage(exception: Throwable): String? {
-    var message = exception.message
-    var throwable: Throwable? = exception
-
-    val processed = IdentityHashMap<Throwable, Unit>()
-    processed.put(exception, Unit)
-
-    while (true) {
-      if (throwable == null) {
-        break
-      }
-
-      val parentMessage = throwable.message
-      if (parentMessage.isNullOrEmpty()) {
-        break
-      }
-
-      throwable = throwable.cause
-
-      if (throwable != null && processed.contains(throwable)) {
-        break
-      }
-
-      val isAppStacktrace = throwable
-        ?.stackTrace
-        ?.any { stackTraceElement -> stackTraceElement.className.contains("com.github.k1rakishou") }
-        ?: false
-
-      if (isAppStacktrace) {
-        message = parentMessage
-      }
-    }
-
-    return message
-  }
-
   companion object {
     private const val TAG = "CrashReportActivity"
-
-    const val EXCEPTION_BUNDLE_KEY = "exception_bundle"
-    const val USER_AGENT_KEY = "user_agent"
-    const val APP_LIFE_TIME_KEY = "app_life_time"
 
     private const val ISSUES_LINK = "https://github.com/K1rakishou/Kuroba-Experimental/issues"
 
@@ -765,7 +708,13 @@ class CrashReportActivity :
       .append(ISODateTimeFormat.date())
       .toFormatter()
 
-    var exception: Throwable? = null
+    fun launch(context: Context) {
+      val intent = Intent(context, CrashReportActivity::class.java)
+      intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+      context.startActivity(intent)
+
+      Thread.sleep(250)
+    }
   }
 
 }

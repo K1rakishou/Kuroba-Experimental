@@ -180,7 +180,10 @@
 
         <activity
             android:name=".ui.activity.CrashReportActivity"
-            android:launchMode="singleTask" />
+            android:excludeFromRecents="true"
+            android:finishOnTaskLaunch="true"
+            android:launchMode="singleInstance"
+            android:taskAffinity="" />
 
         <service
             android:name=".features.image_saver.ImageSaverV2Service"

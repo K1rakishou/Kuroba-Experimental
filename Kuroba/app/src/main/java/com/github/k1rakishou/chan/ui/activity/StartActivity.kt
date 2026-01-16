@@ -40,6 +40,7 @@ import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
 import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
+import com.github.k1rakishou.chan.utils.CrashStorage
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupEdgeToEdge
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupStatusAndNavBarColors
 import com.github.k1rakishou.common.AndroidUtils
@@ -114,6 +115,16 @@ class StartActivity :
         TAG, "onCreate() intentMismatchWorkaround()==true, " +
         "savedInstanceState == null: $isFreshStart")
       return
+    }
+
+    if (isFreshStart) {
+      val crashData = CrashStorage.loadCrash(this)
+      if (crashData != null) {
+        Logger.debug(TAG) { "There is a crash data stored on the disk. Launching the CrashReportActivity." }
+        CrashReportActivity.launch(this)
+        finish()
+        return
+      }
     }
 
     Logger.d(TAG, "onCreate() start isFreshStart: $isFreshStart, initializing everything")
