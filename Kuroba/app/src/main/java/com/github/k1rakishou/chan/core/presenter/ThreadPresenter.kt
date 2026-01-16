@@ -1526,7 +1526,17 @@ class ThreadPresenter @Inject constructor(
 
   fun scrollToPost(needle: PostDescriptor) {
     val displayingChanDescriptor = threadPresenterCallback?.chanDescriptor
-    if (displayingChanDescriptor == null || displayingChanDescriptor != needle.descriptor) {
+    val matchesDisplayingDescriptor = when (displayingChanDescriptor) {
+      is ChanDescriptor.ICatalogDescriptor -> {
+        needle.boardDescriptor() == displayingChanDescriptor.boardDescriptor()
+      }
+      is ChanDescriptor.ThreadDescriptor -> {
+        needle.threadDescriptor() == displayingChanDescriptor.threadDescriptorOrNull()
+      }
+      null -> false
+    }
+
+    if (!matchesDisplayingDescriptor) {
       Logger.d(TAG, "scrollToPost($needle) chanDescriptors do not match " +
         "(displaying: ${displayingChanDescriptor}, needle.descriptor: ${needle.descriptor})")
       return
