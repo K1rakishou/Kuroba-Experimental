@@ -32,6 +32,8 @@ class ChanThreadTicker(
     get() = chanTickerData.currentChanDescriptor()
   val currentChanDescriptorFlow: StateFlow<ChanDescriptor?>
     get() = chanTickerData.currentChanDescriptorFlow()
+  val ticksCounter: Long
+    get() = chanTickerData.getTicksCounter()
 
   private val actor = scope.actor<TickerAction>(capacity = Channel.UNLIMITED) {
     consumeEach { tickerAction ->
@@ -176,6 +178,7 @@ class ChanThreadTicker(
 
       chanTickerData.updateCurrentTimeoutIndex(nextTimeoutIndex)
       chanTickerData.updateWaitTimeSeconds(nextWaitTimeSeconds)
+      chanTickerData.increaseTicksCounter()
 
       Logger.d(TAG, "startOrRestartTickerInternal done, " +
           "nextTimeoutIndex=${nextTimeoutIndex}, " +
@@ -271,6 +274,7 @@ class ChanThreadTicker(
     private var tickerJob: Job? = null
     private var waitTimeSeconds: Long = 0
     private var lastLoadTime: Long = 0
+    private var ticksCounter: Long = 0
 
     @Synchronized
     fun isTicking(): Boolean = tickerJob != null
@@ -305,6 +309,7 @@ class ChanThreadTicker(
       this.currentTimeoutIndex = 0
       this.waitTimeSeconds = 0
       this.lastLoadTime = 0
+      this.ticksCounter = 0
     }
 
     @Synchronized
@@ -319,6 +324,11 @@ class ChanThreadTicker(
     }
 
     @Synchronized
+    fun increaseTicksCounter() {
+      ++ticksCounter
+    }
+
+    @Synchronized
     fun updateWaitTimeSeconds(waitTimeSeconds: Long) {
       this.lastLoadTime = System.currentTimeMillis()
       this.waitTimeSeconds = waitTimeSeconds
@@ -326,6 +336,9 @@ class ChanThreadTicker(
 
     @Synchronized
     fun getCurrentTimeoutIndex(): Int = this.currentTimeoutIndex
+
+    @Synchronized
+    fun getTicksCounter(): Long = this.ticksCounter
 
     @Synchronized
     fun currentChanDescriptor(): ChanDescriptor? = _currentChanDescriptor.value

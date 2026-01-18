@@ -119,8 +119,11 @@ class CloudFlareHandlerInterceptor(
 
         val startTime = System.currentTimeMillis()
         val awaitSuccess = try {
-          countDownLatch.await(AppConstants.CLOUDFLARE_INTERCEPTOR_FIREWALL_BYPASS_MAX_WAIT_TIME_MILLIS, TimeUnit.MILLISECONDS)
-        } catch (error: Throwable) {
+          countDownLatch.await(
+            AppConstants.CLOUDFLARE_INTERCEPTOR_FIREWALL_BYPASS_MAX_WAIT_TIME_MILLIS,
+            TimeUnit.MILLISECONDS
+          )
+        } catch (ignored: Throwable) {
           false
         }
 
@@ -129,7 +132,8 @@ class CloudFlareHandlerInterceptor(
         if (awaitSuccess) {
           if (bypassSuccess.get()) {
             Logger.debug(TAG) {
-              "[$okHttpType] firewallBypassManager.onFirewallDetected() endpoint '${request.url}'... success. (took: ${deltaTime}ms)"
+              "[$okHttpType] firewallBypassManager.onFirewallDetected() " +
+                "endpoint '${request.url}'... success. (took: ${deltaTime}ms)"
             }
 
             response.closeQuietly()
@@ -141,12 +145,14 @@ class CloudFlareHandlerInterceptor(
           }
 
           Logger.debug(TAG) {
-            "[$okHttpType] firewallBypassManager.onFirewallDetected() endpoint '${request.url}'... unsuccessful. (took: ${deltaTime}ms)"
+            "[$okHttpType] firewallBypassManager.onFirewallDetected() " +
+              "endpoint '${request.url}'... unsuccessful. (took: ${deltaTime}ms)"
           }
         }
 
         Logger.debug(TAG) {
-          "[$okHttpType] firewallBypassManager.onFirewallDetected() endpoint '${request.url}'... timeout. (took: ${deltaTime}ms)"
+          "[$okHttpType] firewallBypassManager.onFirewallDetected() " +
+            "endpoint '${request.url}'... timeout. (took: ${deltaTime}ms)"
         }
 
         // countDownLatch.await() reached zero which means CloudFlare bypass got stuck somewhere so we need to throw

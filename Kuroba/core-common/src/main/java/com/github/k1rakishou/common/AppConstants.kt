@@ -41,9 +41,12 @@ open class AppConstants(
 
   fun actualWebViewUserAgent(context: Context): String {
     try {
-      Logger.d(TAG, "actualWebViewUserAgent() WebSettings.getDefaultUserAgent() start...")
+      Logger.debug(TAG) { "actualWebViewUserAgent() WebSettings.getDefaultUserAgent() start..." }
       val webViewUserAgent = WebSettings.getDefaultUserAgent(context)
-      Logger.d(TAG, "actualWebViewUserAgent() WebSettings.getDefaultUserAgent() end. Got WebView user agent: '${webViewUserAgent}'")
+      Logger.debug(TAG) {
+        "actualWebViewUserAgent() WebSettings.getDefaultUserAgent() end. " +
+          "Got WebView user agent: '${webViewUserAgent}'"
+      }
 
       return webViewUserAgent
     } catch (error: Throwable) {
@@ -121,7 +124,10 @@ open class AppConstants(
         return field
       }
 
-      check(field.mkdir()) { "Failed to create ThreadDownloader cache directory! threadDownloaderCacheDir=${field.absolutePath}" }
+      check(field.mkdir()) {
+        "Failed to create ThreadDownloader cache directory! threadDownloaderCacheDir=${field.absolutePath}"
+      }
+
       return field
     }
 
@@ -213,7 +219,8 @@ open class AppConstants(
     const val loggingInterceptorEnabled = false
 
     const val FIREWALL_SCREEN_AUTO_CLOSE_TIMEOUT_MILLIS = 120_000L
-    const val CLOUDFLARE_INTERCEPTOR_FIREWALL_BYPASS_MAX_WAIT_TIME_MILLIS = FIREWALL_SCREEN_AUTO_CLOSE_TIMEOUT_MILLIS + 10_000L
+    const val CLOUDFLARE_INTERCEPTOR_FIREWALL_BYPASS_MAX_WAIT_TIME_MILLIS =
+      FIREWALL_SCREEN_AUTO_CLOSE_TIMEOUT_MILLIS + 10_000L
 
     // 10 percents of the app's available memory (not device's)
     private const val RAM_PERCENT_FOR_POSTS_CACHE = 10
@@ -223,8 +230,8 @@ open class AppConstants(
     private const val MINIMUM_POSTS_CACHE_POSTS_COUNT = 5000L
     private const val MAX_POSTS_CACHE_COUNT = 16000L
 
-    private const val USER_AGENT_FORMAT =
-      "Mozilla/5.0 (Linux; Android %s; %s; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/133.0.6943.137 Mobile Safari/537.36"
+    private const val USER_AGENT_FORMAT = "Mozilla/5.0 (Linux; Android %s; %s; wv) AppleWebKit/537.36 " +
+      "(KHTML, like Gecko) Version/4.0 Chrome/133.0.6943.137 Mobile Safari/537.36"
 
     private const val PROXIES_FILE_NAME = "kuroba_proxies.json"
     private const val THIRD_EYE_SETTINGS_FILE_NAME = "third_eye_settings.json"

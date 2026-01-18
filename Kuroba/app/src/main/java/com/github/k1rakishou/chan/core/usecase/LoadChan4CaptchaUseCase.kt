@@ -12,6 +12,7 @@ import com.github.k1rakishou.common.EmptyBodyResponseException
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ParsingException
 import com.github.k1rakishou.common.StringUtils
+import com.github.k1rakishou.common.StringUtils.asFormattedToken
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.common.substringSafe
@@ -24,6 +25,7 @@ import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.MultipartBody
 import okhttp3.Request
 
 class LoadChan4CaptchaUseCase(
@@ -34,12 +36,14 @@ class LoadChan4CaptchaUseCase(
 
   suspend fun await(
     chanDescriptor: ChanDescriptor,
-    ticket: String?
+    ticket: String?,
+    mcl: String
   ): ModularResult<CaptchaResult> {
     return ModularResult.Try {
       val captchaResult = loadCaptcha(
         chanDescriptor = chanDescriptor,
-        ticket = ticket
+        ticket = ticket,
+        mcl = mcl
       )
 
       updateCaptchaTicket(
@@ -53,16 +57,28 @@ class LoadChan4CaptchaUseCase(
 
   private suspend fun loadCaptcha(
     chanDescriptor: ChanDescriptor,
-    ticket: String?
+    ticket: String?,
+    mcl: String
   ): CaptchaResult {
     val boardCode = chanDescriptor.boardDescriptor().boardCode
     val urlRaw = formatCaptchaUrl(chanDescriptor, boardCode, ticket)
 
-    Logger.d(TAG, "loadCaptcha($chanDescriptor) requesting $urlRaw")
+    Logger.d(TAG, "loadCaptcha(${chanDescriptor}, ${mcl.asFormattedToken()}) requesting $urlRaw")
 
-    val requestBuilder = Request.Builder()
-      .url(urlRaw)
-      .get()
+    val requestBuilder = if (mcl.isBlank()) {
+      Request.Builder()
+        .url(urlRaw)
+        .get()
+    } else {
+      with(MultipartBody.Builder()) {
+        setType(MultipartBody.FORM)
+        addFormDataPart("mcl", mcl)
+
+        return@with Request.Builder()
+          .url(urlRaw)
+          .post(build())
+      }
+    }
 
     siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())?.let { chan4 ->
       chan4.requestModifier().modifyCaptchaGetRequest(chan4, requestBuilder)
@@ -79,6 +95,18 @@ class LoadChan4CaptchaUseCase(
     val captchaResponseHtml = response.body.string()
     if (captchaResponseHtml == null) {
       throw EmptyBodyResponseException()
+    }
+
+    if (captchaResponseHtml.contains("https://mcl.spur.us")) {
+      if (mcl.isNotBlank()) {
+        throw AntibotCheckLoopDetected()
+      }
+
+      throw AntibotCheckDetected(
+        htmlToLoad = captchaResponseHtml,
+        baseUrl = "https://mcl.spur.us",
+        name = "https://spur.us"
+      )
     }
 
     val captchaInfoRawString = try {
@@ -311,6 +339,15 @@ class LoadChan4CaptchaUseCase(
     "Failed to extract 4chan captcha json from HTML. " +
       "This is most likely because the captcha format was changed."
   )
+
+  class AntibotCheckDetected(
+    val htmlToLoad: String,
+    val baseUrl: String,
+    name: String
+  ) : ClientException("Detected '${name}' anti-bot check. A WebView will be loaded to pass the check.")
+
+  class AntibotCheckLoopDetected
+    : ClientException("Captcha got rejected even after passing SpurUsAntiBotCheck (wtf?!)")
 
   companion object {
     private const val TAG = "LoadChan4CaptchaUseCase"

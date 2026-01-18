@@ -57,6 +57,7 @@ import com.github.k1rakishou.chan.core.manager.ThirdEyeManager
 import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.core.manager.ThreadPostSearchManager
+import com.github.k1rakishou.chan.core.manager.WebViewTaskManager
 import com.github.k1rakishou.chan.core.site.ParserRepository
 import com.github.k1rakishou.chan.core.site.SiteRegistry
 import com.github.k1rakishou.chan.core.site.SiteResolver
@@ -921,6 +922,17 @@ class ManagerModule {
     return FirewallBypassManager(
       appScope,
       siteManager,
+      applicationVisibilityManager
+    )
+  }
+
+  @Singleton
+  @Provides
+  fun provideWebViewTaskManager(
+    applicationVisibilityManager: ApplicationVisibilityManager
+  ): WebViewTaskManager {
+    deps("WebViewTaskManager")
+    return WebViewTaskManager(
       applicationVisibilityManager
     )
   }

@@ -14,11 +14,10 @@ import com.github.k1rakishou.chan.core.helper.SitesSetupControllerOpenNotifier
 import com.github.k1rakishou.chan.core.manager.CurrentFocusedController
 import com.github.k1rakishou.chan.core.manager.FirewallBypassManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
+import com.github.k1rakishou.chan.core.manager.WebViewTaskManager
 import com.github.k1rakishou.chan.core.presenter.BrowsePresenter
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter
 import com.github.k1rakishou.chan.core.site.SiteResolver
-import com.github.k1rakishou.chan.features.bypass.CookieResult
-import com.github.k1rakishou.chan.features.bypass.SiteFirewallBypassController
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity
@@ -36,6 +35,11 @@ import com.github.k1rakishou.chan.features.toolbar.ToolbarText
 import com.github.k1rakishou.chan.features.toolbar.state.ToolbarContentState
 import com.github.k1rakishou.chan.features.toolbar.state.ToolbarInlineContent
 import com.github.k1rakishou.chan.features.toolbar.state.ToolbarStateKind
+import com.github.k1rakishou.chan.features.webview.WebViewTaskController
+import com.github.k1rakishou.chan.features.webview.WebViewTaskResult
+import com.github.k1rakishou.chan.features.webview.task.AbstractWebViewTask
+import com.github.k1rakishou.chan.features.webview.task.CloudFlareTask
+import com.github.k1rakishou.chan.features.webview.task.DvachAntispamTask
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.ReplyAutoCloseListener
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.SlideChangeListener
@@ -53,7 +57,6 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.hasPostNotificatio
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.common.FirewallType
 import com.github.k1rakishou.common.errorMessageOrClassName
-import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -63,6 +66,7 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
 import dagger.Lazy
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -73,7 +77,6 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import javax.inject.Inject
@@ -96,6 +99,8 @@ class BrowseController(
   @Inject
   lateinit var firewallBypassManagerLazy: Lazy<FirewallBypassManager>
   @Inject
+  lateinit var webViewTaskManagerLazy: Lazy<WebViewTaskManager>
+  @Inject
   lateinit var runtimePermissionsHelper: RuntimePermissionsHelper
   @Inject
   lateinit var sitesSetupControllerOpenNotifier: SitesSetupControllerOpenNotifier
@@ -106,6 +111,8 @@ class BrowseController(
     get() = siteResolverLazy.get()
   private val firewallBypassManager: FirewallBypassManager
     get() = firewallBypassManagerLazy.get()
+  private val webViewTaskManager: WebViewTaskManager
+    get() = webViewTaskManagerLazy.get()
 
   private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
 
@@ -166,7 +173,7 @@ class BrowseController(
     controllerScope.launch {
       firewallBypassManager.showFirewallControllerEvents.collect { showFirewallControllerInfo ->
         val alreadyPresenting = isAlreadyPresenting { controller ->
-          controller is SiteFirewallBypassController && controller.alive
+          controller is WebViewTaskController && controller.alive
         }
 
         if (alreadyPresenting) {
@@ -175,14 +182,22 @@ class BrowseController(
 
         val firewallType = showFirewallControllerInfo.firewallType
         val urlToOpen = showFirewallControllerInfo.urlToOpen
-        val siteDescriptor = showFirewallControllerInfo.siteDescriptor
         val onFinished = showFirewallControllerInfo.onFinished
 
-        showSiteFirewallBypassController(
+        val success = showWebViewTaskController(
           firewallType = firewallType,
-          urlToOpen = urlToOpen,
-          siteDescriptor = siteDescriptor,
-          onBypassControllerClosed = { success -> onFinished.complete(success) }
+          urlToOpen = urlToOpen
+        )
+
+        onFinished.complete(success)
+      }
+    }
+
+    controllerScope.launch {
+      webViewTaskManager.taskQueue.collect { webViewTask ->
+        presentWebViewTaskAndHandleResult(
+          webViewTask = webViewTask,
+          webViewTaskName = "WebViewTask"
         )
       }
     }
@@ -656,107 +671,74 @@ class BrowseController(
     return chanDescriptor.siteDescriptor().is4chan() || chanDescriptor.siteDescriptor().isDvach()
   }
 
-  private suspend fun showSiteFirewallBypassController(
+  private suspend fun showWebViewTaskController(
     firewallType: FirewallType,
-    urlToOpen: HttpUrl,
-    siteDescriptor: SiteDescriptor,
-    onBypassControllerClosed: (Boolean) -> Unit
-  ) {
-    val cookieResult = suspendCancellableCoroutine<CookieResult> { continuation ->
-      val controller = SiteFirewallBypassController(
-        context = context,
-        firewallType = firewallType,
-        headerTitleText = getString(R.string.firewall_check_header_title, firewallType.name),
-        urlToOpen = urlToOpen,
-        onResult = { cookieResult ->
-          continuation.resumeValueSafe(cookieResult)
-          onBypassControllerClosed(cookieResult is CookieResult.CookieValue)
-        }
-      )
-
-      Logger.d(TAG, "presentController SiteFirewallBypassController (firewallType: ${firewallType}, urlToOpen: ${urlToOpen})")
-      presentController(controller)
-
-      continuation.invokeOnCancellation {
-        Logger.d(TAG, "stopPresenting SiteFirewallBypassController (firewallType: ${firewallType}, urlToOpen: ${urlToOpen})")
-
-        if (controller.alive) {
-          controller.stopPresenting()
-        }
-      }
+    urlToOpen: HttpUrl
+  ): Boolean {
+    Logger.debug(TAG) {
+      "presentController SiteFirewallBypassController " +
+        "(firewallType: ${firewallType}, urlToOpen: ${urlToOpen})"
     }
 
-    when (firewallType) {
+    val resultWaiter = CompletableDeferred<WebViewTaskResult>()
+
+    val webViewTask = when (firewallType) {
       FirewallType.Cloudflare -> {
-        when (cookieResult) {
-          CookieResult.Canceled -> {
-            AppModuleAndroidUtils.showToast(
-              context,
-              getString(R.string.firewall_check_canceled, firewallType),
-              Toast.LENGTH_LONG
-            )
-          }
-          CookieResult.NotSupported -> {
-            AppModuleAndroidUtils.showToast(
-              context,
-              getString(R.string.firewall_check_not_supported, firewallType, siteDescriptor.siteName),
-              Toast.LENGTH_LONG
-            )
-          }
-          is CookieResult.Error -> {
-            val errorMsg = cookieResult.exception.errorMessageOrClassName()
-            AppModuleAndroidUtils.showToast(
-              context,
-              getString(R.string.firewall_check_failure, firewallType, errorMsg),
-              Toast.LENGTH_LONG
-            )
-          }
-          is CookieResult.CookieValue -> {
-            AppModuleAndroidUtils.showToast(
-              context,
-              getString(R.string.firewall_check_success, firewallType),
-              Toast.LENGTH_LONG
-            )
-          }
-        }
+        CloudFlareTask(
+          headerTitleText = getString(R.string.firewall_check_header_title, firewallType.name),
+          loadable = AbstractWebViewTask.Loadable.Url(urlToOpen),
+          resultWaiter = resultWaiter
+        )
       }
       FirewallType.DvachAntiSpam -> {
-        when (cookieResult) {
-          CookieResult.Canceled -> {
-            AppModuleAndroidUtils.showToast(
-              context,
-              R.string.dvach_antispam_result_canceled,
-              Toast.LENGTH_LONG
-            )
-          }
-          CookieResult.NotSupported -> {
-            AppModuleAndroidUtils.showToast(
-              context,
-              getString(R.string.firewall_check_not_supported, firewallType, siteDescriptor.siteName),
-              Toast.LENGTH_LONG
-            )
-          }
-          is CookieResult.Error -> {
-            val errorMsg = cookieResult.exception.errorMessageOrClassName()
-            AppModuleAndroidUtils.showToast(
-              context,
-              getString(R.string.dvach_antispam_result_error, errorMsg),
-              Toast.LENGTH_LONG
-            )
-          }
-          is CookieResult.CookieValue -> {
-            AppModuleAndroidUtils.showToast(
-              context,
-              getString(R.string.dvach_antispam_result_success),
-              Toast.LENGTH_LONG
-            )
-          }
-        }
+        DvachAntispamTask(
+          headerTitleText = getString(R.string.firewall_check_header_title, firewallType.name),
+          loadable = AbstractWebViewTask.Loadable.Url(urlToOpen),
+          resultWaiter = resultWaiter
+        )
       }
       FirewallType.YandexSmartCaptcha -> {
-        // No-op. We only handle Yandex's captcha in one place (ImageSearchController)
+        error("Handled in ImageSearchController")
       }
     }
+
+    return presentWebViewTaskAndHandleResult(
+      webViewTask = webViewTask,
+      webViewTaskName = firewallType.name
+    )
+  }
+
+  private suspend fun presentWebViewTaskAndHandleResult(
+    webViewTask: AbstractWebViewTask,
+    webViewTaskName: String
+  ): Boolean {
+    presentController(
+      WebViewTaskController(
+        context = context,
+        webViewTask = webViewTask
+      )
+    )
+
+    val cookieResult = webViewTask.resultWaiter.await()
+    when (cookieResult) {
+      is WebViewTaskResult.Result -> {
+        val message = getString(R.string.firewall_check_success, webViewTaskName)
+        AppModuleAndroidUtils.showToast(context, message, Toast.LENGTH_LONG)
+      }
+
+      WebViewTaskResult.Canceled -> {
+        val message = getString(R.string.firewall_check_canceled, webViewTaskName)
+        AppModuleAndroidUtils.showToast(context, message, Toast.LENGTH_LONG)
+      }
+
+      is WebViewTaskResult.Error -> {
+        val errorMsg = cookieResult.exception.errorMessageOrClassName()
+        val message = getString(R.string.firewall_check_failure, webViewTaskName, errorMsg)
+        AppModuleAndroidUtils.showToast(context, message, Toast.LENGTH_LONG)
+      }
+    }
+
+    return cookieResult.isSuccess
   }
 
   private fun requestApi33NotificationsPermissionOnce() {

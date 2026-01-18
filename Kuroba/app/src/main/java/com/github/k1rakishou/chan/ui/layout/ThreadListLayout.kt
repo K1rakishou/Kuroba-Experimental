@@ -916,6 +916,11 @@ class ThreadListLayout @JvmOverloads constructor(
     return postAdapter.isErrorShown
   }
 
+  fun isLastSeenIndicatorVisible(): Boolean {
+    BackgroundUtils.ensureMainThread()
+    return postAdapter.isLastSeenIndicatorVisible()
+  }
+
   fun resetCachedPostData(postDescriptor: PostDescriptor) {
     resetCachedPostData(listOf(postDescriptor))
   }
@@ -929,7 +934,8 @@ class ThreadListLayout @JvmOverloads constructor(
   }
 
   private fun setRecyclerViewPadding() {
-    val defaultPadding = if (boardPostViewMode == BoardPostViewMode.GRID || boardPostViewMode == BoardPostViewMode.STAGGER) {
+    val defaultPadding = if (boardPostViewMode == BoardPostViewMode.GRID ||
+      boardPostViewMode == BoardPostViewMode.STAGGER) {
       dp(1f)
     } else {
       0

@@ -547,6 +547,10 @@ class ThreadPresenter @Inject constructor(
     chanThreadTicker.resetTicker()
   }
 
+  fun ticksCounter(): Long {
+    return chanThreadTicker.ticksCounter
+  }
+
   override fun loadCatalogPage(overridePage: Int?) {
     val descriptor = currentChanDescriptor as ChanDescriptor.ICatalogDescriptor?
       ?: return

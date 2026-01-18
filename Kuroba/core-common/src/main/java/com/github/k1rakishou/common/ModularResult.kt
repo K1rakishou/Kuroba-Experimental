@@ -11,7 +11,7 @@ sealed class ModularResult<V : Any?> {
   data class Error<V : Any?>(val error: Throwable) : ModularResult<V>()
 
   @CheckReturnValue
-  fun onError(func: (Throwable) -> Unit): ModularResult<V> {
+  inline fun onError(func: (Throwable) -> Unit): ModularResult<V> {
     when (this) {
       is Value -> {
         return this
@@ -28,7 +28,7 @@ sealed class ModularResult<V : Any?> {
   }
 
   @CheckReturnValue
-  fun onSuccess(func: (V) -> Unit): ModularResult<V> {
+  inline fun onSuccess(func: (V) -> Unit): ModularResult<V> {
     when (this) {
       is Value -> {
         try {

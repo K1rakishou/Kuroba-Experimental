@@ -9,6 +9,7 @@ import com.github.k1rakishou.chan.core.manager.PrefetchStateManager
 import com.github.k1rakishou.chan.core.manager.RevealedSpoilerImagesManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.ThirdEyeManager
+import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.ui.compose.snackbar.manager.SnackbarManagerFactory
 import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
 import com.github.k1rakishou.chan.ui.helper.AppResources
@@ -19,6 +20,7 @@ interface ApplicationDependencies {
   val application: Chan
   val themeEngine: ThemeEngine
   val siteManager: SiteManager
+  val siteResolver: SiteResolver
   val globalUiStateHolder: GlobalUiStateHolder
   val appResources: AppResources
   val snackbarManagerFactory: SnackbarManagerFactory

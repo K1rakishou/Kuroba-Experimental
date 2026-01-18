@@ -1110,6 +1110,14 @@ class ThreadLayout @JvmOverloads constructor(
       return
     }
 
+    val ticksCounter = presenter.ticksCounter()
+    if (ticksCounter <= 1 && threadListLayout.isLastSeenIndicatorVisible()) {
+      // This is the first thread load and last seen indicator is within the viewport (visible). We don't want to show
+      // the "XXX new posts" snackbar in this case.
+      snackbarManager.dismissSnackbar(snackbarId)
+      return
+    }
+
     val text = when {
       newPostsCount <= 0 && deletedPostsCount <= 0 -> return
       newPostsCount > 0 && deletedPostsCount <= 0 -> {

@@ -3,6 +3,8 @@ package com.github.k1rakishou.chan.ui.adapter
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.updateLayoutParams
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.github.k1rakishou.ChanSettings
@@ -464,6 +466,47 @@ class PostAdapter(
 
     val postCellData = threadCellData.getPostCellData(correctedPosition)
     return postCellData.postNo
+  }
+
+  fun isLastSeenIndicatorVisible(): Boolean {
+    val layoutManager = recyclerView.layoutManager
+      ?: return false
+
+    val tempArray = IntArray(32)
+
+    val visibleItemsRange = when (layoutManager) {
+      is StaggeredGridLayoutManager -> {
+        IntRange(
+          layoutManager.findFirstVisibleItemPositions(tempArray).min(),
+          layoutManager.findLastVisibleItemPositions(tempArray).max()
+        )
+      }
+      is GridLayoutManager -> {
+        IntRange(
+          layoutManager.findFirstVisibleItemPosition(),
+          layoutManager.findLastVisibleItemPosition()
+        )
+      }
+      is LinearLayoutManager -> {
+        IntRange(
+          layoutManager.findFirstVisibleItemPosition(),
+          layoutManager.findLastVisibleItemPosition()
+        )
+      }
+      else -> error("Unknown layout manager: ${layoutManager::class.java.name}")
+    }
+
+    for (position in visibleItemsRange) {
+      if (position < 0 || position >= itemCount) {
+        break
+      }
+
+      if (getItemViewTypeSafe(position) == PostCellData.TYPE_LAST_SEEN) {
+        return true
+      }
+    }
+
+    return false
   }
 
   private fun getItemViewTypeSafe(position: Int): Int {

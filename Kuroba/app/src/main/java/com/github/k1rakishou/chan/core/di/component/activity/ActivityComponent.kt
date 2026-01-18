@@ -14,7 +14,6 @@ import com.github.k1rakishou.chan.features.bookmarks.BookmarksSortingController
 import com.github.k1rakishou.chan.features.bookmarks.epoxy.BaseThreadBookmarkViewHolder
 import com.github.k1rakishou.chan.features.bookmarks.epoxy.EpoxyGridThreadBookmarkViewHolder
 import com.github.k1rakishou.chan.features.bookmarks.epoxy.EpoxyListThreadBookmarkViewHolder
-import com.github.k1rakishou.chan.features.bypass.SiteFirewallBypassController
 import com.github.k1rakishou.chan.features.create_sound_media.CreateSoundMediaController
 import com.github.k1rakishou.chan.features.drawer.MainController
 import com.github.k1rakishou.chan.features.filters.CreateOrUpdateFilterController
@@ -92,6 +91,7 @@ import com.github.k1rakishou.chan.features.thirdeye.ThirdEyeSettingsController
 import com.github.k1rakishou.chan.features.thread_downloading.LocalArchiveController
 import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloaderSettingsController
 import com.github.k1rakishou.chan.features.toolbar.KurobaToolbarView
+import com.github.k1rakishou.chan.features.webview.WebViewTaskController
 import com.github.k1rakishou.chan.ui.activity.CrashReportActivity
 import com.github.k1rakishou.chan.ui.activity.SharingActivity
 import com.github.k1rakishou.chan.ui.activity.StartActivity
@@ -258,7 +258,7 @@ interface ActivityComponent : ActivityDependencies {
   fun inject(postLinksController: PostLinksController)
   fun inject(selectSiteForSearchController: SelectSiteForSearchController)
   fun inject(selectBoardForSearchController: SelectBoardForSearchController)
-  fun inject(siteFirewallBypassController: SiteFirewallBypassController)
+  fun inject(webViewTaskController: WebViewTaskController)
   fun inject(imageSaverV2OptionsController: ImageSaverV2OptionsController)
   fun inject(resolveDuplicateImagesController: ResolveDuplicateImagesController)
   fun inject(kurobaAlertDialogHostController: KurobaAlertDialogHostController)

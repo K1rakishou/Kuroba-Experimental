@@ -132,7 +132,6 @@ class FirewallBypassManager(
 
         val showFirewallControllerInfo = ShowFirewallControllerInfo(
           firewallType = firewallType,
-          siteDescriptor = siteDescriptor,
           urlToOpen = urlToOpen,
           onFinished = completableDeferred
         )
@@ -214,7 +213,6 @@ class FirewallBypassManager(
 
   class ShowFirewallControllerInfo(
     val firewallType: FirewallType,
-    val siteDescriptor: SiteDescriptor,
     val urlToOpen: HttpUrl,
     val onFinished: CompletableDeferred<Boolean>
   )

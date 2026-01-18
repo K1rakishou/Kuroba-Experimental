@@ -40,11 +40,13 @@ import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.image.ImageLoaderDeprecated
-import com.github.k1rakishou.chan.features.bypass.CookieResult
-import com.github.k1rakishou.chan.features.bypass.SiteFirewallBypassController
 import com.github.k1rakishou.chan.features.toolbar.BackArrowMenuItem
 import com.github.k1rakishou.chan.features.toolbar.ToolbarMiddleContent
 import com.github.k1rakishou.chan.features.toolbar.ToolbarText
+import com.github.k1rakishou.chan.features.webview.WebViewTaskController
+import com.github.k1rakishou.chan.features.webview.WebViewTaskResult
+import com.github.k1rakishou.chan.features.webview.task.AbstractWebViewTask
+import com.github.k1rakishou.chan.features.webview.task.YandexCaptchaTask
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeErrorMessage
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeProgressIndicator
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
@@ -65,15 +67,15 @@ import com.github.k1rakishou.chan.ui.view.floating_menu.HeaderFloatingListMenuIt
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.findControllerOrNull
 import com.github.k1rakishou.common.FirewallType
+import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isNotNullNorEmpty
-import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.util.ChanPostUtils
 import com.github.k1rakishou.persist_state.ImageSearchInstanceType
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.HttpUrl
 import javax.inject.Inject
 
@@ -115,8 +117,8 @@ class ImageSearchController(
           drawableId = R.drawable.ic_refresh_white_24dp,
           onClick = {
             val currentCaptchaController = findControllerOrNull { controller ->
-              return@findControllerOrNull controller is SiteFirewallBypassController &&
-                controller.firewallType == FirewallType.YandexSmartCaptcha
+              controller is WebViewTaskController &&
+                controller.webViewTask is YandexCaptchaTask
             }
 
             currentCaptchaController?.stopPresenting()
@@ -140,39 +142,47 @@ class ImageSearchController(
           return@collect
         }
 
-        val alreadyPresenting = isAlreadyPresenting { controller -> controller is SiteFirewallBypassController }
+        val alreadyPresenting = isAlreadyPresenting { controller -> controller is WebViewTaskController }
         if (alreadyPresenting) {
           return@collect
         }
 
         try {
-          val cookieResult = suspendCancellableCoroutine<CookieResult> { continuation ->
-            val controller = SiteFirewallBypassController(
-              context = context,
-              firewallType = FirewallType.YandexSmartCaptcha,
-              headerTitleText = AppModuleAndroidUtils.getString(
-                R.string.firewall_check_header_title,
-                FirewallType.YandexSmartCaptcha.name
-              ),
-              urlToOpen = urlToOpen,
-              onResult = { cookieResult -> continuation.resumeValueSafe(cookieResult) }
-            )
+          val resultWaiter = CompletableDeferred<WebViewTaskResult>()
 
-            presentController(controller)
-          }
+          presentController(
+            WebViewTaskController(
+              context = context,
+              webViewTask = YandexCaptchaTask(
+                headerTitleText = AppModuleAndroidUtils.getString(
+                  R.string.firewall_check_header_title,
+                  FirewallType.YandexSmartCaptcha.name
+                ),
+                loadable = AbstractWebViewTask.Loadable.Url(urlToOpen),
+                resultWaiter = resultWaiter,
+              ),
+            )
+          )
+
+          val cookieResult = resultWaiter.await()
 
           // Wait a second for the controller to get closed so that we don't end up in a loop
           delay(1000)
 
-          if (cookieResult !is CookieResult.CookieValue) {
+          if (cookieResult !is WebViewTaskResult.Result) {
             Logger.e(TAG, "Failed to bypass YandexSmartCaptcha, cookieResult: ${cookieResult}")
             controllerViewModel.reloadCurrentPage()
             return@collect
           }
 
-          Logger.d(TAG, "Get YandexSmartCaptcha cookies, cookieResult: ${cookieResult}")
-          controllerViewModel.updateYandexSmartCaptchaCookies(cookieResult.cookie)
+          val cookies = cookieResult.data as String
+
+          Logger.d(TAG, "Get YandexSmartCaptcha cookies, cookies: ${cookies}")
+          controllerViewModel.updateYandexSmartCaptchaCookies(cookies)
           controllerViewModel.reloadCurrentPage()
+        } catch (error: Throwable) {
+          Logger.error(TAG, error) { "Failed to pass Yandex captcha" }
+          snackbarManager.errorToast("Failed to pass Yandex captcha, error: ${error.errorMessageOrClassName()}")
         } finally {
           controllerViewModel.finishedSolvingCaptcha()
         }

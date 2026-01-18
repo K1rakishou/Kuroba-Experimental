@@ -101,6 +101,10 @@ object StringUtils {
     return input
   }
 
+  fun String?.asFormattedToken(): String {
+    return formatToken(this)
+  }
+
   @JvmStatic
   fun formatToken(token: String?): String {
     if (token == null) {
@@ -115,8 +119,7 @@ object StringUtils {
       return "<blank>"
     }
 
-    val tokenPartLength = (token.length.toFloat() * 0.2f).toInt() / 2
-
+    val tokenPartLength = ((token.length.toFloat() * 0.2f).toInt() / 2).coerceAtMost(16)
     val startTokenPart = token.substring(0, tokenPartLength)
     val endTokenPart = token.substring(token.length - tokenPartLength)
 

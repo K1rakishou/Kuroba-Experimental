@@ -17,15 +17,20 @@ import com.github.k1rakishou.chan.core.manager.Chan4CaptchaNotifierManager
 import com.github.k1rakishou.chan.core.manager.FirewallBypassManager
 import com.github.k1rakishou.chan.core.manager.HapticFeedbackManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.manager.WebViewTaskManager
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4CaptchaSettings
 import com.github.k1rakishou.chan.core.usecase.LoadChan4CaptchaUseCase
+import com.github.k1rakishou.chan.features.webview.WebViewTaskResult
+import com.github.k1rakishou.chan.features.webview.task.AbstractWebViewTask
+import com.github.k1rakishou.chan.features.webview.task.SpurUsAntibotTask
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.common.StringUtils
+import com.github.k1rakishou.common.StringUtils.asFormattedToken
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.prefs.GsonJsonSetting
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -35,6 +40,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import org.jsoup.Jsoup
 import javax.inject.Inject
 
 class Chan4CaptchaLayoutViewModel(
@@ -44,6 +51,7 @@ class Chan4CaptchaLayoutViewModel(
   private val hapticFeedbackManager: HapticFeedbackManager,
   private val firewallBypassManager: FirewallBypassManager,
   private val chan4CaptchaNotifierManager: Chan4CaptchaNotifierManager,
+  private val webViewTaskManager: WebViewTaskManager,
 ) : BaseViewModel(), Chan4CaptchaNotifierManager.CaptchaViewModelCallbacks {
 
   private var activeJob: Job? = null
@@ -112,7 +120,11 @@ class Chan4CaptchaLayoutViewModel(
     }
   }
 
-  fun requestCaptcha(chanDescriptor: ChanDescriptor, forced: Boolean) {
+  fun requestCaptcha(
+    chanDescriptor: ChanDescriptor,
+    mcl: String,
+    forced: Boolean
+  ) {
     activeJob?.cancel()
     activeJob = null
 
@@ -134,8 +146,11 @@ class Chan4CaptchaLayoutViewModel(
       return
     }
 
-    Logger.d(TAG, "requestCaptcha() requesting new captcha " +
-      "(forced: $forced, ttl: ${prevCaptchaInfo?.ttlMillis()}, chanDescriptor=$chanDescriptor)")
+    Logger.debug(TAG) {
+      "requestCaptcha() requesting new captcha (" +
+        "forced: $forced, ttl: ${prevCaptchaInfo?.ttlMillis()}, " +
+        "chanDescriptor: $chanDescriptor, mcl: ${mcl.asFormattedToken()})"
+    }
 
     _captchaTtlMillisFlow.value = -1L
     getCachedCaptchaInfoOrNull(chanDescriptor)?.reset()
@@ -152,32 +167,20 @@ class Chan4CaptchaLayoutViewModel(
 
         requestCaptchaInternal(
           chanDescriptor = chanDescriptor,
-          ticket = chan4CaptchaSettingsJson.get().captchaTicket
+          ticket = chan4CaptchaSettingsJson.get().captchaTicket,
+          mcl = mcl
         )
       }
       when (result) {
         is ModularResult.Error -> {
-          val error = result.error
-
-          Logger.e(TAG, "requestCaptcha()", error)
-          _captchaInfoToShow.value = AsyncData.Error(error)
-
-          if (error is CaptchaCooldownError) {
-            Logger.debug(TAG) {
-              "requestCaptcha() error is CaptchaCooldownError, starting the waiter for ${chanDescriptor}"
-            }
-            chan4CaptchaNotifierManager.start(chanDescriptor, error.cooldownEndTimeMs)
-
-            if (!chan4CaptchaNotifierManager.wait()) {
-              Logger.debug(TAG) {
-                "requestCaptcha() chan4CaptchaNotifierManager.wait() was canceled for ${chanDescriptor}"
-              }
-
-              return@launch
-            }
-
-            withContext(Dispatchers.Main) { requestCaptcha(chanDescriptor, forced = true) }
-            return@launch
+          try {
+            handleCaptchaRequestError(
+              chanDescriptor = chanDescriptor,
+              error = result.error
+            )
+          } catch (error: Throwable) {
+            Logger.d(TAG, "requestCaptcha() handleCaptchaRequestError")
+            _captchaInfoToShow.value = AsyncData.Error(error)
           }
         }
         is ModularResult.Value -> {
@@ -247,13 +250,15 @@ class Chan4CaptchaLayoutViewModel(
 
   private suspend fun requestCaptchaInternal(
     chanDescriptor: ChanDescriptor,
-    ticket: String?
+    ticket: String?,
+    mcl: String
   ): CaptchaInfo {
     _captchaDataJson.value = null
 
     val (captchaInfoRaw, captchaInfoRawString) = getCachedCaptchaOrLoadFresh(
       chanDescriptor = chanDescriptor,
-      ticket = ticket
+      ticket = ticket,
+      mcl = mcl
     )
 
     _captchaDataJson.value = captchaInfoRawString.takeIf { it.isNotBlank() }
@@ -271,14 +276,20 @@ class Chan4CaptchaLayoutViewModel(
           error("Cannot use CompositeCatalogDescriptor here")
         }
         is ChanDescriptor.CatalogDescriptor -> {
-          Logger.debug(TAG) { "requestCaptchaInternal($chanDescriptor) new thread creation rate limited! cooldownMs=$cooldownMs" }
+          Logger.debug(TAG) {
+            "requestCaptchaInternal($chanDescriptor) new thread creation rate limited! cooldownMs=$cooldownMs"
+          }
+
           throw CaptchaThreadRateLimitError(
             cooldownEndTimeMs = now + cooldownMs,
             cooldownMs = cooldownMs
           )
         }
         is ChanDescriptor.ThreadDescriptor -> {
-          Logger.d(TAG, "requestCaptchaInternal($chanDescriptor) new post creation rate limited! cooldownMs=$cooldownMs")
+          Logger.debug(TAG) {
+            "requestCaptchaInternal($chanDescriptor) new post creation rate limited! cooldownMs=$cooldownMs"
+          }
+
           throw CaptchaPostRateLimitError(
             cooldownEndTimeMs = now + cooldownMs,
             cooldownMs = cooldownMs
@@ -367,17 +378,81 @@ class Chan4CaptchaLayoutViewModel(
     )
   }
 
+  suspend fun handleCaptchaRequestError(
+    chanDescriptor: ChanDescriptor,
+    error: Throwable
+  ) {
+    Logger.e(TAG, "requestCaptcha()", error)
+    _captchaInfoToShow.value = AsyncData.Error(error)
+
+    if (error is CaptchaCooldownError) {
+      Logger.debug(TAG) {
+        "requestCaptcha() error is CaptchaCooldownError, starting the waiter for ${chanDescriptor}"
+      }
+      chan4CaptchaNotifierManager.start(chanDescriptor, error.cooldownEndTimeMs)
+
+      if (!chan4CaptchaNotifierManager.wait()) {
+        Logger.debug(TAG) {
+          "requestCaptcha() chan4CaptchaNotifierManager.wait() was canceled for ${chanDescriptor}"
+        }
+
+        return
+      }
+
+      withContext(Dispatchers.Main) {
+        requestCaptcha(chanDescriptor = chanDescriptor, mcl = "", forced = true)
+      }
+
+      return
+    }
+
+    if (error is LoadChan4CaptchaUseCase.AntibotCheckDetected) {
+      Logger.debug(TAG) { "requestCaptcha() error is AntibotCheckDetected, loading WebView" }
+
+      val document = Jsoup.parseBodyFragment(error.htmlToLoad)
+      val challengeUrl = document.select("script#_mcl").attr("src").toHttpUrl()
+
+      val taskResult = webViewTaskManager.performWebViewTask(
+        SpurUsAntibotTask(
+          headerTitleText = "SpurUsAntibot",
+          loadableUrl = AbstractWebViewTask.Loadable.Url(challengeUrl),
+          resultWaiter = CompletableDeferred<WebViewTaskResult>()
+        )
+      )
+
+      if (taskResult is WebViewTaskResult.Result) {
+        _captchaInfoToShow.value = AsyncData.Loading
+
+        val mcl = taskResult.data as String
+        Logger.debug(TAG) {
+          "Got SpurUsAntibot mcl (wtf is even this shit?): '${mcl.asFormattedToken()}'. Retrying captcha."
+        }
+
+        withContext(Dispatchers.Main) {
+          requestCaptcha(chanDescriptor = chanDescriptor, mcl = mcl, forced = true)
+        }
+
+        return
+      }
+
+      Logger.error(TAG, error) { "Failed to pass SpurUsAntibot, taskResult: ${taskResult}" }
+      _captchaInfoToShow.value = AsyncData.Error(UnknownCaptchaError("Failed to pass SpurUsAntibot"))
+    }
+  }
+
   private suspend fun getCachedCaptchaOrLoadFresh(
     chanDescriptor: ChanDescriptor,
-    ticket: String?
+    ticket: String?,
+    mcl: String
   ): Pair<LoadChan4CaptchaUseCase.CaptchaInfoRaw, String> {
     Logger.debug(TAG) {
-      "getCachedCaptchaOrLoadFresh(${chanDescriptor}, ${StringUtils.formatToken(ticket)}) requesting fresh captcha"
+      "getCachedCaptchaOrLoadFresh(${chanDescriptor}, ${ticket.asFormattedToken()}) requesting fresh captcha"
     }
 
     val captchaResult = loadChan4CaptchaUseCase.await(
       chanDescriptor = chanDescriptor,
-      ticket = ticket
+      ticket = ticket,
+      mcl = mcl,
     ).unwrap()
 
     val captchaInfoRaw = captchaResult.captchaInfoRaw
@@ -500,6 +575,7 @@ class Chan4CaptchaLayoutViewModel(
     private val hapticFeedbackManager: HapticFeedbackManager,
     private val firewallBypassManager: FirewallBypassManager,
     private val chan4CaptchaNotifierManager: Chan4CaptchaNotifierManager,
+    private val webViewTaskManager: WebViewTaskManager,
   ) : ViewModelAssistedFactory<Chan4CaptchaLayoutViewModel> {
     override fun create(handle: SavedStateHandle): Chan4CaptchaLayoutViewModel {
       return Chan4CaptchaLayoutViewModel(
@@ -509,6 +585,7 @@ class Chan4CaptchaLayoutViewModel(
         hapticFeedbackManager = hapticFeedbackManager,
         firewallBypassManager = firewallBypassManager,
         chan4CaptchaNotifierManager = chan4CaptchaNotifierManager,
+        webViewTaskManager = webViewTaskManager
       )
     }
   }
