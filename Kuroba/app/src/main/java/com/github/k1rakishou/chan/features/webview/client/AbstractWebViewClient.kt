@@ -47,5 +47,4 @@ abstract class AbstractWebViewClient(
   companion object {
     private const val MAX_PAGE_LOADS_COUNT = 10
   }
-
 }

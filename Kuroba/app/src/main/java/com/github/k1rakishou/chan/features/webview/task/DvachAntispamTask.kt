@@ -96,7 +96,6 @@ class DvachAntispamTask(
       private val COOKIE_KEY_PATTERN = Pattern.compile("[0-9a-zA-Z]+")
       private val COOKIE_VALUE_PATTERN = Pattern.compile("([0-9a-z]+)-([0-9a-z]+)-([0-9a-z]+)-([0-9a-z]+)-([0-9a-z]+)")
     }
-
   }
 
   companion object {

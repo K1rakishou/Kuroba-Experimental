@@ -1021,7 +1021,7 @@ formatting:
     active: true
     autoCorrect: true
   SpacingBetweenDeclarationsWithAnnotations:
-    active: true
+    active: false
     autoCorrect: true
   SpacingBetweenDeclarationsWithComments:
     active: true

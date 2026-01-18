@@ -346,8 +346,7 @@ class LoadChan4CaptchaUseCase(
     name: String
   ) : ClientException("Detected '${name}' anti-bot check. A WebView will be loaded to pass the check.")
 
-  class AntibotCheckLoopDetected
-    : ClientException("Captcha got rejected even after passing SpurUsAntiBotCheck (wtf?!)")
+  class AntibotCheckLoopDetected : ClientException("Captcha got rejected even after passing SpurUsAntiBotCheck (wtf?!)")
 
   companion object {
     private const val TAG = "LoadChan4CaptchaUseCase"

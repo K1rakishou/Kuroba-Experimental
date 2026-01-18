@@ -79,7 +79,6 @@ class YandexCaptchaTask(
       super.onReceivedError(view, errorCode, description, failingUrl)
       onPageLoadError(errorCode, description, failingUrl)
     }
-
   }
 
   companion object {

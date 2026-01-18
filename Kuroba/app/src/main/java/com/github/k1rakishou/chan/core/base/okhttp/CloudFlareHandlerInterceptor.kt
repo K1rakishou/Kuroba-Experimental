@@ -94,8 +94,6 @@ class CloudFlareHandlerInterceptor(
 
       val site = siteResolver.findSiteForUrl(request.url.toString())
       if (site != null) {
-        val siteDescriptor = site.siteDescriptor()
-
         val bypassSuccess = AtomicBoolean(false)
         val countDownLatch = CountDownLatch(1)
 
@@ -109,7 +107,6 @@ class CloudFlareHandlerInterceptor(
 
         firewallBypassManager.onFirewallDetected(
           firewallType = FirewallType.Cloudflare,
-          siteDescriptor = siteDescriptor,
           urlToOpen = request.url,
           onFinished = { success ->
             bypassSuccess.set(success)

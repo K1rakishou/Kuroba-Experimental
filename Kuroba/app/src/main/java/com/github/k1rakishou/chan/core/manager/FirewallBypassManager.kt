@@ -8,7 +8,6 @@ import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.rethrowCancellationException
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
-import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
@@ -58,7 +57,6 @@ class FirewallBypassManager(
 
   fun onFirewallDetected(
     firewallType: FirewallType,
-    siteDescriptor: SiteDescriptor,
     urlToOpen: HttpUrl,
     onFinished: (success: Boolean) -> Unit
   ) {

@@ -67,5 +67,4 @@ abstract class AbstractCookieWebViewTask(
   }
 
   abstract fun addCookieToSiteSettings(site: Site, cookies: String)
-
 }

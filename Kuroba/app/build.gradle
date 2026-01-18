@@ -56,8 +56,8 @@ android {
         //          m -> Minor version
         //          p -> patch
         //          MmmPP
-        versionCode 10336
-        versionName "v1.3.36"
+        versionCode 10337
+        versionName "v1.3.37"
 
         configurations.configureEach {
             resolutionStrategy { force 'androidx.emoji2:emoji2:1.3.0' }

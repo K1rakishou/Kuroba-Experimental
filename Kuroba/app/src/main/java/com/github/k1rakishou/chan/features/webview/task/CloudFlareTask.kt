@@ -69,7 +69,6 @@ class CloudFlareTask(
       if (newCfClearanceCookie.isNullOrBlank()
         || prevCfClearanceCookie == newCfClearanceCookie
         || !newCookiesBuilder.containsAll(listOf(CloudFlareHandlerInterceptor.COOKIE_CF_CLEARANCE))) {
-
         return
       }
 
@@ -87,7 +86,6 @@ class CloudFlareTask(
       super.onReceivedError(view, errorCode, description, failingUrl)
       onPageLoadError(errorCode, description, failingUrl)
     }
-
   }
 
   companion object {
