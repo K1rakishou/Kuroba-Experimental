@@ -1,8 +1,8 @@
 package com.github.k1rakishou.chan.ui.controller
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
-import android.os.Build
 import android.widget.Toast
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.ChanSettings.BoardPostViewMode
@@ -741,15 +741,8 @@ class BrowseController(
     return cookieResult.isSuccess
   }
 
+  @SuppressLint("InlinedApi")
   private fun requestApi33NotificationsPermissionOnce() {
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
-      return
-    }
-
-    if (ChanSettings.api33NotificationPermissionRequested.get()) {
-      return
-    }
-
     if (hasPostNotificationsPermission(context)) {
       return
     }
@@ -757,8 +750,6 @@ class BrowseController(
     runtimePermissionsHelper.requestPermission(
       Manifest.permission.POST_NOTIFICATIONS
     ) { granted ->
-      ChanSettings.api33NotificationPermissionRequested.set(true)
-
       if (granted) {
         return@requestPermission
       }

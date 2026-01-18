@@ -1020,7 +1020,8 @@ class ManagerModule {
     appResources: AppResources,
     kurobaSystemNotifications: KurobaSystemNotifications,
     siteManager: SiteManager,
-    chanThreadManager: ChanThreadManager
+    chanThreadManager: ChanThreadManager,
+    applicationVisibilityManager: ApplicationVisibilityManager
   ): Chan4CaptchaNotifierManager {
     Logger.deps("Chan4CaptchaNotifierManager")
     return Chan4CaptchaNotifierManager(
@@ -1028,7 +1029,8 @@ class ManagerModule {
       appResources = appResources,
       kurobaSystemNotifications = kurobaSystemNotifications,
       siteManager = siteManager,
-      chanThreadManager = chanThreadManager
+      chanThreadManager = chanThreadManager,
+      applicationVisibilityManager = applicationVisibilityManager
     )
   }
 

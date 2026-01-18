@@ -19,7 +19,6 @@ import com.github.k1rakishou.chan.core.image.loader.KurobaImageSize
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.NotificationConstants
 import com.github.k1rakishou.chan.utils.appDependencies
-import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import kotlinx.coroutines.Dispatchers
@@ -55,11 +54,8 @@ class KurobaSystemNotifications(
     )
   }
 
+  @SuppressLint("NewApi")
   private fun setupChannels() {
-    if (!AndroidUtils.isAndroidO) {
-      return
-    }
-
     Logger.d(TAG, "setupChannels() called")
 
     if (notificationManagerCompat.getNotificationChannel(NotificationConstants.Generic.CHANNEL_ID) == null) {
@@ -67,13 +63,13 @@ class KurobaSystemNotifications(
         "setupChannels() creating ${NotificationConstants.Generic.CHANNEL_ID} channel"
       }
 
-      val lastPageAlertChannel = NotificationChannel(
+      val genericNotificationChannel = NotificationChannel(
         NotificationConstants.Generic.CHANNEL_ID,
         NotificationConstants.Generic.CHANNEL_NAME,
         NotificationManager.IMPORTANCE_HIGH
       )
 
-      lastPageAlertChannel.setSound(
+      genericNotificationChannel.setSound(
         Settings.System.DEFAULT_NOTIFICATION_URI,
         AudioAttributes.Builder()
           .setUsage(AudioAttributes.USAGE_NOTIFICATION_EVENT)
@@ -83,11 +79,11 @@ class KurobaSystemNotifications(
           .build()
       )
 
-      lastPageAlertChannel.enableLights(true)
-      lastPageAlertChannel.enableVibration(true)
-      lastPageAlertChannel.lightColor = themeEngine.chanTheme.accentColor
+      genericNotificationChannel.enableLights(true)
+      genericNotificationChannel.enableVibration(true)
+      genericNotificationChannel.lightColor = themeEngine.chanTheme.accentColor
 
-      notificationManagerCompat.createNotificationChannel(lastPageAlertChannel)
+      notificationManagerCompat.createNotificationChannel(genericNotificationChannel)
     }
   }
 
@@ -99,6 +95,7 @@ class KurobaSystemNotifications(
     val withVibration: Boolean = true,
     val time: Long = System.currentTimeMillis(),
     val lights: Lights = Lights(1000, 1000),
+    val vibrationPattern: VibrationPattern = VibrationPattern.Default,
     val autoCancel: Boolean = true,
     val largeIcon: LargeIcon? = null,
     val smallIcon: Int = R.drawable.ic_stat_notify_alert
@@ -149,15 +146,21 @@ class KurobaSystemNotifications(
       data class RemoteUrl(val url: HttpUrl) : LargeIcon
     }
 
+    sealed class VibrationPattern(val pattern: LongArray) {
+      data object LowPriority : VibrationPattern(longArrayOf(0, 200))
+      data object Default : VibrationPattern(longArrayOf(0, 250, 250, 250))
+      data object GentleReminder : VibrationPattern(longArrayOf(0, 300, 1000, 300))
+      data object Attention : VibrationPattern(longArrayOf(0, 500))
+      data object Alert : VibrationPattern(longArrayOf(0, 200, 100, 200, 100, 200, 100, 200))
+    }
+
     suspend fun build(appContext: Context, themeEngine: ThemeEngine): Notification {
-      val defaultOptions = if (withSound && withVibration) {
-        Notification.DEFAULT_SOUND or Notification.DEFAULT_VIBRATE or Notification.DEFAULT_LIGHTS
-      } else if (withSound) {
-        Notification.DEFAULT_SOUND or Notification.DEFAULT_LIGHTS
-      } else if (withVibration) {
-        Notification.DEFAULT_VIBRATE or Notification.DEFAULT_LIGHTS
-      } else {
-        Notification.DEFAULT_LIGHTS
+      var defaultOptions = Notification.DEFAULT_LIGHTS
+      if (withSound) {
+        defaultOptions = defaultOptions or Notification.DEFAULT_SOUND
+      }
+      if (withVibration) {
+        defaultOptions = defaultOptions or Notification.DEFAULT_VIBRATE
       }
 
       // Dispatchers.Default should be fine here, as we won't do any heavy IO since it will be delegated to other
@@ -177,7 +180,11 @@ class KurobaSystemNotifications(
         .setSmallIcon(smallIcon)
         .setLargeIcon(largeIcon)
         .setCategory(Notification.CATEGORY_MESSAGE)
-        .setSilent(!withSound)
+        .also { builder ->
+          if (withVibration) {
+            builder.setVibrate(vibrationPattern.pattern)
+          }
+        }
         .also { builder ->
           val notificationStyle = when (style) {
             is Style.Default -> {

@@ -66,6 +66,7 @@ class ApplicationVisibilityManager {
 
   fun getCurrentAppVisibility(): ApplicationVisibility = currentApplicationVisibility
   fun isAppInForeground(): Boolean = getCurrentAppVisibility() == ApplicationVisibility.Foreground
+  fun isAppInBackground(): Boolean = getCurrentAppVisibility() == ApplicationVisibility.Background
 
   // Maybe because the app may get started for whatever reason (service got invoked by the OS) but
   // no activities are going to start up.

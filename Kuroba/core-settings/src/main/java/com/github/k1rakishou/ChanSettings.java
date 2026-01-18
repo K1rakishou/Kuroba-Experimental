@@ -450,7 +450,6 @@ public class ChanSettings {
     public static BooleanSetting markDeletedPostsOnScrollbar;
     public static BooleanSetting markHotPostsOnScrollbar;
     public static BooleanSetting globalNsfwMode;
-    public static BooleanSetting api33NotificationPermissionRequested;
     //endregion
     //endregion
 
@@ -735,7 +734,6 @@ public class ChanSettings {
         drawerDeleteBookmarksWhenDeletingNavHistory = new BooleanSetting(provider, "drawer_delete_bookmarks_when_deleting_nav_history", false);
         drawerDeleteNavHistoryWhenBookmarkDeleted = new BooleanSetting(provider, "drawer_delete_nav_history_when_bookmark_deleted", false);
         globalNsfwMode = new BooleanSetting(provider, "global_nsfw_mode", false);
-        api33NotificationPermissionRequested = new BooleanSetting(provider, "api33_notification_permission_requested", false);
     }
 
     public static int mediaViewerOffscreenPagesCount() {

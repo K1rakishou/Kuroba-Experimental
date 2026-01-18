@@ -22,7 +22,8 @@ class Chan4CaptchaNotifierManager(
   private val appResources: AppResources,
   private val kurobaSystemNotifications: KurobaSystemNotifications,
   private val siteManager: SiteManager,
-  private val chanThreadManager: ChanThreadManager
+  private val chanThreadManager: ChanThreadManager,
+  private val applicationVisibilityManager: ApplicationVisibilityManager
 ) {
   private var _waitJob: Job? = null
   private var _waiter = CompletableDeferred<Unit>()
@@ -107,9 +108,8 @@ class Chan4CaptchaNotifierManager(
           callbacks.updateCurrentCaptchaInfo(AsyncData.Error(updatedError))
         }
 
-        if (!_captchaViewShown) {
+        if (!_captchaViewShown || applicationVisibilityManager.isAppInBackground()) {
           val chanDescriptorReadable = waitDescriptor.userReadableString()
-
           val largeIconUrl = when (waitDescriptor) {
             is ChanDescriptor.CatalogDescriptor -> {
               siteManager.bySiteDescriptorAndActive(waitDescriptor.siteDescriptor())?.icon()?.url
@@ -124,10 +124,14 @@ class Chan4CaptchaNotifierManager(
               id = chanDescriptorReadable,
               style = KurobaSystemNotifications.NotificationData.Style.Default(
                 title = appResources.string(R.string.captcha_layout_captcha_is_ready_title),
-                content = appResources.string(R.string.captcha_layout_captcha_is_ready_description, chanDescriptorReadable)
+                content = appResources.string(
+                  R.string.captcha_layout_captcha_is_ready_description,
+                  chanDescriptorReadable
+                )
               ),
               priority = KurobaSystemNotifications.NotificationData.Priority.High,
-              largeIcon = largeIconUrl?.let { url -> KurobaSystemNotifications.NotificationData.LargeIcon.RemoteUrl(url) }
+              largeIcon = largeIconUrl
+                ?.let { url -> KurobaSystemNotifications.NotificationData.LargeIcon.RemoteUrl(url) }
             )
           )
         }
