@@ -211,6 +211,11 @@ class PostAdapter(
         loadingMoreViewHolder.catalogStatusCell.setError(threadCellData.error)
         loadingMoreViewHolder.bind()
       }
+      PostCellData.TYPE_STATUS -> {
+        recyclerView.post {
+          hideLastSeenIndicatorPosition()
+        }
+      }
     }
   }
 
@@ -385,6 +390,12 @@ class PostAdapter(
   fun setBoardPostViewMode(boardPostViewMode: BoardPostViewMode) {
     threadCellData.setBoardPostViewMode(boardPostViewMode)
     notifyDataSetChanged()
+  }
+
+  fun hideLastSeenIndicatorPosition() {
+    if (threadCellData.hideLastSeenIndicatorPosition()) {
+      notifyDataSetChanged()
+    }
   }
 
   fun getScrollPosition(displayPosition: Int): Int {

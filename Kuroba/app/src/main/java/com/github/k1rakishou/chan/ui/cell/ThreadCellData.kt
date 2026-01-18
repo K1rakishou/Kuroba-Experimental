@@ -581,6 +581,15 @@ class ThreadCellData(
     return postPosition
   }
 
+  fun hideLastSeenIndicatorPosition(): Boolean {
+    if (this.lastSeenIndicatorPosition >= 0) {
+      this.lastSeenIndicatorPosition = -1
+      return true
+    }
+
+    return false
+  }
+
   private fun getLastSeenIndicatorPosition(chanDescriptor: ChanDescriptor?): Int? {
     if (chanDescriptor == null) {
       return null

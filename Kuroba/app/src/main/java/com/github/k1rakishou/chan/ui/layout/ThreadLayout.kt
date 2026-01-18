@@ -90,6 +90,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.android.awaitFrame
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -1110,41 +1111,52 @@ class ThreadLayout @JvmOverloads constructor(
       return
     }
 
-    val ticksCounter = presenter.ticksCounter()
-    if (ticksCounter <= 1 && threadListLayout.isLastSeenIndicatorVisible()) {
-      // This is the first thread load and last seen indicator is within the viewport (visible). We don't want to show
-      // the "XXX new posts" snackbar in this case.
-      snackbarManager.dismissSnackbar(snackbarId)
-      return
-    }
-
-    val text = when {
-      newPostsCount <= 0 && deletedPostsCount <= 0 -> return
-      newPostsCount > 0 && deletedPostsCount <= 0 -> {
-        getQuantityString(R.plurals.thread_new_posts, newPostsCount, newPostsCount)
+    coroutineScope.launch {
+      // Wait for the posts to appear and do nothing if it failed
+      val success = awaitUntilThreadLayoutState(desiredState = ThreadLayout.State.CONTENT, maxWaitTimeMillis = 1000L)
+      if (!success) {
+        return@launch
       }
-      newPostsCount <= 0 && deletedPostsCount > 0 -> {
-        getQuantityString(R.plurals.thread_deleted_posts, deletedPostsCount, deletedPostsCount)
-      }
-      else -> {
-        val newPosts = getQuantityString(R.plurals.thread_new_posts, newPostsCount, newPostsCount)
-        val deletedPosts = getQuantityString(R.plurals.thread_deleted_posts, deletedPostsCount, deletedPostsCount)
 
-        "${newPosts}, ${deletedPosts}"
-      }
-    }
+      // Wait a little bit more, so that last seen indicator is processed
+      delay(250L)
 
-    snackbarCollection += snackbarManager.snackbar(
-      snackbarId = snackbarId,
-      text = snackbarText(text),
-      button = snackbarButton<Unit>(
-        coroutineScope = coroutineScope,
-        text = appResources.string(R.string.thread_new_posts_goto),
-        // Show action only if we are showing new posts and we are not already at the bottom of the thread
-        show = !threadListLayout.scrolledToBottom() && newPostsCount > 0,
-        onClick = { presenter.onNewPostsViewClicked() }
+      val ticksCounter = presenter.ticksCounter()
+      if (ticksCounter <= 1 && threadListLayout.isLastSeenIndicatorVisible()) {
+        // This is the first thread load and last seen indicator is within the viewport (visible). We don't want to show
+        // the "XXX new posts" snackbar in this case.
+        snackbarManager.dismissSnackbar(snackbarId)
+        return@launch
+      }
+
+      val text = when {
+        newPostsCount <= 0 && deletedPostsCount <= 0 -> return@launch
+        newPostsCount > 0 && deletedPostsCount <= 0 -> {
+          getQuantityString(R.plurals.thread_new_posts, newPostsCount, newPostsCount)
+        }
+        newPostsCount <= 0 && deletedPostsCount > 0 -> {
+          getQuantityString(R.plurals.thread_deleted_posts, deletedPostsCount, deletedPostsCount)
+        }
+        else -> {
+          val newPosts = getQuantityString(R.plurals.thread_new_posts, newPostsCount, newPostsCount)
+          val deletedPosts = getQuantityString(R.plurals.thread_deleted_posts, deletedPostsCount, deletedPostsCount)
+
+          "${newPosts}, ${deletedPosts}"
+        }
+      }
+
+      snackbarCollection += snackbarManager.snackbar(
+        snackbarId = snackbarId,
+        text = snackbarText(text),
+        button = snackbarButton<Unit>(
+          coroutineScope = coroutineScope,
+          text = appResources.string(R.string.thread_new_posts_goto),
+          // Show action only if we are showing new posts and we are not already at the bottom of the thread
+          show = !threadListLayout.scrolledToBottom() && newPostsCount > 0,
+          onClick = { presenter.onNewPostsViewClicked() }
+        )
       )
-    )
+    }
   }
 
   override fun showThreadStatusNotification(
@@ -1229,6 +1241,23 @@ class ThreadLayout @JvmOverloads constructor(
     onFinished: ((Boolean) -> Unit)?
   ) {
     threadListLayout.showCaptcha(chanDescriptor, replyMode, autoReply, afterPostingAttempt, onFinished)
+  }
+
+  override suspend fun CoroutineScope.awaitUntilThreadLayoutState(
+    desiredState: State,
+    maxWaitTimeMillis: Long
+  ): Boolean {
+    val maxTime = System.currentTimeMillis() + maxWaitTimeMillis
+
+    while (threadLayoutState != desiredState) {
+      awaitFrame()
+
+      if (!isActive || System.currentTimeMillis() > maxTime) {
+        return false
+      }
+    }
+
+    return true
   }
 
   private fun switchThreadLayoutState(newState: State, animateTransition: Boolean = true) {

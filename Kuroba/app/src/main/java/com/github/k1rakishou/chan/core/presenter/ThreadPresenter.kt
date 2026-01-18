@@ -60,6 +60,7 @@ import com.github.k1rakishou.chan.ui.controller.PostOmittedImagesController
 import com.github.k1rakishou.chan.ui.controller.base.Controller
 import com.github.k1rakishou.chan.ui.helper.PostLinkableClickHelper
 import com.github.k1rakishou.chan.ui.helper.PostPopupHelper
+import com.github.k1rakishou.chan.ui.layout.ThreadLayout
 import com.github.k1rakishou.chan.ui.layout.ThreadListLayout.ThreadListLayoutPresenterCallback
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.ui.view.floating_menu.HeaderFloatingListMenuItem
@@ -3076,6 +3077,11 @@ class ThreadPresenter @Inject constructor(
       afterPostingAttempt: Boolean,
       onFinished: ((Boolean) -> Unit)? = null
     )
+
+    suspend fun CoroutineScope.awaitUntilThreadLayoutState(
+      desiredState: ThreadLayout.State,
+      maxWaitTimeMillis: Long = 1000L
+    ): Boolean
   }
 
   companion object {
