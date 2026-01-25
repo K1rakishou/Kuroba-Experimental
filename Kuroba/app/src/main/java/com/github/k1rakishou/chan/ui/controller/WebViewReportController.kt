@@ -18,6 +18,7 @@ import com.github.k1rakishou.chan.features.toolbar.ToolbarMiddleContent
 import com.github.k1rakishou.chan.features.toolbar.ToolbarText
 import com.github.k1rakishou.chan.ui.controller.base.Controller
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.common.CookieBuilder
 import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.core_logger.Logger
@@ -138,7 +139,14 @@ class WebViewReportController(
       }
 
       if (siteRequestModifier != null) {
-        siteRequestModifier.modifyWebView(webView, urlToOpen)
+        val cookieManager = CookieManager.getInstance()
+        val cookieBuilder = CookieBuilder()
+        siteRequestModifier.modifyCookieBuilder(urlToOpen, cookieBuilder)
+
+        val builtCookies = cookieBuilder.build()
+        if (builtCookies.isNotBlank()) {
+          cookieManager.setCookie(urlToOpen.toString(), builtCookies)
+        }
       }
 
       val settings = webView.getSettings()

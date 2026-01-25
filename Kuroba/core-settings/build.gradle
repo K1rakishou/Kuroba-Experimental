@@ -42,6 +42,7 @@ dependencies {
     implementation "io.reactivex.rxjava2:rxjava:${versions.rxjava}"
     implementation "io.reactivex.rxjava2:rxandroid:${versions.rxandroid}"
     implementation "com.google.code.gson:gson:${versions.gson}"
+    implementation "joda-time:joda-time:${versions.joda_time}"
 
     implementation("com.squareup.moshi:moshi-kotlin:${versions.moshi}")
     ksp("com.squareup.moshi:moshi-kotlin-codegen:${versions.moshi}")

@@ -1,94 +1,73 @@
-package com.github.k1rakishou.chan.core.base.okhttp;
+package com.github.k1rakishou.chan.core.base.okhttp
 
-import static java.util.concurrent.TimeUnit.SECONDS;
-
-import com.github.k1rakishou.ChanSettings;
-import com.github.k1rakishou.chan.core.helper.ProxyStorage;
-import com.github.k1rakishou.chan.core.manager.FirewallBypassManager;
-import com.github.k1rakishou.chan.core.net.KurobaProxySelector;
-import com.github.k1rakishou.chan.core.site.SiteResolver;
-import com.github.k1rakishou.common.dns.CompositeDnsSelector;
-import com.github.k1rakishou.common.dns.DnsOverHttpsSelectorFactory;
-import com.github.k1rakishou.common.dns.NormalDnsSelectorFactory;
-
-import org.jetbrains.annotations.NotNull;
-
-import javax.inject.Inject;
-
-import okhttp3.Interceptor;
-import okhttp3.OkHttpClient;
+import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.chan.core.base.okhttp.HttpLoggingInterceptorInstaller.install
+import com.github.k1rakishou.chan.core.helper.ProxyStorage
+import com.github.k1rakishou.chan.core.manager.FirewallBypassManager
+import com.github.k1rakishou.chan.core.net.KurobaProxySelector
+import com.github.k1rakishou.chan.core.site.SiteResolver
+import com.github.k1rakishou.common.dns.CompositeDnsSelector
+import com.github.k1rakishou.common.dns.DnsOverHttpsSelectorFactory
+import com.github.k1rakishou.common.dns.NormalDnsSelectorFactory
+import okhttp3.Interceptor
+import okhttp3.OkHttpClient
+import java.util.concurrent.TimeUnit
+import javax.inject.Inject
+import kotlin.concurrent.Volatile
 
 // this is basically the same as OkHttpClient, but with a singleton for a proxy instance
-public class RealProxiedOkHttpClient implements ProxiedOkHttpClient {
-  private volatile OkHttpClient proxiedClient;
+class RealProxiedOkHttpClient @Inject constructor(
+  private val normalDnsSelectorFactory: NormalDnsSelectorFactory,
+  private val dnsOverHttpsSelectorFactory: DnsOverHttpsSelectorFactory,
+  private val proxyStorage: ProxyStorage,
+  private val httpLoggingInterceptorLazy: HttpLoggingInterceptorLazy,
+  private val siteResolver: SiteResolver,
+  private val firewallBypassManager: FirewallBypassManager
+) : ProxiedOkHttpClient {
+  @Volatile
+  private var proxiedClient: OkHttpClient? = null
 
-  private final NormalDnsSelectorFactory normalDnsSelectorFactory;
-  private final DnsOverHttpsSelectorFactory dnsOverHttpsSelectorFactory;
-  private final ProxyStorage proxyStorage;
-  private final HttpLoggingInterceptorLazy httpLoggingInterceptorLazy;
-  private final SiteResolver siteResolver;
-  private final FirewallBypassManager firewallBypassManager;
-
-  @Inject
-  public RealProxiedOkHttpClient(
-    NormalDnsSelectorFactory normalDnsSelectorFactory,
-    DnsOverHttpsSelectorFactory dnsOverHttpsSelectorFactory,
-    ProxyStorage proxyStorage,
-    HttpLoggingInterceptorLazy httpLoggingInterceptorLazy,
-    SiteResolver siteResolver,
-    FirewallBypassManager firewallBypassManager
-  ) {
-    this.normalDnsSelectorFactory = normalDnsSelectorFactory;
-    this.dnsOverHttpsSelectorFactory = dnsOverHttpsSelectorFactory;
-    this.proxyStorage = proxyStorage;
-    this.httpLoggingInterceptorLazy = httpLoggingInterceptorLazy;
-    this.siteResolver = siteResolver;
-    this.firewallBypassManager = firewallBypassManager;
-  }
-
-  @NotNull
-  @Override
-  public OkHttpClient okHttpClient() {
+  override fun okHttpClient(): OkHttpClient {
     if (proxiedClient == null) {
-      synchronized (this) {
+      synchronized(this) {
         if (proxiedClient == null) {
-          KurobaProxySelector kurobaProxySelector = new KurobaProxySelector(
+          val kurobaProxySelector = KurobaProxySelector(
             proxyStorage,
             ProxyStorage.ProxyActionType.SiteRequests
-          );
+          )
 
-          Interceptor interceptor = new CloudFlareHandlerInterceptor(
+          val interceptor: Interceptor = CloudFlareHandlerInterceptor(
             siteResolver,
             firewallBypassManager,
             "Generic"
-          );
+          )
 
           // Proxies are usually slow, so they have increased timeouts
-          OkHttpClient.Builder builder = new OkHttpClient.Builder()
-            .connectTimeout(30, SECONDS)
-            .readTimeout(30, SECONDS)
-            .writeTimeout(30, SECONDS)
+          val builder = OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
             .proxySelector(kurobaProxySelector)
-            .addInterceptor(interceptor);
+            .addInterceptor(interceptor)
 
-          HttpLoggingInterceptorInstaller.install(builder, httpLoggingInterceptorLazy);
-          OkHttpClient okHttpClient = builder.build();
+          install(builder, httpLoggingInterceptorLazy)
+          val okHttpClient = builder.build()
 
-          CompositeDnsSelector compositeDnsSelector = new CompositeDnsSelector(
+          val compositeDnsSelector = CompositeDnsSelector(
             okHttpClient,
             ChanSettings.okHttpUseDnsOverHttps.get(),
             normalDnsSelectorFactory,
             dnsOverHttpsSelectorFactory
-          );
+          )
 
           proxiedClient = okHttpClient.newBuilder()
             .dns(compositeDnsSelector)
-            .addNetworkInterceptor(new GzipInterceptor())
-            .build();
+            .addNetworkInterceptor(GzipInterceptor())
+            .build()
         }
       }
     }
 
-    return proxiedClient;
+    return proxiedClient!!
   }
 }

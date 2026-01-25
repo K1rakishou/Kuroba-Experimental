@@ -94,6 +94,10 @@ class CloudFlareHandlerInterceptor(
 
       val site = siteResolver.findSiteForUrl(request.url.toString())
       if (site != null) {
+        if (site.resolvable().matchesCloudflareIgnorePath(request.url.encodedPath)) {
+          return null
+        }
+
         val bypassSuccess = AtomicBoolean(false)
         val countDownLatch = CountDownLatch(1)
 
@@ -172,7 +176,7 @@ class CloudFlareHandlerInterceptor(
     val url = prevRequest.url
     val site = siteResolver.findSiteForUrl(url.toString())
     if (site == null) {
-      Logger.e(TAG, "[$okHttpType] addCloudFlareCookie() siteResolver.findSiteForUrl(${url}) returned null")
+      Logger.warning(TAG) { "[$okHttpType] addCloudFlareCookie() siteResolver.findSiteForUrl(${url}) returned null" }
       return null
     }
 
@@ -181,13 +185,13 @@ class CloudFlareHandlerInterceptor(
     )
 
     if (cloudFlareClearanceCookieSetting == null) {
-      Logger.e(TAG, "[$okHttpType] addCloudFlareCookie() CloudFlareClearanceCookie setting was not found")
+      Logger.warning(TAG) { "[$okHttpType] addCloudFlareCookie() CloudFlareClearanceCookie setting was not found" }
       return null
     }
 
     val cookieValue = cloudFlareClearanceCookieSetting.get(prevRequest.url.domainOrHost())
     if (cookieValue.isNullOrEmpty()) {
-      Logger.e(TAG, "[$okHttpType] addCloudFlareCookie() cookieValue is null or empty")
+      Logger.warning(TAG) { "[$okHttpType] addCloudFlareCookie() cookieValue is null or empty" }
       return null
     }
 

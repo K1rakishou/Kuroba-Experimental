@@ -23,6 +23,7 @@ import com.github.k1rakishou.chan.features.settings.SettingIdentifier
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
 import com.github.k1rakishou.chan.features.settings.SettingsIdentifier
 import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
+import com.github.k1rakishou.chan.features.settings.setting.CookieSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.InputSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
@@ -190,6 +191,27 @@ class SiteSettingsPresenter(
                 dependsOnSetting = null,
                 topDescriptionStringFunc = { siteSetting.settingTitle },
                 bottomDescriptionStringFunc = bottomDescriptionStringFunc
+              )
+            }
+            is SiteSetting.SiteCookieSetting -> {
+              group += CookieSettingV2.createBuilder(
+                context = context,
+                identifier = identifier,
+                setting = siteSetting.setting,
+                inputType = DialogFactory.DialogInputType.String,
+                topDescriptionStringFunc = { siteSetting.settingTitle },
+                bottomDescriptionStringFunc = {
+                  buildString {
+                    if (siteSetting.settingDescription != null) {
+                      appendLine(siteSetting.settingDescription)
+                    }
+
+                    val currentSetting = siteSetting.setting.get()?.value
+                    if (currentSetting.isNotNullNorBlank()) {
+                      appendLine(currentSetting)
+                    }
+                  }
+                }
               )
             }
           }

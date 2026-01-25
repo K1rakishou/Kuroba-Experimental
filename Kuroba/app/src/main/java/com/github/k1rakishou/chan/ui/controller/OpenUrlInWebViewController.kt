@@ -14,6 +14,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.common.CookieBuilder
 import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -138,7 +139,14 @@ class OpenUrlInWebViewController(
 
     val siteRequestModifier = siteResolver.findSiteForUrl(urlToOpenString)?.requestModifier()
     if (siteRequestModifier != null) {
-      siteRequestModifier.modifyWebView(webView, urlToOpen)
+      val cookieManager = CookieManager.getInstance()
+      val cookieBuilder = CookieBuilder()
+      siteRequestModifier.modifyCookieBuilder(urlToOpen, cookieBuilder)
+
+      val builtCookies = cookieBuilder.build()
+      if (builtCookies.isNotBlank()) {
+        cookieManager.setCookie(urlToOpen.toString(), builtCookies)
+      }
     }
 
     webView.webViewClient = webViewClient

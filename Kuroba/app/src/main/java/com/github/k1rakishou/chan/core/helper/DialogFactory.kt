@@ -36,13 +36,13 @@ import dagger.Lazy
 
 
 class DialogFactory(
-  private val _applicationVisibilityManager: Lazy<ApplicationVisibilityManager>,
-  private val _themeEngine: Lazy<ThemeEngine>
+  private val applicationVisibilityManagerLazy: Lazy<ApplicationVisibilityManager>,
+  private val themeEngineLazy: Lazy<ThemeEngine>
 ) {
   private val applicationVisibilityManager: ApplicationVisibilityManager
-    get() = _applicationVisibilityManager.get()
+    get() = applicationVisibilityManagerLazy.get()
   private val themeEngine: ThemeEngine
-    get() = _themeEngine.get()
+    get() = themeEngineLazy.get()
 
   private val visibleDialogs = mutableMapOf<String, AlertDialogHandle>()
   private val visibleComposeDialogs = mutableMapOf<String, KurobaComposeDialogController.DialogHandle>()

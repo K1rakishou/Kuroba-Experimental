@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.core.site
 
-import android.webkit.WebView
 import androidx.annotation.CallSuper
 import com.github.k1rakishou.chan.core.site.http.HttpCall
 import com.github.k1rakishou.common.AppConstants
@@ -10,7 +9,6 @@ import com.github.k1rakishou.common.addHeaderIfNotExists
 import com.github.k1rakishou.common.addOrReplaceCookieHeader
 import com.github.k1rakishou.common.domainOrHost
 import com.github.k1rakishou.common.isNotNullNorEmpty
-import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.prefs.MapSetting
 import okhttp3.HttpUrl
@@ -29,7 +27,7 @@ abstract class SiteRequestModifier<T : Site>(
   }
 
   @CallSuper
-  open fun modifyWebView(webView: WebView, urlToOpen: HttpUrl) {
+  open fun modifyCookieBuilder(urlToOpen: HttpUrl, cookieBuilder: CookieBuilder) {
 
   }
 
@@ -159,12 +157,8 @@ abstract class SiteRequestModifier<T : Site>(
     val url = requestBuilder.build().url
     val cloudFlareCookies = getCloudFlareCookies(url)
 
-    Logger.d(TAG, "addCloudFlareCookie('${url}') '${cloudFlareCookies}'")
-
     if (cloudFlareCookies.isNotNullNorEmpty()) {
       requestBuilder.addOrReplaceCookieHeader(cloudFlareCookies)
-    } else {
-      Logger.w(TAG, "addCloudFlareCookie('${url}') cookie is null or empty: '${cloudFlareCookies}'")
     }
   }
 

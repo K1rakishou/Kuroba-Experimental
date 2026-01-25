@@ -25,6 +25,8 @@ class ChanLoadProgressNotifier {
 sealed class ChanLoadProgressEvent {
   abstract val chanDescriptor: ChanDescriptor
 
+  data class Preprocess(override val chanDescriptor: ChanDescriptor) : ChanLoadProgressEvent()
+
   data class Begin(override val chanDescriptor: ChanDescriptor) : ChanLoadProgressEvent()
 
   data class Loading(override val chanDescriptor: ChanDescriptor) : ChanLoadProgressEvent()

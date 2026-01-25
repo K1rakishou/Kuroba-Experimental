@@ -6,7 +6,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.airbnb.epoxy.EpoxyController
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
-import com.github.k1rakishou.chan.core.di.component.controller.ControllerComponent
 import com.github.k1rakishou.chan.core.helper.AppRestarter
 import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager
 import com.github.k1rakishou.chan.features.settings.epoxy.epoxyBooleanSetting
@@ -14,6 +13,7 @@ import com.github.k1rakishou.chan.features.settings.epoxy.epoxyLinkSetting
 import com.github.k1rakishou.chan.features.settings.epoxy.epoxyNoSettingsFoundView
 import com.github.k1rakishou.chan.features.settings.epoxy.epoxySettingsGroupTitle
 import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
+import com.github.k1rakishou.chan.features.settings.setting.CookieSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.InputSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
@@ -447,6 +447,38 @@ class MainSettingsControllerV2(
               val prev = settingV2.current
 
               showUpdateRangeSettingDialog(settingV2) { curr ->
+                if (prev != curr) {
+                  updateRestartRefreshButton(settingV2)
+                }
+
+                if (!query.isNullOrEmpty()) {
+                  settingsCoordinator.rebuildScreenWithSearchQuery(query, BuildOptions.Default)
+                } else {
+                  settingsCoordinator.rebuildCurrentScreen(BuildOptions.Default)
+                }
+              }
+            }
+          } else {
+            settingEnabled(false)
+            clickListener(null)
+          }
+        }
+      }
+      is CookieSettingV2 -> {
+        epoxyLinkSetting {
+          id("epoxy_cookie_setting_${settingV2.settingsIdentifier.getIdentifier()}")
+          topDescription(settingV2.topDescription)
+          bottomDescription(settingV2.bottomDescription)
+          currentValue(settingV2.getCurrent()?.value)
+          bindNotificationIcon(notificationType)
+
+          if (settingV2.isEnabled()) {
+            settingEnabled(true)
+
+            clickListener {
+              val prev = settingV2.getCurrent()?.value
+
+              showInputDialog(settingV2) { curr ->
                 if (prev != curr) {
                   updateRestartRefreshButton(settingV2)
                 }

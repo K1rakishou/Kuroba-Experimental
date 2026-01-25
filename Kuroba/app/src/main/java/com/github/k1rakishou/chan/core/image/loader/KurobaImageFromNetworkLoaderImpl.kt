@@ -10,6 +10,7 @@ import com.github.k1rakishou.chan.core.base.okhttp.CoilOkHttpClient
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.cache.downloader.ChunkedMediaDownloader
+import com.github.k1rakishou.chan.core.image.FaviconUrlWithInvalidMimeType
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.BadContentTypeException
@@ -151,12 +152,11 @@ class KurobaImageFromNetworkLoaderImpl(
 
     runInterruptible {
       val responseBody = response.body
-        ?: throw IOException("Response body is null")
 
       val contentMainType = responseBody.contentType()?.type
       val contentSubType = responseBody.contentType()?.subtype
 
-      if (contentMainType != "image" && contentMainType != "video" && !faviconUrlWithInvalidMimeType(url)) {
+      if (contentMainType != "image" && contentMainType != "video" && !FaviconUrlWithInvalidMimeType.matches(url)) {
         throw BadContentTypeException("${contentMainType}/${contentSubType}")
       }
 
@@ -179,15 +179,6 @@ class KurobaImageFromNetworkLoaderImpl(
     cacheHandler.fileWasAdded(cacheFileType, fileLength)
 
     return true
-  }
-
-  // Super hack.
-  // Some sites send their favicons without the content type which breaks our content type checks so
-  // we have to check the urls manually...
-  private fun faviconUrlWithInvalidMimeType(url: String): Boolean {
-    return url == "https://endchan.net/favicon.ico"
-      || url == "https://endchan.org/favicon.ico"
-      || url == "https://yeshoney.xyz/favicon.ico"
   }
 
   companion object {

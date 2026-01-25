@@ -3,13 +3,16 @@ package com.github.k1rakishou.chan.core.site.sites.lynxchan.engine
 import com.github.k1rakishou.chan.core.site.SiteRequestModifier
 import com.github.k1rakishou.chan.core.site.http.HttpCall
 import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.common.CookieBuilder
 import com.github.k1rakishou.common.addOrReplaceCookieHeader
+import com.github.k1rakishou.common.isNotNullNorBlank
+import okhttp3.HttpUrl
 import okhttp3.Request
 
-open class LynxchanRequestModifier(
-  site: LynxchanSite,
+open class LynxchanRequestModifier<S : LynxchanSite>(
+  site: S,
   appConstants: AppConstants
-) : SiteRequestModifier<LynxchanSite>(site, appConstants) {
+) : SiteRequestModifier<S>(site, appConstants) {
 
   override fun modifyHttpCall(httpCall: HttpCall, requestBuilder: Request.Builder) {
     super.modifyHttpCall(httpCall, requestBuilder)
@@ -18,7 +21,7 @@ open class LynxchanRequestModifier(
   }
 
   override fun modifyCaptchaGetRequest(
-    site: LynxchanSite,
+    site: S,
     requestBuilder: Request.Builder
   ) {
     super.modifyCaptchaGetRequest(site, requestBuilder)
@@ -26,25 +29,41 @@ open class LynxchanRequestModifier(
     addCookies(requestBuilder)
   }
 
+  override fun modifyCookieBuilder(urlToOpen: HttpUrl, cookieBuilder: CookieBuilder) {
+    super.modifyCookieBuilder(urlToOpen, cookieBuilder)
+
+    val cookies = buildCookies()
+    if (cookies.isNotEmpty()) {
+      cookieBuilder.addOrReplace(cookies)
+    }
+  }
+
   private fun addCookies(requestBuilder: Request.Builder) {
-    val captchaid = buildString {
-      val captchaIdCookie = site.captchaIdCookie.get()
-      val bypassCookie = site.bypassCookie.get()
-      val extraCookie = site.extraCookie.get()
+    val cookies = buildCookies()
+    if (cookies.isNotEmpty()) {
+      requestBuilder.addOrReplaceCookieHeader(cookies)
+    }
+  }
 
-      if (bypassCookie.isEmpty() || extraCookie.isEmpty()) {
-        if (captchaIdCookie.isNotEmpty()) {
-          append("captchaid=$captchaIdCookie")
-        }
+  private fun buildCookies(): String {
+    val captchaIdCookie = site.captchaIdCookie.get()?.value
+    val bypassCookie = site.bypassCookie.get()?.value
+    val extraCookie = site.extraCookie.get()?.value
 
-        return@buildString
+    return with(CookieBuilder()) {
+      if (captchaIdCookie.isNotNullNorBlank()) {
+        addOrReplace("captchaid", captchaIdCookie)
       }
 
-      append("captchaid=$captchaIdCookie; bypass=$bypassCookie; extraCookie=$extraCookie")
-    }
+      if (bypassCookie.isNotNullNorBlank()) {
+        addOrReplace("bypass", bypassCookie)
+      }
 
-    if (captchaid.isNotEmpty()) {
-      requestBuilder.addOrReplaceCookieHeader(captchaid)
+      if (extraCookie.isNotNullNorBlank()) {
+        addOrReplace("extraCookie", extraCookie)
+      }
+
+      build()
     }
   }
 

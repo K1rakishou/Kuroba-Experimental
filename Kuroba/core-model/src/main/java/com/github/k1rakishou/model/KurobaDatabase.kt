@@ -9,7 +9,6 @@ import com.github.k1rakishou.model.converter.BitSetTypeConverter
 import com.github.k1rakishou.model.converter.ChanPostImageTypeTypeConverter
 import com.github.k1rakishou.model.converter.DateTimeTypeConverter
 import com.github.k1rakishou.model.converter.HttpUrlTypeConverter
-import com.github.k1rakishou.model.converter.JsonSettingsTypeConverter
 import com.github.k1rakishou.model.converter.PeriodTypeConverter
 import com.github.k1rakishou.model.converter.ReplyTypeTypeConverter
 import com.github.k1rakishou.model.converter.TextTypeTypeConverter
@@ -165,7 +164,6 @@ import java.util.concurrent.atomic.AtomicInteger
     TextTypeTypeConverter::class,
     ReplyTypeTypeConverter::class,
     BitSetTypeConverter::class,
-    JsonSettingsTypeConverter::class,
     UriTypeConverter::class
   ]
 )
@@ -288,7 +286,7 @@ abstract class KurobaDatabase : RoomDatabase() {
           Migration_v41_to_v42(),
           Migration_v42_to_v43(),
         )
-        .fallbackToDestructiveMigrationOnDowngrade()
+        .fallbackToDestructiveMigrationOnDowngrade(dropAllTables = true)
         .build()
     }
 

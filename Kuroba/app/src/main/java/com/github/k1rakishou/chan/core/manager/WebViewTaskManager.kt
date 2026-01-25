@@ -32,26 +32,40 @@ class WebViewTaskManager(
   suspend fun performWebViewTask(
     webViewTask: AbstractWebViewTask
   ): WebViewTaskResult {
-    if (!applicationVisibilityManager.isAppInForeground()) {
-      // No point to do anything here since there is most likely no activity currently alive
-      Logger.verbose(TAG) {
-        "enqueueWebViewTask(${webViewTask::class.java.simpleName}) " +
-          "skipping because the app is in background (url: '${webViewTask.loadable.readableDescription}')"
+    if (applicationVisibilityManager.isAppInBackground()) {
+      // No point in doing anything here since there is most likely no activity currently alive
+      Logger.debug(TAG) {
+        "enqueueWebViewTask(${webViewTask::class.java.simpleName}) app is in back ground, waiting..."
       }
 
-      return WebViewTaskResult.Canceled
+      applicationVisibilityManager.awaitUntilInForeground()
+
+      Logger.debug(TAG) {
+        "enqueueWebViewTask(${webViewTask::class.java.simpleName}) app is in back ground, waiting... done"
+      }
     }
 
     val loadable = webViewTask.loadable
 
     if (!webViewTask.uniqueTask && loadable is AbstractWebViewTask.Loadable.Url) {
-      _mutex.withLock {
+      val alreadyEnqueued = _mutex.withLock {
         val domainOrHost = loadable.url.domainOrHost()
+
+        val alreadyEnqueued = _taskGroups.contains(domainOrHost)
         val taskGroup = _taskGroups.getOrPut(domainOrHost) { TaskGroup() }
-        taskGroup.resultWaiters.add(webViewTask.resultWaiter)
+
+        if (alreadyEnqueued) {
+          taskGroup.resultWaiters.add(webViewTask.invokerWaiter)
+        }
+
+        return@withLock alreadyEnqueued
       }
 
-      return webViewTask.resultWaiter.await()
+      if (alreadyEnqueued) {
+        return webViewTask.invokerWaiter.await()
+      }
+
+      // fallthrough
     }
 
     if (!_taskQueue.tryEmit(webViewTask)) {
@@ -69,7 +83,7 @@ class WebViewTaskManager(
     }
 
     val webViewTaskResult = try {
-      webViewTask.resultWaiter.await()
+      webViewTask.invokerWaiter.await()
     } catch (error: Throwable) {
       val taskResult = WebViewTaskResult.Error(WebViewTaskException(error.message ?: error.errorMessageOrClassName()))
       return taskResult

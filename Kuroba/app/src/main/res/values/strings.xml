@@ -1060,7 +1060,7 @@ If you ever log out or if the passcode expires you will have to change reply mod
 
     <string name="controller_boards_setup_no_boards">No boards added</string>
     <string name="controller_boards_setup_title">Configure boards of %1$s</string>
-    <string name="controller_boards_setup_boards_updated">Boards updated</string>
+    <string name="controller_boards_setup_boards_loaded">%1$d boards loaded</string>
     <string name="controller_boards_setup_board_code_is_empty">Board code is empty</string>
     <string name="controller_boards_setup_sort_boards_alphabetically">Sort boards alphabetically</string>
     <string name="controller_boards_setup_delete_all_boards">Delete all added boards</string>
@@ -1137,6 +1137,7 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="thread_layout_hide_or_remove_whole_chain_as_well">Would you like to %1$s the whole reply chain with future replies as well?</string>
     <string name="thread_layout_hide_or_remove_future_replies">Would you like to %1$s future replies to this post as well?</string>
 
+    <string name="thread_layout_load_progress_preprocessing">Preprocessing</string>
     <string name="thread_layout_load_progress_preparing">Preparing</string>
     <string name="thread_layout_load_progress_requesting_server_data">Requesting data from the server</string>
     <string name="thread_layout_load_progress_reading_data_response">Reading server response</string>
@@ -1392,9 +1393,9 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="thread_downloader_settings_controller_download_thread_media">Download thread media</string>
     <string name="thread_downloader_settings_controller_location_info">Thread media is stored on the internal storage.\n\nDirectory: %1$s</string>
 
-    <string name="firewall_check_success">Successfully passed %1$s!</string>
-    <string name="firewall_check_failure">Failed to pass %1$s, reason: %2$s</string>
-    <string name="firewall_check_canceled">Failed to pass %1$s, reason: Canceled</string>
+    <string name="firewall_check_success">Successfully finished %1$s!</string>
+    <string name="firewall_check_failure">Failed to finish %1$s, reason: %2$s</string>
+    <string name="firewall_check_canceled">Failed to finish %1$s, reason: Canceled</string>
     <string name="firewall_check_header_title">\'%1$s\' verification.</string>
 
     <string name="image_search_controller_title">Remote image search</string>
@@ -1524,6 +1525,8 @@ Actual error: \'%1$s\'</string>
     <string name="site_proof_of_work_cookie_description">Cookie issued by the server after solving Lynxchan Proof-of-work problem</string>
     <string name="site_ignore_reply_cooldowns">Ignore reply cooldowns</string>
     <string name="site_ignore_reply_cooldowns_description">When enabled, client-side reply cooldown check will be disabled</string>
+    <string name="chan8moe_pow_token">8chan.moe Proof-of-Work token. Required when posting via VPN/Tor</string>
+    <string name="chan8moe_pow_id">8chan.moe Proof-of-Work id. Required when posting via VPN/Tor</string>
 
     <string name="lynxchan_proof_of_work_message">Lynxchan Proof–of–work is required in order to post. This is an additional anti-spam check and is usually required when Tor/VPN/proxy detected. Proof-of-work is not supported by the application because you need to solve a complex problem which requires a lot of computation power and time when solved on PC (~30-40 minutes on Threadripper 2950X with 16 cores). You have to do that on PC and then use the resulting cookies on the phone for posting. To do that, open any thread and try to post. After solving the problem, you will need to copy the following 3 cookies: \'captchaid\', \'bypass\' and \'extraCookie\' into the current site settings.</string>
     <string name="lynxchan_tor_proxy_vpv_detected_message">Tor / VPN / Proxy detected\nYou need a block bypass to post</string>

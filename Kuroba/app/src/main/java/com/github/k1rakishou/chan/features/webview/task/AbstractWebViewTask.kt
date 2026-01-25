@@ -8,6 +8,8 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.features.webview.WebViewTaskResult
 import com.github.k1rakishou.chan.features.webview.client.AbstractWebViewClient
 import com.github.k1rakishou.chan.utils.appDependencies
+import com.github.k1rakishou.common.CookieBuilder
+import com.github.k1rakishou.common.awaitSilently
 import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.core_logger.Logger
 import kotlinx.coroutines.CompletableDeferred
@@ -18,11 +20,12 @@ import java.util.concurrent.atomic.AtomicReference
 abstract class AbstractWebViewTask(
   val headerTitleText: String?,
   val loadable: Loadable,
-  val resultWaiter: CompletableDeferred<WebViewTaskResult>
+  val invokerWaiter: CompletableDeferred<WebViewTaskResult>
 ) {
   protected val cookieManager by lazy { CookieManager.getInstance()!! }
   protected val webViewClient by lazy { createWebClient() }
   protected val siteResolver by lazy { appDependencies().siteResolver }
+  protected val webViewClientResultWaiter = CompletableDeferred<WebViewTaskResult>()
 
   // Cookies before loading the page. Once the page loads, there is no way to get the cookies from WebView, and it's
   // impossible to tell if cookies were updated in CookieManager. But in some cases we need to know when the cookies
@@ -53,8 +56,16 @@ abstract class AbstractWebViewTask(
 
         val siteRequestModifier = siteResolver.findSiteForUrl(urlToOpenString)?.requestModifier()
         if (siteRequestModifier != null) {
-          siteRequestModifier.modifyWebView(webView, loadable.url)
-          initialCookies.set(cookieManager.getCookie(urlToOpenString))
+          val cookieManager = CookieManager.getInstance()
+          val cookieBuilder = CookieBuilder()
+          siteRequestModifier.modifyCookieBuilder(loadable.url, cookieBuilder)
+
+          val builtCookies = cookieBuilder.build()
+          if (builtCookies.isNotBlank()) {
+            cookieManager.setCookie(urlToOpenString, builtCookies)
+          }
+
+          initialCookies.set(builtCookies)
         }
       }
       is Loadable.Html -> {
@@ -87,15 +98,23 @@ abstract class AbstractWebViewTask(
   }
 
   suspend fun waitForResult(webView: WebView) {
-    val taskResult = resultWaiter.await()
+    val taskResult = webViewClientResultWaiter.awaitSilently(WebViewTaskResult.Canceled)
     webView.stopLoading()
 
-    handleResult(taskResult)
+    try {
+      handleResult(taskResult)
+    } finally {
+      finishWithResult(taskResult)
+    }
   }
 
-  fun finishWithResult(value: WebViewTaskResult) {
-    if (!resultWaiter.isCompleted) {
-      resultWaiter.complete(value)
+  fun finishWithResult(taskResult: WebViewTaskResult) {
+    if (!invokerWaiter.isCompleted) {
+      invokerWaiter.complete(taskResult)
+    }
+
+    if (!webViewClientResultWaiter.isCancelled) {
+      webViewClientResultWaiter.cancel()
     }
   }
 
@@ -113,6 +132,7 @@ abstract class AbstractWebViewTask(
       }
 
     data class Url(val url: HttpUrl) : Loadable
+
     data class Html(
       val baseUrl: HttpUrl,
       val html: String

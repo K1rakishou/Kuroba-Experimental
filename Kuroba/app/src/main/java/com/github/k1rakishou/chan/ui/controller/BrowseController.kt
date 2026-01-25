@@ -197,7 +197,7 @@ class BrowseController(
       webViewTaskManager.taskQueue.collect { webViewTask ->
         presentWebViewTaskAndHandleResult(
           webViewTask = webViewTask,
-          webViewTaskName = "WebViewTask"
+          webViewTaskName = webViewTask::class.java.simpleName
         )
       }
     }
@@ -687,14 +687,14 @@ class BrowseController(
         CloudFlareTask(
           headerTitleText = getString(R.string.firewall_check_header_title, firewallType.name),
           loadable = AbstractWebViewTask.Loadable.Url(urlToOpen),
-          resultWaiter = resultWaiter
+          invokerWaiter = resultWaiter
         )
       }
       FirewallType.DvachAntiSpam -> {
         DvachAntispamTask(
           headerTitleText = getString(R.string.firewall_check_header_title, firewallType.name),
           loadable = AbstractWebViewTask.Loadable.Url(urlToOpen),
-          resultWaiter = resultWaiter
+          invokerWaiter = resultWaiter
         )
       }
       FirewallType.YandexSmartCaptcha -> {
@@ -719,7 +719,7 @@ class BrowseController(
       )
     )
 
-    val cookieResult = webViewTask.resultWaiter.await()
+    val cookieResult = webViewTask.invokerWaiter.await()
     when (cookieResult) {
       is WebViewTaskResult.Result -> {
         val message = getString(R.string.firewall_check_success, webViewTaskName)

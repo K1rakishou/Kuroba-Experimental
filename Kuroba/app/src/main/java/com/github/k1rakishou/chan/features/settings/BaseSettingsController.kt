@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.features.settings
 import android.content.Context
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
+import com.github.k1rakishou.chan.features.settings.setting.CookieSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.InputSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.MapSettingV2
@@ -122,7 +123,26 @@ abstract class BaseSettingsController(
     )
   }
 
-  @Suppress("FoldInitializerAndIfToElvis")
+  // TODO: this shit doesn't work!!!
+  protected fun showInputDialog(
+    cookieSettingV2: CookieSettingV2,
+    rebuildScreenFunc: (Any?) -> Unit
+  ) {
+    dialogFactory.createSimpleDialogWithInputAndResetButton(
+      context = context,
+      currentValue = cookieSettingV2.getCurrent()?.value,
+      defaultValue = cookieSettingV2.getDefault()?.value,
+      inputType = DialogFactory.DialogInputType.String,
+      titleText = cookieSettingV2.topDescription,
+      onValueEntered = { input ->
+        val text = input.ifBlank { null }
+
+        cookieSettingV2.updateSetting(text)
+        rebuildScreenFunc(cookieSettingV2.getCurrent())
+      }
+    )
+  }
+
   protected fun onInputValueEntered(
     mapSettingV2: MapSettingV2,
     input: String,
@@ -130,9 +150,7 @@ abstract class BaseSettingsController(
   ) {
     when (mapSettingV2.inputType) {
       DialogFactory.DialogInputType.String -> {
-        val text = if (input.isNotEmpty()) {
-          input
-        } else {
+        val text = input.ifEmpty {
           mapSettingV2.getDefault()?.toString()
         }
 
@@ -146,7 +164,7 @@ abstract class BaseSettingsController(
         val integer = if (input.isNotEmpty()) {
           input.toIntOrNull()
         } else {
-          mapSettingV2.getDefault() as? Int
+          null
         }
 
         if (integer == null) {
@@ -155,13 +173,12 @@ abstract class BaseSettingsController(
 
         mapSettingV2.updateSetting(integer.toString())
       }
-      null -> throw IllegalStateException("InputType is null")
+      null -> error("InputType is null")
     }.exhaustive
 
     rebuildScreenFunc(mapSettingV2.getCurrent())
   }
 
-  @Suppress("FoldInitializerAndIfToElvis")
   protected fun onInputValueEntered(
     inputSettingV2: InputSettingV2<*>,
     input: String,
@@ -169,15 +186,9 @@ abstract class BaseSettingsController(
   ) {
     when (inputSettingV2.inputType) {
       DialogFactory.DialogInputType.String -> {
-        val text = if (input.isNotEmpty()) {
-          input
-        } else {
+        val text = input.ifEmpty {
           inputSettingV2.getDefault()?.toString()
-        }
-
-        if (text == null) {
-          return
-        }
+        } ?: ""
 
         inputSettingV2.updateSetting(text)
       }
@@ -194,7 +205,7 @@ abstract class BaseSettingsController(
 
         inputSettingV2.updateSetting(integer)
       }
-      null -> throw IllegalStateException("InputType is null")
+      null -> error("InputType is null")
     }.exhaustive
 
     rebuildScreenFunc(inputSettingV2.getCurrent())

@@ -5,6 +5,7 @@ import com.github.k1rakishou.core_logger.Logger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.firstOrNull
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.time.measureTime
 
@@ -71,6 +72,14 @@ class ApplicationVisibilityManager {
   // Maybe because the app may get started for whatever reason (service got invoked by the OS) but
   // no activities are going to start up.
   fun isAppStartingUpMaybe(): Boolean = _switchedToForegroundAt == null
+
+  suspend fun awaitUntilInForeground() {
+    if (getCurrentAppVisibility().isInForeground()) {
+      return
+    }
+
+    _applicationVisibilityUpdatesFlow.firstOrNull { visibility -> visibility.isInForeground() }
+  }
 
   companion object {
     private const val TAG = "ApplicationVisibilityManager"

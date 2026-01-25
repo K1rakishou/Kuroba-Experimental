@@ -19,7 +19,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.LynxchanBoardMeta
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
-import com.github.k1rakishou.prefs.StringSetting
+import com.github.k1rakishou.prefs.CookieSetting
 import com.squareup.moshi.Moshi
 import dagger.Lazy
 import okhttp3.HttpUrl
@@ -52,9 +52,9 @@ abstract class LynxchanSite : CommonSite() {
   abstract val postingViaFormData: Boolean
   open val enabled: Boolean = true
 
-  val captchaIdCookie by lazy { StringSetting(prefs, "captcha_id", "") }
-  val bypassCookie by lazy { StringSetting(prefs, "bypass_cookie", "") }
-  val extraCookie by lazy { StringSetting(prefs, "extra_cookie", "") }
+  val captchaIdCookie by lazy { CookieSetting(moshiLazy, prefs, "captcha_id", null) }
+  val bypassCookie by lazy { CookieSetting(moshiLazy, prefs, "bypass_cookie", null) }
+  val extraCookie by lazy { CookieSetting(moshiLazy, prefs, "extra_cookie", null) }
 
   val domainUrl: kotlin.Lazy<HttpUrl> = lazy {
     val siteDomain = siteDomainSetting?.get()
@@ -66,7 +66,9 @@ abstract class LynxchanSite : CommonSite() {
       }
     }
 
-    Logger.d(TAG, "Using default domain: \'${defaultDomain}\' since custom domain seems to be incorrect: \'$siteDomain\'")
+    Logger.debug(TAG) {
+      "Using default domain: \'${defaultDomain}\' since custom domain seems to be incorrect: \'$siteDomain\'"
+    }
     return@lazy defaultDomain
   }
 
@@ -122,12 +124,23 @@ abstract class LynxchanSite : CommonSite() {
 
   override fun settings(): List<SiteSetting> {
     val settings = mutableListOf<SiteSetting>()
-
     settings.addAll(super.settings())
 
-    settings += SiteSetting.SiteStringSetting("captchaIdCookie", getString(R.string.site_captcha_id_cookie_description), captchaIdCookie)
-    settings += SiteSetting.SiteStringSetting("bypassCookie", getString(R.string.site_block_bypass_cookie_description), bypassCookie)
-    settings += SiteSetting.SiteStringSetting("extraCookie", getString(R.string.site_proof_of_work_cookie_description), extraCookie)
+    settings += SiteSetting.SiteCookieSetting(
+      settingName = "captchaIdCookie",
+      settingDescription = getString(R.string.site_captcha_id_cookie_description),
+      setting = captchaIdCookie
+    )
+    settings += SiteSetting.SiteCookieSetting(
+      settingName = "bypassCookie",
+      settingDescription = getString(R.string.site_block_bypass_cookie_description),
+      setting = bypassCookie
+    )
+    settings += SiteSetting.SiteCookieSetting(
+      settingName = "extraCookie",
+      settingDescription = getString(R.string.site_proof_of_work_cookie_description),
+      setting = extraCookie
+    )
 
     return settings
   }

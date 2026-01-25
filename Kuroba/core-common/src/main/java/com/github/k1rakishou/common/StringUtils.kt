@@ -210,4 +210,15 @@ object StringUtils {
 
   fun String.parseTimeStringAsSeconds() = parseTimeStringAsMillis() / 1000L
 
+  fun String.splitOnce(delimiter: String): Pair<String, String>? {
+    return indexOf(delimiter)
+      .takeIf { index -> index >= 0 }
+      ?.let { index ->
+        Pair(
+          this.slice(0..<index),
+          this.slice((index + 1)..<this.length)
+        )
+      }
+  }
+
 }

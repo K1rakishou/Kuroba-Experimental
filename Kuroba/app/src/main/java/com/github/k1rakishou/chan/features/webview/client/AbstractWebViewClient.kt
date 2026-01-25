@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.features.webview.client
 
+import android.webkit.WebView
 import android.webkit.WebViewClient
 import com.github.k1rakishou.chan.features.webview.WebViewTaskException
 import com.github.k1rakishou.chan.features.webview.WebViewTaskResult
@@ -8,17 +9,19 @@ import kotlinx.coroutines.CompletableDeferred
 import java.util.concurrent.atomic.AtomicInteger
 
 abstract class AbstractWebViewClient(
-  protected val resultWaiter: CompletableDeferred<WebViewTaskResult>
+  protected val webViewClientResultWaiter: CompletableDeferred<WebViewTaskResult>
 ) : WebViewClient() {
   private val pageLoadsCounter = AtomicInteger(0)
 
   protected fun finishWithResult(taskResult: WebViewTaskResult) {
-    if (!resultWaiter.isCompleted) {
-      resultWaiter.complete(taskResult)
+    if (!webViewClientResultWaiter.isCompleted) {
+      webViewClientResultWaiter.complete(taskResult)
     }
   }
 
-  protected fun onPageLoadFinished() {
+  override fun onPageFinished(view: WebView?, url: String?) {
+    super.onPageFinished(view, url)
+
     val counter = pageLoadsCounter.getAndIncrement()
     if (counter > MAX_PAGE_LOADS_COUNT) {
       val error = WebViewTaskResult.Error(WebViewTaskException("Exceeded max page load limit"))
@@ -26,7 +29,9 @@ abstract class AbstractWebViewClient(
     }
   }
 
-  protected fun onPageLoadError(
+  @Deprecated("Deprecated in Java")
+  override fun onReceivedError(
+    view: WebView?,
     errorCode: Int,
     description: String?,
     failingUrl: String?

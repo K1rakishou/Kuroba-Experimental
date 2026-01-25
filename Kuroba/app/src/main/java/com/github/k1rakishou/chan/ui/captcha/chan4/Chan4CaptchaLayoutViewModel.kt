@@ -416,14 +416,14 @@ class Chan4CaptchaLayoutViewModel(
         SpurUsAntibotTask(
           headerTitleText = "SpurUsAntibot",
           loadableUrl = AbstractWebViewTask.Loadable.Url(challengeUrl),
-          resultWaiter = CompletableDeferred<WebViewTaskResult>()
+          invokerWaiter = CompletableDeferred<WebViewTaskResult>()
         )
       )
 
       if (taskResult is WebViewTaskResult.Result) {
         _captchaInfoToShow.value = AsyncData.Loading
 
-        val mcl = taskResult.data as String
+        val mcl = taskResult.rawCookies as String
         Logger.debug(TAG) {
           "Got SpurUsAntibot mcl (wtf is even this shit?): '${mcl.asFormattedToken()}'. Retrying captcha."
         }

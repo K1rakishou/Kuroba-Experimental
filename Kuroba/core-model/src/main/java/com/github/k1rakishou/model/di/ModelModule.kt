@@ -1,11 +1,5 @@
 package com.github.k1rakishou.model.di
 
-import com.github.k1rakishou.json.BooleanJsonSetting
-import com.github.k1rakishou.json.IntegerJsonSetting
-import com.github.k1rakishou.json.JsonSetting
-import com.github.k1rakishou.json.LongJsonSetting
-import com.github.k1rakishou.json.RuntimeTypeAdapterFactory
-import com.github.k1rakishou.json.StringJsonSetting
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.repository.BoardRepository
 import com.github.k1rakishou.model.repository.BookmarksRepository
@@ -73,17 +67,7 @@ class ModelModule {
   @Provides
   fun provideGson(): Gson {
     val gson = Gson().newBuilder()
-
-    val userSettingAdapter = RuntimeTypeAdapterFactory.of(
-      JsonSetting::class.java,
-      "type"
-    ).registerSubtype(StringJsonSetting::class.java, "string")
-      .registerSubtype(IntegerJsonSetting::class.java, "integer")
-      .registerSubtype(LongJsonSetting::class.java, "long")
-      .registerSubtype(BooleanJsonSetting::class.java, "boolean")
-
     return gson
-      .registerTypeAdapterFactory(userSettingAdapter)
       .create()
   }
 

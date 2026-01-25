@@ -9,15 +9,15 @@ import kotlinx.coroutines.CompletableDeferred
 class SpurUsAntibotTask(
   headerTitleText: String?,
   loadableUrl: Loadable.Url,
-  resultWaiter: CompletableDeferred<WebViewTaskResult>
-) : AbstractWebViewTask(headerTitleText, loadableUrl, resultWaiter) {
+  invokerWaiter: CompletableDeferred<WebViewTaskResult>
+) : AbstractWebViewTask(headerTitleText, loadableUrl, invokerWaiter) {
 
   override val tag: String = TAG
   override val uniqueTask: Boolean = true
 
   override fun createWebClient(): AbstractWebViewClient {
     return SpurUsAntibotWebViewClient(
-      resultWaiter = resultWaiter
+      resultWaiter = this@SpurUsAntibotTask.invokerWaiter
     )
   }
 

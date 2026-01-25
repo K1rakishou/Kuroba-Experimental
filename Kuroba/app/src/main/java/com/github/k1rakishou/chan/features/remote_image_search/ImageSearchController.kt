@@ -159,7 +159,7 @@ class ImageSearchController(
                   FirewallType.YandexSmartCaptcha.name
                 ),
                 loadable = AbstractWebViewTask.Loadable.Url(urlToOpen),
-                resultWaiter = resultWaiter,
+                invokerWaiter = resultWaiter,
               ),
             )
           )
@@ -175,7 +175,7 @@ class ImageSearchController(
             return@collect
           }
 
-          val cookies = cookieResult.data as String
+          val cookies = cookieResult.rawCookies
 
           Logger.d(TAG, "Get YandexSmartCaptcha cookies, cookies: ${cookies}")
           controllerViewModel.updateYandexSmartCaptchaCookies(cookies)

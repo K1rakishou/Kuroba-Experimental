@@ -51,5 +51,6 @@ public interface SettingProvider {
 
     //endregion
 
+    void remove(String key);
     void removeSync(String key);
 }

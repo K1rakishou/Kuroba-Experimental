@@ -1396,6 +1396,9 @@ class ThreadLayout @JvmOverloads constructor(
     Logger.verbose(TAG) { "handleLoadProgressEvent() $chanLoadProgressEvent" }
 
     progressStepText.text = when (chanLoadProgressEvent) {
+      is ChanLoadProgressEvent.Preprocess -> {
+        appResources.string(R.string.thread_layout_load_progress_preprocessing)
+      }
       is ChanLoadProgressEvent.Begin -> {
         appResources.string(R.string.thread_layout_load_progress_preparing)
       }
@@ -1404,7 +1407,10 @@ class ThreadLayout @JvmOverloads constructor(
       }
       is ChanLoadProgressEvent.Reading -> {
         if (chanLoadProgressEvent.totalPostsRead > 0) {
-          appResources.string(R.string.thread_layout_load_progress_reading_data_response_posts, chanLoadProgressEvent.totalPostsRead)
+          appResources.string(
+            R.string.thread_layout_load_progress_reading_data_response_posts,
+            chanLoadProgressEvent.totalPostsRead
+          )
         } else {
           appResources.string(R.string.thread_layout_load_progress_reading_data_response)
         }

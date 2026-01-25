@@ -15,18 +15,18 @@ import java.util.regex.Pattern
 class DvachAntispamTask(
   headerTitleText: String?,
   loadable: Loadable.Url,
-  resultWaiter: CompletableDeferred<WebViewTaskResult>
-) : AbstractCookieWebViewTask(headerTitleText, loadable, resultWaiter) {
+  invokerWaiter: CompletableDeferred<WebViewTaskResult>
+) : AbstractCookieWebViewTask(headerTitleText, loadable, invokerWaiter) {
   override val tag: String = TAG
 
   override fun createWebClient(): AbstractWebViewClient {
     return WebViewClient(
       cookieManager = cookieManager,
-      resultWaiter = this@DvachAntispamTask.resultWaiter
+      webViewClientResultWaiter = this@DvachAntispamTask.invokerWaiter
     )
   }
 
-  override fun addCookieToSiteSettings(site: Site, cookies: String) {
+  override suspend fun addCookieToSiteSettings(site: Site, cookies: String, userData: Any?) {
     val dvachAntiSpamCookieSetting = site.getSettingBySettingId<StringSetting>(
       SiteSetting.SiteSettingId.DvachAntiSpamCookie
     )
@@ -41,11 +41,10 @@ class DvachAntispamTask(
 
   private class WebViewClient(
     private val cookieManager: CookieManager,
-    resultWaiter: CompletableDeferred<WebViewTaskResult>
-  ) : AbstractCookieWebViewClient(resultWaiter) {
+    webViewClientResultWaiter: CompletableDeferred<WebViewTaskResult>
+  ) : AbstractCookieWebViewClient(webViewClientResultWaiter) {
     override fun onPageFinished(view: WebView?, url: String?) {
       super.onPageFinished(view, url)
-      onPageLoadFinished()
 
       val cookies = cookieManager.getCookie("2ch.hk")
         ?.split(';')
@@ -75,21 +74,10 @@ class DvachAntispamTask(
             continue
           }
 
-          success(cookie)
+          success(cookie, null)
           return
         }
       }
-    }
-
-    @Deprecated("Deprecated in Java")
-    override fun onReceivedError(
-      view: WebView?,
-      errorCode: Int,
-      description: String?,
-      failingUrl: String?
-    ) {
-      super.onReceivedError(view, errorCode, description, failingUrl)
-      onPageLoadError(errorCode, description, failingUrl)
     }
 
     companion object {

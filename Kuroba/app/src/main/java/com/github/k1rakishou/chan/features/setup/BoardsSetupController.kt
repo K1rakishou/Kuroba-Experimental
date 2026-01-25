@@ -224,8 +224,10 @@ class BoardsSetupController(
     presenter.onDestroy()
   }
 
-  override fun onBoardsLoaded() {
-    controllerScope.launch { showToast(R.string.controller_boards_setup_boards_updated) }
+  override fun onBoardsLoaded(loadedBoardsCount: Int) {
+    controllerScope.launch {
+      showToast(appResources.string(R.string.controller_boards_setup_boards_loaded, loadedBoardsCount))
+    }
   }
 
   private fun onStateChanged(state: BoardsSetupControllerState) {

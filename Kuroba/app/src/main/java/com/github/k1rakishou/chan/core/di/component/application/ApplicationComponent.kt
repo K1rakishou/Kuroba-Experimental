@@ -13,6 +13,7 @@ import com.github.k1rakishou.chan.core.di.module.application.LoaderModule
 import com.github.k1rakishou.chan.core.di.module.application.ManagerModule
 import com.github.k1rakishou.chan.core.di.module.application.NetModule
 import com.github.k1rakishou.chan.core.di.module.application.ParserModule
+import com.github.k1rakishou.chan.core.di.module.application.PreprocessorModule
 import com.github.k1rakishou.chan.core.di.module.application.RepositoryModule
 import com.github.k1rakishou.chan.core.di.module.application.RoomDatabaseModule
 import com.github.k1rakishou.chan.core.di.module.application.SiteModule
@@ -52,6 +53,7 @@ import javax.inject.Singleton
     LoaderModule::class,
     ManagerModule::class,
     NetModule::class,
+    PreprocessorModule::class,
     ParserModule::class,
     RepositoryModule::class,
     RoomDatabaseModule::class,
@@ -113,6 +115,8 @@ interface ApplicationComponent : ApplicationDependencies {
     fun managerModule(managerModule: ManagerModule): Builder
     @BindsInstance
     fun netModule(netModule: NetModule): Builder
+    @BindsInstance
+    fun preprocessorModule(preprocessorModule: PreprocessorModule): Builder
     @BindsInstance
     fun parserModule(parserModule: ParserModule): Builder
     @BindsInstance

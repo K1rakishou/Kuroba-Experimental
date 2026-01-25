@@ -25,6 +25,14 @@ class SiteDescriptor private constructor(
     return siteName.equals("Lainchan", ignoreCase = true)
   }
 
+  fun isEndchan(): Boolean {
+    return siteName.equals("Endchan", ignoreCase = true)
+  }
+
+  fun is8chanMoe(): Boolean {
+    return siteName.equals("8chan.moe", ignoreCase = true)
+  }
+
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is SiteDescriptor) return false

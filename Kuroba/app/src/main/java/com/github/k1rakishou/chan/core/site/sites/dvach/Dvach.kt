@@ -794,6 +794,9 @@ class Dvach : CommonSite() {
   class DvachSiteUrlHandler(
     val domainLazy: Lazy<HttpUrl>
   ) : CommonSiteUrlHandler() {
+    private val _cloudflareIgnorePaths = setOf(
+      "/favicon.ico"
+    )
 
     override fun getSiteClass(): Class<out Site?> {
       return Dvach::class.java
@@ -807,6 +810,10 @@ class Dvach : CommonSite() {
 
     override val names: Array<String>
       get() = arrayOf("dvach", "2ch")
+
+    override fun matchesCloudflareIgnorePath(path: String): Boolean {
+      return path in _cloudflareIgnorePaths
+    }
 
     override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?): String? {
       when (chanDescriptor) {

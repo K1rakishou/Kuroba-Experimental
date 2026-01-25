@@ -1,5 +1,7 @@
 package com.github.k1rakishou.common
 
+import com.github.k1rakishou.common.StringUtils.splitOnce
+
 class CookieBuilder(
   initialCookies: String? = null
 ) {
@@ -12,12 +14,21 @@ class CookieBuilder(
     }
   }
 
+  fun addOrReplace(cookies: String?) {
+    if (cookies == null) {
+      return
+    }
+
+    parseCookies(cookies)
+      .forEach { cookiesPart -> addOrReplace(cookiesPart.key, cookiesPart.value) }
+  }
+
   fun addOrReplace(key: String, value: String) {
     if (value.isEmpty()) {
       return
     }
 
-    if (key.contains("=") || key.contains(";") || value.contains("=") || value.contains(";")) {
+    if (key.contains("=") || key.contains(";") || value.contains(";")) {
       error("Invalid cookie! key: '${key}', value: '${value}'")
     }
 
@@ -27,15 +38,6 @@ class CookieBuilder(
     } else {
       _cookieParts[index] = Cookie(key, value)
     }
-  }
-
-  fun addOrReplace(cookies: String?) {
-    if (cookies == null) {
-      return
-    }
-
-    parseCookies(cookies)
-      .forEach { cookiesPart -> addOrReplace(cookiesPart.key, cookiesPart.value) }
   }
 
   fun get(key: String): Cookie? {
@@ -86,14 +88,15 @@ class CookieBuilder(
 
   private fun parseCookies(cookies: String): List<Cookie> {
     return cookies
-      .split(";")
+      .split("; ")
       .map { part ->
-        val split = part.trim().split("=")
-        if (split.size != 2) {
-          error("Bad cookie part: '${part}'")
-        }
+        val split = part.splitOnce("=")
+          ?: error("Bad cookie part: '${part}'")
 
-        return@map Cookie(key = split[0].trim(), value = split[1].trim())
+        return@map Cookie(
+          key = split.first.trim(),
+          value = split.second.trim()
+        )
       }
   }
 
@@ -101,6 +104,10 @@ class CookieBuilder(
     val key: String,
     val value: String
   )
+
+  override fun toString(): String {
+    return _cookieParts.joinToString(separator = "; ", transform = { cookie -> "${cookie.key}=${cookie.value}" })
+  }
 
   companion object {
     private const val TAG = "CookieBuilder"

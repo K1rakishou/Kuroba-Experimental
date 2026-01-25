@@ -61,6 +61,7 @@ class CompositeCatalogSite : Site {
   }
 
   private val siteUrlHandler = object : SiteUrlHandler {
+
     override fun getSiteClass(): Class<out Site> = this@CompositeCatalogSite.javaClass
 
     override fun matchesName(value: String): Boolean = false
@@ -68,6 +69,8 @@ class CompositeCatalogSite : Site {
     override fun respondsTo(url: HttpUrl): Boolean = false
 
     override fun matchesMediaHost(url: HttpUrl): Boolean = false
+
+    override fun matchesCloudflareIgnorePath(path: String): Boolean = false
 
     override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?): String? = null
 

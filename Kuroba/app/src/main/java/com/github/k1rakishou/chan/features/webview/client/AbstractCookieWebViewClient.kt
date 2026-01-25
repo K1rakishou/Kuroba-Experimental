@@ -5,11 +5,11 @@ import com.github.k1rakishou.chan.features.webview.WebViewTaskResult
 import kotlinx.coroutines.CompletableDeferred
 
 abstract class AbstractCookieWebViewClient(
-  resultWaiter: CompletableDeferred<WebViewTaskResult>
-) : AbstractWebViewClient(resultWaiter) {
+  webViewClientResultWaiter: CompletableDeferred<WebViewTaskResult>
+) : AbstractWebViewClient(webViewClientResultWaiter) {
 
-  protected fun success(cookie: String) {
-    finishWithResult(WebViewTaskResult.Result(cookie))
+  protected fun success(rawCookies: String, userData: Any?) {
+    finishWithResult(WebViewTaskResult.Result(rawCookies, userData))
   }
 
   protected fun fail(exception: WebViewTaskException) {

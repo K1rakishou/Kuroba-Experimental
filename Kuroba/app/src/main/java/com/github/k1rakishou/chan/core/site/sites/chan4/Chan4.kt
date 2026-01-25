@@ -1,7 +1,5 @@
 package com.github.k1rakishou.chan.core.site.sites.chan4
 
-import android.webkit.CookieManager
-import android.webkit.WebView
 import com.github.k1rakishou.OptionSettingItem
 import com.github.k1rakishou.Setting
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
@@ -634,11 +632,8 @@ open class Chan4 : SiteBase() {
       }
     }
 
-    override fun modifyWebView(webView: WebView, urlToOpen: HttpUrl) {
-      super.modifyWebView(webView, urlToOpen)
-
-      val cookieBuilder = CookieBuilder()
-      val urlToOpenString = urlToOpen.toString()
+    override fun modifyCookieBuilder(urlToOpen: HttpUrl, cookieBuilder: CookieBuilder) {
+      super.modifyCookieBuilder(urlToOpen, cookieBuilder)
 
       if (site.actions().isLoggedIn()) {
         cookieBuilder.addOrReplace("pass_enabled", "1")
@@ -659,12 +654,6 @@ open class Chan4 : SiteBase() {
         Logger.d(TAG, "modifyWebView() full cookie is empty")
         return
       }
-
-      val cookieManager = CookieManager.getInstance()
-      cookieBuilder.addOrReplace(cookieManager.getCookie(urlToOpenString))
-
-      val builtCookies = cookieBuilder.build()
-      cookieManager.setCookie(urlToOpenString, builtCookies)
 
       val cookieParts = cookieBuilder.cookieParts()
       Logger.debug(TAG) { "modifyWebView('${urlToOpen}') cookieParts size: '${cookieParts.size}'" }
@@ -768,6 +757,10 @@ open class Chan4 : SiteBase() {
 
       override fun matchesMediaHost(url: HttpUrl): Boolean {
         return containsMediaHostUrl(url, mediaHosts)
+      }
+
+      override fun matchesCloudflareIgnorePath(path: String): Boolean {
+        return false
       }
 
       override fun matchesName(value: String): Boolean {

@@ -265,7 +265,11 @@ abstract class CommonSite : SiteBase() {
     override fun matchesMediaHost(url: HttpUrl): Boolean {
       return containsMediaHostUrl(url, mediaHosts)
     }
-    
+
+    override fun matchesCloudflareIgnorePath(path: String): Boolean {
+      return false
+    }
+
     override fun respondsTo(url: HttpUrl): Boolean {
       return this.url!!.host == url.host
         || "www.${this.url!!.host}" == url.host

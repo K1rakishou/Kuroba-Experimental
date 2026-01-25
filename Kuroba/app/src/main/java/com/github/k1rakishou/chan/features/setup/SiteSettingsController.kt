@@ -13,6 +13,7 @@ import com.github.k1rakishou.chan.features.settings.epoxy.epoxyBooleanSetting
 import com.github.k1rakishou.chan.features.settings.epoxy.epoxyLinkSetting
 import com.github.k1rakishou.chan.features.settings.epoxy.epoxySettingsGroupTitle
 import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
+import com.github.k1rakishou.chan.features.settings.setting.CookieSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.InputSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
@@ -232,6 +233,33 @@ class SiteSettingsController(
             if (prev != curr) {
               rebuildSettings()
             }
+          }
+        }
+      }
+      is CookieSettingV2 -> {
+        epoxyLinkSetting {
+          id("epoxy_cookie_setting_${settingV2.settingsIdentifier.getIdentifier()}")
+          topDescription(settingV2.topDescription)
+          bottomDescription(settingV2.bottomDescription)
+          bindNotificationIcon(SettingNotificationType.Default)
+
+          if (settingV2.isEnabled()) {
+            settingEnabled(true)
+
+            clickListener {
+              val prev = settingV2.getCurrent()?.value
+
+              showInputDialog(settingV2) { curr ->
+                if (prev == curr) {
+                  return@showInputDialog
+                }
+
+                rebuildSettings()
+              }
+            }
+          } else {
+            settingEnabled(false)
+            clickListener(null)
           }
         }
       }

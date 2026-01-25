@@ -12,11 +12,11 @@ import kotlinx.coroutines.delay
 abstract class AbstractCookieWebViewTask(
   headerTitleText: String?,
   loadable: Loadable.Url,
-  resultWaiter: CompletableDeferred<WebViewTaskResult>
+  invokerWaiter: CompletableDeferred<WebViewTaskResult>
 ) : AbstractWebViewTask(
   headerTitleText = headerTitleText,
   loadable = loadable,
-  resultWaiter = resultWaiter
+  invokerWaiter = invokerWaiter
 ) {
 
   override suspend fun start(webView: WebView) {
@@ -27,7 +27,7 @@ abstract class AbstractCookieWebViewTask(
   override fun destroy() {
     super.destroy()
 
-    if (!resultWaiter.isCompleted) {
+    if (!this@AbstractCookieWebViewTask.invokerWaiter.isCompleted) {
       finishWithResult(WebViewTaskResult.Canceled)
     }
   }
@@ -38,8 +38,9 @@ abstract class AbstractCookieWebViewTask(
 
     when (taskResult) {
       is WebViewTaskResult.Result -> {
-        val cookies = taskResult.data as String
-        val cookieBuilder = CookieBuilder(cookies)
+        val rawCookies = taskResult.rawCookies
+        val userData = taskResult.userData
+        val cookieBuilder = CookieBuilder(rawCookies)
 
         val cookieParts = cookieBuilder.cookieParts()
         Logger.debug(tag) { "waitAndHandleResult('${description}') Success. cookieParts size: '${cookieParts.size}'" }
@@ -54,8 +55,13 @@ abstract class AbstractCookieWebViewTask(
           return
         }
 
-        addCookieToSiteSettings(site = site, cookies = cookies)
-        delay(500)
+        addCookieToSiteSettings(
+          site = site,
+          cookies = rawCookies,
+          userData = userData
+        )
+
+        delay(200)
       }
       is WebViewTaskResult.Canceled -> {
         Logger.e(tag, "waitAndHandleResult('${description}') Canceled")
@@ -66,5 +72,5 @@ abstract class AbstractCookieWebViewTask(
     }
   }
 
-  abstract fun addCookieToSiteSettings(site: Site, cookies: String)
+  abstract suspend fun addCookieToSiteSettings(site: Site, cookies: String, userData: Any?)
 }

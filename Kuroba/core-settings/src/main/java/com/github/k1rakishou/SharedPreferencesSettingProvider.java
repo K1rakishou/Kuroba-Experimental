@@ -21,122 +21,128 @@ import android.content.SharedPreferences;
 
 @SuppressLint("ApplySharedPref")
 public class SharedPreferencesSettingProvider implements SettingProvider {
-    private final SharedPreferences prefs;
+  private final SharedPreferences prefs;
 
-    public SharedPreferencesSettingProvider(SharedPreferences prefs) {
-        this.prefs = prefs;
+  public SharedPreferencesSettingProvider(SharedPreferences prefs) {
+    this.prefs = prefs;
+  }
+
+  @Override
+  public int getInt(String key, int def) {
+    try {
+      if (!prefs.contains(key)) {
+        // Insert the default value into the sharedprefs file so that the next time we
+        // decide to change the default it won't be applied to people who already have
+        // the old default value.
+        prefs.edit().putInt(key, def).apply();
+        return def;
+      }
+
+      return prefs.getInt(key, def);
+    } catch (Throwable error) {
+      prefs.edit().remove(key).commit();
+      return prefs.getInt(key, def);
     }
+  }
 
-    @Override
-    public int getInt(String key, int def) {
-        try {
-            if (!prefs.contains(key)) {
-                // Insert the default value into the sharedprefs file so that the next time we
-                // decide to change the default it won't be applied to people who already have
-                // the old default value.
-                prefs.edit().putInt(key, def).apply();
-                return def;
-            }
+  @Override
+  public long getLong(String key, long def) {
+    try {
+      if (!prefs.contains(key)) {
+        // See getInt() comment
+        prefs.edit().putLong(key, def).apply();
+        return def;
+      }
 
-            return prefs.getInt(key, def);
-        } catch (Throwable error) {
-            prefs.edit().remove(key).commit();
-            return prefs.getInt(key, def);
-        }
+      return prefs.getLong(key, def);
+    } catch (Throwable error) {
+      prefs.edit().remove(key).commit();
+      return prefs.getLong(key, def);
     }
+  }
 
-    @Override
-    public long getLong(String key, long def) {
-        try {
-            if (!prefs.contains(key)) {
-                // See getInt() comment
-                prefs.edit().putLong(key, def).apply();
-                return def;
-            }
+  @Override
+  public boolean getBoolean(String key, boolean def) {
+    try {
+      if (!prefs.contains(key)) {
+        // See getInt() comment
+        prefs.edit().putBoolean(key, def).apply();
+        return def;
+      }
 
-            return prefs.getLong(key, def);
-        } catch (Throwable error) {
-            prefs.edit().remove(key).commit();
-            return prefs.getLong(key, def);
-        }
+      return prefs.getBoolean(key, def);
+    } catch (Throwable error) {
+      prefs.edit().remove(key).commit();
+      return prefs.getBoolean(key, def);
     }
+  }
 
-    @Override
-    public boolean getBoolean(String key, boolean def) {
-        try {
-            if (!prefs.contains(key)) {
-                // See getInt() comment
-                prefs.edit().putBoolean(key, def).apply();
-                return def;
-            }
+  @Override
+  public String getString(String key, String def) {
+    try {
+      if (!prefs.contains(key)) {
+        // See getInt() comment
+        prefs.edit().putString(key, def).apply();
+        return def;
+      }
 
-            return prefs.getBoolean(key, def);
-        } catch (Throwable error) {
-            prefs.edit().remove(key).commit();
-            return prefs.getBoolean(key, def);
-        }
+      return prefs.getString(key, def);
+    } catch (Throwable error) {
+      prefs.edit().remove(key).commit();
+      return prefs.getString(key, def);
     }
+  }
 
-    @Override
-    public String getString(String key, String def) {
-        try {
-            if (!prefs.contains(key)) {
-                // See getInt() comment
-                prefs.edit().putString(key, def).apply();
-                return def;
-            }
+  @Override
+  public void putInt(String key, int value) {
+    prefs.edit().putInt(key, value).apply();
+  }
 
-            return prefs.getString(key, def);
-        } catch (Throwable error) {
-            prefs.edit().remove(key).commit();
-            return prefs.getString(key, def);
-        }
-    }
+  @Override
+  public void putIntSync(String key, Integer value) {
+    prefs.edit().putInt(key, value).commit();
+  }
 
-    @Override
-    public void putInt(String key, int value) {
-        prefs.edit().putInt(key, value).apply();
-    }
+  @Override
+  public void putLong(String key, long value) {
+    prefs.edit().putLong(key, value).apply();
+  }
 
-    @Override
-    public void putIntSync(String key, Integer value) {
-        prefs.edit().putInt(key, value).commit();
-    }
+  @Override
+  public void putLongSync(String key, Long value) {
+    prefs.edit().putLong(key, value).commit();
+  }
 
-    @Override
-    public void putLong(String key, long value) {
-        prefs.edit().putLong(key, value).apply();
-    }
+  @Override
+  public void putBoolean(String key, boolean value) {
+    prefs.edit().putBoolean(key, value).apply();
+  }
 
-    @Override
-    public void putLongSync(String key, Long value) {
-        prefs.edit().putLong(key, value).commit();
-    }
+  @Override
+  public void putBooleanSync(String key, Boolean value) {
+    prefs.edit().putBoolean(key, value).commit();
+  }
 
-    @Override
-    public void putBoolean(String key, boolean value) {
-        prefs.edit().putBoolean(key, value).apply();
-    }
+  @Override
+  public void putString(String key, String value) {
+    prefs.edit().putString(key, value).apply();
+  }
 
-    @Override
-    public void putBooleanSync(String key, Boolean value) {
-        prefs.edit().putBoolean(key, value).commit();
-    }
+  @Override
+  public void putStringSync(String key, String value) {
+    prefs.edit().putString(key, value).commit();
+  }
 
-    @Override
-    public void putString(String key, String value) {
-        prefs.edit().putString(key, value).apply();
-    }
+  //endregion
 
-    @Override
-    public void putStringSync(String key, String value) {
-        prefs.edit().putString(key, value).commit();
-    }
 
-    //endregion
+  @Override
+  public void remove(String key) {
+    prefs.edit().remove(key).apply();
+  }
 
-    @Override
-    public void removeSync(String key) {
-        prefs.edit().remove(key).commit();
-    }
+  @Override
+  public void removeSync(String key) {
+    prefs.edit().remove(key).commit();
+  }
 }

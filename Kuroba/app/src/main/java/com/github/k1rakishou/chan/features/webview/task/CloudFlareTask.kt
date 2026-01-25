@@ -18,8 +18,8 @@ import java.util.concurrent.atomic.AtomicReference
 class CloudFlareTask(
   headerTitleText: String?,
   loadable: Loadable.Url,
-  resultWaiter: CompletableDeferred<WebViewTaskResult>
-) : AbstractCookieWebViewTask(headerTitleText, loadable, resultWaiter) {
+  invokerWaiter: CompletableDeferred<WebViewTaskResult>
+) : AbstractCookieWebViewTask(headerTitleText, loadable, invokerWaiter) {
   override val tag: String = TAG
 
   override fun createWebClient(): AbstractWebViewClient {
@@ -27,11 +27,11 @@ class CloudFlareTask(
       loadableUrl = loadable as Loadable.Url,
       cookieManager = cookieManager,
       initialCookies = initialCookies,
-      resultWaiter = this@CloudFlareTask.resultWaiter
+      webViewClientResultWaiter = this@CloudFlareTask.invokerWaiter
     )
   }
 
-  override fun addCookieToSiteSettings(site: Site, cookies: String) {
+  override suspend fun addCookieToSiteSettings(site: Site, cookies: String, userData: Any?) {
     val cloudFlareClearanceCookieSetting = site.getSettingBySettingId<MapSetting>(
       SiteSetting.SiteSettingId.CloudFlareClearanceCookie
     )
@@ -53,11 +53,10 @@ class CloudFlareTask(
     private val loadableUrl: Loadable.Url,
     private val cookieManager: CookieManager,
     private val initialCookies: AtomicReference<String>,
-    resultWaiter: CompletableDeferred<WebViewTaskResult>
-  ) : AbstractCookieWebViewClient(resultWaiter) {
+    webViewClientResultWaiter: CompletableDeferred<WebViewTaskResult>
+  ) : AbstractCookieWebViewClient(webViewClientResultWaiter) {
     override fun onPageFinished(view: WebView?, url: String?) {
       super.onPageFinished(view, url)
-      onPageLoadFinished()
 
       val newCookies = cookieManager.getCookie(loadableUrl.url.toString()) ?: ""
       val newCookiesBuilder = CookieBuilder(newCookies)
@@ -73,18 +72,7 @@ class CloudFlareTask(
       }
 
       newCookiesBuilder.retainAllIn(CloudFlareHandlerInterceptor.EXPECTED_CLOUDFLARE_COOKIES)
-      success(newCookiesBuilder.build())
-    }
-
-    @Deprecated("Deprecated in Java")
-    override fun onReceivedError(
-      view: WebView?,
-      errorCode: Int,
-      description: String?,
-      failingUrl: String?
-    ) {
-      super.onReceivedError(view, errorCode, description, failingUrl)
-      onPageLoadError(errorCode, description, failingUrl)
+      success(newCookiesBuilder.build(), null)
     }
   }
 

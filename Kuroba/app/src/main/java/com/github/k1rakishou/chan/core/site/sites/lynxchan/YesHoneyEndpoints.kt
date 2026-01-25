@@ -7,7 +7,6 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
 class YesHoneyEndpoints(lynxchanSite: LynxchanSite) : LynxchanEndpoints(lynxchanSite) {
-
   override fun reply(chanDescriptor: ChanDescriptor): HttpUrl {
     when (chanDescriptor) {
       is ChanDescriptor.ICatalogDescriptor -> {

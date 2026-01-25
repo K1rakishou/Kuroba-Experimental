@@ -42,7 +42,6 @@ import com.github.k1rakishou.chan.utils.lifecycleFromContextOrNull
 import com.github.k1rakishou.common.BadContentTypeException
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
-import com.github.k1rakishou.common.ModularResult.Companion.value
 import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isCoroutineCancellationException
@@ -73,7 +72,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
 import java.io.File
 import java.io.IOException
-import java.util.*
+import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.measureTimedValue
@@ -583,12 +582,11 @@ class ImageLoaderDeprecated(
 
     runInterruptible {
       val responseBody = response.body
-        ?: throw IOException("Response body is null")
 
       val contentMainType = responseBody.contentType()?.type
       val contentSubType = responseBody.contentType()?.subtype
 
-      if (contentMainType != "image" && contentMainType != "video" && !faviconUrlWithInvalidMimeType(url)) {
+      if (contentMainType != "image" && contentMainType != "video" && !FaviconUrlWithInvalidMimeType.matches(url)) {
         throw BadContentTypeException("${contentMainType}/${contentSubType}")
       }
 
@@ -611,15 +609,6 @@ class ImageLoaderDeprecated(
     cacheHandler.fileWasAdded(cacheFileType, fileLength)
 
     return true
-  }
-
-  // Super hack.
-  // Some sites send their favicons without the content type which breaks our content type checks so
-  // we have to check the urls manually...
-  private fun faviconUrlWithInvalidMimeType(url: String): Boolean {
-    return url == "https://endchan.net/favicon.ico"
-      || url == "https://endchan.org/favicon.ico"
-      || url == "https://yeshoney.xyz/favicon.ico"
   }
 
   private suspend fun tryLoadFromDiskCacheOrNull(
@@ -1210,6 +1199,7 @@ class ImageLoaderDeprecated(
       override fun toString(): String = "FixedImageSize{${width}x${height}}"
     }
 
+    @ConsistentCopyVisibility
     data class MeasurableImageSize private constructor(val sizeResolver: ViewSizeResolver<View>) : ImageSize() {
       override fun toString(): String = "MeasurableImageSize"
 

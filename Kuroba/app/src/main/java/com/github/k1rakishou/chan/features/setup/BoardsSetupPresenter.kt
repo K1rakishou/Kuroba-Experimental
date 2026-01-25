@@ -88,7 +88,7 @@ class BoardsSetupPresenter(
 
       withView { showLoadingView("Updating ${siteDescriptor.siteName} boards, please wait") }
 
-      loadBoardInfoSuspend(site)
+      val loadedBoardsCount = loadBoardInfoSuspend(site)
         .safeUnwrap { error ->
           Logger.e(TAG, "Error loading boards for site ${siteDescriptor}", error)
           withView { hideLoadingView() }
@@ -97,7 +97,7 @@ class BoardsSetupPresenter(
         }
 
       withView { hideLoadingView() }
-      withView { onBoardsLoaded() }
+      withView { onBoardsLoaded(loadedBoardsCount) }
 
       displayActiveBoardsInternal()
     }
@@ -222,10 +222,10 @@ class BoardsSetupPresenter(
     }
   }
 
-  private suspend fun loadBoardInfoSuspend(site: Site): ModularResult<Unit> {
+  private suspend fun loadBoardInfoSuspend(site: Site): ModularResult<Int> {
     return suspendCancellableCoroutine { cancellableContinuation ->
       val job = site.loadBoardInfo { result ->
-        cancellableContinuation.resumeValueSafe(result.mapValue { Unit })
+        cancellableContinuation.resumeValueSafe(result.mapValue { siteBoards -> siteBoards.boards.size })
       }
 
       cancellableContinuation.invokeOnCancellation { cause ->

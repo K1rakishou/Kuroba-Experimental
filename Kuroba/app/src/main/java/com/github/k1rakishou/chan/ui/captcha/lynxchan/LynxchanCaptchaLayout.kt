@@ -67,7 +67,6 @@ import com.github.k1rakishou.common.requireComponentActivity
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.launch
-import java.util.*
 import javax.inject.Inject
 
 @SuppressLint("ViewConstructor")
@@ -362,8 +361,8 @@ class LynxchanCaptchaLayout(
       return
     }
 
-    val captchaId = captchaInfo.lynxchanCaptchaJson.captchaId
-      ?: return
+    val captchaId = captchaInfo.captchaInfo.captchaId
+
     scope.launch {
       verifyingCaptchaState.value = true
 
@@ -377,36 +376,48 @@ class LynxchanCaptchaLayout(
         )
 
         if (result is ModularResult.Error) {
-          if (result.error is LynxchanCaptchaLayoutViewModel.LynxchanCaptchaPOWError) {
+          val error = result.error
+          if (error is LynxchanCaptchaLayoutViewModel.LynxchanCaptchaPOWError) {
             showToast(context, result.error.errorMessageOrClassName())
             return@launch
           }
 
-          showToast(context, getString(R.string.lynxchan_captcha_verification_error, result.error.errorMessageOrClassName()))
+          showToast(
+            context = context,
+            message = getString(R.string.lynxchan_captcha_verification_error, result.error.errorMessageOrClassName())
+          )
+
           reset()
           return@launch
         }
 
         val success = result.valueOrNull()
         if (success != true) {
-          showToast(context, getString(R.string.lynxchan_captcha_verification_not_successful))
+          showToast(
+            context = context,
+            message = getString(R.string.lynxchan_captcha_verification_not_successful)
+          )
 
           reset()
           return@launch
         }
 
         if (success && needBlockBypass) {
-          showToast(context, getString(R.string.lynxchan_captcha_verification_block_bypassed))
+          showToast(
+            context = context,
+            message = getString(R.string.lynxchan_captcha_verification_block_bypassed)
+          )
 
           reset()
           return@launch
         }
 
-        val expirationTimeMillis = captchaInfo.lynxchanCaptchaJson.expirationTimeMillis
+        val expirationTimeMillis = captchaInfo.captchaInfo.captchaExpirationTimeMillis
+          ?: CaptchaHolder.RECAPTCHA_TOKEN_LIVE_TIME
 
         captchaHolder.addNewSolution(
           solution = CaptchaSolution.SimpleTokenSolution(token = captchaId),
-          tokenLifetime = expirationTimeMillis ?: CaptchaHolder.RECAPTCHA_TOKEN_LIVE_TIME
+          tokenLifetime = expirationTimeMillis
         )
 
         viewModel.resetCaptchaForced()

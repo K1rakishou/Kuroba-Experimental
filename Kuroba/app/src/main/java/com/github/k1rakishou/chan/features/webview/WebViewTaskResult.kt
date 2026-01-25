@@ -6,5 +6,8 @@ sealed interface WebViewTaskResult {
 
   data object Canceled : WebViewTaskResult
   data class Error(val exception: WebViewTaskException) : WebViewTaskResult
-  data class Result(val data: Any) : WebViewTaskResult
+  data class Result(
+    val rawCookies: String,
+    val userData: Any? = null
+  ) : WebViewTaskResult
 }

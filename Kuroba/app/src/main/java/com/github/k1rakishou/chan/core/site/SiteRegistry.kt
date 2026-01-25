@@ -25,6 +25,7 @@ import com.github.k1rakishou.chan.core.site.sites.leftypol.Leftypol
 import com.github.k1rakishou.chan.core.site.sites.lynxchan.Endchan
 import com.github.k1rakishou.chan.core.site.sites.lynxchan.Kohlchan
 import com.github.k1rakishou.chan.core.site.sites.lynxchan.YesHoney
+import com.github.k1rakishou.chan.core.site.sites.lynxchan.chan8.Chan8Moe
 import com.github.k1rakishou.chan.core.site.sites.soyjakparty.SoyjakParty
 import com.github.k1rakishou.chan.core.site.sites.wired7.Wired7
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
@@ -59,6 +60,7 @@ object SiteRegistry {
     siteClasses.addSiteToSiteClassesMap(Vhschan.SITE_NAME, Vhschan::class.java)
     siteClasses.addSiteToSiteClassesMap(Endchan.SITE_NAME, Endchan::class.java)
     siteClasses.addSiteToSiteClassesMap(Kohlchan.SITE_NAME, Kohlchan::class.java)
+    siteClasses.addSiteToSiteClassesMap(Chan8Moe.SITE_NAME, Chan8Moe::class.java)
     siteClasses.addSiteToSiteClassesMap(RozenArcana.SITE_NAME, RozenArcana::class.java)
     siteClasses.addSiteToSiteClassesMap(YesHoney.SITE_NAME, YesHoney::class.java)
     siteClasses.addSiteToSiteClassesMap(Leftypol.SITE_NAME, Leftypol::class.java)
