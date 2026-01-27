@@ -5,6 +5,7 @@ import android.content.Context
 import android.widget.FrameLayout
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,19 +19,23 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
@@ -47,11 +52,13 @@ import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutInterface
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder
 import com.github.k1rakishou.chan.ui.captcha.CaptchaSolution
 import com.github.k1rakishou.chan.ui.captcha.chan4.Chan4CaptchaLayout
+import com.github.k1rakishou.chan.ui.captcha.lynxchan.LynxchanCaptchaLayoutViewModel.VerifyCaptchaResult
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeErrorMessage
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeProgressIndicator
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextBarButton
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextField
+import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.ComposeEntrypoint
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout
@@ -64,10 +71,17 @@ import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.requireComponentActivity
+import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.android.awaitFrame
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import org.joda.time.Period
+import org.joda.time.format.PeriodFormatterBuilder
 import javax.inject.Inject
+import kotlin.time.measureTime
 
 @SuppressLint("ViewConstructor")
 class LynxchanCaptchaLayout(
@@ -166,9 +180,13 @@ class LynxchanCaptchaLayout(
   @Composable
   private fun ColumnScope.BuildCaptchaWindow() {
     val captchaInfoAsync by viewModel.captchaInfoToShow
+    val needProofOfWork by viewModel.needProofOfWork
+    val captchaBlockMut by viewModel.captchaBlock
+    val captchaBlock = captchaBlockMut
+    var currentInputValue by viewModel.currentInputValue
+
     val verifyingCaptchaState = remember { mutableStateOf(false) }
     val captchaInfo = (captchaInfoAsync as? AsyncData.Data)?.data
-    val needProofOfWork = captchaInfo?.needProofOfWork?.value == true
 
     if (needProofOfWork) {
       BuildProofOfWorkRequired()
@@ -190,16 +208,31 @@ class LynxchanCaptchaLayout(
         text = captchaTypeText,
         textAlign = TextAlign.Center
       )
+
+      if (captchaBlock != null && captchaInfo.needBlockBypass) {
+        Spacer(modifier = Modifier.height(8.dp))
+
+        ProofOfWorkProgressIndicator(captchaBlock)
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        ElapsedTime()
+
+        Spacer(modifier = Modifier.height(8.dp))
+      }
     }
 
     BuildCaptchaImageOrText(captchaInfoAsync)
     Spacer(modifier = Modifier.height(8.dp))
 
     if (captchaInfo != null) {
-      var currentInputValue by captchaInfo.currentInputValue
       val verifyingCaptcha by verifyingCaptchaState
 
       KurobaComposeTextField(
+        modifier = Modifier
+          .fillMaxWidth()
+          .wrapContentHeight()
+          .padding(horizontal = 16.dp),
         enabled = !verifyingCaptcha,
         value = currentInputValue,
         onValueChange = { newValue -> currentInputValue = newValue },
@@ -214,15 +247,14 @@ class LynxchanCaptchaLayout(
           }
         ),
         keyboardOptions = KeyboardOptions(
-          autoCorrect = false,
-          keyboardType = KeyboardType.Password
+          keyboardType = KeyboardType.Password,
+          showKeyboardOnFocus = true,
+          capitalization = KeyboardCapitalization.None,
+          platformImeOptions = null,
+          autoCorrectEnabled = false
         ),
         maxLines = 1,
-        singleLine = true,
-        modifier = Modifier
-          .fillMaxWidth()
-          .wrapContentHeight()
-          .padding(horizontal = 16.dp)
+        singleLine = true
       )
 
       Spacer(modifier = Modifier.height(8.dp))
@@ -248,17 +280,14 @@ class LynxchanCaptchaLayout(
 
       KurobaComposeTextBarButton(
         onClick = {
-          val currentInputValue = captchaInfo?.currentInputValue
-            ?: return@KurobaComposeTextBarButton
-
           verifyCaptcha(
-            needBlockBypass = captchaInfo.needBlockBypass,
+            needBlockBypass = captchaInfo?.needBlockBypass == true,
             verifyingCaptchaState = verifyingCaptchaState,
             captchaInfo = captchaInfo,
-            answer = currentInputValue.value
+            answer = currentInputValue
           )
         },
-        enabled = captchaInfo != null && captchaInfo.currentInputValue.value.isNotEmpty() && !verifyingCaptcha,
+        enabled = captchaInfo != null && currentInputValue.isNotEmpty() && !verifyingCaptcha,
         text = stringResource(id = R.string.captcha_layout_verify)
       )
 
@@ -266,6 +295,81 @@ class LynxchanCaptchaLayout(
     }
 
     Spacer(modifier = Modifier.height(8.dp))
+  }
+
+  @Composable
+  private fun ProofOfWorkProgressIndicator(
+    captchaBlock: LynxchanCaptchaLayoutViewModel.LynxchanCaptchaBlock
+  ) {
+    val chanTheme = LocalChanTheme.current
+
+    Column(
+      modifier = Modifier
+        .fillMaxWidth()
+        .wrapContentHeight()
+        .padding(horizontal = 8.dp, vertical = 4.dp)
+        .background(color = chanTheme.backColorSecondaryCompose)
+        .border(
+          color = chanTheme.accentColorCompose,
+          width = 2.dp,
+          shape = RoundedCornerShape(size = 4.dp)
+        ),
+      horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+      KurobaComposeText(
+        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+        text = stringResource(id = R.string.chan8moe_block_bypass_solve_message),
+        color = ThemeEngine.resolveTextColor(chanTheme.backColorSecondaryCompose)
+      )
+    }
+
+    Spacer(modifier = Modifier.height(8.dp))
+
+    KurobaComposeText(
+      modifier = Modifier
+        .fillMaxWidth()
+        .wrapContentHeight()
+        .padding(horizontal = 8.dp, vertical = 4.dp),
+      text = "Bruteforce iteration: ${captchaBlock.iteration}",
+      textAlign = TextAlign.Center,
+      fontSize = 20.ktu
+    )
+  }
+
+  @Composable
+  private fun ElapsedTime() {
+    val elapsedTimeMut = remember { mutableStateOf("") }
+    val elapsedTime by elapsedTimeMut
+
+    LaunchedEffect(key1 = Unit) {
+      val formatter = PeriodFormatterBuilder()
+        .printZeroAlways()
+        .minimumPrintedDigits(2)
+        .appendMinutes()
+        .appendLiteral(":")
+        .appendSeconds()
+        .toFormatter()
+
+      var durationMillis = 0L
+
+      while (isActive) {
+        val delta = measureTime { awaitFrame() }
+        durationMillis += delta.inWholeMilliseconds
+        elapsedTimeMut.value = formatter.print(Period(durationMillis))
+      }
+    }
+
+    if (elapsedTime.isNotEmpty()) {
+      KurobaComposeText(
+        modifier = Modifier
+          .fillMaxWidth()
+          .wrapContentHeight()
+          .padding(horizontal = 8.dp, vertical = 4.dp),
+        text = "Elapsed time: ${elapsedTime}",
+        textAlign = TextAlign.Center,
+        fontSize = 20.ktu
+      )
+    }
   }
 
   @Composable
@@ -314,7 +418,7 @@ class LynxchanCaptchaLayout(
             null
           }
           is AsyncData.Error -> {
-            val error = (captchaInfoAsync as AsyncData.Error).throwable
+            val error = captchaInfoAsync.throwable
             KurobaComposeErrorMessage(
               error = error,
               modifier = Modifier.fillMaxSize()
@@ -322,7 +426,7 @@ class LynxchanCaptchaLayout(
 
             null
           }
-          is AsyncData.Data -> (captchaInfoAsync as AsyncData.Data).data
+          is AsyncData.Data -> captchaInfoAsync.data
         }
 
         if (captchaInfo != null) {
@@ -375,41 +479,55 @@ class LynxchanCaptchaLayout(
           answer = answer
         )
 
-        if (result is ModularResult.Error) {
-          val error = result.error
-          if (error is LynxchanCaptchaLayoutViewModel.LynxchanCaptchaPOWError) {
-            showToast(context, result.error.errorMessageOrClassName())
+        val captchaVerificationResult = when (result) {
+          is ModularResult.Error -> {
+            val error = result.error
+            if (error is CancellationException) {
+              return@launch
+            }
+
+            if (error is LynxchanCaptchaLayoutViewModel.LynxchanCaptchaPOWError) {
+              showToast(context, result.error.errorMessageOrClassName())
+              return@launch
+            }
+
+            showToast(
+              context = context,
+              message = getString(R.string.lynxchan_captcha_verification_error, result.error.errorMessageOrClassName())
+            )
+
+            reset()
             return@launch
           }
-
-          showToast(
-            context = context,
-            message = getString(R.string.lynxchan_captcha_verification_error, result.error.errorMessageOrClassName())
-          )
-
-          reset()
-          return@launch
+          is ModularResult.Value<VerifyCaptchaResult> -> result.value
         }
 
-        val success = result.valueOrNull()
-        if (success != true) {
-          showToast(
-            context = context,
-            message = getString(R.string.lynxchan_captcha_verification_not_successful)
-          )
+        when (captchaVerificationResult) {
+          VerifyCaptchaResult.Failure -> {
+            showToast(
+              context = context,
+              message = getString(R.string.lynxchan_captcha_verification_not_successful)
+            )
 
-          reset()
-          return@launch
-        }
+            reset()
+            return@launch
+          }
+          VerifyCaptchaResult.SolvedCaptcha -> {
+            if (needBlockBypass) {
+              showToast(
+                context = context,
+                message = getString(R.string.lynxchan_captcha_verification_block_bypassed)
+              )
 
-        if (success && needBlockBypass) {
-          showToast(
-            context = context,
-            message = getString(R.string.lynxchan_captcha_verification_block_bypassed)
-          )
+              reset()
+              return@launch
+            }
 
-          reset()
-          return@launch
+            // fallthrough
+          }
+          VerifyCaptchaResult.SolvedProofOfWork -> {
+            // fallthrough
+          }
         }
 
         val expirationTimeMillis = captchaInfo.captchaInfo.captchaExpirationTimeMillis

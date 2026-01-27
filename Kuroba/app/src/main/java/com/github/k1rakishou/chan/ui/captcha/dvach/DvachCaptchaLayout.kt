@@ -45,6 +45,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
@@ -602,8 +603,20 @@ class DvachCaptchaLayout(
     val keyboardOptions = remember(key1 = input) {
       when (input) {
         null -> KeyboardOptions.Default
-        "numeric" -> KeyboardOptions(autoCorrect = false, keyboardType = KeyboardType.NumberPassword)
-        else -> KeyboardOptions(autoCorrect = false, keyboardType = KeyboardType.Password)
+        "numeric" -> {
+          KeyboardOptions(
+            autoCorrectEnabled = false,
+            keyboardType = KeyboardType.NumberPassword,
+            capitalization = KeyboardCapitalization.None
+          )
+        }
+        else -> {
+          KeyboardOptions(
+            autoCorrectEnabled = false,
+            keyboardType = KeyboardType.Password,
+            capitalization = KeyboardCapitalization.None
+          )
+        }
       }
     }
 

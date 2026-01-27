@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.ui.captcha.lynxchan
 
 import android.graphics.BitmapFactory
+import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
@@ -14,12 +15,15 @@ import com.github.k1rakishou.chan.core.di.module.shared.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.core.site.loader.ClientException
+import com.github.k1rakishou.chan.core.site.sites.lynxchan.chan8.Chan8Moe
 import com.github.k1rakishou.chan.core.site.sites.lynxchan.engine.LynxchanSite
 import com.github.k1rakishou.chan.ui.captcha.lynxchan.pow.LynxchanProofOfWork
 import com.github.k1rakishou.common.BadStatusResponseException
 import com.github.k1rakishou.common.KurobaCookie
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.StringUtils.asFormattedToken
+import com.github.k1rakishou.common.addOrReplaceCookieHeader
+import com.github.k1rakishou.common.awaitSilently
 import com.github.k1rakishou.common.isContentTypeApplicationJson
 import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.common.isNotNullNorEmpty
@@ -30,8 +34,12 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.Headers
@@ -49,24 +57,32 @@ class LynxchanCaptchaLayoutViewModel(
   private val moshi: Moshi,
 ) : BaseViewModel() {
 
-  var captchaInfoToShow = mutableStateOf<AsyncData<LynxchanCaptchaFull>>(AsyncData.NotInitialized)
-  private var activeRequestCaptchaJob: Job? = null
+  private val _captchaInfoToShow = mutableStateOf<AsyncData<LynxchanCaptchaFull>>(AsyncData.NotInitialized)
+  val captchaInfoToShow: State<AsyncData<LynxchanCaptchaFull>>
+    get() = _captchaInfoToShow
+  private val _needProofOfWork = mutableStateOf(false)
+  val needProofOfWork: State<Boolean>
+    get() = _needProofOfWork
+  private val _captchaBlock = mutableStateOf<LynxchanCaptchaBlock?>(null)
+  val captchaBlock: State<LynxchanCaptchaBlock?>
+    get() = _captchaBlock
+  val currentInputValue = mutableStateOf<String>("")
+
+  private var _activeRequestCaptchaJob: Job? = null
 
   override fun injectDependencies(component: ViewModelComponent) {
     component.inject(this)
   }
 
-  override suspend fun onViewModelReady() {
-
-  }
+  override suspend fun onViewModelReady() {}
 
   fun resetCaptchaForced() {
-    captchaInfoToShow.value = AsyncData.NotInitialized
+    _captchaInfoToShow.value = AsyncData.NotInitialized
   }
 
   fun cleanup() {
-    activeRequestCaptchaJob?.cancel()
-    activeRequestCaptchaJob = null
+    _activeRequestCaptchaJob?.cancel()
+    _activeRequestCaptchaJob = null
   }
 
   fun requestCaptcha(
@@ -74,14 +90,25 @@ class LynxchanCaptchaLayoutViewModel(
     chanDescriptor: ChanDescriptor
   ) {
     if (lynxchanCaptcha == null) {
-      captchaInfoToShow.value = AsyncData.Error(LynxchanCaptchaError("lynxchanCaptcha is null"))
+      _captchaInfoToShow.value = AsyncData.Error(LynxchanCaptchaError("lynxchanCaptcha is null"))
       return
     }
 
-    activeRequestCaptchaJob?.cancel()
-    activeRequestCaptchaJob = viewModelScope.launch(Dispatchers.IO) {
+    _activeRequestCaptchaJob?.cancel()
+    _activeRequestCaptchaJob = viewModelScope.launch(Dispatchers.IO) {
       try {
-        captchaInfoToShow.value = AsyncData.Loading
+        _captchaInfoToShow.value = AsyncData.Loading
+
+        val site = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
+        if (site == null || site !is LynxchanSite) {
+          val message = if (site == null) {
+            "Site is not active "
+          } else {
+            "Site ${site::class.java.simpleName} is not a Lynxchan site"
+          }
+
+          throw LynxchanCaptchaError(message)
+        }
 
         val needBlockBypass = needBlockBypass(
           lynxchanCaptcha = lynxchanCaptcha,
@@ -94,15 +121,11 @@ class LynxchanCaptchaLayoutViewModel(
           needBlockBypass = needBlockBypass
         )
 
-        storeCaptchaIdCookie(
-          chanDescriptor = chanDescriptor,
-          cookie = lynxchanCaptchaFull.captchaInfo.kurobaCookie
-        )
-
-        captchaInfoToShow.value = AsyncData.Data(lynxchanCaptchaFull)
+        site.captchaIdCookie.set(lynxchanCaptchaFull.captchaInfo.kurobaCookie)
+        _captchaInfoToShow.value = AsyncData.Data(lynxchanCaptchaFull)
       } catch (error: Throwable) {
         Logger.error(TAG, error) { "Failed to load captcha for ${chanDescriptor}" }
-        captchaInfoToShow.value = AsyncData.Error(error)
+        _captchaInfoToShow.value = AsyncData.Error(error)
       }
     }
   }
@@ -113,7 +136,7 @@ class LynxchanCaptchaLayoutViewModel(
     lynxchanCaptcha: SiteAuthentication.CustomCaptcha.LynxchanCaptcha,
     captchaInfo: LynxchanCaptchaFull,
     answer: String
-  ): ModularResult<Boolean> {
+  ): ModularResult<VerifyCaptchaResult> {
     return withContext(Dispatchers.IO) {
       return@withContext ModularResult.Try {
         val verifyCaptchaEndpoint = if (needBlockBypass) {
@@ -150,13 +173,15 @@ class LynxchanCaptchaLayoutViewModel(
           .url(verifyCaptchaEndpoint)
           .post(requestBody)
 
-        val site = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
-        if (site != null) {
-          site.requestModifier().modifyGenericRequest(
-            site = site,
-            requestBuilder = requestBuilder
-          )
+        val chan8Moe = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor()) as? Chan8Moe
+        if (chan8Moe == null) {
+          throw LynxchanCaptchaError("Site is not active")
         }
+
+        chan8Moe.requestModifier().modifyGenericRequest(
+          site = chan8Moe,
+          requestBuilder = requestBuilder
+        )
 
         val response = proxiedOkHttpClient.okHttpClient().suspendCall(request = requestBuilder.build())
         if (!response.isSuccessful) {
@@ -172,7 +197,7 @@ class LynxchanCaptchaLayoutViewModel(
             throw LynxchanCaptchaError("Failed to extract BlockBypassStatus from '$responseString'")
           }
 
-          if (needBlockBypass && blockBypassStatus.data == null && site is LynxchanSite) {
+          if (needBlockBypass && blockBypassStatus.data == null && chan8Moe is LynxchanSite) {
             val bypass = response.headers("Set-Cookie")
               .firstOrNull { setCookie -> setCookie.startsWith("bypass=") }
               ?.let { bypassCookie -> KurobaCookie.fromRawCookie(bypassCookie, "bypass")?.value }
@@ -180,21 +205,28 @@ class LynxchanCaptchaLayoutViewModel(
             if (bypass != null && bypass.isBypassCookieValidForPOW()) {
               // Need to solve Proof Of Work
               Logger.debug(TAG) { "verifyCaptcha(needBlockBypass: ${needBlockBypass}) need to solve POW" }
-              findProofOfWorkAndSubmit(bypass, chanDescriptor, lynxchanCaptcha).unwrap()
-              return@Try false
+
+              findProofOfWorkAndSubmit(
+                captchaId = captchaId,
+                bypass = bypass,
+                chanDescriptor = chanDescriptor,
+                lynxchanCaptcha = lynxchanCaptcha
+              ).unwrap()
+
+              return@Try VerifyCaptchaResult.SolvedProofOfWork
             }
 
             throw LynxchanCaptchaError("bypassCookie is too short '${bypass.asFormattedToken()}'")
           }
 
           if (blockBypassStatus.isHashcash) {
-            val lynxchanCaptchaFull = (captchaInfoToShow.value as? AsyncData.Data)?.data
+            val lynxchanCaptchaFull = (_captchaInfoToShow.value as? AsyncData.Data)?.data
             if (lynxchanCaptchaFull == null) {
-              return@Try false
+              return@Try VerifyCaptchaResult.Failure
             }
 
             // Not sure about this one
-            lynxchanCaptchaFull.needProofOfWork.value = true
+            _needProofOfWork.value = true
             throw LynxchanCaptchaPOWError()
           }
 
@@ -205,21 +237,19 @@ class LynxchanCaptchaLayoutViewModel(
             }
           }
 
-          if (blockBypassStatus.isOk) {
-            extractAndStoreBypassCookie(chanDescriptor, response.headers)
-          }
-
-          return@Try blockBypassStatus.isOk
+          // fallthrough
         }
 
         if (responseString.contains(CAPTCHA_SOLVED_MSG, ignoreCase = true)) {
           extractAndStoreBypassCookie(chanDescriptor, response.headers)
-          return@Try true
+          return@Try VerifyCaptchaResult.SolvedCaptcha
         }
 
         Logger.error(TAG) { "Failed to verify captcha. response: '${responseString}'" }
         throw LynxchanCaptchaError("Failed to verify captcha. See logs for more info.")
       }
+    }.onError { error ->
+      Logger.error(TAG, error) { "Failed to verify captcha" }
     }
   }
 
@@ -259,21 +289,6 @@ class LynxchanCaptchaLayoutViewModel(
 
       if (blockBypassWithStatusJson.status != "ok") {
         return false
-      }
-
-      if (blockBypassWithStatusJson.data.valid) {
-        if (blockBypassWithStatusJson.data.validated != null
-          && !blockBypassWithStatusJson.data.validated
-          && site is LynxchanSite
-        ) {
-          val bypassCookie = site.bypassCookie.get()?.value
-          if (bypassCookie != null && bypassCookie.isBypassCookieValidForPOW()) {
-            // Need to solve Proof Of Work
-            Logger.debug(TAG) { "needBlockBypass() need to solve POW" }
-            findProofOfWorkAndSubmit(bypassCookie, chanDescriptor, lynxchanCaptcha).unwrap()
-            return true
-          }
-        }
       }
 
       return !blockBypassWithStatusJson.data.valid
@@ -353,7 +368,7 @@ class LynxchanCaptchaLayoutViewModel(
       return@run captchaData
     }
 
-    Logger.d(TAG, "extractLynxchanCaptcha() captchaData=$captchaData")
+    Logger.d(TAG, "extractLynxchanCaptchaInfo() captchaData=$captchaData")
 
     val captchaIdCookieRaw = captchaData
       .firstOrNull { captchaCookie -> captchaCookie.startsWith("captchaid=", ignoreCase = true) }
@@ -387,13 +402,44 @@ class LynxchanCaptchaLayoutViewModel(
   }
 
   private suspend fun findProofOfWorkAndSubmit(
+    captchaId: String,
     bypass: String,
     chanDescriptor: ChanDescriptor,
     lynxchanCaptcha: SiteAuthentication.CustomCaptcha.LynxchanCaptcha
   ): ModularResult<Unit> {
     return ModularResult.Try {
-      val pow = LynxchanProofOfWork(bypass).find()
-      if (pow == null) {
+      val pow = coroutineScope {
+        coroutineContext[Job.Key]?.invokeOnCompletion { _captchaBlock.value = null }
+        val solution = CompletableDeferred<Int>()
+
+        launch {
+          try {
+            LynxchanProofOfWork(bypass)
+              .find()
+              .onEach { event ->
+                when (event) {
+                  is LynxchanProofOfWork.Event.Update -> {
+                    _captchaBlock.value = LynxchanCaptchaBlock(event.iteration)
+                  }
+                  is LynxchanProofOfWork.Event.Solution -> {
+                    solution.complete(event.value)
+                    _captchaBlock.value = null
+                  }
+                }
+              }
+              .collect()
+          } catch (error: Throwable) {
+            Logger.error(TAG, error) { "Unknown error while trying to find the POW solution" }
+            solution.complete(-1)
+
+            throw error
+          }
+        }
+
+        return@coroutineScope solution.awaitSilently(-1)
+      }
+
+      if (pow == -1) {
         throw FailedToDoPOW("Failed to find the POW solution")
       }
 
@@ -416,6 +462,10 @@ class LynxchanCaptchaLayoutViewModel(
         )
       }
 
+      requestBuilder
+        .addOrReplaceCookieHeader("captchaid=${captchaId}")
+        .addOrReplaceCookieHeader("bypass=${bypass}")
+
       val response = proxiedOkHttpClient.okHttpClient().suspendCall(request = requestBuilder.build())
       if (!response.isSuccessful) {
         throw BadStatusResponseException(status = response.code)
@@ -428,11 +478,11 @@ class LynxchanCaptchaLayoutViewModel(
         .fromJson(responseString)
 
       if (blockBypassStatus == null || !blockBypassStatus.isOk || blockBypassStatus.data != null) {
-        Logger.error(TAG) { "Failed to submit POW solution. data: '${blockBypassStatus?.data}'" }
-        return@Try
+        throw FailedToDoPOW("Failed to submit POW solution. Response data: '${blockBypassStatus?.data}'")
       }
 
-      Logger.debug(TAG) { "Successfully submitted POW! You should be able to post now." }
+      extractAndStoreBypassCookie(chanDescriptor, response.headers)
+      Logger.debug(TAG) { "Successfully submitted POW and got bypass cookie" }
     }
   }
 
@@ -458,10 +508,6 @@ class LynxchanCaptchaLayoutViewModel(
       return
     }
 
-    storeBypassCookie(chanDescriptor, bypassKurobaCookie)
-  }
-
-  private fun storeBypassCookie(chanDescriptor: ChanDescriptor, bypass: KurobaCookie) {
     val site = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
       ?: return
 
@@ -469,18 +515,7 @@ class LynxchanCaptchaLayoutViewModel(
       return
     }
 
-    site.bypassCookie.set(bypass)
-  }
-
-  private fun storeCaptchaIdCookie(chanDescriptor: ChanDescriptor, cookie: KurobaCookie) {
-    val site = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
-      ?: return
-
-    if (site !is LynxchanSite) {
-      return
-    }
-
-    site.captchaIdCookie.set(cookie)
+    site.bypassCookie.set(bypassKurobaCookie)
   }
 
   class LynxchanCaptchaError(message: String) : ClientException(message)
@@ -493,20 +528,27 @@ class LynxchanCaptchaLayoutViewModel(
     return str.length >= 712
   }
 
-  class LynxchanCaptchaFull(
+  sealed interface VerifyCaptchaResult {
+    data object SolvedCaptcha : VerifyCaptchaResult
+    data object SolvedProofOfWork : VerifyCaptchaResult
+    data object Failure : VerifyCaptchaResult
+  }
+
+  data class LynxchanCaptchaFull(
     val needBlockBypass: Boolean,
     val captchaInfo: CaptchaInfo,
-    val captchaImage: BitmapPainter
+    val captchaImage: BitmapPainter,
   ) {
-    var needProofOfWork = mutableStateOf(false)
-    var currentInputValue = mutableStateOf<String>("")
-
     data class CaptchaInfo(
       val captchaId: String,
       val captchaExpirationTimeMillis: Long?,
       val kurobaCookie: KurobaCookie,
     )
   }
+
+  data class LynxchanCaptchaBlock(
+    val iteration: Int
+  )
 
   // {"status":"hashcash","data":null}
   @JsonClass(generateAdapter = true)
