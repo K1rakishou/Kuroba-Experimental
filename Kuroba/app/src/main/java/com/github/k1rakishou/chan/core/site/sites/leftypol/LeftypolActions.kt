@@ -1,6 +1,6 @@
 package com.github.k1rakishou.chan.core.site.sites.leftypol
 
-import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.common.CommonSite
@@ -12,17 +12,17 @@ import com.github.k1rakishou.model.data.site.SiteBoards
 import okhttp3.Request
 
 class LeftypolActions(
-        commonSite: CommonSite,
-        proxiedOkHttpClient: RealProxiedOkHttpClient,
-        siteManager: SiteManager,
-        replyManager: ReplyManager
+  commonSite: CommonSite,
+  proxiedOkHttpClient: ProxiedOkHttpClient,
+  siteManager: SiteManager,
+  replyManager: ReplyManager
 ) : LainchanActions(commonSite, proxiedOkHttpClient, siteManager, replyManager) {
 
     override suspend fun boards(): ModularResult<SiteBoards> {
         val requestBuilder = Request.Builder()
                 .url(site.endpoints().boards().toString())
 
-        site.requestModifier().modifyBoardsGetRequest(requestBuilder)
+        site.requestModifier().modifyGenericRequest(site, requestBuilder)
 
         return LeftypolBoardsRequest(
                 siteDescriptor = site.siteDescriptor(),

@@ -1,6 +1,6 @@
 package com.github.k1rakishou.chan.core.site.sites.dvach
 
-import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.site.common.CommonClientException
 import com.github.k1rakishou.chan.core.site.http.report.PostReportData
 import com.github.k1rakishou.chan.core.site.http.report.PostReportResult
@@ -27,12 +27,12 @@ import okhttp3.Request
 class DvachReportPostRequest(
   private val site: Dvach,
   private val _moshi: Lazy<Moshi>,
-  private val _proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>,
+  private val _proxiedOkHttpClient: Lazy<ProxiedOkHttpClient>,
   private val postReportData: PostReportData.Dvach
 ) {
   private val moshi: Moshi
     get() = _moshi.get()
-  private val proxiedOkHttpClient: RealProxiedOkHttpClient
+  private val proxiedOkHttpClient: ProxiedOkHttpClient
     get() = _proxiedOkHttpClient.get()
 
   suspend fun execute(): PostReportResult {

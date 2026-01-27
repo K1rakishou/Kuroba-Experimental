@@ -1,7 +1,7 @@
 package com.github.k1rakishou.chan.core.site.sites.chan4
 
 import android.text.SpannableStringBuilder
-import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.site.sites.search.Chan4SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.PageCursor
 import com.github.k1rakishou.chan.core.site.sites.search.SearchEntry
@@ -36,7 +36,7 @@ import java.util.regex.Pattern
 
 class Chan4SearchRequest(
   private val request: Request,
-  private val proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>,
+  private val proxiedOkHttpClient: Lazy<ProxiedOkHttpClient>,
   private val searchParams: Chan4SearchParams
 ) {
 

@@ -1,6 +1,6 @@
 package com.github.k1rakishou.chan.core.site.sites.chan4
 
-import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.net.AbstractRequest
 import com.github.k1rakishou.common.jsonArray
@@ -19,7 +19,7 @@ class Chan4BoardsRequest(
   private val siteDescriptor: SiteDescriptor,
   private val boardManager: BoardManager,
   request: Request,
-  proxiedOkHttpClient: RealProxiedOkHttpClient
+  proxiedOkHttpClient: ProxiedOkHttpClient
 ) : AbstractRequest<SiteBoards>(request, proxiedOkHttpClient) {
 
   override suspend fun processBody(responseBody: ResponseBody): SiteBoards {

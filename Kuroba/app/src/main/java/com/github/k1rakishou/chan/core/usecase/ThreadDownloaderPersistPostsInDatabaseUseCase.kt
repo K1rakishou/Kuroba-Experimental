@@ -1,6 +1,6 @@
 package com.github.k1rakishou.chan.core.usecase
 
-import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ParsePostsV1UseCase
@@ -22,7 +22,7 @@ class ThreadDownloaderPersistPostsInDatabaseUseCase(
   private val chanThreadLoaderCoordinator: Lazy<ChanThreadLoaderCoordinator>,
   private val parsePostsV1UseCase: ParsePostsV1UseCase,
   private val chanPostRepository: ChanPostRepository,
-  private val proxiedOkHttpClient: RealProxiedOkHttpClient
+  private val proxiedOkHttpClient: ProxiedOkHttpClient
 ) : ISuspendUseCase<DownloadParams, ModularResult<DownloadResult>> {
 
   override suspend fun execute(parameter: DownloadParams): ModularResult<DownloadResult> {

@@ -5,7 +5,7 @@ import com.github.k1rakishou.Setting
 import com.github.k1rakishou.SharedPreferencesSettingProvider
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.image.ImageLoaderDeprecated
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
@@ -38,7 +38,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl
 import java.security.SecureRandom
-import java.util.*
+import java.util.Random
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 
@@ -54,7 +54,7 @@ abstract class SiteBase : Site, CoroutineScope {
   @Inject
   lateinit var siteManagerLazy: Lazy<SiteManager>
   @Inject
-  lateinit var proxiedOkHttpClientLazy: Lazy<RealProxiedOkHttpClient>
+  lateinit var proxiedOkHttpClientLazy: Lazy<ProxiedOkHttpClient>
   @Inject
   lateinit var httpCallManagerLazy: Lazy<HttpCallManager>
   @Inject
@@ -78,7 +78,7 @@ abstract class SiteBase : Site, CoroutineScope {
     get() = boardManagerLazy.get()
   val siteManager: SiteManager
     get() = siteManagerLazy.get()
-  val proxiedOkHttpClient: RealProxiedOkHttpClient
+  val proxiedOkHttpClient: ProxiedOkHttpClient
     get() = proxiedOkHttpClientLazy.get()
   val httpCallManager: HttpCallManager
     get() = httpCallManagerLazy.get()

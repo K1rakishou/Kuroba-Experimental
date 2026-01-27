@@ -1,6 +1,6 @@
 package com.github.k1rakishou.chan.core.site.sites.chan4
 
-import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.site.sites.archive.NativeArchivePost
 import com.github.k1rakishou.chan.core.site.sites.archive.NativeArchivePostList
 import com.github.k1rakishou.common.BadStatusResponseException
@@ -19,7 +19,7 @@ import java.nio.charset.StandardCharsets
 
 class Chan4ArchiveThreadsRequest(
   private val request: Request,
-  private val proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>
+  private val proxiedOkHttpClient: Lazy<ProxiedOkHttpClient>
 ) {
 
   suspend fun execute(): ModularResult<NativeArchivePostList> {

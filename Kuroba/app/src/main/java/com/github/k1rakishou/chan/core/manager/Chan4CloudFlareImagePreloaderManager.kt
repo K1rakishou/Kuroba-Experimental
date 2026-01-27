@@ -2,7 +2,7 @@ package com.github.k1rakishou.chan.core.manager
 
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.ChanSettings
-import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.common.awaitSilently
 import com.github.k1rakishou.common.bidirectionalMap
 import com.github.k1rakishou.common.errorMessageOrClassName
@@ -34,7 +34,7 @@ import kotlin.concurrent.write
 class Chan4CloudFlareImagePreloaderManager(
   private val appScope: CoroutineScope,
   private val verboseLogsEnabled: Boolean,
-  private val realProxiedOkHttpClient: RealProxiedOkHttpClient,
+  private val proxiedOkHttpClient: ProxiedOkHttpClient,
   private val chanThreadsCache: ChanThreadsCache,
   private val prefetchStateManager: PrefetchStateManager
 ) {
@@ -369,7 +369,7 @@ class Chan4CloudFlareImagePreloaderManager(
       .head()
       .build()
 
-    val response = realProxiedOkHttpClient.okHttpClient().suspendCall(request)
+    val response = proxiedOkHttpClient.okHttpClient().suspendCall(request)
     lock.write { preloading[postImage.ownerPostDescriptor]?.completed() }
 
     if (!response.isSuccessful) {

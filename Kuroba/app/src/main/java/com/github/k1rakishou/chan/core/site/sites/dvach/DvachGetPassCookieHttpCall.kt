@@ -33,7 +33,7 @@ class DvachGetPassCookieHttpCall(
     requestBuilder.url(site.endpoints().login())
     requestBuilder.post(formBuilder.build())
 
-    site.requestModifier().modifyLoginRequest(site, requestBuilder)
+    site.requestModifier().modifyGenericRequest(site, requestBuilder)
     site.requestModifier().modifyHttpCall(this, requestBuilder)
   }
 

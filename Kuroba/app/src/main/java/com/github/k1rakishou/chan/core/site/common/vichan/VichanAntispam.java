@@ -16,7 +16,7 @@
  */
 package com.github.k1rakishou.chan.core.site.common.vichan;
 
-import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient;
+import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
 import com.github.k1rakishou.common.ModularResult;
 import com.github.k1rakishou.core_logger.Logger;
 
@@ -47,12 +47,12 @@ import okhttp3.ResponseBody;
 public class VichanAntispam {
     private static final String TAG = "Antispam";
 
-    private Lazy<RealProxiedOkHttpClient> proxiedOkHttpClient;
+    private Lazy<ProxiedOkHttpClient> proxiedOkHttpClient;
 
     private HttpUrl url;
     private List<String> fieldsToIgnore = new ArrayList<>();
 
-    public VichanAntispam(Lazy<RealProxiedOkHttpClient> proxiedOkHttpClient, HttpUrl url) {
+    public VichanAntispam(Lazy<ProxiedOkHttpClient> proxiedOkHttpClient, HttpUrl url) {
         this.proxiedOkHttpClient = proxiedOkHttpClient;
         this.url = url;
 

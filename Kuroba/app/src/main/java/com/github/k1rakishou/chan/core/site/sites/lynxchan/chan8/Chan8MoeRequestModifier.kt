@@ -17,14 +17,6 @@ class Chan8MoeRequestModifier(
   site: Chan8Moe,
   appConstants: AppConstants
 ) : LynxchanRequestModifier<Chan8Moe>(site, appConstants) {
-  override fun modifyThumbnailGetRequest(
-    site: Chan8Moe,
-    requestBuilder: Request.Builder
-  ) {
-    super.modifyThumbnailGetRequest(site, requestBuilder)
-    requestBuilder.add8chanHeaders()
-  }
-
   override fun modifyHttpCall(
     httpCall: HttpCall,
     requestBuilder: Request.Builder
@@ -45,27 +37,11 @@ class Chan8MoeRequestModifier(
     }
   }
 
-  override fun modifyFullImageHeadRequest(
+  override fun modifyGenericRequest(
     site: Chan8Moe,
     requestBuilder: Request.Builder
   ) {
-    super.modifyFullImageHeadRequest(site, requestBuilder)
-    requestBuilder.add8chanHeaders()
-  }
-
-  override fun modifyFullImageGetRequest(
-    site: Chan8Moe,
-    requestBuilder: Request.Builder
-  ) {
-    super.modifyFullImageGetRequest(site, requestBuilder)
-    requestBuilder.add8chanHeaders()
-  }
-
-  override fun modifyCaptchaGetRequest(
-    site: Chan8Moe,
-    requestBuilder: Request.Builder
-  ) {
-    super.modifyCaptchaGetRequest(site, requestBuilder)
+    super.modifyGenericRequest(site, requestBuilder)
     requestBuilder.add8chanHeaders()
   }
 
@@ -75,14 +51,6 @@ class Chan8MoeRequestModifier(
     requestBuilder: Request.Builder
   ) {
     super.modifyCatalogOrThreadGetRequest(site, chanDescriptor, requestBuilder)
-    requestBuilder.add8chanHeaders()
-  }
-
-  override fun modifyMediaDownloadRequest(
-    site: Chan8Moe,
-    requestBuilder: Request.Builder
-  ) {
-    super.modifyMediaDownloadRequest(site, requestBuilder)
     requestBuilder.add8chanHeaders()
   }
 
@@ -96,56 +64,11 @@ class Chan8MoeRequestModifier(
 //    requestProperties.updateCookieHeader(TOS_COOKIE)
   }
 
-  override fun modifyArchiveGetRequest(
-    site: Chan8Moe,
-    requestBuilder: Request.Builder
-  ) {
-    super.modifyArchiveGetRequest(site, requestBuilder)
-    requestBuilder.add8chanHeaders()
-  }
-
-  override fun modifySearchGetRequest(
-    site: Chan8Moe,
-    requestBuilder: Request.Builder
-  ) {
-    super.modifySearchGetRequest(site, requestBuilder)
-    requestBuilder.add8chanHeaders()
-  }
-
   override fun modifyPostReportRequest(
     site: Chan8Moe,
     requestBuilder: Request.Builder
   ) {
     super.modifyPostReportRequest(site, requestBuilder)
-    requestBuilder.add8chanHeaders()
-  }
-
-  override fun modifyLoginRequest(
-    site: Chan8Moe,
-    requestBuilder: Request.Builder
-  ) {
-    super.modifyLoginRequest(site, requestBuilder)
-    requestBuilder.add8chanHeaders()
-  }
-
-  override fun modifyGetPasscodeInfoRequest(
-    site: Chan8Moe,
-    requestBuilder: Request.Builder
-  ) {
-    super.modifyGetPasscodeInfoRequest(site, requestBuilder)
-    requestBuilder.add8chanHeaders()
-  }
-
-  override fun modifyPagesRequest(
-    site: Chan8Moe,
-    requestBuilder: Request.Builder
-  ) {
-    super.modifyPagesRequest(site, requestBuilder)
-    requestBuilder.add8chanHeaders()
-  }
-
-  override fun modifyBoardsGetRequest(requestBuilder: Request.Builder) {
-    super.modifyBoardsGetRequest(requestBuilder)
     requestBuilder.add8chanHeaders()
   }
 

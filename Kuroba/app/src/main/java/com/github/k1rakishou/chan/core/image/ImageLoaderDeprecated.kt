@@ -566,7 +566,7 @@ class ImageLoaderDeprecated(
       .get()
 
     if (site != null && requestModifier != null) {
-      requestModifier.modifyThumbnailGetRequest(site, requestBuilder)
+      requestModifier.modifyGenericRequest(site, requestBuilder)
     }
 
     val response = coilOkHttpClient.okHttpClient().suspendCall(requestBuilder.build())

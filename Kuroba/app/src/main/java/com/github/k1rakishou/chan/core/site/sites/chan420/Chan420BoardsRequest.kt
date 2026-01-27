@@ -1,6 +1,6 @@
 package com.github.k1rakishou.chan.core.site.sites.chan420
 
-import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.net.AbstractRequest
 import com.github.k1rakishou.common.jsonArray
@@ -13,13 +13,12 @@ import com.google.gson.stream.JsonReader
 import okhttp3.Request
 import okhttp3.ResponseBody
 import java.io.IOException
-import java.util.*
 
 class Chan420BoardsRequest(
   private val siteDescriptor: SiteDescriptor,
   private val boardManager: BoardManager,
   request: Request,
-  proxiedOkHttpClient: RealProxiedOkHttpClient
+  proxiedOkHttpClient: ProxiedOkHttpClient
 ) : AbstractRequest<List<ChanBoard>>(request, proxiedOkHttpClient) {
 
   override suspend fun processBody(responseBody: ResponseBody): List<ChanBoard> {

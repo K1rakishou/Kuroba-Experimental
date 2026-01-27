@@ -27,7 +27,7 @@ class DvachGetPasscodeInfoHttpCall(
       .url(passcodeInfoUrl)
       .get()
 
-    site.requestModifier().modifyGetPasscodeInfoRequest(site, requestBuilder)
+    site.requestModifier().modifyGenericRequest(site, requestBuilder)
     site.requestModifier().modifyHttpCall(this, requestBuilder)
   }
 

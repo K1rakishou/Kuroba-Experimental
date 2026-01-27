@@ -1,6 +1,6 @@
 package com.github.k1rakishou.chan.core.site.sites.chan4
 
-import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.common.CommonClientException
 import com.github.k1rakishou.chan.core.site.http.report.PostReportData
@@ -15,7 +15,7 @@ import java.util.Locale
 
 class Chan4ReportPostRequest(
   private val siteManager: SiteManager,
-  private val proxiedOkHttpClient: RealProxiedOkHttpClient,
+  private val proxiedOkHttpClient: ProxiedOkHttpClient,
   private val postReportData: PostReportData.Chan4
 ) {
 

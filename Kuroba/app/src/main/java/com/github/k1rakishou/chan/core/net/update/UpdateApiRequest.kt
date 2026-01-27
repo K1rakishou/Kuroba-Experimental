@@ -3,7 +3,7 @@ package com.github.k1rakishou.chan.core.net.update
 import android.os.Build
 import android.text.Spanned
 import androidx.core.text.toSpanned
-import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.net.update.UpdateApiRequest.ReleaseUpdateApiResponse
 import com.github.k1rakishou.chan.utils.ReleaseHelpers
@@ -18,7 +18,7 @@ import okhttp3.Request
 
 class UpdateApiRequest(
   request: Request,
-  proxiedOkHttpClient: RealProxiedOkHttpClient,
+  proxiedOkHttpClient: ProxiedOkHttpClient,
   private val isRelease: Boolean
 ) : JsonReaderRequest<ReleaseUpdateApiResponse>(request, proxiedOkHttpClient) {
   

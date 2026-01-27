@@ -1,7 +1,7 @@
 package com.github.k1rakishou.chan.core.cache.downloader
 
 import android.net.ConnectivityManager
-import com.github.k1rakishou.chan.core.base.okhttp.RealDownloaderOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.DownloaderOkHttpClient
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.site.SiteResolver
@@ -27,7 +27,7 @@ class ChunkedMediaDownloaderImpl(
   private val fileManager: FileManager,
   private val siteResolver: SiteResolver,
   private val cacheHandlerLazy: Lazy<CacheHandler>,
-  private val downloaderOkHttpClientLazy: Lazy<RealDownloaderOkHttpClient>,
+  private val downloaderOkHttpClientLazy: Lazy<DownloaderOkHttpClient>,
   private val connectivityManager: ConnectivityManager
 ) : ChunkedMediaDownloader {
   private val cacheHandler: CacheHandler

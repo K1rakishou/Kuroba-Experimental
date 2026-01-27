@@ -4,7 +4,7 @@ import android.net.Uri
 import androidx.annotation.GuardedBy
 import androidx.core.app.NotificationManagerCompat
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
-import com.github.k1rakishou.chan.core.base.okhttp.RealDownloaderOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.DownloaderOkHttpClient
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.helper.ImageSaverFileManagerWrapper
@@ -18,7 +18,6 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.NotificationConstants
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.BadStatusResponseException
-import com.github.k1rakishou.common.EmptyBodyResponseException
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.doIoTaskWithAttempts
@@ -71,7 +70,7 @@ class ImageSaverV2ServiceDelegate(
   private val appScope: CoroutineScope,
   private val appConstants: AppConstants,
   private val cacheHandler: CacheHandler,
-  private val downloaderOkHttpClient: RealDownloaderOkHttpClient,
+  private val downloaderOkHttpClient: DownloaderOkHttpClient,
   private val notificationManagerCompat: NotificationManagerCompat,
   private val imageSaverFileManager: ImageSaverFileManagerWrapper,
   private val siteResolver: SiteResolver,
@@ -1079,7 +1078,7 @@ class ImageSaverV2ServiceDelegate(
       .url(imageUrl)
 
     siteResolver.findSiteForUrl(imageUrl.toString())?.let { site ->
-      site.requestModifier().modifyMediaDownloadRequest(site, requestBuilder)
+      site.requestModifier().modifyGenericRequest(site, requestBuilder)
     }
 
     val response = downloaderOkHttpClient.okHttpClient().suspendCall(requestBuilder.build())
@@ -1097,7 +1096,6 @@ class ImageSaverV2ServiceDelegate(
     }
 
     return response.body
-      ?: throw EmptyBodyResponseException()
   }
 
   private suspend fun getDownloadContext(

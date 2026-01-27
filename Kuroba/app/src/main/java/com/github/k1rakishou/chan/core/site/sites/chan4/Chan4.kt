@@ -439,7 +439,7 @@ open class Chan4 : SiteBase() {
         .url(searchUrl)
         .get()
 
-      this@Chan4.requestModifier().modifySearchGetRequest(this@Chan4, requestBuilder)
+      this@Chan4.requestModifier().modifyGenericRequest(this@Chan4, requestBuilder)
 
       return Chan4SearchRequest(
         requestBuilder.build(),
@@ -455,7 +455,7 @@ open class Chan4 : SiteBase() {
         .url(archiveUrl)
         .get()
 
-      this@Chan4.requestModifier().modifyArchiveGetRequest(this@Chan4, requestBuilder)
+      this@Chan4.requestModifier().modifyGenericRequest(this@Chan4, requestBuilder)
 
       return Chan4ArchiveThreadsRequest(
         request = requestBuilder.build(),
@@ -663,8 +663,11 @@ open class Chan4 : SiteBase() {
       }
     }
 
-    override fun modifyCaptchaGetRequest(site: Chan4, requestBuilder: Request.Builder) {
-      super.modifyCaptchaGetRequest(site, requestBuilder)
+    override fun modifyGenericRequest(
+      site: Chan4,
+      requestBuilder: Request.Builder
+    ) {
+      super.modifyGenericRequest(site, requestBuilder)
 
       addChan4CookieHeader(site, requestBuilder)
     }

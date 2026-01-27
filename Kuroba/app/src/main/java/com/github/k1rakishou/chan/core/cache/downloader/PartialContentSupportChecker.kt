@@ -2,7 +2,7 @@ package com.github.k1rakishou.chan.core.cache.downloader
 
 import android.util.LruCache
 import androidx.annotation.GuardedBy
-import com.github.k1rakishou.chan.core.base.okhttp.RealDownloaderOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.DownloaderOkHttpClient
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteBase
 import com.github.k1rakishou.chan.core.site.SiteResolver
@@ -24,7 +24,7 @@ import okhttp3.Response
  * is viewing them. Everything else should be downloaded in a singe chunk.
  * */
 internal class PartialContentSupportChecker(
-  private val downloaderOkHttpClientLazy: Lazy<RealDownloaderOkHttpClient>,
+  private val downloaderOkHttpClientLazy: Lazy<DownloaderOkHttpClient>,
   private val activeDownloads: ActiveDownloads,
   private val siteResolver: SiteResolver,
   private val maxTimeoutMs: Long
@@ -35,7 +35,7 @@ internal class PartialContentSupportChecker(
   @GuardedBy("itself")
   private val checkedChanHosts = mutableMapOf<String, Boolean>()
 
-  private val downloaderOkHttpClient: RealDownloaderOkHttpClient
+  private val downloaderOkHttpClient: DownloaderOkHttpClient
     get() = downloaderOkHttpClientLazy.get()
 
   suspend fun check(mediaUrl: HttpUrl): PartialContentCheckResult {
@@ -120,7 +120,7 @@ internal class PartialContentSupportChecker(
       .head()
       .url(mediaUrl)
 
-    site?.let { it.requestModifier()?.modifyFullImageHeadRequest(it, headRequestBuilder) }
+    site.let { it.requestModifier().modifyGenericRequest(it, headRequestBuilder) }
 
     val headRequest = headRequestBuilder.build()
     val startTime = System.currentTimeMillis()

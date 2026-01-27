@@ -22,7 +22,6 @@ import com.github.k1rakishou.chan.core.di.module.application.LoaderModule
 import com.github.k1rakishou.chan.core.di.module.application.ManagerModule
 import com.github.k1rakishou.chan.core.di.module.application.NetModule
 import com.github.k1rakishou.chan.core.di.module.application.ParserModule
-import com.github.k1rakishou.chan.core.di.module.application.PreprocessorModule
 import com.github.k1rakishou.chan.core.di.module.application.RepositoryModule
 import com.github.k1rakishou.chan.core.di.module.application.RoomDatabaseModule
 import com.github.k1rakishou.chan.core.di.module.application.SiteModule
@@ -280,7 +279,6 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       .loaderModule(LoaderModule())
       .managerModule(ManagerModule())
       .netModule(NetModule())
-      .preprocessorModule(PreprocessorModule())
       .repositoryModule(RepositoryModule())
       .siteModule(SiteModule())
       .parserModule(ParserModule())

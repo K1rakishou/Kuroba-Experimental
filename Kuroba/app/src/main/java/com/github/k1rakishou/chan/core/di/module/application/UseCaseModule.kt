@@ -3,7 +3,6 @@ package com.github.k1rakishou.chan.core.di.module.application
 import android.content.Context
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
-import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.helper.ChanLoadProgressNotifier
 import com.github.k1rakishou.chan.core.helper.FilterEngine
 import com.github.k1rakishou.chan.core.manager.BoardManager
@@ -262,7 +261,7 @@ class UseCaseModule {
   @Provides
   @Singleton
   fun provideDownloadThemeJsonFilesUseCase(
-    proxiedOkHttpClient: RealProxiedOkHttpClient,
+    proxiedOkHttpClient: ProxiedOkHttpClient,
     moshi: Moshi,
     themeEngine: ThemeEngine
   ): DownloadThemeJsonFilesUseCase {
@@ -317,7 +316,7 @@ class UseCaseModule {
     chanThreadLoaderCoordinator: Lazy<ChanThreadLoaderCoordinator>,
     parsePostsV1UseCase: ParsePostsV1UseCase,
     chanPostRepository: ChanPostRepository,
-    proxiedOkHttpClient: RealProxiedOkHttpClient
+    proxiedOkHttpClient: ProxiedOkHttpClient
   ): ThreadDownloaderPersistPostsInDatabaseUseCase {
     deps("ThreadDownloaderPersistPostsInDatabaseUseCase")
     return ThreadDownloaderPersistPostsInDatabaseUseCase(
@@ -356,7 +355,7 @@ class UseCaseModule {
   @Provides
   @Singleton
   fun provideSearxImageSearchUseCase(
-    proxiedOkHttpClient: RealProxiedOkHttpClient,
+    proxiedOkHttpClient: ProxiedOkHttpClient,
     moshi: Moshi
   ): SearxImageSearchUseCase {
     deps("SearxImageSearchUseCase")
@@ -480,7 +479,7 @@ class UseCaseModule {
   fun provideLynxchanGetBoardsUseCase(
     appConstants: AppConstants,
     moshi: Lazy<Moshi>,
-    proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>
+    proxiedOkHttpClient: Lazy<ProxiedOkHttpClient>
   ): LynxchanGetBoardsUseCase {
     deps("LynxchanGetBoardsUseCase")
     return LynxchanGetBoardsUseCase(
@@ -506,7 +505,7 @@ class UseCaseModule {
   @Provides
   @Singleton
   fun provideYandexImageSearchUseCase(
-    proxiedOkHttpClient: RealProxiedOkHttpClient,
+    proxiedOkHttpClient: ProxiedOkHttpClient,
     moshi: Moshi
   ): YandexImageSearchUseCase {
     deps("YandexImageSearchUseCase")
@@ -516,7 +515,7 @@ class UseCaseModule {
   @Provides
   @Singleton
   fun provideUploadFileToCatBoxUseCase(
-    proxiedOkHttpClient: RealProxiedOkHttpClient,
+    proxiedOkHttpClient: ProxiedOkHttpClient,
     fileManager: FileManager
   ): UploadFileToCatBoxUseCase {
     deps("UploadFileToCatBoxUseCase")

@@ -109,7 +109,7 @@ class FoolFuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
       .url(searchUrl)
       .get()
 
-    site.requestModifier().modifySearchGetRequest(site, requestBuilder)
+    site.requestModifier().modifyGenericRequest(site, requestBuilder)
 
     return FoolFuukaSearchRequest(
       searchParams,

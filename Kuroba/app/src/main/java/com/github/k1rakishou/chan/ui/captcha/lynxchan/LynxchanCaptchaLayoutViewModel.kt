@@ -7,7 +7,7 @@ import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.core.base.BaseViewModel
-import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.shared.ViewModelAssistedFactory
@@ -44,7 +44,7 @@ import javax.inject.Inject
 
 class LynxchanCaptchaLayoutViewModel(
   private val savedStateHandle: SavedStateHandle,
-  private val proxiedOkHttpClient: RealProxiedOkHttpClient,
+  private val proxiedOkHttpClient: ProxiedOkHttpClient,
   private val siteManager: SiteManager,
   private val moshi: Moshi,
 ) : BaseViewModel() {
@@ -152,7 +152,7 @@ class LynxchanCaptchaLayoutViewModel(
 
         val site = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
         if (site != null) {
-          site.requestModifier().modifyCaptchaGetRequest(
+          site.requestModifier().modifyGenericRequest(
             site = site,
             requestBuilder = requestBuilder
           )
@@ -235,7 +235,7 @@ class LynxchanCaptchaLayoutViewModel(
       val site = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
         ?: throw LynxchanCaptchaError("Site ${chanDescriptor.siteDescriptor()} does not exist or not active")
 
-      site.requestModifier().modifyCaptchaGetRequest(
+      site.requestModifier().modifyGenericRequest(
         site = site,
         requestBuilder = requestBuilder
       )
@@ -302,7 +302,7 @@ class LynxchanCaptchaLayoutViewModel(
     val site = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
       ?: throw LynxchanCaptchaError("Site ${chanDescriptor.siteDescriptor()} does not exist or not active")
 
-    site.requestModifier().modifyCaptchaGetRequest(
+    site.requestModifier().modifyGenericRequest(
       site = site,
       requestBuilder = requestBuilder
     )
@@ -410,7 +410,7 @@ class LynxchanCaptchaLayoutViewModel(
 
       val site = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
       if (site != null) {
-        site.requestModifier().modifyCaptchaGetRequest(
+        site.requestModifier().modifyGenericRequest(
           site = site,
           requestBuilder = requestBuilder
         )
@@ -534,7 +534,7 @@ class LynxchanCaptchaLayoutViewModel(
   )
 
   class ViewModelFactory @Inject constructor(
-    private val proxiedOkHttpClient: RealProxiedOkHttpClient,
+    private val proxiedOkHttpClient: ProxiedOkHttpClient,
     private val siteManager: SiteManager,
     private val moshi: Moshi,
   ) : ViewModelAssistedFactory<LynxchanCaptchaLayoutViewModel> {

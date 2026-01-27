@@ -100,7 +100,7 @@ class FuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
       .url(searchUrl)
       .get()
 
-    site.requestModifier().modifySearchGetRequest(site, requestBuilder)
+    site.requestModifier().modifyGenericRequest(site, requestBuilder)
 
     return FuukaSearchRequest(
       ChanSettings.verboseLogs.get(),

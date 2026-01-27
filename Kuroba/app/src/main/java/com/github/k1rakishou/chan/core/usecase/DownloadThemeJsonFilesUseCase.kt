@@ -1,6 +1,6 @@
 package com.github.k1rakishou.chan.core.usecase
 
-import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.parallelForEachIndexed
 import com.github.k1rakishou.common.suspendCall
@@ -16,7 +16,7 @@ import com.squareup.moshi.Types
 import okhttp3.Request
 
 class DownloadThemeJsonFilesUseCase(
-  private val proxiedOkHttpClient: RealProxiedOkHttpClient,
+  private val proxiedOkHttpClient: ProxiedOkHttpClient,
   private val moshi: Moshi,
   private val themeEngine: ThemeEngine
 ) : ISuspendUseCase<Unit, List<ChanTheme>> {

@@ -1,7 +1,7 @@
 package com.github.k1rakishou.chan.core.site.sites.dvach
 
 import android.text.SpannableStringBuilder
-import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteEndpoints
 import com.github.k1rakishou.chan.core.site.sites.search.DvachSearchParams
@@ -24,7 +24,7 @@ import org.jsoup.parser.Parser
 class DvachSearchRequest(
   private val moshi: Lazy<Moshi>,
   private val request: Request,
-  private val proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>,
+  private val proxiedOkHttpClient: Lazy<ProxiedOkHttpClient>,
   private val searchParams: DvachSearchParams,
   private val siteManager: SiteManager
 ) {

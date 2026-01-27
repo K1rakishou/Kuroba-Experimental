@@ -2,7 +2,7 @@ package com.github.k1rakishou.chan.core.di.module.activity
 
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NotificationManagerCompat
-import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.di.scope.PerActivity
 import com.github.k1rakishou.chan.core.helper.DialogFactory
@@ -46,7 +46,7 @@ class ActivityModule {
     settingsNotificationManager: SettingsNotificationManager,
     kurobaSystemNotifications: KurobaSystemNotifications,
     fileChooser: Lazy<FileChooser>,
-    proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>,
+    proxiedOkHttpClient: Lazy<ProxiedOkHttpClient>,
     dialogFactory: Lazy<DialogFactory>
   ): UpdateManager {
     Logger.deps("UpdateManager")

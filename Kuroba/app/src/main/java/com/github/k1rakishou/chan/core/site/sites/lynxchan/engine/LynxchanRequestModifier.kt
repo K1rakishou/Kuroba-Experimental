@@ -20,15 +20,6 @@ open class LynxchanRequestModifier<S : LynxchanSite>(
     addCookies(requestBuilder)
   }
 
-  override fun modifyCaptchaGetRequest(
-    site: S,
-    requestBuilder: Request.Builder
-  ) {
-    super.modifyCaptchaGetRequest(site, requestBuilder)
-
-    addCookies(requestBuilder)
-  }
-
   override fun modifyCookieBuilder(urlToOpen: HttpUrl, cookieBuilder: CookieBuilder) {
     super.modifyCookieBuilder(urlToOpen, cookieBuilder)
 
@@ -36,6 +27,12 @@ open class LynxchanRequestModifier<S : LynxchanSite>(
     if (cookies.isNotEmpty()) {
       cookieBuilder.addOrReplace(cookies)
     }
+  }
+
+  override fun modifyGenericRequest(site: S, requestBuilder: Request.Builder) {
+    super.modifyGenericRequest(site, requestBuilder)
+
+    addCookies(requestBuilder)
   }
 
   private fun addCookies(requestBuilder: Request.Builder) {

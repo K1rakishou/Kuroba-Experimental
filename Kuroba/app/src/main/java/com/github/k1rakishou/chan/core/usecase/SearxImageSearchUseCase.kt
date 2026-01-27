@@ -1,6 +1,6 @@
 package com.github.k1rakishou.chan.core.usecase
 
-import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.features.remote_image_search.ImageSearchResult
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.fixUrlOrNull
@@ -15,7 +15,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
 
 class SearxImageSearchUseCase(
-  private val proxiedOkHttpClient: RealProxiedOkHttpClient,
+  private val proxiedOkHttpClient: ProxiedOkHttpClient,
   private val moshi: Moshi
 ) : ISuspendUseCase<HttpUrl, ModularResult<List<ImageSearchResult>>> {
 

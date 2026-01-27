@@ -37,7 +37,6 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.BadStatusResponseException
-import com.github.k1rakishou.common.EmptyBodyResponseException
 import com.github.k1rakishou.common.FirewallDetectedException
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
@@ -224,7 +223,6 @@ class ChanThreadLoaderCoordinator(
 
         val (chanReaderProcessor, readPostsDuration) = measureTimedValue {
           val body = response.body
-            ?: throw EmptyBodyResponseException()
 
           return@measureTimedValue body.byteStream().use { inputStream ->
             return@use readPostsFromResponse(

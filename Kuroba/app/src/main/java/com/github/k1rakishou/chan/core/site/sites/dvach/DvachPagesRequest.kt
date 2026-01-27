@@ -1,6 +1,6 @@
 package com.github.k1rakishou.chan.core.site.sites.dvach
 
-import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.common.jsonArray
 import com.github.k1rakishou.common.jsonObject
@@ -18,7 +18,7 @@ import okhttp3.Request
 class DvachPagesRequest(
   private val chanBoard: ChanBoard,
   request: Request,
-  proxiedOkHttpClient: RealProxiedOkHttpClient
+  proxiedOkHttpClient: ProxiedOkHttpClient
 ) : JsonReaderRequest<BoardPages>(
   request,
   proxiedOkHttpClient

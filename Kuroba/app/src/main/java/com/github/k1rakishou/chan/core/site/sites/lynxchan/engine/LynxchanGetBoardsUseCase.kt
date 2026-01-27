@@ -1,6 +1,6 @@
 package com.github.k1rakishou.chan.core.site.sites.lynxchan.engine
 
-import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.usecase.ISuspendUseCase
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
@@ -23,12 +23,12 @@ import okhttp3.Request
 class LynxchanGetBoardsUseCase(
   private val appConstants: AppConstants,
   private val _moshi: Lazy<Moshi>,
-  private val _proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>
+  private val _proxiedOkHttpClient: Lazy<ProxiedOkHttpClient>
 ) : ISuspendUseCase<LynxchanGetBoardsUseCase.Params, ModularResult<SiteBoards>> {
 
   private val moshi: Moshi
     get() = _moshi.get()
-  private val proxiedOkHttpClient: RealProxiedOkHttpClient
+  private val proxiedOkHttpClient: ProxiedOkHttpClient
     get() = _proxiedOkHttpClient.get()
 
   override suspend fun execute(parameter: Params): ModularResult<SiteBoards> {

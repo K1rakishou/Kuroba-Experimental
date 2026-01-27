@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.core.di.component.application
 
 import android.content.Context
 import com.github.k1rakishou.chan.Chan
-import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.application.AppModule
@@ -13,7 +12,6 @@ import com.github.k1rakishou.chan.core.di.module.application.LoaderModule
 import com.github.k1rakishou.chan.core.di.module.application.ManagerModule
 import com.github.k1rakishou.chan.core.di.module.application.NetModule
 import com.github.k1rakishou.chan.core.di.module.application.ParserModule
-import com.github.k1rakishou.chan.core.di.module.application.PreprocessorModule
 import com.github.k1rakishou.chan.core.di.module.application.RepositoryModule
 import com.github.k1rakishou.chan.core.di.module.application.RoomDatabaseModule
 import com.github.k1rakishou.chan.core.di.module.application.SiteModule
@@ -53,7 +51,6 @@ import javax.inject.Singleton
     LoaderModule::class,
     ManagerModule::class,
     NetModule::class,
-    PreprocessorModule::class,
     ParserModule::class,
     RepositoryModule::class,
     RoomDatabaseModule::class,
@@ -71,7 +68,6 @@ interface ApplicationComponent : ApplicationDependencies {
   fun inject(threadDownloadingWorker: ThreadDownloadingWorker)
   fun inject(compositeCatalogSite: CompositeCatalogSite)
   fun inject(replyNotificationDeleteIntentBroadcastReceiver: ReplyNotificationDeleteIntentBroadcastReceiver)
-  fun inject(cloudFlareHandlerInterceptor: CloudFlareHandlerInterceptor)
   fun inject(imageSaverV2Service: ImageSaverV2Service)
   fun inject(postingService: PostingService)
   fun inject(imageSaverBroadcastReceiver: ImageSaverBroadcastReceiver)
@@ -115,8 +111,6 @@ interface ApplicationComponent : ApplicationDependencies {
     fun managerModule(managerModule: ManagerModule): Builder
     @BindsInstance
     fun netModule(netModule: NetModule): Builder
-    @BindsInstance
-    fun preprocessorModule(preprocessorModule: PreprocessorModule): Builder
     @BindsInstance
     fun parserModule(parserModule: ParserModule): Builder
     @BindsInstance

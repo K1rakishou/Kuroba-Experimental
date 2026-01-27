@@ -17,7 +17,7 @@
 package com.github.k1rakishou.chan.core.site.common.vichan
 
 import android.text.TextUtils
-import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
@@ -41,7 +41,7 @@ import java.util.regex.Pattern
 
 open class VichanActions(
   commonSite: CommonSite,
-  private val proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>,
+  private val proxiedOkHttpClient: Lazy<ProxiedOkHttpClient>,
   private val siteManager: SiteManager,
   protected val replyManager: Lazy<ReplyManager>
 ) : CommonActions(commonSite) {

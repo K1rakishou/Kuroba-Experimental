@@ -1,6 +1,6 @@
 package com.github.k1rakishou.chan.core.usecase
 
-import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.features.remote_image_search.ImageSearchResult
 import com.github.k1rakishou.common.BadStatusResponseException
 import com.github.k1rakishou.common.EmptyBodyResponseException
@@ -25,7 +25,7 @@ import org.jsoup.nodes.Document
 import java.nio.charset.StandardCharsets
 
 class YandexImageSearchUseCase(
-  private val proxiedOkHttpClient: RealProxiedOkHttpClient,
+  private val proxiedOkHttpClient: ProxiedOkHttpClient,
   private val moshi: Moshi
 ) : ISuspendUseCase<YandexImageSearchUseCase.Params, ModularResult<List<ImageSearchResult>>> {
 

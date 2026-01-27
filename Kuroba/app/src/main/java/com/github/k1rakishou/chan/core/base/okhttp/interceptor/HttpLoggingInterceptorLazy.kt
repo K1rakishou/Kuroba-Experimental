@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.core.base.okhttp
+package com.github.k1rakishou.chan.core.base.okhttp.interceptor
 
 import okhttp3.logging.HttpLoggingInterceptor
 

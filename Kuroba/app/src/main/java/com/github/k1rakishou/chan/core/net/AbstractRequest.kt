@@ -1,6 +1,6 @@
 package com.github.k1rakishou.chan.core.net
 
-import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.common.BadStatusResponseException
 import com.github.k1rakishou.common.EmptyBodyResponseException
 import com.github.k1rakishou.common.ModularResult
@@ -11,7 +11,7 @@ import okhttp3.ResponseBody
 
 abstract class AbstractRequest<T>(
   protected val request: Request,
-  private val proxiedOkHttpClient: RealProxiedOkHttpClient
+  private val proxiedOkHttpClient: ProxiedOkHttpClient
 ) {
 
   suspend fun execute(): ModularResult<T> {

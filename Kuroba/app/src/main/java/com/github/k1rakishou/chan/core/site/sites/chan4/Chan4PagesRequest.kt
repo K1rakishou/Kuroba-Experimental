@@ -1,6 +1,6 @@
 package com.github.k1rakishou.chan.core.site.sites.chan4
 
-import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.common.jsonArray
 import com.github.k1rakishou.common.jsonObject
@@ -17,7 +17,7 @@ class Chan4PagesRequest(
   private val boardDescriptor: BoardDescriptor,
   private val boardTotalPagesCount: Int,
   request: Request,
-  proxiedOkHttpClient: RealProxiedOkHttpClient
+  proxiedOkHttpClient: ProxiedOkHttpClient
 ) : JsonReaderRequest<BoardPages>(
   request,
   proxiedOkHttpClient

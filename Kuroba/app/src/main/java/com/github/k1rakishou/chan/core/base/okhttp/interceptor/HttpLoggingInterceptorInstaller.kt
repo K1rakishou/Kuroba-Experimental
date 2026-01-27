@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.core.base.okhttp
+package com.github.k1rakishou.chan.core.base.okhttp.interceptor
 
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger

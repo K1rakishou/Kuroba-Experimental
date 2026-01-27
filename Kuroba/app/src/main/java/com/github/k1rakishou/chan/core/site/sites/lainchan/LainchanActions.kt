@@ -2,7 +2,7 @@
 package com.github.k1rakishou.chan.core.site.sites.lainchan
 
 import android.text.TextUtils
-import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
@@ -24,10 +24,10 @@ import java.io.IOException
 import java.util.regex.Pattern
 
 open class LainchanActions(
-        commonSite: CommonSite,
-        protected val proxiedOkHttpClient: RealProxiedOkHttpClient,
-        private val siteManager: SiteManager,
-        protected val replyManager: ReplyManager
+  commonSite: CommonSite,
+  protected val proxiedOkHttpClient: ProxiedOkHttpClient,
+  private val siteManager: SiteManager,
+  protected val replyManager: ReplyManager
 ) : CommonActions(commonSite) {
 
   override fun setupPost(replyChanDescriptor: ChanDescriptor, call: MultipartHttpCall): ModularResult<Unit> {

@@ -8,7 +8,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.core.base.BaseViewModel
-import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.shared.ViewModelAssistedFactory
@@ -38,7 +38,7 @@ import javax.inject.Inject
 
 class DvachCaptchaLayoutViewModel(
   private val savedStateHandle: SavedStateHandle,
-  private val proxiedOkHttpClient: RealProxiedOkHttpClient,
+  private val proxiedOkHttpClient: ProxiedOkHttpClient,
   private val siteManager: SiteManager,
   private val moshi: Moshi,
   private val hapticFeedbackManager: HapticFeedbackManager
@@ -136,7 +136,7 @@ class DvachCaptchaLayoutViewModel(
       .url("${dvach.domainString}/api/captcha/emoji/click")
       .post(clickEmojiRequestJson.toRequestBody("application/json".toMediaType()))
 
-    dvach.requestModifier().modifyCaptchaGetRequest(dvach, requestBuilder)
+    dvach.requestModifier().modifyGenericRequest(dvach, requestBuilder)
 
     val emojiCaptchaInfo = proxiedOkHttpClient.okHttpClient().suspendConvertIntoJsonObjectWithAdapter(
       request = requestBuilder.build(),
@@ -202,7 +202,7 @@ class DvachCaptchaLayoutViewModel(
       throw DvachCaptchaError("Site ${Dvach.SITE_DESCRIPTOR} is not supported")
     }
 
-    dvach.requestModifier().modifyCaptchaGetRequest(dvach, requestBuilder)
+    dvach.requestModifier().modifyGenericRequest(dvach, requestBuilder)
 
     val request = requestBuilder.build()
 
@@ -236,7 +236,7 @@ class DvachCaptchaLayoutViewModel(
       .url("${dvach.domainString}/api/captcha/emoji/show?id=${captchaInfoData.id}")
       .get()
 
-    dvach.requestModifier().modifyCaptchaGetRequest(dvach, requestBuilder)
+    dvach.requestModifier().modifyGenericRequest(dvach, requestBuilder)
 
     val emojiCaptchaInfo = proxiedOkHttpClient.okHttpClient().suspendConvertIntoJsonObjectWithAdapter(
       request = requestBuilder.build(),
@@ -516,7 +516,7 @@ class DvachCaptchaLayoutViewModel(
   )
 
   class ViewModelFactory @Inject constructor(
-    private val proxiedOkHttpClient: RealProxiedOkHttpClient,
+    private val proxiedOkHttpClient: ProxiedOkHttpClient,
     private val siteManager: SiteManager,
     private val moshi: Moshi,
     private val hapticFeedbackManager: HapticFeedbackManager

@@ -267,7 +267,8 @@ abstract class CommonSite : SiteBase() {
     }
 
     override fun matchesCloudflareIgnorePath(path: String): Boolean {
-      return false
+      // Do not show CloudFlare bypass popup for favicons
+      return path.endsWith("/favicon.ico")
     }
 
     override fun respondsTo(url: HttpUrl): Boolean {

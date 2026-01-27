@@ -1,6 +1,6 @@
 package com.github.k1rakishou.chan.core.net
 
-import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.common.EmptyBodyResponseException
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.errorMessageOrClassName
@@ -17,7 +17,7 @@ import kotlin.time.measureTimedValue
 
 abstract class JsonReaderRequest<T>(
   protected val request: Request,
-  private val proxiedOkHttpClient: RealProxiedOkHttpClient
+  private val proxiedOkHttpClient: ProxiedOkHttpClient
 ) {
 
   open suspend fun execute(): JsonReaderResponse<T> {

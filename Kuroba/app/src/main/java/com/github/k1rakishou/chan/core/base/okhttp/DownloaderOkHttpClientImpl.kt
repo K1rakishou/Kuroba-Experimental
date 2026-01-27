@@ -11,32 +11,35 @@ import com.github.k1rakishou.common.dns.CompositeDnsSelector
 import com.github.k1rakishou.common.dns.DnsOverHttpsSelectorFactory
 import com.github.k1rakishou.common.dns.NormalDnsSelectorFactory
 import okhttp3.OkHttpClient
+import java.util.concurrent.TimeUnit
 import kotlin.concurrent.Volatile
 
-class CoilOkHttpClient(
+class DownloaderOkHttpClientImpl(
   private val normalDnsSelectorFactory: NormalDnsSelectorFactory,
   private val dnsOverHttpsSelectorFactory: DnsOverHttpsSelectorFactory,
   private val proxyStorage: ProxyStorage,
   private val httpLoggingInterceptorLazy: HttpLoggingInterceptorLazy,
   private val interceptors: Set<KurobaOkHttpInterceptor>
-) : CustomOkHttpClient {
+) : DownloaderOkHttpClient {
   @Volatile
-  private var coilClient: OkHttpClient? = null
+  private var downloaderClient: OkHttpClient? = null
 
   override fun okHttpClient(): OkHttpClient {
-    if (coilClient == null) {
+    if (downloaderClient == null) {
       synchronized(this) {
-        if (coilClient == null) {
+        if (downloaderClient == null) {
           val kurobaProxySelector = KurobaProxySelector(
             proxyStorage,
-            ProxyStorage.ProxyActionType.SiteMediaPreviews
+            ProxyStorage.ProxyActionType.SiteMediaFull
           )
 
           val builder = OkHttpClient.Builder()
+            .readTimeout(5, TimeUnit.SECONDS)
+            .writeTimeout(5, TimeUnit.SECONDS)
             .proxySelector(kurobaProxySelector)
 
           interceptors.forEach { interceptor ->
-            interceptor.okHttpType = "Coil"
+            interceptor.okHttpType = "Downloader"
             builder.addInterceptor(interceptor)
           }
 
@@ -50,7 +53,7 @@ class CoilOkHttpClient(
             dnsOverHttpsSelectorFactory
           )
 
-          coilClient = okHttpClient.newBuilder()
+          downloaderClient = okHttpClient.newBuilder()
             .dns(compositeDnsSelector)
             .addNetworkInterceptor(GzipInterceptor())
             .build()
@@ -58,6 +61,6 @@ class CoilOkHttpClient(
       }
     }
 
-    return coilClient!!
+    return downloaderClient!!
   }
 }

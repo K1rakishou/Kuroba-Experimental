@@ -1396,9 +1396,6 @@ class ThreadLayout @JvmOverloads constructor(
     Logger.verbose(TAG) { "handleLoadProgressEvent() $chanLoadProgressEvent" }
 
     progressStepText.text = when (chanLoadProgressEvent) {
-      is ChanLoadProgressEvent.Preprocess -> {
-        appResources.string(R.string.thread_layout_load_progress_preprocessing)
-      }
       is ChanLoadProgressEvent.Begin -> {
         appResources.string(R.string.thread_layout_load_progress_preparing)
       }

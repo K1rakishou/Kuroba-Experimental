@@ -1,6 +1,6 @@
 package com.github.k1rakishou.chan.core.site.sites.dvach
 
-import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.site.sites.archive.NativeArchivePost
 import com.github.k1rakishou.chan.core.site.sites.archive.NativeArchivePostList
 import com.github.k1rakishou.common.ModularResult
@@ -17,7 +17,7 @@ import java.util.regex.Pattern
 
 class DvachArchiveThreadsRequest(
   private val request: Request,
-  private val proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>
+  private val proxiedOkHttpClient: Lazy<ProxiedOkHttpClient>
 ) {
 
   suspend fun execute(): ModularResult<NativeArchivePostList> {

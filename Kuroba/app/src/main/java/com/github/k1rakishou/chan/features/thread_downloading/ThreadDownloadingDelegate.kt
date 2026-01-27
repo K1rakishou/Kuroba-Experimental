@@ -1,7 +1,7 @@
 package com.github.k1rakishou.chan.features.thread_downloading
 
 import com.github.k1rakishou.ChanSettings
-import com.github.k1rakishou.chan.core.base.okhttp.RealDownloaderOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.DownloaderOkHttpClient
 import com.github.k1rakishou.chan.core.helper.ThreadDownloaderFileManagerWrapper
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
@@ -46,7 +46,7 @@ import kotlin.time.measureTimedValue
 
 class ThreadDownloadingDelegate(
   private val appConstants: AppConstants,
-  private val downloaderOkHttpClient: Lazy<RealDownloaderOkHttpClient>,
+  private val downloaderOkHttpClient: Lazy<DownloaderOkHttpClient>,
   private val siteManager: SiteManager,
   private val siteResolver: SiteResolver,
   private val threadDownloadManager: ThreadDownloadManager,
@@ -409,11 +409,7 @@ class ThreadDownloadingDelegate(
       .get()
 
     if (site != null && requestModifier != null) {
-      if (isThumbnail) {
-        requestModifier.modifyThumbnailGetRequest(site, requestBuilder)
-      } else {
-        requestModifier.modifyFullImageGetRequest(site, requestBuilder)
-      }
+      requestModifier.modifyGenericRequest(site, requestBuilder)
     }
 
     val response = okHttpClient.suspendCall(requestBuilder.build())

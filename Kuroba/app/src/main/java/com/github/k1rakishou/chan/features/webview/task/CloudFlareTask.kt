@@ -2,7 +2,7 @@ package com.github.k1rakishou.chan.features.webview.task
 
 import android.webkit.CookieManager
 import android.webkit.WebView
-import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
+import com.github.k1rakishou.chan.core.base.okhttp.interceptor.CloudFlareInterceptor
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.features.webview.WebViewTaskResult
@@ -62,16 +62,16 @@ class CloudFlareTask(
       val newCookiesBuilder = CookieBuilder(newCookies)
       val prevCookiesBuilder = CookieBuilder(initialCookies.get())
 
-      val prevCfClearanceCookie = prevCookiesBuilder.get(CloudFlareHandlerInterceptor.COOKIE_CF_CLEARANCE)?.value
-      val newCfClearanceCookie = newCookiesBuilder.get(CloudFlareHandlerInterceptor.COOKIE_CF_CLEARANCE)?.value
+      val prevCfClearanceCookie = prevCookiesBuilder.get(CloudFlareInterceptor.COOKIE_CF_CLEARANCE)?.value
+      val newCfClearanceCookie = newCookiesBuilder.get(CloudFlareInterceptor.COOKIE_CF_CLEARANCE)?.value
 
       if (newCfClearanceCookie.isNullOrBlank()
         || prevCfClearanceCookie == newCfClearanceCookie
-        || !newCookiesBuilder.containsAll(listOf(CloudFlareHandlerInterceptor.COOKIE_CF_CLEARANCE))) {
+        || !newCookiesBuilder.containsAll(listOf(CloudFlareInterceptor.COOKIE_CF_CLEARANCE))) {
         return
       }
 
-      newCookiesBuilder.retainAllIn(CloudFlareHandlerInterceptor.EXPECTED_CLOUDFLARE_COOKIES)
+      newCookiesBuilder.retainAllIn(CloudFlareInterceptor.EXPECTED_CLOUDFLARE_COOKIES)
       success(newCookiesBuilder.build(), null)
     }
   }

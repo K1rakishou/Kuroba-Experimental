@@ -15,7 +15,7 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.ControllerHostActivity
-import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.helper.DialogFactory
@@ -78,7 +78,7 @@ class UpdateManager(
   private val settingsNotificationManager: SettingsNotificationManager,
   private val kurobaSystemNotifications: KurobaSystemNotifications,
   private val fileChooser: Lazy<FileChooser>,
-  private val proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>,
+  private val proxiedOkHttpClient: Lazy<ProxiedOkHttpClient>,
   private val dialogFactory: Lazy<DialogFactory>
 ) : CoroutineScope {
   private var updateDownloadDialog: ProgressDialog? = null

@@ -1,7 +1,7 @@
 package com.github.k1rakishou.chan.core.site.sites.chan4
 
 import android.os.SystemClock
-import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
@@ -24,7 +24,7 @@ class Chan4CheckPostExistsRequest(
   private val chan4: Chan4,
   private val chanDescriptor: ChanDescriptor,
   private val replyPostDescriptor: PostDescriptor,
-  private val proxiedOkHttpClient: RealProxiedOkHttpClient,
+  private val proxiedOkHttpClient: ProxiedOkHttpClient,
   private val chanThreadManager: ChanThreadManager,
   private val replyManager: ReplyManager
 ) {

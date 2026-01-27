@@ -3,9 +3,8 @@ package com.github.k1rakishou.chan.core.di.module.application
 import android.content.Context
 import androidx.core.app.NotificationManagerCompat
 import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.chan.core.base.okhttp.DownloaderOkHttpClient
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
-import com.github.k1rakishou.chan.core.base.okhttp.RealDownloaderOkHttpClient
-import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.helper.FilterEngine
 import com.github.k1rakishou.chan.core.helper.FilterWatcherNotificationHelper
@@ -619,7 +618,7 @@ class ManagerModule {
   @Provides
   fun provideChan4CloudFlareImagePreloaderManager(
     appScope: CoroutineScope,
-    realProxiedOkHttpClient: RealProxiedOkHttpClient,
+    proxiedOkHttpClient: ProxiedOkHttpClient,
     chanThreadsCache: ChanThreadsCache,
     prefetchStateManager: PrefetchStateManager
   ): Chan4CloudFlareImagePreloaderManager {
@@ -627,7 +626,7 @@ class ManagerModule {
     return Chan4CloudFlareImagePreloaderManager(
       appScope,
       ChanSettings.verboseLogs.get(),
-      realProxiedOkHttpClient,
+      proxiedOkHttpClient,
       chanThreadsCache,
       prefetchStateManager
     )
@@ -720,7 +719,7 @@ class ManagerModule {
     appScope: CoroutineScope,
     appConstants: AppConstants,
     cacheHandler: CacheHandler,
-    downloaderOkHttpClient: RealDownloaderOkHttpClient,
+    downloaderOkHttpClient: DownloaderOkHttpClient,
     notificationManagerCompat: NotificationManagerCompat,
     imageSaverFileManagerWrapper: ImageSaverFileManagerWrapper,
     siteResolver: SiteResolver,
@@ -839,7 +838,7 @@ class ManagerModule {
   @Provides
   fun provideThreadDownloadingDelegate(
     appConstants: AppConstants,
-    realDownloaderOkHttpClient: Lazy<RealDownloaderOkHttpClient>,
+    downloaderOkHttpClient: Lazy<DownloaderOkHttpClient>,
     siteManager: SiteManager,
     siteResolver: SiteResolver,
     threadDownloadManager: ThreadDownloadManager,
@@ -852,7 +851,7 @@ class ManagerModule {
     deps("ThreadDownloadingDelegate")
     return ThreadDownloadingDelegate(
       appConstants,
-      realDownloaderOkHttpClient,
+      downloaderOkHttpClient,
       siteManager,
       siteResolver,
       threadDownloadManager,

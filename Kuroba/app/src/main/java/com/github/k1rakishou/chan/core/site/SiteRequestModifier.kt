@@ -32,7 +32,7 @@ abstract class SiteRequestModifier<T : Site>(
   }
 
   @CallSuper
-  open fun modifyThumbnailGetRequest(site: T, requestBuilder: Request.Builder) {
+  open fun modifyGenericRequest(site: T, requestBuilder: Request.Builder) {
     requestBuilder.addDefaultHeaders(appConstants)
     addCloudFlareCookie(requestBuilder)
   }
@@ -41,33 +41,6 @@ abstract class SiteRequestModifier<T : Site>(
   open fun modifyCatalogOrThreadGetRequest(
     site: T,
     chanDescriptor: ChanDescriptor,
-    requestBuilder: Request.Builder
-  ) {
-    requestBuilder.addDefaultHeaders(appConstants)
-    addCloudFlareCookie(requestBuilder)
-  }
-
-  @CallSuper
-  open fun modifyFullImageHeadRequest(
-    site: T,
-    requestBuilder: Request.Builder
-  ) {
-    requestBuilder.addHeaderIfNotExists(UserAgentHeaderKey, appConstants.userAgentMightBeOverridden)
-    addCloudFlareCookie(requestBuilder)
-  }
-
-  @CallSuper
-  open fun modifyFullImageGetRequest(
-    site: T,
-    requestBuilder: Request.Builder
-  ) {
-    requestBuilder.addDefaultHeaders(appConstants)
-    addCloudFlareCookie(requestBuilder)
-  }
-
-  @CallSuper
-  open fun modifyMediaDownloadRequest(
-    site: T,
     requestBuilder: Request.Builder
   ) {
     requestBuilder.addDefaultHeaders(appConstants)
@@ -88,49 +61,7 @@ abstract class SiteRequestModifier<T : Site>(
   }
 
   @CallSuper
-  open fun modifyArchiveGetRequest(site: T, requestBuilder: Request.Builder) {
-    requestBuilder.addDefaultHeaders(appConstants)
-    addCloudFlareCookie(requestBuilder)
-  }
-
-  @CallSuper
-  open fun modifySearchGetRequest(site: T, requestBuilder: Request.Builder) {
-    requestBuilder.addDefaultHeaders(appConstants)
-    addCloudFlareCookie(requestBuilder)
-  }
-
-  @CallSuper
-  open fun modifyCaptchaGetRequest(site: T, requestBuilder: Request.Builder) {
-    requestBuilder.addDefaultHeaders(appConstants)
-    addCloudFlareCookie(requestBuilder)
-  }
-
-  @CallSuper
   open fun modifyPostReportRequest(site: T, requestBuilder: Request.Builder) {
-    requestBuilder.addDefaultHeaders(appConstants)
-    addCloudFlareCookie(requestBuilder)
-  }
-
-  @CallSuper
-  open fun modifyLoginRequest(site: T, requestBuilder: Request.Builder) {
-    requestBuilder.addDefaultHeaders(appConstants)
-    addCloudFlareCookie(requestBuilder)
-  }
-
-  @CallSuper
-  open fun modifyGetPasscodeInfoRequest(site: T, requestBuilder: Request.Builder) {
-    requestBuilder.addDefaultHeaders(appConstants)
-    addCloudFlareCookie(requestBuilder)
-  }
-
-  @CallSuper
-  open fun modifyPagesRequest(site: T, requestBuilder: Request.Builder) {
-    requestBuilder.addDefaultHeaders(appConstants)
-    addCloudFlareCookie(requestBuilder)
-  }
-
-  @CallSuper
-  open fun modifyBoardsGetRequest(requestBuilder: Request.Builder) {
     requestBuilder.addDefaultHeaders(appConstants)
     addCloudFlareCookie(requestBuilder)
   }

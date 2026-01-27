@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.core.base.okhttp
+package com.github.k1rakishou.chan.core.base.okhttp.interceptor
 
 import okhttp3.Interceptor
 import okhttp3.Response
@@ -21,7 +21,6 @@ class GzipInterceptor : Interceptor {
 
   private fun unzip(response: Response): Response {
     val responseBody = response.body
-      ?: return response
 
     val strippedHeaders = response.headers.newBuilder()
       .removeAll("Content-Encoding")

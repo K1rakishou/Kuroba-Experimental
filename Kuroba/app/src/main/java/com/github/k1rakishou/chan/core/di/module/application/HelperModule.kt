@@ -3,7 +3,6 @@ package com.github.k1rakishou.chan.core.di.module.application
 import android.content.Context
 import androidx.core.app.NotificationManagerCompat
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
-import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.helper.AppRestarter
 import com.github.k1rakishou.chan.core.helper.ChanLoadProgressNotifier
@@ -64,7 +63,7 @@ class HelperModule {
   @Provides
   @Singleton
   fun provideChanThreadLoaderCoordinator(
-    proxiedOkHttpClient: RealProxiedOkHttpClient,
+    proxiedOkHttpClient: ProxiedOkHttpClient,
     chanPostRepository: ChanPostRepository,
     chanCatalogSnapshotRepository: ChanCatalogSnapshotRepository,
     appConstants: AppConstants,

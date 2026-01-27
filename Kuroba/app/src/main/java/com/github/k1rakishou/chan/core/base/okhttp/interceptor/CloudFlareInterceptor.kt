@@ -1,6 +1,5 @@
-package com.github.k1rakishou.chan.core.base.okhttp
+package com.github.k1rakishou.chan.core.base.okhttp.interceptor
 
-import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.core.manager.FirewallBypassManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.core.site.SiteSetting
@@ -20,14 +19,10 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
-class CloudFlareHandlerInterceptor(
+class CloudFlareInterceptor(
   private val siteResolver: SiteResolver,
-  private val firewallBypassManager: FirewallBypassManager,
-  private val okHttpType: String
-) : Interceptor {
-  @GuardedBy("this")
-  private val sitesThatRequireCloudFlareCache = mutableSetOf<String>()
-
+  private val firewallBypassManager: FirewallBypassManager
+) : KurobaOkHttpInterceptor() {
   override fun intercept(chain: Interceptor.Chain): Response {
     return interceptInternal(
       chain = chain,
@@ -86,8 +81,6 @@ class CloudFlareHandlerInterceptor(
     Logger.verbose(TAG) {
       "[$okHttpType] Found CloudFlare needle in the page's body for endpoint '${request.url}'"
     }
-
-    synchronized(this) { sitesThatRequireCloudFlareCache.add(host) }
 
     if (canShowCloudFlareBypassScreen(retrying, request)) {
       siteResolver.waitUntilInitialized()
@@ -196,7 +189,7 @@ class CloudFlareHandlerInterceptor(
     }
 
     val newBuilder = prevRequest.newBuilder()
-    site.requestModifier().modifyCaptchaGetRequest(site, newBuilder)
+    site.requestModifier().modifyGenericRequest(site, newBuilder)
     return newBuilder.build()
   }
 
@@ -263,9 +256,9 @@ class CloudFlareHandlerInterceptor(
     const val COOKIE_CF_BM = "__cf_bm"
 
     val EXPECTED_CLOUDFLARE_COOKIES = listOf(
-      CloudFlareHandlerInterceptor.COOKIE_CF_CLEARANCE,
-      CloudFlareHandlerInterceptor.COOKIE_TCS,
-      CloudFlareHandlerInterceptor.COOKIE_CF_BM,
+      COOKIE_CF_CLEARANCE,
+      COOKIE_TCS,
+      COOKIE_CF_BM,
     )
 
     private val cloudFlareHeaders = arrayOf("cloudflare-nginx", "cloudflare")

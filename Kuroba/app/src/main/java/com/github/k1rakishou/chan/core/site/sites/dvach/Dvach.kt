@@ -401,47 +401,12 @@ class Dvach : CommonSite() {
       addUserCodeCookie(site, requestBuilder)
     }
 
-    override fun modifyThumbnailGetRequest(site: Dvach, requestBuilder: Request.Builder) {
-      super.modifyThumbnailGetRequest(site, requestBuilder)
-
-      addAntiSpamCookie(requestBuilder)
-      addUserCodeCookie(site, requestBuilder)
-    }
-
     override fun modifyCatalogOrThreadGetRequest(
       site: Dvach,
       chanDescriptor: ChanDescriptor,
       requestBuilder: Request.Builder
     ) {
       super.modifyCatalogOrThreadGetRequest(site, chanDescriptor, requestBuilder)
-
-      addAntiSpamCookie(requestBuilder)
-      addUserCodeCookie(site, requestBuilder)
-    }
-
-    override fun modifyFullImageHeadRequest(site: Dvach, requestBuilder: Request.Builder) {
-      super.modifyFullImageHeadRequest(site, requestBuilder)
-
-      addAntiSpamCookie(requestBuilder)
-      addUserCodeCookie(site, requestBuilder)
-    }
-
-    override fun modifyFullImageGetRequest(site: Dvach, requestBuilder: Request.Builder) {
-      super.modifyFullImageGetRequest(site, requestBuilder)
-
-      addAntiSpamCookie(requestBuilder)
-      addUserCodeCookie(site, requestBuilder)
-    }
-
-    override fun modifyMediaDownloadRequest(site: Dvach, requestBuilder: Request.Builder) {
-      super.modifyMediaDownloadRequest(site, requestBuilder)
-
-      addAntiSpamCookie(requestBuilder)
-      addUserCodeCookie(site, requestBuilder)
-    }
-
-    override fun modifySearchGetRequest(site: Dvach, requestBuilder: Request.Builder) {
-      super.modifySearchGetRequest(site, requestBuilder)
 
       addAntiSpamCookie(requestBuilder)
       addUserCodeCookie(site, requestBuilder)
@@ -461,43 +426,8 @@ class Dvach : CommonSite() {
       requestProperties.put(UserAgentHeaderKey, appConstants.kurobaExCustomUserAgent)
     }
 
-    override fun modifyCaptchaGetRequest(site: Dvach, requestBuilder: Request.Builder) {
-      super.modifyCaptchaGetRequest(site, requestBuilder)
-
-      addAntiSpamCookie(requestBuilder)
-      addUserCodeCookie(site, requestBuilder)
-    }
-
     override fun modifyPostReportRequest(site: Dvach, requestBuilder: Request.Builder) {
       super.modifyPostReportRequest(site, requestBuilder)
-
-      addAntiSpamCookie(requestBuilder)
-      addUserCodeCookie(site, requestBuilder)
-    }
-
-    override fun modifyLoginRequest(site: Dvach, requestBuilder: Request.Builder) {
-      super.modifyLoginRequest(site, requestBuilder)
-
-      addAntiSpamCookie(requestBuilder)
-      addUserCodeCookie(site, requestBuilder)
-    }
-
-    override fun modifyGetPasscodeInfoRequest(site: Dvach, requestBuilder: Request.Builder) {
-      super.modifyGetPasscodeInfoRequest(site, requestBuilder)
-
-      addAntiSpamCookie(requestBuilder)
-      addUserCodeCookie(site, requestBuilder)
-    }
-
-    override fun modifyPagesRequest(site: Dvach, requestBuilder: Request.Builder) {
-      super.modifyPagesRequest(site, requestBuilder)
-
-      addAntiSpamCookie(requestBuilder)
-      addUserCodeCookie(site, requestBuilder)
-    }
-
-    override fun modifyBoardsGetRequest(requestBuilder: Request.Builder) {
-      super.modifyBoardsGetRequest(requestBuilder)
 
       addAntiSpamCookie(requestBuilder)
       addUserCodeCookie(site, requestBuilder)
@@ -716,7 +646,7 @@ class Dvach : CommonSite() {
         .url(endpoints().pages(board))
         .get()
 
-      this@Dvach.requestModifier().modifyPagesRequest(this@Dvach, requestBuilder)
+      this@Dvach.requestModifier().modifyGenericRequest(this@Dvach, requestBuilder)
 
       return DvachPagesRequest(
         chanBoard = board,
@@ -739,7 +669,7 @@ class Dvach : CommonSite() {
         .url(searchUrl)
         .post(formBuilder.build())
 
-      this@Dvach.requestModifier().modifySearchGetRequest(this@Dvach, requestBuilder)
+      this@Dvach.requestModifier().modifyGenericRequest(this@Dvach, requestBuilder)
 
       return DvachSearchRequest(
         moshi = moshiLazy,
@@ -757,7 +687,7 @@ class Dvach : CommonSite() {
         .url(archiveUrl)
         .get()
 
-      this@Dvach.requestModifier().modifyArchiveGetRequest(this@Dvach, requestBuilder)
+      this@Dvach.requestModifier().modifyGenericRequest(this@Dvach, requestBuilder)
 
       return DvachArchiveThreadsRequest(
         request = requestBuilder.build(),
@@ -794,10 +724,6 @@ class Dvach : CommonSite() {
   class DvachSiteUrlHandler(
     val domainLazy: Lazy<HttpUrl>
   ) : CommonSiteUrlHandler() {
-    private val _cloudflareIgnorePaths = setOf(
-      "/favicon.ico"
-    )
-
     override fun getSiteClass(): Class<out Site?> {
       return Dvach::class.java
     }
@@ -810,10 +736,6 @@ class Dvach : CommonSite() {
 
     override val names: Array<String>
       get() = arrayOf("dvach", "2ch")
-
-    override fun matchesCloudflareIgnorePath(path: String): Boolean {
-      return path in _cloudflareIgnorePaths
-    }
 
     override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?): String? {
       when (chanDescriptor) {

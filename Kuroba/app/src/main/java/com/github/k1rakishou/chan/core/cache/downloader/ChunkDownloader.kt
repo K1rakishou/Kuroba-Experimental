@@ -1,6 +1,6 @@
 package com.github.k1rakishou.chan.core.cache.downloader
 
-import com.github.k1rakishou.chan.core.base.okhttp.RealDownloaderOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.DownloaderOkHttpClient
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
@@ -9,11 +9,11 @@ import okhttp3.HttpUrl
 import okhttp3.Request
 
 internal class ChunkDownloader(
-  private val downloaderOkHttpClientLazy: Lazy<RealDownloaderOkHttpClient>,
+  private val downloaderOkHttpClientLazy: Lazy<DownloaderOkHttpClient>,
   private val siteResolver: SiteResolver,
   private val activeDownloads: ActiveDownloads
 ) {
-  private val downloaderOkHttpClient: RealDownloaderOkHttpClient
+  private val downloaderOkHttpClient: DownloaderOkHttpClient
     get() = downloaderOkHttpClientLazy.get()
 
   suspend fun downloadChunk(
@@ -35,7 +35,7 @@ internal class ChunkDownloader(
       .url(mediaUrl)
 
     siteResolver.findSiteForUrl(mediaUrl.toString())?.let { site ->
-      site.requestModifier().modifyFullImageGetRequest(site, requestBuilder)
+      site.requestModifier().modifyGenericRequest(site, requestBuilder)
     }
 
     if (!chunk.isWholeFile()) {

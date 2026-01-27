@@ -1,6 +1,6 @@
 package com.github.k1rakishou.chan.core.site.sites.dvach
 
-import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.common.EmptyBodyResponseException
 import com.github.k1rakishou.common.ModularResult
@@ -24,7 +24,7 @@ class DvachBoardsRequest internal constructor(
   private val dvach: Dvach,
   private val siteDescriptor: SiteDescriptor,
   private val boardManager: BoardManager,
-  private val proxiedOkHttpClient: RealProxiedOkHttpClient,
+  private val proxiedOkHttpClient: ProxiedOkHttpClient,
   private val boardsRequestUrl: HttpUrl
 ) {
 
@@ -44,7 +44,7 @@ class DvachBoardsRequest internal constructor(
     val request = Request.Builder()
       .url(url)
       .get()
-      .also { requestBuilder -> dvach.requestModifier().modifyBoardsGetRequest(requestBuilder) }
+      .also { requestBuilder -> dvach.requestModifier().modifyGenericRequest(dvach, requestBuilder) }
       .build()
 
     val response = proxiedOkHttpClient.okHttpClient().suspendCall(request)

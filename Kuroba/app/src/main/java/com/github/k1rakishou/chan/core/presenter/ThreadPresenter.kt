@@ -46,8 +46,6 @@ import com.github.k1rakishou.chan.core.site.http.report.PostReportResult
 import com.github.k1rakishou.chan.core.site.loader.ChanLoaderException
 import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
 import com.github.k1rakishou.chan.core.site.loader.UnknownClientException
-import com.github.k1rakishou.chan.core.site.preprocessor.SitePreprocessing
-import com.github.k1rakishou.chan.core.site.preprocessor.SitePreprocessingEventQueue
 import com.github.k1rakishou.chan.features.drawer.data.NavigationHistoryEntry
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerGoToPostHelper
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter.PostAdapterCallback
@@ -152,9 +150,7 @@ class ThreadPresenter @Inject constructor(
   private val currentOpenedDescriptorStateManagerLazy: Lazy<CurrentOpenedDescriptorStateManager>,
   private val chanCatalogSnapshotCacheLazy: Lazy<ChanCatalogSnapshotCache>,
   private val compositeCatalogManagerLazy: Lazy<CompositeCatalogManager>,
-  private val revealedSpoilerImagesManagerLazy: Lazy<RevealedSpoilerImagesManager>,
-  private val sitePreprocessingLazy: Lazy<SitePreprocessing>,
-  private val sitePreprocessingEventQueueLazy: Lazy<SitePreprocessingEventQueue>
+  private val revealedSpoilerImagesManagerLazy: Lazy<RevealedSpoilerImagesManager>
 ) : PostAdapterCallback,
   PostCellCallback,
   ThreadStatusCell.Callback,
@@ -215,10 +211,6 @@ class ThreadPresenter @Inject constructor(
     get() = mediaViewerGoToPostHelperLazy.get()
   private val revealedSpoilerImagesManager: RevealedSpoilerImagesManager
     get() = revealedSpoilerImagesManagerLazy.get()
-  private val sitePreprocessing: SitePreprocessing
-    get() = sitePreprocessingLazy.get()
-  private val sitePreprocessingEventQueue: SitePreprocessingEventQueue
-    get() = sitePreprocessingEventQueueLazy.get()
 
   override val endOfCatalogReached: Boolean
     get() {
@@ -403,14 +395,6 @@ class ThreadPresenter @Inject constructor(
           highlightPost(postDescriptor = postDescriptor, blink = true)
         }
     }
-
-    launch {
-      sitePreprocessingEventQueue.eventQueue.collect { event ->
-        Logger.debug(TAG) {
-          "Got SitePreprocessing event: ${event::class.java.simpleName} for site ${event.siteDescriptor}"
-        }
-      }
-    }
   }
 
   fun create(context: Context, threadPresenterCallback: ThreadPresenterCallback) {
@@ -468,10 +452,6 @@ class ThreadPresenter @Inject constructor(
       }
     }
 
-    Logger.debug(TAG) { "sitePreprocessing.start(${chanDescriptor.siteDescriptor()})..." }
-    sitePreprocessing.start(chanDescriptor.siteDescriptor())
-    Logger.debug(TAG) { "sitePreprocessing.start(${chanDescriptor.siteDescriptor()})... done" }
-
     Logger.d(TAG, "chanThreadTicker.startTicker($chanDescriptor)")
     chanThreadTicker.startTicker(chanDescriptor)
   }
@@ -483,10 +463,6 @@ class ThreadPresenter @Inject constructor(
     Logger.d(TAG, "unbindChanDescriptor(isDestroying=$isDestroying) currentChanDescriptor=$currentChanDescriptor")
 
     alreadyCreatedNavElement.set(false)
-
-    if (currentChanDescriptor != null) {
-      sitePreprocessing.stop(currentChanDescriptor.siteDescriptor())
-    }
 
     if (currentChanDescriptor != null) {
       onDemandContentLoaderManager.cancelAllForDescriptor(currentChanDescriptor)
@@ -855,10 +831,6 @@ class ThreadPresenter @Inject constructor(
         Logger.d(TAG, "normalLoad() isEndReached == true, chanCacheUpdateOptions=${chanCacheUpdateOptions}")
         return@launch
       }
-
-      chanLoadProgressNotifier.sendProgressEvent(ChanLoadProgressEvent.Preprocess(currentChanDescriptor))
-
-      sitePreprocessing.awaitUntilDone(currentChanDescriptor.siteDescriptor())
 
       chanLoadProgressNotifier.sendProgressEvent(ChanLoadProgressEvent.Begin(currentChanDescriptor))
 
