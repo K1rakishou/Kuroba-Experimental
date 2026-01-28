@@ -9,9 +9,9 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 class ImageDownloadRequestRepository(
   database: KurobaDatabase,
-  private val applicationScope: CoroutineScope,
+  applicationScope: CoroutineScope,
   private val imageDownloadRequestLocalSource: ImageDownloadRequestLocalSource
-) : AbstractRepository(database) {
+) : AbstractRepository(database, applicationScope) {
   private val deletionRoutineExecuted = AtomicBoolean(false)
 
   suspend fun create(imageDownloadRequest: ImageDownloadRequest): ModularResult<ImageDownloadRequest?> {
@@ -24,8 +24,8 @@ class ImageDownloadRequestRepository(
   ): ModularResult<List<ImageDownloadRequest>> {
     check(imageDownloadRequests.isNotEmpty()) { "imageDownloadRequests is empty" }
 
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         if (deletionRoutineExecuted.compareAndSet(false, true)) {
           imageDownloadRequestLocalSource.deleteOldAndHangedInQueueStatus()
         }
@@ -36,8 +36,8 @@ class ImageDownloadRequestRepository(
   }
 
   suspend fun selectMany(uniqueId: String): ModularResult<List<ImageDownloadRequest>> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction imageDownloadRequestLocalSource.selectMany(uniqueId)
       }
     }
@@ -47,8 +47,8 @@ class ImageDownloadRequestRepository(
     uniqueId: String,
     downloadStatuses: Collection<ImageDownloadRequest.Status>
   ): ModularResult<List<ImageDownloadRequest>> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction imageDownloadRequestLocalSource.selectManyWithStatus(
           uniqueId,
           downloadStatuses
@@ -62,8 +62,8 @@ class ImageDownloadRequestRepository(
       return ModularResult.value(Unit)
     }
 
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction imageDownloadRequestLocalSource.completeMany(imageDownloadRequests)
       }
     }
@@ -74,16 +74,16 @@ class ImageDownloadRequestRepository(
       return ModularResult.value(Unit)
     }
 
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction imageDownloadRequestLocalSource.updateMany(imageDownloadRequests)
       }
     }
   }
 
   suspend fun deleteByUniqueId(uniqueId: String): ModularResult<Unit> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction imageDownloadRequestLocalSource.deleteByUniqueId(uniqueId)
       }
     }

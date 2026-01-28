@@ -29,26 +29,25 @@ import com.github.k1rakishou.model.util.ensureBackgroundThread
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlin.math.max
 import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
 class ChanPostRepository(
   database: KurobaDatabase,
+  applicationScope: CoroutineScope,
   private val isDevFlavor: Boolean,
-  private val applicationScope: CoroutineScope,
   private val appConstants: AppConstants,
   private val localSource: ChanPostLocalSource,
   private val chanThreadsCache: ChanThreadsCache,
   private val chanDescriptorCache: ChanDescriptorCache
-) : AbstractRepository(database) {
+) : AbstractRepository(database, applicationScope) {
   private val TAG = "ChanPostRepository"
   private val suspendableInitializer = SuspendableInitializer<Unit>("ChanPostRepository")
 
   fun initialize() {
     Logger.d(TAG, "ChanPostRepository.initialize()")
 
-    applicationScope.launch(Dispatchers.IO) {
+    coroutineScope.launch(Dispatchers.IO) {
       // We need to first delete the posts, so that the threads are only left with the OP
       val postDeleteResult = deleteOldPostsIfNeeded()
       if (postDeleteResult is ModularResult.Error) {
@@ -88,32 +87,32 @@ class ChanPostRepository(
   suspend fun getTotalCachedPostsCount(): Int {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
 
-    return applicationScope.dbCall {
-      return@dbCall chanThreadsCache.getTotalCachedPostsCount()
+    return database.call {
+      return@call chanThreadsCache.getTotalCachedPostsCount()
     }
   }
 
   suspend fun getTotalCachedThreadCount(): Int {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
 
-    return applicationScope.dbCall {
-      return@dbCall chanThreadsCache.getCachedThreadsCount()
+    return database.call {
+      return@call chanThreadsCache.getCachedThreadsCount()
     }
   }
 
   suspend fun getThreadsWithMoreThanOnePostCount(): Int {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
 
-    return applicationScope.dbCall {
-      return@dbCall chanThreadsCache.getThreadsWithMoreThanOnePostCount()
+    return database.call {
+      return@call chanThreadsCache.getThreadsWithMoreThanOnePostCount()
     }
   }
 
   suspend fun getThreadCachedPostsCount(threadDescriptor: ChanDescriptor.ThreadDescriptor): Int? {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
 
-    return applicationScope.dbCall {
-      return@dbCall chanThreadsCache.getThreadCachedPostsCount(threadDescriptor)
+    return database.call {
+      return@call chanThreadsCache.getThreadCachedPostsCount(threadDescriptor)
     }
   }
 
@@ -122,8 +121,8 @@ class ChanPostRepository(
   ): ModularResult<Unit> {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
 
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         threadDescriptors.forEach { threadDescriptor ->
           val threadDatabaseIdFromCache = chanDescriptorCache.getThreadIdByThreadDescriptorFromCache(threadDescriptor)?.id
           if (threadDatabaseIdFromCache != null) {
@@ -147,8 +146,8 @@ class ChanPostRepository(
       return value(threadDatabaseIdFromCache)
     }
 
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         val createdThreadDatabaseId = localSource.insertEmptyThread(descriptor) ?: -1L
         if (createdThreadDatabaseId >= 0L) {
           chanDescriptorCache.putThreadDescriptor(
@@ -172,8 +171,8 @@ class ChanPostRepository(
       return value(Unit)
     }
 
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         chanThreadsCache.updateThreadState(
           threadDescriptor = threadDescriptor,
           deleted = deleted,
@@ -279,8 +278,8 @@ class ChanPostRepository(
 
     Logger.d(TAG, "getCatalogOriginalPosts(descriptor=$descriptor, count=$count)")
 
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         val catalogPosts = localSource.getCatalogOriginalPosts(
           descriptor,
           count
@@ -308,8 +307,8 @@ class ChanPostRepository(
   ): ModularResult<LinkedHashMap<ChanDescriptor.ThreadDescriptor, ChanOriginalPost>> {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
 
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         val originalPostsFromCache = chanThreadsCache.getCatalogPostsFromCache(threadDescriptors)
 
         val notCachedOriginalPostThreadDescriptors = threadDescriptors.filter { threadDescriptor ->
@@ -361,8 +360,8 @@ class ChanPostRepository(
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
     ensureBackgroundThread()
 
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         Logger.d(TAG, "preloadForThread($threadDescriptor) begin")
 
         val time = measureTime {
@@ -395,8 +394,8 @@ class ChanPostRepository(
 
     Logger.d(TAG, "getThreadPostBuilders(threadDescriptor=$threadDescriptor)")
 
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         val postsFromCache = chanThreadsCache.getThread(threadDescriptor)?.let { thread ->
           when (postsToReloadOptions) {
             is PostsToReloadOptions.Reload -> {
@@ -446,8 +445,8 @@ class ChanPostRepository(
     val catalogDescriptor = catalogSnapshot.catalogDescriptor
     Logger.d(TAG, "getCatalogPostBuilders(catalogDescriptor=$catalogDescriptor)")
 
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         val chanCatalog = chanThreadsCache.getCatalog(catalogDescriptor)
         if (chanCatalog != null && !chanCatalog.isEmpty()) {
           return@tryWithTransaction chanCatalog.mapPostsOrdered { chanOriginalPost ->
@@ -475,8 +474,8 @@ class ChanPostRepository(
 
     Logger.d(TAG, "getThreadPosts(threadDescriptor=$threadDescriptor)")
 
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         val postsFromCache = chanThreadsCache.getThreadPosts(threadDescriptor)
         if (postsFromCache.isNotEmpty()) {
           return@tryWithTransaction postsFromCache
@@ -508,8 +507,8 @@ class ChanPostRepository(
 
     Logger.d(TAG, "getThreadPosts(threadDescriptor=$threadDescriptor)")
 
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction localSource.getThreadPosts(threadDescriptor)
       }
     }
@@ -518,8 +517,8 @@ class ChanPostRepository(
   suspend fun countThreadPosts(threadDatabaseId: Long): ModularResult<Int> {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
 
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction localSource.countThreadPosts(threadDatabaseId)
       }
     }
@@ -528,8 +527,8 @@ class ChanPostRepository(
   suspend fun deleteThread(threadDescriptor: ChanDescriptor.ThreadDescriptor): ModularResult<Unit> {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
 
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         val result = localSource.deleteThread(threadDescriptor)
         chanThreadsCache.deleteThread(threadDescriptor)
 
@@ -541,8 +540,8 @@ class ChanPostRepository(
   suspend fun deleteCatalog(catalogDescriptor: ChanDescriptor.CatalogDescriptor): ModularResult<Unit> {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
 
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         val threadDescriptors = chanThreadsCache.getCatalog(catalogDescriptor)
           ?.mapPostsOrdered { chanOriginalPost -> chanOriginalPost.postDescriptor.threadDescriptor() }
           ?.distinct()
@@ -559,8 +558,8 @@ class ChanPostRepository(
   suspend fun deletePost(postDescriptor: PostDescriptor): ModularResult<Unit> {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
 
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         localSource.deletePost(postDescriptor)
         chanThreadsCache.deletePost(postDescriptor)
 
@@ -572,8 +571,8 @@ class ChanPostRepository(
   suspend fun totalPostsCount(): ModularResult<Int> {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
 
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction localSource.countTotalAmountOfPosts()
       }
     }
@@ -582,8 +581,8 @@ class ChanPostRepository(
   suspend fun totalThreadsCount(): ModularResult<Int> {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
 
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction localSource.countTotalAmountOfThreads()
       }
     }
@@ -605,7 +604,7 @@ class ChanPostRepository(
     )
 
     // Store catalog thread original posts concurrently
-    applicationScope.dbCallAsync {
+    database.callAsync {
       tryWithTransaction {
         // Always store catalog original posts so that we always have catalog thread (even when there
         // is no internet connection).
@@ -664,8 +663,8 @@ class ChanPostRepository(
   ): ModularResult<Unit> {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
 
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction localSource.insertThreadPosts(ownerThreadId, posts)
       }
     }
@@ -676,45 +675,39 @@ class ChanPostRepository(
   ): ModularResult<List<ChanOriginalPost>> {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
 
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction localSource.getThreadOriginalPostsByDatabaseId(threadDatabaseIds)
       }
     }
   }
 
   suspend fun deleteOldPostsIfNeeded(forced: Boolean = false): ModularResult<ChanPostLocalSource.DeleteResult> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
-        val totalAmountOfPostsInDatabase = localSource.countTotalAmountOfPosts()
-        if (totalAmountOfPostsInDatabase <= 0) {
+    return database.call {
+      return@call tryWithTransaction {
+        val postsCount = localSource.countTotalAmountOfPosts()
+        if (postsCount <= 0) {
           Logger.d(TAG, "deleteOldPostsIfNeeded database is empty")
           return@tryWithTransaction ChanPostLocalSource.DeleteResult()
         }
 
         val maxPostsAmount = appConstants.maxAmountOfPostsInDatabase
-
-        if (!forced && totalAmountOfPostsInDatabase < maxPostsAmount) {
+        if (!forced && postsCount < maxPostsAmount) {
           Logger.d(TAG, "Not enough posts to start deleting, " +
-            "posts in database amount: $totalAmountOfPostsInDatabase, " +
+            "posts in database amount: $postsCount, " +
             "max allowed posts amount: $maxPostsAmount")
           return@tryWithTransaction ChanPostLocalSource.DeleteResult()
         }
 
-        val postsInDatabaseToUse = if (forced) {
-          totalAmountOfPostsInDatabase
-        } else {
-          max(totalAmountOfPostsInDatabase, maxPostsAmount)
-        }
-
-        val toDeleteCount = (postsInDatabaseToUse / 4)
+        val extraPosts = (postsCount - maxPostsAmount).coerceAtLeast(0)
+        val toDeleteCount = (postsCount.toFloat() * CLEANUP_PERCENTAGE).toInt() + extraPosts
         if (toDeleteCount <= 0) {
           return@tryWithTransaction ChanPostLocalSource.DeleteResult()
         }
 
         Logger.d(TAG, "Starting deleting $toDeleteCount posts " +
-          "(totalAmountOfPostsInDatabase = $totalAmountOfPostsInDatabase, " +
-          "maxPostsAmount = $maxPostsAmount)")
+          "(totalAmountOfPostsInDatabase: $postsCount, " +
+          "maxPostsAmount: $maxPostsAmount)")
 
         val (deleteMRResult, time) = measureTimedValue { Try { localSource.deleteOldPosts(toDeleteCount) } }
         val deleteResult = if (deleteMRResult is ModularResult.Error) {
@@ -734,37 +727,31 @@ class ChanPostRepository(
   }
 
   suspend fun deleteOldThreadsIfNeeded(forced: Boolean = false): ModularResult<ChanPostLocalSource.DeleteResult> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
-        val totalAmountOfThreadsInDatabase = localSource.countTotalAmountOfThreads()
-        if (totalAmountOfThreadsInDatabase <= 0) {
+    return database.call {
+      return@call tryWithTransaction {
+        val threadsCount = localSource.countTotalAmountOfThreads()
+        if (threadsCount <= 0) {
           Logger.d(TAG, "deleteOldThreadsIfNeeded database is empty")
           return@tryWithTransaction ChanPostLocalSource.DeleteResult()
         }
 
         val maxThreadsAmount = appConstants.maxAmountOfThreadsInDatabase
-
-        if (!forced && totalAmountOfThreadsInDatabase < maxThreadsAmount) {
+        if (!forced && threadsCount < maxThreadsAmount) {
           Logger.d(TAG, "Not enough threads to start deleting, " +
-            "threads in database amount: $totalAmountOfThreadsInDatabase, " +
+            "threads in database amount: $threadsCount, " +
             "max allowed threads amount: $maxThreadsAmount")
           return@tryWithTransaction ChanPostLocalSource.DeleteResult()
         }
 
-        val threadsInDatabaseToUse = if (forced) {
-          totalAmountOfThreadsInDatabase
-        } else {
-          max(totalAmountOfThreadsInDatabase, maxThreadsAmount)
-        }
-
-        val toDeleteCount = (threadsInDatabaseToUse / 4)
+        val extraPosts = (threadsCount - maxThreadsAmount).coerceAtLeast(0)
+        val toDeleteCount = (threadsCount.toFloat() * CLEANUP_PERCENTAGE).toInt() + extraPosts
         if (toDeleteCount <= 0) {
           return@tryWithTransaction ChanPostLocalSource.DeleteResult()
         }
 
         Logger.d(TAG, "Starting deleting $toDeleteCount threads " +
-          "(totalAmountOfThreadsInDatabase = $totalAmountOfThreadsInDatabase, " +
-          "maxThreadsAmount = $maxThreadsAmount)")
+          "(totalAmountOfThreadsInDatabase: $threadsCount, " +
+          "maxThreadsAmount: $maxThreadsAmount)")
 
         val (deleteMRResult, time) = measureTimedValue { Try { localSource.deleteOldThreads(toDeleteCount) } }
         val deleteResult = if (deleteMRResult is ModularResult.Error) {
@@ -806,6 +793,10 @@ class ChanPostRepository(
     }
 
     return false
+  }
+
+  companion object {
+    private const val CLEANUP_PERCENTAGE = 0.15f
   }
 
 }

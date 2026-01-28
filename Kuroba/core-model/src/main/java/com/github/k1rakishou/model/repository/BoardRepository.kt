@@ -13,14 +13,14 @@ import kotlin.time.measureTimedValue
 
 class BoardRepository(
   database: KurobaDatabase,
-  private val applicationScope: CoroutineScope,
+  applicationScope: CoroutineScope,
   private val localSource: BoardLocalSource
-) : AbstractRepository(database) {
+) : AbstractRepository(database, applicationScope) {
   private val TAG = "BoardRepository"
 
   suspend fun loadAllBoards(): ModularResult<Map<SiteDescriptor, List<ChanBoard>>> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         val (boards, duration) = measureTimedValue {
           return@measureTimedValue localSource.selectAllBoards()
         }
@@ -37,8 +37,8 @@ class BoardRepository(
     boardDescriptors: Collection<BoardDescriptor>,
     activate: Boolean
   ): ModularResult<Boolean> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction localSource.activateDeactivateBoards(
           siteDescriptor,
           boardDescriptors,
@@ -53,8 +53,8 @@ class BoardRepository(
       return ModularResult.value(Unit)
     }
 
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         val time = measureTime { localSource.persist(boardsOrdered) }
 
         val boardsCountTotal = boardsOrdered.values.sumOf { boards -> boards.size }

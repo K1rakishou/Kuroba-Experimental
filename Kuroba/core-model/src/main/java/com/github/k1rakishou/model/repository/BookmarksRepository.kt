@@ -12,15 +12,15 @@ import kotlin.time.measureTimedValue
 
 class BookmarksRepository(
   database: KurobaDatabase,
-  private val applicationScope: CoroutineScope,
+  applicationScope: CoroutineScope,
   private val localSource: ThreadBookmarkLocalSource
-) : AbstractRepository(database) {
+) : AbstractRepository(database, applicationScope) {
   private val TAG = "BookmarksRepository"
 
   @OptIn(ExperimentalTime::class)
   suspend fun initialize(): ModularResult<List<ThreadBookmark>> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         ensureBackgroundThread()
 
         val (bookmarks, duration) = measureTimedValue { localSource.selectAll() }
@@ -32,8 +32,8 @@ class BookmarksRepository(
   }
 
   suspend fun deleteAll(): ModularResult<Unit> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         localSource.deleteAll()
       }
     }
@@ -41,8 +41,8 @@ class BookmarksRepository(
 
   @OptIn(ExperimentalTime::class)
   suspend fun persist(bookmarks: List<ThreadBookmark>): ModularResult<Unit> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         val (result, duration) = measureTimedValue {
           return@measureTimedValue localSource.persist(bookmarks)
         }

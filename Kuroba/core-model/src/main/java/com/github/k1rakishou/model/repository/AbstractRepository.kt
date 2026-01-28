@@ -5,36 +5,42 @@ import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.model.KurobaDatabase
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.concurrent.Executors
 
 abstract class AbstractRepository(
-  private val database: KurobaDatabase
+  protected val database: KurobaDatabase,
+  protected val coroutineScope: CoroutineScope
 ) {
-  private val dbDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
-
-  protected suspend fun <T> tryWithTransaction(func: suspend () -> T): ModularResult<T> {
+  protected suspend fun <T> DatabaseScope.tryWithTransaction(func: suspend () -> T): ModularResult<T> {
     return Try { database.withTransaction(func) }
   }
 
-  protected fun isInTransaction() = database.inTransaction()
-
   @Suppress("RedundantAsync")
-  protected suspend fun <T> CoroutineScope.dbCall(
-    func: suspend () -> T
+  protected suspend fun <T> KurobaDatabase.call(
+    func: suspend DatabaseScope.() -> T
   ): T {
-    return withContext(dbDispatcher + NonCancellable) { func() }
+    return withContext(Dispatchers.IO + NonCancellable) {
+      with(DatabaseScopeImpl()) {
+        func()
+      }
+    }
   }
 
   @Suppress("RedundantAsync")
-  protected suspend fun CoroutineScope.dbCallAsync(
-    func: suspend () -> Unit
+  protected fun KurobaDatabase.callAsync(
+    func: suspend DatabaseScope.() -> Unit
   ) {
-    val scope = this
-    scope.launch(dbDispatcher) { func() }
+    coroutineScope.launch(Dispatchers.IO) {
+      with(DatabaseScopeImpl()) {
+        func()
+      }
+    }
   }
+
+  interface DatabaseScope
+  class DatabaseScopeImpl : DatabaseScope
 
 }

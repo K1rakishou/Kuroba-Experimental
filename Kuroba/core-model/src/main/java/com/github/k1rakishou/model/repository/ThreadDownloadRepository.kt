@@ -9,38 +9,38 @@ import kotlin.time.ExperimentalTime
 
 class ThreadDownloadRepository(
   database: KurobaDatabase,
-  private val applicationScope: CoroutineScope,
+  applicationScope: CoroutineScope,
   private val localSource: ThreadDownloadLocalSource
-) : AbstractRepository(database) {
+) : AbstractRepository(database, applicationScope) {
 
   @OptIn(ExperimentalTime::class)
   suspend fun initialize(): ModularResult<List<ThreadDownload>> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction localSource.loadAll()
       }
     }
   }
 
   suspend fun createThreadDownload(threadDownload: ThreadDownload): ModularResult<Unit> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction localSource.createThreadDownload(threadDownload)
       }
     }
   }
 
   suspend fun updateThreadDownload(threadDownload: ThreadDownload): ModularResult<Unit> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction localSource.updateThreadDownload(threadDownload)
       }
     }
   }
 
   suspend fun deleteThreadDownload(threadDownloads: Collection<ThreadDownload>): ModularResult<Unit> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction localSource.deleteThreadDownload(threadDownloads)
       }
     }

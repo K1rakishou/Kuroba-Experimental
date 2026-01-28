@@ -9,22 +9,24 @@ import kotlinx.coroutines.CoroutineScope
 
 class ChanThreadViewableInfoRepository(
   database: KurobaDatabase,
-  private val applicationScope: CoroutineScope,
+  applicationScope: CoroutineScope,
   private val localSource: ChanThreadViewableInfoLocalSource
-) : AbstractRepository(database) {
+) : AbstractRepository(database, applicationScope) {
   private val TAG = "ChanThreadViewableInfoRepository"
 
-  suspend fun preloadForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor): ModularResult<ChanThreadViewableInfo?> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+  suspend fun preloadForThread(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor
+  ): ModularResult<ChanThreadViewableInfo?> {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction localSource.preloadForThread(threadDescriptor)
       }
     }
   }
 
   suspend fun persist(chanThreadViewableInfo: ChanThreadViewableInfo): ModularResult<Unit> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction localSource.persist(chanThreadViewableInfo)
       }
     }

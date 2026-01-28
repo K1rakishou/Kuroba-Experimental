@@ -10,45 +10,45 @@ import kotlinx.coroutines.CoroutineScope
 
 class ChanSavedReplyRepository(
   database: KurobaDatabase,
-  private val applicationScope: CoroutineScope,
+  applicationScope: CoroutineScope,
   private val localSource: ChanSavedReplyLocalSource
-) : AbstractRepository(database) {
+) : AbstractRepository(database, applicationScope) {
 
   suspend fun loadAll(): ModularResult<List<ChanSavedReply>> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction localSource.loadAll()
       }
     }
   }
 
   suspend fun preloadForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor): ModularResult<List<ChanSavedReply>> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction localSource.preloadForThread(threadDescriptor)
       }
     }
   }
 
   suspend fun unsavePosts(postDescriptors: Collection<PostDescriptor>): ModularResult<Unit> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction localSource.unsavePosts(postDescriptors)
       }
     }
   }
 
   suspend fun unsaveAll(): ModularResult<Unit> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction localSource.unsaveAll()
       }
     }
   }
 
   suspend fun savePost(chanSavedReply: ChanSavedReply): ModularResult<Unit> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction localSource.savePost(chanSavedReply)
       }
     }

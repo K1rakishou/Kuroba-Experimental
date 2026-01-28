@@ -15,11 +15,11 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 class MediaServiceLinkExtraContentRepository(
   database: KurobaDatabase,
-  private val applicationScope: CoroutineScope,
+  applicationScope: CoroutineScope,
   private val cache: GenericSuspendableCacheSource<MediaServiceKey, MediaServiceLinkExtraContent>,
   private val mediaServiceLinkExtraContentLocalSource: MediaServiceLinkExtraContentLocalSource,
   private val mediaServiceLinkExtraContentRemoteSource: MediaServiceLinkExtraContentRemoteSource
-) : AbstractRepository(database) {
+) : AbstractRepository(database, applicationScope) {
   private val TAG = "MediaServiceLinkExtraContentRepository"
   private val alreadyExecuted = AtomicBoolean(false)
 
@@ -30,8 +30,8 @@ class MediaServiceLinkExtraContentRepository(
   ): ModularResult<MediaServiceLinkExtraContent> {
     val mediaServiceKey = MediaServiceKey(videoId, mediaServiceType)
 
-    return applicationScope.dbCall {
-      return@dbCall RepoGenericGetAction.perform(
+    return database.call {
+      return@call RepoGenericGetAction.perform(
         tag = TAG,
         fileUrl = requestUrl,
         cleanupFunc = { mediaServiceLinkExtraContentRepositoryCleanup().ignore() },
@@ -78,8 +78,8 @@ class MediaServiceLinkExtraContentRepository(
     ensureBackgroundThread()
     val mediaServiceKey = MediaServiceKey(videoId, mediaServiceType)
 
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         val hasInCache = cache.contains(mediaServiceKey)
         if (hasInCache) {
           return@tryWithTransaction true
@@ -96,24 +96,24 @@ class MediaServiceLinkExtraContentRepository(
   }
 
   suspend fun deleteAll(): ModularResult<Int> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction mediaServiceLinkExtraContentLocalSource.deleteAll()
       }
     }
   }
 
   suspend fun count(): ModularResult<Int> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction mediaServiceLinkExtraContentLocalSource.count()
       }
     }
   }
 
   private suspend fun mediaServiceLinkExtraContentRepositoryCleanup(): ModularResult<Int> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         if (!alreadyExecuted.compareAndSet(false, true)) {
           return@tryWithTransaction 0
         }

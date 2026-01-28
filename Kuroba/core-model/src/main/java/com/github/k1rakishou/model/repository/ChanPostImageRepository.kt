@@ -9,10 +9,10 @@ import okhttp3.HttpUrl
 
 class ChanPostImageRepository(
   database: KurobaDatabase,
+  applicationScope: CoroutineScope,
   private val isDevFlavor: Boolean,
-  private val applicationScope: CoroutineScope,
   private val chanPostImageLocalSource: ChanPostImageLocalSource
-) : AbstractRepository(database) {
+) : AbstractRepository(database, applicationScope) {
   private val TAG = "ChanPostImageRepository"
 
   suspend fun selectPostImageByUrl(imagesUrl: HttpUrl): ModularResult<ChanPostImage?> {
@@ -21,24 +21,24 @@ class ChanPostImageRepository(
   }
 
   suspend fun selectPostImagesByUrls(imagesUrls: Collection<HttpUrl>): ModularResult<List<ChanPostImage>> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction chanPostImageLocalSource.selectPostImagesByUrls(imagesUrls)
       }
     }
   }
 
   suspend fun selectPostImagesByOwnerThreadDatabaseId(threadDatabaseId: Long): ModularResult<List<ChanPostImage>> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction chanPostImageLocalSource.selectPostImagesByOwnerThreadDatabaseId(threadDatabaseId)
       }
     }
   }
 
   suspend fun countPostImagesByOwnerThreadDatabaseId(threadDatabaseId: Long): ModularResult<Int> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction chanPostImageLocalSource.countPostImagesByOwnerThreadDatabaseId(threadDatabaseId)
       }
     }

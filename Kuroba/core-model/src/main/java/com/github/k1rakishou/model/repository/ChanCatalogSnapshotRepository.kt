@@ -16,10 +16,10 @@ import kotlin.time.measureTimedValue
 
 class ChanCatalogSnapshotRepository(
   database: KurobaDatabase,
+  applicationScope: CoroutineScope,
   private val verboseLogsEnabled: Boolean,
-  private val applicationScope: CoroutineScope,
   private val localSource: ChanCatalogSnapshotLocalSource
-) : AbstractRepository(database) {
+) : AbstractRepository(database, applicationScope) {
   private val TAG = "ChanCatalogSnapshotRepository"
 
   private val mutex = Mutex()
@@ -35,8 +35,8 @@ class ChanCatalogSnapshotRepository(
       return ModularResult.value(Unit)
     }
 
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
 
         if (verboseLogsEnabled) {
           Logger.d(TAG, "preloadChanCatalogSnapshot($catalogDescriptor) begin")
@@ -67,8 +67,8 @@ class ChanCatalogSnapshotRepository(
   ): ModularResult<Unit> {
     Logger.d(TAG, "storeChanCatalogSnapshot($chanCatalogSnapshot)")
 
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction localSource.storeChanCatalogSnapshot(chanCatalogSnapshot)
       }
     }

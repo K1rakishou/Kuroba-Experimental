@@ -197,19 +197,19 @@ abstract class ChanPostDao {
   abstract suspend fun deletePost(threadId: Long, postNo: Long, postSubNo: Long)
 
   @Query("""
-        DELETE FROM ${ChanPostIdEntity.TABLE_NAME} 
-        WHERE ${ChanPostIdEntity.POST_ID_COLUMN_NAME} IN (
-            SELECT ${ChanPostIdEntity.POST_ID_COLUMN_NAME}
-            FROM ${ChanPostIdEntity.TABLE_NAME}
-            INNER JOIN ${ChanPostEntity.TABLE_NAME} 
-                ON ${ChanPostIdEntity.POST_ID_COLUMN_NAME} = ${ChanPostEntity.CHAN_POST_ID_COLUMN_NAME}
-            WHERE 
-                ${ChanPostIdEntity.OWNER_THREAD_ID_COLUMN_NAME} = :ownerThreadId
-            AND 
-                ${ChanPostEntity.IS_OP_COLUMN_NAME} = ${KurobaDatabase.SQLITE_FALSE}
-        )
-    """)
-  abstract suspend fun deletePostsByThreadId(ownerThreadId: Long): Int
+      DELETE FROM ${ChanPostIdEntity.TABLE_NAME} 
+      WHERE ${ChanPostIdEntity.POST_ID_COLUMN_NAME} IN (
+          SELECT cpie.${ChanPostIdEntity.POST_ID_COLUMN_NAME}
+          FROM ${ChanPostIdEntity.TABLE_NAME} AS cpie
+          INNER JOIN ${ChanPostEntity.TABLE_NAME} AS cpe
+              ON cpie.${ChanPostIdEntity.POST_ID_COLUMN_NAME} = cpe.${ChanPostEntity.CHAN_POST_ID_COLUMN_NAME}
+          WHERE 
+              cpie.${ChanPostIdEntity.OWNER_THREAD_ID_COLUMN_NAME} IN (:ownerThreadIds)
+          AND 
+              cpe.${ChanPostEntity.IS_OP_COLUMN_NAME} = ${KurobaDatabase.SQLITE_FALSE}
+      )
+  """)
+  abstract suspend fun deletePostsByThreadIds(ownerThreadIds: List<Long>): Int
 
   @Query("SELECT *FROM ${ChanPostIdEntity.TABLE_NAME}")
   abstract suspend fun testGetAll(): List<ChanPostFull>

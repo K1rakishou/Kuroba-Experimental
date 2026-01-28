@@ -799,11 +799,16 @@ class ChanPostLocalSource(
         Logger.d(TAG, "deleteOldPosts() deleting a batch of ${threadIdSet.size} threads with ${totalPosts} posts")
         Logger.d(TAG, "deleteOldPosts() threadIdSet: ${threadIdSet}")
 
-        threadIdSet.forEach { threadId ->
+        threadIdSet
+          .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+          .forEach { threadIdsChunk ->
           try {
-            chanPostDao.deletePostsByThreadId(threadId)
+            chanPostDao.deletePostsByThreadIds(threadIdsChunk)
           } catch (error: Throwable) {
-            Logger.e(TAG, "deleteOldPosts() Failed to delete posts for thread: ${threadId}, error: ${error.errorMessageOrClassName()}")
+            Logger.error(TAG) {
+              "deleteOldPosts() Failed to delete a batch of ${threadIdsChunk.size} thread posts, " +
+                "error: ${error.errorMessageOrClassName()}"
+            }
           }
         }
       }
@@ -871,14 +876,19 @@ class ChanPostLocalSource(
 
         Logger.d(TAG, "deleteOldThreads() deleting a batch of ${threadIdSet.size} threads with $totalPosts posts")
 
-        threadIdSet.forEach { threadId ->
-          deletedTotal += try {
-            chanThreadDao.deleteThread(threadId)
-          } catch (error: Throwable) {
-            Logger.e(TAG, "deleteOldThreads() Failed to delete thread: ${threadId}, error: ${error.errorMessageOrClassName()}")
-            return@forEach
+        threadIdSet
+          .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+          .forEach { threadIdsChunk ->
+            deletedTotal += try {
+              chanThreadDao.deleteThreads(threadIdsChunk)
+            } catch (error: Throwable) {
+              Logger.error(TAG) {
+                "deleteOldThreads() Failed to delete a batch of ${threadIdsChunk.size} threads, " +
+                  "error: ${error.errorMessageOrClassName()}"
+              }
+              return@forEach
+            }
           }
-        }
       }
 
       offset += threadBatch.size

@@ -391,13 +391,13 @@ class ModelModule {
     chanDescriptorCache: ChanDescriptorCache
   ): ChanPostRepository {
     return ChanPostRepository(
-      database,
-      dependencies.isDevFlavor,
-      dependencies.coroutineScope,
-      dependencies.appConstants,
-      chanPostLocalSource,
-      chanThreadsCache,
-      chanDescriptorCache
+      database = database,
+      applicationScope = dependencies.coroutineScope,
+      isDevFlavor = dependencies.isDevFlavor,
+      appConstants = dependencies.appConstants,
+      localSource = chanPostLocalSource,
+      chanThreadsCache = chanThreadsCache,
+      chanDescriptorCache = chanDescriptorCache
     )
   }
 
@@ -535,10 +535,10 @@ class ModelModule {
     localSource: ChanCatalogSnapshotLocalSource
   ): ChanCatalogSnapshotRepository {
     return ChanCatalogSnapshotRepository(
-      database,
-      dependencies.verboseLogs,
-      dependencies.coroutineScope,
-      localSource
+      database = database,
+      applicationScope = dependencies.coroutineScope,
+      verboseLogsEnabled = dependencies.verboseLogs,
+      localSource = localSource
     )
   }
 
@@ -578,10 +578,10 @@ class ModelModule {
     localSource: ChanPostImageLocalSource
   ): ChanPostImageRepository {
     return ChanPostImageRepository(
-      database,
-      dependencies.isDevFlavor,
-      dependencies.coroutineScope,
-      localSource
+      database = database,
+      applicationScope = dependencies.coroutineScope,
+      isDevFlavor = dependencies.isDevFlavor,
+      chanPostImageLocalSource = localSource
     )
   }
 

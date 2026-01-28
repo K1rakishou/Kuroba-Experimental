@@ -8,38 +8,38 @@ import kotlinx.coroutines.CoroutineScope
 
 class ChanFilterWatchRepository(
   database: KurobaDatabase,
-  private val applicationScope: CoroutineScope,
+  applicationScope: CoroutineScope,
   private val localSource: ChanFilterWatchLocalSource
-) : AbstractRepository(database) {
+) : AbstractRepository(database, applicationScope) {
   private val TAG = "ChanFilterWatchRepository"
 
   suspend fun createFilterWatchGroups(watchGroups: List<ChanFilterWatchGroup>): ModularResult<Unit> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         localSource.createFilterWatchGroups(watchGroups)
       }
     }
   }
 
   suspend fun getFilterWatchGroupsByFilterId(filterId: Long): ModularResult<List<ChanFilterWatchGroup>> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction localSource.getFilterWatchGroupsByFilterId(filterId)
       }
     }
   }
 
   suspend fun getFilterWatchGroups(): ModularResult<List<ChanFilterWatchGroup>> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction localSource.getFilterWatchGroups()
       }
     }
   }
 
   suspend fun clearFilterWatchGroups(): ModularResult<Unit> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         localSource.clearFilterWatchGroups()
       }
     }

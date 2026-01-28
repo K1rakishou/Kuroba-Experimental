@@ -8,30 +8,30 @@ import kotlinx.coroutines.CoroutineScope
 
 class ChanFilterRepository(
   database: KurobaDatabase,
-  private val applicationScope: CoroutineScope,
+  applicationScope: CoroutineScope,
   private val localSource: ChanFilterLocalSource
-) : AbstractRepository(database) {
+) : AbstractRepository(database, applicationScope) {
   private val TAG = "ChanFilterRepository"
 
   suspend fun loadAllFilters(): ModularResult<List<ChanFilter>> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction localSource.selectAll()
       }
     }
   }
 
   suspend fun createFilter(chanFilter: ChanFilter, order: Int): ModularResult<Long> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction localSource.createFilter(chanFilter, order)
       }
     }
   }
 
   suspend fun updateAllFilters(filters: List<ChanFilter>): ModularResult<Boolean> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         localSource.updateAllFilters(filters)
         return@tryWithTransaction true
       }
@@ -39,8 +39,8 @@ class ChanFilterRepository(
   }
 
   suspend fun deleteFilter(filter: ChanFilter): ModularResult<Boolean> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         localSource.deleteFilter(filter)
         return@tryWithTransaction true
       }
@@ -48,8 +48,8 @@ class ChanFilterRepository(
   }
 
   suspend fun deleteAll(): ModularResult<Unit> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         localSource.deleteAll()
       }
     }

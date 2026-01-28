@@ -469,7 +469,7 @@ class LocalArchiveViewModel(
 
       if (threadDownload.lastUpdateTime != null) {
         appendLine()
-        append("Updated: ")
+        append("Last updated: ")
         append(DATE_TIME_PRINTER.print(threadDownload.lastUpdateTime))
       }
     }

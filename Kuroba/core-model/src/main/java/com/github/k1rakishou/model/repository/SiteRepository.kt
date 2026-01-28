@@ -14,14 +14,14 @@ import kotlin.time.measureTimedValue
 
 class SiteRepository(
   database: KurobaDatabase,
-  private val applicationScope: CoroutineScope,
+  applicationScope: CoroutineScope,
   private val localSource: SiteLocalSource
-) : AbstractRepository(database) {
+) : AbstractRepository(database, applicationScope) {
   private val TAG = "SiteRepository"
   private val allSitesLoadedInitializer = SuspendableInitializer<Unit>("allSitesLoadedInitializer")
 
   suspend fun initialize(allSiteDescriptors: Collection<SiteDescriptor>): ModularResult<List<ChanSiteData>> {
-    return applicationScope.dbCall {
+    return database.call {
       val result = tryWithTransaction {
         ensureBackgroundThread()
 
@@ -37,7 +37,7 @@ class SiteRepository(
 
       allSitesLoadedInitializer.initWithModularResult(result.mapValue { Unit })
       Logger.d(TAG, "allSitesLoadedInitializer initialized")
-      return@dbCall result
+      return@call result
     }
   }
 
@@ -45,8 +45,8 @@ class SiteRepository(
     check(allSitesLoadedInitializer.isInitialized()) { "SiteRepository is not initialized" }
     Logger.d(TAG, "persist(chanSiteDataListCount=${chanSiteDataList.size})")
 
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         val time = measureTime { localSource.persist(chanSiteDataList) }
         Logger.d(TAG, "persist(${chanSiteDataList.size}) took $time")
 

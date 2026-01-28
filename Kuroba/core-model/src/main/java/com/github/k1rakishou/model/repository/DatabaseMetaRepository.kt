@@ -7,14 +7,14 @@ import kotlinx.coroutines.CoroutineScope
 
 class DatabaseMetaRepository(
   database: KurobaDatabase,
-  private val applicationScope: CoroutineScope,
+  applicationScope: CoroutineScope,
   private val localSource: DatabaseMetaLocalSource
-) : AbstractRepository(database) {
+) : AbstractRepository(database, applicationScope) {
   private val TAG = "DatabaseMetaRepository"
 
   suspend fun checkpoint(): ModularResult<Int> {
-    return applicationScope.dbCall {
-      return@dbCall ModularResult.Try { localSource.checkpoint() }
+    return database.call {
+      return@call ModularResult.Try { localSource.checkpoint() }
     }
   }
 

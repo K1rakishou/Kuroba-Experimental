@@ -12,9 +12,9 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 class SeenPostRepository(
   database: KurobaDatabase,
-  private val applicationScope: CoroutineScope,
+  applicationScope: CoroutineScope,
   private val seenPostLocalSource: SeenPostLocalSource
-) : AbstractRepository(database) {
+) : AbstractRepository(database, applicationScope) {
   private val TAG = "SeenPostRepository"
   private val alreadyExecuted = AtomicBoolean(false)
 
@@ -22,8 +22,8 @@ class SeenPostRepository(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
     seenPosts: Collection<SeenPost>
   ): ModularResult<Unit> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         seenPostLocalRepositoryCleanup()
 
         return@tryWithTransaction seenPostLocalSource.insertMany(threadDescriptor, seenPosts)
@@ -34,8 +34,8 @@ class SeenPostRepository(
   suspend fun selectAllByThreadDescriptor(
     threadDescriptor: ChanDescriptor.ThreadDescriptor
   ): ModularResult<List<SeenPost>> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction seenPostLocalSource.selectAllByThreadDescriptor(threadDescriptor)
       }
     }
@@ -45,24 +45,24 @@ class SeenPostRepository(
     boardDescriptor: BoardDescriptor,
     threadDescriptors: List<ChanDescriptor.ThreadDescriptor>
   ): ModularResult<List<SeenPost>> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction seenPostLocalSource.selectAllByThreadDescriptors(boardDescriptor, threadDescriptors)
       }
     }
   }
 
   suspend fun count(): ModularResult<Int> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction seenPostLocalSource.count()
       }
     }
   }
 
   suspend fun deleteAll(): ModularResult<Int> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction seenPostLocalSource.deleteAll()
       }
     }

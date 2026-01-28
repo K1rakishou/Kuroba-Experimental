@@ -12,15 +12,15 @@ import kotlin.time.measureTimedValue
 
 class HistoryNavigationRepository(
   database: KurobaDatabase,
-  private val applicationScope: CoroutineScope,
+  applicationScope: CoroutineScope,
   private val localSource: NavHistoryLocalSource
-) : AbstractRepository(database) {
+) : AbstractRepository(database, applicationScope) {
   private val TAG = "HistoryNavigationRepository"
 
   @OptIn(ExperimentalTime::class)
   suspend fun initialize(maxCount: Int): ModularResult<List<NavHistoryElement>> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         ensureBackgroundThread()
 
         val (navHistoryStack, duration) = measureTimedValue {
@@ -35,8 +35,8 @@ class HistoryNavigationRepository(
 
   @OptIn(ExperimentalTime::class)
   suspend fun persist(navHistoryStack: List<NavHistoryElement>): ModularResult<Unit> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         val (result, duration) = measureTimedValue {
           return@measureTimedValue localSource.persist(navHistoryStack)
         }
@@ -48,24 +48,24 @@ class HistoryNavigationRepository(
   }
 
   suspend fun getFirstNavElement(): ModularResult<NavHistoryElement?> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction localSource.getFirstNavElement()
       }
     }
   }
 
   suspend fun getFirstCatalogNavElement(): ModularResult<NavHistoryElement?> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction localSource.getFirstCatalogNavElement()
       }
     }
   }
 
   suspend fun getFirstThreadNavElement(): ModularResult<NavHistoryElement?> {
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
+    return database.call {
+      return@call tryWithTransaction {
         return@tryWithTransaction localSource.getFirstThreadNavElement()
       }
     }
