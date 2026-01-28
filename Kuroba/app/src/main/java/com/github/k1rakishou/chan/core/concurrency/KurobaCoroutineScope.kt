@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.core.base
+package com.github.k1rakishou.chan.core.concurrency
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

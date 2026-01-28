@@ -4,7 +4,7 @@ import android.content.Context
 import android.view.HapticFeedbackConstants
 import android.view.View
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
+import com.github.k1rakishou.chan.core.concurrency.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.site.ImageSearch
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2

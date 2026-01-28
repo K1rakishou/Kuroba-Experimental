@@ -2,7 +2,7 @@ package com.github.k1rakishou.chan.features.image_saver
 
 import android.net.Uri
 import com.github.k1rakishou.chan.core.base.BasePresenter
-import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
+import com.github.k1rakishou.chan.core.concurrency.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.features.image_saver.epoxy.DupImage
 import com.github.k1rakishou.chan.features.image_saver.epoxy.DuplicateImage

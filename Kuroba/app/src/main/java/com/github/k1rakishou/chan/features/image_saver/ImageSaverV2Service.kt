@@ -15,8 +15,8 @@ import androidx.core.app.NotificationManagerCompat
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.base.KeyBasedSerializedCoroutineExecutor
-import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
+import com.github.k1rakishou.chan.core.concurrency.KeyBasedSerializedCoroutineExecutor
+import com.github.k1rakishou.chan.core.concurrency.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.manager.NotificationAutoDismissManager
 import com.github.k1rakishou.chan.core.receiver.ImageSaverBroadcastReceiver
 import com.github.k1rakishou.chan.ui.activity.StartActivity

@@ -21,8 +21,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
-import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
+import com.github.k1rakishou.chan.core.concurrency.DebouncingCoroutineExecutor
+import com.github.k1rakishou.chan.core.concurrency.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.helper.PostHideHelper
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager

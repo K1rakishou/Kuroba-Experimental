@@ -9,7 +9,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.widget.AppCompatImageButton
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
+import com.github.k1rakishou.chan.core.concurrency.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.PostHideManager
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerControllerViewModel

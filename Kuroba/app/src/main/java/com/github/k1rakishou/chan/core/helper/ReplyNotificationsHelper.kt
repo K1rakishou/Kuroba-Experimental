@@ -20,8 +20,8 @@ import coil.transform.Transformation
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.cache.CacheFileType
+import com.github.k1rakishou.chan.core.concurrency.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.image.ImageLoaderDeprecated
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.receiver.ReplyNotificationDeleteIntentBroadcastReceiver

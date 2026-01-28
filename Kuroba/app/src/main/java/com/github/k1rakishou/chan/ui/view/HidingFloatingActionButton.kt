@@ -18,7 +18,7 @@ import androidx.core.graphics.withTranslation
 import androidx.core.view.updatePadding
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
+import com.github.k1rakishou.chan.core.concurrency.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener

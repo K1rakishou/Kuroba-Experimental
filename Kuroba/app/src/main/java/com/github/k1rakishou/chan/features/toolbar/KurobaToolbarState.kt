@@ -7,7 +7,7 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.compose.ui.unit.Dp
-import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
+import com.github.k1rakishou.chan.core.concurrency.KurobaCoroutineScope
 import com.github.k1rakishou.chan.features.toolbar.state.IKurobaToolbarParams
 import com.github.k1rakishou.chan.features.toolbar.state.KurobaToolbarSubState
 import com.github.k1rakishou.chan.features.toolbar.state.ToolbarStateKind

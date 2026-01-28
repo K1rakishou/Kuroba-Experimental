@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.core.base
+package com.github.k1rakishou.chan.core.concurrency
 
 import androidx.annotation.GuardedBy
 import kotlinx.coroutines.CoroutineDispatcher

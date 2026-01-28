@@ -48,8 +48,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.compose.AsyncData
+import com.github.k1rakishou.chan.core.concurrency.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.image.ImageLoaderDeprecated
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager

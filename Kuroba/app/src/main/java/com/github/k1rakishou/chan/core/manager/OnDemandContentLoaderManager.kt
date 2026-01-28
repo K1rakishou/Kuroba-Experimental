@@ -1,7 +1,7 @@
 package com.github.k1rakishou.chan.core.manager
 
 import androidx.annotation.GuardedBy
-import com.github.k1rakishou.chan.core.base.QueueableConcurrentCoroutineExecutor
+import com.github.k1rakishou.chan.core.concurrency.QueueableConcurrentCoroutineExecutor
 import com.github.k1rakishou.chan.core.loader.LoaderBatchResult
 import com.github.k1rakishou.chan.core.loader.LoaderResult
 import com.github.k1rakishou.chan.core.loader.OnDemandContentLoader
@@ -22,10 +22,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
-import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.collections.HashMap
-import kotlin.collections.set
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 

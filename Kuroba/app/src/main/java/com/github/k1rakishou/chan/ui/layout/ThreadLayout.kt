@@ -15,8 +15,8 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.ChanSettings.BoardPostViewMode
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.base.Debouncer
-import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
+import com.github.k1rakishou.chan.core.concurrency.Debouncer
+import com.github.k1rakishou.chan.core.concurrency.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.helper.ChanLoadProgressEvent
 import com.github.k1rakishou.chan.core.helper.ChanLoadProgressNotifier
 import com.github.k1rakishou.chan.core.helper.DialogFactory

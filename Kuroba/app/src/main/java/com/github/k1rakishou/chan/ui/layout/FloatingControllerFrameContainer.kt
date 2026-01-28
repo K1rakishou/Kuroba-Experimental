@@ -4,7 +4,7 @@ import android.content.Context
 import android.util.AttributeSet
 import android.widget.FrameLayout
 import androidx.compose.ui.unit.dp
-import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
+import com.github.k1rakishou.chan.core.concurrency.KurobaCoroutineScope
 import com.github.k1rakishou.chan.ui.compose.window.KurobaWindowWidthSizeClass
 import com.github.k1rakishou.chan.ui.compose.window.WindowWidthSizeClass
 import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder

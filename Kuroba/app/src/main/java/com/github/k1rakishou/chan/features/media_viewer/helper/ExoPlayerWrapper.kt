@@ -3,7 +3,7 @@ package com.github.k1rakishou.chan.features.media_viewer.helper
 import android.content.Context
 import android.net.Uri
 import com.github.k1rakishou.ChanSettings
-import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
+import com.github.k1rakishou.chan.core.concurrency.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia

@@ -4,8 +4,8 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.github.k1rakishou.chan.Chan
-import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
-import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
+import com.github.k1rakishou.chan.core.concurrency.KurobaCoroutineScope
+import com.github.k1rakishou.chan.core.concurrency.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.features.posting.PostingService
 import com.github.k1rakishou.chan.features.posting.PostingServiceDelegate
 import com.github.k1rakishou.core_logger.Logger

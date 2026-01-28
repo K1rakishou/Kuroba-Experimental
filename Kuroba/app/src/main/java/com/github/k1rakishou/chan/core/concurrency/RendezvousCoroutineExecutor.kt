@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.core.base
+package com.github.k1rakishou.chan.core.concurrency
 
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isExceptionImportant

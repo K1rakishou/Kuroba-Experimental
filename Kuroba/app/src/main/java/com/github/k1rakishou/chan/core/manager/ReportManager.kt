@@ -7,8 +7,8 @@ import android.provider.Settings
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.Chan
-import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.concurrency.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AndroidUtils

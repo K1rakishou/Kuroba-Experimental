@@ -1,7 +1,7 @@
 package com.github.k1rakishou.chan.core.manager
 
 import androidx.annotation.GuardedBy
-import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
+import com.github.k1rakishou.chan.core.concurrency.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteRegistry
 import com.github.k1rakishou.common.ModularResult

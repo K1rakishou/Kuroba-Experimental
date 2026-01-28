@@ -28,7 +28,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
+import com.github.k1rakishou.chan.core.concurrency.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.features.toolbar.BackArrowMenuItem

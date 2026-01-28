@@ -1,6 +1,6 @@
 package com.github.k1rakishou.chan.core.helper
 
-import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
+import com.github.k1rakishou.chan.core.concurrency.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.common.rethrowCancellationException

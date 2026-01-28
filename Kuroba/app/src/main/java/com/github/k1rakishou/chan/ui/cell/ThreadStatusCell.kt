@@ -9,8 +9,8 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
-import com.github.k1rakishou.chan.core.base.ThrottleFirstCoroutineExecutor
+import com.github.k1rakishou.chan.core.concurrency.RendezvousCoroutineExecutor
+import com.github.k1rakishou.chan.core.concurrency.ThrottleFirstCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager

@@ -1,7 +1,7 @@
 package com.github.k1rakishou.chan.core.manager
 
 import androidx.annotation.GuardedBy
-import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
+import com.github.k1rakishou.chan.core.concurrency.RendezvousCoroutineExecutor
 import com.github.k1rakishou.common.FirewallType
 import com.github.k1rakishou.common.domainOrHost
 import com.github.k1rakishou.common.errorMessageOrClassName

@@ -11,7 +11,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.ChanSettings.BoardPostViewMode
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
+import com.github.k1rakishou.chan.core.concurrency.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.image.ImageLoaderDeprecated
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.PostHighlightManager

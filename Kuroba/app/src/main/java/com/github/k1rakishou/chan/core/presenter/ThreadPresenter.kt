@@ -6,9 +6,9 @@ import android.widget.Toast
 import androidx.annotation.StringRes
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
-import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
-import com.github.k1rakishou.chan.core.base.ThrottlingCoroutineExecutorWithAccumulator
+import com.github.k1rakishou.chan.core.concurrency.RendezvousCoroutineExecutor
+import com.github.k1rakishou.chan.core.concurrency.SerializedCoroutineExecutor
+import com.github.k1rakishou.chan.core.concurrency.ThrottlingCoroutineExecutorWithAccumulator
 import com.github.k1rakishou.chan.core.helper.ChanLoadProgressEvent
 import com.github.k1rakishou.chan.core.helper.ChanLoadProgressNotifier
 import com.github.k1rakishou.chan.core.helper.ChanThreadTicker

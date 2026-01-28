@@ -8,7 +8,7 @@ import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
+import com.github.k1rakishou.chan.core.concurrency.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.receiver.SelectedFilePickerBroadcastReceiver
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString

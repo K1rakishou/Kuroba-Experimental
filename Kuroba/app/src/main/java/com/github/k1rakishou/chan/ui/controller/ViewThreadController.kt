@@ -4,7 +4,7 @@ import android.content.Context
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.R.string.action_reload
-import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
+import com.github.k1rakishou.chan.core.concurrency.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
@@ -34,7 +34,6 @@ import com.github.k1rakishou.chan.ui.layout.ThreadLayout
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout.ThreadLayoutCallback
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shareLink
 import com.github.k1rakishou.chan.utils.SharingUtils.getUrlForSharing
 import com.github.k1rakishou.core_logger.Logger

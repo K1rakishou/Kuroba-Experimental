@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.core.base
+package com.github.k1rakishou.chan.core.concurrency
 
 class RecalculatableLazy<T>(val initializer: () -> T) {
   @Volatile

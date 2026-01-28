@@ -3,7 +3,7 @@ package com.github.k1rakishou.chan.core.manager
 import android.content.Context
 import android.net.Uri
 import androidx.annotation.GuardedBy
-import com.github.k1rakishou.chan.core.base.LazySuspend
+import com.github.k1rakishou.chan.core.concurrency.LazySuspend
 import com.github.k1rakishou.chan.features.thirdeye.data.BooruSetting
 import com.github.k1rakishou.chan.features.thirdeye.data.ThirdEyeSettings
 import com.github.k1rakishou.common.AppConstants

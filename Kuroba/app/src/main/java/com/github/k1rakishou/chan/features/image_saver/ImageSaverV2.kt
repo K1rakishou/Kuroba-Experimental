@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.core.content.FileProvider
-import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
+import com.github.k1rakishou.chan.core.concurrency.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openIntent

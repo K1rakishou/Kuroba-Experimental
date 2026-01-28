@@ -1,7 +1,7 @@
 package com.github.k1rakishou.chan.ui.cell
 
 import com.github.k1rakishou.ChanSettings
-import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
+import com.github.k1rakishou.chan.core.concurrency.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.PostFilterHighlightManager

@@ -37,10 +37,10 @@ import androidx.appcompat.widget.AppCompatImageView
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.base.Debouncer
-import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
+import com.github.k1rakishou.chan.core.concurrency.Debouncer
+import com.github.k1rakishou.chan.core.concurrency.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.image.ImageLoaderDeprecated
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder

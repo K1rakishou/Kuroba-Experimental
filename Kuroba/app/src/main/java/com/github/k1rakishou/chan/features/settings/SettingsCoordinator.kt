@@ -2,11 +2,11 @@ package com.github.k1rakishou.chan.features.settings
 
 import android.content.Context
 import com.airbnb.epoxy.EpoxyRecyclerView
-import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
-import com.github.k1rakishou.chan.core.base.LazySuspend
-import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.cache.downloader.ChunkedMediaDownloader
+import com.github.k1rakishou.chan.core.concurrency.KurobaCoroutineScope
+import com.github.k1rakishou.chan.core.concurrency.LazySuspend
+import com.github.k1rakishou.chan.core.concurrency.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.helper.AppRestarter
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.helper.ProxyStorage

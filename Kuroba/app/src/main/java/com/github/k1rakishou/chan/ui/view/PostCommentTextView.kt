@@ -10,7 +10,7 @@ import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.textclassifier.TextClassifier
 import androidx.appcompat.widget.AppCompatTextView
-import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
+import com.github.k1rakishou.chan.core.concurrency.KurobaCoroutineScope
 import com.github.k1rakishou.chan.utils.ViewUtils.emulateMotionEvent
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.isActionUpOrCancel

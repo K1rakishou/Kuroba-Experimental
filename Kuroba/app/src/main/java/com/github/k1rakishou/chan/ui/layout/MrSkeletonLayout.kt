@@ -7,9 +7,9 @@ import android.widget.FrameLayout
 import androidx.core.view.GravityCompat
 import androidx.core.view.updateLayoutParams
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
+import com.github.k1rakishou.chan.core.concurrency.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.image.loader.KurobaImageLoader
 import com.github.k1rakishou.chan.core.image.loader.KurobaImageSize
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager

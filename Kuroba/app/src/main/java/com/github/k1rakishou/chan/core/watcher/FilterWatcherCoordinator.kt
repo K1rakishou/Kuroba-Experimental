@@ -8,7 +8,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.await
 import com.github.k1rakishou.ChanSettings
-import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
+import com.github.k1rakishou.chan.core.concurrency.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AppConstants

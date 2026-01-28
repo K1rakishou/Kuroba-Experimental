@@ -21,7 +21,7 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.GravityCompat
 import androidx.core.widget.TextViewCompat
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
+import com.github.k1rakishou.chan.core.concurrency.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.image.ImageLoaderDeprecated
 import com.github.k1rakishou.chan.core.manager.PostHighlightManager
 import com.github.k1rakishou.chan.core.manager.SeenPostsManager

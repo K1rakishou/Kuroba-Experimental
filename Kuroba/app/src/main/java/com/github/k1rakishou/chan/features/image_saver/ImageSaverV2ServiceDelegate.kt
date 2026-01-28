@@ -3,10 +3,10 @@ package com.github.k1rakishou.chan.features.image_saver
 import android.net.Uri
 import androidx.annotation.GuardedBy
 import androidx.core.app.NotificationManagerCompat
-import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.okhttp.DownloaderOkHttpClient
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
+import com.github.k1rakishou.chan.core.concurrency.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.helper.ImageSaverFileManagerWrapper
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.DownloadedImagesManager

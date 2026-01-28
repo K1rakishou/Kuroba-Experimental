@@ -4,7 +4,7 @@ import android.content.Context
 import android.widget.LinearLayout
 import android.widget.RadioGroup
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
+import com.github.k1rakishou.chan.core.concurrency.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.ProxyStorage
 import com.github.k1rakishou.chan.core.manager.SiteManager

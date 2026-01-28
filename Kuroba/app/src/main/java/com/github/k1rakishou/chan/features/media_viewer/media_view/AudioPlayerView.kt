@@ -11,9 +11,9 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
+import com.github.k1rakishou.chan.core.concurrency.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerControllerViewModel
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerToolbar

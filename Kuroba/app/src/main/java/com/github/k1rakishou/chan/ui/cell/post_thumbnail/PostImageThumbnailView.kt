@@ -16,9 +16,9 @@ import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.withTranslation
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
+import com.github.k1rakishou.chan.core.concurrency.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.image.ImageLoaderDeprecated
 import com.github.k1rakishou.chan.core.manager.PrefetchState
 import com.github.k1rakishou.chan.core.manager.PrefetchState.PrefetchCompleted

@@ -1,6 +1,6 @@
 package com.github.k1rakishou.chan.features.media_viewer.helper
 
-import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
+import com.github.k1rakishou.chan.core.concurrency.KurobaCoroutineScope
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerAdapter
 import com.github.k1rakishou.chan.ui.view.OptionalSwipeViewPager
 import com.github.k1rakishou.core_logger.Logger

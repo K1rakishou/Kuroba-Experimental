@@ -2,7 +2,7 @@ package com.github.k1rakishou.chan.core.manager
 
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.ChanSettings
-import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
+import com.github.k1rakishou.chan.core.concurrency.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.helper.OneShotRunnable
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.mutableListWithCap

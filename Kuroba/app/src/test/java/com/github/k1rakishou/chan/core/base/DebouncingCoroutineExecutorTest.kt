@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.core.base
 
+import com.github.k1rakishou.chan.core.concurrency.DebouncingCoroutineExecutor
 import junit.framework.Assert.assertEquals
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle

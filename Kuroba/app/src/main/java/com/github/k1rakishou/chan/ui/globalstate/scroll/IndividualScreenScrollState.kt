@@ -6,7 +6,7 @@ import androidx.compose.runtime.FloatState
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.ui.unit.dp
 import androidx.core.animation.addListener
-import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
+import com.github.k1rakishou.chan.core.concurrency.KurobaCoroutineScope
 import com.github.k1rakishou.chan.ui.helper.AppResources
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.quantize

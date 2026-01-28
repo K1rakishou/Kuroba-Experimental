@@ -7,13 +7,13 @@ import android.view.View
 import androidx.annotation.CallSuper
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.cache.downloader.CancelableDownload
 import com.github.k1rakishou.chan.core.cache.downloader.ChunkedMediaDownloader
 import com.github.k1rakishou.chan.core.cache.downloader.DownloadRequestExtraInfo
 import com.github.k1rakishou.chan.core.cache.downloader.FileCacheListener
+import com.github.k1rakishou.chan.core.concurrency.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.RevealedSpoilerImagesManager
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager

@@ -10,7 +10,7 @@ import androidx.core.text.TextDirectionHeuristicsCompat
 import androidx.core.text.buildSpannedString
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.base.RecalculatableLazy
+import com.github.k1rakishou.chan.core.concurrency.RecalculatableLazy
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.cell.helpers.PostNumberClickableSpan
 import com.github.k1rakishou.chan.ui.cell.helpers.PosterIdClickableSpan
@@ -47,7 +47,7 @@ import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.util.ChanPostUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.util.*
+import java.util.Locale
 
 data class PostCellData(
   val chanDescriptor: ChanDescriptor,

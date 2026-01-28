@@ -1,6 +1,6 @@
 package com.github.k1rakishou.chan.core.helper
 
-import com.github.k1rakishou.chan.core.base.Debouncer
+import com.github.k1rakishou.chan.core.concurrency.Debouncer
 import com.github.k1rakishou.common.datastructure.RingBuffer
 
 class CommentEditingHistory(
