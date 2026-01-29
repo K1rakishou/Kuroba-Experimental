@@ -94,7 +94,7 @@ class KurobaCookieTest {
     assertEquals("57efc99ef502a4338d05d5493a1a40b417ddf5239e594c1b9788d2a4b2cb2500", kurobaCookie.value)
     kurobaCookie.expiration as KurobaCookie.Expiration.Session
 
-    assertEquals(null, kurobaCookie.path)
+    assertEquals("/", kurobaCookie.path)
   }
 
   @Test
@@ -106,5 +106,20 @@ class KurobaCookieTest {
     val kurobaCookie = KurobaCookie.fromRawCookie(cookie, "POW_ID")!!
     assertEquals("", kurobaCookie.value)
     kurobaCookie.expiration as KurobaCookie.Expiration.Session
+  }
+
+  @Test
+  fun `regression with Kohlchan cookies, expiration was parsed as Session`() {
+    val cookie = """
+      bypass=697b7bdcb5873aa82f4ddde6; expires=Thu, 05 Feb 2026 15:31:22 GMT; path=/
+    """.trimIndent()
+
+    val kurobaCookie = KurobaCookie.fromRawCookie(cookie, "bypass")!!
+    assertEquals("697b7bdcb5873aa82f4ddde6", kurobaCookie.value)
+
+    kurobaCookie.expiration as KurobaCookie.Expiration.Time
+    assertEquals(kurobaCookie.expiration.expirationTimeMillis, 1770305482000L)
+
+    assertEquals("/", kurobaCookie.path)
   }
 }

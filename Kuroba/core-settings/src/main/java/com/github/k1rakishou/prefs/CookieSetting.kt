@@ -22,6 +22,7 @@ class CookieSetting(
   init {
     val cookie = get()
     if (cookie != null && cookie.expiration is KurobaCookie.Expiration.Session) {
+      Logger.debug(TAG) { "Removing session cookie '${key}'" }
       // Remove Session cookies at app startup
       setSync(null)
     }
@@ -67,6 +68,7 @@ class CookieSetting(
     }
 
     _cached.set(value)
+    settingState.onNext(value)
   }
 
   override fun setSync(value: KurobaCookie?) {
@@ -82,6 +84,7 @@ class CookieSetting(
     }
 
     _cached.set(value)
+    settingState.onNext(value)
   }
 
   private fun cookieToString(kurobaCookie: KurobaCookie?): String? {

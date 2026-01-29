@@ -108,11 +108,11 @@ data class KurobaCookie(
       var resultPath: String = "/"
 
       for (cookiePart in cookieParts) {
-        val splitCookiePart = cookiePart.splitOnce("=")
+        val splitCookiePart = cookiePart.trim().splitOnce("=")
           ?: continue
 
-        val key = splitCookiePart.first
-        val value = splitCookiePart.second
+        val key = splitCookiePart.first.trim()
+        val value = splitCookiePart.second.trim()
 
         if (key == expectedKey) {
           resultValue = value
