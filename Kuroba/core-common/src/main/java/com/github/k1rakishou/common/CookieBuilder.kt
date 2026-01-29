@@ -88,7 +88,7 @@ class CookieBuilder(
 
   private fun parseCookies(cookies: String): List<Cookie> {
     return cookies
-      .split("; ")
+      .split(";")
       .map { part ->
         val split = part.splitOnce("=")
           ?: error("Bad cookie part: '${part}'")

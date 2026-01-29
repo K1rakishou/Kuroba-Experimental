@@ -26,8 +26,6 @@ import com.github.k1rakishou.common.addOrReplaceCookieHeader
 import com.github.k1rakishou.common.awaitSilently
 import com.github.k1rakishou.common.isContentTypeApplicationJson
 import com.github.k1rakishou.common.isNotNullNorBlank
-import com.github.k1rakishou.common.isNotNullNorEmpty
-import com.github.k1rakishou.common.removeAllAfterFirstInclusive
 import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -43,6 +41,8 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.Headers
+import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MultipartBody
 import okhttp3.Request
 import okhttp3.Response
@@ -60,9 +60,9 @@ class LynxchanCaptchaLayoutViewModel(
   private val _captchaInfoToShow = mutableStateOf<AsyncData<LynxchanCaptchaFull>>(AsyncData.NotInitialized)
   val captchaInfoToShow: State<AsyncData<LynxchanCaptchaFull>>
     get() = _captchaInfoToShow
-  private val _needProofOfWork = mutableStateOf(false)
-  val needProofOfWork: State<Boolean>
-    get() = _needProofOfWork
+  private val _needHashCashSolution = mutableStateOf(false)
+  val needHashCashSolution: State<Boolean>
+    get() = _needHashCashSolution
   private val _captchaBlock = mutableStateOf<LynxchanCaptchaBlock?>(null)
   val captchaBlock: State<LynxchanCaptchaBlock?>
     get() = _captchaBlock
@@ -87,7 +87,8 @@ class LynxchanCaptchaLayoutViewModel(
 
   fun requestCaptcha(
     lynxchanCaptcha: SiteAuthentication.CustomCaptcha.LynxchanCaptcha?,
-    chanDescriptor: ChanDescriptor
+    chanDescriptor: ChanDescriptor,
+    resetCaptchaCookies: Boolean
   ) {
     if (lynxchanCaptcha == null) {
       _captchaInfoToShow.value = AsyncData.Error(LynxchanCaptchaError("lynxchanCaptcha is null"))
@@ -98,6 +99,9 @@ class LynxchanCaptchaLayoutViewModel(
     _activeRequestCaptchaJob = viewModelScope.launch(Dispatchers.IO) {
       try {
         _captchaInfoToShow.value = AsyncData.Loading
+        _needHashCashSolution.value = false
+        _captchaBlock.value = null
+        currentInputValue.value = ""
 
         val site = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
         if (site == null || site !is LynxchanSite) {
@@ -108,6 +112,10 @@ class LynxchanCaptchaLayoutViewModel(
           }
 
           throw LynxchanCaptchaError(message)
+        }
+
+        if (resetCaptchaCookies) {
+          site.captchaIdCookie.set(null)
         }
 
         val needBlockBypass = needBlockBypass(
@@ -173,13 +181,13 @@ class LynxchanCaptchaLayoutViewModel(
           .url(verifyCaptchaEndpoint)
           .post(requestBody)
 
-        val chan8Moe = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor()) as? Chan8Moe
-        if (chan8Moe == null) {
-          throw LynxchanCaptchaError("Site is not active")
+        val site = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
+        if (site == null) {
+          throw LynxchanCaptchaError("Site ${chanDescriptor.siteDescriptor()} is not active")
         }
 
-        chan8Moe.requestModifier().modifyGenericRequest(
-          site = chan8Moe,
+        site.requestModifier().modifyGenericRequest(
+          site = site,
           requestBuilder = requestBuilder
         )
 
@@ -191,13 +199,27 @@ class LynxchanCaptchaLayoutViewModel(
         val responseString = response.body.string()
 
         if (response.isContentTypeApplicationJson()) {
-          // {"status":"hashcash","data":null}
           val blockBypassStatus = moshi.adapter(BlockBypassStatus::class.java).fromJson(responseString)
           if (blockBypassStatus == null) {
             throw LynxchanCaptchaError("Failed to extract BlockBypassStatus from '$responseString'")
           }
 
-          if (needBlockBypass && blockBypassStatus.data == null && chan8Moe is LynxchanSite) {
+          if (blockBypassStatus.isHashcash) {
+            val lynxchanCaptchaFull = (_captchaInfoToShow.value as? AsyncData.Data)?.data
+            if (lynxchanCaptchaFull == null) {
+              return@Try VerifyCaptchaResult.Failure
+            }
+
+            _needHashCashSolution.value = true
+            return@Try VerifyCaptchaResult.NotSupported
+          }
+
+          if (blockBypassStatus.isError) {
+            val errorMessage = blockBypassStatus.data
+            throw LynxchanCaptchaError("Error. Message: \'$errorMessage\'")
+          }
+
+          if (needBlockBypass && blockBypassStatus.data == null && site is Chan8Moe) {
             val bypass = response.headers("Set-Cookie")
               .firstOrNull { setCookie -> setCookie.startsWith("bypass=") }
               ?.let { bypassCookie -> KurobaCookie.fromRawCookie(bypassCookie, "bypass")?.value }
@@ -219,24 +241,6 @@ class LynxchanCaptchaLayoutViewModel(
             throw LynxchanCaptchaError("bypassCookie is too short '${bypass.asFormattedToken()}'")
           }
 
-          if (blockBypassStatus.isHashcash) {
-            val lynxchanCaptchaFull = (_captchaInfoToShow.value as? AsyncData.Data)?.data
-            if (lynxchanCaptchaFull == null) {
-              return@Try VerifyCaptchaResult.Failure
-            }
-
-            // Not sure about this one
-            _needProofOfWork.value = true
-            throw LynxchanCaptchaPOWError()
-          }
-
-          if (blockBypassStatus.isError) {
-            val errorMessage = blockBypassStatus.data
-            if (errorMessage.isNotNullNorEmpty()) {
-              throw LynxchanCaptchaError("Error. Message=\'$errorMessage\'")
-            }
-          }
-
           // fallthrough
         }
 
@@ -250,6 +254,85 @@ class LynxchanCaptchaLayoutViewModel(
       }
     }.onError { error ->
       Logger.error(TAG, error) { "Failed to verify captcha" }
+    }
+  }
+
+  fun validateHashCashUrl(text: CharSequence): String? {
+    // https://kohlchan.net/addon.js/hashcash?action=save&b=123&h=546&e=100
+    val url = text.toString().toHttpUrlOrNull()
+    if (url == null) {
+      return "Not a HTTP url"
+    }
+
+    if (url.queryParameter("b").isNullOrBlank()) {
+      return "Missing 'b' parameter"
+    }
+
+    if (url.queryParameter("h").isNullOrBlank()) {
+      return "Missing 'h' parameter"
+    }
+
+    if (url.queryParameter("e").isNullOrBlank()) {
+      return "Missing 'e' parameter"
+    }
+
+    return null
+  }
+
+  suspend fun applyHashCashCookiesByUrl(
+    chanDescriptor: ChanDescriptor,
+    url: HttpUrl
+  ): ModularResult<KurobaCookie?> {
+    return ModularResult.Try {
+      val lynxchanSite = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
+        ?: throw LynxchanCaptchaError("Site ${chanDescriptor.siteDescriptor()} does not exist or not active")
+
+      lynxchanSite as LynxchanSite
+
+      val requestBuilder = Request.Builder()
+        .url(url)
+        .get()
+
+      lynxchanSite.requestModifier()
+        .modifyGenericRequest(lynxchanSite, requestBuilder)
+
+      val response = proxiedOkHttpClient.okHttpClient()
+        .suspendCall(requestBuilder.build())
+
+      if (!response.isSuccessful) {
+        throw LynxchanCaptchaError("Response is not successful: ${response.code}")
+      }
+
+      val cookies = response.headers("Set-Cookie")
+
+      val bypassCookie = cookies
+        .firstOrNull { cookie -> cookie.startsWith("bypass=") }
+        ?.let { bypass -> KurobaCookie.fromRawCookie(bypass, "bypass") }
+      val extraCookie = cookies
+        .firstOrNull { cookie -> cookie.startsWith("extraCookie=") }
+        ?.let { extraCookie -> KurobaCookie.fromRawCookie(extraCookie, "extraCookie") }
+
+      if (bypassCookie == null) {
+        Logger.debug(TAG) { "All cookies: ${cookies.joinToString(separator = "; ")}" }
+        throw LynxchanCaptchaError("Failed to parse bypass cookie")
+      }
+
+      if (extraCookie == null) {
+        Logger.debug(TAG) { "All cookies: ${cookies.joinToString(separator = "; ")}" }
+        throw LynxchanCaptchaError("Failed to parse bypass extraCookie cookie")
+      }
+
+      lynxchanSite.bypassCookie.setSync(bypassCookie)
+      lynxchanSite.extraCookie.setSync(extraCookie)
+
+      Logger.debug(TAG) { "Successfully received HashCash challenge cookies (site: ${lynxchanSite.siteDescriptor()})!" }
+
+      val captchaIdCookie = lynxchanSite.captchaIdCookie.get()
+      if (captchaIdCookie == null) {
+        return@Try null
+      }
+
+      return@Try captchaIdCookie
     }
   }
 
@@ -377,27 +460,12 @@ class LynxchanCaptchaLayoutViewModel(
         throw LynxchanCaptchaError("captchaIdCookieRaw is null or empty (captchaData: '${captchaData}')")
     }
 
-    val captchaId = captchaIdCookieRaw.split("; ")
-      .firstOrNull { part -> part.startsWith("captchaid=") }
-      ?.removePrefix("captchaid=")
-
-    if (captchaId.isNullOrBlank()) {
-      throw LynxchanCaptchaError("captchaId is null or empty (captchaIdCookieRaw: '${captchaIdCookieRaw}')")
-    }
-
     val kurobaCookie = KurobaCookie.fromRawCookie(captchaIdCookieRaw, "captchaid")
       ?: throw LynxchanCaptchaError("Failed to create KurobaCookie from '${captchaIdCookieRaw}'")
 
-    val captchaExpirationTimeMillis = captchaData
-      .firstOrNull { captchaCookie -> captchaCookie.startsWith("captchaexpiration=", ignoreCase = true) }
-      ?.removePrefix("captchaexpiration=")
-      ?.removeAllAfterFirstInclusive(delimiter = ';')
-      ?.let { captchaExpirationString -> LYNXCHAN_CAPTCHA_DATE_PARSER.parseDateTime(captchaExpirationString).millis }
-
     return LynxchanCaptchaFull.CaptchaInfo(
-      captchaId = captchaId,
-      kurobaCookie = kurobaCookie,
-      captchaExpirationTimeMillis = captchaExpirationTimeMillis
+      captchaId = kurobaCookie.value,
+      kurobaCookie = kurobaCookie
     )
   }
 
@@ -409,7 +477,9 @@ class LynxchanCaptchaLayoutViewModel(
   ): ModularResult<Unit> {
     return ModularResult.Try {
       val pow = coroutineScope {
-        coroutineContext[Job.Key]?.invokeOnCompletion { _captchaBlock.value = null }
+        coroutineContext[Job.Key]
+          ?.invokeOnCompletion { _captchaBlock.value = null }
+
         val solution = CompletableDeferred<Int>()
 
         launch {
@@ -531,6 +601,7 @@ class LynxchanCaptchaLayoutViewModel(
   sealed interface VerifyCaptchaResult {
     data object SolvedCaptcha : VerifyCaptchaResult
     data object SolvedProofOfWork : VerifyCaptchaResult
+    data object NotSupported : VerifyCaptchaResult
     data object Failure : VerifyCaptchaResult
   }
 
@@ -541,7 +612,6 @@ class LynxchanCaptchaLayoutViewModel(
   ) {
     data class CaptchaInfo(
       val captchaId: String,
-      val captchaExpirationTimeMillis: Long?,
       val kurobaCookie: KurobaCookie,
     )
   }
@@ -594,11 +664,8 @@ class LynxchanCaptchaLayoutViewModel(
     private const val TAG = "LynxchanCaptchaLayoutViewModel"
     private const val CAPTCHA_SOLVED_MSG = "<title>Captcha solved.</title>"
 
-    private var Chan8MoeCaptchaTimeFormatter =
+    private val Chan8MoeCaptchaTimeFormatter =
       DateTimeFormat.forPattern("EEE MMM dd yyyy HH:mm:ss 'GMT' ZZ '(Indochina Time)'")
-
-    //                                                            Thu, 18 Nov 2021 12:02:36 GMT
-    private val LYNXCHAN_CAPTCHA_DATE_PARSER = DateTimeFormat.forPattern("EEE, dd MMM yyyy HH:mm:ss zzz")
   }
 
 }

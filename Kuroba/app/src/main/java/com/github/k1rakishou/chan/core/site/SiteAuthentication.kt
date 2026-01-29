@@ -46,6 +46,7 @@ class SiteAuthentication private constructor(val type: Type) {
       val bypassEndpoint: HttpUrl,
       val renewBypassEndpoint: HttpUrl,
       val validateBypassEndpoint: HttpUrl,
+      val hashCashValidationEndpoint: HttpUrl
     ) : CustomCaptcha()
   }
 

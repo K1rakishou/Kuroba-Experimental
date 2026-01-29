@@ -101,27 +101,6 @@ class CookieSetting(
     }
   }
 
-  private fun KurobaCookie.expired(currentTimeMillis: Long): Boolean {
-    when (val expiration = this.expiration) {
-      KurobaCookie.Expiration.Session -> {
-        // Session cookies are removed at the start of the app
-        return false
-      }
-      KurobaCookie.Expiration.Never -> {
-        // This is for cookies that are only ever deleted manually, so return false here
-        return false
-      }
-      is KurobaCookie.Expiration.Time -> {
-        if (currentTimeMillis >= expiration.expirationTimeMillis) {
-          // Cookie expired
-          return true
-        }
-      }
-    }
-
-    return false
-  }
-
   companion object {
     private const val TAG = "CookieSetting"
   }

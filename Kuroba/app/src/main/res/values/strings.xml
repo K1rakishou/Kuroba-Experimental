@@ -1162,6 +1162,7 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="captcha_layout_v2_verify_button_text">Verify</string>
     <string name="captcha_layout_v2_use_old_captcha">Use old\ncaptcha</string>
 
+    <string name="captcha_layout_reset">Reset</string>
     <string name="captcha_layout_reload">Reload</string>
     <string name="captcha_layout_copy">Copy</string>
     <string name="captcha_layout_verify">Verify</string>
@@ -1527,13 +1528,15 @@ Actual error: \'%1$s\'</string>
     <string name="chan8moe_pow_token">8chan.moe Proof-of-Work token</string>
     <string name="chan8moe_pow_id">8chan.moe Proof-of-Work id</string>
 
-    <string name="lynxchan_proof_of_work_message">Lynxchan Proof–of–work is required in order to post. This is an additional anti–spam check and is usually required when Tor/VPN/proxy detected. Proof-of-work is not supported by the application because you need to solve a complex problem which requires a lot of computation power and time when solved on PC (~30-40 minutes on Threadripper 2950X with 16 cores). You have to do that on PC and then use the resulting cookies on the phone for posting. To do that, open any thread and try to post. After solving the problem, you will need to copy the following 3 cookies: \'captchaid\', \'bypass\' and \'extraCookie\' into the current site settings.</string>
+    <string name="lynxchan_hashcash_required">Lynxchan HashCash Proof-of-Work is required in order to post. This is an additional anti–spam check and is usually required when Tor/VPN/proxy detected. HashCash requires you to solve a complex cryptographic problem which requires a lot of computation power and time even when solved on PC</string>
+    <string name="lynxchan_hashcash_description">Solving HashCash POW on a mobile phone doesn\'t make much sense, because it takes 20-30 minutes on 7950X3D. So, you need to solve HashCash on PC and then copy the url, which you will get at the end, into the below field, then click Verify</string>
+    <string name="lynxchan_hashcash_textfield_label_url">HashCash solution url</string>
     <string name="lynxchan_tor_proxy_vpv_detected_message">You need a block bypass to post</string>
     <string name="lynxchan_regular_captcha_message">Regular captcha</string>
     <string name="lynxchan_captcha_verification_error">Captcha verification error: %1$s</string>
     <string name="lynxchan_captcha_verification_not_successful">Captcha verification was not successful</string>
     <string name="lynxchan_captcha_verification_block_bypassed">Block bypassed, now solve the regular captcha</string>
-    <string name="chan8moe_block_bypass_solve_message">Sometimes when trying to post on 8chan.moe it may ask you to solve a Proof–of-Work challenge (brutforce a hash until some condition is met).\nThis process is automatic, but it may take 5-10+ minutes (and some battery power).\nAlternatively, you can copy your browser\'s cookies into the app after solving it there.</string>
+    <string name="chan8moe_block_bypass_solve_message">Sometimes when trying to post on 8chan.moe it may ask you to solve a Proof–of-Work challenge (brutforce a hash until some condition is met).\nThis process is automatic, but it may take 5-10+ minutes (and some battery power).\nAlternatively, you can copy your browser\'s cookies into the app after solving it there</string>
 
     <string name="report_controller_report_post">Report post</string>
     <string name="report_controller_select_report_category">Select report category</string>

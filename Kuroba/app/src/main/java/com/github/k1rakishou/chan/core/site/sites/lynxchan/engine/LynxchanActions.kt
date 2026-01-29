@@ -100,7 +100,8 @@ open class LynxchanActions(
       solveCaptchaEndpoint = "${domain}/solveCaptcha.js".toHttpUrl(),
       bypassEndpoint = "${domain}/blockBypass.js?json=1".toHttpUrl(),
       renewBypassEndpoint = "${domain}/renewBypass.js?json=1".toHttpUrl(),
-      validateBypassEndpoint = "${domain}/validateBypass.js?json=1".toHttpUrl()
+      validateBypassEndpoint = "${domain}/validateBypass.js?json=1".toHttpUrl(),
+      hashCashValidationEndpoint = "${domain}/addon.js/hashcash/?action=get".toHttpUrl(),
     )
 
     return SiteAuthentication.customCaptcha(customCaptcha = customCaptcha)

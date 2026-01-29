@@ -14,7 +14,8 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Locale
+import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 class CaptchaHolder(
@@ -32,16 +33,16 @@ class CaptchaHolder(
   }
 
   @JvmOverloads
-  fun addNewToken(token: String, tokenLifetime: Long = RECAPTCHA_TOKEN_LIVE_TIME) {
-    addNewSolution(CaptchaSolution.SimpleTokenSolution(token), tokenLifetime)
+  fun addNewToken(token: String, tokenLifetimeMillis: Long = DEFAULT_TOKEN_LIVE_TIME) {
+    addNewSolution(CaptchaSolution.SimpleTokenSolution(token), tokenLifetimeMillis)
   }
 
   @JvmOverloads
-  fun addNewSolution(solution: CaptchaSolution, tokenLifetime: Long = RECAPTCHA_TOKEN_LIVE_TIME) {
+  fun addNewSolution(solution: CaptchaSolution, tokenLifetimeMillis: Long = DEFAULT_TOKEN_LIVE_TIME) {
     BackgroundUtils.ensureMainThread()
     removeNotValidTokens()
 
-    if (tokenLifetime <= 0) {
+    if (tokenLifetimeMillis <= 0) {
       return
     }
 
@@ -50,12 +51,12 @@ class CaptchaHolder(
         0,
         CaptchaInfo(
           solution = solution,
-          validUntil = tokenLifetime + System.currentTimeMillis()
+          validUntil = tokenLifetimeMillis + System.currentTimeMillis()
         )
       )
 
       Logger.d(TAG, "A new token has been added, validCount: ${captchaQueue.size}, " +
-              "solution=$solution, tokenLifetime=$tokenLifetime")
+              "solution=$solution, tokenLifetime=$tokenLifetimeMillis")
     }
 
     notifyListener()
@@ -169,7 +170,7 @@ class CaptchaHolder(
   companion object {
     private const val TAG = "CaptchaHolder"
 
-    val RECAPTCHA_TOKEN_LIVE_TIME = TimeUnit.MINUTES.toMillis(2)
+    val DEFAULT_TOKEN_LIVE_TIME = TimeUnit.MINUTES.toMillis(2)
   }
 }
 

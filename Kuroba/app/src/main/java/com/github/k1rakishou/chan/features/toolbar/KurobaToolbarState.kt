@@ -134,7 +134,7 @@ class KurobaToolbarState(
     get() = "Toolbar_${controllerKey.key}"
 
   fun init() {
-    Logger.debug(TAG) { "Toolbar '${toolbarKey}' is being initialized (${hashCode()})" }
+    Logger.debug(TAG) { "Toolbar '${toolbarKey}' is being initialized" }
 
     _destroyed = false
 

@@ -18,6 +18,41 @@ data class KurobaCookie(
   val expiration: Expiration,
   val path: String = "/"
 ) {
+  fun expired(currentTimeMillis: Long): Boolean {
+    when (val expiration = this.expiration) {
+      KurobaCookie.Expiration.Session -> {
+        // Session cookies are removed at the start of the app
+        return false
+      }
+      KurobaCookie.Expiration.Never -> {
+        // This is for cookies that are only ever deleted manually, so return false here
+        return false
+      }
+      is KurobaCookie.Expiration.Time -> {
+        if (currentTimeMillis >= expiration.expirationTimeMillis) {
+          // Cookie expired
+          return true
+        }
+      }
+    }
+
+    return false
+  }
+
+  fun expirationMillis(): Long? {
+    return when (val expiration = this.expiration) {
+      KurobaCookie.Expiration.Session -> {
+        return null
+      }
+      KurobaCookie.Expiration.Never -> {
+        Long.MAX_VALUE
+      }
+      is KurobaCookie.Expiration.Time -> {
+        expiration.expirationTimeMillis
+      }
+    }
+  }
+
   sealed interface Expiration {
     data object Session : Expiration
     data object Never : Expiration
@@ -43,7 +78,7 @@ data class KurobaCookie(
       .withZoneUTC()
 
     fun fromRawCookie(rawCookie: String, expectedKey: String): KurobaCookie? {
-      val cookieParts = rawCookie.split("; ")
+      val cookieParts = rawCookie.split(";")
       return fromCookieParts(cookieParts, expectedKey)
     }
 

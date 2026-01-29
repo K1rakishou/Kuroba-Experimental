@@ -23,7 +23,7 @@ class Chan8MoeProofOfWork(
       val found = AtomicBoolean(false)
       val result = CompletableDeferred<Int?>()
       val iterations = AtomicInteger(-1)
-      val numCoroutines = Runtime.getRuntime().availableProcessors()
+      val numCoroutines = (Runtime.getRuntime().availableProcessors() - 1).coerceAtLeast(1)
 
       repeat(numCoroutines) { coroutineId ->
         launch(Dispatchers.Default) {
