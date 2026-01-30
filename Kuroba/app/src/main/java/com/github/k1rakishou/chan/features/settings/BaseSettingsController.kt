@@ -8,6 +8,7 @@ import com.github.k1rakishou.chan.features.settings.setting.InputSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.MapSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.RangeSettingV2
+import com.github.k1rakishou.chan.features.setup.CookieCaptchaInputController
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.base.Controller
 import com.github.k1rakishou.chan.ui.controller.settings.RangeSettingUpdaterController
@@ -127,19 +128,16 @@ abstract class BaseSettingsController(
     cookieSettingV2: CookieSettingV2,
     rebuildScreenFunc: (Any?) -> Unit
   ) {
-    dialogFactory.createSimpleDialogWithInputAndResetButton(
+    val controller = CookieCaptchaInputController(
       context = context,
-      currentValue = cookieSettingV2.getCurrent()?.value,
-      defaultValue = cookieSettingV2.getDefault()?.value,
-      inputType = DialogFactory.DialogInputType.String,
-      titleText = cookieSettingV2.topDescription,
-      onValueEntered = { input ->
-        val text = input.ifBlank { null }
-
-        cookieSettingV2.updateSetting(text)
+      cookieSettingV2 = cookieSettingV2,
+      onOkClicked = { kurobaCookie ->
+        cookieSettingV2.updateSetting(kurobaCookie)
         rebuildScreenFunc(cookieSettingV2.getCurrent())
       }
     )
+
+    presentController(controller)
   }
 
   protected fun onInputValueEntered(

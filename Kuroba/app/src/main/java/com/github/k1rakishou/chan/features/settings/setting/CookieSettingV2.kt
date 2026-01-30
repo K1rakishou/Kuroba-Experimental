@@ -9,7 +9,7 @@ import com.github.k1rakishou.prefs.BooleanSetting
 import com.github.k1rakishou.prefs.CookieSetting
 
 class CookieSettingV2(
-  private val setting: CookieSetting
+  val setting: CookieSetting
 ) : SettingV2() {
   private var updateCounter = 0
 
@@ -29,7 +29,7 @@ class CookieSettingV2(
   fun getCurrent(): KurobaCookie? = setting.get()
   fun getDefault(): KurobaCookie? = setting.getDefault()
 
-  fun updateSetting(value: String?) {
+  fun updateSetting(value: KurobaCookie?) {
     update()
 
     if (value == null) {
@@ -37,7 +37,7 @@ class CookieSettingV2(
       return
     }
 
-    setting.set(setting.get()?.copy(value = value))
+    setting.set(value)
   }
 
   override fun isEnabled(): Boolean {
@@ -146,13 +146,6 @@ class CookieSettingV2(
           bottomDescriptionStringFunc
         ).mapNotNull { func -> func?.invoke() }
           .lastOrNull()
-
-        cookieSettingV2.bottomDescription = when (bottomDescResult) {
-          is Int -> context.getString(bottomDescResult as Int)
-          is String -> bottomDescResult as String
-          null -> null
-          else -> error("Bad bottomDescResult: $bottomDescResult")
-        }
 
         cookieSettingV2.bottomDescription = when (bottomDescResult) {
           is Int -> context.getString(bottomDescResult as Int)

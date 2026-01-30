@@ -53,6 +53,15 @@ data class KurobaCookie(
     }
   }
 
+  fun expirationTimeFormatted(): String {
+    val expirationMillis = expirationMillis()
+    if (expirationMillis == null) {
+      return ""
+    }
+
+    return HttpDateFormatter.print(expirationMillis)
+  }
+
   sealed interface Expiration {
     data object Session : Expiration
     data object Never : Expiration
@@ -72,10 +81,12 @@ data class KurobaCookie(
   companion object {
     private const val TAG = "KurobaCookie"
 
-    private val HttpDateFormatter = DateTimeFormat
+    val HttpDateFormatter = DateTimeFormat
       .forPattern("EEE, dd MMM yyyy HH:mm:ss 'GMT'")
       .withLocale(Locale.ENGLISH)
       .withZoneUTC()
+
+    val MillisPerMinute = 1000 * 60
 
     fun fromRawCookie(rawCookie: String, expectedKey: String): KurobaCookie? {
       val cookieParts = rawCookie.split(";")

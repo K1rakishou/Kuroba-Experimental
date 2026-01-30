@@ -76,6 +76,7 @@ import com.github.k1rakishou.chan.features.setup.BoardsSetupController
 import com.github.k1rakishou.chan.features.setup.ComposeBoardsController
 import com.github.k1rakishou.chan.features.setup.ComposeBoardsSelectorController
 import com.github.k1rakishou.chan.features.setup.CompositeCatalogsSetupController
+import com.github.k1rakishou.chan.features.setup.CookieCaptchaInputController
 import com.github.k1rakishou.chan.features.setup.SiteSettingsController
 import com.github.k1rakishou.chan.features.setup.SitesSetupController
 import com.github.k1rakishou.chan.features.setup.epoxy.EpoxyBoardView
@@ -287,6 +288,7 @@ interface ActivityComponent : ActivityDependencies {
   fun inject(createSoundMediaController: CreateSoundMediaController)
   fun inject(kurobaComposeDialogController: KurobaComposeDialogController)
   fun inject(kurobaAlertController: KurobaAlertController)
+  fun inject(cookieCaptchaInputController: CookieCaptchaInputController)
 
   fun inject(colorizableBarButton: ColorizableBarButton)
   fun inject(colorizableButton: ColorizableButton)

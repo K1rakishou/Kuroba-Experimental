@@ -1618,6 +1618,12 @@ Actual error: \'%1$s\'</string>
     <string name="gesture_exclusion_zone_dialog_title">Android 10 gesture zone blockers</string>
     <string name="gesture_exclusion_zone_dialog_description">On Android 10 and above, when gesture system navigation is enabled (in Android settings), in order to avoid gesture conflicts with some UI elements (right now only enabled when Reply layout is opened), special gesture exclusion zones are used that block the system gestures based on where the last touch position was. When hitting such zone, it will be highlighted for a short period of time so you can visually see it and adjust your next touch position depending on whether you actually want to trigger system navigation gesture or not. If you do want to perform a system navigation gesture then just do it outside of the zone. Due to how the API for gesture exclusion zones is designed the first touch will always trigger the system navigation gesture. If you touch the same place again (or within a certain vertical distance from the last touch) the system navigation gesture will be ignored. Not the best solution, but such is the API Google has provided. The previous implementation was removed because it wasn\'t very flexible since the zones were global for all screens.</string>
 
+    <string name="cookie_captcha_input_controller_expiration_description">Use negative value for a cookie that has no expiration, zero for a session cookie and a positive value for a duration (current time + duration)</string>
+    <string name="cookie_captcha_input_controller_path_description">What url path the cookie is applied to</string>
+    <string name="cookie_captcha_input_controller_value">Value</string>
+    <string name="cookie_captcha_input_controller_lifetime">Lifetime in minutes %1$s</string>
+    <string name="cookie_captcha_input_controller_path">Path</string>
+
     <string name="not_allowed_during_halloween">You are not allowed to do this</string>
     <string name="setting_show_prefetch_loading_indicator_title">Show loading indicator for prefetching images</string>
     <string name="epoxy_no_settings_found_by_query">No settings were found by query \"%1$s\"</string>

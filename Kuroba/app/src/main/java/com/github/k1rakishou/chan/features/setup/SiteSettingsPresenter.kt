@@ -28,6 +28,7 @@ import com.github.k1rakishou.chan.features.settings.setting.InputSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.MapSettingV2
+import com.github.k1rakishou.common.KurobaCookie
 import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
@@ -201,14 +202,37 @@ class SiteSettingsPresenter(
                 inputType = DialogFactory.DialogInputType.String,
                 topDescriptionStringFunc = { siteSetting.settingTitle },
                 bottomDescriptionStringFunc = {
-                  buildString {
+                  return@createBuilder buildString {
                     if (siteSetting.settingDescription != null) {
                       appendLine(siteSetting.settingDescription)
                     }
 
-                    val currentSetting = siteSetting.setting.get()?.value
-                    if (currentSetting.isNotNullNorBlank()) {
-                      appendLine(currentSetting)
+                    val kurobaCookie = siteSetting.setting.get()
+                    if (kurobaCookie == null) {
+                      return@buildString
+                    }
+
+                    appendLine()
+
+                    val value = kurobaCookie.value
+                    if (value.isNotNullNorBlank()) {
+                      appendLine("Value: ${value}")
+                    }
+
+                    when (kurobaCookie.expiration) {
+                      KurobaCookie.Expiration.Never -> appendLine("Expires: never")
+                      KurobaCookie.Expiration.Session -> appendLine("Expires: end of session")
+                      is KurobaCookie.Expiration.Time -> {
+                        val expirationDateFormatted = kurobaCookie.expirationTimeFormatted()
+                        if (expirationDateFormatted.isNotNullNorBlank()) {
+                          appendLine("Expires: ${expirationDateFormatted}")
+                        }
+                      }
+                    }
+
+                    val path = kurobaCookie.path
+                    if (path.isNotNullNorBlank()) {
+                      appendLine("Path: ${path}")
                     }
                   }
                 }
