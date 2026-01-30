@@ -2783,13 +2783,19 @@ class ThreadPresenter @Inject constructor(
 
   private suspend fun showPosts(refreshPostPopupHelperPosts: Boolean = false) {
     if (!isBound) {
-      Logger.d(TAG, "showPosts() isBound==false")
+      Logger.warning(TAG) { "showPosts() isBound: false" }
       return
     }
 
     val descriptor = currentChanDescriptor
     if (descriptor == null) {
-      Logger.d(TAG, "showPosts() currentChanDescriptor==null")
+      Logger.warning(TAG) { "showPosts() currentChanDescriptor is null" }
+      return
+    }
+
+    val callback = threadPresenterCallback
+    if (callback == null) {
+      Logger.warning(TAG) { "showPosts() callback is null" }
       return
     }
 
@@ -2799,7 +2805,7 @@ class ThreadPresenter @Inject constructor(
     // their replies have the correct postlinkable types (QUOTE_TO_HIDDEN_OR_REMOVED_POST)
     val additionalPostsToReparse = mutableSetOf<PostDescriptor>()
 
-    threadPresenterCallback?.showPostsForChanDescriptor(
+    callback.showPostsForChanDescriptor(
       descriptor = descriptor,
       filter = PostsFilter(
         chanLoadProgressNotifier = chanLoadProgressNotifier,

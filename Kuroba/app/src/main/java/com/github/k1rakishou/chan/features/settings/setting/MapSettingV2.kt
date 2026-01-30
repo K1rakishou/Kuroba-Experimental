@@ -1,7 +1,6 @@
 package com.github.k1rakishou.chan.features.settings.setting
 
 import android.content.Context
-import com.github.k1rakishou.Setting
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.features.settings.SettingsIdentifier
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
@@ -28,7 +27,7 @@ class MapSettingV2(
     private set
 
   fun getCurrent(): String? = setting?.get(mapKey)
-  fun getDefault(): Map<String, String>? = setting?.default
+  fun getDefault(): Map<String, String>? = setting?.getDefault()
 
   fun updateSetting(value: String) {
     update()

@@ -133,7 +133,7 @@ class ReplyLayoutViewModel(
 
   val drawerAppearanceEventFlow: StateFlow<DrawerAppearanceEvent>
     get() = globalUiStateHolder.drawer.drawerAppearanceEventFlow
-  val newReplyLayoutTutorialFinished: StateFlow<Boolean> = PersistableChanState.newReplyLayoutTutorialFinished.listenForChanges()
+  val newReplyLayoutTutorialFinished: StateFlow<Boolean> = PersistableChanState.newReplyLayoutTutorialFinished.listenForChangesDeprecated()
     .asFlow()
     .stateIn(
       scope = viewModelScope,

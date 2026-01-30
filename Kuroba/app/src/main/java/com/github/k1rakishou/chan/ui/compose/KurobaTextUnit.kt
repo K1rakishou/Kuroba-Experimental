@@ -89,7 +89,7 @@ fun collectGlobalFontSizeMultiplierAsState(): Float {
     key1 = Unit,
     block = {
       coroutineScope.launch {
-        ChanSettings.fontSize.listenForChanges()
+        ChanSettings.fontSize.listenForChangesDeprecated()
           .asFlow()
           .collectLatest { globalFontSizeMultiplier = calculateFontSizeMultiplier() }
       }

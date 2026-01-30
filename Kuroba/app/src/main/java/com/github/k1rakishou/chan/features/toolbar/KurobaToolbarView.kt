@@ -93,8 +93,8 @@ class KurobaToolbarView @JvmOverloads constructor(
 
     coroutineScope.launch {
       combineMany(
-        ChanSettings.layoutMode.listenForChanges().asFlow(),
-        ChanSettings.neverHideToolbar.listenForChanges().asFlow(),
+        ChanSettings.layoutMode.listenForChangesDeprecated().asFlow(),
+        ChanSettings.neverHideToolbar.listenForChangesDeprecated().asFlow(),
         globalUiStateHolder.replyLayout.replyLayoutVisibilityEventsFlow,
         snapshotFlow { globalUiStateHolder.fastScroller.isDraggingFastScrollerState.value },
         snapshotFlow { globalUiStateHolder.scroll.scrollTransitionProgress.floatValue },

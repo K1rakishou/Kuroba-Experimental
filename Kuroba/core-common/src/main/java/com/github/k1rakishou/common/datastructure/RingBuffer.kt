@@ -38,7 +38,7 @@ class RingBuffer<T>(
 
   fun pop(): T {
     if (tailIndex >= headIndex) {
-      throw IllegalStateException("Attempt to remove head element on an empty RingBuffer")
+      error("Attempt to remove head element on an empty RingBuffer")
     }
 
     val element = requireNotNull(array[headIndex % maxSize]) {

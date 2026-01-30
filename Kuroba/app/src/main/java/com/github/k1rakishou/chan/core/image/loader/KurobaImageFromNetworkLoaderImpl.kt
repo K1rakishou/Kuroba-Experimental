@@ -10,7 +10,6 @@ import com.github.k1rakishou.chan.core.base.okhttp.CoilOkHttpClient
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.cache.downloader.ChunkedMediaDownloader
-import com.github.k1rakishou.chan.core.image.FaviconUrlWithInvalidMimeType
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.BadContentTypeException
@@ -156,7 +155,8 @@ class KurobaImageFromNetworkLoaderImpl(
       val contentMainType = responseBody.contentType()?.type
       val contentSubType = responseBody.contentType()?.subtype
 
-      if (contentMainType != "image" && contentMainType != "video" && !FaviconUrlWithInvalidMimeType.matches(url)) {
+      // Seems like all Lynxchan-based sites return null/null as the MimeType of "favicon.ico", so let's just ignore it
+      if (contentMainType != "image" && contentMainType != "video" && !url.endsWith("/favicon.ico")) {
         throw BadContentTypeException("${contentMainType}/${contentSubType}")
       }
 

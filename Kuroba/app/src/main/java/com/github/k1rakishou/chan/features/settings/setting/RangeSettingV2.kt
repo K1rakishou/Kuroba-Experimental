@@ -21,7 +21,7 @@ class RangeSettingV2(
 
   val min: Int = setting.min
   val max: Int = setting.max
-  val default: Int = setting.default
+  val default: Int = setting.getDefault()
   val current: Int = setting.get()
 
   var dependsOnSetting: BooleanSetting? = null

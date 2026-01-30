@@ -38,7 +38,7 @@ class ThreadDownloadingCoordinator(
     }
 
     appScope.launch {
-      ChanSettings.threadDownloaderUpdateInterval.listenForChanges()
+      ChanSettings.threadDownloaderUpdateInterval.listenForChangesDeprecated()
         .asFlow()
         .collect { startOrRestartThreadDownloading(appContext, appConstants, eager = true) }
     }

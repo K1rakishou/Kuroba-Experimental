@@ -26,7 +26,7 @@ public class LongSetting extends Setting<Long> {
         if (!value.equals(get())) {
             settingProvider.putLong(key, value);
             cached = value;
-            settingState.onNext(value);
+            settingStateDeprecated.onNext(value);
         }
     }
 
@@ -34,7 +34,7 @@ public class LongSetting extends Setting<Long> {
         if (!value.equals(get())) {
             settingProvider.putLongSync(key, value);
             cached = value;
-            settingState.onNext(value);
+            settingStateDeprecated.onNext(value);
         }
     }
 

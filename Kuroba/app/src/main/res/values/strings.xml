@@ -1528,9 +1528,10 @@ Actual error: \'%1$s\'</string>
     <string name="chan8moe_pow_token">8chan.moe Proof-of-Work token</string>
     <string name="chan8moe_pow_id">8chan.moe Proof-of-Work id</string>
 
-    <string name="lynxchan_hashcash_required">Lynxchan HashCash Proof-of-Work is required in order to post. This is an additional anti–spam check and is usually required when Tor/VPN/proxy detected. HashCash requires you to solve a complex cryptographic problem which requires a lot of computation power and time even when solved on PC</string>
-    <string name="lynxchan_hashcash_description">Solving HashCash POW on a mobile phone doesn\'t make much sense, because it takes 20-30 minutes on 7950X3D. So, you need to solve HashCash on PC and then copy the url, which you will get at the end, into the below field, then click Verify</string>
-    <string name="lynxchan_hashcash_textfield_label_url">HashCash solution url</string>
+    <string name="lynxchan_hashcash_description">Lynxchan HashCash Proof-of-Work is required in order to post. This is an additional anti–spam check and is usually required when Tor/VPN/proxy detected. HashCash requires you to solve a complex cryptographic problem which requires a lot of computation power and time even when solved on PC.\n\nSolving HashCash POW on a mobile phone doesn\'t make much sense, because it takes 20-30 minutes on 7950X3D. So, you need to solve HashCash on PC and then copy the url (which you will get at the end), into the field below, then click Verify.</string>
+    <string name="krautchan_hashcash_description">In order to post on Krautchan you need to request a Komturcode on IRC channel. You can click this link to open a page with instructions on how to get it. After doing that, you will get a url which you will then need to paste into the field below, then click Verify.</string>
+    <string name="lynxchan_url_example_description">The url is going to have the following format:</string>
+    <string name="lynxchan_hashcash_textfield_label_url">Bypass validation url</string>
     <string name="lynxchan_tor_proxy_vpv_detected_message">You need a block bypass to post</string>
     <string name="lynxchan_regular_captcha_message">Regular captcha</string>
     <string name="lynxchan_captcha_verification_error">Captcha verification error: %1$s</string>

@@ -11,9 +11,8 @@ import java.util.concurrent.atomic.AtomicReference
 class CookieSetting(
   private val moshiLazy: Lazy<Moshi>,
   settingProvider: SettingProvider,
-  key: String,
-  def: KurobaCookie?
-) : Setting<KurobaCookie?>(settingProvider, key, def) {
+  key: String
+) : Setting<KurobaCookie?>(settingProvider, key, null) {
   private val moshi: Moshi
     get() = moshiLazy.get()
 
@@ -68,7 +67,7 @@ class CookieSetting(
     }
 
     _cached.set(value)
-    settingState.onNext(value)
+    settingState.value = value
   }
 
   override fun setSync(value: KurobaCookie?) {
@@ -84,11 +83,17 @@ class CookieSetting(
     }
 
     _cached.set(value)
-    settingState.onNext(value)
+    settingState.value = value
   }
 
   private fun cookieToString(kurobaCookie: KurobaCookie?): String? {
-    return moshi.adapter<KurobaCookie>(KurobaCookie::class.java).toJson(kurobaCookie)
+    if (kurobaCookie == null) {
+      return null
+    }
+
+    return moshi
+      .adapter<KurobaCookie>(KurobaCookie::class.java)
+      .toJson(kurobaCookie)
   }
 
   private fun stringToCookie(json: String?): KurobaCookie? {

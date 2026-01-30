@@ -185,8 +185,8 @@ fun KurobaComposePostImageIndicators(
       }
 
       combine(
-        ChanSettings.prefetchMedia.listenForChanges().asFlow(),
-        ChanSettings.showPrefetchLoadingIndicator.listenForChanges().asFlow()
+        ChanSettings.prefetchMedia.listenForChangesDeprecated().asFlow(),
+        ChanSettings.showPrefetchLoadingIndicator.listenForChangesDeprecated().asFlow()
       ) { prefetchMedia, showPrefetchLoadingIndicator -> prefetchMedia && showPrefetchLoadingIndicator }
         .onEach { showIndicator ->
           prefetchingEnabled.value = showIndicator

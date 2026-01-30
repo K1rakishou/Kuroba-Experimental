@@ -7,6 +7,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
+import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.compose.AsyncData
@@ -15,9 +16,11 @@ import com.github.k1rakishou.chan.core.di.module.shared.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.core.site.loader.ClientException
+import com.github.k1rakishou.chan.core.site.sites.lynxchan.Krautchan
 import com.github.k1rakishou.chan.core.site.sites.lynxchan.chan8.Chan8Moe
 import com.github.k1rakishou.chan.core.site.sites.lynxchan.engine.LynxchanSite
 import com.github.k1rakishou.chan.ui.captcha.lynxchan.pow.LynxchanProofOfWork
+import com.github.k1rakishou.chan.ui.helper.AppResources
 import com.github.k1rakishou.common.BadStatusResponseException
 import com.github.k1rakishou.common.KurobaCookie
 import com.github.k1rakishou.common.ModularResult
@@ -52,6 +55,7 @@ import javax.inject.Inject
 
 class LynxchanCaptchaLayoutViewModel(
   private val savedStateHandle: SavedStateHandle,
+  private val appResources: AppResources,
   private val proxiedOkHttpClient: ProxiedOkHttpClient,
   private val siteManager: SiteManager,
   private val moshi: Moshi,
@@ -60,9 +64,9 @@ class LynxchanCaptchaLayoutViewModel(
   private val _captchaInfoToShow = mutableStateOf<AsyncData<LynxchanCaptchaFull>>(AsyncData.NotInitialized)
   val captchaInfoToShow: State<AsyncData<LynxchanCaptchaFull>>
     get() = _captchaInfoToShow
-  private val _needHashCashSolution = mutableStateOf(false)
-  val needHashCashSolution: State<Boolean>
-    get() = _needHashCashSolution
+  private val _hashCashInfoToShow = mutableStateOf<HashCashInfo?>(null)
+  val hashCashInfoToShow: State<HashCashInfo?>
+    get() = _hashCashInfoToShow
   private val _captchaBlock = mutableStateOf<LynxchanCaptchaBlock?>(null)
   val captchaBlock: State<LynxchanCaptchaBlock?>
     get() = _captchaBlock
@@ -99,7 +103,7 @@ class LynxchanCaptchaLayoutViewModel(
     _activeRequestCaptchaJob = viewModelScope.launch(Dispatchers.IO) {
       try {
         _captchaInfoToShow.value = AsyncData.Loading
-        _needHashCashSolution.value = false
+        _hashCashInfoToShow.value = null
         _captchaBlock.value = null
         currentInputValue.value = ""
 
@@ -181,13 +185,13 @@ class LynxchanCaptchaLayoutViewModel(
           .url(verifyCaptchaEndpoint)
           .post(requestBody)
 
-        val site = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
-        if (site == null) {
+        val lynxchanSite = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor()) as? LynxchanSite
+        if (lynxchanSite == null) {
           throw LynxchanCaptchaError("Site ${chanDescriptor.siteDescriptor()} is not active")
         }
 
-        site.requestModifier().modifyGenericRequest(
-          site = site,
+        lynxchanSite.requestModifier().modifyGenericRequest(
+          site = lynxchanSite,
           requestBuilder = requestBuilder
         )
 
@@ -210,7 +214,25 @@ class LynxchanCaptchaLayoutViewModel(
               return@Try VerifyCaptchaResult.Failure
             }
 
-            _needHashCashSolution.value = true
+            val urlExample = "${lynxchanSite.domainString}/addon.js/hashcash?action=save" +
+              "&b=XXXXXXXXXXXXXXXXXXXXXXXX&h=YYYYYYYYYYYYYYYYYYYYYYYY&e=ZZZ"
+
+            _hashCashInfoToShow.value = when (lynxchanSite) {
+              is Krautchan -> {
+                HashCashInfo.Krautchan(
+                  descriptionText = appResources.string(stringId = R.string.krautchan_hashcash_description),
+                  urlExample = urlExample,
+                  urlToOpen = "${lynxchanSite.domainString}/addon.js/hashcash/?action=get"
+                )
+              }
+              else -> {
+                HashCashInfo.GenericLynxchan(
+                  descriptionText = appResources.string(R.string.lynxchan_hashcash_description),
+                  urlExample = urlExample
+                )
+              }
+            }
+
             return@Try VerifyCaptchaResult.NotSupported
           }
 
@@ -219,7 +241,7 @@ class LynxchanCaptchaLayoutViewModel(
             throw LynxchanCaptchaError("Error. Message: \'$errorMessage\'")
           }
 
-          if (needBlockBypass && blockBypassStatus.data == null && site is Chan8Moe) {
+          if (needBlockBypass && blockBypassStatus.data == null && lynxchanSite is Chan8Moe) {
             val bypass = response.headers("Set-Cookie")
               .firstOrNull { setCookie -> setCookie.startsWith("bypass=") }
               ?.let { bypassCookie -> KurobaCookie.fromRawCookie(bypassCookie, "bypass")?.value }
@@ -259,6 +281,7 @@ class LynxchanCaptchaLayoutViewModel(
 
   fun validateHashCashUrl(text: CharSequence): String? {
     // https://kohlchan.net/addon.js/hashcash?action=save&b=123&h=546&e=100
+    // https://krautchan.org/addon.js/hashcash?action=save&b=123&h=456&e=100
     val url = text.toString().toHttpUrlOrNull()
     if (url == null) {
       return "Not a HTTP url"
@@ -620,6 +643,22 @@ class LynxchanCaptchaLayoutViewModel(
     val iteration: Int
   )
 
+  sealed interface HashCashInfo {
+    val descriptionText: String
+    val urlExample: String
+
+    data class Krautchan(
+      override val descriptionText: String,
+      override val urlExample: String,
+      val urlToOpen: String,
+    ) : HashCashInfo
+
+    data class GenericLynxchan(
+      override val descriptionText: String,
+      override val urlExample: String
+    ) : HashCashInfo
+  }
+
   // {"status":"hashcash","data":null}
   @JsonClass(generateAdapter = true)
   data class BlockBypassStatus(
@@ -646,6 +685,7 @@ class LynxchanCaptchaLayoutViewModel(
   )
 
   class ViewModelFactory @Inject constructor(
+    private val appResources: AppResources,
     private val proxiedOkHttpClient: ProxiedOkHttpClient,
     private val siteManager: SiteManager,
     private val moshi: Moshi,
@@ -653,6 +693,7 @@ class LynxchanCaptchaLayoutViewModel(
     override fun create(handle: SavedStateHandle): LynxchanCaptchaLayoutViewModel {
       return LynxchanCaptchaLayoutViewModel(
         savedStateHandle = handle,
+        appResources = appResources,
         proxiedOkHttpClient = proxiedOkHttpClient,
         siteManager = siteManager,
         moshi = moshi

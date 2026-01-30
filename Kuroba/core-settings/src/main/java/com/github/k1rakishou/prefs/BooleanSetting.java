@@ -26,7 +26,7 @@ public class BooleanSetting extends Setting<Boolean> {
         if (!value.equals(get())) {
             cached = value;
             settingProvider.putBoolean(key, value);
-            settingState.onNext(value);
+            settingStateDeprecated.onNext(value);
         }
     }
 
@@ -34,7 +34,7 @@ public class BooleanSetting extends Setting<Boolean> {
         if (!value.equals(get())) {
             cached = value;
             settingProvider.putBooleanSync(key, value);
-            settingState.onNext(value);
+            settingStateDeprecated.onNext(value);
         }
     }
 

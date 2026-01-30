@@ -123,7 +123,6 @@ abstract class BaseSettingsController(
     )
   }
 
-  // TODO: this shit doesn't work!!!
   protected fun showInputDialog(
     cookieSettingV2: CookieSettingV2,
     rebuildScreenFunc: (Any?) -> Unit

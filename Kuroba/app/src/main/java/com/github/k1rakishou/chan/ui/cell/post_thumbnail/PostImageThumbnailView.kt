@@ -220,7 +220,7 @@ class PostImageThumbnailView @JvmOverloads constructor(
 
   private fun listenForNsfwSettingUpdates() {
     scope.launch {
-      ChanSettings.globalNsfwMode.listenForChanges().asFlow().collect { isNsfwModeEnabled ->
+      ChanSettings.globalNsfwMode.listenForChangesDeprecated().asFlow().collect { isNsfwModeEnabled ->
         if (nsfwMode != isNsfwModeEnabled) {
           nsfwMode = isNsfwModeEnabled
           invalidate()

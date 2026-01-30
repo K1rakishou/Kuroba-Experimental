@@ -586,7 +586,7 @@ class ImageLoaderDeprecated(
       val contentMainType = responseBody.contentType()?.type
       val contentSubType = responseBody.contentType()?.subtype
 
-      if (contentMainType != "image" && contentMainType != "video" && !FaviconUrlWithInvalidMimeType.matches(url)) {
+      if (contentMainType != "image" && contentMainType != "video" && !url.endsWith("/favicon.ico")) {
         throw BadContentTypeException("${contentMainType}/${contentSubType}")
       }
 

@@ -6,7 +6,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
-class KohlchanEndpoints(lynxchanSite: LynxchanSite) : LynxchanEndpoints(lynxchanSite) {
+class KrautchanEndpoints(lynxchanSite: LynxchanSite) : LynxchanEndpoints(lynxchanSite) {
   override fun reply(chanDescriptor: ChanDescriptor): HttpUrl {
     return when (chanDescriptor) {
       is ChanDescriptor.ICatalogDescriptor -> "${lynxchanDomain}/newThread.js?json=1".toHttpUrl()

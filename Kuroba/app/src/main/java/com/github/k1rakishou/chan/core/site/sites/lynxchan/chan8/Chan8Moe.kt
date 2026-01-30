@@ -26,8 +26,8 @@ class Chan8Moe : LynxchanSite() {
   private val mediaHostsLazy = lazy { arrayOf(domainUrl.value) }
   private val siteUrlHandler = lazy { Chan8MoeUrlHandler(domainUrl.value, mediaHostsLazy.value) }
 
-  val powToken by lazy { CookieSetting(moshiLazy, prefs, "pow_token", null) }
-  val powId by lazy { CookieSetting(moshiLazy, prefs, "pow_id", null) }
+  val powToken by lazy { CookieSetting(moshiLazy, prefs, "pow_token") }
+  val powId by lazy { CookieSetting(moshiLazy, prefs, "pow_id") }
 
   override val siteDomainSetting: StringSetting? by lazy {
     StringSetting(prefs, "site_domain", defaultDomain.toString())

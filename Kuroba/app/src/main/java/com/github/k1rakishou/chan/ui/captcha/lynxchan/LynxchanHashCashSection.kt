@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.ui.captcha.lynxchan
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -28,9 +29,11 @@ import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextFieldV2
 import com.github.k1rakishou.chan.ui.compose.components.KurobaLabelText
+import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
 import com.github.k1rakishou.chan.ui.compose.forEachTextValue
 import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink
 import com.github.k1rakishou.common.KurobaCookie
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.isNotNullNorEmpty
@@ -45,6 +48,7 @@ private const val TAG = "LynxchanHashCashSection"
 fun LynxchanHashCashSection(
   chanDescriptor: ChanDescriptor,
   lynxchanCaptcha: SiteAuthentication.CustomCaptcha.LynxchanCaptcha?,
+  hashCashInfoToShow: LynxchanCaptchaLayoutViewModel.HashCashInfo,
   viewModel: LynxchanCaptchaLayoutViewModel,
   onCookiesFromUrlApplied: (ModularResult<KurobaCookie?>) -> Unit
 ) {
@@ -61,10 +65,22 @@ fun LynxchanHashCashSection(
       .wrapContentHeight()
       .padding(horizontal = 8.dp, vertical = 4.dp)
   ) {
+    val modifier = if (hashCashInfoToShow is LynxchanCaptchaLayoutViewModel.HashCashInfo.Krautchan) {
+      Modifier
+        .background(color = chanTheme.backColorSecondaryCompose)
+        .kurobaClickable(
+          bounded = true,
+          onClick = { openLink(hashCashInfoToShow.urlToOpen) }
+        )
+        .padding(horizontal = 8.dp, vertical = 4.dp)
+    } else {
+      Modifier
+        .padding(horizontal = 8.dp, vertical = 4.dp)
+    }
+
     KurobaComposeText(
-      modifier = Modifier
-        .padding(horizontal = 8.dp, vertical = 4.dp),
-      text = stringResource(id = R.string.lynxchan_hashcash_required),
+      modifier = modifier,
+      text = hashCashInfoToShow.descriptionText
     )
 
     Spacer(modifier = Modifier.height(8.dp))
@@ -72,7 +88,15 @@ fun LynxchanHashCashSection(
     KurobaComposeText(
       modifier = Modifier
         .padding(horizontal = 8.dp, vertical = 4.dp),
-      text = stringResource(id = R.string.lynxchan_hashcash_description)
+      text = stringResource(R.string.lynxchan_url_example_description),
+    )
+
+    Spacer(modifier = Modifier.height(4.dp))
+
+    KurobaComposeText(
+      modifier = Modifier
+        .padding(horizontal = 8.dp, vertical = 4.dp),
+      text = hashCashInfoToShow.urlExample,
     )
 
     Spacer(modifier = Modifier.height(8.dp))

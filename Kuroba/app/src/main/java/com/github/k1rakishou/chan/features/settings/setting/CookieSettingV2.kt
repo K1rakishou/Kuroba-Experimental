@@ -27,7 +27,7 @@ class CookieSettingV2(
     private set
 
   fun getCurrent(): KurobaCookie? = setting.get()
-  fun getDefault(): KurobaCookie? = setting.default
+  fun getDefault(): KurobaCookie? = setting.getDefault()
 
   fun updateSetting(value: String?) {
     update()

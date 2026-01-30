@@ -25,7 +25,7 @@ class InputSettingV2<T : Any> : SettingV2() {
     private set
 
   fun getCurrent(): T? = setting?.get()
-  fun getDefault(): T? = setting?.default
+  fun getDefault(): T? = setting?.getDefault()
 
   fun updateSetting(value: Any) {
     update()

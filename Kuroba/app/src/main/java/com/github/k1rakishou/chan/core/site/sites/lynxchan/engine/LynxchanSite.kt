@@ -52,9 +52,9 @@ abstract class LynxchanSite : CommonSite() {
   abstract val postingViaFormData: Boolean
   open val enabled: Boolean = true
 
-  val captchaIdCookie by lazy { CookieSetting(moshiLazy, prefs, "captcha_id", null) }
-  val bypassCookie by lazy { CookieSetting(moshiLazy, prefs, "bypass_cookie", null) }
-  val extraCookie by lazy { CookieSetting(moshiLazy, prefs, "extra_cookie", null) }
+  val captchaIdCookie by lazy { CookieSetting(moshiLazy, prefs, "captcha_id") }
+  val bypassCookie by lazy { CookieSetting(moshiLazy, prefs, "bypass_cookie") }
+  val extraCookie by lazy { CookieSetting(moshiLazy, prefs, "extra_cookie") }
 
   val domainUrl: kotlin.Lazy<HttpUrl> = lazy {
     val siteDomain = siteDomainSetting?.get()

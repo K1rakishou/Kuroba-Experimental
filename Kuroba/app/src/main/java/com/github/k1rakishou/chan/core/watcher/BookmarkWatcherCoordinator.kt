@@ -54,16 +54,16 @@ class BookmarkWatcherCoordinator(
     }
 
     appScope.launch {
-      val watchEnabledFlowable = ChanSettings.watchEnabled.listenForChanges()
+      val watchEnabledFlowable = ChanSettings.watchEnabled.listenForChangesDeprecated()
         .map { enabled -> WatchSettingChange.WatcherSettingChanged(enabled) }
         .distinctUntilChanged()
-      val watchBackgroundFlowable = ChanSettings.watchBackground.listenForChanges()
+      val watchBackgroundFlowable = ChanSettings.watchBackground.listenForChangesDeprecated()
         .map { enabled -> WatchSettingChange.BackgroundWatcherSettingChanged(enabled) }
         .distinctUntilChanged()
-      val watchBackgroundIntervalFlowable = ChanSettings.watchBackgroundInterval.listenForChanges()
+      val watchBackgroundIntervalFlowable = ChanSettings.watchBackgroundInterval.listenForChangesDeprecated()
         .map { interval -> WatchSettingChange.BackgroundWatcherIntervalSettingChanged(interval) }
         .distinctUntilChanged()
-      val watchForegroundIntervalFlowable = ChanSettings.watchForegroundInterval.listenForChanges()
+      val watchForegroundIntervalFlowable = ChanSettings.watchForegroundInterval.listenForChangesDeprecated()
         .map { interval -> WatchSettingChange.ForegroundWatcherIntervalSettingChanged(interval) }
         .distinctUntilChanged()
 

@@ -40,7 +40,7 @@ fun BoxScope.ToolbarBadge(
   )
   val highlight = toolbarBadge.highlight
 
-  val watchEnabled by ChanSettings.watchEnabled.listenForChanges()
+  val watchEnabled by ChanSettings.watchEnabled.listenForChangesDeprecated()
     .asFlow()
     .collectAsState(initial = true)
 

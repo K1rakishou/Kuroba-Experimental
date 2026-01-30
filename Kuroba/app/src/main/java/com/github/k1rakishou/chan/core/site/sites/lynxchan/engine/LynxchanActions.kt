@@ -40,7 +40,7 @@ open class LynxchanActions(
     }
 
     val params = LynxchanGetBoardsUseCase.Params(
-      siteDescriptor = site.siteDescriptor(),
+      site = lynxchanSite,
       getBoardsEndpoint = getBoardsEndpoint
     )
 

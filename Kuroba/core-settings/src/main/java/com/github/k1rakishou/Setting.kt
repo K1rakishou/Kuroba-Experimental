@@ -1,55 +1,44 @@
-package com.github.k1rakishou;
+package com.github.k1rakishou
 
-import io.reactivex.Flowable;
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.processors.BehaviorProcessor;
+import io.reactivex.Flowable
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.processors.BehaviorProcessor
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
-public abstract class Setting<T> {
-    protected final SettingProvider settingProvider;
-    protected final String key;
-    protected final T def;
-    protected BehaviorProcessor<T> settingState = BehaviorProcessor.create();
+abstract class Setting<T : Any?>(
+  @JvmField protected val settingProvider: SettingProvider,
+  @JvmField val key: String,
+  @JvmField protected val def: T
+) {
+  @JvmField
+  @Deprecated("Use listenForChanges")
+  protected val settingStateDeprecated: BehaviorProcessor<T> = BehaviorProcessor.create<T>()
 
-    public Setting(SettingProvider settingProvider, String key, T def) {
-        this.settingProvider = settingProvider;
-        this.key = key;
-        this.def = def;
+  protected val settingState: MutableStateFlow<T> by lazy { MutableStateFlow<T>(get()) }
+
+  abstract fun get(): T
+  abstract fun set(value: T)
+  abstract fun setSync(value: T)
+
+  fun getDefault(): T {
+    return def
+  }
+
+  @Deprecated("Use listenForChanges")
+  fun listenForChangesDeprecated(): Flowable<T> {
+    if (!settingStateDeprecated.hasValue()) {
+      settingStateDeprecated.onNext(get())
     }
 
-    public abstract T get();
+    return settingStateDeprecated
+      .onBackpressureLatest()
+      .hide()
+      .observeOn(AndroidSchedulers.mainThread())
+  }
 
-    public abstract void set(T value);
-
-    public abstract void setSync(T value);
-
-    public boolean isDefault() {
-        T def = getDefault();
-        T curr = get();
-
-        if (def != null && curr == null) {
-            return false;
-        }
-
-        return curr.equals(def);
-    }
-
-    public T getDefault() {
-        return def;
-    }
-
-    public String getKey() {
-        return key;
-    }
-
-    public Flowable<T> listenForChanges() {
-        if (!settingState.hasValue()) {
-            settingState.onNext(get());
-        }
-
-        return settingState
-          .onBackpressureLatest()
-          .hide()
-          .observeOn(AndroidSchedulers.mainThread());
-    }
-
+  fun listenForChanges(): StateFlow<T> {
+    return settingState.asStateFlow()
+  }
 }

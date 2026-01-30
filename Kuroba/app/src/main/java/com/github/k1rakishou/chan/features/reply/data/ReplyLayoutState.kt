@@ -269,7 +269,7 @@ class ReplyLayoutState(
         return@launch
       }
 
-      replyModeSetting.listenForChanges()
+      replyModeSetting.listenForChangesDeprecated()
         .asFlow()
         .onEach { updateCaptchaButtonVisibility() }
         .collect()

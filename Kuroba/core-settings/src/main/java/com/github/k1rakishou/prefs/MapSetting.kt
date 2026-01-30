@@ -102,7 +102,7 @@ class MapSetting(
     } catch (error: Throwable) {
       Logger.e(TAG, "MapSetting.get()", error)
 
-      settingProvider.putString(key, convertMapToJson(default))
+      settingProvider.putString(key, convertMapToJson(getDefault()))
       cache = def.toMutableMap()
     }
 
@@ -122,7 +122,7 @@ class MapSetting(
     }
 
     settingProvider.putString(key, json)
-    settingState.onNext(value)
+    settingStateDeprecated.onNext(value)
   }
 
   override fun setSync(value: Map<String, String>) {
@@ -138,7 +138,7 @@ class MapSetting(
     }
 
     settingProvider.putStringSync(key, json)
-    settingState.onNext(value)
+    settingStateDeprecated.onNext(value)
   }
 
   private fun convertMapToJson(value: Map<String, String>): String {

@@ -62,7 +62,7 @@ fun BoxScope.BottomPanelBadge(menuItemBadge: MenuItemBadge) {
       )
       val highlight = menuItemBadge.highlight
 
-      val watchEnabled by ChanSettings.watchEnabled.listenForChanges()
+      val watchEnabled by ChanSettings.watchEnabled.listenForChangesDeprecated()
         .asFlow()
         .collectAsState(initial = false)
 

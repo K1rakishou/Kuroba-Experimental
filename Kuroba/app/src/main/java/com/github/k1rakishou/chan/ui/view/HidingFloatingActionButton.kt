@@ -214,9 +214,9 @@ class HidingFloatingActionButton
       val controllerKey = _controllerKey ?: return@launch
 
       combineMany(
-        ChanSettings.layoutMode.listenForChanges().asFlow(),
-        ChanSettings.neverHideToolbar.listenForChanges().asFlow(),
-        ChanSettings.enableReplyFab.listenForChanges().asFlow(),
+        ChanSettings.layoutMode.listenForChangesDeprecated().asFlow(),
+        ChanSettings.neverHideToolbar.listenForChangesDeprecated().asFlow(),
+        ChanSettings.enableReplyFab.listenForChangesDeprecated().asFlow(),
         globalUiStateHolder.replyLayout.replyLayoutVisibilityEventsFlow,
         snapshotFlow { globalUiStateHolder.threadLayout.threadLayoutState(threadControllerType).value },
         snapshotFlow { globalUiStateHolder.threadLayout.focusedControllerState.value },

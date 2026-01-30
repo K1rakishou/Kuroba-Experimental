@@ -139,11 +139,14 @@ class LynxchanCaptchaLayout(
 
   @Composable
   private fun BuildCaptchaWindow() {
-    val needHashCashSolution by viewModel.needHashCashSolution
-    if (needHashCashSolution) {
+    val hashCashInfoToShowMut by viewModel.hashCashInfoToShow
+    val hashCashInfoToShow = hashCashInfoToShowMut
+
+    if (hashCashInfoToShow != null) {
       LynxchanHashCashSection(
         chanDescriptor = chanDescriptor,
         lynxchanCaptcha = lynxchanCaptcha,
+        hashCashInfoToShow = hashCashInfoToShow,
         viewModel = viewModel,
         onCookiesFromUrlApplied = { result ->
           when (result) {

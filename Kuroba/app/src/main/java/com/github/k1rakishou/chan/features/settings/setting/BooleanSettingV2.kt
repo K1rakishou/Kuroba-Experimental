@@ -18,7 +18,6 @@ class BooleanSettingV2 : SettingV2() {
 
   private var isEnabledFunc: (() -> Boolean)? = null
 
-
   private val defaultCallback: () -> Boolean = {
     val newValue = !setting!!.get()
 
@@ -55,7 +54,7 @@ class BooleanSettingV2 : SettingV2() {
     this.dependsOnSetting = dependsOnSetting
 
     compositeDisposable.add(
-      this.dependsOnSetting!!.listenForChanges()
+      this.dependsOnSetting!!.listenForChangesDeprecated()
         .subscribe({ isChecked ->
           if (!isChecked) {
             this.setting?.set(false)

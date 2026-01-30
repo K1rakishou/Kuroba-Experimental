@@ -43,7 +43,7 @@ class FilterWatcherCoordinator(
     }
 
     appScope.launch {
-      ChanSettings.filterWatchEnabled.listenForChanges()
+      ChanSettings.filterWatchEnabled.listenForChangesDeprecated()
         .asFlow()
         .collect { enabled ->
           Logger.d(TAG, "filterWatchEnabled.listenForChanges() new event")
@@ -57,7 +57,7 @@ class FilterWatcherCoordinator(
     }
 
     appScope.launch {
-      ChanSettings.filterWatchInterval.listenForChanges()
+      ChanSettings.filterWatchInterval.listenForChangesDeprecated()
         .asFlow()
         .collect {
           Logger.d(TAG, "filterWatchInterval.listenForChanges() new event")

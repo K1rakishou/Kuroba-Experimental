@@ -30,7 +30,7 @@ import kotlin.time.measureTime
 class BoardManager(
   private val appScope: CoroutineScope,
   private val isDevFlavor: Boolean,
-  private val _boardRepository: Lazy<BoardRepository>,
+  private val boardRepositoryLazy: Lazy<BoardRepository>,
   private val currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager
 ) {
   private val suspendableInitializer = SuspendableInitializer<Unit>("BoardManager")
@@ -45,7 +45,7 @@ class BoardManager(
   private val ordersMap = mutableMapOf<SiteDescriptor, MutableList<BoardDescriptor>>()
 
   private val boardRepository: BoardRepository
-    get() = _boardRepository.get()
+    get() = boardRepositoryLazy.get()
 
   fun initialize(siteDataListAsync: CompletableDeferred<List<ChanSiteData>>) {
     Logger.d(TAG, "BoardManager.initialize()")

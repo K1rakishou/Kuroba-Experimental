@@ -128,19 +128,19 @@ class AlbumViewControllerViewModel(
   val toolbarData: StateFlow<ToolbarData>
     get() = _toolbarData
 
-  val albumSpanCount = ChanSettings.albumSpanCount.listenForChanges()
+  val albumSpanCount = ChanSettings.albumSpanCount.listenForChangesDeprecated()
     .asFlow()
     .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
-  val albumLayoutGridMode = PersistableChanState.albumLayoutGridMode.listenForChanges()
+  val albumLayoutGridMode = PersistableChanState.albumLayoutGridMode.listenForChangesDeprecated()
     .asFlow()
     .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
-  val showAlbumViewsImageDetails = PersistableChanState.showAlbumViewsImageDetails.listenForChanges()
+  val showAlbumViewsImageDetails = PersistableChanState.showAlbumViewsImageDetails.listenForChangesDeprecated()
     .asFlow()
     .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
-  val globalNsfwMode = ChanSettings.globalNsfwMode.listenForChanges()
+  val globalNsfwMode = ChanSettings.globalNsfwMode.listenForChangesDeprecated()
     .asFlow()
     .stateIn(viewModelScope, SharingStarted.Lazily, null)
 

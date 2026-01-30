@@ -14,7 +14,7 @@ data class RecyclerIndexAndTopInfo(
   companion object {
     fun bookmarksControllerDefaultJson(gson: Gson, viewThreadBookmarksGridMode: BooleanSetting): String {
       return gson.toJson(
-        RecyclerIndexAndTopInfo(isForGridLayoutManager = viewThreadBookmarksGridMode.default)
+        RecyclerIndexAndTopInfo(isForGridLayoutManager = viewThreadBookmarksGridMode.getDefault())
       )
     }
 

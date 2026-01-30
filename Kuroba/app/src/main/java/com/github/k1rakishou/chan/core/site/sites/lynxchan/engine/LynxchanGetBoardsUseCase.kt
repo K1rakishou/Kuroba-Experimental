@@ -9,7 +9,6 @@ import com.github.k1rakishou.common.suspendConvertIntoJsonObjectWithAdapter
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
-import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
@@ -22,20 +21,20 @@ import okhttp3.Request
 
 class LynxchanGetBoardsUseCase(
   private val appConstants: AppConstants,
-  private val _moshi: Lazy<Moshi>,
-  private val _proxiedOkHttpClient: Lazy<ProxiedOkHttpClient>
+  private val moshiLazy: Lazy<Moshi>,
+  private val proxiedOkHttpClientLazy: Lazy<ProxiedOkHttpClient>
 ) : ISuspendUseCase<LynxchanGetBoardsUseCase.Params, ModularResult<SiteBoards>> {
 
   private val moshi: Moshi
-    get() = _moshi.get()
+    get() = moshiLazy.get()
   private val proxiedOkHttpClient: ProxiedOkHttpClient
-    get() = _proxiedOkHttpClient.get()
+    get() = proxiedOkHttpClientLazy.get()
 
   override suspend fun execute(parameter: Params): ModularResult<SiteBoards> {
     return ModularResult.Try {
       return@Try withContext(Dispatchers.IO) {
         return@withContext executeInternal(
-          siteDescriptor = parameter.siteDescriptor,
+          site = parameter.site,
           boardsEndpoint = parameter.getBoardsEndpoint
         )
       }
@@ -43,12 +42,15 @@ class LynxchanGetBoardsUseCase(
   }
 
   private suspend fun executeInternal(
-    siteDescriptor: SiteDescriptor,
+    site: LynxchanSite,
     boardsEndpoint: HttpUrl
   ): SiteBoards {
+    val siteDescriptor = site.siteDescriptor()
+
     val request = Request.Builder()
       .url(boardsPageEndpoint(boardsEndpoint = boardsEndpoint, page = 1))
       .get()
+      .also { builder -> site.requestModifier().modifyGenericRequest(site, builder) }
       .build()
 
     val totalLynxchanBoards = mutableListOf<LynxchanBoardsData>()
@@ -155,7 +157,7 @@ class LynxchanGetBoardsUseCase(
   }
 
   data class Params(
-    val siteDescriptor: SiteDescriptor,
+    val site: LynxchanSite,
     val getBoardsEndpoint: HttpUrl
   )
 

@@ -155,10 +155,10 @@ class ListSettingV2<T : Any> : SettingV2() {
           val item = items.firstOrNull { item -> item == settingValue }
           if (item == null) {
             Logger.e(TAG, "Couldn't find item with value $settingValue " +
-              "resetting to default: ${setting.default}")
+              "resetting to default: ${setting.getDefault()}")
 
-            setting.set(setting.default)
-            return@mapNotNull func?.invoke(itemNameMapper(setting.default))
+            setting.set(setting.getDefault())
+            return@mapNotNull func?.invoke(itemNameMapper(setting.getDefault()))
           }
 
           return@mapNotNull func?.invoke(itemNameMapper(item))

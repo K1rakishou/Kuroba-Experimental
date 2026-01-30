@@ -24,6 +24,7 @@ import com.github.k1rakishou.chan.core.site.sites.lainchan.Lainchan
 import com.github.k1rakishou.chan.core.site.sites.leftypol.Leftypol
 import com.github.k1rakishou.chan.core.site.sites.lynxchan.Endchan
 import com.github.k1rakishou.chan.core.site.sites.lynxchan.Kohlchan
+import com.github.k1rakishou.chan.core.site.sites.lynxchan.Krautchan
 import com.github.k1rakishou.chan.core.site.sites.lynxchan.YesHoney
 import com.github.k1rakishou.chan.core.site.sites.lynxchan.chan8.Chan8Moe
 import com.github.k1rakishou.chan.core.site.sites.soyjakparty.SoyjakParty
@@ -46,6 +47,17 @@ object SiteRegistry {
     siteClasses.addSiteToSiteClassesMap(Wired7.SITE_NAME, Wired7::class.java)
     siteClasses.addSiteToSiteClassesMap(Kun8.SITE_NAME, Kun8::class.java)
     siteClasses.addSiteToSiteClassesMap(Chan420.SITE_NAME, Chan420::class.java)
+    siteClasses.addSiteToSiteClassesMap(Chan370.SITE_NAME, Chan370::class.java)
+    siteClasses.addSiteToSiteClassesMap(Vhschan.SITE_NAME, Vhschan::class.java)
+    siteClasses.addSiteToSiteClassesMap(Endchan.SITE_NAME, Endchan::class.java)
+    siteClasses.addSiteToSiteClassesMap(Kohlchan.SITE_NAME, Kohlchan::class.java)
+    siteClasses.addSiteToSiteClassesMap(Krautchan.SITE_NAME, Krautchan::class.java)
+    siteClasses.addSiteToSiteClassesMap(Chan8Moe.SITE_NAME, Chan8Moe::class.java)
+    siteClasses.addSiteToSiteClassesMap(YesHoney.SITE_NAME, YesHoney::class.java)
+    siteClasses.addSiteToSiteClassesMap(Leftypol.SITE_NAME, Leftypol::class.java)
+    siteClasses.addSiteToSiteClassesMap(SoyjakParty.SITE_NAME, SoyjakParty::class.java)
+
+    // By default, archives should be placed after the regular sites
     siteClasses.addSiteToSiteClassesMap(ArchivedMoe.SITE_NAME, ArchivedMoe::class.java)
     siteClasses.addSiteToSiteClassesMap(ForPlebs.SITE_NAME, ForPlebs::class.java)
     siteClasses.addSiteToSiteClassesMap(Nyafuu.SITE_NAME, Nyafuu::class.java)
@@ -56,15 +68,7 @@ object SiteRegistry {
     siteClasses.addSiteToSiteClassesMap(TokyoChronos.SITE_NAME, TokyoChronos::class.java)
     siteClasses.addSiteToSiteClassesMap(Warosu.SITE_NAME, Warosu::class.java)
     siteClasses.addSiteToSiteClassesMap(WakarimasenMoe.SITE_NAME, WakarimasenMoe::class.java)
-    siteClasses.addSiteToSiteClassesMap(Chan370.SITE_NAME, Chan370::class.java)
-    siteClasses.addSiteToSiteClassesMap(Vhschan.SITE_NAME, Vhschan::class.java)
-    siteClasses.addSiteToSiteClassesMap(Endchan.SITE_NAME, Endchan::class.java)
-    siteClasses.addSiteToSiteClassesMap(Kohlchan.SITE_NAME, Kohlchan::class.java)
-    siteClasses.addSiteToSiteClassesMap(Chan8Moe.SITE_NAME, Chan8Moe::class.java)
     siteClasses.addSiteToSiteClassesMap(RozenArcana.SITE_NAME, RozenArcana::class.java)
-    siteClasses.addSiteToSiteClassesMap(YesHoney.SITE_NAME, YesHoney::class.java)
-    siteClasses.addSiteToSiteClassesMap(Leftypol.SITE_NAME, Leftypol::class.java)
-    siteClasses.addSiteToSiteClassesMap(SoyjakParty.SITE_NAME, SoyjakParty::class.java)
 
     // A synthetic site which only purpose is to have an order in the global site order for composed
     // catalogs when showing them on the board selection screen.

@@ -181,14 +181,12 @@ abstract class SiteBase : Site, CoroutineScope {
         Logger.d(TAG, "Requesting boards for site ${name()}")
 
         val readerResponse = actions().boards()
-
         when (readerResponse) {
           is ModularResult.Error -> {
             Logger.e(TAG, "Couldn't get site boards", readerResponse.error)
           }
           is ModularResult.Value -> {
             val siteBoards = readerResponse.value
-
             boardManager.createOrUpdateBoards(siteBoards.boards)
 
             Logger.d(TAG, "Got the boards for site ${siteBoards.siteDescriptor.siteName}, " +
