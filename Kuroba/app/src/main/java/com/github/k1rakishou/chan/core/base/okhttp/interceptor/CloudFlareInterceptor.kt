@@ -35,7 +35,6 @@ class CloudFlareInterceptor(
     retryingAfterCloudFlareAuthorizationFinished: Boolean
   ): Response {
     var request = chain.request()
-    val host = request.url.host
 
     val updatedRequest = addCloudFlareCookie(chain.request())
     if (updatedRequest != null) {
@@ -47,7 +46,6 @@ class CloudFlareInterceptor(
     if ((response.code == 503 || response.code == 403) && !ignoreCloudFlareBotDetectionErrors(request)) {
       val newResponse = processCloudflareRejectedRequest(
         response = response,
-        host = host,
         chain = chain,
         request = request,
         retrying = retryingAfterCloudFlareAuthorizationFinished
@@ -65,7 +63,6 @@ class CloudFlareInterceptor(
 
   private fun processCloudflareRejectedRequest(
     response: Response,
-    host: String,
     chain: Interceptor.Chain,
     request: Request,
     retrying: Boolean

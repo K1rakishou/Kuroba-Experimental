@@ -22,7 +22,6 @@ import java.net.SocketTimeoutException
 import java.util.concurrent.CountDownLatch
 import kotlin.time.measureTimedValue
 
-
 class Chan8MoeInterceptor(
   private val okHttpClient: OkHttpClientForInterceptors,
   private val siteResolver: SiteResolver

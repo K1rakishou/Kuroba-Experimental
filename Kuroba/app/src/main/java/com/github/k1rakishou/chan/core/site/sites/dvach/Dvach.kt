@@ -700,8 +700,8 @@ class Dvach : CommonSite() {
 
       return DvachReportPostRequest(
         site = this@Dvach,
-        _moshi = moshiLazy,
-        _proxiedOkHttpClient = proxiedOkHttpClientLazy,
+        moshiLazy = moshiLazy,
+        proxiedOkHttpClientLazy = proxiedOkHttpClientLazy,
         postReportData = postReportData
       ).execute()
     }

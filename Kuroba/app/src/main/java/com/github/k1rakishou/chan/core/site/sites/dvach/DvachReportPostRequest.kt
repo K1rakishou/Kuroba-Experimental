@@ -26,14 +26,14 @@ import okhttp3.Request
 
 class DvachReportPostRequest(
   private val site: Dvach,
-  private val _moshi: Lazy<Moshi>,
-  private val _proxiedOkHttpClient: Lazy<ProxiedOkHttpClient>,
+  private val moshiLazy: Lazy<Moshi>,
+  private val proxiedOkHttpClientLazy: Lazy<ProxiedOkHttpClient>,
   private val postReportData: PostReportData.Dvach
 ) {
   private val moshi: Moshi
-    get() = _moshi.get()
+    get() = moshiLazy.get()
   private val proxiedOkHttpClient: ProxiedOkHttpClient
-    get() = _proxiedOkHttpClient.get()
+    get() = proxiedOkHttpClientLazy.get()
 
   suspend fun execute(): PostReportResult {
     val postDescriptor = postReportData.postDescriptor

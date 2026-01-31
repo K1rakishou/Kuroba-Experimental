@@ -95,6 +95,7 @@ class CookieSettingV2(
   }
 
   companion object {
+    @Suppress("UnusedPrivateProperty")
     private const val TAG = "CookieSettingV2"
 
     @Suppress("UNCHECKED_CAST")
@@ -112,7 +113,7 @@ class CookieSettingV2(
       requiresUiRefresh: Boolean = false,
       notificationType: SettingNotificationType? = null
     ): SettingV2Builder {
-
+      @Suppress("UnusedParameter")
       suspend fun buildFunc(updateCounter: Int): CookieSettingV2 {
         require(notificationType != SettingNotificationType.Default) {
           "Can't use default notification type here"
@@ -170,5 +171,4 @@ class CookieSettingV2(
       )
     }
   }
-
 }

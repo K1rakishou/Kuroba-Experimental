@@ -12,7 +12,6 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl
 import okhttp3.Request
 
-
 class Chan8MoeRequestModifier(
   site: Chan8Moe,
   appConstants: AppConstants
@@ -54,14 +53,21 @@ class Chan8MoeRequestModifier(
     requestBuilder.add8chanHeaders()
   }
 
+  @Suppress("ForbiddenComment")
   override fun modifyVideoStreamRequest(
     site: Chan8Moe,
     requestProperties: MutableMap<String, String>,
     url: HttpUrl
   ) {
     super.modifyVideoStreamRequest(site, requestProperties, url)
-    // TODO: videos are not supported yet
-//    requestProperties.updateCookieHeader(TOS_COOKIE)
+
+    val cookies = buildCookies()
+    if (cookies.isNotBlank()) {
+      requestProperties.updateCookieHeader(cookies)
+    }
+
+    // Can be just the root url
+    requestProperties["Referer"] = site.domainString
   }
 
   override fun modifyPostReportRequest(

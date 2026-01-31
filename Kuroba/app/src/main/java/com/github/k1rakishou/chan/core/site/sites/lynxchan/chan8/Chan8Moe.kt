@@ -74,6 +74,7 @@ class Chan8Moe : LynxchanSite() {
   )
 
   companion object {
+    @Suppress("UnusedPrivateProperty")
     private const val TAG = "8chan.moe"
     const val SITE_NAME = "8chan.moe"
 
@@ -84,5 +85,4 @@ class Chan8Moe : LynxchanSite() {
 
     private val DEFAULT_DOMAIN = "https://8chan.moe".toHttpUrl()
   }
-
 }

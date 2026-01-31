@@ -109,6 +109,7 @@ abstract class SiteRequestModifier<T : Site>(
   }
 
   companion object {
+    @Suppress("UnusedPrivateProperty")
     private const val TAG = "SiteRequestModifier"
 
     const val UserAgentHeaderKey = "User-Agent"

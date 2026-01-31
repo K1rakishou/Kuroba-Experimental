@@ -42,6 +42,7 @@ class Krautchan : LynxchanSite() {
   )
 
   companion object {
+    @Suppress("UnusedPrivateProperty")
     private const val TAG = "Krautchan"
     const val SITE_NAME = "Krautchan"
 
