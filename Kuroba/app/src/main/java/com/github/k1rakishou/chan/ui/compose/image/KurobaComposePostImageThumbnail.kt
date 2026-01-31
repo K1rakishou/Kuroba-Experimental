@@ -165,7 +165,7 @@ fun KurobaComposePostImageThumbnail(
 }
 
 @Composable
-fun PostImageThumbnailOverlay(
+private fun PostImageThumbnailOverlay(
   modifier: Modifier = Modifier,
   hasAudio: Boolean,
   displayErrorMessage: Boolean,

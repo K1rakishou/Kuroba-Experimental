@@ -812,10 +812,12 @@ class AlbumViewControllerViewModel(
     return buildString {
       append(postImage.extension?.uppercase(Locale.ENGLISH) ?: "")
       append(" ")
-      append(postImage.imageWidth)
-      append("x")
-      append(postImage.imageHeight)
-      append(" ")
+      if (postImage.imageWidth > 0 || postImage.imageHeight > 0) {
+        append(postImage.imageWidth)
+        append("x")
+        append(postImage.imageHeight)
+        append(" ")
+      }
       append(ChanPostUtils.getReadableFileSize(postImage.size))
     }
   }

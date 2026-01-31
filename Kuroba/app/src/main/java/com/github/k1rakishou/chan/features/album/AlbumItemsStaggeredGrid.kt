@@ -113,10 +113,9 @@ fun AlbumItemsStaggeredGrid(
           modifier = Modifier
             .fillMaxSize()
             .let { modifier ->
-              val aspectRatio = albumItemData.albumItemPostData?.aspectRatio
-              if (aspectRatio == null) {
-                return@let modifier
-              }
+              val aspectRatio = albumItemData.albumItemPostData
+                ?.aspectRatio
+                ?: 1f
 
               return@let modifier.aspectRatio(aspectRatio)
             },

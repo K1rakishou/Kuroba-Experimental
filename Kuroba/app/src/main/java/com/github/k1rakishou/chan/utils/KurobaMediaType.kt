@@ -24,7 +24,7 @@ fun String?.asKurobaMediaType(): KurobaMediaType {
     return KurobaMediaType.Unknown
   }
 
-  if (mimeType.startsWith("video/")) {
+  if (mimeType.startsWith("video/") || mimeType.startsWith("audio/")) {
     return KurobaMediaType.Video
   } else if (mimeType.startsWith("image/")) {
     if (mimeType.endsWith("gif")) {
