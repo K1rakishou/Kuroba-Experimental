@@ -1537,7 +1537,7 @@ Actual error: \'%1$s\'</string>
     <string name="lynxchan_captcha_verification_error">Captcha verification error: %1$s</string>
     <string name="lynxchan_captcha_verification_not_successful">Captcha verification was not successful</string>
     <string name="lynxchan_captcha_verification_block_bypassed">Block bypassed, now solve the regular captcha</string>
-    <string name="chan8moe_block_bypass_solve_message">Sometimes when trying to post on 8chan.moe it may ask you to solve a Proof–of-Work challenge (brutforce a hash until some condition is met).\nThis process is automatic, but it may take 5-10+ minutes (and some battery power).\nAlternatively, you can copy your browser\'s cookies into the app after solving it there</string>
+    <string name="chan8moe_block_bypass_solve_message">In order to proceed with posting, you must solve a Proof–of-Work challenge (brutforce a hash until some condition is met).\nThis process is automatic, but it may take 5-10+ minutes (and some battery power).\nAlternatively, you can copy your browser\'s cookies into the app after solving it there.\nDo not close this window until the process finishes, unless you want to cancel it.</string>
 
     <string name="report_controller_report_post">Report post</string>
     <string name="report_controller_select_report_category">Select report category</string>

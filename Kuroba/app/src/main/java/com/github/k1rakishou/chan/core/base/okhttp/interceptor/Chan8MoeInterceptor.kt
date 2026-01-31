@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.core.base.okhttp.interceptor
 
-import androidx.room.concurrent.AtomicBoolean
 import com.github.k1rakishou.chan.core.base.okhttp.OkHttpClientForInterceptors
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.core.site.sites.lynxchan.chan8.Chan8Moe
@@ -31,8 +30,7 @@ class Chan8MoeInterceptor(
   @GuardedBy("this")
   @Volatile
   private var _latch: CountDownLatch? = null
-  private val _needsBypass = AtomicBoolean(true)
-  
+
   private val _noRedirectHttpClient = OkHttpClient.Builder()
     .connectionPool(okHttpClient.okHttpClient().connectionPool)
     .dispatcher(okHttpClient.okHttpClient().dispatcher)
@@ -42,8 +40,13 @@ class Chan8MoeInterceptor(
   override fun intercept(chain: Interceptor.Chain): Response {
     val originalRequest = chain.request()
 
-    if (!_needsBypass.get()) {
-      return chain.proceed(originalRequest)
+    run {
+      val response = chain.proceed(originalRequest)
+      if (!needPowBlockBypass(response)) {
+        return response
+      }
+
+      response.close()
     }
 
     siteResolver.waitUntilInitialized()
@@ -71,23 +74,21 @@ class Chan8MoeInterceptor(
     val threadId = Thread.currentThread().id
 
     try {
-      if (!acquired) {
+      if (acquired) {
+        Logger.debug(TAG) { "[tid: ${threadId}] starting 8chan.moe POW bypass" }
+
+        if (!tryPass8chanMoePOWBlock(chan8Moe)) {
+          // We didn't need to pass the POW block, so just do the original request
+          return chain.proceed(originalRequest)
+        }
+
+        Logger.debug(TAG) { "[tid: ${threadId}] successfully performed 8chan.moe POW bypass" }
+      } else {
         // Wait for the first thread to finish POW bypass
-        Logger.verbose(TAG) { "[tid: ${threadId}] waiting for latch..." }
+        Logger.debug(TAG) { "[tid: ${threadId}] waiting for latch..." }
         localLatch.await()
-        Logger.verbose(TAG) { "[tid: ${threadId}] waiting for latch... done" }
-
-        val updatedRequest = updateRequest(originalRequest, chan8Moe)
-        return chain.proceed(updatedRequest)
+        Logger.debug(TAG) { "[tid: ${threadId}] waiting for latch... done" }
       }
-
-      if (!tryPass8chanMoePOWBlock(chan8Moe)) {
-        // We didn't need to pass the POW block, so just do the original request
-        return chain.proceed(originalRequest)
-      }
-
-      _needsBypass.set(false)
-      Logger.debug(TAG) { "[tid: ${threadId}] successfully performed 8chan.moe POW bypass" }
     } catch (error: Throwable) {
       if (error is IOException && error.message?.equals("Canceled", ignoreCase = true) == true) {
         Logger.error(TAG) { "[tid: ${threadId}] request was canceled" }
@@ -97,7 +98,6 @@ class Chan8MoeInterceptor(
         throw error
       }
 
-      _needsBypass.set(true)
       Logger.error(TAG, error) { "[tid: ${threadId}] failed to do POW bypass" }
     } finally {
       // Release all the other threads and set latch to null
@@ -107,6 +107,7 @@ class Chan8MoeInterceptor(
       }
     }
 
+    // Now perform the same request but with new cookies
     val updatedRequest = updateRequest(originalRequest, chan8Moe)
     return chain.proceed(updatedRequest)
   }
@@ -117,7 +118,6 @@ class Chan8MoeInterceptor(
   ): Request {
     val requestBuilder = prevRequest.newBuilder()
 
-    // Now perform the same request but with new cookies
     chan8Moe.requestModifier()
       .modifyGenericRequest(chan8Moe, requestBuilder)
 
@@ -145,20 +145,12 @@ class Chan8MoeInterceptor(
         throw InterceptionException("Bad response: ${response.code}, message: '${response.message}'")
       }
 
-      when (val powBlockStatus = response.header("X-PoWBlock-Status")?.lowercase()) {
-        null,
-        PowBlockStatusCompleted -> {
-          Logger.debug(TAG) { "POW bypass is not required for ${siteDescriptor}, exiting" }
-          return false
-        }
-        PowBlockStatusRequired -> {
-          _needsBypass.set(true)
-          Logger.debug(TAG) { "POW bypass is required for ${siteDescriptor}" }
-        }
-        else -> {
-          throw InterceptionException("Unknown 'X-PoWBlock-Status' value: '${powBlockStatus}'")
-        }
+      if (!needPowBlockBypass(response)) {
+        Logger.debug(TAG) { "POW bypass is not required for ${siteDescriptor}, exiting" }
+        return false
       }
+
+      Logger.debug(TAG) { "POW bypass is required for ${siteDescriptor}" }
 
       if (!response.isContentTypeTextHtml()) {
         throw InterceptionException("Expected text/html media type but got '${response.tryExtractMediaType()}'")
@@ -257,6 +249,15 @@ class Chan8MoeInterceptor(
     chan8Moe.powId.setSync(powIdCookie)
 
     return true
+  }
+
+  private fun needPowBlockBypass(response: Response): Boolean {
+    return when (val powBlockStatus = response.header("X-PoWBlock-Status")?.lowercase()) {
+      null,
+      PowBlockStatusCompleted -> false
+      PowBlockStatusRequired -> true
+      else -> throw InterceptionException("Unknown 'X-PoWBlock-Status' value: '${powBlockStatus}'")
+    }
   }
 
   private class RequestTag
