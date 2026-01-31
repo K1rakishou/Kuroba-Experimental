@@ -16,7 +16,13 @@ class YandexCaptchaTask(
   headerTitleText: String?,
   loadable: AbstractWebViewTask.Loadable.Url,
   invokerWaiter: CompletableDeferred<WebViewTaskResult>
-) : AbstractCookieWebViewTask(headerTitleText, loadable, invokerWaiter) {
+) : AbstractCookieWebViewTask(
+  headerTitleText = headerTitleText,
+  loadable = loadable,
+  // IIRC, Yandex captcha might require user input
+  headlessMaxTime = 5_000L,
+  invokerWaiter = invokerWaiter
+) {
   override val tag: String = TAG
 
   override fun createWebClient(): AbstractWebViewClient {

@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.core.manager
 
 import androidx.annotation.GuardedBy
+import com.github.k1rakishou.chan.features.webview.HeadlessWebViewTaskExecutor
 import com.github.k1rakishou.chan.features.webview.WebViewTaskException
 import com.github.k1rakishou.chan.features.webview.WebViewTaskResult
 import com.github.k1rakishou.chan.features.webview.task.AbstractWebViewTask
@@ -16,7 +17,8 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 class WebViewTaskManager(
-  private val applicationVisibilityManager: ApplicationVisibilityManager
+  private val applicationVisibilityManager: ApplicationVisibilityManager,
+  private val headlessWebViewTaskExecutor: HeadlessWebViewTaskExecutor
 ) {
   private val _mutex = Mutex()
 
@@ -32,7 +34,7 @@ class WebViewTaskManager(
   suspend fun performWebViewTask(
     webViewTask: AbstractWebViewTask
   ): WebViewTaskResult {
-    if (applicationVisibilityManager.isAppInBackground()) {
+    if (applicationVisibilityManager.isAppInBackground() && !webViewTask.canRunHeadlessly()) {
       // No point in doing anything here since there is most likely no activity currently alive
       Logger.debug(TAG) {
         "enqueueWebViewTask(${webViewTask::class.java.simpleName}) app is in back ground, waiting..."
@@ -42,6 +44,38 @@ class WebViewTaskManager(
 
       Logger.debug(TAG) {
         "enqueueWebViewTask(${webViewTask::class.java.simpleName}) app is in back ground, waiting... done"
+      }
+    }
+
+    if (webViewTask.canRunHeadlessly()) {
+      Logger.debug(TAG) {
+        "Trying to perform task ${webViewTask::class.java.simpleName} headlessly, " +
+          "headlessMaxTime: ${webViewTask.headlessMaxTime} seconds..."
+      }
+
+      try {
+        headlessWebViewTaskExecutor.tryExecuteTaskHeadlessly(webViewTask)
+      } catch (error: Throwable) {
+        Logger.error(TAG, error) {
+          "Unhandled error while trying to execute ${webViewTask::class.java.simpleName} headlessly"
+        }
+
+        webViewTask.invokerWaiter.cancel()
+        return WebViewTaskResult.Error(WebViewTaskException(error.message ?: "Unknown error"))
+      }
+
+      if (webViewTask.invokerWaiter.isCompleted) {
+        Logger.debug(TAG) {
+          "Trying to perform task ${webViewTask::class.java.simpleName} headlessly, " +
+            "headlessMaxTime: ${webViewTask.headlessMaxTime} seconds... done!"
+        }
+
+        return webViewTask.invokerWaiter.await()
+      }
+
+      Logger.debug(TAG) {
+        "Trying to perform task ${webViewTask::class.java.simpleName} headlessly, " +
+          "headlessMaxTime: ${webViewTask.headlessMaxTime} seconds... timeout. Switching to normal mode."
       }
     }
 

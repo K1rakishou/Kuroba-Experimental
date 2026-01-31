@@ -14,7 +14,6 @@ import androidx.viewpager.widget.ViewPager
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
-import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
@@ -62,8 +61,6 @@ class ThemeSettingsController(context: Context) : Controller(context), WindowIns
   lateinit var fileManager: FileManager
   @Inject
   lateinit var fileChooser: FileChooser
-  @Inject
-  lateinit var dialogFactory: DialogFactory
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 

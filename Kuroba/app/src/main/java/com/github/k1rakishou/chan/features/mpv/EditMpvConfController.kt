@@ -44,9 +44,6 @@ class EditMpvConfController(
     return@lazy File(mpvconfDir, MPVView.MPV_CONF_FILE)
   }
 
-  override val contentAlignment: Alignment
-    get() = Alignment.Center
-
   override fun injectActivityDependencies(component: ActivityComponent) {
     component.inject(this)
   }

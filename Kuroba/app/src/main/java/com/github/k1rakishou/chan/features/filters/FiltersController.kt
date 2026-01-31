@@ -47,7 +47,6 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.BaseSelectionHelper
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.DialogFactory
-import com.github.k1rakishou.chan.core.helper.FilterEngine
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.usecase.ExportFiltersUseCase
@@ -110,11 +109,7 @@ class FiltersController(
 ) : Controller(context) {
 
   @Inject
-  lateinit var filterEngine: FilterEngine
-  @Inject
   lateinit var themeEngine: ThemeEngine
-  @Inject
-  lateinit var dialogFactory: DialogFactory
   @Inject
   lateinit var boardManager: BoardManager
   @Inject

@@ -39,7 +39,8 @@ abstract class BaseFloatingComposeController(
 
   private var presenting = true
 
-  open val contentAlignment: Alignment = Alignment.TopStart
+  open val contentAlignment: Alignment = Alignment.Center
+  open val closableByClickingOutside = true
 
   override fun onCreate() {
     super.onCreate()
@@ -50,7 +51,6 @@ abstract class BaseFloatingComposeController(
         ComposeEntrypoint {
           val windowInsets = LocalWindowInsets.current
           val windowSizeClass = LocalWindowSizeClass.current
-
           val backgroundColor = remember { Color(red = 0f, green = 0f, blue = 0f, alpha = 0.6f) }
 
           BoxWithConstraints(
@@ -130,7 +130,9 @@ abstract class BaseFloatingComposeController(
   }
 
   protected open fun onOutsideOfDialogClicked() {
-    pop()
+    if (closableByClickingOutside) {
+      pop()
+    }
   }
 
   protected open fun pop(): Boolean {

@@ -5,7 +5,6 @@ import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.BaseSelectionHelper
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
-import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.helper.ProxyStorage
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
@@ -35,8 +34,6 @@ class ProxySetupController(
   context: Context
 ) : Controller(context), ProxySetupView, WindowInsetsListener, ProxySelectionHelper.OnProxyItemClicked {
 
-  @Inject
-  lateinit var dialogFactory: DialogFactory
   @Inject
   lateinit var proxyStorage: ProxyStorage
   @Inject

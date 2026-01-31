@@ -1,7 +1,13 @@
 package com.github.k1rakishou.chan.core.manager
 
 import androidx.annotation.GuardedBy
+import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.concurrency.RendezvousCoroutineExecutor
+import com.github.k1rakishou.chan.features.webview.WebViewTaskResult
+import com.github.k1rakishou.chan.features.webview.task.AbstractWebViewTask
+import com.github.k1rakishou.chan.features.webview.task.CloudFlareTask
+import com.github.k1rakishou.chan.features.webview.task.DvachAntispamTask
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.common.FirewallType
 import com.github.k1rakishou.common.domainOrHost
 import com.github.k1rakishou.common.errorMessageOrClassName
@@ -10,10 +16,6 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.util.concurrent.atomic.AtomicBoolean
@@ -21,7 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 class FirewallBypassManager(
   private val appScope: CoroutineScope,
   private val siteManager: SiteManager,
-  private val applicationVisibilityManager: ApplicationVisibilityManager
+  private val webViewTaskManager: WebViewTaskManager
 ) {
   @GuardedBy("itself")
   private val firewallSiteInfoMap = mutableMapOf<String, FirewallSiteInfo>()
@@ -29,13 +31,6 @@ class FirewallBypassManager(
   private val hostLastTimeCheck = mutableMapOf<String, Long>()
 
   private val rendezvousCoroutineExecutor = RendezvousCoroutineExecutor(appScope)
-
-  private val _showFirewallControllerEvents = MutableSharedFlow<ShowFirewallControllerInfo>(
-    extraBufferCapacity = 1,
-    onBufferOverflow = BufferOverflow.DROP_LATEST
-  )
-  val showFirewallControllerEvents: SharedFlow<ShowFirewallControllerInfo>
-    get() = _showFirewallControllerEvents.asSharedFlow()
 
   suspend fun removeHostTimeCheckByChanDescriptor(chanDescriptor: ChanDescriptor) {
     siteManager.awaitUntilInitialized()
@@ -60,16 +55,6 @@ class FirewallBypassManager(
     urlToOpen: HttpUrl,
     onFinished: (success: Boolean) -> Unit
   ) {
-    if (!applicationVisibilityManager.isAppInForeground()) {
-      // No point to do anything here since there is most likely no activity currently alive
-      Logger.verbose(TAG) {
-        "onFirewallDetected(${firewallType}, ${urlToOpen}) skipping because the app is in background"
-      }
-
-      onFinished.invoke(false)
-      return
-    }
-
     val domainOrHost = urlToOpen.domainOrHost()
 
     val showShowFirewallBypassScreen = synchronized(firewallSiteInfoMap) {
@@ -126,25 +111,33 @@ class FirewallBypassManager(
           firewallSiteInfoMap[domainOrHost]?.onStarted()
         }
 
-        val completableDeferred = CompletableDeferred<Boolean>()
-
-        val showFirewallControllerInfo = ShowFirewallControllerInfo(
-          firewallType = firewallType,
-          urlToOpen = urlToOpen,
-          onFinished = completableDeferred
-        )
-
-        _showFirewallControllerEvents.emit(showFirewallControllerInfo)
-
         Logger.debug(TAG) {
           "onFirewallDetected(${firewallType}, '${urlToOpen}') Waiting for result from SiteFirewallBypassController..."
         }
 
-        success = try {
-          completableDeferred.await()
-        } catch (error: Throwable) {
-          false
+        val resultWaiter = CompletableDeferred<WebViewTaskResult>()
+
+        val webViewTask = when (firewallType) {
+          FirewallType.Cloudflare -> {
+            CloudFlareTask(
+              headerTitleText = getString(R.string.firewall_check_header_title, firewallType.name),
+              loadable = AbstractWebViewTask.Loadable.Url(urlToOpen),
+              invokerWaiter = resultWaiter
+            )
+          }
+          FirewallType.DvachAntiSpam -> {
+            DvachAntispamTask(
+              headerTitleText = getString(R.string.firewall_check_header_title, firewallType.name),
+              loadable = AbstractWebViewTask.Loadable.Url(urlToOpen),
+              invokerWaiter = resultWaiter
+            )
+          }
+          FirewallType.YandexSmartCaptcha -> {
+            error("Handled in ImageSearchController")
+          }
         }
+
+        success = webViewTaskManager.performWebViewTask(webViewTask).isSuccess
 
         Logger.debug(TAG) {
           "onFirewallDetected(${firewallType}, '${urlToOpen}') Waiting for result from " +

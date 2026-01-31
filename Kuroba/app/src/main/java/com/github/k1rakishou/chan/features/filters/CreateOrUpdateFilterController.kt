@@ -101,8 +101,6 @@ class CreateOrUpdateFilterController(
   lateinit var chanFilterManager: ChanFilterManager
   @Inject
   lateinit var archivesManager: ArchivesManager
-  @Inject
-  lateinit var dialogFactory: DialogFactory
 
   private val viewModel by viewModelByKey<FilterBoardSelectorControllerViewModel>()
 

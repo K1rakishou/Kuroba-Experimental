@@ -59,7 +59,8 @@ class NotFoundException : IOException("Not found"), ExceptionWithShortErrorMessa
   }
 }
 
-class BadContentTypeException(contentType: String?) : Exception("Unexpected content type: '${contentType}'"), ExceptionWithShortErrorMessage {
+class BadContentTypeException(contentType: String?) :
+  Exception("Unexpected content type: '${contentType}'"), ExceptionWithShortErrorMessage {
   override fun shortErrorMessage(): String {
     return message!!
   }

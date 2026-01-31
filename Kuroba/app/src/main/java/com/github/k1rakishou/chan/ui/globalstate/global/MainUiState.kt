@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.ui.globalstate.global
 
 import android.view.MotionEvent
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.unit.IntSize
 import com.github.k1rakishou.chan.ui.compose.window.WindowSizeClass
 import com.github.k1rakishou.chan.ui.controller.base.ControllerKey
 import com.github.k1rakishou.core_logger.Logger
@@ -13,6 +14,7 @@ interface IMainUiState {
   interface Readable {
     val touchPosition: StateFlow<Offset>
     val windowSizeClass: StateFlow<WindowSizeClass?>
+    val windowSize: StateFlow<IntSize?>
 
     fun addTouchPositionListener(key: String, listener: GlobalTouchPositionListener)
     fun removeTouchPositionListener(key: String)
@@ -23,6 +25,7 @@ interface IMainUiState {
   interface Writeable {
     fun updateTouchPosition(touchPosition: Offset, eventAction: Int?)
     fun updateWindowSizeClass(windowSizeClass: WindowSizeClass)
+    fun updateWindowSize(windowSize: IntSize)
 
     fun startTrackingScrollSpeed(controllerKey: ControllerKey)
     fun updateScrollSpeed(controllerKey: ControllerKey, motionEvent: MotionEvent?)
@@ -38,6 +41,10 @@ internal class MainUiState : IMainUiState.Readable, IMainUiState.Writeable {
   private val _windowSizeClass = MutableStateFlow<WindowSizeClass?>(null)
   override val windowSizeClass: StateFlow<WindowSizeClass?>
     get() = _windowSizeClass.asStateFlow()
+
+  private val _windowSize = MutableStateFlow<IntSize?>(null)
+  override val windowSize: StateFlow<IntSize?>
+    get() = _windowSize.asStateFlow()
 
   private val _velocityTracking = VelocityTracking()
 
@@ -68,6 +75,11 @@ internal class MainUiState : IMainUiState.Readable, IMainUiState.Writeable {
   override fun updateWindowSizeClass(windowSizeClass: WindowSizeClass) {
     Logger.verbose(TAG) { "updateWindowSizeClass() windowSizeClass: ${windowSizeClass}" }
     _windowSizeClass.value = windowSizeClass
+  }
+
+  override fun updateWindowSize(windowSize: IntSize) {
+    Logger.verbose(TAG) { "updateWindowSize() windowSize: ${windowSize}" }
+    _windowSize.value = windowSize
   }
 
   override fun startTrackingScrollSpeed(controllerKey: ControllerKey) {

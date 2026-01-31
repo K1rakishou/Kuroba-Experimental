@@ -10,14 +10,20 @@ class SpurUsAntibotTask(
   headerTitleText: String?,
   loadableUrl: Loadable.Url,
   invokerWaiter: CompletableDeferred<WebViewTaskResult>
-) : AbstractWebViewTask(headerTitleText, loadableUrl, invokerWaiter) {
+) : AbstractWebViewTask(
+  headerTitleText = headerTitleText,
+  loadable = loadableUrl,
+  // Spur.us doesn't require any user interaction (at least for now)
+  headlessMaxTime = 8_000L,
+  invokerWaiter = invokerWaiter
+) {
 
   override val tag: String = TAG
   override val uniqueTask: Boolean = true
 
   override fun createWebClient(): AbstractWebViewClient {
     return SpurUsAntibotWebViewClient(
-      resultWaiter = this@SpurUsAntibotTask.invokerWaiter
+      webViewClientResultWaiter = this@SpurUsAntibotTask.webViewClientResultWaiter
     )
   }
 
@@ -33,7 +39,7 @@ class SpurUsAntibotTask(
     }, "Android")
   }
 
-  override suspend fun start(webView: WebView) {
+  override suspend fun startTask(webView: WebView) {
     check(loadable is Loadable.Url) { "Unexpected loadable: ${loadable::class.java.simpleName}" }
 
     val challengeUrl = loadable.url.toString()
@@ -47,8 +53,8 @@ class SpurUsAntibotTask(
   }
 
   private class SpurUsAntibotWebViewClient(
-    resultWaiter: CompletableDeferred<WebViewTaskResult>,
-  ) : AbstractWebViewClient(resultWaiter)
+    webViewClientResultWaiter: CompletableDeferred<WebViewTaskResult>,
+  ) : AbstractWebViewClient(webViewClientResultWaiter)
 
   companion object {
     private const val TAG = "SpurUsAntibotTask"

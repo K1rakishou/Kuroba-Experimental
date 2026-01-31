@@ -16,7 +16,6 @@ import androidx.core.view.updateLayoutParams
 import androidx.core.widget.doAfterTextChanged
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
-import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
@@ -72,8 +71,6 @@ class ImageSaverV2OptionsController(
   lateinit var fileManager: FileManager
   @Inject
   lateinit var themeEngine: ThemeEngine
-  @Inject
-  lateinit var dialogFactory: DialogFactory
 
   private var rootDirAccessible = false
   private var needCallCancelFunc = true

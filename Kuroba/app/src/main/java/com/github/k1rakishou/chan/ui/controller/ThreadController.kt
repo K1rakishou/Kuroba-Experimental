@@ -112,8 +112,6 @@ abstract class ThreadController(
   @Inject
   lateinit var appSettingsUpdateAppRefreshHelperLazy: Lazy<AppSettingsUpdateAppRefreshHelper>
   @Inject
-  lateinit var dialogFactoryLazy: Lazy<DialogFactory>
-  @Inject
   lateinit var currentOpenedDescriptorStateManagerLazy: Lazy<CurrentOpenedDescriptorStateManager>
   @Inject
   lateinit var pageRequestManagerLazy: Lazy<PageRequestManager>
@@ -132,8 +130,6 @@ abstract class ThreadController(
     get() = chanThreadViewableInfoManagerLazy.get()
   protected val archivesManager: ArchivesManager
     get() = archivesManagerLazy.get()
-  protected val dialogFactory: DialogFactory
-    get() = dialogFactoryLazy.get()
   protected val chanThreadManager: ChanThreadManager
     get() = chanThreadManagerLazy.get()
   protected val threadFollowHistoryManager: ThreadFollowHistoryManager

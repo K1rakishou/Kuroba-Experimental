@@ -114,8 +114,8 @@ class OpenUrlInWebViewController(
     webView.stopLoading()
 
     suspendCancellableCoroutine { cont ->
-      cookieManager.removeAllCookies { removed ->
-        Logger.debug(TAG) { "cookieManager.removeAllCookies -> ${removed}" }
+      cookieManager.removeAllCookies {
+        Logger.debug(TAG) { "cookieManager.removeAllCookies()" }
         cont.resumeValueSafe(Unit)
       }
     }

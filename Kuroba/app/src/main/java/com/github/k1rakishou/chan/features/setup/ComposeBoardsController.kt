@@ -70,8 +70,6 @@ class ComposeBoardsController(
   lateinit var imageLoaderDeprecated: ImageLoaderDeprecated
   @Inject
   lateinit var siteManager: SiteManager
-  @Inject
-  lateinit var dialogFactory: DialogFactory
 
   private val viewModel by viewModelByKey<ComposeBoardsControllerViewModel>()
 

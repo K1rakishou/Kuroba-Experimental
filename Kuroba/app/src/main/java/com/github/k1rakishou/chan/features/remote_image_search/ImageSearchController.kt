@@ -38,11 +38,11 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
-import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.image.ImageLoaderDeprecated
 import com.github.k1rakishou.chan.features.toolbar.BackArrowMenuItem
 import com.github.k1rakishou.chan.features.toolbar.ToolbarMiddleContent
 import com.github.k1rakishou.chan.features.toolbar.ToolbarText
+import com.github.k1rakishou.chan.features.webview.HeadlessWebViewTaskExecutor
 import com.github.k1rakishou.chan.features.webview.WebViewTaskController
 import com.github.k1rakishou.chan.features.webview.WebViewTaskResult
 import com.github.k1rakishou.chan.features.webview.task.AbstractWebViewTask
@@ -90,7 +90,7 @@ class ImageSearchController(
   @Inject
   lateinit var imageLoaderDeprecated: ImageLoaderDeprecated
   @Inject
-  lateinit var dialogFactory: DialogFactory
+  lateinit var headlessWebViewTaskExecutor: HeadlessWebViewTaskExecutor
 
   override fun injectActivityDependencies(component: ActivityComponent) {
     component.inject(this)
@@ -150,17 +150,14 @@ class ImageSearchController(
         try {
           val resultWaiter = CompletableDeferred<WebViewTaskResult>()
 
-          presentController(
-            WebViewTaskController(
-              context = context,
-              webViewTask = YandexCaptchaTask(
-                headerTitleText = AppModuleAndroidUtils.getString(
-                  R.string.firewall_check_header_title,
-                  FirewallType.YandexSmartCaptcha.name
-                ),
-                loadable = AbstractWebViewTask.Loadable.Url(urlToOpen),
-                invokerWaiter = resultWaiter,
+          headlessWebViewTaskExecutor.tryExecuteTaskHeadlessly(
+            YandexCaptchaTask(
+              headerTitleText = AppModuleAndroidUtils.getString(
+                R.string.firewall_check_header_title,
+                FirewallType.YandexSmartCaptcha.name
               ),
+              loadable = AbstractWebViewTask.Loadable.Url(urlToOpen),
+              invokerWaiter = resultWaiter,
             )
           )
 

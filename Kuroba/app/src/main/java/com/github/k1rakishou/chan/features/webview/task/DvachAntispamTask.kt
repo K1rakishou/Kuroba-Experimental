@@ -16,13 +16,19 @@ class DvachAntispamTask(
   headerTitleText: String?,
   loadable: Loadable.Url,
   invokerWaiter: CompletableDeferred<WebViewTaskResult>
-) : AbstractCookieWebViewTask(headerTitleText, loadable, invokerWaiter) {
+) : AbstractCookieWebViewTask(
+  headerTitleText = headerTitleText,
+  loadable = loadable,
+  // I don't think this one is even used on 2ch.hk, so standard timeout.
+  headlessMaxTime = 5_000L,
+  invokerWaiter = invokerWaiter
+) {
   override val tag: String = TAG
 
   override fun createWebClient(): AbstractWebViewClient {
     return WebViewClient(
       cookieManager = cookieManager,
-      webViewClientResultWaiter = this@DvachAntispamTask.invokerWaiter
+      webViewClientResultWaiter = this@DvachAntispamTask.webViewClientResultWaiter
     )
   }
 

@@ -15,7 +15,6 @@ import com.airbnb.epoxy.EpoxyModelTouchCallback
 import com.airbnb.epoxy.EpoxyViewHolder
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
-import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
@@ -52,8 +51,6 @@ class BoardsSetupController(
   lateinit var siteManager: SiteManager
   @Inject
   lateinit var boardManager: BoardManager
-  @Inject
-  lateinit var dialogFactory: DialogFactory
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 

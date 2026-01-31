@@ -1,137 +1,157 @@
 package com.github.k1rakishou.chan.features.webview
 
-import android.annotation.SuppressLint
 import android.content.Context
-import android.view.View
+import android.view.ViewGroup
 import android.webkit.WebView
-import android.widget.FrameLayout
-import android.widget.ImageView
-import android.widget.TextView
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
-import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.features.webview.task.AbstractWebViewTask
-import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeClickableIcon
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
+import com.github.k1rakishou.chan.ui.compose.ktu
+import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
+import com.github.k1rakishou.chan.ui.controller.BaseFloatingComposeController
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.core_themes.ThemeEngine
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class WebViewTaskController(
   context: Context,
   val webViewTask: AbstractWebViewTask,
-) : BaseFloatingController(context), ThemeEngine.ThemeChangesListener {
+) : BaseFloatingComposeController(context) {
 
   @Inject
   lateinit var appConstants: AppConstants
   @Inject
   lateinit var siteResolver: SiteResolver
   @Inject
-  lateinit var themeEngine: ThemeEngine
-  @Inject
-  lateinit var dialogFactory: DialogFactory
+  lateinit var headlessWebViewTaskExecutor: HeadlessWebViewTaskExecutor
 
-  private lateinit var webView: WebView
-  private lateinit var closeButton: ImageView
-  private lateinit var headerTitle: TextView
+  private var _webViewRef: WebView? = null
 
   override fun injectActivityDependencies(component: ActivityComponent) {
     component.inject(this)
   }
 
-  override fun getLayoutId(): Int = R.layout.controller_firewall_bypass
+  override fun onDestroy() {
+    super.onDestroy()
 
-  override fun onCreate() {
-    super.onCreate()
+    _webViewRef?.let { webView -> (webView.parent as? ViewGroup)?.removeView(webView) }
+    _webViewRef = null
 
-    // Add a frame delay for the navigation stuff to completely load
-    controllerScope.launch {
-      try {
-        // Some users may have no WebView installed
-        onCreateInternal()
+    webViewTask.destroy()
+  }
+
+  @Composable
+  override fun BoxScope.BuildContent() {
+    val chanTheme = LocalChanTheme.current
+    val density = LocalDensity.current
+
+    var currentWebViewMut by remember { mutableStateOf<WebView?>(null) }
+    val currentWebView = currentWebViewMut
+
+    var webViewSizeMut by remember { mutableStateOf<DpSize?>(null) }
+    val webViewSize = webViewSizeMut
+
+    LaunchedEffect(key1 = Unit) {
+      val webView = try {
+        headlessWebViewTaskExecutor.getOrCreateWebView()
       } catch (error: Throwable) {
-        Logger.e(TAG, "Error when trying to create the view", error)
+        Logger.error(TAG, error) { "Error when trying to create the view" }
 
         val result = WebViewTaskResult.Error(WebViewTaskException(error.errorMessageOrClassName()))
         webViewTask.finishWithResult(result)
 
         pop()
+        return@LaunchedEffect
+      }
+
+      webView.webViewClient = webViewTask.webViewClient
+      _webViewRef = webView
+
+      currentWebViewMut = webView
+      webViewSizeMut = with(density) {
+        DpSize(
+          width = webView.layoutParams.width.toDp(),
+          height = webView.layoutParams.height.toDp()
+        )
       }
     }
-  }
 
-  override fun onDestroy() {
-    super.onDestroy()
-
-    if (::webView.isInitialized) {
-      webView.stopLoading()
+    if (currentWebView == null || webViewSize == null) {
+      return
     }
 
-    if (::themeEngine.isInitialized) {
-      themeEngine.removeListener(this)
-    }
+    Column(
+      modifier = Modifier
+        .size(webViewSize)
+        .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+      Row(
+        modifier = Modifier
+          .fillMaxWidth()
+          .wrapContentHeight()
+          .background(color = chanTheme.backColorSecondaryCompose),
+        verticalAlignment = Alignment.CenterVertically
+      ) {
+        if (webViewTask.headerTitleText.isNotNullNorBlank()) {
+          KurobaComposeText(
+            text = webViewTask.headerTitleText,
+            fontSize = 16.ktu,
+            color = Color.White
+          )
+        }
 
-    webViewTask.destroy()
-  }
+        Spacer(modifier = Modifier.weight(1f))
 
-  override fun onThemeChanged() {
-    val tintedDrawable = themeEngine.tintDrawable(
-      drawable = closeButton.drawable,
-      isCurrentColorDark = ThemeEngine.isDarkColor(themeEngine.chanTheme.backColor)
-    )
+        KurobaComposeClickableIcon(
+          modifier = Modifier.size(38.dp),
+          drawableId = R.drawable.ic_clear_white_24dp,
+          onClick = { pop() }
+        )
+      }
 
-    closeButton.setImageDrawable(tintedDrawable)
-
-    val textColor = ThemeEngine.resolveTextColor(themeEngine.chanTheme)
-    headerTitle.setTextColor(textColor)
-  }
-
-  @SuppressLint("SetJavaScriptEnabled")
-  private suspend fun onCreateInternal() {
-    val webViewContainer = view.findViewById<FrameLayout>(R.id.web_view_container)
-
-    themeEngine.addListener(this)
-
-    webView = WebView(context, null, android.R.attr.webViewStyle).apply {
-      layoutParams = FrameLayout.LayoutParams(
-        FrameLayout.LayoutParams.MATCH_PARENT,
-        FrameLayout.LayoutParams.MATCH_PARENT
+      AndroidView(
+        modifier = Modifier
+          .fillMaxWidth()
+          .weight(1f),
+        factory = { currentWebView },
       )
-
-      isClickable = false
-      isFocusable = false
     }
 
-    webViewContainer.addView(webView)
-
-    val clickableArea = view.findViewById<FrameLayout>(R.id.clickable_area)
-    clickableArea.setOnClickListener { pop() }
-
-    closeButton = view.findViewById(R.id.close_button)
-    closeButton.setOnClickListener {
-      pop()
-    }
-
-    headerTitle = view.findViewById(R.id.header_title)
-    if (webViewTask.headerTitleText.isNullOrBlank()) {
-      headerTitle.visibility = View.INVISIBLE
-    } else {
-      headerTitle.text = webViewTask.headerTitleText
-      headerTitle.visibility = View.VISIBLE
-    }
-
-    webView.stopLoading()
-    webViewTask.init(webView)
-    webViewTask.start(webView)
-
-    onThemeChanged()
-
-    controllerScope.launch {
-      webViewTask.waitForResult(webView)
-      pop()
+    LaunchedEffect(key1 = Unit) {
+      try {
+        webViewTask.init(currentWebView)
+        webViewTask.start(currentWebView)
+        webViewTask.waitForResult(currentWebView)
+      } finally {
+        pop()
+      }
     }
   }
 

@@ -83,6 +83,7 @@ import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadProg
 import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadingCoordinator
 import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadingDelegate
 import com.github.k1rakishou.chan.features.toolbar.KurobaToolbarStateManager
+import com.github.k1rakishou.chan.features.webview.HeadlessWebViewTaskExecutor
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder
 import com.github.k1rakishou.chan.ui.compose.snackbar.manager.SnackbarManagerFactory
 import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
@@ -915,24 +916,26 @@ class ManagerModule {
   fun provideFirewallBypassManager(
     appScope: CoroutineScope,
     siteManager: SiteManager,
-    applicationVisibilityManager: ApplicationVisibilityManager
+    webViewTaskManager: WebViewTaskManager
   ): FirewallBypassManager {
     deps("FirewallBypassManager")
     return FirewallBypassManager(
-      appScope,
-      siteManager,
-      applicationVisibilityManager
+      appScope = appScope,
+      siteManager = siteManager,
+      webViewTaskManager = webViewTaskManager
     )
   }
 
   @Singleton
   @Provides
   fun provideWebViewTaskManager(
-    applicationVisibilityManager: ApplicationVisibilityManager
+    applicationVisibilityManager: ApplicationVisibilityManager,
+    headlessWebViewTaskExecutor: HeadlessWebViewTaskExecutor
   ): WebViewTaskManager {
     deps("WebViewTaskManager")
     return WebViewTaskManager(
-      applicationVisibilityManager
+      applicationVisibilityManager = applicationVisibilityManager,
+      headlessWebViewTaskExecutor = headlessWebViewTaskExecutor
     )
   }
 

@@ -24,7 +24,6 @@ import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
-import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.image.ImageLoaderDeprecated
 import com.github.k1rakishou.chan.features.toolbar.BackArrowMenuItem
 import com.github.k1rakishou.chan.features.toolbar.ToolbarMiddleContent
@@ -58,8 +57,6 @@ class CreateSoundMediaController(
   lateinit var imageLoaderDeprecated: ImageLoaderDeprecated
   @Inject
   lateinit var fileChooser: FileChooser
-  @Inject
-  lateinit var dialogFactory: DialogFactory
 
   override fun injectActivityDependencies(component: ActivityComponent) {
     component.inject(this)

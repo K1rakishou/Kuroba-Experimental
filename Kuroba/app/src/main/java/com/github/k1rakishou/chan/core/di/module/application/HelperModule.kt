@@ -32,6 +32,7 @@ import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerOpenTh
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutHelper
 import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadProgressNotifier
+import com.github.k1rakishou.chan.features.webview.HeadlessWebViewTaskExecutor
 import com.github.k1rakishou.chan.ui.captcha.chan4.Chan4CaptchaSolverHelper
 import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
 import com.github.k1rakishou.chan.ui.helper.AppResources
@@ -333,6 +334,19 @@ class HelperModule {
       postFilterManager = postFilterManager,
       threadPostSearchManager = threadPostSearchManager,
       chanLoadProgressNotifier = chanLoadProgressNotifier
+    )
+  }
+
+  @Singleton
+  @Provides
+  fun provideHeadlessWebViewTaskExecutor(
+    appContext: Context,
+    globalUiStateHolder: GlobalUiStateHolder
+  ): HeadlessWebViewTaskExecutor {
+    deps("HeadlessWebViewTaskExecutor")
+    return HeadlessWebViewTaskExecutor(
+      appContext = appContext,
+      globalUiStateHolder = globalUiStateHolder
     )
   }
 

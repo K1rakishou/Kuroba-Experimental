@@ -62,7 +62,6 @@ import com.github.k1rakishou.chan.core.base.BaseSelectionHelper
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
-import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
 import com.github.k1rakishou.chan.core.image.ImageLoaderDeprecated
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
@@ -119,8 +118,6 @@ class LocalArchiveController(
   lateinit var appConstants: AppConstants
   @Inject
   lateinit var imageLoaderDeprecated: ImageLoaderDeprecated
-  @Inject
-  lateinit var dialogFactory: DialogFactory
   @Inject
   lateinit var fileChooser: FileChooser
   @Inject

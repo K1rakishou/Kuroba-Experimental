@@ -34,7 +34,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
-import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeCard
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeCustomTextField
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeIcon
@@ -55,19 +54,13 @@ import com.github.k1rakishou.model.data.bookmark.BookmarkGroupMatchFlag
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkGroup
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
-import java.util.*
-import javax.inject.Inject
+import java.util.Locale
 
 class BookmarkGroupPatternSettingsController(
   context: Context,
   private val bookmarkGroupId: String
 ) : BaseFloatingComposeController(context) {
-
-  @Inject
-  lateinit var dialogFactory: DialogFactory
-
   private var matcherValidationTrigger: MutableState<Int> = mutableStateOf(0)
-
   private val viewModel by viewModelByKey<BookmarkGroupPatternSettingsControllerViewModel>()
 
   override fun injectActivityDependencies(component: ActivityComponent) {

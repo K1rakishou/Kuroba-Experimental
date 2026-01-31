@@ -4,11 +4,13 @@ import androidx.activity.ComponentActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.toComposeRect
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntSize
 import androidx.window.layout.WindowMetricsCalculator
 import com.github.k1rakishou.chan.ui.compose.window.WindowSizeClass
 import com.github.k1rakishou.chan.utils.appDependencies
@@ -23,12 +25,25 @@ fun ProvideWindowClassSize(content: @Composable () -> Unit) {
   @Suppress("UNUSED_VARIABLE") val configuration = LocalConfiguration.current
 
   val density = LocalDensity.current
-  val metrics = WindowMetricsCalculator.getOrCreate().computeCurrentWindowMetrics(context as ComponentActivity)
-  val size = with(density) { metrics.bounds.toComposeRect().size.toDpSize() }
-  val windowClassSize = WindowSizeClass.calculateFromSize(size)
+  val metrics = remember(key1 = configuration, key2 = density) {
+    WindowMetricsCalculator.getOrCreate()
+      .computeCurrentWindowMetrics(context as ComponentActivity)
+  }
 
-  LaunchedEffect(key1 = windowClassSize) {
-    globalUiStateHolder.updateMainUiState { updateWindowSizeClass(windowClassSize) }
+  val size = remember(key1 = metrics) {
+    metrics.bounds.toComposeRect().size
+  }
+
+  val windowClassSize = remember(key1 = size) {
+    val dpSize = with(density) { size.toDpSize() }
+    WindowSizeClass.calculateFromSize(dpSize)
+  }
+
+  LaunchedEffect(key1 = windowClassSize, key2 = size) {
+    globalUiStateHolder.updateMainUiState {
+      updateWindowSizeClass(windowClassSize)
+      updateWindowSize(IntSize(size.width.toInt(), size.height.toInt()))
+    }
   }
 
   CompositionLocalProvider(LocalWindowSizeClass provides windowClassSize) {

@@ -1,31 +1,35 @@
 package com.github.k1rakishou.chan.features.webview.task
 
 import android.webkit.CookieManager
-import android.webkit.WebSettings
 import android.webkit.WebView
 import androidx.annotation.CallSuper
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.features.webview.WebViewTaskResult
 import com.github.k1rakishou.chan.features.webview.client.AbstractWebViewClient
 import com.github.k1rakishou.chan.utils.appDependencies
 import com.github.k1rakishou.common.CookieBuilder
 import com.github.k1rakishou.common.awaitSilently
-import com.github.k1rakishou.common.resumeValueSafe
-import com.github.k1rakishou.core_logger.Logger
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.HttpUrl
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 abstract class AbstractWebViewTask(
   val headerTitleText: String?,
   val loadable: Loadable,
+  val headlessMaxTime: Long,
   val invokerWaiter: CompletableDeferred<WebViewTaskResult>
 ) {
-  protected val cookieManager by lazy { CookieManager.getInstance()!! }
-  protected val webViewClient by lazy { createWebClient() }
-  protected val siteResolver by lazy { appDependencies().siteResolver }
-  protected val webViewClientResultWaiter = CompletableDeferred<WebViewTaskResult>()
+  val cookieManager by lazy { CookieManager.getInstance()!! }
+  val webViewClient by lazy { createWebClient() }
+  val siteResolver by lazy { appDependencies().siteResolver }
+  val webViewClientResultWaiter = CompletableDeferred<WebViewTaskResult>()
+
+  private val _initialized = AtomicBoolean(false)
+  private val _destroyed = AtomicBoolean(false)
+
+  private val _started = AtomicBoolean(false)
+  val started: Boolean
+    get() = _started.get()
 
   // Cookies before loading the page. Once the page loads, there is no way to get the cookies from WebView, and it's
   // impossible to tell if cookies were updated in CookieManager. But in some cases we need to know when the cookies
@@ -41,58 +45,32 @@ abstract class AbstractWebViewTask(
   // the whole website domain, not just a single url.
   open val uniqueTask: Boolean = false
 
+  fun canRunHeadlessly(): Boolean = headlessMaxTime > 0L
+
   @CallSuper
   open suspend fun init(webView: WebView) {
-    suspendCancellableCoroutine { cont ->
-      cookieManager.removeAllCookies { removed ->
-        Logger.debug(tag) { "cookieManager.removeAllCookies -> ${removed}" }
-        cont.resumeValueSafe(Unit)
-      }
+    if (!_initialized.compareAndSet(false, true)) {
+      return
     }
 
-    when (loadable) {
-      is Loadable.Url -> {
-        val urlToOpenString = loadable.url.toString()
+    setupCookies()
+  }
 
-        val siteRequestModifier = siteResolver.findSiteForUrl(urlToOpenString)?.requestModifier()
-        if (siteRequestModifier != null) {
-          val cookieManager = CookieManager.getInstance()
-          val cookieBuilder = CookieBuilder()
-          siteRequestModifier.modifyCookieBuilder(loadable.url, cookieBuilder)
-
-          val builtCookies = cookieBuilder.build()
-          if (builtCookies.isNotBlank()) {
-            cookieManager.setCookie(urlToOpenString, builtCookies)
-          }
-
-          initialCookies.set(builtCookies)
-        }
-      }
-      is Loadable.Html -> {
-        // no-op
-      }
+  suspend fun start(webView: WebView) {
+    if (!_started.compareAndSet(false, true)) {
+      return
     }
 
-    cookieManager.setAcceptCookie(true)
-    cookieManager.setAcceptThirdPartyCookies(webView, true)
-
-    val webSettings: WebSettings = webView.settings
-    webSettings.javaScriptEnabled = true
-    webSettings.domStorageEnabled = true
-    webSettings.databaseEnabled = true
-    webSettings.useWideViewPort = true
-    webSettings.loadWithOverviewMode = true
-    webSettings.cacheMode = WebSettings.LOAD_DEFAULT
-
-    ChanSettings.customUserAgent.get()
-      .takeIf { customUserAgent -> customUserAgent.isNotBlank() }
-      ?.let { customUserAgent -> webSettings.userAgentString = customUserAgent }
-
-    webView.webViewClient = webViewClient
+    webView.stopLoading()
+    startTask(webView)
   }
 
   @CallSuper
   open fun destroy() {
+    if (!_destroyed.compareAndSet(false, true)) {
+      return
+    }
+
     webViewClient.destroy()
     finishWithResult(WebViewTaskResult.Canceled)
   }
@@ -109,18 +87,43 @@ abstract class AbstractWebViewTask(
   }
 
   fun finishWithResult(taskResult: WebViewTaskResult) {
-    if (!invokerWaiter.isCompleted) {
-      invokerWaiter.complete(taskResult)
+    if (!webViewClientResultWaiter.isCompleted) {
+      webViewClientResultWaiter.complete(taskResult)
     }
 
-    if (!webViewClientResultWaiter.isCancelled) {
-      webViewClientResultWaiter.cancel()
+    if (!invokerWaiter.isCompleted) {
+      invokerWaiter.complete(taskResult)
     }
   }
 
   abstract fun createWebClient(): AbstractWebViewClient
-  abstract suspend fun start(webView: WebView)
+  abstract suspend fun startTask(webView: WebView)
   abstract suspend fun handleResult(taskResult: WebViewTaskResult)
+
+  private fun setupCookies() {
+    when (loadable) {
+      is Loadable.Url -> {
+        val urlToOpenString = loadable.url.toString()
+
+        val siteRequestModifier = siteResolver.findSiteForUrl(urlToOpenString)?.requestModifier()
+        if (siteRequestModifier != null) {
+          val cookieBuilder = CookieBuilder()
+          siteRequestModifier.modifyCookieBuilder(loadable.url, cookieBuilder)
+
+          val builtCookies = cookieBuilder.build()
+          if (builtCookies.isNotBlank()) {
+            cookieManager.setCookie(urlToOpenString, builtCookies)
+          }
+
+          initialCookies.set(builtCookies)
+        }
+      }
+
+      is Loadable.Html -> {
+        // no-op
+      }
+    }
+  }
 
   sealed interface Loadable {
     val readableDescription: String

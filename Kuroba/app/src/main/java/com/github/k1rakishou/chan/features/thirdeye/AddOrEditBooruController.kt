@@ -55,9 +55,6 @@ class AddOrEditBooruController(
   @Inject
   lateinit var thirdEyeManager: ThirdEyeManager
 
-  override val contentAlignment: Alignment
-    get() = Alignment.Center
-
   override fun injectActivityDependencies(component: ActivityComponent) {
     component.inject(this)
   }

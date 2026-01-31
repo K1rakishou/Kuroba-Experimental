@@ -19,7 +19,6 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.AppRestarter
-import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
 import com.github.k1rakishou.chan.core.helper.migration.ApplicationMigrationHelper
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
@@ -96,8 +95,6 @@ class MainController(
   @Inject
   lateinit var bookmarksManagerLazy: Lazy<BookmarksManager>
   @Inject
-  lateinit var dialogFactoryLazy: Lazy<DialogFactory>
-  @Inject
   lateinit var imageSaverV2Lazy: Lazy<ImageSaverV2>
   @Inject
   lateinit var threadDownloadManagerLazy: Lazy<ThreadDownloadManager>
@@ -116,8 +113,6 @@ class MainController(
     get() = historyNavigationManagerLazy.get()
   private val bookmarksManager: BookmarksManager
     get() = bookmarksManagerLazy.get()
-  private val dialogFactory: DialogFactory
-    get() = dialogFactoryLazy.get()
   private val imageSaverV2: ImageSaverV2
     get() = imageSaverV2Lazy.get()
   private val threadDownloadManager: ThreadDownloadManager

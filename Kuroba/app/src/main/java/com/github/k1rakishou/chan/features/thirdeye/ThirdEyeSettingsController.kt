@@ -84,9 +84,6 @@ class ThirdEyeSettingsController(context: Context) : BaseFloatingComposeControll
   @Inject
   lateinit var fileManager: FileManager
 
-  override val contentAlignment: Alignment
-    get() = Alignment.Center
-
   override fun injectActivityDependencies(component: ActivityComponent) {
     component.inject(this)
   }

@@ -22,8 +22,6 @@ abstract class BaseSettingsController(
 ) : Controller(context) {
 
   @Inject
-  lateinit var dialogFactory: DialogFactory
-  @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   protected fun showListDialog(settingV2: ListSettingV2<*>, onItemClicked: (Any?) -> Unit) {

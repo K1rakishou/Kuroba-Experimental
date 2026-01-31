@@ -12,7 +12,6 @@ import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.helper.SitesSetupControllerOpenNotifier
 import com.github.k1rakishou.chan.core.manager.CurrentFocusedController
-import com.github.k1rakishou.chan.core.manager.FirewallBypassManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.WebViewTaskManager
 import com.github.k1rakishou.chan.core.presenter.BrowsePresenter
@@ -38,8 +37,6 @@ import com.github.k1rakishou.chan.features.toolbar.state.ToolbarStateKind
 import com.github.k1rakishou.chan.features.webview.WebViewTaskController
 import com.github.k1rakishou.chan.features.webview.WebViewTaskResult
 import com.github.k1rakishou.chan.features.webview.task.AbstractWebViewTask
-import com.github.k1rakishou.chan.features.webview.task.CloudFlareTask
-import com.github.k1rakishou.chan.features.webview.task.DvachAntispamTask
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.ReplyAutoCloseListener
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.SlideChangeListener
@@ -55,7 +52,6 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.hasPostNotificationsPermission
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
-import com.github.k1rakishou.common.FirewallType
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
@@ -66,7 +62,6 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
 import dagger.Lazy
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -77,7 +72,6 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import javax.inject.Inject
 
@@ -97,8 +91,6 @@ class BrowseController(
   @Inject
   lateinit var siteResolverLazy: Lazy<SiteResolver>
   @Inject
-  lateinit var firewallBypassManagerLazy: Lazy<FirewallBypassManager>
-  @Inject
   lateinit var webViewTaskManagerLazy: Lazy<WebViewTaskManager>
   @Inject
   lateinit var runtimePermissionsHelper: RuntimePermissionsHelper
@@ -109,8 +101,6 @@ class BrowseController(
     get() = historyNavigationManagerLazy.get()
   private val siteResolver: SiteResolver
     get() = siteResolverLazy.get()
-  private val firewallBypassManager: FirewallBypassManager
-    get() = firewallBypassManagerLazy.get()
   private val webViewTaskManager: WebViewTaskManager
     get() = webViewTaskManagerLazy.get()
 
@@ -168,29 +158,6 @@ class BrowseController(
         catalogSortingOrder = catalogSortingOrder,
         isManuallyChangedOrder = false
       )
-    }
-
-    controllerScope.launch {
-      firewallBypassManager.showFirewallControllerEvents.collect { showFirewallControllerInfo ->
-        val alreadyPresenting = isAlreadyPresenting { controller ->
-          controller is WebViewTaskController && controller.alive
-        }
-
-        if (alreadyPresenting) {
-          return@collect
-        }
-
-        val firewallType = showFirewallControllerInfo.firewallType
-        val urlToOpen = showFirewallControllerInfo.urlToOpen
-        val onFinished = showFirewallControllerInfo.onFinished
-
-        val success = showWebViewTaskController(
-          firewallType = firewallType,
-          urlToOpen = urlToOpen
-        )
-
-        onFinished.complete(success)
-      }
     }
 
     controllerScope.launch {
@@ -669,43 +636,6 @@ class BrowseController(
     }
 
     return chanDescriptor.siteDescriptor().is4chan() || chanDescriptor.siteDescriptor().isDvach()
-  }
-
-  private suspend fun showWebViewTaskController(
-    firewallType: FirewallType,
-    urlToOpen: HttpUrl
-  ): Boolean {
-    Logger.debug(TAG) {
-      "presentController SiteFirewallBypassController " +
-        "(firewallType: ${firewallType}, urlToOpen: ${urlToOpen})"
-    }
-
-    val resultWaiter = CompletableDeferred<WebViewTaskResult>()
-
-    val webViewTask = when (firewallType) {
-      FirewallType.Cloudflare -> {
-        CloudFlareTask(
-          headerTitleText = getString(R.string.firewall_check_header_title, firewallType.name),
-          loadable = AbstractWebViewTask.Loadable.Url(urlToOpen),
-          invokerWaiter = resultWaiter
-        )
-      }
-      FirewallType.DvachAntiSpam -> {
-        DvachAntispamTask(
-          headerTitleText = getString(R.string.firewall_check_header_title, firewallType.name),
-          loadable = AbstractWebViewTask.Loadable.Url(urlToOpen),
-          invokerWaiter = resultWaiter
-        )
-      }
-      FirewallType.YandexSmartCaptcha -> {
-        error("Handled in ImageSearchController")
-      }
-    }
-
-    return presentWebViewTaskAndHandleResult(
-      webViewTask = webViewTask,
-      webViewTaskName = firewallType.name
-    )
   }
 
   private suspend fun presentWebViewTaskAndHandleResult(

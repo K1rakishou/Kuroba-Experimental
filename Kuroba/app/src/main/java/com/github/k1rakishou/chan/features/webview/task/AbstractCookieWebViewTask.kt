@@ -12,14 +12,16 @@ import kotlinx.coroutines.delay
 abstract class AbstractCookieWebViewTask(
   headerTitleText: String?,
   loadable: Loadable.Url,
+  headlessMaxTime: Long,
   invokerWaiter: CompletableDeferred<WebViewTaskResult>
 ) : AbstractWebViewTask(
   headerTitleText = headerTitleText,
   loadable = loadable,
+  headlessMaxTime = headlessMaxTime,
   invokerWaiter = invokerWaiter
 ) {
 
-  override suspend fun start(webView: WebView) {
+  override suspend fun startTask(webView: WebView) {
     check(loadable is Loadable.Url) { "Unexpected loadable: ${loadable::class.java.simpleName}" }
     webView.loadUrl(loadable.url.toString())
   }

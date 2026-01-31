@@ -25,6 +25,7 @@ import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.di.component.controller.ControllerComponent
 import com.github.k1rakishou.chan.core.di.module.controller.ControllerModule
 import com.github.k1rakishou.chan.core.di.module.shared.IHasViewModelProviderFactory
+import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.features.toolbar.KurobaToolbarState
 import com.github.k1rakishou.chan.features.toolbar.KurobaToolbarStateManager
 import com.github.k1rakishou.chan.ui.compose.snackbar.SnackbarScope
@@ -76,6 +77,8 @@ abstract class Controller(
   lateinit var appResourcesLazy: Lazy<AppResources>
   @Inject
   lateinit var snackbarManagerFactoryLazy: Lazy<SnackbarManagerFactory>
+  @Inject
+  lateinit var dialogFactoryLazy: Lazy<DialogFactory>
 
   private val _lifecycleRegistry by lazy(LazyThreadSafetyMode.NONE) { LifecycleRegistry(this) }
   private val _savedStateRegistryController by lazy(LazyThreadSafetyMode.NONE) { SavedStateRegistryController.create(this) }
@@ -90,6 +93,8 @@ abstract class Controller(
     get() = appResourcesLazy.get()
   val snackbarManagerFactory: SnackbarManagerFactory
     get() = snackbarManagerFactoryLazy.get()
+  val dialogFactory: DialogFactory
+    get() = dialogFactoryLazy.get()
 
   open val controllerKey: ControllerKey
     get() = ControllerKey(this::class.java.name)

@@ -74,8 +74,6 @@ class BookmarkGroupSettingsController(
 ) : Controller(context) {
 
   @Inject
-  lateinit var dialogFactory: DialogFactory
-  @Inject
   lateinit var themeEngine: ThemeEngine
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager

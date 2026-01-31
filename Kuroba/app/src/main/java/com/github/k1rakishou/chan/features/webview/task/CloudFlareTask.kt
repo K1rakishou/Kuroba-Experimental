@@ -19,7 +19,13 @@ class CloudFlareTask(
   headerTitleText: String?,
   loadable: Loadable.Url,
   invokerWaiter: CompletableDeferred<WebViewTaskResult>
-) : AbstractCookieWebViewTask(headerTitleText, loadable, invokerWaiter) {
+) : AbstractCookieWebViewTask(
+  headerTitleText = headerTitleText,
+  loadable = loadable,
+  // Cloudflare might require user input. This depends on a lot of parameters.
+  headlessMaxTime = 5_000L,
+  invokerWaiter = invokerWaiter
+) {
   override val tag: String = TAG
 
   override fun createWebClient(): AbstractWebViewClient {
@@ -27,7 +33,7 @@ class CloudFlareTask(
       loadableUrl = loadable as Loadable.Url,
       cookieManager = cookieManager,
       initialCookies = initialCookies,
-      webViewClientResultWaiter = this@CloudFlareTask.invokerWaiter
+      webViewClientResultWaiter = this@CloudFlareTask.webViewClientResultWaiter
     )
   }
 

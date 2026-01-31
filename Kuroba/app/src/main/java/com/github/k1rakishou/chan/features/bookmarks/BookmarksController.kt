@@ -20,7 +20,6 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.BaseSelectionHelper
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
-import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
@@ -84,8 +83,6 @@ class BookmarksController(
   BookmarksView,
   BookmarksSelectionHelper.OnBookmarkMenuItemClicked {
 
-  @Inject
-  lateinit var dialogFactory: DialogFactory
   @Inject
   lateinit var themeEngine: ThemeEngine
   @Inject
