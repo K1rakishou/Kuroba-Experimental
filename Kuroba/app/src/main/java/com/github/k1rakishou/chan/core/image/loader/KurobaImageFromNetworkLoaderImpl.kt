@@ -22,6 +22,7 @@ import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withContext
+import okhttp3.Headers
 import okhttp3.Request
 import java.io.File
 import java.io.IOException
@@ -57,42 +58,66 @@ class KurobaImageFromNetworkLoaderImpl(
   ): ModularResult<BitmapDrawable> {
     return withContext(Dispatchers.IO) {
       return@withContext ModularResult.Try {
-        val imageFile = loadFromNetworkIntoFile(
-          cacheFileType = cacheFileType,
-          url = url
-        ).unwrap()
+        val cacheFile = cacheHandler.getOrCreateCacheFile(cacheFileType, url)
+        if (cacheFile == null) {
+          Logger.e(TAG, "loadFromNetworkIntoFile(${url}) cacheHandler.getOrCreateCacheFile() -> null")
+          throw KurobaImageLoaderException("Failed to get or create cache file")
+        }
 
-        return@Try applyTransformationsToDrawable(
-          coilImageLoader = coilImageLoader,
-          chunkedMediaDownloader = chunkedMediaDownloader,
-          cacheHandler = cacheHandler,
-          context = context,
-          imageFile = fileManager.fromRawFile(imageFile),
-          url = url,
-          memoryCacheKey = memoryCacheKey,
-          cacheFileType = cacheFileType,
-          imageSize = imageSize,
-          transformations = transformations
-        ).unwrap()
+        fun deleteCacheFile() {
+          if (!chunkedMediaDownloader.isRunning(url)) {
+            cacheHandler.deleteCacheFile(cacheFileType, cacheFile)
+          }
+        }
+
+        try {
+          val (imageFile, diskCacheResolution) = loadFromNetworkIntoFile(
+            cacheFileType = cacheFileType,
+            cacheFile = cacheFile,
+            url = url
+          ).unwrap()
+
+          val bitmapDrawable = applyTransformationsToDrawable(
+            coilImageLoader = coilImageLoader,
+            chunkedMediaDownloader = chunkedMediaDownloader,
+            cacheHandler = cacheHandler,
+            context = context,
+            imageFile = fileManager.fromRawFile(imageFile),
+            url = url,
+            memoryCacheKey = memoryCacheKey,
+            cacheFileType = cacheFileType,
+            imageSize = imageSize,
+            transformations = transformations
+          ).unwrap()
+
+          when (diskCacheResolution) {
+            DiskCacheResolution.Cache -> {
+              // no-op
+            }
+            DiskCacheResolution.DoNotCache -> {
+              deleteCacheFile()
+            }
+          }
+
+          return@Try bitmapDrawable
+        } catch (error: Throwable) {
+          deleteCacheFile()
+          throw error
+        }
       }
     }
   }
 
   @Throws(HttpException::class)
   private suspend fun loadFromNetworkIntoFile(
+    cacheFile: File,
     cacheFileType: CacheFileType,
     url: String
-  ): ModularResult<File> {
+  ): ModularResult<Pair<File, DiskCacheResolution>> {
     return ModularResult.Try {
       BackgroundUtils.ensureBackgroundThread()
 
-      val cacheFile = cacheHandler.getOrCreateCacheFile(cacheFileType, url)
-      if (cacheFile == null) {
-        Logger.e(TAG, "loadFromNetworkIntoFile(${url}) cacheHandler.getOrCreateCacheFile() -> null")
-        throw KurobaImageLoaderException("Failed to get or create cache file")
-      }
-
-      val success = try {
+      val (success, diskCacheResolution) = try {
         loadFromNetworkIntoFileInternal(
           url = url,
           cacheFileType = cacheFileType,
@@ -100,23 +125,14 @@ class KurobaImageFromNetworkLoaderImpl(
         )
       } catch (error: Throwable) {
         Logger.error(TAG) { "loadFromNetworkIntoFile(${url}) error: ${error.errorMessageOrClassName()}" }
-
-        if (!chunkedMediaDownloader.isRunning(url)) {
-          cacheHandler.deleteCacheFile(cacheFileType, cacheFile)
-        }
-
         throw error
       }
 
       if (!success) {
-        if (!chunkedMediaDownloader.isRunning(url)) {
-          cacheHandler.deleteCacheFile(cacheFileType, cacheFile)
-        }
-
         throw KurobaImageLoaderException("Failed to download image into a file")
       }
 
-      return@Try cacheFile
+      return@Try Pair(cacheFile, diskCacheResolution)
     }
   }
 
@@ -124,7 +140,7 @@ class KurobaImageFromNetworkLoaderImpl(
     url: String,
     cacheFileType: CacheFileType,
     cacheFile: File
-  ): Boolean {
+  ): Pair<Boolean, DiskCacheResolution> {
     BackgroundUtils.ensureBackgroundThread()
 
     val site = siteResolver.findSiteForUrl(url)
@@ -146,8 +162,10 @@ class KurobaImageFromNetworkLoaderImpl(
         throw HttpException(response)
       }
 
-      return false
+      return Pair(false, DiskCacheResolution.DoNotCache)
     }
+
+    val diskCacheResolution = determineDiskCache(response.headers)
 
     runInterruptible {
       val responseBody = response.body
@@ -173,12 +191,33 @@ class KurobaImageFromNetworkLoaderImpl(
 
     val fileLength = cacheFile.length()
     if (fileLength <= 0) {
-      return false
+      Pair(false, DiskCacheResolution.DoNotCache)
     }
 
     cacheHandler.fileWasAdded(cacheFileType, fileLength)
 
-    return true
+    return Pair(true, diskCacheResolution)
+  }
+
+  private fun determineDiskCache(headers: Headers): DiskCacheResolution {
+    val cacheControl = headers
+      .firstOrNull { (key, _) -> key.equals("Cache-Control", ignoreCase = true) }
+
+    if (cacheControl == null) {
+      return DiskCacheResolution.Cache
+    }
+
+    return when (cacheControl.second.lowercase()) {
+      "no-store",
+      "private",
+      "no-cache" -> DiskCacheResolution.DoNotCache
+      else -> DiskCacheResolution.Cache
+    }
+  }
+
+  private enum class DiskCacheResolution {
+    Cache,
+    DoNotCache
   }
 
   companion object {
