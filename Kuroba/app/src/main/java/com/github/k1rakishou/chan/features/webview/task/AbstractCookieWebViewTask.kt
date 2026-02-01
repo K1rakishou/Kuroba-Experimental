@@ -13,11 +13,13 @@ abstract class AbstractCookieWebViewTask(
   headerTitleText: String?,
   loadable: Loadable.Url,
   headlessMaxTime: Long,
+  invisibleMaxTime: Long,
   invokerWaiter: CompletableDeferred<WebViewTaskResult>
 ) : AbstractWebViewTask(
   headerTitleText = headerTitleText,
   loadable = loadable,
   headlessMaxTime = headlessMaxTime,
+  invisibleMaxTime = invisibleMaxTime,
   invokerWaiter = invokerWaiter
 ) {
 

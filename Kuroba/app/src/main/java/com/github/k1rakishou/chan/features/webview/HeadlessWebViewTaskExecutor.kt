@@ -25,6 +25,7 @@ class HeadlessWebViewTaskExecutor(
 ) {
   private val _mutex = Mutex()
 
+  @Suppress("ForbiddenComment")
   // TODO: automatically destroy WebView when nothing accesses it anymore
   @GuardedBy("mutex")
   private var _currentActiveWebView: WebView? = null
@@ -55,11 +56,11 @@ class HeadlessWebViewTaskExecutor(
       webViewTask.start(webView)
 
       try {
-        Logger.debug(TAG) { "Task '${webViewTask::class.java.simpleName}' started" }
+        Logger.debug(TAG) { "Task '${webViewTask.taskId}' started" }
         withTimeout(webViewTask.headlessMaxTime) { webViewTask.webViewClientResultWaiter.await() }
-        Logger.debug(TAG) { "Task '${webViewTask::class.java.simpleName}' ended normally" }
+        Logger.debug(TAG) { "Task '${webViewTask.taskId}' ended normally" }
       } catch (ignored: Throwable) {
-        Logger.debug(TAG) { "Task '${webViewTask::class.java.simpleName}' timed out" }
+        Logger.debug(TAG) { "Task '${webViewTask.taskId}' timed out" }
         return@withContext
       }
 
@@ -73,9 +74,6 @@ class HeadlessWebViewTaskExecutor(
     removeAllCookies()
 
     val webView = WebView(appContext, null, android.R.attr.webViewStyle)
-    webView.isClickable = false
-    webView.isFocusable = false
-
     cookieManager.setAcceptCookie(true)
     cookieManager.setAcceptThirdPartyCookies(webView, true)
 
@@ -119,5 +117,4 @@ class HeadlessWebViewTaskExecutor(
   companion object {
     private const val TAG = "HeadlessWebViewTaskExecutor"
   }
-
 }

@@ -13,6 +13,7 @@ import com.github.k1rakishou.common.domainOrHost
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.prefs.MapSetting
 import kotlinx.coroutines.CompletableDeferred
+import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 
 class CloudFlareTask(
@@ -24,16 +25,22 @@ class CloudFlareTask(
   loadable = loadable,
   // Cloudflare might require user input. This depends on a lot of parameters.
   headlessMaxTime = 5_000L,
+  // Cloudflare only fully passes the check when WebView is actually attached to the view hierarchy, for some reason.
+  // Couldn't figure out why yet, so for now I will just display it invisibly for some time.
+  invisibleMaxTime = 5_000L,
   invokerWaiter = invokerWaiter
 ) {
   override val tag: String = TAG
 
+  override val doAutoClickLastTouchPosition: Boolean = true
+
   override fun createWebClient(): AbstractWebViewClient {
-    return WebViewClient(
+    return CloudFlareTaskWebViewClient(
+      webViewClientResultWaiter = this@CloudFlareTask.webViewClientResultWaiter,
       loadableUrl = loadable as Loadable.Url,
       cookieManager = cookieManager,
       initialCookies = initialCookies,
-      webViewClientResultWaiter = this@CloudFlareTask.webViewClientResultWaiter
+      performAutoClick = ::performAutoClick
     )
   }
 
@@ -55,30 +62,51 @@ class CloudFlareTask(
     )
   }
 
-  private class WebViewClient(
+  private class CloudFlareTaskWebViewClient(
+    webViewClientResultWaiter: CompletableDeferred<WebViewTaskResult>,
     private val loadableUrl: Loadable.Url,
     private val cookieManager: CookieManager,
     private val initialCookies: AtomicReference<String>,
-    webViewClientResultWaiter: CompletableDeferred<WebViewTaskResult>
+    private val performAutoClick: (view: WebView) -> Unit
   ) : AbstractCookieWebViewClient(webViewClientResultWaiter) {
+    private val _requestId = AtomicLong(0)
+
     override fun onPageFinished(view: WebView?, url: String?) {
       super.onPageFinished(view, url)
 
-      val newCookies = cookieManager.getCookie(loadableUrl.url.toString()) ?: ""
-      val newCookiesBuilder = CookieBuilder(newCookies)
-      val prevCookiesBuilder = CookieBuilder(initialCookies.get())
-
-      val prevCfClearanceCookie = prevCookiesBuilder.get(CloudFlareInterceptor.COOKIE_CF_CLEARANCE)?.value
-      val newCfClearanceCookie = newCookiesBuilder.get(CloudFlareInterceptor.COOKIE_CF_CLEARANCE)?.value
-
-      if (newCfClearanceCookie.isNullOrBlank()
-        || prevCfClearanceCookie == newCfClearanceCookie
-        || !newCookiesBuilder.containsAll(listOf(CloudFlareInterceptor.COOKIE_CF_CLEARANCE))) {
+      if (view == null) {
         return
       }
 
-      newCookiesBuilder.retainAllIn(CloudFlareInterceptor.EXPECTED_CLOUDFLARE_COOKIES)
-      success(newCookiesBuilder.build(), null)
+      val currentRequestId = _requestId.getAndIncrement()
+
+      view.postVisualStateCallback(currentRequestId, object : WebView.VisualStateCallback() {
+        override fun onComplete(requestId: Long) {
+          if (requestId != currentRequestId) {
+            return
+          }
+
+          onPageVisible()
+
+          val newCookies = cookieManager.getCookie(loadableUrl.url.toString()) ?: ""
+          val newCookiesBuilder = CookieBuilder(newCookies)
+          val prevCookiesBuilder = CookieBuilder(initialCookies.get())
+
+          val prevCfClearanceCookie = prevCookiesBuilder.get(CloudFlareInterceptor.COOKIE_CF_CLEARANCE)?.value
+          val newCfClearanceCookie = newCookiesBuilder.get(CloudFlareInterceptor.COOKIE_CF_CLEARANCE)?.value
+
+          if (newCfClearanceCookie.isNullOrBlank()
+            || prevCfClearanceCookie == newCfClearanceCookie
+            || !newCookiesBuilder.containsAll(listOf(CloudFlareInterceptor.COOKIE_CF_CLEARANCE))
+          ) {
+            performAutoClick(view)
+            return
+          }
+
+          newCookiesBuilder.retainAllIn(CloudFlareInterceptor.EXPECTED_CLOUDFLARE_COOKIES)
+          success(newCookiesBuilder.build(), null)
+        }
+      })
     }
   }
 

@@ -420,6 +420,21 @@ abstract class Controller(
     return false
   }
 
+  open fun onTouchEvent(event: MotionEvent): Boolean {
+    if (!isTouchInsideView(event)) {
+      return false
+    }
+
+    for (i in childControllers.indices.reversed()) {
+      val controller = childControllers[i]
+      if (controller.onTouchEvent(event)) {
+        return true
+      }
+    }
+
+    return false
+  }
+
   open fun onBack(): Boolean {
     for (index in childControllers.indices.reversed()) {
       val controller = childControllers[index]

@@ -21,12 +21,13 @@ class YandexCaptchaTask(
   loadable = loadable,
   // IIRC, Yandex captcha might require user input
   headlessMaxTime = 5_000L,
+  invisibleMaxTime = 0L,
   invokerWaiter = invokerWaiter
 ) {
   override val tag: String = TAG
 
   override fun createWebClient(): AbstractWebViewClient {
-    return WebViewClient(
+    return YandexCaptchaTaskWebViewClient(
       loadableUrl = loadable as Loadable.Url,
       cookieManager = cookieManager,
       webViewClientResultWaiter = this@YandexCaptchaTask.webViewClientResultWaiter
@@ -46,7 +47,7 @@ class YandexCaptchaTask(
     dvachAntiSpamCookieSetting.setSync(cookies)
   }
 
-  private class WebViewClient(
+  private class YandexCaptchaTaskWebViewClient(
     private val loadableUrl: AbstractWebViewTask.Loadable.Url,
     private val cookieManager: CookieManager,
     webViewClientResultWaiter: CompletableDeferred<WebViewTaskResult>

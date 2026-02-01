@@ -33,6 +33,7 @@ import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScroll
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutHelper
 import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadProgressNotifier
 import com.github.k1rakishou.chan.features.webview.HeadlessWebViewTaskExecutor
+import com.github.k1rakishou.chan.features.webview.WebViewLastTouchPositionHolder
 import com.github.k1rakishou.chan.ui.captcha.chan4.Chan4CaptchaSolverHelper
 import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
 import com.github.k1rakishou.chan.ui.helper.AppResources
@@ -347,6 +348,19 @@ class HelperModule {
     return HeadlessWebViewTaskExecutor(
       appContext = appContext,
       globalUiStateHolder = globalUiStateHolder
+    )
+  }
+
+  @Singleton
+  @Provides
+  fun provideWebViewLastTouchPositionHolder(
+    appContext: Context,
+    moshi: Moshi
+  ): WebViewLastTouchPositionHolder {
+    deps("WebViewLastTouchPositionHolder")
+    return WebViewLastTouchPositionHolder(
+      appContext = appContext,
+      moshi = moshi
     )
   }
 

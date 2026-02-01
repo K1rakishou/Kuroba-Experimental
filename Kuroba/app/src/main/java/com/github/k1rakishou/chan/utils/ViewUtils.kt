@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager.widget.ViewPager
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.google.android.material.tabs.TabLayout
 import java.lang.reflect.Field
@@ -255,11 +256,19 @@ object ViewUtils {
     }
   }
 
-  fun View.emulateMotionEvent(downTime: Long, action: Int, x: Float, y: Float) {
+  fun View.emulateMotionEvent(downTime: Long, action: Int, x: Float, y: Float): Boolean {
+    val viewClassName = this::class.java.simpleName
+    Logger.debug(viewClassName) {
+      "Emulating ${MotionEvent.actionToString(action)} at ${x}:${y} " +
+        "(viewClickable: ${isClickable}, viewFocusable: ${isFocusable})"
+    }
+
     val motionEvent = MotionEvent.obtain(downTime, SystemClock.uptimeMillis(), action, x, y, 0)
     motionEvent.source = InputDevice.SOURCE_TOUCHSCREEN
-    onTouchEvent(motionEvent)
+    val result = dispatchTouchEvent(motionEvent)
     motionEvent.recycle()
+
+    return result
   }
 
 }

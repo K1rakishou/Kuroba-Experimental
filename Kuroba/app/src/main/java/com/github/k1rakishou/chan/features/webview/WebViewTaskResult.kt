@@ -1,5 +1,7 @@
 package com.github.k1rakishou.chan.features.webview
 
+import com.github.k1rakishou.common.StringUtils.asFormattedToken
+
 sealed interface WebViewTaskResult {
   val isSuccess: Boolean
     get() = this is Result
@@ -9,5 +11,9 @@ sealed interface WebViewTaskResult {
   data class Result(
     val rawCookies: String,
     val userData: Any? = null
-  ) : WebViewTaskResult
+  ) : WebViewTaskResult {
+    override fun toString(): String {
+      return "Result(rawCookies=${rawCookies.asFormattedToken()}, userData=${userData})"
+    }
+  }
 }

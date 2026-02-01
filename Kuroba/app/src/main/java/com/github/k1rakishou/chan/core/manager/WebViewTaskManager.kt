@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.time.measureTime
 
 class WebViewTaskManager(
   private val applicationVisibilityManager: ApplicationVisibilityManager,
@@ -36,46 +37,49 @@ class WebViewTaskManager(
   ): WebViewTaskResult {
     if (applicationVisibilityManager.isAppInBackground() && !webViewTask.canRunHeadlessly()) {
       // No point in doing anything here since there is most likely no activity currently alive
+      // (unless the task supports headless mode)
       Logger.debug(TAG) {
-        "enqueueWebViewTask(${webViewTask::class.java.simpleName}) app is in back ground, waiting..."
+        "enqueueWebViewTask(${webViewTask.taskId}) app is in back ground, waiting..."
       }
 
       applicationVisibilityManager.awaitUntilInForeground()
 
       Logger.debug(TAG) {
-        "enqueueWebViewTask(${webViewTask::class.java.simpleName}) app is in back ground, waiting... done"
+        "enqueueWebViewTask(${webViewTask.taskId}) app is in back ground, waiting... done"
       }
     }
 
     if (webViewTask.canRunHeadlessly()) {
       Logger.debug(TAG) {
-        "Trying to perform task ${webViewTask::class.java.simpleName} headlessly, " +
-          "headlessMaxTime: ${webViewTask.headlessMaxTime} seconds..."
+        "Trying to perform task ${webViewTask.taskId} headlessly, " +
+          "initialHeadlessMaxTime: ${webViewTask.headlessMaxTime} seconds..."
       }
 
-      try {
-        headlessWebViewTaskExecutor.tryExecuteTaskHeadlessly(webViewTask)
-      } catch (error: Throwable) {
-        Logger.error(TAG, error) {
-          "Unhandled error while trying to execute ${webViewTask::class.java.simpleName} headlessly"
-        }
+      val totalHeadlessModeTime = measureTime {
+        try {
+          headlessWebViewTaskExecutor.tryExecuteTaskHeadlessly(webViewTask)
+        } catch (error: Throwable) {
+          Logger.error(TAG, error) {
+            "Unhandled error while trying to execute ${webViewTask.taskId} headlessly"
+          }
 
-        webViewTask.invokerWaiter.cancel()
-        return WebViewTaskResult.Error(WebViewTaskException(error.message ?: "Unknown error"))
+          webViewTask.invokerWaiter.cancel()
+          return WebViewTaskResult.Error(WebViewTaskException(error.message ?: "Unknown error"))
+        }
       }
 
       if (webViewTask.invokerWaiter.isCompleted) {
         Logger.debug(TAG) {
-          "Trying to perform task ${webViewTask::class.java.simpleName} headlessly, " +
-            "headlessMaxTime: ${webViewTask.headlessMaxTime} seconds... done!"
+          "Trying to perform task ${webViewTask.taskId} headlessly, " +
+            "totalHeadlessModeTime: ${totalHeadlessModeTime} seconds... done!"
         }
 
         return webViewTask.invokerWaiter.await()
       }
 
       Logger.debug(TAG) {
-        "Trying to perform task ${webViewTask::class.java.simpleName} headlessly, " +
-          "headlessMaxTime: ${webViewTask.headlessMaxTime} seconds... timeout. Switching to normal mode."
+        "Trying to perform task ${webViewTask.taskId} headlessly, " +
+          "totalHeadlessModeTime: ${totalHeadlessModeTime} seconds... timeout. Continuing in normal mode."
       }
     }
 
@@ -104,7 +108,7 @@ class WebViewTaskManager(
 
     if (!_taskQueue.tryEmit(webViewTask)) {
       Logger.warning(TAG) {
-        "enqueueWebViewTask(${webViewTask::class.java.simpleName}) " +
+        "enqueueWebViewTask(${webViewTask.taskId}) " +
           "failed to enqueue (url: '${loadable.readableDescription}')"
       }
 
@@ -112,7 +116,7 @@ class WebViewTaskManager(
     }
 
     Logger.debug(TAG) {
-      "enqueueWebViewTask(${webViewTask::class.java.simpleName}) " +
+      "enqueueWebViewTask(${webViewTask.taskId}) " +
         "success, waiting... (url: '${loadable.readableDescription}')"
     }
 
@@ -124,7 +128,7 @@ class WebViewTaskManager(
     }
 
     Logger.debug(TAG) {
-      "enqueueWebViewTask(${webViewTask::class.java.simpleName}) " +
+      "enqueueWebViewTask(${webViewTask.taskId}) " +
         "success, waiting... done. Result: ${webViewTaskResult} (url: '${loadable.readableDescription}')"
     }
 

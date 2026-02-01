@@ -15,6 +15,7 @@ class SpurUsAntibotTask(
   loadable = loadableUrl,
   // Spur.us doesn't require any user interaction (at least for now)
   headlessMaxTime = 8_000L,
+  invisibleMaxTime = 0L,
   invokerWaiter = invokerWaiter
 ) {
 

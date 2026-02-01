@@ -10,11 +10,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.dp
@@ -41,6 +45,7 @@ abstract class BaseFloatingComposeController(
 
   open val contentAlignment: Alignment = Alignment.Center
   open val closableByClickingOutside = true
+  open val currentlyInvisible = mutableStateOf(false)
 
   override fun onCreate() {
     super.onCreate()
@@ -52,16 +57,30 @@ abstract class BaseFloatingComposeController(
           val windowInsets = LocalWindowInsets.current
           val windowSizeClass = LocalWindowSizeClass.current
           val backgroundColor = remember { Color(red = 0f, green = 0f, blue = 0f, alpha = 0.6f) }
+          val invisible by currentlyInvisible
 
-          BoxWithConstraints(
-            modifier = Modifier
-              .fillMaxSize()
+          val additionalModifier = if (invisible) {
+            Modifier
+              .pointerInteropFilter(
+                onTouchEvent = { _ -> false }
+              )
+              .graphicsLayer {
+                alpha = 0f
+              }
+          } else {
+            Modifier
               .drawBehind { drawRect(backgroundColor) }
               .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
-                onClick = { onOutsideOfDialogClicked() }
-              ),
+                onClick = { pop() }
+              )
+          }
+
+          BoxWithConstraints(
+            modifier = Modifier
+              .fillMaxSize()
+              .then(additionalModifier),
             contentAlignment = Alignment.Center
           ) {
             val availableWidth = maxWidth
@@ -103,7 +122,7 @@ abstract class BaseFloatingComposeController(
                   top = windowInsets.top + vertPadding,
                   bottom = windowInsets.bottom + vertPadding,
                 ),
-              contentAlignment = contentAlignment,
+              contentAlignment = Alignment.Center,
             ) {
               BuildContent()
             }

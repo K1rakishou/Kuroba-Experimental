@@ -18,7 +18,7 @@ import com.github.k1rakishou.chan.utils.IHasViewModelScope
 import com.github.k1rakishou.chan.utils.ViewModelScope
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_themes.ChanTheme
-import java.util.*
+import java.util.Stack
 import javax.inject.Inject
 
 abstract class ControllerHostActivity :
@@ -76,6 +76,20 @@ abstract class ControllerHostActivity :
     }
 
     return super.dispatchTouchEvent(ev)
+  }
+
+  override fun onTouchEvent(ev: MotionEvent?): Boolean {
+    if (stack.isEmpty() || ev == null) {
+      return super.onTouchEvent(ev)
+    }
+
+    for (controller in stack.reversed()) {
+      if (controller.onTouchEvent(ev)) {
+        break
+      }
+    }
+
+    return super.onTouchEvent(ev)
   }
 
   override fun onConfigurationChanged(newConfig: Configuration) {
