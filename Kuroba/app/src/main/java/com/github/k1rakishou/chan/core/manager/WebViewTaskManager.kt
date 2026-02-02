@@ -10,11 +10,14 @@ import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeout
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.measureTime
 
 class WebViewTaskManager(
@@ -35,20 +38,6 @@ class WebViewTaskManager(
   suspend fun performWebViewTask(
     webViewTask: AbstractWebViewTask
   ): WebViewTaskResult {
-    if (applicationVisibilityManager.isAppInBackground() && !webViewTask.canRunHeadlessly()) {
-      // No point in doing anything here since there is most likely no activity currently alive
-      // (unless the task supports headless mode)
-      Logger.debug(TAG) {
-        "enqueueWebViewTask(${webViewTask.taskId}) app is in back ground, waiting..."
-      }
-
-      applicationVisibilityManager.awaitUntilInForeground()
-
-      Logger.debug(TAG) {
-        "enqueueWebViewTask(${webViewTask.taskId}) app is in back ground, waiting... done"
-      }
-    }
-
     if (webViewTask.canRunHeadlessly()) {
       Logger.debug(TAG) {
         "Trying to perform task ${webViewTask.taskId} headlessly, " +
@@ -74,7 +63,7 @@ class WebViewTaskManager(
             "totalHeadlessModeTime: ${totalHeadlessModeTime} seconds... done!"
         }
 
-        return webViewTask.invokerWaiter.await()
+        return webViewTask.waitForResultWithTimeout()
       }
 
       Logger.debug(TAG) {
@@ -100,10 +89,27 @@ class WebViewTaskManager(
       }
 
       if (alreadyEnqueued) {
-        return webViewTask.invokerWaiter.await()
+        return webViewTask.waitForResultWithTimeout()
       }
 
       // fallthrough
+    }
+
+    if (applicationVisibilityManager.isAppInBackground()) {
+      // No point in doing anything here since there is most likely no activity currently alive
+      // (unless the task supports headless mode)
+      Logger.debug(TAG) { "enqueueWebViewTask(${webViewTask.taskId}) app is in background, waiting..." }
+
+      try {
+        withTimeout(10.minutes) { applicationVisibilityManager.awaitUntilInForeground() }
+        // Wait a bit more for the UI to have time to initialize
+        delay(10_000L)
+      } catch (error: Throwable) {
+        Logger.error(TAG) { "enqueueWebViewTask(${webViewTask.taskId}) app is in background, waiting... timeout!" }
+        return WebViewTaskResult.Error(WebViewTaskException(error.message ?: error.errorMessageOrClassName()))
+      }
+
+      Logger.debug(TAG) { "enqueueWebViewTask(${webViewTask.taskId}) app is in foreground now" }
     }
 
     if (!_taskQueue.tryEmit(webViewTask)) {
@@ -121,7 +127,7 @@ class WebViewTaskManager(
     }
 
     val webViewTaskResult = try {
-      webViewTask.invokerWaiter.await()
+      withTimeout(5.minutes) { webViewTask.waitForResultWithTimeout() }
     } catch (error: Throwable) {
       val taskResult = WebViewTaskResult.Error(WebViewTaskException(error.message ?: error.errorMessageOrClassName()))
       return taskResult
@@ -143,6 +149,10 @@ class WebViewTaskManager(
     }
 
     return webViewTaskResult
+  }
+
+  private suspend fun AbstractWebViewTask.waitForResultWithTimeout(): WebViewTaskResult {
+    return withTimeout(5.minutes) { invokerWaiter.await() }
   }
 
   private class TaskGroup {

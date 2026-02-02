@@ -68,6 +68,12 @@ class WebViewTaskController(
     component.inject(this)
   }
 
+  override fun onCreate() {
+    super.onCreate()
+
+    headlessWebViewTaskExecutor.acquireWebView()
+  }
+
   override fun onDestroy() {
     super.onDestroy()
 
@@ -75,6 +81,7 @@ class WebViewTaskController(
     _webViewRef = null
 
     webViewTask.destroy()
+    headlessWebViewTaskExecutor.releaseWebView()
   }
 
   override fun onTouchEvent(event: MotionEvent): Boolean {

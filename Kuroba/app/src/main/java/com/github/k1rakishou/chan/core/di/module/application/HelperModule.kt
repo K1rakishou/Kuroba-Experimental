@@ -342,11 +342,13 @@ class HelperModule {
   @Provides
   fun provideHeadlessWebViewTaskExecutor(
     appContext: Context,
+    appScope: CoroutineScope,
     globalUiStateHolder: GlobalUiStateHolder
   ): HeadlessWebViewTaskExecutor {
     deps("HeadlessWebViewTaskExecutor")
     return HeadlessWebViewTaskExecutor(
       appContext = appContext,
+      appScope = appScope,
       globalUiStateHolder = globalUiStateHolder
     )
   }
