@@ -24,7 +24,7 @@ class CloudFlareTask(
   headerTitleText = headerTitleText,
   loadable = loadable,
   // Cloudflare might require user input. This depends on a lot of parameters.
-  headlessMaxTime = 5_000L,
+  headlessMaxTime = 2_000L,
   // Cloudflare only fully passes the check when WebView is actually attached to the view hierarchy, for some reason.
   // Couldn't figure out why yet, so for now I will just display it invisibly for some time.
   invisibleMaxTime = 5_000L,
