@@ -25,18 +25,20 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import java.io.File
+import java.util.concurrent.atomic.AtomicBoolean
 
 class KurobaSystemNotifications(
   private val appContext: Context,
   private val themeEngine: ThemeEngine,
   private val notificationManagerCompat: NotificationManagerCompat
 ) {
-
-  init {
-    setupChannels()
-  }
+  private val _channelsSetup = AtomicBoolean(false)
 
   suspend fun showNotification(notificationData: NotificationData) {
+    if (_channelsSetup.compareAndSet(false, true)) {
+      setupChannels()
+    }
+
     if (AppModuleAndroidUtils.hasPostNotificationsPermission(appContext)) {
       @SuppressLint("MissingPermission")
       notificationManagerCompat.notify(

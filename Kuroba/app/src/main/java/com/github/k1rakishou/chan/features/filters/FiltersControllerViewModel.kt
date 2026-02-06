@@ -2,9 +2,11 @@ package com.github.k1rakishou.chan.features.filters
 
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.State
+import androidx.compose.runtime.IntState
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
@@ -26,16 +28,13 @@ import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanelItem
 import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanelItemId
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.common.isNotNullNorBlank
+import com.github.k1rakishou.common.removeIfKt
 import com.github.k1rakishou.common.toHashSetBy
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.filter.ChanFilter
 import com.github.k1rakishou.model.data.filter.FilterAction
 import com.github.k1rakishou.model.data.filter.FilterType
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.PersistentList
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -55,13 +54,13 @@ class FiltersControllerViewModel(
   private val boardManager: BoardManager,
   private val themeEngine: ThemeEngine,
 ) : BaseViewModel() {
-  private val _filtersState = mutableStateOf<PersistentList<ChanFilterInfo>>(persistentListOf())
-  val filtersState: State<ImmutableList<ChanFilterInfo>>
-    get() = _filtersState
-  private val _filters: PersistentList<ChanFilterInfo>
-    get() = _filtersState.value
-  val filters: ImmutableList<ChanFilterInfo>
+  private val _filters = mutableStateListOf<ChanFilterInfo>()
+  val filters: SnapshotStateList<ChanFilterInfo>
     get() = _filters
+
+  private val _updateTrigger = mutableIntStateOf(0)
+  val updateTrigger: IntState
+    get() = _updateTrigger
 
   private val _filterMatchedPostCountMap = mutableStateMapOf<Long, Int>()
   val filterMatchedPostCountMap: Map<Long, Int>
@@ -163,7 +162,8 @@ class FiltersControllerViewModel(
     }
 
     if (moved) {
-      _filtersState.value = _filters.move(fromIdx = fromIndex, toIdx = toIndex)
+      _filters.move(fromIdx = fromIndex, toIdx = toIndex)
+      triggerUpdate()
     }
   }
 
@@ -182,10 +182,13 @@ class FiltersControllerViewModel(
         onDeleted = { continuation.resume(Unit) }
       )
     }
+
+    triggerUpdate()
   }
 
   suspend fun persistReorderedFilters() {
     chanFilterManager.persistReorderedFilters()
+    triggerUpdate()
   }
 
   private fun processFilterChanges(filterEvent: ChanFilterManager.FilterEvent) {
@@ -195,16 +198,19 @@ class FiltersControllerViewModel(
       }
       is ChanFilterManager.FilterEvent.Created -> {
         filterEvent.chanFilters.forEach { chanFilter ->
-          _filtersState.value = _filters.add(createChanFilterInfo(chanFilter))
+          _filters.add(createChanFilterInfo(chanFilter))
         }
+
+        triggerUpdate()
       }
       is ChanFilterManager.FilterEvent.Deleted -> {
         val databaseIds = filterEvent.chanFilters
           .toHashSetBy { chanFilter -> chanFilter.getDatabaseId() }
 
-        _filtersState.value = _filters
-          .filter { chanFilterInfo -> chanFilterInfo.chanFilter.getDatabaseId() !in databaseIds }
-          .toPersistentList()
+        _filters
+          .removeIfKt { chanFilterInfo -> chanFilterInfo.chanFilter.getDatabaseId() in databaseIds }
+
+        triggerUpdate()
       }
       is ChanFilterManager.FilterEvent.Updated -> {
         filterEvent.chanFilters.forEach { chanFilter ->
@@ -213,11 +219,13 @@ class FiltersControllerViewModel(
           }
 
           if (index >= 0) {
-            _filtersState.value = _filters.set(index, createChanFilterInfo(chanFilter))
+            _filters[index] = createChanFilterInfo(chanFilter)
           } else {
-            _filtersState.value = _filters.add(createChanFilterInfo(chanFilter))
+            _filters.add(createChanFilterInfo(chanFilter))
           }
         }
+
+        triggerUpdate()
       }
     }
   }
@@ -226,10 +234,14 @@ class FiltersControllerViewModel(
     awaitUntilDependenciesInitialized()
     _activeBoardsCountForAllSites.set(activeBoardsCountForAllSites())
 
-    _filtersState.value = withContext(Dispatchers.Default) {
+    val loadedFilters = withContext(Dispatchers.Default) {
       return@withContext chanFilterManager.getAllFilters()
         .map { chanFilter -> createChanFilterInfo(chanFilter) }
-    }.toPersistentList()
+    }
+
+    _filters.clear()
+    _filters.addAll(loadedFilters)
+    triggerUpdate()
 
     _updateEnableDisableAllFiltersButtonFlow.emit(Unit)
   }
@@ -255,6 +267,32 @@ class FiltersControllerViewModel(
         _filterMatchedPostCountMap[chanFilter.getDatabaseId()] = postsCount
       }
     }
+  }
+
+  fun getBottomPanelMenus(): List<BottomMenuPanelItem> {
+    val currentlySelectedItems = viewModelSelectionHelper.getCurrentlySelectedItems()
+    if (currentlySelectedItems.isEmpty()) {
+      return emptyList()
+    }
+
+    val itemsList = mutableListOf<BottomMenuPanelItem>()
+
+    itemsList += BottomMenuPanelItem(
+      menuItemId = FilterMenuItemId(MenuItemType.Delete),
+      iconResId = R.drawable.ic_baseline_delete_outline_24,
+      textResId = R.string.bottom_menu_item_delete,
+      onClickListener = {
+        val clickEvent = MenuItemClickEvent(
+          menuItemType = MenuItemType.Delete,
+          items = viewModelSelectionHelper.getCurrentlySelectedItems()
+        )
+
+        viewModelSelectionHelper.emitBottomPanelMenuItemClickEvent(clickEvent)
+        viewModelSelectionHelper.unselectAll()
+      }
+    )
+
+    return itemsList
   }
 
   private fun createChanFilterInfo(chanFilter: ChanFilter): ChanFilterInfo {
@@ -429,30 +467,9 @@ class FiltersControllerViewModel(
     }
   }
 
-  fun getBottomPanelMenus(): List<BottomMenuPanelItem> {
-    val currentlySelectedItems = viewModelSelectionHelper.getCurrentlySelectedItems()
-    if (currentlySelectedItems.isEmpty()) {
-      return emptyList()
-    }
-
-    val itemsList = mutableListOf<BottomMenuPanelItem>()
-
-    itemsList += BottomMenuPanelItem(
-      menuItemId = FilterMenuItemId(MenuItemType.Delete),
-      iconResId = R.drawable.ic_baseline_delete_outline_24,
-      textResId = R.string.bottom_menu_item_delete,
-      onClickListener = {
-        val clickEvent = MenuItemClickEvent(
-          menuItemType = MenuItemType.Delete,
-          items = viewModelSelectionHelper.getCurrentlySelectedItems()
-        )
-
-        viewModelSelectionHelper.emitBottomPanelMenuItemClickEvent(clickEvent)
-        viewModelSelectionHelper.unselectAll()
-      }
-    )
-
-    return itemsList
+  // Unfortunately, this hack is needed because SnapshotStateList doesn't work well with (toolbar) filtering
+  private fun triggerUpdate() {
+    _updateTrigger.intValue += 1
   }
 
   @Immutable

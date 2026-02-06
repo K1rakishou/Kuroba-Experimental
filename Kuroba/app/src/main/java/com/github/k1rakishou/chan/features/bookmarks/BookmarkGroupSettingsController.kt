@@ -203,8 +203,7 @@ class BookmarkGroupSettingsController(
     ) {
       LazyColumnWithFastScroller(
         modifier = Modifier
-          .fillMaxWidth()
-          .weight(1f)
+          .fillMaxSize()
           .reorderable(reorderableState),
         state = reorderableState.listState,
         contentPadding = paddingValues,
@@ -253,7 +252,7 @@ class BookmarkGroupSettingsController(
         },
       backgroundColor = chanTheme.accentColorCompose,
       contentColor = Color.White,
-      onClick = { onCreateGroupClickedRemembered.value.invoke() }
+      onClick = { onCreateGroupClickedRemembered.value.invoke() },
     ) {
       Icon(
         painter = painterResource(id = R.drawable.ic_add_white_24dp),

@@ -5,9 +5,9 @@ import com.github.k1rakishou.chan.core.helper.OneShotRunnable
 import com.github.k1rakishou.chan.core.usecase.GetThreadBookmarkGroupIdsUseCase
 import com.github.k1rakishou.chan.features.bookmarks.data.GroupOfThreadBookmarkItemViews
 import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkItemView
+import com.github.k1rakishou.chan.ui.compose.reorder.move
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.hashSetWithCap
-import com.github.k1rakishou.common.move
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.common.withLockNonCancellable
 import com.github.k1rakishou.core_logger.Logger
@@ -29,7 +29,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
-import java.util.*
+import java.util.Locale
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 

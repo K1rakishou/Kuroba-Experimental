@@ -34,6 +34,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
+import com.github.k1rakishou.chan.ui.compose.FloatingLazyListScaffoldBuilder
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeCard
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeCustomTextField
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeIcon
@@ -85,54 +86,60 @@ class BookmarkGroupPatternSettingsController(
         .background(chanTheme.backColorCompose)
         .consumeClicks()
     ) {
-      BuildContentInternal()
-    }
-  }
-
-  @Composable
-  private fun BuildContentInternal() {
-    Column(
-      modifier = Modifier
-        .wrapContentHeight()
-        .fillMaxWidth()
-        .padding(4.dp)
-    ) {
       val listState = rememberLazyListState()
 
-      LazyColumnWithFastScroller(
-        state = listState,
-        modifier = Modifier
-          .fillMaxWidth()
-          .weight(1f),
-        draggableScrollbar = false,
-        content = {
-          val mutableMatcherFlags = viewModel.mutableMatcherFlags
+      with(FloatingLazyListScaffoldBuilder()) {
+        Content(
+          boxScope = this@BuildContent,
+          lazyListState = listState,
+          body = { paddings ->
+            LazyColumnWithFastScroller(
+              state = listState,
+              modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()
+                .padding(paddings),
+              draggableScrollbar = false,
+              content = {
+                val mutableMatcherFlags = viewModel.mutableMatcherFlags
 
-          items(
-            count = mutableMatcherFlags.size,
-            itemContent = { itemIndex ->
-              val mutableMatcherFlag = mutableMatcherFlags.get(itemIndex)
+                items(
+                  count = mutableMatcherFlags.size,
+                  itemContent = { itemIndex ->
+                    val mutableMatcherFlag = mutableMatcherFlags.get(itemIndex)
 
-              BuildMatcherGroup(
-                mutableMatcherFlag = mutableMatcherFlag,
-                index = itemIndex,
-                totalCount= mutableMatcherFlags.size,
-                onRemoveMatcherFlagClicked = { index -> onRemoveMatcherFlagClicked(index) },
-                onSelectMatcherFlagClicked = { index -> onSelectMatcherFlagClicked(index) },
-                onSelectMatcherOperatorClicked = { index -> onSelectMatcherOperatorClicked(index) },
-                onAddNewMatcherGroupClicked = { onAddNewMatcherGroupClicked() }
-              )
-            }
-          )
-        }
-      )
-
-      BuildFooter()
+                    BuildMatcherGroup(
+                      modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight()
+                        .padding(horizontal = 8.dp, vertical = 16.dp),
+                      mutableMatcherFlag = mutableMatcherFlag,
+                      index = itemIndex,
+                      totalCount= mutableMatcherFlags.size,
+                      onRemoveMatcherFlagClicked = { index -> onRemoveMatcherFlagClicked(index) },
+                      onSelectMatcherFlagClicked = { index -> onSelectMatcherFlagClicked(index) },
+                      onSelectMatcherOperatorClicked = { index -> onSelectMatcherOperatorClicked(index) },
+                      onAddNewMatcherGroupClicked = { onAddNewMatcherGroupClicked() }
+                    )
+                  }
+                )
+              }
+            )
+          },
+          footer = {
+            BuildFooter(
+              modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()
+            )
+          }
+        )
+      }
     }
   }
 
   @Composable
-  private fun BuildFooter() {
+  private fun BuildFooter(modifier: Modifier) {
     val validationTrigger by remember { matcherValidationTrigger }
     val mutableMatcherFlags = viewModel.mutableMatcherFlags
 
@@ -147,9 +154,7 @@ class BookmarkGroupPatternSettingsController(
     LaunchedEffect(key1 = true, block = { triggerMatcherValidation() })
 
     Column(
-      modifier = Modifier
-        .fillMaxWidth()
-        .wrapContentHeight()
+      modifier = modifier
     ) {
       val text = when (val vr = validationResult) {
         is GroupMatcherValidationResult.Error -> "Error: ${vr.message}"
@@ -163,6 +168,8 @@ class BookmarkGroupPatternSettingsController(
         GroupMatcherValidationResult.Validating -> validationInProgressColor
       }
 
+      Spacer(modifier = Modifier.height(8.dp))
+
       KurobaComposeText(
         modifier = Modifier
           .fillMaxWidth()
@@ -171,6 +178,8 @@ class BookmarkGroupPatternSettingsController(
         color = Color.White,
         text = text
       )
+
+      Spacer(modifier = Modifier.height(8.dp))
 
       Row(
         modifier = Modifier
@@ -199,12 +208,12 @@ class BookmarkGroupPatternSettingsController(
           text = stringResource(id = R.string.save)
         )
       }
-
     }
   }
 
   @Composable
   private fun BuildMatcherGroup(
+    modifier: Modifier,
     mutableMatcherFlag: MatchFlagMutable,
     index: Int,
     totalCount: Int,
@@ -242,10 +251,7 @@ class BookmarkGroupPatternSettingsController(
     }
 
     Column(
-      modifier = Modifier
-        .fillMaxWidth()
-        .wrapContentHeight()
-        .padding(vertical = 4.dp)
+      modifier = modifier
     ) {
       Row(
         modifier = Modifier

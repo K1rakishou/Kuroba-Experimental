@@ -27,10 +27,9 @@ import androidx.compose.ui.zIndex
 @Composable
 fun LazyItemScope.ReorderableItem(
     reorderableState: ReorderableState<*>,
-    key: Any?,
+    key: Any,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    index: Int? = null,
     orientationLocked: Boolean = true,
     content: @Composable BoxScope.(isDragging: Boolean) -> Unit
 ) {
@@ -41,7 +40,6 @@ fun LazyItemScope.ReorderableItem(
         defaultDraggingModifier = Modifier.animateItem(),
         enabled = enabled,
         orientationLocked = orientationLocked,
-        index = index,
         content = content
     )
 }
@@ -49,10 +47,9 @@ fun LazyItemScope.ReorderableItem(
 @Composable
 fun LazyGridItemScope.ReorderableItem(
     reorderableState: ReorderableState<*>,
-    key: Any?,
+    key: Any,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    index: Int? = null,
     content: @Composable BoxScope.(isDragging: Boolean) -> Unit
 ) {
     ReorderableItem(
@@ -62,7 +59,6 @@ fun LazyGridItemScope.ReorderableItem(
         defaultDraggingModifier = Modifier.animateItem(),
         enabled = enabled,
         orientationLocked = false,
-        index = index,
         content = content
     )
 }
@@ -70,22 +66,17 @@ fun LazyGridItemScope.ReorderableItem(
 @Composable
 fun ReorderableItem(
     state: ReorderableState<*>,
-    key: Any?,
+    key: Any,
     modifier: Modifier = Modifier,
     defaultDraggingModifier: Modifier = Modifier,
     enabled: Boolean = true,
     orientationLocked: Boolean = true,
-    index: Int? = null,
     content: @Composable BoxScope.(isDragging: Boolean) -> Unit
 ) {
     val isDragging = if (!enabled) {
         false
     } else {
-        if (index != null) {
-            index == state.draggingItemIndex
-        } else {
-            key == state.draggingItemKey
-        }
+      key == state.draggingItemKey
     }
 
     val draggingModifier = draggingModifier(
@@ -93,7 +84,6 @@ fun ReorderableItem(
         isDragging = isDragging,
         orientationLocked = orientationLocked,
         state = state,
-        index = index,
         key = key,
         defaultDraggingModifier = defaultDraggingModifier
     )
@@ -110,7 +100,6 @@ private fun draggingModifier(
     isDragging: Boolean,
     orientationLocked: Boolean,
     state: ReorderableState<*>,
-    index: Int?,
     key: Any?,
     defaultDraggingModifier: Modifier
 ): Modifier {
@@ -136,12 +125,7 @@ private fun draggingModifier(
             }
     }
 
-    val cancel = if (index != null) {
-        index == state.dragCancelledAnimation.position?.index
-    } else {
-        key == state.dragCancelledAnimation.position?.key
-    }
-
+    val cancel = key == state.dragCancelledAnimation.position?.key
     if (cancel) {
         return Modifier
             .zIndex(1f)

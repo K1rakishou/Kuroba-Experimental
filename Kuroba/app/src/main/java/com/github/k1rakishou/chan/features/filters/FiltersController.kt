@@ -283,13 +283,20 @@ class FiltersController(
     val searchState = rememberSimpleSearchStateV2<FiltersControllerViewModel.ChanFilterInfo>(
       textFieldState = toolbarState.search.searchQueryState
     )
+    val reorderTask = rememberCancellableCoroutineTask()
+    val reorderableState = rememberReorderableLazyListState(
+      onMove = { from, to -> reorderTask.launch { viewModel.reorderFilterInMemory(from.index, to.index) } },
+      onDragEnd = { _, _ -> reorderTask.launch { viewModel.persistReorderedFilters() } }
+    )
 
-    val filters by viewModel.filtersState
+    val filters = viewModel.filters
     val searchQuery = searchState.textFieldState.text
+    val updateTrigger by viewModel.updateTrigger
 
     LaunchedEffect(
       key1 = searchQuery,
       key2 = filters,
+      key3 = updateTrigger,
       block = {
         if (searchQuery.isEmpty()) {
           searchState.results.value = filters
@@ -305,12 +312,6 @@ class FiltersController(
     )
 
     val searchResults by searchState.results
-
-    val reorderTask = rememberCancellableCoroutineTask()
-    val reorderableState = rememberReorderableLazyListState(
-      onMove = { from, to -> reorderTask.launch { viewModel.reorderFilterInMemory(from.index, to.index) } },
-      onDragEnd = { _, _ -> reorderTask.launch { viewModel.persistReorderedFilters() } }
-    )
 
     val paddingValues = remember(contentPaddings, layoutDirection) {
       contentPaddings
@@ -362,6 +363,7 @@ class FiltersController(
           BuildChanFilter(
             index = index,
             totalCount = searchResults.size,
+            isInSearchMode = searchState.usingSearch,
             reorderableState = reorderableState,
             chanFilterInfo = chanFilterInfo,
             onFilterClicked = { clickedFilter ->
@@ -391,6 +393,7 @@ class FiltersController(
   private fun LazyItemScope.BuildChanFilter(
     index: Int,
     totalCount: Int,
+    isInSearchMode: Boolean,
     reorderableState: ReorderableLazyListState,
     chanFilterInfo: FiltersControllerViewModel.ChanFilterInfo,
     onFilterClicked: (ChanFilter) -> Unit,
@@ -405,7 +408,6 @@ class FiltersController(
 
     ReorderableItem(
       reorderableState = reorderableState,
-      orientationLocked = false,
       key = chanFilterInfo.chanFilter.getDatabaseId()
     ) { isDragging ->
       KurobaComposeDraggableElementContainer(
@@ -478,22 +480,17 @@ class FiltersController(
                 }
               )
 
-              val reorderModifier = if (isInSelectionMode) {
-                Modifier
-              } else {
-                Modifier.detectReorder(reorderableState)
+              if (!isInSearchMode && !isInSelectionMode) {
+                KurobaComposeIcon(
+                  modifier = Modifier
+                    .size(32.dp)
+                    .padding(all = 4.dp)
+                    .align(Alignment.CenterHorizontally)
+                    .detectReorder(reorderableState),
+                  drawableId = R.drawable.ic_baseline_reorder_24
+                )
               }
-
-              KurobaComposeIcon(
-                modifier = Modifier
-                  .size(32.dp)
-                  .padding(all = 4.dp)
-                  .align(Alignment.CenterHorizontally)
-                  .then(reorderModifier),
-                drawableId = R.drawable.ic_baseline_reorder_24
-              )
             }
-
           }
 
           if (index in 0 until (totalCount - 1)) {

@@ -50,8 +50,8 @@ class ComposeBoardsControllerViewModel(
         ?.compositeCatalogDescriptor
         ?.catalogDescriptors
         ?.getOrNull(index)
-        ?.let { catalogDescriptor -> CatalogCompositionSlot.Occupied(catalogDescriptor) }
-        ?: CatalogCompositionSlot.Empty
+        ?.let { catalogDescriptor -> CatalogCompositionSlot.Occupied(index, catalogDescriptor) }
+        ?: CatalogCompositionSlot.Empty(index)
 
       _compositionSlots.add(catalogCompositionSlot)
     }
@@ -64,10 +64,11 @@ class ComposeBoardsControllerViewModel(
 
     if (boardDescriptor != null) {
       _compositionSlots[clickedIndex] = CatalogCompositionSlot.Occupied(
+        key = clickedIndex,
         catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(boardDescriptor)
       )
     } else {
-      _compositionSlots[clickedIndex] = CatalogCompositionSlot.Empty
+      _compositionSlots[clickedIndex] = CatalogCompositionSlot.Empty(clickedIndex)
     }
   }
 
@@ -76,7 +77,7 @@ class ComposeBoardsControllerViewModel(
       return
     }
 
-    _compositionSlots[clickedIndex] = CatalogCompositionSlot.Empty
+    _compositionSlots[clickedIndex] = CatalogCompositionSlot.Empty(clickedIndex)
   }
 
 
@@ -137,8 +138,16 @@ class ComposeBoardsControllerViewModel(
   class CreateCompositeCatalogError(message: String) : Exception(message)
 
   sealed class CatalogCompositionSlot {
-    data object Empty : CatalogCompositionSlot()
-    data class Occupied(val catalogDescriptor: ChanDescriptor.CatalogDescriptor) : CatalogCompositionSlot()
+    abstract val key: Int
+
+    data class Empty(
+      override val key: Int
+    ) : CatalogCompositionSlot()
+
+    data class Occupied(
+      override val key: Int,
+      val catalogDescriptor: ChanDescriptor.CatalogDescriptor
+    ) : CatalogCompositionSlot()
   }
 
   class ViewModelFactory @Inject constructor(

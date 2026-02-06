@@ -6,10 +6,10 @@ import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.core.concurrency.LazySuspend
 import com.github.k1rakishou.chan.features.thirdeye.data.BooruSetting
 import com.github.k1rakishou.chan.features.thirdeye.data.ThirdEyeSettings
+import com.github.k1rakishou.chan.ui.compose.reorder.move
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.groupOrNull
-import com.github.k1rakishou.common.move
 import com.github.k1rakishou.common.mutableIteration
 import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.core_logger.Logger

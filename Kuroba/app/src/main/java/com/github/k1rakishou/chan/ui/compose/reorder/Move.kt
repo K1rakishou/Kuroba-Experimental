@@ -1,7 +1,5 @@
 package com.github.k1rakishou.chan.ui.compose.reorder
 
-import kotlinx.collections.immutable.PersistentList
-
 fun <T> MutableList<T>.move(fromIdx: Int, toIdx: Int): Boolean {
   if (fromIdx == toIdx) {
     return false
@@ -15,23 +13,15 @@ fun <T> MutableList<T>.move(fromIdx: Int, toIdx: Int): Boolean {
     return false
   }
 
-  add(toIdx, removeAt(fromIdx))
+  if (toIdx > fromIdx) {
+    for (i in fromIdx until toIdx) {
+      this[i] = this[i + 1].also { this[i + 1] = this[i] }
+    }
+  } else {
+    for (i in fromIdx downTo toIdx + 1) {
+      this[i] = this[i - 1].also { this[i - 1] = this[i] }
+    }
+  }
+
   return true
-}
-
-fun <T> PersistentList<T>.move(fromIdx: Int, toIdx: Int): PersistentList<T> {
-  if (fromIdx == toIdx) {
-    return this
-  }
-
-  if (fromIdx < 0 || fromIdx >= size) {
-    return this
-  }
-
-  if (toIdx < 0 || toIdx >= size) {
-    return this
-  }
-
-  val element = get(fromIdx)
-  return removeAt(fromIdx).add(toIdx, element)
 }

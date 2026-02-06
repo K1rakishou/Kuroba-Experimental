@@ -5,11 +5,13 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.annotation.FrequentlyChangingValue
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -71,7 +73,7 @@ fun Modifier.passClicksThrough(passClicks: Boolean = true): Modifier {
 }
 
 
-fun PaddingValues.update(
+fun PaddingValues.copy(
   layoutDirection: LayoutDirection,
   start: Dp = calculateStartPadding(layoutDirection),
   top: Dp = calculateTopPadding(),
@@ -182,4 +184,18 @@ fun Modifier.clearFocusOnKeyboardDismiss(): Modifier = composed {
       }
     }
   }
+}
+
+@FrequentlyChangingValue
+fun LazyListState.isFullyScrolledTop(): Boolean {
+  return firstVisibleItemIndex == 0 && firstVisibleItemScrollOffset == 0
+}
+
+@FrequentlyChangingValue
+fun LazyListState.isFullyScrolledBottom(): Boolean {
+  val lastVisibleItem = layoutInfo.visibleItemsInfo.lastOrNull()
+    ?: return false
+
+  return lastVisibleItem.index == layoutInfo.totalItemsCount - 1 &&
+    lastVisibleItem.offset + lastVisibleItem.size <= layoutInfo.viewportEndOffset
 }

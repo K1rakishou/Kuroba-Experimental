@@ -165,32 +165,36 @@ class CompositeCatalogsSetupController(
             return@LazyColumnWithFastScroller
           }
 
-          items(compositeCatalogs.size) { index ->
-            val compositeCatalog = compositeCatalogs.get(index)
+          items(
+            count = compositeCatalogs.size,
+            key = { idx -> compositeCatalogs[idx].name },
+            itemContent = { index ->
+              val compositeCatalog = compositeCatalogs.get(index)
 
-            BuildCompositeCatalogItem(
-              index = index,
-              chanTheme = chanTheme,
-              reorderableState = reorderableState,
-              compositeCatalog = compositeCatalog,
-              onCompositeCatalogItemClicked = { clickedCompositeCatalog ->
-                showComposeBoardsController(compositeCatalog = clickedCompositeCatalog)
-              },
-              onDeleteCompositeCatalogItemClicked = { clickedCompositeCatalog ->
-                rendezvousCoroutineExecutor.post {
-                  viewModel.delete(clickedCompositeCatalog)
-                    .toastOnError(longToast = true)
-                    .toastOnSuccess(message = {
-                      return@toastOnSuccess getString(
-                        R.string.controller_composite_catalogs_catalog_deleted,
-                        clickedCompositeCatalog.name
-                      )
-                    })
-                    .ignore()
-                }
-              },
-            )
-          }
+              BuildCompositeCatalogItem(
+                key = compositeCatalog.name,
+                chanTheme = chanTheme,
+                reorderableState = reorderableState,
+                compositeCatalog = compositeCatalog,
+                onCompositeCatalogItemClicked = { clickedCompositeCatalog ->
+                  showComposeBoardsController(compositeCatalog = clickedCompositeCatalog)
+                },
+                onDeleteCompositeCatalogItemClicked = { clickedCompositeCatalog ->
+                  rendezvousCoroutineExecutor.post {
+                    viewModel.delete(clickedCompositeCatalog)
+                      .toastOnError(longToast = true)
+                      .toastOnSuccess(message = {
+                        return@toastOnSuccess getString(
+                          R.string.controller_composite_catalogs_catalog_deleted,
+                          clickedCompositeCatalog.name
+                        )
+                      })
+                      .ignore()
+                  }
+                },
+              )
+            }
+          )
         }
       )
 
@@ -224,7 +228,7 @@ class CompositeCatalogsSetupController(
 
   @Composable
   private fun LazyItemScope.BuildCompositeCatalogItem(
-    index: Int,
+    key: String,
     chanTheme: ChanTheme,
     reorderableState: ReorderableLazyListState,
     compositeCatalog: CompositeCatalog,
@@ -236,8 +240,7 @@ class CompositeCatalogsSetupController(
 
     ReorderableItem(
       reorderableState = reorderableState,
-      key = null,
-      index = index
+      key = key,
     ) { isDragging ->
       KurobaComposeDraggableElementContainer(
         modifier = Modifier
