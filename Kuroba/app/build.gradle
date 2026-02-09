@@ -242,7 +242,8 @@ android {
                 "-Xopt-in=androidx.compose.animation.graphics.ExperimentalAnimationGraphicsApi",
                 "-Xopt-in=kotlinx.coroutines.ObsoleteCoroutinesApi",
                 "-Xopt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
-                "-Xstring-concat=inline"
+                "-Xstring-concat=inline",
+                "-opt-in=kotlin.concurrent.atomics.ExperimentalAtomicApi"
         ]
     }
 

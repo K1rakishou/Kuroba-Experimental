@@ -9,12 +9,6 @@ android {
 
     defaultConfig {
         minSdkVersion 23
-
-        javaCompileOptions {
-            annotationProcessorOptions {
-                arguments = ["room.schemaLocation": "$projectDir/schemas".toString()]
-            }
-        }
     }
 
     buildTypes {
@@ -35,6 +29,10 @@ android {
         jvmTarget = '21'
         freeCompilerArgs = ["-Xstring-concat=inline"]
     }
+}
+
+ksp {
+    arg('room.schemaLocation', "$projectDir/schemas")
 }
 
 dependencies {

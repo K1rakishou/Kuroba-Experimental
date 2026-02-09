@@ -191,11 +191,18 @@ class SavedPostsController(
     val savedRepliesGrouped = when (val savedRepliesAsync = myPostsViewModelState.savedRepliesGroupedAsync) {
       AsyncData.NotInitialized -> return
       AsyncData.Loading -> {
-        KurobaComposeProgressIndicator()
+        KurobaComposeProgressIndicator(
+          modifier = Modifier.fillMaxSize()
+        )
+
         return
       }
       is AsyncData.Error -> {
-        KurobaComposeErrorMessage(error = savedRepliesAsync.throwable)
+        KurobaComposeErrorMessage(
+          modifier = Modifier.fillMaxSize(),
+          error = savedRepliesAsync.throwable
+        )
+
         return
       }
       is AsyncData.Data -> savedRepliesAsync.data

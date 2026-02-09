@@ -17,13 +17,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.onFocusEvent
-import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.Dp
@@ -62,16 +60,6 @@ fun Modifier.consumeClicks(enabled: Boolean = true): Modifier {
     onClick = {}
   )
 }
-
-@OptIn(ExperimentalComposeUiApi::class)
-fun Modifier.passClicksThrough(passClicks: Boolean = true): Modifier {
-  if (!passClicks) {
-    return this
-  }
-
-  return pointerInteropFilter(onTouchEvent = { false })
-}
-
 
 fun PaddingValues.copy(
   layoutDirection: LayoutDirection,

@@ -20,8 +20,9 @@ data class LynxchanBoardMeta(
     ForAllPosting(2);
 
     companion object {
-      fun fromValue(value: Int): CaptchaType {
+      fun fromValue(value: Int?): CaptchaType {
         return when (value) {
+          null,
           0 -> NoCaptcha
           1 -> OnlyForThreadCreation
           else -> ForAllPosting

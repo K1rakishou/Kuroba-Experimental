@@ -38,19 +38,19 @@ import java.io.InputStream
 import java.util.regex.Pattern
 
 open class LynxchanApi(
-  private val _moshi: Lazy<Moshi>,
-  private val _siteManager: Lazy<SiteManager>,
-  private val _boardManager: Lazy<BoardManager>,
+  private val moshiLazy: Lazy<Moshi>,
+  private val siteManagerLazy: Lazy<SiteManager>,
+  private val boardManagerLazy: Lazy<BoardManager>,
   site: LynxchanSite
 ) : CommonSite.CommonApi(site) {
   private val lynxchanCatalogList = Types.newParameterizedType(List::class.java, LynxchanCatalogThread::class.java)
 
   private val moshi: Moshi
-    get() = _moshi.get()
+    get() = moshiLazy.get()
   private val siteManager: SiteManager
-    get() = _siteManager.get()
+    get() = siteManagerLazy.get()
   private val boardManager: BoardManager
-    get() = _boardManager.get()
+    get() = boardManagerLazy.get()
 
   override suspend fun loadThreadFresh(
     requestUrl: String,
@@ -111,7 +111,7 @@ open class LynxchanApi(
 
     val catalogThreadPosts = lynxchanCatalog?.threads
     if (catalogThreadPosts == null) {
-      throw IllegalStateException("No posts parsed for '$requestUrl'")
+      error("No posts parsed for '$requestUrl'")
     }
 
     if (catalogThreadPosts.isEmpty()) {
@@ -160,12 +160,13 @@ open class LynxchanApi(
     responseBodyStream: InputStream
   ): ModularResult<ThreadBookmarkInfoObject> {
     return ModularResult.Try {
-      val lynxchanBookmarkThreadInfoAdapter = moshi.adapter<LynxchanBookmarkThreadInfo>(LynxchanBookmarkThreadInfo::class.java)
+      val lynxchanBookmarkThreadInfoAdapter = moshi
+        .adapter<LynxchanBookmarkThreadInfo>(LynxchanBookmarkThreadInfo::class.java)
       val lynxchanBookmarkThreadInfo = responseBodyStream
         .useBufferedSource { bufferedSource -> lynxchanBookmarkThreadInfoAdapter.fromJson(bufferedSource) }
 
       if (lynxchanBookmarkThreadInfo == null) {
-        throw IllegalStateException("No posts parsed for '$requestUrl'")
+        error("No posts parsed for '$requestUrl'")
       }
 
       val postObjects = mutableListWithCap<ThreadBookmarkInfoPostObject>(lynxchanBookmarkThreadInfo.postsCount)
@@ -226,7 +227,7 @@ open class LynxchanApi(
         .useBufferedSource { bufferedSource -> lynxchanCatalogAdapter.fromJson(bufferedSource) }
 
       if (lynxchanCatalogThreads == null) {
-        throw IllegalStateException("No posts parsed for '$requestUrl'")
+        error("No posts parsed for '$requestUrl'")
       }
 
       if (lynxchanCatalogThreads.isEmpty()) {
@@ -373,16 +374,16 @@ open class LynxchanApi(
 
   @JsonClass(generateAdapter = true)
   data class LynxchanBookmarkThreadInfo(
-    @Json(name = "threadId") val threadId: Long?,
-    @Json(name = "postId") val postId: Long?,
-    @Json(name = "message") val message: String?,
-    @Json(name = "subject") val subject: String?,
-    @Json(name = "locked") val locked: Boolean?,
-    @Json(name = "pinned") val pinned: Boolean?,
-    @Json(name = "cyclic") val cyclic: Boolean?,
-    @Json(name = "autoSage") val autoSage: Boolean?,
-    @Json(name = "lastBump") val lastBump: String?,
-    @Json(name = "posts") val morePosts: List<LynxchanBookmarkThreadInfo>?
+    @field:Json(name = "threadId") val threadId: Long?,
+    @field:Json(name = "postId") val postId: Long?,
+    @field:Json(name = "message") val message: String?,
+    @field:Json(name = "subject") val subject: String?,
+    @field:Json(name = "locked") val locked: Boolean?,
+    @field:Json(name = "pinned") val pinned: Boolean?,
+    @field:Json(name = "cyclic") val cyclic: Boolean?,
+    @field:Json(name = "autoSage") val autoSage: Boolean?,
+    @field:Json(name = "lastBump") val lastBump: String?,
+    @field:Json(name = "posts") val morePosts: List<LynxchanBookmarkThreadInfo>?
   ) {
     val isOp: Boolean = threadId != null
 
@@ -398,51 +399,51 @@ open class LynxchanApi(
 
   @JsonClass(generateAdapter = true)
   data class LynxchanCatalogThread(
-    @Json(name = "threadId") val threadId: Long,
-    @Json(name = "page") val page: Int,
-    @Json(name = "message") val message: String?,
-    @Json(name = "subject") val subject: String?,
-    @Json(name = "locked") val locked: Boolean?,
-    @Json(name = "pinned") val pinned: Boolean?,
-    @Json(name = "cyclic") val cyclic: Boolean?,
-    @Json(name = "autoSage") val autoSage: Boolean?,
-    @Json(name = "lastBump") val lastBump: String?,
-    @Json(name = "thumb") val thumb: String?
+    @field:Json(name = "threadId") val threadId: Long,
+    @field:Json(name = "page") val page: Int,
+    @field:Json(name = "message") val message: String?,
+    @field:Json(name = "subject") val subject: String?,
+    @field:Json(name = "locked") val locked: Boolean?,
+    @field:Json(name = "pinned") val pinned: Boolean?,
+    @field:Json(name = "cyclic") val cyclic: Boolean?,
+    @field:Json(name = "autoSage") val autoSage: Boolean?,
+    @field:Json(name = "lastBump") val lastBump: String?,
+    @field:Json(name = "thumb") val thumb: String?
   )
 
   @JsonClass(generateAdapter = true)
   data class LynxchanCatalogPage(
-    @Json(name = "pageCount") val pageCount: Int,
-    @Json(name = "maxMessageLength") val maxMessageLength: Int,
-    @Json(name = "captchaMode") val captchaMode: Int,
-    @Json(name = "maxFileCount") val maxFileCount: Int,
-    @Json(name = "maxFileSize") val maxFileSize: String,
-    @Json(name = "threads") val threads: List<LynxchanPost>
+    @field:Json(name = "pageCount") val pageCount: Int,
+    @field:Json(name = "maxMessageLength") val maxMessageLength: Int,
+    @field:Json(name = "captchaMode") val captchaMode: Int?,
+    @field:Json(name = "maxFileCount") val maxFileCount: Int,
+    @field:Json(name = "maxFileSize") val maxFileSize: String,
+    @field:Json(name = "threads") val threads: List<LynxchanPost>
   )
 
   @JsonClass(generateAdapter = true)
   data class LynxchanPost(
-    @Json(name = "id") val posterId: String?,
-    @Json(name = "signedRole") val signedRole: String?,
-    @Json(name = "name") val name: String,
-    @Json(name = "threadId") val threadId: Long?,
-    @Json(name = "postId") val postId: Long?,
-    @Json(name = "subject") val subject: String?,
-    @Json(name = "markdown") val markdown: String?,
-    @Json(name = "locked") val locked: Boolean?,
-    @Json(name = "pinned") val pinned: Boolean?,
-    @Json(name = "cyclic") val cyclic: Boolean?,
-    @Json(name = "files") val files: List<LynxchanPostFile>?,
-    @Json(name = "omittedFiles") val omittedFiles: Int?,
-    @Json(name = "creation") val creation: String?,
-    @Json(name = "flag") val flag: String?,
-    @Json(name = "flagCode") val flagCode: String?,
-    @Json(name = "flagName") val flagName: String?,
+    @field:Json(name = "id") val posterId: String?,
+    @field:Json(name = "signedRole") val signedRole: String?,
+    @field:Json(name = "name") val name: String,
+    @field:Json(name = "threadId") val threadId: Long?,
+    @field:Json(name = "postId") val postId: Long?,
+    @field:Json(name = "subject") val subject: String?,
+    @field:Json(name = "markdown") val markdown: String?,
+    @field:Json(name = "locked") val locked: Boolean?,
+    @field:Json(name = "pinned") val pinned: Boolean?,
+    @field:Json(name = "cyclic") val cyclic: Boolean?,
+    @field:Json(name = "files") val files: List<LynxchanPostFile>?,
+    @field:Json(name = "omittedFiles") val omittedFiles: Int?,
+    @field:Json(name = "creation") val creation: String?,
+    @field:Json(name = "flag") val flag: String?,
+    @field:Json(name = "flagCode") val flagCode: String?,
+    @field:Json(name = "flagName") val flagName: String?,
     // Before Lynxchan 2.7.0
-    @Json(name = "ommitedPosts") val ommitedPosts: Int?,
+    @field:Json(name = "ommitedPosts") val ommitedPosts: Int?,
     // After Lynxchan 2.7.0
-    @Json(name = "omittedPosts") val omittedPosts: Int?,
-    @Json(name = "posts") val morePosts: List<LynxchanPost>?
+    @field:Json(name = "omittedPosts") val omittedPosts: Int?,
+    @field:Json(name = "posts") val morePosts: List<LynxchanPost>?
   ) {
     val omittedPostsCount: Int?
       get() = omittedPosts ?: ommitedPosts
@@ -453,13 +454,13 @@ open class LynxchanApi(
 
   @JsonClass(generateAdapter = true)
   data class LynxchanPostFile(
-    @Json(name = "originalName") val originalName: String,
-    @Json(name = "path") val path: String,
-    @Json(name = "thumb") val thumb: String,
-    @Json(name = "mime") val mime: String,
-    @Json(name = "size") val size: Long,
-    @Json(name = "width") val width: Int?,
-    @Json(name = "height") val height: Int?,
+    @field:Json(name = "originalName") val originalName: String,
+    @field:Json(name = "path") val path: String,
+    @field:Json(name = "thumb") val thumb: String,
+    @field:Json(name = "mime") val mime: String,
+    @field:Json(name = "size") val size: Long,
+    @field:Json(name = "width") val width: Int?,
+    @field:Json(name = "height") val height: Int?,
   ) {
 
     fun toChanPostImage(board: ChanBoard, endpoints: SiteEndpoints): ChanPostImage? {

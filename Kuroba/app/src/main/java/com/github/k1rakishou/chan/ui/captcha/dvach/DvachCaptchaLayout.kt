@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -452,8 +453,17 @@ class DvachCaptchaLayout(
         .clickable { onReloadClick() },
       controllerKey = null,
       request = request,
-      loading = { KurobaComposeProgressIndicator() },
-      error = { throwable -> KurobaComposeErrorMessage(error = throwable) },
+      loading = {
+        KurobaComposeProgressIndicator(
+          modifier = Modifier.fillMaxSize()
+        )
+      },
+      error = { throwable ->
+        KurobaComposeErrorMessage(
+          modifier = Modifier.fillMaxSize(),
+          error = throwable
+        )
+      },
       contentScale = ContentScale.Crop
     )
   }

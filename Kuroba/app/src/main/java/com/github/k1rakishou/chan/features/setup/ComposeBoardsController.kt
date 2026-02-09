@@ -29,7 +29,6 @@ import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.image.ImageLoaderDeprecated
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.ui.compose.FloatingLazyListScaffoldBuilder
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeDraggableElementContainer
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeIcon
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
@@ -44,6 +43,8 @@ import com.github.k1rakishou.chan.ui.compose.reorder.ReorderableLazyListState
 import com.github.k1rakishou.chan.ui.compose.reorder.detectReorder
 import com.github.k1rakishou.chan.ui.compose.reorder.rememberReorderableLazyListState
 import com.github.k1rakishou.chan.ui.compose.reorder.reorderable
+import com.github.k1rakishou.chan.ui.compose.scaffold.FloatingLazyListScaffoldBuilder
+import com.github.k1rakishou.chan.ui.compose.scaffold.LazyListScaffoldShared
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingComposeController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.viewModelByKey
@@ -139,14 +140,14 @@ class ComposeBoardsController(
             modifier = Modifier
               .fillMaxWidth()
               .wrapContentHeight(),
-            negativeButton = FloatingLazyListScaffoldBuilder.Button(
+            negativeButton = LazyListScaffoldShared.Button(
               text = stringResource(id = R.string.cancel),
               onClick = {
                 focusManager.clearFocus(force = true)
                 pop()
               }
             ),
-            positiveButton = FloatingLazyListScaffoldBuilder.Button(
+            positiveButton = LazyListScaffoldShared.Button(
               enabled = run {
                 val currentCatalogDescriptors = compositionSlots.mapNotNull { compositionSlot ->
                   if (compositionSlot is ComposeBoardsControllerViewModel.CatalogCompositionSlot.Empty) {

@@ -310,66 +310,40 @@ class BoardManager(
     }
   }
 
-  fun viewBoards(siteDescriptor: SiteDescriptor, boardViewMode: BoardViewMode, func: (ChanBoard) -> Unit) {
+  fun viewBoards(
+    boardViewMode: BoardViewMode = BoardViewMode.All,
+    siteDescriptor: SiteDescriptor? = null,
+    func: (ChanBoard) -> Boolean
+  ) {
     check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
 
     lock.read {
-      boardsMap[siteDescriptor]?.forEach { (_, chanBoard) ->
-        when (boardViewMode) {
-          BoardViewMode.AllBoards -> func(chanBoard)
-          BoardViewMode.OnlyActiveBoards -> {
-            if (chanBoard.active) {
-              func(chanBoard)
-            }
-          }
-          BoardViewMode.OnlyNonActiveBoards -> {
-            if (!chanBoard.active) {
-              func(chanBoard)
-            }
-          }
-        }
-      }
-    }
-  }
-
-  fun viewAllActiveBoards(func: (ChanBoard) -> Unit) {
-    check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
-
-    lock.read {
-      boardsMap.values.forEach { innerMap ->
-        innerMap.values.forEach { chanBoard ->
-          if (chanBoard.active) {
-            func(chanBoard)
-          }
-        }
-      }
-    }
-  }
-
-  fun viewActiveBoardsOrdered(siteDescriptor: SiteDescriptor, func: (ChanBoard) -> Unit) {
-    check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
-
-    lock.read {
-      ordersMap[siteDescriptor]?.forEach { boardDescriptor ->
-        val chanBoard = boardsMap[siteDescriptor]?.get(boardDescriptor)
-          ?: return@forEach
-
-        if (chanBoard.active) {
-          func(chanBoard)
-        }
-      }
-    }
-  }
-
-  fun viewAllBoards(siteDescriptor: SiteDescriptor, func: (ChanBoard) -> Unit) {
-    check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
-
-    lock.read {
-      val boards = boardsMap[siteDescriptor]
+      val innerMap = boardsMap[siteDescriptor] 
         ?: return@read
 
-      boards.values.forEach { chanBoard ->
-        func(chanBoard)
+      for ((_, chanBoard) in innerMap) {
+        if (!viewBoard(chanBoard, boardViewMode, func)) {
+          break
+        }
+      }
+    }
+  }
+
+  fun viewBoardsOrdered(siteDescriptor: SiteDescriptor, boardViewMode: BoardViewMode, func: (ChanBoard) -> Boolean) {
+    check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
+
+    lock.read {
+      val innerMap = ordersMap[siteDescriptor] 
+        ?: return@read
+
+      for (boardDescriptor in innerMap) {
+        val chanBoard = boardsMap[siteDescriptor]
+          ?.get(boardDescriptor)
+          ?: continue
+
+        if (!viewBoard(chanBoard, boardViewMode, func)) {
+          return@read
+        }
       }
     }
   }
@@ -516,6 +490,38 @@ class BoardManager(
     Logger.d(TAG, "BoardManager initialization completed, took $duration")
   }
 
+  private fun viewBoard(
+    chanBoard: ChanBoard,
+    boardViewMode: BoardViewMode,
+    func: (ChanBoard) -> Boolean
+  ): Boolean {
+    when (boardViewMode) {
+      BoardViewMode.All -> {
+        if (!func(chanBoard)) {
+          return false
+        }
+      }
+
+      BoardViewMode.Active -> {
+        if (chanBoard.active) {
+          if (!func(chanBoard)) {
+            return false
+          }
+        }
+      }
+
+      BoardViewMode.NonActive -> {
+        if (!chanBoard.active) {
+          if (!func(chanBoard)) {
+            return false
+          }
+        }
+      }
+    }
+
+    return true
+  }
+
   private suspend fun persistAllBoards(siteDescriptors: List<SiteDescriptor>) {
     if (!suspendableInitializer.isInitialized()) {
       return
@@ -610,9 +616,9 @@ class BoardManager(
   }
 
   enum class BoardViewMode {
-    AllBoards,
-    OnlyActiveBoards,
-    OnlyNonActiveBoards
+    NonActive,
+    Active,
+    All
   }
 
   companion object {

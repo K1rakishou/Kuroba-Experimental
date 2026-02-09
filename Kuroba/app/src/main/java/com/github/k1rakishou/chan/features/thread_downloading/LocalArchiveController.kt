@@ -248,11 +248,18 @@ class LocalArchiveController(
     val threadDownloadViews = when (val asyncData = state.threadDownloadsAsync) {
       AsyncData.NotInitialized -> return
       AsyncData.Loading -> {
-        KurobaComposeProgressIndicator()
+        KurobaComposeProgressIndicator(
+          modifier = Modifier.fillMaxSize()
+        )
+
         return
       }
       is AsyncData.Error -> {
-        KurobaComposeErrorMessage(error = asyncData.throwable)
+        KurobaComposeErrorMessage(
+          modifier = Modifier.fillMaxSize(),
+          error = asyncData.throwable
+        )
+
         return
       }
       is AsyncData.Data -> asyncData.data

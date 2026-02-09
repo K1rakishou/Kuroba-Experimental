@@ -277,14 +277,17 @@ private fun BuildCaptchaImageOrText(
       val captchaInfo = when (captchaInfoAsync) {
         AsyncData.NotInitialized,
         AsyncData.Loading -> {
-          KurobaComposeProgressIndicator()
+          KurobaComposeProgressIndicator(
+            modifier = Modifier.fillMaxSize()
+          )
+
           null
         }
         is AsyncData.Error -> {
           val error = captchaInfoAsync.throwable
           KurobaComposeErrorMessage(
-            error = error,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
+            error = error
           )
 
           null

@@ -27,7 +27,7 @@ class CatalogCellData(
   val fullName by lazy {
     when (catalogDescriptor) {
       is ChanDescriptor.CatalogDescriptor -> {
-        return@lazy BoardHelper.getName(catalogDescriptor.boardDescriptor.boardCode, boardName)
+        return@lazy BoardHelper.formatName(catalogDescriptor.boardDescriptor.boardCode, boardName)
       }
       is ChanDescriptor.CompositeCatalogDescriptor -> {
         return@lazy catalogDescriptor.userReadableString()

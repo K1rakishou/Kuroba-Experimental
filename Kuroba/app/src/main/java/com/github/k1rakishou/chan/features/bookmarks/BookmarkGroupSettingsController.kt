@@ -158,7 +158,10 @@ class BookmarkGroupSettingsController(
 
     val loading by viewModel.loading
     if (loading) {
-      KurobaComposeProgressIndicator()
+      KurobaComposeProgressIndicator(
+        modifier = Modifier.fillMaxSize()
+      )
+
       return
     }
 

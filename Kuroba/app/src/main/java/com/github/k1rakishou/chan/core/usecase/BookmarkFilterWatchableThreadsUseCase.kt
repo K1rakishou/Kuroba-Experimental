@@ -549,8 +549,9 @@ class BookmarkFilterWatchableThreadsUseCase(
       }
 
       if (chanFilter.allBoards()) {
-        boardManager.viewAllActiveBoards { chanBoard ->
+        boardManager.viewBoards(BoardManager.BoardViewMode.Active) { chanBoard ->
           boardDescriptorsToCheck += chanBoard.boardDescriptor
+          return@viewBoards true
         }
 
         return@viewAllFilters

@@ -364,16 +364,16 @@ suspend fun <
       onPointerSlopReached = { change, _ ->
         val distance = change.position - down.position
 
-        // In order to avoid triggering fast scroller accidentally when touch the right edge of the screen (some
+        // In order to avoid triggering fast scroller accidentally when touching the right edge of the screen (some
         // phones have curved screen, god forbid them) we want to check that the finger actually moved vertically more
-        // than horizontally by 1/3.
-        if (distance.y.absoluteValue < (distance.x.absoluteValue * 1.333f)) {
-          return@awaitPointerSlopOrCancellationWithPass false
+        // than horizontally by 1.333x distance.
+        if (distance.y.absoluteValue > (distance.x.absoluteValue * 1.333f)) {
+          down.consume()
+          change.consume()
+          return@awaitPointerSlopOrCancellationWithPass true
         }
 
-        down.consume()
-        change.consume()
-        return@awaitPointerSlopOrCancellationWithPass true
+        return@awaitPointerSlopOrCancellationWithPass false
       }
     ) != null
 

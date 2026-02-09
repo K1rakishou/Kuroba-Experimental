@@ -1,18 +1,15 @@
-package com.github.k1rakishou.chan.ui.compose
+package com.github.k1rakishou.chan.ui.compose.scaffold
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -25,25 +22,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
-import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeDivider
-import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
-import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextBarButton
+import com.github.k1rakishou.chan.ui.compose.consumeClicks
+import com.github.k1rakishou.chan.ui.compose.copy
+import com.github.k1rakishou.chan.ui.compose.isFullyScrolledBottom
+import com.github.k1rakishou.chan.ui.compose.isFullyScrolledTop
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
-import com.github.k1rakishou.chan.utils.appDependencies
 
-interface FloatingLazyListScaffold
+interface FloatingLazyListScaffold : LazyListScaffoldShared
 
 class FloatingLazyListScaffoldBuilder : FloatingLazyListScaffold {
   @Composable
   fun Content(
     boxScope: BoxScope,
     lazyListState: LazyListState,
-    header: (@Composable () -> Unit)? = null,
-    body: @Composable (PaddingValues) -> Unit,
-    footer: @Composable () -> Unit
+    header: (@Composable BoxScope.() -> Unit)? = null,
+    body: @Composable BoxScope.(PaddingValues) -> Unit,
+    footer: @Composable BoxScope.() -> Unit
   ) {
     val chanTheme = LocalChanTheme.current
     val density = LocalDensity.current
@@ -109,89 +105,6 @@ class FloatingLazyListScaffoldBuilder : FloatingLazyListScaffold {
           }
           Spacer(modifier = Modifier.height(8.dp))
         }
-      }
-    }
-  }
-
-  @Composable
-  fun Header(modifier: Modifier, title: String) {
-    Header(
-      modifier = modifier,
-      title = remember(key1 = title) { AnnotatedString(title) }
-    )
-  }
-
-  @Composable
-  fun Header(modifier: Modifier, title: AnnotatedString) {
-    KurobaComposeText(
-      modifier = modifier,
-      text = title,
-      fontSize = 18.ktu
-    )
-  }
-
-  @Composable
-  fun Footer(
-    modifier: Modifier,
-    negativeButton: Button,
-    positiveButton: Button,
-    extractButton: Button? = null
-  ) {
-    Row(
-      modifier = modifier
-    ) {
-      if (extractButton != null) {
-        KurobaComposeTextBarButton(
-          modifier = Modifier
-            .wrapContentSize(),
-          enabled = extractButton.enabled,
-          onClick = extractButton.onClick,
-          text = extractButton.text
-        )
-      }
-
-      Spacer(modifier = Modifier.weight(1f))
-
-      KurobaComposeTextBarButton(
-        modifier = Modifier
-          .wrapContentSize(),
-        enabled = negativeButton.enabled,
-        onClick = negativeButton.onClick,
-        text = negativeButton.text
-      )
-
-      Spacer(modifier = Modifier.width(16.dp))
-
-      KurobaComposeTextBarButton(
-        modifier = Modifier
-          .wrapContentSize(),
-        enabled = positiveButton.enabled,
-        onClick = positiveButton.onClick,
-        text = positiveButton.text
-      )
-    }
-  }
-
-  data class Button(
-    val text: String,
-    val enabled: Boolean = true,
-    val onClick: () -> Unit
-  ) {
-    companion object {
-      fun ok(enabled: Boolean = true, onClick: () -> Unit): Button {
-        return Button(
-          text = appDependencies().appResources.string(R.string.ok),
-          enabled = enabled,
-          onClick = onClick
-        )
-      }
-
-      fun cancel(enabled: Boolean = true, onClick: () -> Unit): Button {
-        return Button(
-          text = appDependencies().appResources.string(R.string.cancel),
-          enabled = enabled,
-          onClick = onClick
-        )
       }
     }
   }

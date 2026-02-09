@@ -19,6 +19,7 @@ import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
+import com.github.k1rakishou.chan.features.setup.boards.add.AddBoardsController
 import com.github.k1rakishou.chan.features.setup.data.BoardsSetupControllerState
 import com.github.k1rakishou.chan.features.setup.epoxy.EpoxyBoardView
 import com.github.k1rakishou.chan.features.setup.epoxy.EpoxyBoardViewModel_
@@ -173,11 +174,13 @@ class BoardsSetupController(
 
     fabAddBoards = view.findViewById(R.id.fab_add_boards)
     fabAddBoards.setOnClickListener {
-      val controller = AddBoardsController(context, siteDescriptor) {
-        presenter.displayActiveBoards()
-      }
+      val controller = AddBoardsController(
+        context = context,
+        siteDescriptor = siteDescriptor,
+        refreshBoardsFunc = { presenter.displayActiveBoards() }
+      )
 
-      navigationController!!.presentController(controller)
+      requireNavController().pushController(controller)
     }
 
     compositeDisposable.add(

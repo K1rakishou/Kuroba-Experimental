@@ -28,16 +28,16 @@ interface SnackbarManager {
     duration: Duration = ScopedSnackbarManager.STANDARD_DURATION
   ): SnackbarId
 
-  fun errorToast(
-    @StringRes messageId: Int,
-    toastId: String = ScopedSnackbarManager.nextToastId(),
-    duration: Duration = ScopedSnackbarManager.LONG_DURATION
-  ): SnackbarId
-
   fun toast(
     message: String,
     toastId: String = ScopedSnackbarManager.nextToastId(),
     duration: Duration = ScopedSnackbarManager.STANDARD_DURATION
+  ): SnackbarId
+
+  fun errorToast(
+    @StringRes messageId: Int,
+    toastId: String = ScopedSnackbarManager.nextToastId(),
+    duration: Duration = ScopedSnackbarManager.LONG_DURATION
   ): SnackbarId
 
   fun errorToast(

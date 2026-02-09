@@ -70,7 +70,6 @@ import com.github.k1rakishou.chan.features.settings.epoxy.EpoxyLinkSetting
 import com.github.k1rakishou.chan.features.settings.epoxy.EpoxyNoSettingsFoundView
 import com.github.k1rakishou.chan.features.settings.epoxy.EpoxySettingsGroupTitle
 import com.github.k1rakishou.chan.features.settings.screens.delegate.ExportBackupOptionsController
-import com.github.k1rakishou.chan.features.setup.AddBoardsController
 import com.github.k1rakishou.chan.features.setup.BoardSelectionController
 import com.github.k1rakishou.chan.features.setup.BoardsSetupController
 import com.github.k1rakishou.chan.features.setup.ComposeBoardsController
@@ -219,7 +218,6 @@ interface ActivityComponent : ActivityDependencies {
   fun inject(crashReportActivity: CrashReportActivity)
 
   fun inject(controller: Controller)
-  fun inject(addBoardsController: AddBoardsController)
   fun inject(addOrEditBooruController: AddOrEditBooruController)
   fun inject(boardArchiveController: BoardArchiveController)
   fun inject(boardSelectionController: BoardSelectionController)

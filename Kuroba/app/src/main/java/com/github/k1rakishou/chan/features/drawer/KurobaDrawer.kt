@@ -63,8 +63,8 @@ import com.github.k1rakishou.chan.features.drawer.data.HistoryControllerState
 import com.github.k1rakishou.chan.features.drawer.data.NavHistoryBookmarkAdditionalInfo
 import com.github.k1rakishou.chan.features.drawer.data.NavigationHistoryEntry
 import com.github.k1rakishou.chan.ui.compose.components.IconTint
-import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeErrorMessage
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeIcon
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeMessage
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeProgressIndicator
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeSelectionIndicator
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
@@ -130,12 +130,15 @@ fun KurobaDrawer(
 
     when (historyControllerState) {
       HistoryControllerState.Loading -> {
-        KurobaComposeProgressIndicator()
+        KurobaComposeProgressIndicator(
+          modifier = Modifier.fillMaxSize()
+        )
       }
 
       is HistoryControllerState.Error -> {
-        KurobaComposeErrorMessage(
-          errorMessage = (historyControllerState as HistoryControllerState.Error).errorText
+        KurobaComposeMessage(
+          modifier = Modifier.fillMaxSize(),
+          message = (historyControllerState as HistoryControllerState.Error).errorText
         )
       }
 

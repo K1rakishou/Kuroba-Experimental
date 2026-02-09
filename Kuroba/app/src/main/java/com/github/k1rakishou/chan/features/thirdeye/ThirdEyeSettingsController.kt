@@ -45,8 +45,8 @@ import com.github.k1rakishou.chan.features.thirdeye.data.BooruSetting
 import com.github.k1rakishou.chan.features.thirdeye.data.ThirdEyeSettings
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeCheckbox
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeDraggableElementContainer
-import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeErrorMessage
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeIcon
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeMessage
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextBarButton
 import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
@@ -402,9 +402,9 @@ class ThirdEyeSettingsController(context: Context) : BaseFloatingComposeControll
           item(
             key = "no_sites_added_key",
             content = {
-              KurobaComposeErrorMessage(
+              KurobaComposeMessage(
                 modifier = Modifier.fillParentMaxSize(),
-                errorMessage = stringResource(id = R.string.third_eye_settings_controller_no_sites_added)
+                message = stringResource(id = R.string.third_eye_settings_controller_no_sites_added)
               )
             }
           )

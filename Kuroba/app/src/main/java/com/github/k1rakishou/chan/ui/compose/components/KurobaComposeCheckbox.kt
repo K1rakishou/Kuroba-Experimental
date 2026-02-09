@@ -20,9 +20,9 @@ import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 
 @Composable
 fun KurobaComposeCheckbox(
+  modifier: Modifier = Modifier,
   currentlyChecked: Boolean,
   onCheckChanged: (Boolean) -> Unit,
-  modifier: Modifier = Modifier,
   text: String? = null,
   enabled: Boolean = true
 ) {
@@ -37,10 +37,10 @@ fun KurobaComposeCheckbox(
     }
   }
 
-  Row(
-    modifier = Modifier
+  val clickable = if (enabled) {
+    Modifier
       .clickable(
-        enabled = enabled,
+        enabled = true,
         interactionSource = remember { MutableInteractionSource() },
         indication = rememberKurobaRipple(bounded = true, color = color),
         onClick = {
@@ -48,6 +48,13 @@ fun KurobaComposeCheckbox(
           onCheckChanged(isChecked)
         }
       )
+  } else {
+    Modifier
+  }
+
+  Row(
+    modifier = Modifier
+      .then(clickable)
       .then(modifier)
   ) {
     Checkbox(

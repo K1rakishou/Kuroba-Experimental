@@ -151,10 +151,13 @@ class BoardsSetupPresenter(
 
   fun sortBoardsAlphabetically() {
     val activeBoards = mutableListOf<BoardDescriptor>()
-    boardManager.viewAllBoards(siteDescriptor) { chanBoard ->
-      if (chanBoard.active) {
-        activeBoards += chanBoard.boardDescriptor
-      }
+
+    boardManager.viewBoards(
+      boardViewMode = BoardManager.BoardViewMode.Active,
+      siteDescriptor = siteDescriptor
+    ) { chanBoard ->
+      activeBoards += chanBoard.boardDescriptor
+      return@viewBoards true
     }
 
     activeBoards
@@ -183,13 +186,18 @@ class BoardsSetupPresenter(
       error("Cannot use sites with 'CATALOG_COMPOSITION' feature here")
     }
 
-    boardManager.viewActiveBoardsOrdered(siteDescriptor) { chanBoard ->
+    boardManager.viewBoardsOrdered(
+      siteDescriptor = siteDescriptor,
+      boardViewMode = BoardManager.BoardViewMode.Active
+    ) { chanBoard ->
       boardCellDataList += CatalogCellData(
         searchQuery = null,
         catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(chanBoard.boardDescriptor),
         boardName = chanBoard.boardName(),
-        description = BoardHelper.getDescription(chanBoard)
+        description = BoardHelper.formatDescription(chanBoard)
       )
+
+      return@viewBoardsOrdered true
     }
 
     if (boardCellDataList.isEmpty()) {
@@ -204,8 +212,12 @@ class BoardsSetupPresenter(
     presenterScope.launch {
       val boardsToDeactivate = mutableSetOf<BoardDescriptor>()
 
-      boardManager.viewBoards(siteDescriptor, BoardManager.BoardViewMode.OnlyActiveBoards) { chanBoard ->
+      boardManager.viewBoards(
+        boardViewMode = BoardManager.BoardViewMode.Active,
+        siteDescriptor = siteDescriptor
+      ) { chanBoard ->
         boardsToDeactivate += chanBoard.boardDescriptor
+        return@viewBoards true
       }
 
       if (boardsToDeactivate.isEmpty()) {

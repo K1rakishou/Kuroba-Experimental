@@ -90,7 +90,7 @@ class AlbumViewControllerViewModel(
 ) : BaseViewModel() {
   private val _albumItemIdCounter = AtomicLong(0)
 
-  private val _currentListenMode: AlbumViewController.ListenMode
+  val currentListenMode: AlbumViewController.ListenMode
     get() = savedStateHandle.requireParams<AlbumViewController.Params>().listenMode
 
   private val _currentDescriptor = MutableStateFlow<ChanDescriptor?>(null)
@@ -145,7 +145,7 @@ class AlbumViewControllerViewModel(
     .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
   private val snackbarManager by lazy {
-    val snackbarScope = when (_currentListenMode) {
+    val snackbarScope = when (currentListenMode) {
       AlbumViewController.ListenMode.Catalog -> SnackbarScope.Album(SnackbarScope.MainLayoutAnchor.Catalog)
       AlbumViewController.ListenMode.Thread -> SnackbarScope.Album(SnackbarScope.MainLayoutAnchor.Thread)
     }
@@ -684,9 +684,9 @@ class AlbumViewControllerViewModel(
   private suspend fun listenForCurrentChanDescriptor() {
     chanThreadManager.awaitUntilDependenciesInitialized()
 
-    Logger.debug(TAG) { "listenForCurrentChanDescriptor() currentListenMode: ${_currentListenMode}" }
+    Logger.debug(TAG) { "listenForCurrentChanDescriptor() currentListenMode: ${currentListenMode}" }
 
-    val currentDescriptorFlow = when (_currentListenMode) {
+    val currentDescriptorFlow = when (currentListenMode) {
       AlbumViewController.ListenMode.Catalog -> {
         currentOpenedDescriptorStateManager.currentCatalogDescriptorFlow
           .map { catalogDescriptor -> catalogDescriptor as ChanDescriptor? }

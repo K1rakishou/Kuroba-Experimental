@@ -15,6 +15,7 @@ import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -73,7 +74,6 @@ import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.providers.LocalContentPaddings
 import com.github.k1rakishou.chan.ui.compose.providers.LocalWindowSizeClass
 import com.github.k1rakishou.chan.ui.compose.window.WindowWidthSizeClass
-import com.github.k1rakishou.chan.ui.controller.base.Controller
 import com.github.k1rakishou.chan.utils.appDependencies
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -82,7 +82,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import java.util.*
+import java.util.Locale
 
 class SnackbarContainerView @JvmOverloads constructor(
   context: Context,
@@ -118,10 +118,10 @@ class SnackbarContainerView @JvmOverloads constructor(
 }
 
 @Composable
-fun Controller.SnackbarContainer(
+fun BoxScope.SnackbarContainer(
   modifier: Modifier = Modifier,
-  snackbarScope: SnackbarScope = this.snackbarScope,
-  animationDuration: Int = 200
+  animationDuration: Int = 200,
+  snackbarScope: SnackbarScope
 ) {
   com.github.k1rakishou.chan.ui.compose.snackbar.SnackbarContainer(
     modifier = modifier,

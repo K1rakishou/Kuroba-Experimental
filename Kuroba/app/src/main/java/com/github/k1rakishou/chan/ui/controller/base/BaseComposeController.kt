@@ -20,6 +20,7 @@ import javax.inject.Inject
 abstract class BaseComposeController<VM : ViewModel, Params: Parcelable>(
   context: Context,
   viewModelClass: Class<VM>,
+  viewModelParams: Params?
 ) : Controller(context) {
 
   @Inject
@@ -29,13 +30,11 @@ abstract class BaseComposeController<VM : ViewModel, Params: Parcelable>(
 
   private val controllerViewModelLazy: Lazy<VM> = viewModelByKeyWithClass(
     clazz = viewModelClass,
-    params = { viewModelParams() },
+    params = { viewModelParams },
   )
 
   protected val controllerViewModel: VM
     get() = controllerViewModelLazy.value
-
-  abstract fun viewModelParams(): Params?
 
   final override fun onCreate() {
     super.onCreate()

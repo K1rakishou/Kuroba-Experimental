@@ -1,46 +1,18 @@
-/*
- * KurobaEx - *chan browser https://github.com/K1rakishou/Kuroba-Experimental/
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-package com.github.k1rakishou.chan.ui.helper;
+package com.github.k1rakishou.chan.ui.helper
 
-import android.text.TextUtils;
+import com.github.k1rakishou.model.data.board.ChanBoard
+import org.jsoup.parser.Parser
 
-import androidx.annotation.Nullable;
-
-import com.github.k1rakishou.model.data.board.ChanBoard;
-
-import org.jsoup.parser.Parser;
-
-public class BoardHelper {
-    private static final String TAG = "BoardHelper";
-
-    public static String getName(ChanBoard board) {
-        return getName(board.boardCode(), board.getName());
+object BoardHelper {
+  fun formatName(boardCode: String, boardName: String?): String {
+    if (boardName.isNullOrBlank()) {
+      return "/$boardCode/"
     }
 
-    public static String getName(String boardCode, @Nullable String boardName) {
-        if (TextUtils.isEmpty(boardName)) {
-            return "/" + boardCode + "/";
-        }
+    return "/$boardCode/ \u2013 $boardName"
+  }
 
-        return "/" + boardCode + "/ \u2013 " + boardName;
-    }
-
-    public static String getDescription(ChanBoard board) {
-        return Parser.unescapeEntities(board.getDescription(), false);
-    }
-
+  fun formatDescription(board: ChanBoard): String {
+    return Parser.unescapeEntities(board.description, false)
+  }
 }

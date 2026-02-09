@@ -54,11 +54,12 @@ import javax.inject.Inject
 
 class AlbumViewController(
   context: Context,
-  private val listenMode: ListenMode,
-  private val initialImageFullUrl: String?
+  listenMode: ListenMode,
+  initialImageFullUrl: String?
 ) : BaseComposeController<AlbumViewControllerViewModel, AlbumViewController.Params>(
   context = context,
-  viewModelClass = AlbumViewControllerViewModel::class.java
+  viewModelClass = AlbumViewControllerViewModel::class.java,
+  viewModelParams = Params(listenMode, initialImageFullUrl)
 ) {
 
   @Inject
@@ -83,11 +84,9 @@ class AlbumViewController(
     component.inject(this)
   }
 
-  override fun viewModelParams(): Params = Params(listenMode, initialImageFullUrl)
-
   override val snackbarScope: SnackbarScope
     get() {
-      return when (listenMode) {
+      return when (controllerViewModel.currentListenMode) {
         ListenMode.Catalog -> SnackbarScope.Album(mainLayoutAnchor = SnackbarScope.MainLayoutAnchor.Catalog)
         ListenMode.Thread -> SnackbarScope.Album(mainLayoutAnchor = SnackbarScope.MainLayoutAnchor.Thread)
       }
@@ -301,7 +300,10 @@ class AlbumViewController(
         )
       }
 
-      SnackbarContainer(modifier = Modifier.fillMaxSize())
+      SnackbarContainer(
+        modifier = Modifier.fillMaxSize(),
+        snackbarScope = snackbarScope
+      )
     }
   }
 

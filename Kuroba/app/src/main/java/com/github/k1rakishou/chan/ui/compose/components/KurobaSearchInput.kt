@@ -3,7 +3,6 @@ package com.github.k1rakishou.chan.ui.compose.components
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -41,8 +40,7 @@ fun KurobaSearchInput(
   modifier: Modifier = Modifier,
   displayClearButton: Boolean = true,
   color: Color,
-  searchQueryState: TextFieldState,
-  interactionSource: MutableInteractionSource = remember { MutableInteractionSource() }
+  searchQueryState: TextFieldState
 ) {
   val chanTheme = LocalChanTheme.current
 
@@ -101,8 +99,7 @@ fun KurobaSearchInput(
             isSearchQueryEmpty = isSearchQueryEmpty,
             chanTheme = chanTheme,
             searchQueryState = searchQueryState,
-            textColor = color,
-            interactionSource = interactionSource
+            textColor = color
           )
         }
       }
@@ -116,8 +113,7 @@ private fun TextFieldWithHint(
   isSearchQueryEmpty: Boolean,
   chanTheme: ChanTheme,
   searchQueryState: TextFieldState,
-  textColor: Color,
-  interactionSource: MutableInteractionSource
+  textColor: Color
 ) {
   KurobaComposeTextFieldV2(
     modifier = modifier.then(
@@ -129,7 +125,6 @@ private fun TextFieldWithHint(
     fontSize = 16.ktu,
     textStyle = remember(key1 = textColor) { TextStyle.Default.copy(color = textColor) },
     lineLimits = TextFieldLineLimits.SingleLine,
-    interactionSource = interactionSource,
     label = null
   )
 

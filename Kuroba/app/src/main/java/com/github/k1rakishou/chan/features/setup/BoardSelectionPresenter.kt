@@ -14,6 +14,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.InputWithQuerySorter
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isNotNullNorBlank
+import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.catalog.CompositeCatalog
@@ -178,7 +179,7 @@ class BoardSelectionPresenter(
   ): List<CatalogCellData> {
     boardManager.awaitUntilInitialized()
 
-    val boardCellDataList = mutableListOf<CatalogCellData>()
+    val boardCellDataList = mutableListWithCap<CatalogCellData>(initialCapacity = 512)
 
     val iteratorFunc = iteratorFunc@ { chanBoard: ChanBoard ->
       val boardCode = chanBoard.formattedBoardCode()
@@ -188,24 +189,33 @@ class BoardSelectionPresenter(
         || boardCode.contains(query, ignoreCase = true)
         || boardName.contains(query, ignoreCase = true)
 
-      if (!matches) {
-        return@iteratorFunc
+      if (matches) {
+        boardCellDataList += CatalogCellData(
+          searchQuery = query,
+          catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(chanBoard.boardDescriptor),
+          boardName = chanBoard.boardName(),
+          description = ""
+        )
       }
-
-      boardCellDataList += CatalogCellData(
-        searchQuery = query,
-        catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(chanBoard.boardDescriptor),
-        boardName = chanBoard.boardName(),
-        description = ""
-      )
+      
+      return@iteratorFunc true
     }
 
     if (query.isEmpty()) {
-      boardManager.viewActiveBoardsOrdered(siteDescriptor, iteratorFunc)
+      boardManager.viewBoardsOrdered(
+        siteDescriptor = siteDescriptor,
+        boardViewMode = BoardManager.BoardViewMode.Active,
+        func = iteratorFunc
+      )
+      
       return boardCellDataList
     }
 
-    boardManager.viewAllBoards(siteDescriptor, iteratorFunc)
+    boardManager.viewBoards(
+      boardViewMode = BoardManager.BoardViewMode.All,
+      siteDescriptor = siteDescriptor,
+      func = iteratorFunc
+    )
 
     var canFilterOutLastElement = true
     if (query.isNotEmpty()) {

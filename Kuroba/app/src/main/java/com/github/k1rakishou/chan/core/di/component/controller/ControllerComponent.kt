@@ -5,6 +5,7 @@ import com.github.k1rakishou.chan.core.di.module.controller.ControllerScopedView
 import com.github.k1rakishou.chan.core.di.module.controller.ControllerScopedViewModelModule
 import com.github.k1rakishou.chan.core.di.scope.PerController
 import com.github.k1rakishou.chan.features.album.AlbumViewController
+import com.github.k1rakishou.chan.features.setup.boards.add.AddBoardsController
 import com.github.k1rakishou.chan.ui.controller.base.Controller
 import dagger.BindsInstance
 import dagger.Subcomponent
@@ -20,6 +21,7 @@ import dagger.Subcomponent
 interface ControllerComponent : ControllerDependencies {
   fun inject(controller: Controller)
   fun inject(albumViewController: AlbumViewController)
+  fun inject(addBoardsController: AddBoardsController)
 
   @Subcomponent.Builder
   interface Builder {

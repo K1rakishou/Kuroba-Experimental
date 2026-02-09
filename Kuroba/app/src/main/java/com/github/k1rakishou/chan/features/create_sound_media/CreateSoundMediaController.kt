@@ -50,7 +50,8 @@ class CreateSoundMediaController(
   context: Context
 ) : BaseComposeController<CreateSoundMediaControllerViewModel, Nothing>(
   context = context,
-  viewModelClass = CreateSoundMediaControllerViewModel::class.java
+  viewModelClass = CreateSoundMediaControllerViewModel::class.java,
+  viewModelParams = null
 ) {
 
   @Inject
@@ -61,8 +62,6 @@ class CreateSoundMediaController(
   override fun injectActivityDependencies(component: ActivityComponent) {
     component.inject(this)
   }
-
-  override fun viewModelParams(): Nothing? = null
 
   override fun setupNavigation() {
     updateNavigationFlags(

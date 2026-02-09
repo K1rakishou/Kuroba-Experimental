@@ -84,7 +84,8 @@ class ImageSearchController(
   private val onImageSelected: (HttpUrl) -> Unit
 ) : BaseComposeController<ImageSearchControllerViewModel, Nothing>(
   context = context,
-  viewModelClass = ImageSearchControllerViewModel::class.java
+  viewModelClass = ImageSearchControllerViewModel::class.java,
+  viewModelParams = null
 ) {
 
   @Inject
@@ -95,8 +96,6 @@ class ImageSearchController(
   override fun injectActivityDependencies(component: ActivityComponent) {
     component.inject(this)
   }
-
-  override fun viewModelParams(): Nothing? = null
 
   override fun setupNavigation() {
     updateNavigationFlags(
@@ -364,11 +363,14 @@ class ImageSearchController(
         return
       }
       AsyncData.Loading -> {
-        KurobaComposeProgressIndicator()
+        KurobaComposeProgressIndicator(
+          modifier = Modifier.fillMaxSize()
+        )
         return
       }
       is AsyncData.Error -> {
         KurobaComposeErrorMessage(
+          modifier = Modifier.fillMaxSize(),
           error = result.throwable
         )
 
