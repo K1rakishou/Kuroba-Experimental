@@ -8,7 +8,6 @@ interface SiteUrlHandler {
   fun matchesName(value: String): Boolean
   fun respondsTo(url: HttpUrl): Boolean
   fun matchesMediaHost(url: HttpUrl): Boolean
-  fun matchesCloudflareIgnorePath(path: String): Boolean
   fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?): String?
   fun resolveChanDescriptor(site: Site, url: HttpUrl): ResolvedChanDescriptor?
 }

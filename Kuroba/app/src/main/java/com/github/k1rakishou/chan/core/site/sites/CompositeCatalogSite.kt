@@ -70,8 +70,6 @@ class CompositeCatalogSite : Site {
 
     override fun matchesMediaHost(url: HttpUrl): Boolean = false
 
-    override fun matchesCloudflareIgnorePath(path: String): Boolean = false
-
     override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?): String? = null
 
     override fun resolveChanDescriptor(site: Site, url: HttpUrl): ResolvedChanDescriptor? = null

@@ -197,7 +197,7 @@ class BoardSelectionPresenter(
           description = ""
         )
       }
-      
+
       return@iteratorFunc true
     }
 
@@ -211,7 +211,7 @@ class BoardSelectionPresenter(
       return boardCellDataList
     }
 
-    boardManager.viewBoards(
+    boardManager.viewBoardsWhile(
       boardViewMode = BoardManager.BoardViewMode.All,
       siteDescriptor = siteDescriptor,
       func = iteratorFunc

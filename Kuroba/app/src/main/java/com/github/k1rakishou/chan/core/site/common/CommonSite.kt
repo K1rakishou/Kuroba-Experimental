@@ -266,11 +266,6 @@ abstract class CommonSite : SiteBase() {
       return containsMediaHostUrl(url, mediaHosts)
     }
 
-    override fun matchesCloudflareIgnorePath(path: String): Boolean {
-      // Do not show CloudFlare bypass popup for favicons
-      return path.endsWith("/favicon.ico")
-    }
-
     override fun respondsTo(url: HttpUrl): Boolean {
       return this.url!!.host == url.host
         || "www.${this.url!!.host}" == url.host

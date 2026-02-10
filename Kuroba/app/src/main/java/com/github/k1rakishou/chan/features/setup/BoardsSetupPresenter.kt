@@ -152,12 +152,12 @@ class BoardsSetupPresenter(
   fun sortBoardsAlphabetically() {
     val activeBoards = mutableListOf<BoardDescriptor>()
 
-    boardManager.viewBoards(
+    boardManager.viewBoardsWhile(
       boardViewMode = BoardManager.BoardViewMode.Active,
       siteDescriptor = siteDescriptor
     ) { chanBoard ->
       activeBoards += chanBoard.boardDescriptor
-      return@viewBoards true
+      return@viewBoardsWhile true
     }
 
     activeBoards
@@ -212,12 +212,12 @@ class BoardsSetupPresenter(
     presenterScope.launch {
       val boardsToDeactivate = mutableSetOf<BoardDescriptor>()
 
-      boardManager.viewBoards(
+      boardManager.viewBoardsWhile(
         boardViewMode = BoardManager.BoardViewMode.Active,
         siteDescriptor = siteDescriptor
       ) { chanBoard ->
         boardsToDeactivate += chanBoard.boardDescriptor
-        return@viewBoards true
+        return@viewBoardsWhile true
       }
 
       if (boardsToDeactivate.isEmpty()) {

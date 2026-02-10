@@ -310,39 +310,61 @@ class BoardManager(
     }
   }
 
-  fun viewBoards(
+  fun viewBoardsWhile(
     boardViewMode: BoardViewMode = BoardViewMode.All,
-    siteDescriptor: SiteDescriptor? = null,
+    // Null means all sites
+    siteDescriptor: SiteDescriptor?,
     func: (ChanBoard) -> Boolean
   ) {
     check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
 
     lock.read {
-      val innerMap = boardsMap[siteDescriptor] 
-        ?: return@read
+      val innerMaps = if (siteDescriptor == null) {
+        boardsMap.values
+      } else {
+        val inner = boardsMap[siteDescriptor]
+          ?: return@read
 
-      for ((_, chanBoard) in innerMap) {
-        if (!viewBoard(chanBoard, boardViewMode, func)) {
-          break
+        listOf(inner)
+      }
+
+      for (innerMap in innerMaps) {
+        for (chanBoard in innerMap.values) {
+          if (!viewBoard(chanBoard, boardViewMode, func)) {
+            break
+          }
         }
       }
     }
   }
 
-  fun viewBoardsOrdered(siteDescriptor: SiteDescriptor, boardViewMode: BoardViewMode, func: (ChanBoard) -> Boolean) {
+  fun viewBoardsOrdered(
+    boardViewMode: BoardViewMode = BoardViewMode.All,
+    // Null means all sites
+    siteDescriptor: SiteDescriptor?,
+    func: (ChanBoard) -> Boolean
+  ) {
     check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
 
     lock.read {
-      val innerMap = ordersMap[siteDescriptor] 
-        ?: return@read
+      val innerMaps = if (siteDescriptor == null) {
+        boardsMap.values
+      } else {
+        val inner = boardsMap[siteDescriptor]
+          ?: return@read
 
-      for (boardDescriptor in innerMap) {
-        val chanBoard = boardsMap[siteDescriptor]
-          ?.get(boardDescriptor)
-          ?: continue
+        listOf(inner)
+      }
 
-        if (!viewBoard(chanBoard, boardViewMode, func)) {
-          return@read
+      for (innerMap in innerMaps) {
+        for (boardDescriptor in innerMap.keys) {
+          val chanBoard = boardsMap[siteDescriptor]
+            ?.get(boardDescriptor)
+            ?: continue
+
+          if (!viewBoard(chanBoard, boardViewMode, func)) {
+            return@read
+          }
         }
       }
     }

@@ -84,10 +84,6 @@ class CloudFlareInterceptor(
 
       val site = siteResolver.findSiteForUrl(request.url.toString())
       if (site != null) {
-        if (site.resolvable().matchesCloudflareIgnorePath(request.url.encodedPath)) {
-          return null
-        }
-
         val bypassSuccess = AtomicBoolean(false)
         val countDownLatch = CountDownLatch(1)
 

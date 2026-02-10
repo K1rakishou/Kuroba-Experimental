@@ -762,10 +762,6 @@ open class Chan4 : SiteBase() {
         return containsMediaHostUrl(url, mediaHosts)
       }
 
-      override fun matchesCloudflareIgnorePath(path: String): Boolean {
-        return false
-      }
-
       override fun matchesName(value: String): Boolean {
         return value == SITE_NAME
       }

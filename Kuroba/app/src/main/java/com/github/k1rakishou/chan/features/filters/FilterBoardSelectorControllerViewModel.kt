@@ -137,7 +137,7 @@ class FilterBoardSelectorControllerViewModel(
 
       if (!chanBoard.active && !_currentlySelectedBoards.containsKey(boardDescriptor)) {
         // Handle a situation where a currently not active boards was previously selected for a filter
-        return@iteratorFunc false
+        return@iteratorFunc true
       }
 
       boardCellDataList += CatalogCellData(
@@ -150,7 +150,7 @@ class FilterBoardSelectorControllerViewModel(
       return@iteratorFunc true
     }
 
-    boardManager.viewBoards(
+    boardManager.viewBoardsWhile(
       boardViewMode = BoardManager.BoardViewMode.All,
       siteDescriptor = chanSiteData.siteDescriptor,
       func = iteratorFunc

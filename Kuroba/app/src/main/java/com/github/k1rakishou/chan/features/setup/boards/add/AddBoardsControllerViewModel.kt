@@ -149,12 +149,12 @@ class AddBoardsControllerViewModel(
   private fun loadInactiveBoards(siteDescriptor: SiteDescriptor) {
     _allInactiveBoards.clear()
 
-    boardManager.viewBoards(
+    boardManager.viewBoardsWhile(
       boardViewMode = BoardManager.BoardViewMode.NonActive,
       siteDescriptor = siteDescriptor
     ) { chanBoard ->
       _allInactiveBoards.add(chanBoard)
-      return@viewBoards true
+      return@viewBoardsWhile true
     }
 
     _nonActiveBoardsCount.intValue = _allInactiveBoards.size

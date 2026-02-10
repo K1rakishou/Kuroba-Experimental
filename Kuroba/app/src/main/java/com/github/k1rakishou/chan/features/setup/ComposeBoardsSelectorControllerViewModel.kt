@@ -97,26 +97,20 @@ class ComposeBoardsSelectorControllerViewModel(
         || boardCode.contains(query, ignoreCase = true)
         || boardName.contains(query, ignoreCase = true)
 
-      if (!matches) {
-        return@iteratorFunc false
+      if (matches && chanBoard.boardDescriptor !in currentlyComposedBoards) {
+        boardCellDataList += CatalogCellData(
+          searchQuery = query,
+          catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(chanBoard.boardDescriptor),
+          boardName = chanBoard.boardName(),
+          description = ""
+        )
       }
 
-      if (chanBoard.boardDescriptor in currentlyComposedBoards) {
-        return@iteratorFunc false
-      }
-
-      boardCellDataList += CatalogCellData(
-        searchQuery = query,
-        catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(chanBoard.boardDescriptor),
-        boardName = chanBoard.boardName(),
-        description = ""
-      )
-      
       return@iteratorFunc true
     }
 
     if (query.isEmpty()) {
-      boardManager.viewBoards(
+      boardManager.viewBoardsWhile(
         boardViewMode = BoardManager.BoardViewMode.All,
         siteDescriptor = chanSiteData.siteDescriptor,
         func = iteratorFunc
@@ -125,7 +119,7 @@ class ComposeBoardsSelectorControllerViewModel(
       return boardCellDataList
     }
 
-    boardManager.viewBoards(
+    boardManager.viewBoardsWhile(
       boardViewMode = BoardManager.BoardViewMode.All,
       siteDescriptor = chanSiteData.siteDescriptor,
       func = iteratorFunc

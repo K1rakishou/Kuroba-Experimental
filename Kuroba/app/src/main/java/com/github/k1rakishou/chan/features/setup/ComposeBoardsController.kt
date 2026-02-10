@@ -104,7 +104,8 @@ class ComposeBoardsController(
           LazyColumnWithFastScroller(
             state = reorderableState.listState,
             modifier = Modifier
-              .fillMaxSize()
+              .fillMaxWidth()
+              .wrapContentHeight()
               .padding(paddings)
               .reorderable(reorderableState),
             draggableScrollbar = false,
