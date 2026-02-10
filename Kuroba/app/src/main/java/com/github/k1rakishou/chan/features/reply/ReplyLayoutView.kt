@@ -388,9 +388,11 @@ class ReplyLayoutView @JvmOverloads constructor(
   }
 
   override fun onReplyLayoutPickFileButtonLongClicked() {
-    val selectedImageUrl = AndroidUtils.clipboardContent.toHttpUrlOrNull()
+    val clipboardContent = AndroidUtils.clipboardContent
+    val selectedImageUrl = clipboardContent.toHttpUrlOrNull()
     if (selectedImageUrl == null) {
-      AppModuleAndroidUtils.showErrorToast("Clipboard contains invalid image url: '${selectedImageUrl}'")
+      val errorText = appResources.string(R.string.clipboard_contains_invalid_image_url, clipboardContent)
+      AppModuleAndroidUtils.showErrorToast(errorText)
       return
     }
 

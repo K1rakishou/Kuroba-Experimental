@@ -1661,6 +1661,7 @@ Actual error: \'%1$s\'</string>
     <string name="selected_text_is_empty">Selected text is empty</string>
     <string name="catalog_end_reached">Catalog end reached</string>
     <string name="archives_end_reached">End reached</string>
+    <string name="clipboard_contains_invalid_image_url">Clipboard contains invalid image url: \'%1$s\'</string>
 
     <string name="api_33_android_13_notifications_permission_title">Api 33 (Android 13+) notifications permission</string>
     <string name="api_33_android_13_notifications_permission_descriptor">Api 33 (Android 13+) requires applications to request for a permission to display notifications. Without this permission some application features may not work correctly (posting, media downloading, reply notifications, thread last page notifications, etc).\n\nYou can always enable this manually in Android OS application settings.</string>
