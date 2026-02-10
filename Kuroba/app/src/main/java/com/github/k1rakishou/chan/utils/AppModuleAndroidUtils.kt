@@ -497,7 +497,7 @@ object AppModuleAndroidUtils {
     })
   }
 
-  private val snackbarManagerLazy = lazy<SnackbarManager?> {
+  private val snackbarManagerLazy = lazy<SnackbarManager> {
     val applicationComponent = getComponent()
     applicationComponent.snackbarManagerFactory.snackbarManager(SnackbarScope.Global())
   }
@@ -520,7 +520,7 @@ object AppModuleAndroidUtils {
       return
     }
 
-    snackbarManagerLazy.value!!.globalToast(message, duration)
+    snackbarManagerLazy.value.globalToast(message, duration)
   }
 
   fun showErrorToast(resId: Int, duration: Int) {
@@ -538,7 +538,7 @@ object AppModuleAndroidUtils {
       return
     }
 
-    snackbarManagerLazy.value!!.globalToast(message, duration)
+    snackbarManagerLazy.value.globalErrorToast(message, duration)
   }
 
   fun getPreferencesForSite(siteDescriptor: SiteDescriptor): SharedPreferences? {

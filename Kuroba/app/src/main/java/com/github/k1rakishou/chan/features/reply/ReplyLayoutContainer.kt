@@ -44,6 +44,7 @@ fun ReplyLayoutContainer(
   onFlagSelectorClicked: (ChanDescriptor) -> Unit,
   onPresolveCaptchaButtonClicked: () -> Unit,
   onReplyLayoutPickFileButtonClicked: () -> Unit,
+  onReplyLayoutPickFileButtonLongClicked: () -> Unit,
   onReplyLayoutOptionsButtonClicked: () -> Unit,
 ) {
   val replyInputRightPartWidth = 58.dp
@@ -116,6 +117,7 @@ fun ReplyLayoutContainer(
         onSendReplyClicked = onSendReplyClicked,
         onPresolveCaptchaButtonClicked = onPresolveCaptchaButtonClicked,
         onReplyLayoutPickFileButtonClicked = onReplyLayoutPickFileButtonClicked,
+        onReplyLayoutPickFileButtonLongClicked = onReplyLayoutPickFileButtonLongClicked,
         onReplyLayoutOptionsButtonClicked = onReplyLayoutOptionsButtonClicked,
       )
     }

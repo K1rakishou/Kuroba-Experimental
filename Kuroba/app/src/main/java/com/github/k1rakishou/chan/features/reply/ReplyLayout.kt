@@ -73,6 +73,7 @@ fun ReplyLayout(
           onFlagSelectorClicked = replyLayoutViewModel::onFlagSelectorClicked,
           onPresolveCaptchaButtonClicked = onPresolveCaptchaButtonClicked,
           onReplyLayoutPickFileButtonClicked = replyLayoutViewModel::onReplyLayoutPickFileButtonClicked,
+          onReplyLayoutPickFileButtonLongClicked = replyLayoutViewModel::onReplyLayoutPickFileButtonLongClicked,
           onReplyLayoutOptionsButtonClicked = replyLayoutViewModel::onReplyLayoutOptionsButtonClicked,
         )
       }

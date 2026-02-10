@@ -654,6 +654,10 @@ class ReplyLayoutViewModel(
     replyLayoutViewCallbacks?.onReplyLayoutOptionsButtonClicked()
   }
 
+  fun onReplyLayoutPickFileButtonLongClicked() {
+    replyLayoutViewCallbacks?.onReplyLayoutPickFileButtonLongClicked()
+  }
+
   fun onReplyLayoutPickFileButtonClicked() {
     replyLayoutViewCallbacks?.onPickLocalMediaButtonClicked()
   }
@@ -862,6 +866,7 @@ class ReplyLayoutViewModel(
 
     fun onPickLocalMediaButtonClicked()
     fun onReplyLayoutOptionsButtonClicked()
+    fun onReplyLayoutPickFileButtonLongClicked()
     fun onAttachedMediaClicked(attachedMedia: ReplyFileAttachable, isFileSupportedForReencoding: Boolean)
     suspend fun onAttachedMediaLongClicked(attachedMedia: ReplyFileAttachable)
     fun onDontKeepActivitiesSettingDetected()

@@ -44,6 +44,7 @@ internal fun ReplyInputRightPart(
   onSendReplyClicked: (ChanDescriptor) -> Unit,
   onPresolveCaptchaButtonClicked: () -> Unit,
   onReplyLayoutPickFileButtonClicked: () -> Unit,
+  onReplyLayoutPickFileButtonLongClicked: () -> Unit,
   onReplyLayoutOptionsButtonClicked: () -> Unit,
 ) {
   val chanTheme = LocalChanTheme.current
@@ -116,7 +117,8 @@ internal fun ReplyInputRightPart(
         .kurobaClickable(
           bounded = false,
           enabled = newReplyLayoutTutorialFinished,
-          onClick = onReplyLayoutPickFileButtonClicked
+          onClick = onReplyLayoutPickFileButtonClicked,
+          onLongClick = onReplyLayoutPickFileButtonLongClicked
         ),
       drawableId = R.drawable.ic_baseline_attach_file_24
     )
