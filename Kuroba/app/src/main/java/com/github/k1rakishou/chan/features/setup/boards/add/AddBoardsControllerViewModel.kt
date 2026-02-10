@@ -35,13 +35,15 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
+import kotlin.concurrent.atomics.AtomicInt
+import kotlin.concurrent.atomics.incrementAndFetch
 
 class AddBoardsControllerViewModel(
   private val savedStateHandle: SavedStateHandle,
   private val siteManager: SiteManager,
   private val boardManager: BoardManager,
 ) : BaseViewModel() {
-  private val _allInactiveBoards = mutableListWithCap<ChanBoard>(initialCapacity = 1024)
+  private val _allNoneActiveBoards = mutableListWithCap<ChanBoard>(initialCapacity = 1024)
 
   private val _checkedBoards = mutableStateSetOf<BoardDescriptor>()
   val checkedBoards: SnapshotStateSet<BoardDescriptor>
@@ -51,6 +53,10 @@ class AddBoardsControllerViewModel(
   val uiState: State<AsyncData<Unit>>
     get() = _uiState
 
+  private val _processing = mutableStateOf(false)
+  val processing: State<Boolean>
+    get() = _processing
+
   private val _boardsForSelection = mutableStateListOf<BoardForSelection>()
   val boardsForSelection: SnapshotStateList<BoardForSelection>
     get() = _boardsForSelection
@@ -59,9 +65,13 @@ class AddBoardsControllerViewModel(
   val currentSearchQuery: State<String>
     get() = _currentSearchQuery
 
-  private val _nonActiveBoardsCount = mutableIntStateOf(-1)
-  val nonActiveBoardsCount: IntState
-    get() = _nonActiveBoardsCount
+  private val _totalBoardsCount = mutableIntStateOf(-1)
+  val totalBoardsCount: IntState
+    get() = _totalBoardsCount
+
+  private val _totalMatchedBySearchQueryCount = mutableIntStateOf(-1)
+  val totalMatchedBySearchQueryCount: IntState
+    get() = _totalMatchedBySearchQueryCount
 
   private val _resetScrollEventFlow = MutableSharedFlow<Unit>(extraBufferCapacity = Channel.RENDEZVOUS)
   val resetScrollEventFlow: SharedFlow<Unit>
@@ -108,7 +118,7 @@ class AddBoardsControllerViewModel(
       return
     }
 
-    _searchQueryUpdateExecutor.post(timeout = 100L) { findBoardsForSelection(query) }
+    _searchQueryUpdateExecutor.post(timeout = 200L) { findBoardsForSelection(query) }
   }
 
   fun onBoardCheckStateChanged(boardDescriptor: BoardDescriptor, check: Boolean) {
@@ -120,12 +130,12 @@ class AddBoardsControllerViewModel(
   }
 
   fun toggleAll() {
-    if (_checkedBoards.size == _allInactiveBoards.size) {
+    if (_checkedBoards.size == _allNoneActiveBoards.size) {
       _checkedBoards.clear()
       return
     }
 
-    val allBoardsDescriptors = _allInactiveBoards
+    val allBoardsDescriptors = _allNoneActiveBoards
       .map { chanBoard -> chanBoard.boardDescriptor }
 
     _checkedBoards.clear()
@@ -147,65 +157,78 @@ class AddBoardsControllerViewModel(
   }
 
   private fun loadInactiveBoards(siteDescriptor: SiteDescriptor) {
-    _allInactiveBoards.clear()
+    _allNoneActiveBoards.clear()
+    val totalBoardsCount = AtomicInt(0)
 
     boardManager.viewBoardsWhile(
-      boardViewMode = BoardManager.BoardViewMode.NonActive,
+      boardViewMode = BoardManager.BoardViewMode.All,
       siteDescriptor = siteDescriptor
     ) { chanBoard ->
-      _allInactiveBoards.add(chanBoard)
+      if (!chanBoard.active) {
+        totalBoardsCount.incrementAndFetch()
+        _allNoneActiveBoards.add(chanBoard)
+      }
+
       return@viewBoardsWhile true
     }
 
-    _nonActiveBoardsCount.intValue = _allInactiveBoards.size
+    _totalBoardsCount.intValue = totalBoardsCount.load()
   }
 
   private suspend fun findBoardsForSelection(query: String = "") {
-    return withContext(Dispatchers.Default) {
-      val matchedBoards = mutableListWithCap<BoardForSelection>(MAX_DISPLAYED_BOARDS)
+    try {
+      _processing.value = true
 
-      for (chanBoard in _allInactiveBoards) {
-        if (matchedBoards.size >= MAX_DISPLAYED_BOARDS) {
-          break
+      return withContext(Dispatchers.Default) {
+        val matchedBoards = mutableListWithCap<BoardForSelection>(MAX_DISPLAYED_BOARDS)
+        var totalMatched = 0
+
+        for (chanBoard in _allNoneActiveBoards) {
+          val boardDescription = chanBoard.description
+
+          val matches = query.isEmpty()
+            || chanBoard.formattedBoardCode().contains(query, ignoreCase = true)
+            || chanBoard.boardName().contains(query, ignoreCase = true)
+            || (boardDescription.isEmpty() || boardDescription.contains(query, ignoreCase = true))
+
+          if (matches) {
+            ++totalMatched
+
+            if (matchedBoards.size < MAX_DISPLAYED_BOARDS) {
+              matchedBoards += BoardForSelection(
+                boardDescriptor = chanBoard.boardDescriptor,
+                boardName = BoardHelper.formatName(chanBoard.boardDescriptor.boardCode, chanBoard.boardName()),
+                description = BoardHelper.formatDescription(chanBoard)
+              )
+            }
+          }
         }
 
-        val boardDescription = chanBoard.description
-
-        val matches = query.isEmpty()
-          || chanBoard.formattedBoardCode().contains(query, ignoreCase = true)
-          || chanBoard.boardName().contains(query, ignoreCase = true)
-          || (boardDescription.isEmpty() || boardDescription.contains(query, ignoreCase = true))
-
-        if (matches) {
-          matchedBoards += BoardForSelection(
-            boardDescriptor = chanBoard.boardDescriptor,
-            boardName = BoardHelper.formatName(chanBoard.boardDescriptor.boardCode, chanBoard.boardName()),
-            description = BoardHelper.formatDescription(chanBoard)
+        val sortedBoards = if (query.isEmpty()) {
+          matchedBoards.sortedBy { matchedBoard ->
+            matchedBoard.boardDescriptor.boardCode
+          }
+        } else {
+          InputWithQuerySorter.sort(
+            input = matchedBoards,
+            query = query,
+            textSelector = { boardForSelection -> boardForSelection.boardName }
           )
         }
-      }
 
-      val sortedBoards = if (query.isEmpty()) {
-        matchedBoards.sortedBy { matchedBoard ->
-          matchedBoard.boardDescriptor.boardCode
+        Snapshot.withMutableSnapshot {
+          _uiState.value = AsyncData.Data(Unit)
+          _currentSearchQuery.value = query
+          _totalMatchedBySearchQueryCount.intValue = totalMatched
+          _boardsForSelection.clear()
+          _boardsForSelection.addAll(sortedBoards)
         }
-      } else {
-        InputWithQuerySorter.sort(
-          input = matchedBoards,
-          query = query,
-          textSelector = { boardForSelection -> boardForSelection.boardDescriptor.boardCode }
-        )
-      }
 
-      Snapshot.withMutableSnapshot {
-        _uiState.value = AsyncData.Data(Unit)
-        _currentSearchQuery.value = query
-        _boardsForSelection.clear()
-        _boardsForSelection.addAll(sortedBoards)
+        awaitFrame()
+        _resetScrollEventFlow.emit(Unit)
       }
-
-      awaitFrame()
-      _resetScrollEventFlow.emit(Unit)
+    } finally {
+      _processing.value = false
     }
   }
 

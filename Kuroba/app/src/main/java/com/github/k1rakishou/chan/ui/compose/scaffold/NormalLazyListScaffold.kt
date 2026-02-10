@@ -11,10 +11,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,11 +27,8 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeDivider
 import com.github.k1rakishou.chan.ui.compose.consumeClicks
 import com.github.k1rakishou.chan.ui.compose.copy
-import com.github.k1rakishou.chan.ui.compose.isFullyScrolledBottom
-import com.github.k1rakishou.chan.ui.compose.isFullyScrolledTop
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.providers.LocalContentPaddings
 import com.github.k1rakishou.chan.ui.controller.base.ControllerKey
@@ -44,7 +39,6 @@ class NormalLazyListScaffoldBuilder : NormalLazyListScaffold {
   @Composable
   fun Content(
     boxScope: BoxScope,
-    lazyListState: LazyListState,
     controllerKey: ControllerKey,
     header: (@Composable BoxScope.() -> Unit)? = null,
     body: @Composable BoxScope.(PaddingValues) -> Unit,
@@ -95,11 +89,6 @@ class NormalLazyListScaffoldBuilder : NormalLazyListScaffold {
             Box {
               header()
             }
-
-            val fullyScrolledTop by remember { derivedStateOf { lazyListState.isFullyScrolledTop() } }
-            if (!fullyScrolledTop) {
-              KurobaComposeDivider(modifier = Modifier.fillMaxWidth())
-            }
           }
         }
 
@@ -137,11 +126,6 @@ class NormalLazyListScaffoldBuilder : NormalLazyListScaffold {
             .zIndex(1f)
             .shadow(elevation = 4.dp)
         ) {
-          val isFullyScrolledBottom by remember { derivedStateOf { lazyListState.isFullyScrolledBottom() } }
-          if (!isFullyScrolledBottom) {
-            KurobaComposeDivider(modifier = Modifier.fillMaxWidth())
-          }
-
           Box {
             footer(contentPaddings.calculateBottomPadding(controllerKey))
           }

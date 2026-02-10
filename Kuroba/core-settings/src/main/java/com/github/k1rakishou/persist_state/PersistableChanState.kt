@@ -94,7 +94,11 @@ object PersistableChanState {
     try {
       val provider = SharedPreferencesSettingProvider(AndroidUtils.appState)
 
-      applicationMigrationVersion = IntegerSetting(provider, "application_migration_version", 0)
+      applicationMigrationVersion = IntegerSetting(
+        provider,
+        "application_migration_version",
+        persistableChanStateInfo.applicationMigrationVersion
+      )
       watchLastCount = IntegerSetting(provider, "watch_last_count", 0)
       hasNewApkUpdate = BooleanSetting(provider, "has_new_apk_update", false)
       previousVersion = IntegerSetting(provider, "previous_version", persistableChanStateInfo.versionCode)

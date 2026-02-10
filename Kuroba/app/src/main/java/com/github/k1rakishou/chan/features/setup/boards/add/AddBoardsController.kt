@@ -23,6 +23,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.unit.dp
@@ -87,7 +89,7 @@ class AddBoardsController(
         onClick = { requireNavController().popController() }
       ),
       middleContent = ToolbarMiddleContent.Title(
-        title = ToolbarText.String(formatToolbarTitle()),
+        title = ToolbarText.String(appResources.string(R.string.add_boards_controller_toolbar_title)),
         subtitle = null
       )
     )
@@ -106,8 +108,10 @@ class AddBoardsController(
 
       val boardsForSelection = controllerViewModel.boardsForSelection
       val checkedBoards = controllerViewModel.checkedBoards
+      val processing by controllerViewModel.processing
       val currentSearchQuery by controllerViewModel.currentSearchQuery
-      val nonActiveBoardsCount by controllerViewModel.nonActiveBoardsCount
+      val totalBoardsCount by controllerViewModel.totalBoardsCount
+      val totalMatchedBySearchQueryCount by controllerViewModel.totalMatchedBySearchQueryCount
 
       val lazyListState = rememberLazyListState()
       val searchQueryState = rememberTextFieldState()
@@ -138,7 +142,6 @@ class AddBoardsController(
         with(NormalLazyListScaffoldBuilder()) {
           Content(
             boxScope = this@Box,
-            lazyListState = lazyListState,
             controllerKey = controllerKey,
             header = {
               Column(
@@ -201,21 +204,42 @@ class AddBoardsController(
                   item(key = "nothing_found") {
                     KurobaComposeMessage(
                       modifier = Modifier.fillParentMaxSize(),
-                      message = "Nothing found by query '${currentSearchQuery}'"
+                      message = stringResource(
+                        R.string.add_boards_controller_nothing_found_by_query,
+                        currentSearchQuery
+                      )
                     )
                   }
 
                   return@LazyColumnWithFastScroller
                 }
 
+                if (totalBoardsCount > 0) {
+                  item(key = "found_boards_info") {
+                    FoundBoardsInfo(
+                      modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight(),
+                      currentSearchQuery = currentSearchQuery,
+                      boardsForSelectionCount = boardsForSelection.size,
+                      totalBoardsCount = totalBoardsCount,
+                      totalMatchedBySearchQueryCount = totalMatchedBySearchQueryCount,
+                      maxDisplayedBoards = maxDisplayedBoards
+                    )
+                  }
+                }
+
                 items(
                   count = boardsForSelection.size,
-                  key = { idx -> boardsForSelection[idx].composeKey() },
+                  key = { idx -> boardsForSelection.getOrNull(idx)?.composeKey() ?: "null" },
                   itemContent = { idx ->
-                    val boardForSelection = boardsForSelection[idx]
+                    val boardForSelection = boardsForSelection.getOrNull(idx)
+                      ?: return@items
+
                     BoardForSelectionElement(
                       index = idx,
                       currentSearchQuery = currentSearchQuery,
+                      enabled = !processing,
                       checked = boardForSelection.boardDescriptor in checkedBoards,
                       boardForSelection = boardForSelection,
                       onCheckChanged = { boardDescriptor, check ->
@@ -224,25 +248,13 @@ class AddBoardsController(
                     )
                   }
                 )
-
-                if (boardsForSelection.size >= maxDisplayedBoards && nonActiveBoardsCount > 0) {
-                  item(key = "too_many_boards_found") {
-                    TooManyBoardsFound(
-                      modifier = Modifier
-                        .fillMaxWidth()
-                        .wrapContentHeight(),
-                      boardsForSelectionCount = boardsForSelection.size,
-                      nonActiveBoardsCount = nonActiveBoardsCount
-                    )
-                  }
-                }
               }
             },
             footer = { bottomPadding ->
               val toggleAllButton = LazyListScaffoldShared.Button(
-                // TODO: strings
-                text = "Toggle all",
+                text = stringResource(R.string.add_boards_controller_toggle_all),
                 fontSize = 18.ktu,
+                enabled = !processing,
                 onClick = {
                   controllerViewModel.toggleAll()
                 }
@@ -252,9 +264,9 @@ class AddBoardsController(
                 null
               } else {
                 LazyListScaffoldShared.Button(
-                  // TODO: strings
-                  text = "Add (${checkedBoards.size}) boards",
+                  text = stringResource(R.string.add_boards_controller_add_boards, checkedBoards.size),
                   fontSize = 18.ktu,
+                  enabled = !processing,
                   onClick = {
                     if (checkedBoards.size < maxDisplayedBoards) {
                       controllerViewModel.activateCheckedBoards(
@@ -265,10 +277,14 @@ class AddBoardsController(
 
                     dialogFactory.createSimpleConfirmationDialog(
                       context = context,
-                      // TODO: Strings
-                      titleText = "Adding ${checkedBoards.size} boards",
-                      // TODO: Strings
-                      descriptionText = "You are about to add ${checkedBoards.size} boards, which might not be a good idea. Are you sure?",
+                      titleText = appResources.string(
+                        R.string.add_boards_controller_adding_too_many_boards_dialog_title,
+                        checkedBoards.size
+                      ),
+                      descriptionText = appResources.string(
+                        R.string.add_boards_controller_adding_too_many_boards_dialog_description,
+                        checkedBoards.size
+                      ),
                       negativeButtonText = appResources.string(R.string.no),
                       positiveButtonText = appResources.string(R.string.yes),
                       onPositiveButtonClickListener = {
@@ -312,6 +328,7 @@ class AddBoardsController(
   private fun BoardForSelectionElement(
     index: Int,
     currentSearchQuery: String,
+    enabled: Boolean,
     checked: Boolean,
     boardForSelection: AddBoardsControllerViewModel.BoardForSelection,
     onCheckChanged: (BoardDescriptor, Boolean) -> Unit
@@ -371,6 +388,7 @@ class AddBoardsController(
         .heightIn(min = 64.dp)
         .kurobaClickable(
           bounded = true,
+          enabled = enabled,
           onClick = {
             onCheckChanged(boardForSelection.boardDescriptor, !checked)
           }
@@ -379,6 +397,9 @@ class AddBoardsController(
           if (checked) {
             drawRect(chanTheme.postHighlightedColorCompose)
           }
+        }
+        .graphicsLayer {
+          alpha = if (enabled) 1f else 0.6f
         }
         .padding(horizontal = 16.dp, vertical = 8.dp),
       verticalAlignment = Alignment.CenterVertically
@@ -403,6 +424,7 @@ class AddBoardsController(
         modifier = Modifier
           .wrapContentSize()
           .padding(horizontal = 16.dp, vertical = 8.dp),
+        enabled = enabled,
         currentlyChecked = checked,
         onCheckChanged = { nowChecked ->
           onCheckChanged(boardForSelection.boardDescriptor, nowChecked)
@@ -412,12 +434,47 @@ class AddBoardsController(
   }
 
   @Composable
-  private fun TooManyBoardsFound(
+  private fun FoundBoardsInfo(
     modifier: Modifier,
+    currentSearchQuery: String,
     boardsForSelectionCount: Int,
-    nonActiveBoardsCount: Int
+    totalBoardsCount: Int,
+    totalMatchedBySearchQueryCount: Int,
+    maxDisplayedBoards: Int
   ) {
     val chanTheme = LocalChanTheme.current
+
+    val text = remember(key1 = boardsForSelectionCount, key2 = totalBoardsCount, key3 = currentSearchQuery) {
+      buildString {
+        if (currentSearchQuery.isEmpty()) {
+          if (totalBoardsCount > maxDisplayedBoards) {
+            append(appResources.string(
+              R.string.add_boards_controller_found_boards_displaying_out_of,
+              boardsForSelectionCount,
+              totalBoardsCount
+            ))
+          } else {
+            append(appResources.string(
+              R.string.add_boards_controller_found_boards_displaying,
+              boardsForSelectionCount
+            ))
+          }
+        } else {
+          if (totalMatchedBySearchQueryCount > maxDisplayedBoards) {
+            append(appResources.string(
+              R.string.add_boards_controller_found_boards_displaying_out_of_by_query,
+              boardsForSelectionCount,
+              totalMatchedBySearchQueryCount
+            ))
+          } else {
+            append(appResources.string(
+              R.string.add_boards_controller_found_boards_displaying_by_query,
+              boardsForSelectionCount
+            ))
+          }
+        }
+      }
+    }
 
     Box(
       modifier = modifier,
@@ -425,29 +482,10 @@ class AddBoardsController(
     ) {
       KurobaComposeText(
         modifier = Modifier.padding(vertical = 8.dp),
-        // TODO: strings
-        text = "Only displaying ${boardsForSelectionCount} boards out of ${nonActiveBoardsCount}",
+        text = text,
         fontSize = 14.ktu,
         color = chanTheme.textColorHintCompose
       )
-    }
-  }
-
-  private fun formatToolbarTitle(
-    displayed: Int = 0,
-    total: Int = 0
-  ): String {
-    // TODO: strings
-    return buildString {
-      append("Select boards")
-
-      if (displayed > 0 && total > 0) {
-        append("(")
-        append(displayed)
-        append("/")
-        append(total)
-        append(")")
-      }
     }
   }
 

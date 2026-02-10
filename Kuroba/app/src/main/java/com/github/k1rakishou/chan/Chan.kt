@@ -401,7 +401,8 @@ class Chan : Application(), ActivityLifecycleCallbacks {
   private fun createPersistableChanStateInfo(): PersistableChanStateInfo {
     return PersistableChanStateInfo(
       versionCode = BuildConfig.VERSION_CODE,
-      commitHash = BuildConfig.COMMIT_HASH
+      commitHash = BuildConfig.COMMIT_HASH,
+      applicationMigrationVersion = ApplicationMigrationHelper.LATEST_VERSION
     )
   }
 

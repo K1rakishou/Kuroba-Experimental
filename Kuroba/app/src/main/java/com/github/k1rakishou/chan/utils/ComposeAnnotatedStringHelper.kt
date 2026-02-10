@@ -19,7 +19,10 @@ class ComposeAnnotatedStringHelperImpl {
     }
 
     for (textMark in textMarks) {
-      val pattern = Regex(textMark.pattern)
+      val pattern = Regex(
+        pattern = Regex.escape(textMark.pattern),
+        option = RegexOption.IGNORE_CASE
+      )
 
       pattern.findAll(text)
         .forEach { matchResult ->
