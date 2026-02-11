@@ -347,17 +347,17 @@ class BoardManager(
     check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
 
     lock.read {
-      val innerMaps = if (siteDescriptor == null) {
-        boardsMap.values
+      val orderedBoardDescriptors = if (siteDescriptor == null) {
+        ordersMap.values
       } else {
-        val inner = boardsMap[siteDescriptor]
+        val inner = ordersMap[siteDescriptor]
           ?: return@read
 
         listOf(inner)
       }
 
-      for (innerMap in innerMaps) {
-        for (boardDescriptor in innerMap.keys) {
+      for (boardDescriptors in orderedBoardDescriptors) {
+        for (boardDescriptor in boardDescriptors) {
           val chanBoard = boardsMap[siteDescriptor]
             ?.get(boardDescriptor)
             ?: continue
