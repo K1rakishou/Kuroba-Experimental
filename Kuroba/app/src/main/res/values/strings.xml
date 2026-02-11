@@ -1626,8 +1626,8 @@ Actual error: \'%1$s\'</string>
 
     <string name="add_boards_controller_toolbar_title">Select boards</string>
     <string name="add_boards_controller_nothing_found_by_query">Nothing found by query \'%1$s\'</string>
-    <string name="add_boards_controller_toggle_all">Toggle all</string>
-    <string name="add_boards_controller_add_boards">Add %1$d boards</string>
+    <string name="add_boards_controller_toggle_all">Toggle\nall</string>
+    <string name="add_boards_controller_add_boards">Add %1$d\nboards</string>
     <string name="add_boards_controller_adding_too_many_boards_dialog_title">Adding %1$d boards</string>
     <string name="add_boards_controller_adding_too_many_boards_dialog_description">You are about to add %1$d boards, which might not be a good idea. Are you sure?</string>
     <string name="add_boards_controller_found_boards_displaying_out_of">Displaying %1$d board(s) out of %2$d</string>

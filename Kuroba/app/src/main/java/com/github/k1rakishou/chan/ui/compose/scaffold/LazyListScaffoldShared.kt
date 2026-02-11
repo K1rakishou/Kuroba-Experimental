@@ -46,6 +46,8 @@ interface LazyListScaffoldShared {
       modifier = modifier
     ) {
       if (extractButton != null) {
+        Spacer(modifier = Modifier.width(8.dp))
+
         KurobaComposeTextBarButton(
           modifier = Modifier
             .wrapContentSize()
@@ -83,6 +85,8 @@ interface LazyListScaffoldShared {
           text = positiveButton.text,
           fontSize = positiveButton.fontSize
         )
+
+        Spacer(modifier = Modifier.width(8.dp))
       }
     }
   }
