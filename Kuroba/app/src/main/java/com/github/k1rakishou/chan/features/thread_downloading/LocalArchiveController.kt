@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -32,7 +31,6 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.Card
-import androidx.compose.material.Divider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -45,7 +43,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.DefaultAlpha
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -53,9 +50,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.BaseSelectionHelper
@@ -86,6 +80,7 @@ import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.controller.base.Controller
 import com.github.k1rakishou.chan.ui.controller.base.DeprecatedNavigationFlags
+import com.github.k1rakishou.chan.ui.view.floating_menu.CheckableFloatingListMenuItem
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.viewModelByKey
@@ -165,6 +160,11 @@ class LocalArchiveController(
 
             onRefreshClicked()
           }
+        )
+        withMenuItem(
+          id = ACTION_FILTER,
+          drawableId = R.drawable.baseline_filter_alt_24,
+          onClick = { onFilterClicked() }
         )
       }
     )
@@ -267,16 +267,6 @@ class LocalArchiveController(
 
     BuildThreadDownloadsList(
       threadDownloadViews = threadDownloadViews,
-      onViewModeChanged = { newViewMode ->
-        viewModel.viewModelSelectionHelper.unselectAll()
-
-        if (newViewMode == viewModel.viewMode.value) {
-          return@BuildThreadDownloadsList
-        }
-
-        viewModel.viewMode.value = newViewMode
-        viewModel.reload()
-      },
       onThreadDownloadClicked = { threadDescriptor ->
         if (viewModel.viewModelSelectionHelper.isInSelectionMode()) {
           viewModel.viewModelSelectionHelper.toggleSelection(threadDescriptor)
@@ -309,7 +299,6 @@ class LocalArchiveController(
   @Composable
   private fun BuildThreadDownloadsList(
     threadDownloadViews: List<LocalArchiveViewModel.ThreadDownloadView>,
-    onViewModeChanged: (LocalArchiveViewModel.ViewMode) -> Unit,
     onThreadDownloadClicked: (ChanDescriptor.ThreadDescriptor) -> Unit,
     onThreadDownloadLongClicked: (ChanDescriptor.ThreadDescriptor) -> Unit
   ) {
@@ -359,10 +348,6 @@ class LocalArchiveController(
         contentPadding = paddingValues,
         draggableScrollbar = true
       ) {
-        item(key = "selector", contentType = "selector") {
-          BuildViewModelSelector(onViewModeChanged = onViewModeChanged)
-        }
-
         if (threadDownloadViews.isEmpty()) {
           val searchQuery = toolbarState.search.searchQueryState.text
           if (searchQuery.isNullOrEmpty()) {
@@ -397,106 +382,6 @@ class LocalArchiveController(
             onThreadDownloadLongClicked = onThreadDownloadLongClicked
           )
         }
-      }
-    }
-  }
-
-  @Composable
-  private fun BuildViewModelSelector(onViewModeChanged: (LocalArchiveViewModel.ViewMode) -> Unit) {
-    val chanTheme = LocalChanTheme.current
-    val highlightColor = chanTheme.postHighlightedColorCompose
-    val viewMode by viewModel.viewMode
-
-    Row(
-      modifier = Modifier
-        .fillMaxWidth()
-        .height(32.dp)
-    ) {
-      kotlin.run {
-        val backgroundColor = remember(key1 = viewMode) {
-          if (viewMode == LocalArchiveViewModel.ViewMode.ShowAll) {
-            highlightColor
-          } else {
-            Color.Unspecified
-          }
-        }
-
-        KurobaComposeText(
-          text = stringResource(id = R.string.controller_local_archive_show_all_threads),
-          textAlign = TextAlign.Center,
-          fontSize = 15.ktu,
-          maxLines = 1,
-          overflow = TextOverflow.Ellipsis,
-          fontWeight = FontWeight.SemiBold,
-          modifier = Modifier
-            .fillMaxHeight()
-            .background(color = backgroundColor)
-            .weight(weight = 0.2f)
-            .clickable { onViewModeChanged(LocalArchiveViewModel.ViewMode.ShowAll) }
-            .padding(top = 4.dp)
-        )
-      }
-
-      Divider(
-        color = chanTheme.dividerColorCompose,
-        modifier = Modifier
-          .width(1.dp)
-          .fillMaxHeight()
-          .padding(vertical = 2.dp)
-      )
-
-      kotlin.run {
-        val backgroundColor = remember(key1 = viewMode) {
-          if (viewMode == LocalArchiveViewModel.ViewMode.ShowDownloading) {
-            highlightColor
-          } else {
-            Color.Unspecified
-          }
-        }
-
-        KurobaComposeText(
-          text = stringResource(id = R.string.controller_local_archive_show_downloading_threads),
-          fontSize = 15.ktu,
-          fontWeight = FontWeight.SemiBold,
-          textAlign = TextAlign.Center,
-          modifier = Modifier
-            .fillMaxHeight()
-            .background(color = backgroundColor)
-            .weight(weight = 0.4f)
-            .clickable { onViewModeChanged(LocalArchiveViewModel.ViewMode.ShowDownloading) }
-            .padding(top = 4.dp)
-        )
-      }
-
-      Divider(
-        color = chanTheme.dividerColorCompose,
-        modifier = Modifier
-          .width(1.dp)
-          .fillMaxHeight()
-          .padding(vertical = 2.dp)
-      )
-
-      kotlin.run {
-        val backgroundColor = remember(key1 = viewMode) {
-          if (viewMode == LocalArchiveViewModel.ViewMode.ShowCompleted) {
-            highlightColor
-          } else {
-            Color.Unspecified
-          }
-        }
-
-        KurobaComposeText(
-          text = stringResource(id = R.string.controller_local_archive_show_downloaded_threads),
-          fontSize = 15.ktu,
-          fontWeight = FontWeight.SemiBold,
-          textAlign = TextAlign.Center,
-          modifier = Modifier
-            .fillMaxHeight()
-            .background(color = backgroundColor)
-            .weight(weight = 0.4f)
-            .clickable { onViewModeChanged(LocalArchiveViewModel.ViewMode.ShowCompleted) }
-            .padding(top = 4.dp)
-        )
       }
     }
   }
@@ -761,6 +646,54 @@ class LocalArchiveController(
         .size(ICON_SIZE)
         .clickable { showToast(threadDownloadView.status.toString(), Toast.LENGTH_LONG) }
     )
+  }
+
+  private fun onFilterClicked() {
+    val floatingMenuItems = mutableListOf<FloatingListMenuItem>()
+    val groupId = "view_mode"
+    val currentViewMode = viewModel.viewMode.value
+
+    floatingMenuItems += CheckableFloatingListMenuItem(
+      key = ACTION_SHOW_ALL,
+      name = appResources.string(R.string.controller_local_archive_show_all_threads),
+      value = LocalArchiveViewModel.ViewMode.ShowAll,
+      groupId = groupId,
+      checked = currentViewMode == LocalArchiveViewModel.ViewMode.ShowAll
+    )
+
+    floatingMenuItems += CheckableFloatingListMenuItem(
+      key = ACTION_SHOW_DOWNLOADING,
+      name = appResources.string(R.string.controller_local_archive_show_downloading_threads),
+      value = LocalArchiveViewModel.ViewMode.ShowDownloading,
+      groupId = groupId,
+      checked = currentViewMode == LocalArchiveViewModel.ViewMode.ShowDownloading
+    )
+
+    floatingMenuItems += CheckableFloatingListMenuItem(
+      key = ACTION_SHOW_COMPLETED,
+      name = appResources.string(R.string.controller_local_archive_show_completed_threads),
+      value = LocalArchiveViewModel.ViewMode.ShowCompleted,
+      groupId = groupId,
+      checked = currentViewMode == LocalArchiveViewModel.ViewMode.ShowCompleted
+    )
+
+    val floatingMenuScreen = FloatingListMenuController(
+      context = context,
+      constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
+      items = floatingMenuItems,
+      itemClickListener = { clickedItem ->
+        val newViewMode = clickedItem.value as? LocalArchiveViewModel.ViewMode
+        if (newViewMode == null || newViewMode == viewModel.viewMode.value) {
+          return@FloatingListMenuController
+        }
+
+        viewModel.viewModelSelectionHelper.unselectAll()
+        viewModel.viewMode.value = newViewMode
+        viewModel.reload()
+      }
+    )
+
+    presentController(floatingMenuScreen)
   }
 
   private fun onMenuItemClicked(
@@ -1043,10 +976,15 @@ class LocalArchiveController(
   companion object {
     private const val ACTION_SEARCH = 0
     private const val ACTION_UPDATE_ALL = 1
+    private const val ACTION_FILTER = 2
 
     private const val ACTION_EXPORT_THREADS = 100
     private const val ACTION_EXPORT_THREAD_MEDIA = 101
     private const val ACTION_EXPORT_THREAD_JSON = 102
+
+    private const val ACTION_SHOW_ALL = 200
+    private const val ACTION_SHOW_DOWNLOADING = 201
+    private const val ACTION_SHOW_COMPLETED = 202
 
     private val ICON_SIZE = 26.dp
     private val PROGRESS_SIZE = 20.dp
