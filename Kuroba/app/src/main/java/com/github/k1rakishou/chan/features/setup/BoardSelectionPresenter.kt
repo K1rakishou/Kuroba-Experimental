@@ -207,7 +207,6 @@ class BoardSelectionPresenter(
         boardViewMode = BoardManager.BoardViewMode.Active,
         func = iteratorFunc
       )
-      
       return boardCellDataList
     }
 

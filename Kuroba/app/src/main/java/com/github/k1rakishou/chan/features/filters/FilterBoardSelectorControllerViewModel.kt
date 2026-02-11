@@ -146,7 +146,6 @@ class FilterBoardSelectorControllerViewModel(
         boardName = chanBoard.boardName(),
         description = ""
       )
-      
       return@iteratorFunc true
     }
 

@@ -256,7 +256,6 @@ class AddBoardsControllerViewModel(
   }
 
   companion object {
-    private const val TAG = "AddBoardsControllerV2ViewModel"
     const val MAX_DISPLAYED_BOARDS = 256
   }
 }
