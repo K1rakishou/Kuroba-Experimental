@@ -35,8 +35,8 @@ import com.github.k1rakishou.chan.features.toolbar.BackArrowMenuItem
 import com.github.k1rakishou.chan.features.toolbar.ToolbarMiddleContent
 import com.github.k1rakishou.chan.features.toolbar.ToolbarText
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeDraggableElementContainer
-import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeErrorMessageNoInsets
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeIcon
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeMessage
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
 import com.github.k1rakishou.chan.ui.compose.compose_task.rememberCancellableCoroutineTask
@@ -156,9 +156,9 @@ class CompositeCatalogsSetupController(
         content = {
           if (compositeCatalogs.isEmpty()) {
             item {
-              KurobaComposeErrorMessageNoInsets(
+              KurobaComposeMessage(
                 modifier = Modifier.fillParentMaxSize(),
-                errorMessage = stringResource(id = R.string.controller_composite_catalogs_empty_text)
+                message = stringResource(id = R.string.controller_composite_catalogs_empty_text)
               )
             }
 

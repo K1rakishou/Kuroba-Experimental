@@ -33,7 +33,7 @@ import com.github.k1rakishou.chan.features.toolbar.BackArrowMenuItem
 import com.github.k1rakishou.chan.features.toolbar.ToolbarMiddleContent
 import com.github.k1rakishou.chan.features.toolbar.ToolbarText
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeErrorMessage
-import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeErrorMessageNoInsets
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeMessage
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeProgressIndicator
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.ktu
@@ -306,14 +306,14 @@ class BoardArchiveController(
 
     if (!hasResults) {
       if (!resultsFromSearch || searchQuery == null) {
-        KurobaComposeErrorMessageNoInsets(
+        KurobaComposeMessage(
           modifier = modifier,
-          errorMessage = stringResource(id = R.string.search_nothing_found)
+          message = stringResource(id = R.string.search_nothing_found)
         )
       } else {
-        KurobaComposeErrorMessageNoInsets(
+        KurobaComposeMessage(
           modifier = modifier,
-          errorMessage = stringResource(id = R.string.search_nothing_found_with_query, searchQuery)
+          message = stringResource(id = R.string.search_nothing_found_with_query, searchQuery)
         )
       }
 

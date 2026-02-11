@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.ui.compose.components
 
 import androidx.annotation.FloatRange
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.runtime.Composable
@@ -13,20 +12,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
-import com.github.k1rakishou.chan.ui.compose.providers.LocalWindowInsets
 
 @Composable
 fun KurobaComposeProgressIndicator(
   modifier: Modifier,
   overrideColor: Color? = null
 ) {
-  val windowInsets = LocalWindowInsets.current
-
   Box(
-    modifier = modifier.then(
-      Modifier
-        .padding(bottom = windowInsets.bottom)
-    )
+    modifier = modifier
   ) {
     val color = if (overrideColor == null) {
       val chanTheme = LocalChanTheme.current

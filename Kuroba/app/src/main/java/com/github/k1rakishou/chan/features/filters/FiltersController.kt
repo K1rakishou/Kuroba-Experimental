@@ -60,8 +60,8 @@ import com.github.k1rakishou.chan.ui.compose.SelectableItem
 import com.github.k1rakishou.chan.ui.compose.addBottom
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeClickableText
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeDraggableElementContainer
-import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeErrorMessageNoInsets
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeIcon
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeMessage
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeSwitch
 import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
 import com.github.k1rakishou.chan.ui.compose.compose_task.rememberCancellableCoroutineTask
@@ -333,9 +333,9 @@ class FiltersController(
             key = "nothing_found_with_query",
             contentType = "nothing_found_with_query_item"
           ) {
-            KurobaComposeErrorMessageNoInsets(
+            KurobaComposeMessage(
               modifier = Modifier.fillParentMaxSize(),
-              errorMessage = stringResource(id = R.string.search_nothing_found_with_query, searchQuery)
+              message = stringResource(id = R.string.search_nothing_found_with_query, searchQuery)
             )
           }
         } else {
@@ -343,9 +343,9 @@ class FiltersController(
             key = "no_filters",
             contentType = "no_filters_item"
           ) {
-            KurobaComposeErrorMessageNoInsets(
+            KurobaComposeMessage(
               modifier = Modifier.fillParentMaxSize(),
-              errorMessage = stringResource(id = R.string.filter_controller_no_filters)
+              message = stringResource(id = R.string.filter_controller_no_filters)
             )
           }
         }
