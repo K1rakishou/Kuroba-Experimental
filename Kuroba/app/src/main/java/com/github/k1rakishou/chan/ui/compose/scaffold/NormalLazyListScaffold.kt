@@ -19,13 +19,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.github.k1rakishou.chan.ui.compose.consumeClicks
 import com.github.k1rakishou.chan.ui.compose.copy
@@ -42,8 +40,10 @@ class NormalLazyListScaffoldBuilder : NormalLazyListScaffold {
     controllerKey: ControllerKey,
     header: (@Composable BoxScope.() -> Unit)? = null,
     body: @Composable BoxScope.(PaddingValues) -> Unit,
-    footer: @Composable BoxScope.(Dp) -> Unit
+    footer: (@Composable BoxScope.(Dp) -> Unit)? = null
   ) {
+    require(header != null || footer != null) { "Either header or footer must not be null!" }
+
     val chanTheme = LocalChanTheme.current
     val density = LocalDensity.current
     val layoutDirection = LocalLayoutDirection.current
@@ -69,10 +69,7 @@ class NormalLazyListScaffoldBuilder : NormalLazyListScaffold {
             modifier = Modifier
               .onSizeChanged { intSize ->
                 lazyListPaddings = with(density) {
-                  lazyListPaddings.copy(
-                    layoutDirection = layoutDirection,
-                    top = intSize.height.toDp()
-                  )
+                  lazyListPaddings.copy(layoutDirection = layoutDirection, top = intSize.height.toDp())
                 }
 
                 headerMeasured = true
@@ -82,7 +79,6 @@ class NormalLazyListScaffoldBuilder : NormalLazyListScaffold {
               .align(Alignment.TopCenter)
               .consumeClicks(enabled = true)
               .zIndex(1f)
-              .shadow(elevation = 4.dp)
           ) {
             Spacer(modifier = Modifier.height(contentPaddings.calculateTopPadding()))
 
@@ -90,14 +86,18 @@ class NormalLazyListScaffoldBuilder : NormalLazyListScaffold {
               header()
             }
           }
+        } else {
+          LaunchedEffect(key1 = contentPaddings) {
+            lazyListPaddings = with(density) {
+              lazyListPaddings.copy(layoutDirection = layoutDirection, top = contentPaddings.calculateTopPadding())
+            }
+          }
         }
 
         LaunchedEffect(key1 = headerMeasured, key2 = footerMeasured) {
-          if (!headerMeasured || !footerMeasured) {
-            return@LaunchedEffect
+          if (headerMeasured || footerMeasured) {
+            alphaAnimatable.animateTo(1f, tween(durationMillis = 100))
           }
-
-          alphaAnimatable.animateTo(1f, tween(durationMillis = 100))
         }
 
         Box(
@@ -107,27 +107,32 @@ class NormalLazyListScaffoldBuilder : NormalLazyListScaffold {
           body(lazyListPaddings)
         }
 
-        Column(
-          modifier = Modifier
-            .onSizeChanged { intSize ->
-              lazyListPaddings = with(density) {
-                lazyListPaddings.copy(
-                  layoutDirection = layoutDirection,
-                  bottom = intSize.height.toDp()
-                )
-              }
+        if (footer != null) {
+          Column(
+            modifier = Modifier
+              .onSizeChanged { intSize ->
+                lazyListPaddings = with(density) {
+                  lazyListPaddings.copy(layoutDirection = layoutDirection, bottom = intSize.height.toDp())
+                }
 
-              footerMeasured = true
+                footerMeasured = true
+              }
+              .fillMaxWidth()
+              .wrapContentHeight()
+              .align(Alignment.BottomCenter)
+              .consumeClicks(enabled = true)
+              .zIndex(1f)
+          ) {
+            Box {
+              footer(contentPaddings.calculateBottomPadding(controllerKey))
             }
-            .fillMaxWidth()
-            .wrapContentHeight()
-            .align(Alignment.BottomCenter)
-            .consumeClicks(enabled = true)
-            .zIndex(1f)
-            .shadow(elevation = 4.dp)
-        ) {
-          Box {
-            footer(contentPaddings.calculateBottomPadding(controllerKey))
+          }
+        } else {
+          LaunchedEffect(key1 = contentPaddings) {
+            lazyListPaddings = with(density) {
+              val bottom = contentPaddings.calculateBottomPadding(controllerKey)
+              lazyListPaddings.copy(layoutDirection = layoutDirection, bottom = bottom)
+            }
           }
         }
       }

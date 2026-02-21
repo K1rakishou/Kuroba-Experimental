@@ -30,7 +30,7 @@ class CompositeCatalogsSetupControllerViewModel(
 
   override suspend fun onViewModelReady() {
     viewModelScope.launch {
-      compositeCatalogManager.compositeCatalogUpdateEventsFlow
+      compositeCatalogManager.eventsFlow
         .collect { event -> processCompositeCatalogUpdateEvents(event) }
     }
   }

@@ -358,7 +358,7 @@ open class BaseThreadBookmarkViewHolder : EpoxyHolder() {
 
       requestDisposable = imageLoaderDeprecated.loadFromResources(
         context = context,
-        drawableId = R.drawable.error_icon,
+        drawableId = R.drawable.ic_baseline_warning_24,
         imageSize = ImageLoaderDeprecated.ImageSize.MeasurableImageSize.create(bookmarkImage),
         scale = Scale.FIT,
         transformations = emptyList(),

@@ -141,7 +141,7 @@ class EpoxySiteView @JvmOverloads constructor(
         imageSize = ImageLoaderDeprecated.ImageSize.MeasurableImageSize.create(siteIconView),
         transformations = transformations,
         listener = { drawable -> siteIconView.setImageBitmap(drawable.bitmap) },
-        errorDrawableId = R.drawable.error_icon
+        errorDrawableId = R.drawable.ic_baseline_warning_24
       )
     } else if (siteIcon.drawable != null) {
       siteIconView.setImageBitmap(siteIcon.drawable!!.bitmap)

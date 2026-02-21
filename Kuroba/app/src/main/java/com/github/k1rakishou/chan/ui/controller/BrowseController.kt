@@ -10,7 +10,6 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.concurrency.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.DialogFactory
-import com.github.k1rakishou.chan.core.helper.SitesSetupControllerOpenNotifier
 import com.github.k1rakishou.chan.core.manager.CurrentFocusedController
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.WebViewTaskManager
@@ -94,8 +93,6 @@ class BrowseController(
   lateinit var webViewTaskManagerLazy: Lazy<WebViewTaskManager>
   @Inject
   lateinit var runtimePermissionsHelper: RuntimePermissionsHelper
-  @Inject
-  lateinit var sitesSetupControllerOpenNotifier: SitesSetupControllerOpenNotifier
 
   private val historyNavigationManager: HistoryNavigationManager
     get() = historyNavigationManagerLazy.get()
@@ -694,18 +691,10 @@ class BrowseController(
 
 
   private fun openBoardSelectionController() {
-    val siteDescriptor = if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
-      null
-    } else {
-      chanDescriptor?.siteDescriptor()
-    }
-
-    val boardSelectionController = BoardSelectionController(
+     val boardSelectionController = BoardSelectionController(
       context = context,
-      currentSiteDescriptor = siteDescriptor,
       callback = object : BoardSelectionController.UserSelectionListener {
         override fun onOpenSitesSettingsClicked() {
-          sitesSetupControllerOpenNotifier.onSitesSetupControllerOpened()
           pushChildController(SitesSetupController(context))
         }
 
@@ -722,7 +711,7 @@ class BrowseController(
         }
       })
 
-    requireNavController().presentController(boardSelectionController)
+    requireNavController().pushController(boardSelectionController)
   }
 
   @Suppress("MoveLambdaOutsideParentheses")

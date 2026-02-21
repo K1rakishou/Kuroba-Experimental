@@ -93,7 +93,7 @@ class MainControllerViewModel(
     }
 
     viewModelScope.launch {
-      compositeCatalogManager.compositeCatalogUpdateEventsFlow
+      compositeCatalogManager.eventsFlow
         .collect { event ->
           updateNavigationHistoryEntryListExecutor.post {
             onCompositeCatalogsUpdated(event)

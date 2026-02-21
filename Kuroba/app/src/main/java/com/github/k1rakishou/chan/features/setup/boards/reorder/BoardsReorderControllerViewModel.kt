@@ -11,7 +11,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.viewmodel.KurobaViewModel
-import com.github.k1rakishou.chan.core.concurrency.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.shared.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.BoardManager
@@ -28,6 +27,8 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -59,7 +60,7 @@ class BoardsReorderControllerViewModel(
   val selectedBoards: SnapshotStateSet<BoardDescriptor>
     get() = _selectedBoards
 
-  private val _suspendDebouncer = DebouncingCoroutineExecutor(viewModelScope)
+  private var _searchJob: Job? = null
 
   override fun injectDependencies(component: ViewModelComponent) {
     component.inject(this)
@@ -215,20 +216,16 @@ class BoardsReorderControllerViewModel(
       _loading.value = true
     }
 
-    if (withDebouncing) {
-      _suspendDebouncer.post(DEBOUNCE_TIME_MS) {
-        boardManager.awaitUntilInitialized()
-        siteManager.awaitUntilInitialized()
-
-        displayActiveBoardsInternal()
+    _searchJob?.cancel()
+    _searchJob = viewModelScope.launch {
+      if (withDebouncing) {
+        delay(200L)
       }
-    } else {
-      viewModelScope.launch {
-        boardManager.awaitUntilInitialized()
-        siteManager.awaitUntilInitialized()
 
-        displayActiveBoardsInternal()
-      }
+      boardManager.awaitUntilInitialized()
+      siteManager.awaitUntilInitialized()
+
+      displayActiveBoardsInternal()
     }
   }
 
@@ -355,6 +352,5 @@ class BoardsReorderControllerViewModel(
 
   companion object {
     private const val TAG = "BoardsReorderControllerViewModel"
-    private const val DEBOUNCE_TIME_MS = 100L
   }
 }

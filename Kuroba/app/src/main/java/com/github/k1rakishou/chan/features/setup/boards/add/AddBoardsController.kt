@@ -147,7 +147,7 @@ class AddBoardsController(
               Column(
                 modifier = Modifier
                   .fillMaxWidth()
-                  .background(chanTheme.backColorSecondaryCompose)
+                  .background(chanTheme.backColorCompose)
               ) {
                 val kurobaSearchInputColor = if (ThemeEngine.isDarkColor(chanTheme.backColorCompose)) {
                   Color.White
@@ -299,7 +299,7 @@ class AddBoardsController(
 
               Column(
                 modifier = Modifier
-                  .background(chanTheme.backColorSecondaryCompose)
+                  .background(chanTheme.primaryColorCompose)
               ) {
                 Footer(
                   modifier = Modifier
@@ -335,14 +335,19 @@ class AddBoardsController(
   ) {
     val chanTheme = LocalChanTheme.current
 
-    val index = remember {
+    val index = remember(index, chanTheme.textColorSecondaryCompose) {
       buildAnnotatedString {
         pushStyle(SpanStyle(color = chanTheme.textColorSecondaryCompose))
         append("#${index + 1}")
       }
     }
 
-    val title = remember(key1 = currentSearchQuery, key2 = boardForSelection.boardName) {
+    val title = remember(
+      currentSearchQuery,
+      boardForSelection.boardName,
+      chanTheme.textColorPrimaryCompose,
+      chanTheme.accentColorCompose
+    ) {
       buildAnnotatedString {
         pushStyle(SpanStyle(color = chanTheme.textColorPrimaryCompose))
         append(boardForSelection.boardName)

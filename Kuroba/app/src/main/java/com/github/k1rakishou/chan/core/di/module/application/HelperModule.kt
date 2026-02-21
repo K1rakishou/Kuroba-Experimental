@@ -8,7 +8,6 @@ import com.github.k1rakishou.chan.core.helper.AppRestarter
 import com.github.k1rakishou.chan.core.helper.ChanLoadProgressNotifier
 import com.github.k1rakishou.chan.core.helper.KurobaSystemNotifications
 import com.github.k1rakishou.chan.core.helper.PostHideHelper
-import com.github.k1rakishou.chan.core.helper.SitesSetupControllerOpenNotifier
 import com.github.k1rakishou.chan.core.image.ImageLoaderDeprecated
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
@@ -249,13 +248,6 @@ class HelperModule {
   fun provideChan4CaptchaSolverHelper(moshi: Lazy<Moshi>): Chan4CaptchaSolverHelper {
     Logger.deps("Chan4CaptchaSolverHelper");
     return Chan4CaptchaSolverHelper(moshi)
-  }
-
-  @Provides
-  @Singleton
-  fun provideSiteSelectionControllerOpenNotifier(): SitesSetupControllerOpenNotifier {
-    Logger.deps("SiteSelectionControllerOpenNotifier");
-    return SitesSetupControllerOpenNotifier()
   }
 
   @Provides

@@ -1065,6 +1065,10 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="controller_boards_reorder_sort_boards_alphabetically">Sort boards alphabetically</string>
     <string name="controller_boards_reorder_delete_all_boards">Delete all added boards</string>
 
+    <string name="controller_board_select_title">Pick a board</string>
+    <string name="controller_board_go_to_sites">Sites</string>
+    <string name="controller_board_select_no_boards">No boards added. You can still select boards by using the search. Or you can add some in the boards settings.</string>
+
     <string name="controller_boards_selection_no_boards">No boards found</string>
     <string name="controller_boards_selection_sites">Sites</string>
 
@@ -1213,8 +1217,6 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="drawer_controller_navigation_entry_failed_to_pin_unpin">Failed to pin or unpin</string>
     <string name="drawer_controller_grid_mode">Grid mode</string>
     <string name="drawer_controller_switched_to_theme">Theme changed to \'%1$s\'</string>
-
-    <string name="board_selection_controller_grid_layout_mode">Grid mode</string>
 
     <string name="catalog_loading_error_title">Failed to load catalog</string>
     <string name="thread_loading_error_title">Failed to load thread</string>

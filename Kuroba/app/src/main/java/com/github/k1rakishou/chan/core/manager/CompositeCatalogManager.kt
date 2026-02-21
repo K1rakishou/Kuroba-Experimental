@@ -27,9 +27,9 @@ class CompositeCatalogManager(
   private val compositeCatalogs = mutableListOf<CompositeCatalog>()
   private val orderCounter = AtomicInteger(0)
 
-  private val _compositeCatalogUpdatesFlow = MutableSharedFlow<Event>(extraBufferCapacity = 16)
-  val compositeCatalogUpdateEventsFlow: SharedFlow<Event>
-    get() = _compositeCatalogUpdatesFlow.asSharedFlow()
+  private val _eventsFlow = MutableSharedFlow<Event>(extraBufferCapacity = 16)
+  val eventsFlow: SharedFlow<Event>
+    get() = _eventsFlow.asSharedFlow()
 
   suspend fun doWithLockedCompositeCatalogs(func: suspend (List<CompositeCatalog>) -> Unit) {
     ensureInitialized()
@@ -62,7 +62,7 @@ class CompositeCatalogManager(
 
         val event = Event.Created(compositeCatalog.compositeCatalogDescriptor)
         updateCurrentCatalogDescriptorIfNeeded(event)
-        _compositeCatalogUpdatesFlow.emit(event)
+        _eventsFlow.emit(event)
       }
     }
   }
@@ -100,7 +100,7 @@ class CompositeCatalogManager(
           newCatalogDescriptor = compositeCatalog.compositeCatalogDescriptor
         )
 
-        _compositeCatalogUpdatesFlow.emit(event)
+        _eventsFlow.emit(event)
       }
     }
   }
@@ -181,7 +181,7 @@ class CompositeCatalogManager(
         if (removed) {
           val event = Event.Deleted(compositeCatalog.compositeCatalogDescriptor)
           updateCurrentCatalogDescriptorIfNeeded(event)
-          _compositeCatalogUpdatesFlow.emit(event)
+          _eventsFlow.emit(event)
         }
       }
     }

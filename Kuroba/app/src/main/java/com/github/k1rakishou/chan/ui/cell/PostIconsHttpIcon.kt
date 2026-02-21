@@ -81,7 +81,7 @@ class PostIconsHttpIcon(
     private val MIN_SIZE_PX = dp(16f)
 
     private val errorIcon = MediaUtils.bitmapToDrawable(
-      BitmapFactory.decodeResource(AppModuleAndroidUtils.res, R.drawable.error_icon)
+      BitmapFactory.decodeResource(AppModuleAndroidUtils.res, R.drawable.ic_baseline_warning_24)
     )
   }
 

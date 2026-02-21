@@ -65,7 +65,7 @@ class FloatingControllerLinearContainer : LinearLayout {
     val windowSizeClass = globalUiStateHolder.mainUi.windowSizeClass.value
 
     var maxWidth = with(appResources.composeDensity) {
-      val maxWidthPx = when (windowSizeClass?.widthSizeClass?.asKurobaWindowWidthSizeClass()) {
+      val maxWidthPx = when (windowSizeClass?.widthSizeClass?.asKuroba()) {
         null -> WindowWidthSizeClass.CompactWindowMaxWidth
         KurobaWindowWidthSizeClass.Compact -> WindowWidthSizeClass.CompactWindowMaxWidth
         KurobaWindowWidthSizeClass.Medium -> WindowWidthSizeClass.MediumWindowMaxWidth

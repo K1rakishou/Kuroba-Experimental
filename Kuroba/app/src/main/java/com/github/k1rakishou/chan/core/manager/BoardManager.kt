@@ -18,6 +18,10 @@ import dagger.Lazy
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -41,6 +45,10 @@ class BoardManager(
 
   private val boardRepository: BoardRepository
     get() = boardRepositoryLazy.get()
+
+  private val _eventsFlow = MutableSharedFlow<Event>(extraBufferCapacity = Channel.UNLIMITED)
+  val eventsFlow: SharedFlow<Event>
+    get() = _eventsFlow.asSharedFlow()
 
   fun initialize(siteDataListAsync: CompletableDeferred<List<ChanSiteData>>) {
     Logger.d(TAG, "BoardManager.initialize()")
@@ -225,9 +233,9 @@ class BoardManager(
 
     if (!changed) {
       boardRepository.activateDeactivateBoards(
-        siteDescriptor,
-        boardDescriptors,
-        activate.not()
+        siteDescriptor = siteDescriptor,
+        boardDescriptors = boardDescriptors,
+        activate = activate.not()
       )
 
       return false
@@ -235,6 +243,7 @@ class BoardManager(
 
     persistActiveBoards()
     updateCurrentCatalogDescriptorIfNeeded(activate, boardDescriptors, siteDescriptor)
+    _eventsFlow.emit(Event.ActivatedOrDeactivate(activate, boardDescriptors.toSet()))
 
     return true
   }
@@ -461,6 +470,7 @@ class BoardManager(
       return false
     }
 
+    _eventsFlow.tryEmit(Event.Move(fromBoardDescriptor, toBoardDescriptor))
     return true
   }
 
@@ -629,6 +639,18 @@ class BoardManager(
     NonActive,
     Active,
     All
+  }
+
+  sealed interface Event {
+    data class ActivatedOrDeactivate(
+      val activated: Boolean,
+      val descriptors: Set<BoardDescriptor>
+    ) : Event
+
+    data class Move(
+      val fromBoardDescriptor: BoardDescriptor,
+      val toBoardDescriptor: BoardDescriptor
+    ) : Event
   }
 
   companion object {

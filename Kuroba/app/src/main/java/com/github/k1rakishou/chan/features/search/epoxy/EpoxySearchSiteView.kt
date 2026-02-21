@@ -95,8 +95,8 @@ import javax.inject.Inject
         ),
         transformations = emptyList(),
         listener = { drawable -> siteIconRef.get()?.setImageBitmap(drawable.bitmap) },
-        errorDrawableId = R.drawable.error_icon,
-        notFoundDrawableId = R.drawable.error_icon
+        errorDrawableId = R.drawable.ic_baseline_warning_24,
+        notFoundDrawableId = R.drawable.ic_baseline_warning_24
       )
     }
   }

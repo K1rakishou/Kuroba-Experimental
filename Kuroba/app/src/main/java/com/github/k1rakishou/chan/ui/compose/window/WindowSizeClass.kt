@@ -75,7 +75,7 @@ class WindowSizeClass private constructor(
 @kotlin.jvm.JvmInline
 value class WindowWidthSizeClass private constructor(private val value: Int) : Comparable<WindowWidthSizeClass> {
 
-  fun asKurobaWindowWidthSizeClass(): KurobaWindowWidthSizeClass {
+  fun asKuroba(): KurobaWindowWidthSizeClass {
     return KurobaWindowWidthSizeClass.from(this)
   }
 

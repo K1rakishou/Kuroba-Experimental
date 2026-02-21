@@ -101,7 +101,7 @@ abstract class BaseFloatingComposeController(
               }
             }
 
-            val maxControllerWidth = when (windowSizeClass.widthSizeClass.asKurobaWindowWidthSizeClass()) {
+            val maxControllerWidth = when (windowSizeClass.widthSizeClass.asKuroba()) {
               KurobaWindowWidthSizeClass.Compact -> {
                 availableWidth.coerceAtMost(WindowWidthSizeClass.CompactWindowMaxWidth.dp)
               }

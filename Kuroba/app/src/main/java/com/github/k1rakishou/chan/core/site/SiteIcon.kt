@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.drawable.BitmapDrawable
 import androidx.annotation.DrawableRes
 import androidx.core.graphics.drawable.toBitmap
+import androidx.core.graphics.drawable.toDrawable
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.image.ImageLoaderDeprecated
@@ -33,7 +34,7 @@ class SiteIcon private constructor(
       getIcon(
         context = context,
         resultFunc = { bitmapDrawable -> cancellableContinuation.resumeValueSafe(bitmapDrawable) },
-        errorDrawableId = R.drawable.error_icon,
+        errorDrawableId = R.drawable.ic_baseline_warning_24,
         errorFunc = { bitmapDrawable -> cancellableContinuation.resumeValueSafe(bitmapDrawable) }
       )
 
@@ -101,10 +102,7 @@ class SiteIcon private constructor(
         private fun showErrorDrawable() {
           val drawable = AppModuleAndroidUtils.getDrawable(errorDrawableId!!)
 
-          val errorDrawable = BitmapDrawable(
-            AppModuleAndroidUtils.res,
-            drawable.toBitmap()
-          )
+          val errorDrawable = drawable.toBitmap().toDrawable(AppModuleAndroidUtils.res)
 
           errorFunc!!.invoke(errorDrawable)
         }
@@ -144,10 +142,7 @@ class SiteIcon private constructor(
       val siteIcon = SiteIcon(imageLoaderDeprecated)
       val drawable = AppModuleAndroidUtils.getDrawable(drawableId)
 
-      siteIcon.drawable = BitmapDrawable(
-        AppModuleAndroidUtils.res,
-        drawable.toBitmap()
-      )
+      siteIcon.drawable = drawable.toBitmap().toDrawable(AppModuleAndroidUtils.res)
 
       return siteIcon
     }

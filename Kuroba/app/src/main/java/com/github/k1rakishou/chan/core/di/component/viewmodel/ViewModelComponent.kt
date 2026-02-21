@@ -19,6 +19,7 @@ import com.github.k1rakishou.chan.features.setup.boards.composing.ComposeBoardsC
 import com.github.k1rakishou.chan.features.setup.boards.composing.ComposeBoardsSelectorControllerViewModel
 import com.github.k1rakishou.chan.features.setup.boards.composing.CompositeCatalogsSetupControllerViewModel
 import com.github.k1rakishou.chan.features.setup.boards.reorder.BoardsReorderControllerViewModel
+import com.github.k1rakishou.chan.features.setup.boards.selection.BoardSelectionControllerViewModel
 import com.github.k1rakishou.chan.features.site_archive.BoardArchiveViewModel
 import com.github.k1rakishou.chan.features.thread_downloading.LocalArchiveViewModel
 import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloaderSettingsViewModel
@@ -53,6 +54,7 @@ abstract class ViewModelComponent {
   abstract fun inject(albumViewControllerViewModel: AlbumViewControllerViewModel)
   abstract fun inject(addBoardsControllerViewModel: AddBoardsControllerViewModel)
   abstract fun inject(boardsReorderControllerViewModel: BoardsReorderControllerViewModel)
+  abstract fun inject(boardSelectionControllerViewModel: BoardSelectionControllerViewModel)
 
   @Subcomponent.Builder
   interface Builder {

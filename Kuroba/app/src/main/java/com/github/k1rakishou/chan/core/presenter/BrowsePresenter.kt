@@ -96,7 +96,7 @@ class BrowsePresenter @Inject constructor(
     }
 
     controllerScope.launch {
-      compositeCatalogManager.compositeCatalogUpdateEventsFlow
+      compositeCatalogManager.eventsFlow
         .collect { event ->
           if (event !is CompositeCatalogManager.Event.Updated) {
             return@collect

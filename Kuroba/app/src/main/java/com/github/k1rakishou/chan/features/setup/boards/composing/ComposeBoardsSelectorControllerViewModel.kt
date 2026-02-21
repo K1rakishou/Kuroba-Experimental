@@ -10,7 +10,7 @@ import com.github.k1rakishou.chan.core.di.module.shared.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.Site
-import com.github.k1rakishou.chan.features.setup.boards.selection.BoardSelectionPresenter
+import com.github.k1rakishou.chan.features.setup.boards.selection.BoardSelectionControllerViewModel
 import com.github.k1rakishou.chan.features.setup.data.CatalogCellData
 import com.github.k1rakishou.chan.features.setup.data.SiteCellData
 import com.github.k1rakishou.chan.features.setup.data.SiteEnableState
@@ -146,9 +146,9 @@ class ComposeBoardsSelectorControllerViewModel(
     }
 
     val maxBoardsToShow = if (AppModuleAndroidUtils.isTablet) {
-      BoardSelectionPresenter.MAX_CATALOGS_TO_SHOW_IN_SEARCH_MODE_TABLET
+      BoardSelectionControllerViewModel.MAX_CATALOGS_TO_SHOW_IN_SEARCH_MODE_TABLET
     } else {
-      BoardSelectionPresenter.MAX_CATALOGS_TO_SHOW_IN_SEARCH_MODE_PHONE
+      BoardSelectionControllerViewModel.MAX_CATALOGS_TO_SHOW_IN_SEARCH_MODE_PHONE
     }
 
     return sortedBoards.take(maxBoardsToShow)

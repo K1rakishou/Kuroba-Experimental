@@ -1,335 +1,399 @@
 package com.github.k1rakishou.chan.features.setup.boards.selection
 
 import android.content.Context
-import android.widget.FrameLayout
-import androidx.appcompat.widget.AppCompatImageView
-import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.LinearLayoutManager
-import com.airbnb.epoxy.EpoxyController
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.ParagraphStyle
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.Hyphens
+import androidx.compose.ui.text.style.LineBreak
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
-import com.github.k1rakishou.chan.core.manager.BoardManager
-import com.github.k1rakishou.chan.core.manager.CompositeCatalogManager
-import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManager
-import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.features.setup.data.BoardSelectionControllerState
-import com.github.k1rakishou.chan.features.setup.epoxy.selection.EpoxyBoardSelectionGridView
-import com.github.k1rakishou.chan.features.setup.epoxy.selection.epoxyBoardSelectionGridView
-import com.github.k1rakishou.chan.features.setup.epoxy.selection.epoxyBoardSelectionListView
-import com.github.k1rakishou.chan.features.setup.epoxy.selection.epoxySiteSelectionView
-import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
-import com.github.k1rakishou.chan.ui.controller.base.BaseFloatingController
-import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
-import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
-import com.github.k1rakishou.chan.ui.layout.SearchLayout
-import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
-import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
-import com.github.k1rakishou.chan.ui.view.floating_menu.CheckableFloatingListMenuItem
-import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
-import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.chan.core.di.component.controller.ControllerComponent
+import com.github.k1rakishou.chan.features.toolbar.BackArrowMenuItem
+import com.github.k1rakishou.chan.features.toolbar.ToolbarMiddleContent
+import com.github.k1rakishou.chan.features.toolbar.ToolbarText
+import com.github.k1rakishou.chan.ui.compose.SiteIconElement
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeDivider
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeMessage
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextBarButton
+import com.github.k1rakishou.chan.ui.compose.components.KurobaSearchInput
+import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
+import com.github.k1rakishou.chan.ui.compose.copy
+import com.github.k1rakishou.chan.ui.compose.forEachTextValue
+import com.github.k1rakishou.chan.ui.compose.ktu
+import com.github.k1rakishou.chan.ui.compose.lazylist.LazyVerticalGridWithFastScroller
+import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
+import com.github.k1rakishou.chan.ui.compose.providers.LocalWindowSizeClass
+import com.github.k1rakishou.chan.ui.compose.scaffold.NormalLazyListScaffoldBuilder
+import com.github.k1rakishou.chan.ui.compose.snackbar.SnackbarScope
+import com.github.k1rakishou.chan.ui.compose.window.KurobaWindowWidthSizeClass
+import com.github.k1rakishou.chan.ui.controller.base.BaseComposeController
+import com.github.k1rakishou.chan.ui.controller.base.DeprecatedNavigationFlags
+import com.github.k1rakishou.chan.utils.ComposeAnnotatedStringHelper
+import com.github.k1rakishou.chan.utils.ComposeAnnotatedStringHelperImpl
+import com.github.k1rakishou.chan.utils.ViewModelScope
+import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.core_themes.ThemeEngine
-import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
-import com.github.k1rakishou.persist_state.PersistableChanState
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.launch
-import javax.inject.Inject
+import kotlin.math.roundToInt
 
 class BoardSelectionController(
   context: Context,
-  private val currentSiteDescriptor: SiteDescriptor?,
   private val callback: UserSelectionListener
-) : BaseFloatingController(context), BoardSelectionView, ThemeEngine.ThemeChangesListener {
+) : BaseComposeController<BoardSelectionControllerViewModel, BoardSelectionControllerParams>(
+  context = context,
+  viewModelClass = BoardSelectionControllerViewModel::class.java,
+  viewModelParams = BoardSelectionControllerParams()
+) {
+  override val viewModelScope: ViewModelScope
+    get() = ViewModelScope.ControllerScope(this)
 
-  @Inject
-  lateinit var themeEngine: ThemeEngine
-  @Inject
-  lateinit var siteManager: SiteManager
-  @Inject
-  lateinit var boardManager: BoardManager
-  @Inject
-  lateinit var compositeCatalogManager: CompositeCatalogManager
-  @Inject
-  lateinit var currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager
+  override val layoutAnchor: SnackbarScope.LayoutAnchor
+    get() = SnackbarScope.LayoutAnchor.Catalog
 
-  private val presenter by lazy {
-    BoardSelectionPresenter(
-      siteManager = siteManager,
-      boardManager = boardManager,
-      compositeCatalogManager = compositeCatalogManager,
-      currentOpenedDescriptorStateManager = currentOpenedDescriptorStateManager
-    )
-  }
-
-  private val spanCount: Int
-    get() {
-      val screenWidth = AndroidUtils.getDisplaySize(context).x
-      return (screenWidth / GRID_COLUMN_WIDTH).coerceIn(MIN_SPAN_COUNT, MAX_SPAN_COUNT)
-    }
-
-  private val controller = BoardsSelectionEpoxyController()
-
-  private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
-  private lateinit var searchView: SearchLayout
-  private lateinit var outsideArea: FrameLayout
-  private lateinit var openSitesButton: ColorizableBarButton
-  private lateinit var openSettingsButton: AppCompatImageView
-
-  override fun getLayoutId(): Int = R.layout.controller_board_selection
-
-  @Deprecated("All controllers should use controller scope! Switch this controller to injectControllerDependencies")
-  override fun injectActivityDependencies(component: ActivityComponent) {
+  override fun injectControllerDependencies(component: ControllerComponent) {
     component.inject(this)
   }
 
-  override fun onCreate() {
-    super.onCreate()
+  override fun setupNavigation() {
+    updateNavigationFlags(
+      newNavigationFlags = DeprecatedNavigationFlags()
+    )
 
-    epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
-    epoxyRecyclerView.setController(controller)
+    toolbarState.enterDefaultMode(
+      leftItem = BackArrowMenuItem(
+        onClick = { requireNavController().popController() }
+      ),
+      middleContent = ToolbarMiddleContent.Title(
+        title = ToolbarText.String(appResources.string(R.string.controller_board_select_title))
+      )
+    )
+  }
 
-    outsideArea = view.findViewById(R.id.outside_area)
-    searchView = view.findViewById(R.id.search_view)
-    searchView.setAutoRequestFocus(false)
-    openSitesButton = view.findViewById(R.id.open_all_sites_settings)
-    openSettingsButton = view.findViewById(R.id.open_settings_button)
+  @Composable
+  override fun ScreenContent() {
+    val density = LocalDensity.current
+    val windowSizeClass = LocalWindowSizeClass.current
+    val layoutDirection = LocalLayoutDirection.current
 
-    openSitesButton.setOnClickListener {
-      callback.onOpenSitesSettingsClicked()
-      pop()
+    val selectableBoardElements = viewModel.selectableElements
+    val currentlySelectedCatalogDescriptor by viewModel.currentlySelectedCatalogDescriptor.collectAsState()
+    val currentSearchQuery by viewModel.currentSearchQuery
+
+    val searchQueryState = rememberTextFieldState()
+
+    LaunchedEffect(key1 = Unit) {
+      searchQueryState.forEachTextValue { text ->
+        viewModel.onSearchQueryChanged(text.toString())
+      }
     }
 
-    outsideArea.setOnClickListener {
-      pop()
-    }
+    BoxWithConstraints {
+      val spanCount = with(density) {
+        val cellWidth = when (windowSizeClass.widthSizeClass.asKuroba()) {
+          KurobaWindowWidthSizeClass.Compact -> 64.dp
+          KurobaWindowWidthSizeClass.Medium -> 72.dp
+          KurobaWindowWidthSizeClass.Expanded -> 82.dp
+        }
 
-    openSettingsButton.setOnClickListener { showOptions() }
+        val availableWidth = this@BoxWithConstraints.maxWidth.toPx()
+        (availableWidth / cellWidth.toPx()).roundToInt().coerceIn(MIN_SPAN_COUNT, MAX_SPAN_COUNT)
+      }
 
-    controllerScope.launch {
-      startListeningForSearchQueries()
-        .collect { (doneClicked, query) ->
-          if (!doneClicked) {
-            presenter.onSearchQueryChanged(query)
-            return@collect
-          }
+      with(NormalLazyListScaffoldBuilder()) {
+        Content(
+          boxScope = this@BoxWithConstraints,
+          controllerKey = controllerKey,
+          header = {
+            SearchInputHeader(searchQueryState)
+          },
+          body = { paddingValues ->
+            val lazyGridPaddings = remember(key1 = paddingValues, key2 = layoutDirection) {
+              paddingValues
+                .copy(layoutDirection = layoutDirection, start = 8.dp, end = 8.dp)
+            }
 
-          if (currentSiteDescriptor == null) {
-            return@collect
-          }
+            LazyVerticalGridWithFastScroller(
+              modifier = Modifier.fillMaxSize(),
+              columns = GridCells.Fixed(count = spanCount),
+              draggableScrollbar = false,
+              contentPadding = lazyGridPaddings,
+              horizontalArrangement = Arrangement.spacedBy(space = 4.dp),
+              verticalArrangement = Arrangement.spacedBy(space = 4.dp),
+              content = {
+                if (selectableBoardElements.isEmpty()) {
+                  item(
+                    key = "no_boards",
+                    span = { GridItemSpan(maxLineSpan) }
+                  ) {
+                    KurobaComposeMessage(
+                      modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight()
+                        .padding(vertical = 32.dp),
+                      message = stringResource(R.string.controller_board_select_no_boards)
+                    )
+                  }
 
-          val normalizedQuery = query.trim()
-          if (normalizedQuery.isEmpty()) {
-            return@collect
-          }
+                  return@LazyVerticalGridWithFastScroller
+                }
 
-          val catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(
-            boardDescriptor = BoardDescriptor.Companion.create(
-              siteDescriptor = currentSiteDescriptor,
-              boardCode = normalizedQuery
+                selectableBoardElements.forEach { selectableBoardElement ->
+                  when (val element = selectableBoardElement) {
+                    is BoardSelectionControllerViewModel.SelectableElement.SiteHeader -> {
+                      item(
+                        key = element.siteDescriptor,
+                        span = { GridItemSpan(maxLineSpan) }
+                      ) {
+                        HeaderElement(element)
+                      }
+                    }
+                    is BoardSelectionControllerViewModel.SelectableElement.Boards -> {
+                      val boards = element.selectableBoards
+
+                      items(
+                        count = element.selectableBoards.size,
+                        key = { index ->
+                          val selectableBoard = boards.getOrNull(index)
+                            ?: return@items "${element.siteDescriptor}_null"
+
+                          return@items when (val descriptor = selectableBoard.catalogDescriptor) {
+                            is ChanDescriptor.CatalogDescriptor -> descriptor.boardDescriptor.userReadableString()
+                            is ChanDescriptor.CompositeCatalogDescriptor -> {
+                              "CompositeCatalog_${descriptor.userReadableString()}"
+                            }
+                          }
+                        },
+                        span = { index ->
+                          val selectableBoard = boards.getOrNull(index)
+
+                          val span = if (selectableBoard?.catalogDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+                            spanCount / 2
+                          } else {
+                            1
+                          }
+
+                          return@items GridItemSpan(span)
+                        },
+                        itemContent = { index ->
+                          val selectableBoard = boards.getOrNull(index)
+                            ?: return@items
+
+                          SelectableBoardElement(
+                            selectableBoard = selectableBoard,
+                            isCurrentlySelectedCatalog =
+                              selectableBoard.catalogDescriptor == currentlySelectedCatalogDescriptor,
+                            searchQuery = currentSearchQuery
+                          )
+                        }
+                      )
+                    }
+                  }
+                }
+              }
             )
-          )
-
-          callback.onCatalogSelected(catalogDescriptor)
-          pop()
-        }
-    }
-
-    compositeDisposable.add(
-      presenter.listenForStateChanges()
-        .subscribe { state -> onStateChanged(state) }
-    )
-
-    themeEngine.addListener(this)
-    presenter.onCreate(this)
-
-    updateRecyclerLayoutMode()
-    onThemeChanged()
-  }
-
-  private fun showOptions() {
-    val drawerOptions = mutableListOf<FloatingListMenuItem>()
-
-    drawerOptions += CheckableFloatingListMenuItem(
-      key = ACTION_TOGGLE_LAYOUT_MODE,
-      name = AppModuleAndroidUtils.getString(R.string.board_selection_controller_grid_layout_mode),
-      checked = PersistableChanState.boardSelectionGridMode.get()
-    )
-
-    val floatingListMenuController = FloatingListMenuController(
-      context = context,
-      constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
-      items = drawerOptions,
-      itemClickListener = { item -> onDrawerOptionClicked(item) }
-    )
-
-    presentController(floatingListMenuController)
-  }
-
-  private fun onDrawerOptionClicked(item: FloatingListMenuItem) {
-    when (item.key) {
-      ACTION_TOGGLE_LAYOUT_MODE -> {
-        PersistableChanState.boardSelectionGridMode.toggle()
-        updateRecyclerLayoutMode()
+          },
+          footer = null
+        )
       }
     }
   }
 
-  private fun updateRecyclerLayoutMode() {
-    val isGridMode = PersistableChanState.boardSelectionGridMode.get()
-    if (isGridMode) {
-      epoxyRecyclerView.layoutManager = GridLayoutManager(context, spanCount).apply {
-        spanSizeLookup = controller.spanSizeLookup
+  @Composable
+  private fun SearchInputHeader(searchQueryState: TextFieldState) {
+    val chanTheme = LocalChanTheme.current
+
+    Row(
+      modifier = Modifier
+        .fillMaxWidth()
+        .background(chanTheme.backColorCompose),
+      verticalAlignment = Alignment.CenterVertically
+    ) {
+      val kurobaSearchInputColor = if (ThemeEngine.isDarkColor(chanTheme.backColorCompose)) {
+        Color.White
+      } else {
+        Color.Black
       }
 
-      presenter.reloadBoards()
-      return
+      KurobaSearchInput(
+        modifier = Modifier
+          .weight(1f)
+          .wrapContentHeight()
+          .padding(vertical = 8.dp),
+        displayClearButton = true,
+        color = kurobaSearchInputColor,
+        searchQueryState = searchQueryState
+      )
+
+      Spacer(modifier = Modifier.width(16.dp))
+
+      KurobaComposeTextBarButton(
+        text = stringResource(R.string.controller_board_go_to_sites),
+        onClick = { callback.onOpenSitesSettingsClicked() }
+      )
+
+      Spacer(modifier = Modifier.width(8.dp))
     }
-
-    epoxyRecyclerView.layoutManager = LinearLayoutManager(context)
-    presenter.reloadBoards()
   }
 
-  override fun onDestroy() {
-    super.onDestroy()
-
-    epoxyRecyclerView.clear()
-    presenter.onDestroy()
-    themeEngine.removeListener(this)
+  @Composable
+  private fun HeaderElement(
+    siteHeader: BoardSelectionControllerViewModel.SelectableElement.SiteHeader
+  ) {
+    Row(
+      modifier = Modifier
+        .fillMaxWidth()
+        .kurobaClickable(
+          bounded = true,
+          onClick = { callback.onSiteSelected(siteHeader.siteDescriptor) }
+        )
+        .padding(vertical = 8.dp),
+      verticalAlignment = Alignment.CenterVertically
+    ) {
+      Spacer(modifier = Modifier.width(8.dp))
+      Box(modifier = Modifier.size(42.dp)) {
+        SiteIconElement(siteDescriptor = siteHeader.siteDescriptor)
+      }
+      Spacer(modifier = Modifier.width(8.dp))
+      KurobaComposeText(text = siteHeader.name)
+      Spacer(modifier = Modifier.width(8.dp))
+      KurobaComposeDivider(modifier = Modifier.weight(1f))
+    }
   }
 
-  override fun onThemeChanged() {
-    openSettingsButton.setImageDrawable(
-      themeEngine.tintDrawable(context, R.drawable.ic_more_vert_white_24dp)
-    )
-  }
+  @Composable
+  private fun SelectableBoardElement(
+    selectableBoard: BoardSelectionControllerViewModel.SelectableBoard,
+    isCurrentlySelectedCatalog: Boolean,
+    searchQuery: String
+  ) {
+    val chanTheme = LocalChanTheme.current
 
-  private fun onStateChanged(state: BoardSelectionControllerState) {
-    controller.callback = {
-      when (state) {
-        BoardSelectionControllerState.Empty -> {
-          epoxyTextView {
-            id("boards_selection_empty_text_view")
-            message(context.getString(R.string.controller_boards_selection_no_boards))
+    Column(
+      modifier = Modifier
+        .fillMaxWidth()
+        .height(IntrinsicSize.Max)
+        .drawBehind {
+          if (isCurrentlySelectedCatalog) {
+            drawRect(color = chanTheme.postHighlightedColorCompose)
           }
         }
-        is BoardSelectionControllerState.Error -> {
-          epoxyErrorView {
-            id("boards_selection_error_view")
-            errorMessage(state.errorText)
+        .kurobaClickable(
+          bounded = true,
+          onClick = {
+            callback.onCatalogSelected(selectableBoard.catalogDescriptor)
+            requireNavController().popController()
           }
-        }
-        is BoardSelectionControllerState.Data -> {
-          state.sortedSiteWithBoardsData.entries.forEach { (siteCellData, boardCellDataList) ->
-            epoxySiteSelectionView {
-              id("boards_selection_site_selection_view_${siteCellData.siteDescriptor}")
-              bindIcon(siteCellData.siteIcon)
-              bindSiteName(siteCellData.siteName)
-              bindRowClickCallback {
-                callback.onSiteSelected(siteCellData.siteDescriptor)
-                pop()
-              }
-            }
+        )
+        .padding(all = 4.dp),
+      horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+      run {
+        val header = remember(
+          selectableBoard.header,
+          searchQuery,
+          chanTheme.textColorPrimaryCompose,
+          chanTheme.accentColorCompose
+        ) {
+          buildAnnotatedString {
+            pushStyle(SpanStyle(color = chanTheme.textColorPrimaryCompose))
+            append(selectableBoard.header)
 
-            val gridMode = PersistableChanState.boardSelectionGridMode.get()
+            with(ComposeAnnotatedStringHelperImpl()) {
+              val textMark = ComposeAnnotatedStringHelper.TextMark(
+                pattern = searchQuery,
+                backgroundColor = chanTheme.accentColorCompose,
+                textColor = ThemeEngine.resolveTextColor(chanTheme.accentColorCompose)
+              )
 
-            boardCellDataList.forEach { boardCellData ->
-              val topTitle = when (boardCellData.catalogDescriptor) {
-                is ChanDescriptor.CatalogDescriptor -> boardCellData.boardCodeFormatted
-                is ChanDescriptor.CompositeCatalogDescriptor -> boardCellData.boardName
-              }
-
-              val bottomTitle = when (boardCellData.catalogDescriptor) {
-                is ChanDescriptor.CatalogDescriptor -> boardCellData.boardName
-                is ChanDescriptor.CompositeCatalogDescriptor -> boardCellData.boardCodeFormatted
-              }
-
-              if (gridMode) {
-                epoxyBoardSelectionGridView {
-                  id("boards_selection_board_selection_grid_view_${boardCellData.catalogDescriptor}")
-                  topTitle(topTitle)
-                  bottomTitle(bottomTitle)
-                  catalogDescriptor(boardCellData.catalogDescriptor)
-                  searchQuery(boardCellData.searchQuery)
-                  selected(state.currentlySelected == boardCellData.catalogDescriptor)
-                  clickListener {
-                    callback.onCatalogSelected(boardCellData.catalogDescriptor)
-                    pop()
-                  }
-                }
-              } else {
-                epoxyBoardSelectionListView {
-                  id("boards_selection_board_selection_list_view_${boardCellData.catalogDescriptor}")
-                  topTitle(topTitle)
-                  bottomTitle(bottomTitle)
-                  catalogDescriptor(boardCellData.catalogDescriptor)
-                  searchQuery(boardCellData.searchQuery)
-                  selected(state.currentlySelected == boardCellData.catalogDescriptor)
-                  clickListener {
-                    callback.onCatalogSelected(boardCellData.catalogDescriptor)
-                    pop()
-                  }
-                }
-              }
+              markText(
+                text = selectableBoard.header,
+                textMarks = listOf(textMark)
+              )
             }
           }
         }
+
+        KurobaComposeText(
+          text = header,
+          fontSize = 14.ktu,
+          maxLines = 1,
+          overflow = TextOverflow.Ellipsis,
+          color = chanTheme.textColorPrimaryCompose,
+          textAlign = TextAlign.Center
+        )
       }
-    }
 
-    controller.requestModelBuild()
-  }
+      if (selectableBoard.description.isNotNullNorBlank()) {
+        val description = remember(
+          selectableBoard.description,
+          searchQuery,
+          chanTheme.textColorSecondaryCompose,
+          chanTheme.accentColorCompose
+        ) {
+          buildAnnotatedString {
+            pushStyle(SpanStyle(color = chanTheme.textColorSecondaryCompose))
+            pushStyle(ParagraphStyle(lineBreak = LineBreak.Paragraph, hyphens = Hyphens.Auto))
+            append(selectableBoard.description)
 
-  @OptIn(ExperimentalCoroutinesApi::class)
-  private fun startListeningForSearchQueries(): Flow<Pair<Boolean, String>> {
-    return callbackFlow<Pair<Boolean, String>> {
-      searchView.setCallback(false, true, object : SearchLayout.SearchLayoutCallback {
-        override fun onSearchEntered(input: String?) {
-          if (input != null) {
-            trySend(false to input)
+            with(ComposeAnnotatedStringHelperImpl()) {
+              val textMark = ComposeAnnotatedStringHelper.TextMark(
+                pattern = searchQuery,
+                backgroundColor = chanTheme.accentColorCompose,
+                textColor = ThemeEngine.resolveTextColor(chanTheme.accentColorCompose)
+              )
+
+              markText(
+                text = selectableBoard.description,
+                textMarks = listOf(textMark)
+              )
+            }
           }
         }
 
-        override fun onDoneClicked(input: String?) {
-          if (input != null) {
-            trySend(true to input)
-          }
-        }
-      })
-
-      awaitClose()
-    }
-  }
-
-  private class BoardsSelectionEpoxyController : EpoxyController() {
-    private val spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
-      override fun getSpanSize(position: Int): Int {
-        val model = adapter.getModelAtPosition(position)
-
-        if (model is EpoxyBoardSelectionGridView) {
-          if (model.catalogDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
-            return spanCount / 2
-          } else {
-            return 1
-          }
-        }
-
-        return spanCount
+        KurobaComposeText(
+          text = description,
+          fontSize = 11.ktu,
+          maxLines = 4,
+          overflow = TextOverflow.Ellipsis,
+          textAlign = TextAlign.Center
+        )
       }
-    }
-
-    var callback: EpoxyController.() -> Unit = {}
-
-    override fun buildModels() {
-      callback(this)
-    }
-
-    override fun getSpanSizeLookup(): GridLayoutManager.SpanSizeLookup {
-      return spanSizeLookup
     }
   }
 
@@ -340,12 +404,8 @@ class BoardSelectionController(
   }
 
   companion object {
-    private const val ACTION_TOGGLE_LAYOUT_MODE = 0
-
     private const val MIN_SPAN_COUNT = 2
     private const val MAX_SPAN_COUNT = 10
-
-    private val GRID_COLUMN_WIDTH = AppModuleAndroidUtils.dp(64f)
   }
 
 }

@@ -74,9 +74,6 @@ import com.github.k1rakishou.chan.features.settings.screens.delegate.ExportBacku
 import com.github.k1rakishou.chan.features.setup.boards.composing.ComposeBoardsController
 import com.github.k1rakishou.chan.features.setup.boards.composing.ComposeBoardsSelectorController
 import com.github.k1rakishou.chan.features.setup.boards.composing.CompositeCatalogsSetupController
-import com.github.k1rakishou.chan.features.setup.boards.selection.BoardSelectionController
-import com.github.k1rakishou.chan.features.setup.epoxy.selection.BaseBoardSelectionViewHolder
-import com.github.k1rakishou.chan.features.setup.epoxy.selection.EpoxySiteSelectionView
 import com.github.k1rakishou.chan.features.setup.epoxy.site.EpoxySiteView
 import com.github.k1rakishou.chan.features.setup.site.settings.SiteSettingsController
 import com.github.k1rakishou.chan.features.setup.site.setup.SitesSetupController
@@ -216,7 +213,6 @@ interface ActivityComponent : ActivityDependencies {
   fun inject(controller: Controller)
   fun inject(addOrEditBooruController: AddOrEditBooruController)
   fun inject(boardArchiveController: BoardArchiveController)
-  fun inject(boardSelectionController: BoardSelectionController)
   fun inject(browseController: BrowseController)
   fun inject(mainController: MainController)
   fun inject(filtersController: FiltersController)
@@ -321,8 +317,6 @@ interface ActivityComponent : ActivityDependencies {
   fun inject(epoxyLinkSetting: EpoxyLinkSetting)
   fun inject(epoxyNoSettingsFoundView: EpoxyNoSettingsFoundView)
   fun inject(epoxySettingsGroupTitle: EpoxySettingsGroupTitle)
-  fun inject(baseBoardSelectionViewHolder: BaseBoardSelectionViewHolder)
-  fun inject(epoxySiteSelectionView: EpoxySiteSelectionView)
   fun inject(epoxySiteView: EpoxySiteView)
   fun inject(epoxyDividerView: EpoxyDividerView)
   fun inject(epoxyErrorView: EpoxyErrorView)
