@@ -71,15 +71,12 @@ import com.github.k1rakishou.chan.features.settings.epoxy.EpoxyNoSettingsFoundVi
 import com.github.k1rakishou.chan.features.settings.epoxy.EpoxySettingsGroupTitle
 import com.github.k1rakishou.chan.features.settings.screens.delegate.ExportBackupOptionsController
 import com.github.k1rakishou.chan.features.setup.BoardSelectionController
-import com.github.k1rakishou.chan.features.setup.BoardsSetupController
 import com.github.k1rakishou.chan.features.setup.ComposeBoardsController
 import com.github.k1rakishou.chan.features.setup.ComposeBoardsSelectorController
 import com.github.k1rakishou.chan.features.setup.CompositeCatalogsSetupController
 import com.github.k1rakishou.chan.features.setup.CookieCaptchaInputController
 import com.github.k1rakishou.chan.features.setup.SiteSettingsController
 import com.github.k1rakishou.chan.features.setup.SitesSetupController
-import com.github.k1rakishou.chan.features.setup.epoxy.EpoxyBoardView
-import com.github.k1rakishou.chan.features.setup.epoxy.EpoxySelectableBoardView
 import com.github.k1rakishou.chan.features.setup.epoxy.selection.BaseBoardSelectionViewHolder
 import com.github.k1rakishou.chan.features.setup.epoxy.selection.EpoxySiteSelectionView
 import com.github.k1rakishou.chan.features.setup.epoxy.site.EpoxySiteView
@@ -110,7 +107,6 @@ import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
 import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailView
 import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailViewWrapper
 import com.github.k1rakishou.chan.ui.compose.ThreadSearchNavigationButtonsView
-import com.github.k1rakishou.chan.ui.compose.bottom_panel.KurobaComposeIconPanel
 import com.github.k1rakishou.chan.ui.compose.lazylist.ScrollbarView
 import com.github.k1rakishou.chan.ui.controller.BrowseController
 import com.github.k1rakishou.chan.ui.controller.CaptchaContainerController
@@ -247,7 +243,6 @@ interface ActivityComponent : ActivityDependencies {
   fun inject(proxySetupController: ProxySetupController)
   fun inject(globalSearchController: GlobalSearchController)
   fun inject(searchResultsController: SearchResultsController)
-  fun inject(boardsSetupController: BoardsSetupController)
   fun inject(mainSettingsControllerV2: MainSettingsControllerV2)
   fun inject(siteSettingsController: SiteSettingsController)
   fun inject(reportIssueController: ReportIssueController)
@@ -326,8 +321,6 @@ interface ActivityComponent : ActivityDependencies {
   fun inject(epoxyLinkSetting: EpoxyLinkSetting)
   fun inject(epoxyNoSettingsFoundView: EpoxyNoSettingsFoundView)
   fun inject(epoxySettingsGroupTitle: EpoxySettingsGroupTitle)
-  fun inject(epoxyBoardView: EpoxyBoardView)
-  fun inject(epoxySelectableBoardView: EpoxySelectableBoardView)
   fun inject(baseBoardSelectionViewHolder: BaseBoardSelectionViewHolder)
   fun inject(epoxySiteSelectionView: EpoxySiteSelectionView)
   fun inject(epoxySiteView: EpoxySiteView)
@@ -403,7 +396,6 @@ interface ActivityComponent : ActivityDependencies {
   fun inject(chan4CaptchaLayout: Chan4CaptchaLayout)
   fun inject(lynxchanCaptchaLayout: LynxchanCaptchaLayout)
   fun inject(mrSkeletonLayout: MrSkeletonLayout)
-  fun inject(kurobaComposeIconPanel: KurobaComposeIconPanel)
   fun inject(floatingControllerLinearContainer: FloatingControllerLinearContainer)
   fun inject(floatingControllerFrameContainer: FloatingControllerFrameContainer)
   fun inject(replyLayoutView: ReplyLayoutView)

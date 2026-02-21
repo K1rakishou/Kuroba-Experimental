@@ -38,7 +38,7 @@ import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeClickableIc
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
-import com.github.k1rakishou.chan.ui.controller.BaseFloatingComposeController
+import com.github.k1rakishou.chan.ui.controller.base.BaseFloatingComposeController
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isNotNullNorBlank

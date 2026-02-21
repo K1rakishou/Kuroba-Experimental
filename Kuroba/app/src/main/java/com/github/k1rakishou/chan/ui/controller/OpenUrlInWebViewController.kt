@@ -13,6 +13,7 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.site.SiteResolver
+import com.github.k1rakishou.chan.ui.controller.base.BaseFloatingController
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.CookieBuilder
 import com.github.k1rakishou.common.resumeValueSafe

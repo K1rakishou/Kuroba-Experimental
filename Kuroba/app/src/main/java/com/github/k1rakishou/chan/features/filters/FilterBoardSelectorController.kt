@@ -61,7 +61,7 @@ import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.search.SimpleSearchStateV2
 import com.github.k1rakishou.chan.ui.compose.search.rememberSimpleSearchStateV2
 import com.github.k1rakishou.chan.ui.compose.textAsFlow
-import com.github.k1rakishou.chan.ui.controller.BaseFloatingComposeController
+import com.github.k1rakishou.chan.ui.controller.base.BaseFloatingComposeController
 import com.github.k1rakishou.chan.utils.InputWithQuerySorter
 import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.core_themes.ChanTheme

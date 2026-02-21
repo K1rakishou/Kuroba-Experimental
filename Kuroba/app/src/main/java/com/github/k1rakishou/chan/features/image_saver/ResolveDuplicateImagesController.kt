@@ -17,7 +17,7 @@ import com.github.k1rakishou.chan.features.image_saver.epoxy.ServerImage
 import com.github.k1rakishou.chan.features.image_saver.epoxy.epoxyDuplicateImageView
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity
-import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
+import com.github.k1rakishou.chan.ui.controller.base.BaseFloatingController
 import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView

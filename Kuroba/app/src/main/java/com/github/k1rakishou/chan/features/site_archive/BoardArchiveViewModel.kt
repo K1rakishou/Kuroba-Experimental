@@ -6,8 +6,8 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
-import com.github.k1rakishou.chan.core.base.BaseViewModel
-import com.github.k1rakishou.chan.core.compose.AsyncData
+import com.github.k1rakishou.chan.core.base.viewmodel.KurobaViewModel
+import com.github.k1rakishou.chan.core.compose.AsyncUiData
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.shared.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.SeenPostsManager
@@ -26,9 +26,9 @@ class BoardArchiveViewModel(
   private val savedStateHandle: SavedStateHandle,
   private val siteManager: SiteManager,
   private val seenPostsManager: SeenPostsManager
-) : BaseViewModel() {
-  private var _state = mutableStateOf<AsyncData<Unit>>(AsyncData.NotInitialized)
-  val state: State<AsyncData<Unit>>
+) : KurobaViewModel() {
+  private var _state = mutableStateOf<AsyncUiData<Unit>>(AsyncUiData.NotInitialized)
+  val state: State<AsyncUiData<Unit>>
     get() = _state
 
   private var _archiveThreads = mutableStateListOf<ArchiveThread>()
@@ -79,11 +79,11 @@ class BoardArchiveViewModel(
   }
 
   private suspend fun loadPageOfArchiveThreads() {
-    if (_endReached.value || _state.value is AsyncData.Loading) {
+    if (_endReached.value || _state.value is AsyncUiData.Loading) {
       return
     }
 
-    _state.value = AsyncData.Loading
+    _state.value = AsyncUiData.Loading
     Logger.d(TAG, "loadPageOfArchiveThreads() catalogDescriptor: ${catalogDescriptor} page: ${page.value}")
 
     val nativeArchivePostListResult = siteManager.bySiteDescriptorAndActive(catalogDescriptor.siteDescriptor())
@@ -92,7 +92,7 @@ class BoardArchiveViewModel(
 
     if (_archiveThreads.isEmpty() && nativeArchivePostListResult == null) {
       val exception = ArchiveNotSupportedException(catalogDescriptor.boardCode())
-      _state.value = AsyncData.Error(exception)
+      _state.value = AsyncUiData.Error(exception)
       return
     }
 
@@ -101,11 +101,11 @@ class BoardArchiveViewModel(
 
       if (error is BadStatusResponseException && error.status == 404) {
         val exception = ArchiveNotSupportedException(catalogDescriptor.boardCode())
-        _state.value = AsyncData.Error(exception)
+        _state.value = AsyncUiData.Error(exception)
         return
       }
 
-      _state.value = AsyncData.Error(error)
+      _state.value = AsyncUiData.Error(error)
       return
     } else {
       nativeArchivePostListResult?.valueOrNull() ?: NativeArchivePostList()
@@ -170,7 +170,7 @@ class BoardArchiveViewModel(
 
     _page.value = nativeArchivePostList.nextPage
     _archiveThreads.addAll(archiveThreads)
-    _state.value = AsyncData.Data(Unit)
+    _state.value = AsyncUiData.UiData(Unit)
   }
 
   fun updatePrevLazyListState(firstVisibleItemIndex: Int, firstVisibleItemScrollOffset: Int) {

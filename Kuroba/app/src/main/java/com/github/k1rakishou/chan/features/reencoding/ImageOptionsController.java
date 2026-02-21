@@ -18,7 +18,7 @@ import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
 import com.github.k1rakishou.chan.features.create_sound_media.CreateSoundMediaController;
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity;
-import com.github.k1rakishou.chan.ui.controller.BaseFloatingController;
+import com.github.k1rakishou.chan.ui.controller.base.BaseFloatingController;
 import com.github.k1rakishou.chan.ui.helper.AppResources;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton;

@@ -54,7 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.graphics.scale
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheFileType
-import com.github.k1rakishou.chan.core.compose.AsyncData
+import com.github.k1rakishou.chan.core.compose.AsyncUiData
 import com.github.k1rakishou.chan.core.concurrency.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.image.ImageLoaderDeprecated
@@ -209,18 +209,18 @@ class DvachCaptchaLayout(
       val captchaInfoAsync by viewModel.captchaInfoToShow
 
       when (captchaInfoAsync) {
-        AsyncData.NotInitialized-> {
+        AsyncUiData.NotInitialized-> {
           // no-op
         }
-        AsyncData.Loading -> {
+        AsyncUiData.Loading -> {
           KurobaComposeProgressIndicator(
             modifier = Modifier
               .fillMaxWidth()
               .height(300.dp)
           )
         }
-        is AsyncData.Error -> {
-          val error = (captchaInfoAsync as AsyncData.Error).throwable
+        is AsyncUiData.Error -> {
+          val error = (captchaInfoAsync as AsyncUiData.Error).throwable
           KurobaComposeErrorMessage(
             error = error,
             modifier = Modifier
@@ -228,8 +228,8 @@ class DvachCaptchaLayout(
               .height(300.dp)
           )
         }
-        is AsyncData.Data -> {
-          when (val captchaInfo = (captchaInfoAsync as AsyncData.Data).data) {
+        is AsyncUiData.UiData -> {
+          when (val captchaInfo = (captchaInfoAsync as AsyncUiData.UiData).data) {
             is DvachCaptchaLayoutViewModel.CaptchaInfo.Puzzle -> {
               PuzzleBasedCaptchaImage(captchaInfo)
             }
@@ -245,7 +245,7 @@ class DvachCaptchaLayout(
 
       Spacer(modifier = Modifier.height(16.dp))
 
-      when (val captchaInfo = (captchaInfoAsync as? AsyncData.Data)?.data) {
+      when (val captchaInfo = (captchaInfoAsync as? AsyncUiData.UiData)?.data) {
         is DvachCaptchaLayoutViewModel.CaptchaInfo.Puzzle -> {
           CaptchaPuzzleBasedFooter(
             viewModel = viewModel,

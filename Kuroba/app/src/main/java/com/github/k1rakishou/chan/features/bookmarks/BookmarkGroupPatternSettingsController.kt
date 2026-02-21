@@ -44,8 +44,8 @@ import com.github.k1rakishou.chan.ui.compose.consumeClicks
 import com.github.k1rakishou.chan.ui.compose.lazylist.LazyColumnWithFastScroller
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.scaffold.FloatingLazyListScaffoldBuilder
-import com.github.k1rakishou.chan.ui.controller.BaseFloatingComposeController
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
+import com.github.k1rakishou.chan.ui.controller.base.BaseFloatingComposeController
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.ui.view.floating_menu.HeaderFloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString

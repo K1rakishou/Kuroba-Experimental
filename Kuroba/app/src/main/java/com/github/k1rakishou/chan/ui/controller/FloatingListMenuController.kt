@@ -6,6 +6,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.updateLayoutParams
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
+import com.github.k1rakishou.chan.ui.controller.base.BaseFloatingController
 import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBias
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenu
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem

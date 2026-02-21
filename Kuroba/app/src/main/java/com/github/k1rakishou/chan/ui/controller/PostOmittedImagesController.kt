@@ -34,6 +34,7 @@ import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeCard
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
 import com.github.k1rakishou.chan.ui.compose.ktu
+import com.github.k1rakishou.chan.ui.controller.base.BaseFloatingComposeController
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.model.data.post.ChanPostImage

@@ -70,8 +70,8 @@ import com.github.k1rakishou.chan.ui.compose.components.kurobaClickable
 import com.github.k1rakishou.chan.ui.compose.consumeClicks
 import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
-import com.github.k1rakishou.chan.ui.controller.BaseFloatingComposeController
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
+import com.github.k1rakishou.chan.ui.controller.base.BaseFloatingComposeController
 import com.github.k1rakishou.chan.ui.theme.DropdownArrowPainter
 import com.github.k1rakishou.chan.ui.view.ColorPickerView
 import com.github.k1rakishou.chan.ui.view.floating_menu.CheckableFloatingListMenuItem

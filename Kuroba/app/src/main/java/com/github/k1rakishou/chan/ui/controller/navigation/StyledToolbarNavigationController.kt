@@ -21,11 +21,6 @@ class StyledToolbarNavigationController(context: Context) : ToolbarNavigationCon
   private lateinit var toolbar: KurobaToolbarView
   private lateinit var bottomMenuPanel: BottomMenuPanel
 
-  override val isBottomPanelShown: Boolean
-    get() = bottomMenuPanel.isBottomPanelShown
-  override val bottomPanelHeight: Int
-    get() = bottomMenuPanel.totalHeight()
-
   private val mainController: MainController?
     get() {
       if (parentController is MainController) {
@@ -157,10 +152,6 @@ class StyledToolbarNavigationController(context: Context) : ToolbarNavigationCon
       val mainController = mainController
       mainController?.onNavigationItemDrawerInfoUpdated(to.hasDrawer)
     }
-  }
-
-  override fun onBottomPanelStateChanged(func: (BottomMenuPanel.State) -> Unit) {
-    bottomMenuPanel.onBottomPanelStateChanged(func)
   }
 
   override fun showBottomPanel(controllerKey: ControllerKey, items: List<BottomMenuPanelItem>) {

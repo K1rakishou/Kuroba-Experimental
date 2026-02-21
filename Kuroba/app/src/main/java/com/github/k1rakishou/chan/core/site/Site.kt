@@ -9,7 +9,6 @@ import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
-import kotlinx.coroutines.Job
 
 interface Site {
   val isSynthetic: Boolean
@@ -45,7 +44,7 @@ interface Site {
   fun enabled(): Boolean
   fun initialize()
   fun postInitialize()
-  fun loadBoardInfo(callback: ((ModularResult<SiteBoards>) -> Unit)? = null): Job?
+  suspend fun loadBoardInfo(): ModularResult<SiteBoards>
   fun name(): String
   fun siteDescriptor(): SiteDescriptor
   fun icon(): SiteIcon

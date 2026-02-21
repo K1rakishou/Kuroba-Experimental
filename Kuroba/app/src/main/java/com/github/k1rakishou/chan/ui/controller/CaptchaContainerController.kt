@@ -20,6 +20,7 @@ import com.github.k1rakishou.chan.ui.captcha.dvach.DvachCaptchaLayout
 import com.github.k1rakishou.chan.ui.captcha.lynxchan.LynxchanCaptchaLayout
 import com.github.k1rakishou.chan.ui.captcha.v1.CaptchaNojsLayoutV1
 import com.github.k1rakishou.chan.ui.captcha.v2.CaptchaNoJsLayoutV2
+import com.github.k1rakishou.chan.ui.controller.base.BaseFloatingController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.core_logger.Logger

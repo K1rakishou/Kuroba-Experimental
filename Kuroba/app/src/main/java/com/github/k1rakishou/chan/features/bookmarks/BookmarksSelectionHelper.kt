@@ -25,8 +25,8 @@ class BookmarksSelectionHelper(
     )
 
     itemsList += BottomMenuPanelItem(
-      BookmarksMenuItemId(BookmarksMenuItemType.Delete),
-      R.drawable.ic_reorder_white_24dp,
+      BookmarksMenuItemId(BookmarksMenuItemType.Reorder),
+      R.drawable.ic_drag_handle_list_white_24dp,
       R.string.bottom_menu_item_reorder,
       { bookmarkMenuItemClickListener.onMenuItemClicked(BookmarksMenuItemType.Reorder, selectedItems.toList()) }
     )

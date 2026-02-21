@@ -30,7 +30,7 @@ import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextFieldV2
 import com.github.k1rakishou.chan.ui.compose.components.KurobaLabelText
 import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
-import com.github.k1rakishou.chan.ui.controller.BaseFloatingComposeController
+import com.github.k1rakishou.chan.ui.controller.base.BaseFloatingComposeController
 import com.github.k1rakishou.common.KurobaCookie
 
 class CookieCaptchaInputController(

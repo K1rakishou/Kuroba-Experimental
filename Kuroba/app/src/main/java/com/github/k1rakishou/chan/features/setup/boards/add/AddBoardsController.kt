@@ -29,7 +29,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.compose.AsyncData
+import com.github.k1rakishou.chan.core.compose.AsyncUiData
 import com.github.k1rakishou.chan.core.di.component.controller.ControllerComponent
 import com.github.k1rakishou.chan.features.toolbar.BackArrowMenuItem
 import com.github.k1rakishou.chan.features.toolbar.ToolbarMiddleContent
@@ -72,8 +72,8 @@ class AddBoardsController(
   override val viewModelScope: ViewModelScope
     get() = ViewModelScope.ControllerScope(this)
 
-  override val snackbarScope: SnackbarScope
-    get() = SnackbarScope.Album(mainLayoutAnchor = SnackbarScope.MainLayoutAnchor.Catalog)
+  override val layoutAnchor: SnackbarScope.LayoutAnchor
+    get() = SnackbarScope.LayoutAnchor.Catalog
 
   override fun injectControllerDependencies(component: ControllerComponent) {
     component.inject(this)
@@ -103,15 +103,15 @@ class AddBoardsController(
     ) {
       val chanTheme = LocalChanTheme.current
 
-      val uiStateMut by controllerViewModel.uiState
+      val uiStateMut by viewModel.uiState
       val uiState = uiStateMut
 
-      val boardsForSelection = controllerViewModel.boardsForSelection
-      val checkedBoards = controllerViewModel.checkedBoards
-      val processing by controllerViewModel.processing
-      val currentSearchQuery by controllerViewModel.currentSearchQuery
-      val totalBoardsCount by controllerViewModel.totalBoardsCount
-      val totalMatchedBySearchQueryCount by controllerViewModel.totalMatchedBySearchQueryCount
+      val boardsForSelection = viewModel.boardsForSelection
+      val checkedBoards = viewModel.checkedBoards
+      val processing by viewModel.processing
+      val currentSearchQuery by viewModel.currentSearchQuery
+      val totalBoardsCount by viewModel.totalBoardsCount
+      val totalMatchedBySearchQueryCount by viewModel.totalMatchedBySearchQueryCount
 
       val lazyListState = rememberLazyListState()
       val searchQueryState = rememberTextFieldState()
@@ -120,12 +120,12 @@ class AddBoardsController(
 
       LaunchedEffect(key1 = Unit) {
         searchQueryState.forEachTextValue { text ->
-          controllerViewModel.onSearchQueryUpdated(text.toString())
+          viewModel.onSearchQueryUpdated(text.toString())
         }
       }
 
       LaunchedEffect(key1 = Unit) {
-        controllerViewModel.resetScrollEventFlow
+        viewModel.resetScrollEventFlow
           .collectLatest {
             try {
               awaitFrame()
@@ -173,10 +173,10 @@ class AddBoardsController(
                 contentPadding = paddings
               ) {
                 when (uiState) {
-                  AsyncData.NotInitialized -> {
+                  AsyncUiData.NotInitialized -> {
                     return@LazyColumnWithFastScroller
                   }
-                  AsyncData.Loading -> {
+                  AsyncUiData.Loading -> {
                     item(key = "progress_indicator") {
                       KurobaComposeProgressIndicator(
                         modifier = Modifier.fillParentMaxSize()
@@ -185,7 +185,7 @@ class AddBoardsController(
 
                     return@LazyColumnWithFastScroller
                   }
-                  is AsyncData.Error -> {
+                  is AsyncUiData.Error -> {
                     item(key = "error_message") {
                       KurobaComposeErrorMessage(
                         modifier = Modifier.fillParentMaxSize(),
@@ -195,7 +195,7 @@ class AddBoardsController(
 
                     return@LazyColumnWithFastScroller
                   }
-                  is AsyncData.Data<*> -> {
+                  is AsyncUiData.UiData<*> -> {
                     // no-op
                   }
                 }
@@ -243,7 +243,7 @@ class AddBoardsController(
                       checked = boardForSelection.boardDescriptor in checkedBoards,
                       boardForSelection = boardForSelection,
                       onCheckChanged = { boardDescriptor, check ->
-                        controllerViewModel.onBoardCheckStateChanged(boardDescriptor, check)
+                        viewModel.onBoardCheckStateChanged(boardDescriptor, check)
                       }
                     )
                   }
@@ -256,7 +256,7 @@ class AddBoardsController(
                 fontSize = 18.ktu,
                 enabled = !processing,
                 onClick = {
-                  controllerViewModel.toggleAll()
+                  viewModel.toggleAll()
                 }
               )
 
@@ -269,7 +269,7 @@ class AddBoardsController(
                   enabled = !processing,
                   onClick = {
                     if (checkedBoards.size < maxDisplayedBoards) {
-                      controllerViewModel.activateCheckedBoards(
+                      viewModel.activateCheckedBoards(
                         onDone = { closeScreen() }
                       )
                       return@Button
@@ -288,7 +288,7 @@ class AddBoardsController(
                       negativeButtonText = appResources.string(R.string.no),
                       positiveButtonText = appResources.string(R.string.yes),
                       onPositiveButtonClickListener = {
-                        controllerViewModel.activateCheckedBoards(
+                        viewModel.activateCheckedBoards(
                           onDone = { closeScreen() }
                         )
                       }

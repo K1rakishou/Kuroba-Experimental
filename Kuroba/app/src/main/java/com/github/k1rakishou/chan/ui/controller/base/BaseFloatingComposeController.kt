@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.ui.controller
+package com.github.k1rakishou.chan.ui.controller.base
 
 import android.content.Context
 import androidx.compose.foundation.clickable
@@ -28,7 +28,6 @@ import com.github.k1rakishou.chan.ui.compose.providers.LocalWindowInsets
 import com.github.k1rakishou.chan.ui.compose.providers.LocalWindowSizeClass
 import com.github.k1rakishou.chan.ui.compose.window.KurobaWindowWidthSizeClass
 import com.github.k1rakishou.chan.ui.compose.window.WindowWidthSizeClass
-import com.github.k1rakishou.chan.ui.controller.base.Controller
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.core_themes.ThemeEngine
 import javax.inject.Inject

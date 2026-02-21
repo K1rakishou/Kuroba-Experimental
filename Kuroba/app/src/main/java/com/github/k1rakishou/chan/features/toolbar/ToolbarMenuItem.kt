@@ -183,7 +183,7 @@ class BackArrowMenuItem(onClick: (ToolbarMenuItem) -> Unit) : ToolbarMenuItem(
 )
 
 class HamburgMenuItem(onClick: (ToolbarMenuItem) -> Unit) : ToolbarMenuItem(
-  drawableId = R.drawable.ic_reorder_white_24dp,
+  drawableId = R.drawable.ic_hamburg_white_24,
   onClick = onClick
 )
 

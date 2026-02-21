@@ -3292,7 +3292,7 @@
     <ID>PackageName:ImageSearchControllerViewModel.kt$package com.github.k1rakishou.chan.features.remote_image_search</ID>
     <ID>PackageName:ImageSearchInstance.kt$package com.github.k1rakishou.chan.features.remote_image_search</ID>
     <ID>PackageName:ImageSearchResult.kt$package com.github.k1rakishou.chan.features.remote_image_search</ID>
-    <ID>PackageName:KurobaComposeIconPanel.kt$package com.github.k1rakishou.chan.ui.compose.bottom_panel</ID>
+    <ID>PackageName:KurobaComposeIconPanel.kt$package com.github.k1rakishou.chan.ui.compose.panel</ID>
     <ID>PackageName:LinkInfoRequest.kt$package com.github.k1rakishou.chan.core.loader.impl.post_comment</ID>
     <ID>PackageName:LocalArchiveController.kt$package com.github.k1rakishou.chan.features.thread_downloading</ID>
     <ID>PackageName:LocalArchiveViewModel.kt$package com.github.k1rakishou.chan.features.thread_downloading</ID>
@@ -3398,7 +3398,7 @@
     <ID>PackageNaming:ImageSearchControllerViewModel.kt$package com.github.k1rakishou.chan.features.remote_image_search</ID>
     <ID>PackageNaming:ImageSearchInstance.kt$package com.github.k1rakishou.chan.features.remote_image_search</ID>
     <ID>PackageNaming:ImageSearchResult.kt$package com.github.k1rakishou.chan.features.remote_image_search</ID>
-    <ID>PackageNaming:KurobaComposeIconPanel.kt$package com.github.k1rakishou.chan.ui.compose.bottom_panel</ID>
+    <ID>PackageNaming:KurobaComposeIconPanel.kt$package com.github.k1rakishou.chan.ui.compose.panel</ID>
     <ID>PackageNaming:LinkInfoRequest.kt$package com.github.k1rakishou.chan.core.loader.impl.post_comment</ID>
     <ID>PackageNaming:LocalArchiveController.kt$package com.github.k1rakishou.chan.features.thread_downloading</ID>
     <ID>PackageNaming:LocalArchiveViewModel.kt$package com.github.k1rakishou.chan.features.thread_downloading</ID>

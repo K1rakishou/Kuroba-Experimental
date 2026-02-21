@@ -8,9 +8,9 @@ import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
-import com.github.k1rakishou.chan.core.compose.AsyncData
+import com.github.k1rakishou.chan.core.base.viewmodel.KurobaViewModel
+import com.github.k1rakishou.chan.core.compose.AsyncUiData
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.shared.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.SiteManager
@@ -59,10 +59,10 @@ class LynxchanCaptchaLayoutViewModel(
   private val proxiedOkHttpClient: ProxiedOkHttpClient,
   private val siteManager: SiteManager,
   private val moshi: Moshi,
-) : BaseViewModel() {
+) : KurobaViewModel() {
 
-  private val _captchaInfoToShow = mutableStateOf<AsyncData<LynxchanCaptchaFull>>(AsyncData.NotInitialized)
-  val captchaInfoToShow: State<AsyncData<LynxchanCaptchaFull>>
+  private val _captchaInfoToShow = mutableStateOf<AsyncUiData<LynxchanCaptchaFull>>(AsyncUiData.NotInitialized)
+  val captchaInfoToShow: State<AsyncUiData<LynxchanCaptchaFull>>
     get() = _captchaInfoToShow
   private val _hashCashInfoToShow = mutableStateOf<HashCashInfo?>(null)
   val hashCashInfoToShow: State<HashCashInfo?>
@@ -81,7 +81,7 @@ class LynxchanCaptchaLayoutViewModel(
   override suspend fun onViewModelReady() {}
 
   fun resetCaptchaForced() {
-    _captchaInfoToShow.value = AsyncData.NotInitialized
+    _captchaInfoToShow.value = AsyncUiData.NotInitialized
   }
 
   fun cleanup() {
@@ -95,14 +95,14 @@ class LynxchanCaptchaLayoutViewModel(
     resetCaptchaCookies: Boolean
   ) {
     if (lynxchanCaptcha == null) {
-      _captchaInfoToShow.value = AsyncData.Error(LynxchanCaptchaError("lynxchanCaptcha is null"))
+      _captchaInfoToShow.value = AsyncUiData.Error(LynxchanCaptchaError("lynxchanCaptcha is null"))
       return
     }
 
     _activeRequestCaptchaJob?.cancel()
     _activeRequestCaptchaJob = viewModelScope.launch(Dispatchers.IO) {
       try {
-        _captchaInfoToShow.value = AsyncData.Loading
+        _captchaInfoToShow.value = AsyncUiData.Loading
         _hashCashInfoToShow.value = null
         _captchaBlock.value = null
         currentInputValue.value = ""
@@ -134,10 +134,10 @@ class LynxchanCaptchaLayoutViewModel(
         )
 
         site.captchaIdCookie.set(lynxchanCaptchaFull.captchaInfo.kurobaCookie)
-        _captchaInfoToShow.value = AsyncData.Data(lynxchanCaptchaFull)
+        _captchaInfoToShow.value = AsyncUiData.UiData(lynxchanCaptchaFull)
       } catch (error: Throwable) {
         Logger.error(TAG, error) { "Failed to load captcha for ${chanDescriptor}" }
-        _captchaInfoToShow.value = AsyncData.Error(error)
+        _captchaInfoToShow.value = AsyncUiData.Error(error)
       }
     }
   }
@@ -209,7 +209,7 @@ class LynxchanCaptchaLayoutViewModel(
           }
 
           if (blockBypassStatus.isHashcash) {
-            val lynxchanCaptchaFull = (_captchaInfoToShow.value as? AsyncData.Data)?.data
+            val lynxchanCaptchaFull = (_captchaInfoToShow.value as? AsyncUiData.UiData)?.data
             if (lynxchanCaptchaFull == null) {
               return@Try VerifyCaptchaResult.Failure
             }

@@ -5,7 +5,6 @@ import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.chan.core.manager.PostHideManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.sites.Sushichan
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
 import com.github.k1rakishou.chan.core.site.sites.chan420.Chan420
@@ -269,17 +268,21 @@ class KurobaSettingsImportUseCase(
         "siteManager.bySiteDescriptor returned null for $siteDescriptor"
       }
 
-      loadBoardInfoSuspend(site).safeUnwrap { error ->
-        Logger.e(TAG, "Failed to load board info for site ${siteDescriptor}", error)
-        return@mapNotNull null
-      }
+      site.loadBoardInfo()
+        .mapValue { Unit }
+        .safeUnwrap { error ->
+          Logger.e(TAG, "Failed to load board info for site ${siteDescriptor}", error)
+          return@mapNotNull null
+        }
 
       Logger.d(TAG, "activateSitesAndLoadBoardInfo() loaded boards for $siteDescriptor")
       return@mapNotNull siteDescriptor
     }.toSet()
   }
 
-  private fun JsonReader.readBookmarks(siteIdMap: Map<Int, Int>, func: (BookmarksManager.SimpleThreadBookmark) -> Unit) {
+  private fun JsonReader.readBookmarks(
+    siteIdMap: Map<Int, Int>, func: (BookmarksManager.SimpleThreadBookmark
+      ) -> Unit) {
     jsonArray {
       while (hasNext()) {
         jsonObject {
@@ -691,14 +694,6 @@ class KurobaSettingsImportUseCase(
         }
 
         continuation.resume(Unit)
-      }
-    }
-  }
-
-  private suspend fun loadBoardInfoSuspend(site: Site): ModularResult<Unit> {
-    return suspendCoroutine { continuation ->
-      site.loadBoardInfo { result ->
-        continuation.resume(result.mapValue { Unit })
       }
     }
   }

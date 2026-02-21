@@ -2,7 +2,7 @@ package com.github.k1rakishou.chan.features.thread_downloading
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
-import com.github.k1rakishou.chan.core.base.BaseViewModel
+import com.github.k1rakishou.chan.core.base.viewmodel.KurobaViewModel
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.shared.ViewModelAssistedFactory
 import com.github.k1rakishou.persist_state.PersistableChanState
@@ -11,7 +11,7 @@ import javax.inject.Inject
 
 class ThreadDownloaderSettingsViewModel(
   private val savedStateHandle: SavedStateHandle,
-) : BaseViewModel() {
+) : KurobaViewModel() {
 
   private val threadDownloaderOptions = PersistableChanState.threadDownloaderOptions.get()
 

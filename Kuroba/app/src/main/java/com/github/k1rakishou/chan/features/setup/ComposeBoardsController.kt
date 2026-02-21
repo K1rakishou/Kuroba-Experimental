@@ -38,6 +38,7 @@ import com.github.k1rakishou.chan.ui.compose.image.ImageLoaderRequestData
 import com.github.k1rakishou.chan.ui.compose.image.KurobaComposeImage
 import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.lazylist.LazyColumnWithFastScroller
+import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.reorder.ReorderableItem
 import com.github.k1rakishou.chan.ui.compose.reorder.ReorderableLazyListState
 import com.github.k1rakishou.chan.ui.compose.reorder.detectReorder
@@ -45,7 +46,7 @@ import com.github.k1rakishou.chan.ui.compose.reorder.rememberReorderableLazyList
 import com.github.k1rakishou.chan.ui.compose.reorder.reorderable
 import com.github.k1rakishou.chan.ui.compose.scaffold.FloatingLazyListScaffoldBuilder
 import com.github.k1rakishou.chan.ui.compose.scaffold.LazyListScaffoldShared
-import com.github.k1rakishou.chan.ui.controller.BaseFloatingComposeController
+import com.github.k1rakishou.chan.ui.controller.base.BaseFloatingComposeController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.common.ModularResult
@@ -262,6 +263,8 @@ class ComposeBoardsController(
     onAddOrReplaceBoardClicked: (Int) -> Unit,
     removeBoardClicked: (Int) -> Unit
   ) {
+    val chanTheme = LocalChanTheme.current
+
     val onAddOrReplaceBoardClickedRemembered = rememberUpdatedState(newValue = onAddOrReplaceBoardClicked)
     val removeBoardClickedRemembered = rememberUpdatedState(newValue = removeBoardClicked)
 
@@ -278,7 +281,8 @@ class ComposeBoardsController(
             bounded = true,
             onClick = { onAddOrReplaceBoardClickedRemembered.value.invoke(id) }
           ),
-        isDragging = isDragging
+        isDragging = isDragging,
+        backgroundColor = chanTheme.backColorSecondaryCompose
       ) {
         Box(modifier = Modifier.fillMaxSize()) {
           when (catalogCompositionSlot) {

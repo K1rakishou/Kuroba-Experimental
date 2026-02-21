@@ -26,7 +26,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.compose.AsyncData
+import com.github.k1rakishou.chan.core.compose.AsyncUiData
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.features.toolbar.BackArrowMenuItem
@@ -209,7 +209,7 @@ class BoardArchiveController(
       draggableScrollbar = true
     ) {
       if (searchResults.isEmpty()) {
-        if (boardArchiveControllerState is AsyncData.Error) {
+        if (boardArchiveControllerState is AsyncUiData.Error) {
           item {
             KurobaComposeErrorMessage(
               modifier = Modifier.fillParentMaxSize(),
@@ -220,7 +220,7 @@ class BoardArchiveController(
           return@LazyColumnWithFastScroller
         }
 
-        if (boardArchiveControllerState is AsyncData.Loading) {
+        if (boardArchiveControllerState is AsyncUiData.Loading) {
           item {
             KurobaComposeProgressIndicator(modifier = Modifier.fillParentMaxSize())
           }
@@ -276,10 +276,10 @@ class BoardArchiveController(
     hasResults: Boolean,
     endReached: Boolean,
     page: Int?,
-    boardArchiveControllerState: AsyncData<Unit>,
+    boardArchiveControllerState: AsyncUiData<Unit>,
     viewModel: BoardArchiveViewModel
   ) {
-    if (boardArchiveControllerState is AsyncData.NotInitialized) {
+    if (boardArchiveControllerState is AsyncUiData.NotInitialized) {
       return
     }
 
@@ -288,7 +288,7 @@ class BoardArchiveController(
       .wrapContentHeight()
       .padding(horizontal = 8.dp, vertical = 12.dp)
 
-    if (boardArchiveControllerState is AsyncData.Error) {
+    if (boardArchiveControllerState is AsyncUiData.Error) {
       KurobaComposeErrorMessage(
         modifier = modifier,
         error = boardArchiveControllerState.throwable
@@ -297,12 +297,12 @@ class BoardArchiveController(
       return
     }
 
-    if (boardArchiveControllerState is AsyncData.Loading) {
+    if (boardArchiveControllerState is AsyncUiData.Loading) {
       KurobaComposeProgressIndicator(modifier = modifier)
       return
     }
 
-    boardArchiveControllerState as AsyncData.Data
+    boardArchiveControllerState as AsyncUiData.UiData
 
     if (!hasResults) {
       if (!resultsFromSearch || searchQuery == null) {

@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.map
 interface IBottomPanelGlobalState {
   interface Readable {
     val controllersHoldingBottomPanel: StateFlow<Set<ControllerKey>>
+    val bottomPanelWidth: StateFlow<Dp>
     val bottomPanelHeight: StateFlow<Dp>
     val bottomPanelHeightDp: Dp
 
@@ -21,6 +22,7 @@ interface IBottomPanelGlobalState {
   }
 
   interface Writeable {
+    fun onBottomPanelWidthKnown(width: Dp)
     fun onBottomPanelHeightKnown(height: Dp)
     fun onBottomPanelShown(controllerKey: ControllerKey)
     fun onBottomPanelHidden(controllerKey: ControllerKey)
@@ -31,6 +33,10 @@ class BottomPanelGlobalState : IBottomPanelGlobalState.Readable, IBottomPanelGlo
   private val _controllersHoldingBottomPanel = MutableStateFlow<Set<ControllerKey>>(emptySet())
   override val controllersHoldingBottomPanel: StateFlow<Set<ControllerKey>>
     get() = _controllersHoldingBottomPanel.asStateFlow()
+
+  private val _bottomPanelWidth = MutableStateFlow<Dp>(0.dp)
+  override val bottomPanelWidth: StateFlow<Dp>
+    get() = _bottomPanelWidth.asStateFlow()
 
   private val _bottomPanelHeight = MutableStateFlow<Dp>(0.dp)
   override val bottomPanelHeight: StateFlow<Dp>
@@ -47,6 +53,10 @@ class BottomPanelGlobalState : IBottomPanelGlobalState.Readable, IBottomPanelGlo
     return _controllersHoldingBottomPanel
       .map { controllerKeys -> controllerKey in controllerKeys }
       .distinctUntilChanged()
+  }
+
+  override fun onBottomPanelWidthKnown(width: Dp) {
+    _bottomPanelWidth.value = width
   }
 
   override fun onBottomPanelHeightKnown(height: Dp) {

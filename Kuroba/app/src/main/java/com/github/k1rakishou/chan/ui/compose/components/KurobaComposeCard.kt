@@ -42,16 +42,17 @@ fun KurobaComposeCard(
 fun KurobaComposeDraggableElementContainer(
   modifier: Modifier,
   isDragging: Boolean,
+  backgroundColor: Color = LocalChanTheme.current.backColorCompose,
+  draggingBackgroundColor: Color = LocalChanTheme.current.selectedOnBackColor,
   content: @Composable () -> Unit
 ) {
-  val chanTheme = LocalChanTheme.current
   val density = LocalDensity.current
 
-  val backgroundColor = animateColorAsState(
+  val backgroundColorAnimated = animateColorAsState(
     targetValue = if (isDragging) {
-      chanTheme.selectedOnBackColor
+      draggingBackgroundColor
     } else {
-      chanTheme.backColorSecondaryCompose
+      backgroundColor
     }
   )
 
@@ -63,13 +64,13 @@ fun KurobaComposeDraggableElementContainer(
         Modifier.drawBehind {
           drawRoundRect(
             cornerRadius = cornerRadius,
-            color = chanTheme.backColorSecondaryCompose
+            color = backgroundColor
           )
 
-          if (chanTheme.backColorCompose != backgroundColor.value) {
+          if (backgroundColor != backgroundColorAnimated.value) {
             drawRoundRect(
               cornerRadius = cornerRadius,
-              color = backgroundColor.value.copy(alpha = 0.5f)
+              color = backgroundColorAnimated.value.copy(alpha = 0.5f)
             )
           }
         }

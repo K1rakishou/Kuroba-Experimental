@@ -22,7 +22,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.compose.AsyncData
+import com.github.k1rakishou.chan.core.compose.AsyncUiData
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.image.ImageLoaderDeprecated
 import com.github.k1rakishou.chan.features.toolbar.BackArrowMenuItem
@@ -38,6 +38,7 @@ import com.github.k1rakishou.chan.ui.compose.image.ImageLoaderRequestData
 import com.github.k1rakishou.chan.ui.compose.image.KurobaComposeImage
 import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.LocalContentPaddings
+import com.github.k1rakishou.chan.ui.compose.snackbar.SnackbarScope
 import com.github.k1rakishou.chan.ui.controller.base.BaseComposeController
 import com.github.k1rakishou.chan.ui.controller.base.DeprecatedNavigationFlags
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
@@ -58,6 +59,8 @@ class CreateSoundMediaController(
   lateinit var imageLoaderDeprecated: ImageLoaderDeprecated
   @Inject
   lateinit var fileChooser: FileChooser
+
+  override val layoutAnchor: SnackbarScope.LayoutAnchor? = null
 
   override fun injectActivityDependencies(component: ActivityComponent) {
     component.inject(this)
@@ -83,9 +86,9 @@ class CreateSoundMediaController(
   override fun ScreenContent() {
     val contentPadding = LocalContentPaddings.current
 
-    val attachments = controllerViewModel.attachments
-    val processingAttachments = controllerViewModel.processingAttachments
-    val selectedFiles = controllerViewModel.selectedFiles
+    val attachments = viewModel.attachments
+    val processingAttachments = viewModel.processingAttachments
+    val selectedFiles = viewModel.selectedFiles
 
     val paddingValues = remember(key1 = contentPadding) {
       contentPadding.asPaddingValues(controllerKey)
@@ -104,7 +107,7 @@ class CreateSoundMediaController(
         count = attachments.size,
         itemContent = { index ->
           val attachment = attachments[index]
-          val processingAttachment = processingAttachments[attachment.fileUUID] ?: AsyncData.NotInitialized
+          val processingAttachment = processingAttachments[attachment.fileUUID] ?: AsyncUiData.NotInitialized
 
           Attachment(
             attachment = attachment,
@@ -126,7 +129,7 @@ class CreateSoundMediaController(
   private fun Attachment(
     attachment: CreateSoundMediaControllerViewModel.Attachment,
     canRetryOnError: Boolean,
-    processingAttachment: AsyncData<Unit>,
+    processingAttachment: AsyncUiData<Unit>,
     createSoundMedia: (CreateSoundMediaControllerViewModel.Attachment, checkMediaHasSound: Boolean) -> Unit
   ) {
     val request = remember(attachment.imagePath) {
@@ -142,7 +145,7 @@ class CreateSoundMediaController(
         .fillMaxWidth()
         .height(256.dp)
         .kurobaClickable(
-          enabled = processingAttachment !is AsyncData.Loading,
+          enabled = processingAttachment !is AsyncUiData.Loading,
           bounded = true,
           onClick = { createSoundMedia(attachment, true) }
         )
@@ -177,7 +180,7 @@ class CreateSoundMediaController(
         canRetryOnError = canRetryOnError,
         retryCreatingSoundMedia = { createSoundMedia(attachment, false) },
         cancelCreatingSoundMedia = {
-          controllerViewModel.cancelCreatingSoundMedia(attachment)
+          viewModel.cancelCreatingSoundMedia(attachment)
           showToast(R.string.create_sound_media_controller_creation_canceled)
         }
       )
@@ -186,7 +189,7 @@ class CreateSoundMediaController(
 
   @Composable
   private fun AttachmentOverlay(
-    processingAttachment: AsyncData<Unit>,
+    processingAttachment: AsyncUiData<Unit>,
     canRetryOnError: Boolean,
     retryCreatingSoundMedia: () -> Unit,
     cancelCreatingSoundMedia: () -> Unit,
@@ -202,8 +205,8 @@ class CreateSoundMediaController(
           )
           .fillMaxSize()
           .drawBehind {
-              val drawDimmedBackground = processingAttachment is AsyncData.Loading
-                || (processingAttachment is AsyncData.Error && canRetryOnError)
+              val drawDimmedBackground = processingAttachment is AsyncUiData.Loading
+                || (processingAttachment is AsyncUiData.Error && canRetryOnError)
 
               if (drawDimmedBackground) {
                   drawRect(color = bgColor)
@@ -211,11 +214,11 @@ class CreateSoundMediaController(
           }
     ) {
       when (processingAttachment) {
-        AsyncData.NotInitialized -> {
+        AsyncUiData.NotInitialized -> {
           // no-op
         }
 
-        AsyncData.Loading -> {
+        AsyncUiData.Loading -> {
           Box(
             modifier = Modifier
                 .size(42.dp)
@@ -235,7 +238,7 @@ class CreateSoundMediaController(
           }
         }
 
-        is AsyncData.Error -> {
+        is AsyncUiData.Error -> {
           if (canRetryOnError) {
             KurobaComposeIcon(
               modifier = Modifier
@@ -247,7 +250,7 @@ class CreateSoundMediaController(
           }
         }
 
-        is AsyncData.Data -> {
+        is AsyncUiData.UiData -> {
           // no-op
         }
       }
@@ -255,12 +258,12 @@ class CreateSoundMediaController(
   }
 
   private fun Modifier.customClickModifier(
-    processingAttachment: AsyncData<Unit>,
+    processingAttachment: AsyncUiData<Unit>,
     retryCreatingSoundMedia: () -> Unit,
     cancelCreatingSoundMedia: () -> Unit,
   ): Modifier {
     return when (processingAttachment) {
-      is AsyncData.Loading -> {
+      is AsyncUiData.Loading -> {
         this.then(
           Modifier.kurobaClickable(
             bounded = true,
@@ -269,7 +272,7 @@ class CreateSoundMediaController(
         )
       }
 
-      is AsyncData.Error -> {
+      is AsyncUiData.Error -> {
         this.then(
           Modifier.kurobaClickable(
             bounded = true,
@@ -286,7 +289,7 @@ class CreateSoundMediaController(
     clickedAttachment: CreateSoundMediaControllerViewModel.Attachment,
     checkMediaHasSound: Boolean = true
   ) {
-    if (checkMediaHasSound && controllerViewModel.checkMediaAlreadyHasSoundAttached(clickedAttachment)) {
+    if (checkMediaHasSound && viewModel.checkMediaAlreadyHasSoundAttached(clickedAttachment)) {
       dialogFactory.createSimpleConfirmationDialog(
         context = context,
         titleTextId = R.string.create_sound_media_controller_media_already_has_sound_dialog_title,
@@ -297,7 +300,7 @@ class CreateSoundMediaController(
       return
     }
 
-    controllerViewModel.tryToCreateSoundMedia(
+    viewModel.tryToCreateSoundMedia(
       fileChooser = fileChooser,
       clickedAttachment = clickedAttachment,
       showErrorToast = { error ->

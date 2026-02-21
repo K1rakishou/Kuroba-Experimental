@@ -22,6 +22,7 @@ import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.cache.CacheFileType;
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
 import com.github.k1rakishou.chan.core.image.ImageLoaderDeprecated;
+import com.github.k1rakishou.chan.ui.controller.base.BaseFloatingController;
 import com.github.k1rakishou.chan.ui.helper.AppResources;
 import com.github.k1rakishou.chan.ui.helper.RemovedPostsHelper;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton;

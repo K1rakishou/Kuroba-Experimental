@@ -54,7 +54,7 @@ import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.BaseSelectionHelper
 import com.github.k1rakishou.chan.core.cache.CacheFileType
-import com.github.k1rakishou.chan.core.compose.AsyncData
+import com.github.k1rakishou.chan.core.compose.AsyncUiData
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
 import com.github.k1rakishou.chan.core.image.ImageLoaderDeprecated
@@ -246,15 +246,15 @@ class LocalArchiveController(
     val state by viewModel.state.collectAsState()
 
     val threadDownloadViews = when (val asyncData = state.threadDownloadsAsync) {
-      AsyncData.NotInitialized -> return
-      AsyncData.Loading -> {
+      AsyncUiData.NotInitialized -> return
+      AsyncUiData.Loading -> {
         KurobaComposeProgressIndicator(
           modifier = Modifier.fillMaxSize()
         )
 
         return
       }
-      is AsyncData.Error -> {
+      is AsyncUiData.Error -> {
         KurobaComposeErrorMessage(
           modifier = Modifier.fillMaxSize(),
           error = asyncData.throwable
@@ -262,7 +262,7 @@ class LocalArchiveController(
 
         return
       }
-      is AsyncData.Data -> asyncData.data
+      is AsyncUiData.UiData -> asyncData.data
     }
 
     BuildThreadDownloadsList(
@@ -909,7 +909,7 @@ class LocalArchiveController(
 
   private fun enterSelectionModeOrUpdate() {
     val selectedItemsCount = viewModel.viewModelSelectionHelper.selectedItemsCount()
-    val totalItemsCount = (viewModel.state.value.threadDownloadsAsync as? AsyncData.Data)?.data?.size ?: 0
+    val totalItemsCount = (viewModel.state.value.threadDownloadsAsync as? AsyncUiData.UiData)?.data?.size ?: 0
 
     if (!toolbarState.isInSelectionMode()) {
       toolbarState.enterSelectionMode(

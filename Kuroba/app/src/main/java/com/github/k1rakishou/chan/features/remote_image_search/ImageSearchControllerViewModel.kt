@@ -7,8 +7,8 @@ import androidx.compose.runtime.snapshots.Snapshot
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.base.BaseViewModel
-import com.github.k1rakishou.chan.core.compose.AsyncData
+import com.github.k1rakishou.chan.core.base.viewmodel.KurobaViewModel
+import com.github.k1rakishou.chan.core.compose.AsyncUiData
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.shared.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.usecase.SearxImageSearchUseCase
@@ -37,7 +37,7 @@ class ImageSearchControllerViewModel(
   private val savedStateHandle: SavedStateHandle,
   private val searxImageSearchUseCase: SearxImageSearchUseCase,
   private val yandexImageSearchUseCase: YandexImageSearchUseCase,
-) : BaseViewModel() {
+) : KurobaViewModel() {
 
   private val _lastUsedSearchInstance = mutableStateOf<ImageSearchInstanceType?>(null)
   val lastUsedSearchInstance: State<ImageSearchInstanceType?>
@@ -47,8 +47,8 @@ class ImageSearchControllerViewModel(
   val searchInstances: Map<ImageSearchInstanceType, ImageSearchInstance>
     get() = _searchInstances
 
-  private val _searchResults = mutableStateMapOf<ImageSearchInstanceType, AsyncData<ImageResults>>()
-  val searchResults: Map<ImageSearchInstanceType, AsyncData<ImageResults>>
+  private val _searchResults = mutableStateMapOf<ImageSearchInstanceType, AsyncUiData<ImageResults>>()
+  val searchResults: Map<ImageSearchInstanceType, AsyncUiData<ImageResults>>
     get() = _searchResults
 
   private val _solvingCaptcha = MutableStateFlow<HttpUrl?>(null)
@@ -114,7 +114,7 @@ class ImageSearchControllerViewModel(
     val newQuery = searchQuery.value
 
     val searchResults = _searchResults[newImageSearchInstanceType]
-    if ((searchResults !is AsyncData.Data || prevQuery != newQuery) && newQuery.isNotEmpty() && baseUrlFromSettings != null) {
+    if ((searchResults !is AsyncUiData.UiData || prevQuery != newQuery) && newQuery.isNotEmpty() && baseUrlFromSettings != null) {
       onSearchQueryChanged(newQuery)
     }
 
@@ -179,7 +179,7 @@ class ImageSearchControllerViewModel(
     val imageSearchInstance = getCurrentSearchInstance()
       ?: return
 
-    _searchResults[imageSearchInstance.type] = AsyncData.Loading
+    _searchResults[imageSearchInstance.type] = AsyncUiData.Loading
     imageSearchInstance.updateCurrentPage(0)
     imageSearchInstance.updateLazyListState(
       firstVisibleItemIndex = 0,
@@ -223,7 +223,7 @@ class ImageSearchControllerViewModel(
       currentImageSearchInstance.updateSearchQuery(query)
 
       if (query.isEmpty()) {
-        _searchResults[currentImageSearchInstance.type] = AsyncData.NotInitialized
+        _searchResults[currentImageSearchInstance.type] = AsyncUiData.NotInitialized
         return@launch
       }
 
@@ -260,7 +260,7 @@ class ImageSearchControllerViewModel(
           return@launch
         }
 
-        _searchResults[currentImageSearchInstance.type] = AsyncData.Error(error)
+        _searchResults[currentImageSearchInstance.type] = AsyncUiData.Error(error)
         return@launch
       } else {
         foundImagesResult as ModularResult.Value
@@ -269,16 +269,16 @@ class ImageSearchControllerViewModel(
 
       Logger.d(TAG, "search() got ${newFoundImages.size} results")
 
-      val prevImageResults = (_searchResults[currentImageSearchInstance.type] as? AsyncData.Data)?.data
+      val prevImageResults = (_searchResults[currentImageSearchInstance.type] as? AsyncUiData.UiData)?.data
       _searchResults[currentImageSearchInstance.type] = when {
         prevImageResults == null -> {
-          AsyncData.Data(ImageResults(newFoundImages))
+          AsyncUiData.UiData(ImageResults(newFoundImages))
         }
         newFoundImages.isNotEmpty() -> {
-          AsyncData.Data(prevImageResults.append(newFoundImages))
+          AsyncUiData.UiData(prevImageResults.append(newFoundImages))
         }
         else -> {
-          AsyncData.Data(prevImageResults.endReached())
+          AsyncUiData.UiData(prevImageResults.endReached())
         }
       }
     }

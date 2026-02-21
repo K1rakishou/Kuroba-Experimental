@@ -497,6 +497,12 @@ class KurobaToolbarState(
     }
   }
 
+  fun popIfInState(toolbarStateKind: ToolbarStateKind, withAnimation: Boolean = true) {
+    if (topToolbar?.kind == toolbarStateKind) {
+      pop(withAnimation)
+    }
+  }
+
   fun pop(withAnimation: Boolean = true): Boolean {
     if (_toolbarList.size <= 1) {
       return false

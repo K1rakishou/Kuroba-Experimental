@@ -5,9 +5,9 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.base.ViewModelSelectionHelper
-import com.github.k1rakishou.chan.core.compose.AsyncData
+import com.github.k1rakishou.chan.core.base.viewmodel.KurobaViewModel
+import com.github.k1rakishou.chan.core.compose.AsyncUiData
 import com.github.k1rakishou.chan.core.concurrency.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.shared.ViewModelAssistedFactory
@@ -37,7 +37,7 @@ class SavedPostsViewModel(
   private val savedStateHandle: SavedStateHandle,
   private val savedReplyManager: SavedReplyManager,
   private val themeEngine: ThemeEngine
-) : BaseViewModel() {
+) : KurobaViewModel() {
   private val _myPostsViewModelState = MutableStateFlow(MyPostsViewModelState())
   val myPostsViewModelState: StateFlow<MyPostsViewModelState>
     get() = _myPostsViewModelState.asStateFlow()
@@ -75,11 +75,11 @@ class SavedPostsViewModel(
         .collect { reloadSavedReplies() }
     }
 
-    _myPostsViewModelState.updateState { copy(savedRepliesGroupedAsync = AsyncData.Loading) }
+    _myPostsViewModelState.updateState { copy(savedRepliesGroupedAsync = AsyncUiData.Loading) }
 
     val result = savedReplyManager.loadAll()
     if (result.isError()) {
-      _myPostsViewModelState.updateState { copy(savedRepliesGroupedAsync = AsyncData.Error(result.unwrapError())) }
+      _myPostsViewModelState.updateState { copy(savedRepliesGroupedAsync = AsyncUiData.Error(result.unwrapError())) }
       return
     }
 
@@ -93,7 +93,7 @@ class SavedPostsViewModel(
   }
 
   fun toggleGroupSelection(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
-    val savedRepliesGrouped = (myPostsViewModelState.value.savedRepliesGroupedAsync as? AsyncData.Data)?.data
+    val savedRepliesGrouped = (myPostsViewModelState.value.savedRepliesGroupedAsync as? AsyncUiData.UiData)?.data
     if (savedRepliesGrouped == null) {
       return
     }
@@ -128,11 +128,11 @@ class SavedPostsViewModel(
 
   private suspend fun reloadSavedReplies() {
     withContext(Dispatchers.Default) {
-      _myPostsViewModelState.updateState { copy(savedRepliesGroupedAsync = AsyncData.Loading) }
+      _myPostsViewModelState.updateState { copy(savedRepliesGroupedAsync = AsyncUiData.Loading) }
 
       val allSavedReplies = savedReplyManager.getAll()
       if (allSavedReplies.isEmpty()) {
-        _myPostsViewModelState.updateState { copy(savedRepliesGroupedAsync = AsyncData.Data(emptyList())) }
+        _myPostsViewModelState.updateState { copy(savedRepliesGroupedAsync = AsyncUiData.UiData(emptyList())) }
         return@withContext
       }
 
@@ -171,7 +171,7 @@ class SavedPostsViewModel(
         }
 
       _myPostsViewModelState.updateState {
-        copy(savedRepliesGroupedAsync = AsyncData.Data(groupedSavedReplies))
+        copy(savedRepliesGroupedAsync = AsyncUiData.UiData(groupedSavedReplies))
       }
     }
   }
@@ -281,7 +281,7 @@ class SavedPostsViewModel(
   }
 
   data class MyPostsViewModelState(
-    val savedRepliesGroupedAsync: AsyncData<List<GroupedSavedReplies>> = AsyncData.NotInitialized
+    val savedRepliesGroupedAsync: AsyncUiData<List<GroupedSavedReplies>> = AsyncUiData.NotInitialized
   )
 
   data class GroupedSavedReplies(

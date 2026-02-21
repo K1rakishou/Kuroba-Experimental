@@ -3,8 +3,8 @@ package com.github.k1rakishou.chan.features.report_posts
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
-import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.base.viewmodel.KurobaViewModel
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.shared.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.SiteManager
@@ -30,7 +30,7 @@ class Chan4ReportPostControllerViewModel(
   private val savedStateHandle: SavedStateHandle,
   private val okHttpClient: ProxiedOkHttpClient,
   private val siteManager: SiteManager,
-) : BaseViewModel() {
+) : KurobaViewModel() {
 
   private val cache = ConcurrentHashMap<BoardDescriptor, List<ReportCategory>>()
 

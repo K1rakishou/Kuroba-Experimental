@@ -17,8 +17,8 @@ import com.github.k1rakishou.chan.features.setup.epoxy.selection.EpoxyBoardSelec
 import com.github.k1rakishou.chan.features.setup.epoxy.selection.epoxyBoardSelectionGridView
 import com.github.k1rakishou.chan.features.setup.epoxy.selection.epoxyBoardSelectionListView
 import com.github.k1rakishou.chan.features.setup.epoxy.selection.epoxySiteSelectionView
-import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
+import com.github.k1rakishou.chan.ui.controller.base.BaseFloatingController
 import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.layout.SearchLayout
@@ -39,8 +39,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.collections.component1
-import kotlin.collections.component2
 
 class BoardSelectionController(
   context: Context,

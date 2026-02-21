@@ -26,7 +26,7 @@ import com.github.k1rakishou.chan.core.mpv.MPVView
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeCard
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextBarButton
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextField
-import com.github.k1rakishou.chan.ui.controller.BaseFloatingComposeController
+import com.github.k1rakishou.chan.ui.controller.base.BaseFloatingComposeController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File

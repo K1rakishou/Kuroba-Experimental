@@ -11,26 +11,20 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyItemScope
-import androidx.compose.material.FloatingActionButton
-import androidx.compose.material.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
@@ -41,6 +35,9 @@ import com.github.k1rakishou.chan.features.toolbar.ToolbarMiddleContent
 import com.github.k1rakishou.chan.features.toolbar.ToolbarText
 import com.github.k1rakishou.chan.ui.compose.addBottom
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeDraggableElementContainer
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeFab
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeFabMargins
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeFabSize
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeIcon
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeProgressIndicator
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
@@ -154,8 +151,6 @@ class BookmarkGroupSettingsController(
     val contentPaddings = LocalContentPaddings.current
     val layoutDirection = LocalLayoutDirection.current
 
-    val onCreateGroupClickedRemembered = rememberUpdatedState(newValue = onCreateGroupClicked)
-
     val loading by viewModel.loading
     if (loading) {
       KurobaComposeProgressIndicator(
@@ -181,7 +176,7 @@ class BookmarkGroupSettingsController(
     val paddingValues = remember(contentPaddings, layoutDirection) {
       contentPaddings
         .asPaddingValues(controllerKey)
-        .addBottom(layoutDirection, FAB_SIZE + FAB_MARGIN)
+        .addBottom(layoutDirection, KurobaComposeFabSize + KurobaComposeFabMargins)
     }
 
     val reorderTask = rememberCancellableCoroutineTask()
@@ -243,25 +238,11 @@ class BookmarkGroupSettingsController(
       )
     }
 
-    FloatingActionButton(
-      modifier = Modifier
-        .size(FAB_SIZE)
-        .align(Alignment.BottomEnd)
-        .offset {
-          return@offset IntOffset(
-            x = -(FAB_MARGIN.roundToPx()),
-            y = -(contentPaddings.calculateBottomPadding(controllerKey) + (FAB_MARGIN / 2)).roundToPx()
-          )
-        },
-      backgroundColor = chanTheme.accentColorCompose,
-      contentColor = Color.White,
-      onClick = { onCreateGroupClickedRemembered.value.invoke() },
-    ) {
-      Icon(
-        painter = painterResource(id = R.drawable.ic_add_white_24dp),
-        contentDescription = null
-      )
-    }
+    KurobaComposeFab(
+      controllerKey = controllerKey,
+      drawableId = R.drawable.ic_add_white_24dp,
+      onClick = onCreateGroupClicked
+    )
   }
 
   private fun bookmarkGroupClicked(groupId: String) {
@@ -457,8 +438,5 @@ class BookmarkGroupSettingsController(
     private const val TAG = "BookmarkGroupSettingsController"
 
     private const val ACTION_SHOW_HELP = 0
-
-    private val FAB_SIZE = 52.dp
-    private val FAB_MARGIN = 16.dp
   }
 }

@@ -11,8 +11,8 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.snapshots.SnapshotStateSet
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
-import com.github.k1rakishou.chan.core.base.BaseViewModel
-import com.github.k1rakishou.chan.core.compose.AsyncData
+import com.github.k1rakishou.chan.core.base.viewmodel.KurobaViewModel
+import com.github.k1rakishou.chan.core.compose.AsyncUiData
 import com.github.k1rakishou.chan.core.concurrency.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.shared.ViewModelAssistedFactory
@@ -42,15 +42,15 @@ class AddBoardsControllerViewModel(
   private val savedStateHandle: SavedStateHandle,
   private val siteManager: SiteManager,
   private val boardManager: BoardManager,
-) : BaseViewModel() {
+) : KurobaViewModel() {
   private val _allNoneActiveBoards = mutableListWithCap<ChanBoard>(initialCapacity = 1024)
 
   private val _checkedBoards = mutableStateSetOf<BoardDescriptor>()
   val checkedBoards: SnapshotStateSet<BoardDescriptor>
     get() = _checkedBoards
 
-  private val _uiState = mutableStateOf<AsyncData<Unit>>(AsyncData.NotInitialized)
-  val uiState: State<AsyncData<Unit>>
+  private val _uiState = mutableStateOf<AsyncUiData<Unit>>(AsyncUiData.NotInitialized)
+  val uiState: State<AsyncUiData<Unit>>
     get() = _uiState
 
   private val _processing = mutableStateOf(false)
@@ -88,7 +88,7 @@ class AddBoardsControllerViewModel(
   }
 
   override suspend fun onViewModelReady() {
-    _uiState.value = AsyncData.NotInitialized
+    _uiState.value = AsyncUiData.NotInitialized
 
     viewModelScope.launch(Dispatchers.Default) {
       boardManager.awaitUntilInitialized()
@@ -96,17 +96,17 @@ class AddBoardsControllerViewModel(
 
       val site = siteManager.bySiteDescriptorAndActive(_siteDescriptor)
       if (site == null) {
-        _uiState.value = AsyncData.Error(Exception("No site found by descriptor: ${_siteDescriptor}"))
+        _uiState.value = AsyncUiData.Error(Exception("No site found by descriptor: ${_siteDescriptor}"))
         return@launch
       }
 
       val isSiteActive = siteManager.isSiteActive(_siteDescriptor)
       if (!isSiteActive) {
-        _uiState.value = AsyncData.Error(Exception("Site with descriptor ${_siteDescriptor} is not active!"))
+        _uiState.value = AsyncUiData.Error(Exception("Site with descriptor ${_siteDescriptor} is not active!"))
         return@launch
       }
 
-      _uiState.value = AsyncData.Loading
+      _uiState.value = AsyncUiData.Loading
 
       loadInactiveBoards(_siteDescriptor)
       findBoardsForSelection()
@@ -217,7 +217,7 @@ class AddBoardsControllerViewModel(
         }
 
         Snapshot.withMutableSnapshot {
-          _uiState.value = AsyncData.Data(Unit)
+          _uiState.value = AsyncUiData.UiData(Unit)
           _currentSearchQuery.value = query
           _totalMatchedBySearchQueryCount.intValue = totalMatched
           _boardsForSelection.clear()

@@ -15,9 +15,6 @@ import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.site.ChanSiteData
 import com.github.k1rakishou.model.repository.BoardRepository
 import dagger.Lazy
-import io.reactivex.Flowable
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.processors.PublishProcessor
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -35,8 +32,6 @@ class BoardManager(
 ) {
   private val suspendableInitializer = SuspendableInitializer<Unit>("BoardManager")
   private val persistBoardsDebouncer = DebouncingCoroutineExecutor(appScope)
-
-  private val boardsChangedSubject = PublishProcessor.create<Unit>()
 
   private val lock = ReentrantReadWriteLock()
   @GuardedBy("lock")
@@ -118,14 +113,6 @@ class BoardManager(
     }
   }
 
-  fun listenForSitesChanges(): Flowable<Unit> {
-    return boardsChangedSubject
-      .onBackpressureLatest()
-      .observeOn(AndroidSchedulers.mainThread())
-      .doOnError { error -> Logger.e(TAG, "Error while listening for sitesChangedSubject updates", error) }
-      .hide()
-  }
-
   suspend fun createOrUpdateBoards(boards: List<ChanBoard>): Boolean {
     check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
 
@@ -170,7 +157,6 @@ class BoardManager(
       .distinct()
 
     persistAllBoards(siteDescriptors)
-    boardsChanged()
 
     return true
   }
@@ -249,7 +235,6 @@ class BoardManager(
 
     persistActiveBoards()
     updateCurrentCatalogDescriptorIfNeeded(activate, boardDescriptors, siteDescriptor)
-    boardsChanged()
 
     return true
   }
@@ -448,18 +433,27 @@ class BoardManager(
     }
   }
 
-  fun onBoardMoving(boardDescriptor: BoardDescriptor, from: Int, to: Int): Boolean {
+  fun onBoardMoving(fromBoardDescriptor: BoardDescriptor, toBoardDescriptor: BoardDescriptor): Boolean {
     check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
+    check(fromBoardDescriptor.siteDescriptor == toBoardDescriptor.siteDescriptor) {
+      "Site descriptors must be the same! from: ${fromBoardDescriptor}, to: ${toBoardDescriptor}"
+    }
 
     val moved = lock.write {
-      val orders = ordersMap[boardDescriptor.siteDescriptor]
+      val orders = ordersMap[fromBoardDescriptor.siteDescriptor]
         ?: return@write false
 
-      if (orders[from] != boardDescriptor) {
+      val fromIndex = orders.indexOf(fromBoardDescriptor)
+      if (fromIndex < 0) {
         return@write false
       }
 
-      orders.add(to, orders.removeAt(from))
+      val toIndex = orders.indexOf(toBoardDescriptor)
+      if (toIndex < 0) {
+        return@write false
+      }
+
+      orders.add(toIndex, orders.removeAt(fromIndex))
       return@write true
     }
 
@@ -472,7 +466,6 @@ class BoardManager(
 
   fun onBoardMoved() {
     persistBoardsDebouncer.post(BOARD_MOVED_DEBOUNCE_TIME_MS) { persistActiveBoards() }
-    boardsChanged()
   }
 
   fun reorder(siteDescriptor: SiteDescriptor, sortedBoards: List<BoardDescriptor>) {
@@ -491,7 +484,6 @@ class BoardManager(
     }
 
     persistBoardsDebouncer.post(BOARD_MOVED_DEBOUNCE_TIME_MS) { persistActiveBoards() }
-    boardsChanged()
   }
 
   fun getAllBoardDescriptorsForSite(siteDescriptor: SiteDescriptor): Set<BoardDescriptor> {
@@ -603,10 +595,6 @@ class BoardManager(
     }
 
     return resultMap
-  }
-
-  private fun boardsChanged() {
-    boardsChangedSubject.onNext(Unit)
   }
 
   private fun mergePrevAndNewBoards(prevBoard: ChanBoard, newBoard: ChanBoard): ChanBoard {

@@ -61,8 +61,8 @@ import com.github.k1rakishou.chan.ui.compose.reorder.detectReorder
 import com.github.k1rakishou.chan.ui.compose.reorder.move
 import com.github.k1rakishou.chan.ui.compose.reorder.rememberReorderableLazyListState
 import com.github.k1rakishou.chan.ui.compose.reorder.reorderable
-import com.github.k1rakishou.chan.ui.controller.BaseFloatingComposeController
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
+import com.github.k1rakishou.chan.ui.controller.base.BaseFloatingComposeController
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.common.isNotNullNorBlank

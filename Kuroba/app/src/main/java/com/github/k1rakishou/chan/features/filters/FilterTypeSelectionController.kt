@@ -31,7 +31,7 @@ import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeCheckbox
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextBarButton
 import com.github.k1rakishou.chan.ui.compose.consumeClicks
-import com.github.k1rakishou.chan.ui.controller.BaseFloatingComposeController
+import com.github.k1rakishou.chan.ui.controller.base.BaseFloatingComposeController
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable
 import com.github.k1rakishou.model.data.filter.FilterType
 

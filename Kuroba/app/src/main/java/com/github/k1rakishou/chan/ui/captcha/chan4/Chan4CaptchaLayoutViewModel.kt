@@ -9,8 +9,8 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
-import com.github.k1rakishou.chan.core.base.BaseViewModel
-import com.github.k1rakishou.chan.core.compose.AsyncData
+import com.github.k1rakishou.chan.core.base.viewmodel.KurobaViewModel
+import com.github.k1rakishou.chan.core.compose.AsyncUiData
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.shared.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.Chan4CaptchaNotifierManager
@@ -52,7 +52,7 @@ class Chan4CaptchaLayoutViewModel(
   private val firewallBypassManager: FirewallBypassManager,
   private val chan4CaptchaNotifierManager: Chan4CaptchaNotifierManager,
   private val webViewTaskManager: WebViewTaskManager,
-) : BaseViewModel(), Chan4CaptchaNotifierManager.CaptchaViewModelCallbacks {
+) : KurobaViewModel(), Chan4CaptchaNotifierManager.CaptchaViewModelCallbacks {
 
   private var activeJob: Job? = null
   private var captchaTtlUpdateJob: Job? = null
@@ -68,8 +68,8 @@ class Chan4CaptchaLayoutViewModel(
   val captchaTtlMillisFlow: StateFlow<Long>
     get() = _captchaTtlMillisFlow.asStateFlow()
 
-  private val _captchaInfoToShow = mutableStateOf<AsyncData<CaptchaInfo>>(AsyncData.NotInitialized)
-  val captchaInfoToShow: State<AsyncData<CaptchaInfo>>
+  private val _captchaInfoToShow = mutableStateOf<AsyncUiData<CaptchaInfo>>(AsyncUiData.NotInitialized)
+  val captchaInfoToShow: State<AsyncUiData<CaptchaInfo>>
     get() = _captchaInfoToShow
 
   private val _captchaDataJson = mutableStateOf<String?>(null)
@@ -83,11 +83,11 @@ class Chan4CaptchaLayoutViewModel(
   override suspend fun onViewModelReady() {
   }
 
-  override fun readCurrentCaptchaInfo(): AsyncData<CaptchaInfo> {
+  override fun readCurrentCaptchaInfo(): AsyncUiData<CaptchaInfo> {
     return _captchaInfoToShow.value
   }
 
-  override fun updateCurrentCaptchaInfo(captchaInfo: AsyncData<CaptchaInfo>) {
+  override fun updateCurrentCaptchaInfo(captchaInfo: AsyncUiData<CaptchaInfo>) {
     _captchaInfoToShow.value = captchaInfo
   }
 
@@ -107,7 +107,7 @@ class Chan4CaptchaLayoutViewModel(
   }
 
   fun resetCaptchaForced(chanDescriptor: ChanDescriptor) {
-    _captchaInfoToShow.value = AsyncData.NotInitialized
+    _captchaInfoToShow.value = AsyncUiData.NotInitialized
     getCachedCaptchaInfoOrNull(chanDescriptor)?.reset()
 
     captchaInfoCache.remove(chanDescriptor)
@@ -140,7 +140,7 @@ class Chan4CaptchaLayoutViewModel(
       Logger.d(TAG, "requestCaptcha() old captcha is still fine, " +
         "ttl: ${prevCaptchaInfo.ttlMillis()}, chanDescriptor=$chanDescriptor")
 
-      _captchaInfoToShow.value = AsyncData.Data(prevCaptchaInfo)
+      _captchaInfoToShow.value = AsyncUiData.UiData(prevCaptchaInfo)
       startOrRestartCaptchaTtlUpdateTask(chanDescriptor)
 
       return
@@ -158,7 +158,7 @@ class Chan4CaptchaLayoutViewModel(
     captchaInfoCache.remove(chanDescriptor)
 
     activeJob = viewModelScope.launch(Dispatchers.Default) {
-      _captchaInfoToShow.value = AsyncData.Loading
+      _captchaInfoToShow.value = AsyncUiData.Loading
 
       val result = ModularResult.Try {
         if (forced) {
@@ -180,14 +180,14 @@ class Chan4CaptchaLayoutViewModel(
             )
           } catch (error: Throwable) {
             Logger.d(TAG, "requestCaptcha() handleCaptchaRequestError")
-            _captchaInfoToShow.value = AsyncData.Error(error)
+            _captchaInfoToShow.value = AsyncUiData.Error(error)
           }
         }
         is ModularResult.Value -> {
           Logger.d(TAG, "requestCaptcha() success")
 
           captchaInfoCache[chanDescriptor] = result.value
-          _captchaInfoToShow.value = AsyncData.Data(result.value)
+          _captchaInfoToShow.value = AsyncUiData.UiData(result.value)
 
           startOrRestartCaptchaTtlUpdateTask(chanDescriptor)
         }
@@ -200,7 +200,7 @@ class Chan4CaptchaLayoutViewModel(
   fun onCaptchaImageClicked(taskIndex: Int, imageIndex: Int) {
     val captchaInfoAsyncData = _captchaInfoToShow.value
 
-    val captchaInfo = if (captchaInfoAsyncData !is AsyncData.Data) {
+    val captchaInfo = if (captchaInfoAsyncData !is AsyncUiData.UiData) {
       return
     } else {
       captchaInfoAsyncData.data
@@ -227,7 +227,7 @@ class Chan4CaptchaLayoutViewModel(
       while (isActive) {
         val captchaInfoAsyncData = _captchaInfoToShow.value
 
-        val captchaInfo = if (captchaInfoAsyncData !is AsyncData.Data) {
+        val captchaInfo = if (captchaInfoAsyncData !is AsyncUiData.UiData) {
           resetCaptchaForced(chanDescriptor)
           break
         } else {
@@ -383,7 +383,7 @@ class Chan4CaptchaLayoutViewModel(
     error: Throwable
   ) {
     Logger.e(TAG, "requestCaptcha()", error)
-    _captchaInfoToShow.value = AsyncData.Error(error)
+    _captchaInfoToShow.value = AsyncUiData.Error(error)
 
     if (error is CaptchaCooldownError) {
       Logger.debug(TAG) {
@@ -421,7 +421,7 @@ class Chan4CaptchaLayoutViewModel(
       )
 
       if (taskResult is WebViewTaskResult.Result) {
-        _captchaInfoToShow.value = AsyncData.Loading
+        _captchaInfoToShow.value = AsyncUiData.Loading
 
         val mcl = taskResult.rawCookies as String
         Logger.debug(TAG) {
@@ -436,7 +436,7 @@ class Chan4CaptchaLayoutViewModel(
       }
 
       Logger.error(TAG, error) { "Failed to pass SpurUsAntibot, taskResult: ${taskResult}" }
-      _captchaInfoToShow.value = AsyncData.Error(UnknownCaptchaError("Failed to pass SpurUsAntibot"))
+      _captchaInfoToShow.value = AsyncUiData.Error(UnknownCaptchaError("Failed to pass SpurUsAntibot"))
     }
   }
 

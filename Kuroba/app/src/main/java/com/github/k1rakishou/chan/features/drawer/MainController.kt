@@ -7,6 +7,11 @@ import android.view.View
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
@@ -36,7 +41,9 @@ import com.github.k1rakishou.chan.features.search.GlobalSearchController
 import com.github.k1rakishou.chan.features.settings.MainSettingsControllerV2
 import com.github.k1rakishou.chan.features.thread_downloading.LocalArchiveController
 import com.github.k1rakishou.chan.features.toolbar.state.ToolbarStateKind
-import com.github.k1rakishou.chan.ui.compose.bottom_panel.KurobaComposeIconPanel
+import com.github.k1rakishou.chan.ui.compose.panel.KurobaIconPanel
+import com.github.k1rakishou.chan.ui.compose.panel.KurobaIconPanelState
+import com.github.k1rakishou.chan.ui.compose.panel.rememberKurobaIconPanelState
 import com.github.k1rakishou.chan.ui.compose.providers.ComposeEntrypoint
 import com.github.k1rakishou.chan.ui.compose.snackbar.SnackbarContainerView
 import com.github.k1rakishou.chan.ui.compose.snackbar.SnackbarScope
@@ -131,14 +138,6 @@ class MainController(
 
   private val kurobaDrawerState: KurobaDrawerState
     get() = mainControllerViewModel.kurobaDrawerState
-
-  private val kurobaComposeBottomPanel by lazy(LazyThreadSafetyMode.NONE) {
-    KurobaComposeIconPanel(
-      context = context,
-      orientation = KurobaComposeIconPanel.Orientation.Horizontal,
-      menuItems = bottomNavViewButtons()
-    )
-  }
 
   private val startActivityCallback: StartActivityStartupHandlerHelper.StartActivityCallbacks
     get() = (context as StartActivityStartupHandlerHelper.StartActivityCallbacks)
@@ -249,25 +248,8 @@ class MainController(
       }
     }
 
-    compositeDisposable.add(
-      settingsNotificationManager.listenForNotificationUpdates()
-        .subscribe { onSettingsNotificationChanged() }
-    )
-
     controllerScope.launch {
       restartTheAppAfterMigration()
-    }
-
-    controllerScope.launch {
-      mainControllerViewModel.bookmarksBadgeState
-        .onEach { bookmarksBadgeState -> onBookmarksBadgeStateChanged(bookmarksBadgeState) }
-        .collect()
-    }
-
-    controllerScope.launch {
-      threadDownloadManager.threadDownloadUpdateFlow
-        .debounce(500L)
-        .collect { event -> onNewThreadDownloadEvent(event) }
     }
 
     controllerScope.launch {
@@ -361,7 +343,78 @@ class MainController(
 
   @Composable
   private fun KurobaComposeBottomPanelContent() {
-    kurobaComposeBottomPanel.BuildPanel(
+    val bottomNavViewButtons by PersistableChanState.reorderableBottomNavViewButtons
+      .listenForChanges()
+      .collectAsState()
+
+    val menuItems = remember(key1 = bottomNavViewButtons) {
+      return@remember bottomNavViewButtons.bottomNavViewButtons().map { bottomNavViewButton ->
+        return@map when (bottomNavViewButton) {
+          BottomNavViewButton.Search -> {
+            KurobaIconPanelState.MenuItem(
+              id = com.github.k1rakishou.chan.R.id.action_search,
+              iconId = com.github.k1rakishou.chan.R.drawable.ic_search_white_24dp
+            )
+          }
+          BottomNavViewButton.Archive -> {
+            KurobaIconPanelState.MenuItem(
+              id = com.github.k1rakishou.chan.R.id.action_archive,
+              iconId = com.github.k1rakishou.chan.R.drawable.ic_baseline_archive_24
+            )
+          }
+          BottomNavViewButton.MyPosts -> {
+            KurobaIconPanelState.MenuItem(
+              id = com.github.k1rakishou.chan.R.id.action_posts,
+              iconId = com.github.k1rakishou.chan.R.drawable.ic_baseline_posts
+            )
+          }
+          BottomNavViewButton.Bookmarks -> {
+            KurobaIconPanelState.MenuItem(
+              id = com.github.k1rakishou.chan.R.id.action_bookmarks,
+              iconId = com.github.k1rakishou.chan.R.drawable.ic_bookmark_white_24dp
+            )
+          }
+          BottomNavViewButton.Settings -> {
+            KurobaIconPanelState.MenuItem(
+              id = com.github.k1rakishou.chan.R.id.action_settings,
+              iconId = com.github.k1rakishou.chan.R.drawable.ic_baseline_settings
+            )
+          }
+        }
+      }
+    }
+
+    val panelState = rememberKurobaIconPanelState(
+      controllerKey = null,
+      orientation = KurobaIconPanelState.Orientation.Horizontal,
+      menuItems = menuItems
+    )
+    val panelStateUpdated = rememberUpdatedState(panelState)
+
+    LaunchedEffect(key1 = Unit) {
+      mainControllerViewModel.bookmarksBadgeState
+        .collect { bookmarksBadgeState ->
+          onBookmarksBadgeStateChanged(panelStateUpdated.value, bookmarksBadgeState)
+        }
+    }
+
+    LaunchedEffect(key1 = Unit) {
+      controllerScope.launch {
+        threadDownloadManager.threadDownloadUpdateFlow
+          .debounce(500L)
+          .collect { event -> onNewThreadDownloadEvent(panelStateUpdated.value, event) }
+      }
+    }
+
+    LaunchedEffect(key1 = Unit) {
+      compositeDisposable.add(
+        settingsNotificationManager.listenForNotificationUpdates()
+          .subscribe { onSettingsNotificationChanged(panelStateUpdated.value) }
+      )
+    }
+
+    KurobaIconPanel(
+      panelState = panelState,
       onMenuItemClicked = { clickedMenuItemId ->
         onNavigationItemSelectedListener(clickedMenuItemId)
 
@@ -515,16 +568,19 @@ class MainController(
     presentController(imageSaverV2OptionsController)
   }
 
-  private fun onBookmarksBadgeStateChanged(state: MainControllerViewModel.BookmarksBadgeState) {
+  private fun onBookmarksBadgeStateChanged(
+    panelState: KurobaIconPanelState,
+    state: MainControllerViewModel.BookmarksBadgeState
+  ) {
     if (state.totalUnseenPostsCount <= 0) {
-      kurobaComposeBottomPanel.updateBadge(
+      panelState.updateBadge(
         menuItemId = R.id.action_bookmarks,
         menuItemBadgeInfo = null
       )
     } else {
-      kurobaComposeBottomPanel.updateBadge(
+      panelState.updateBadge(
         menuItemId = R.id.action_bookmarks,
-        menuItemBadgeInfo = KurobaComposeIconPanel.MenuItemBadgeInfo.Counter(
+        menuItemBadgeInfo = KurobaIconPanelState.MenuItemBadgeInfo.Counter(
           counter = state.totalUnseenPostsCount,
           highlight = state.hasUnreadReplies
         )
@@ -543,18 +599,21 @@ class MainController(
     }
   }
 
-  private suspend fun onNewThreadDownloadEvent(event: ThreadDownloadManager.Event) {
+  private suspend fun onNewThreadDownloadEvent(
+    panelState: KurobaIconPanelState,
+    event: ThreadDownloadManager.Event
+  ) {
     val activeThreadDownloadsCount = threadDownloadManager.getAllActiveThreadDownloads().size
 
     if (activeThreadDownloadsCount <= 0) {
-      kurobaComposeBottomPanel.updateBadge(
+      panelState.updateBadge(
         menuItemId = R.id.action_archive,
         menuItemBadgeInfo = null
       )
     } else {
-      kurobaComposeBottomPanel.updateBadge(
+      panelState.updateBadge(
         menuItemId = R.id.action_archive,
-        menuItemBadgeInfo = KurobaComposeIconPanel.MenuItemBadgeInfo.Counter(
+        menuItemBadgeInfo = KurobaIconPanelState.MenuItemBadgeInfo.Counter(
           counter = activeThreadDownloadsCount,
           highlight = false
         )
@@ -562,18 +621,18 @@ class MainController(
     }
   }
 
-  private fun onSettingsNotificationChanged() {
+  private fun onSettingsNotificationChanged(panelState: KurobaIconPanelState) {
     val notificationsCount = settingsNotificationManager.count()
 
     if (notificationsCount <= 0) {
-      kurobaComposeBottomPanel.updateBadge(
+      panelState.updateBadge(
         menuItemId = R.id.action_settings,
         menuItemBadgeInfo = null
       )
     } else {
-      kurobaComposeBottomPanel.updateBadge(
+      panelState.updateBadge(
         menuItemId = R.id.action_settings,
-        menuItemBadgeInfo = KurobaComposeIconPanel.MenuItemBadgeInfo.Dot
+        menuItemBadgeInfo = KurobaIconPanelState.MenuItemBadgeInfo.Dot
       )
     }
   }
@@ -608,45 +667,6 @@ class MainController(
       com.github.k1rakishou.chan.R.id.action_posts -> openPostsController()
       com.github.k1rakishou.chan.R.id.action_bookmarks -> openBookmarksController(emptyList())
       com.github.k1rakishou.chan.R.id.action_settings -> openSettingsController()
-    }
-  }
-
-  private fun bottomNavViewButtons(): List<KurobaComposeIconPanel.MenuItem> {
-    val bottomNavViewButtons = PersistableChanState.reorderableBottomNavViewButtons.get()
-
-    return bottomNavViewButtons.bottomNavViewButtons().map { bottomNavViewButton ->
-      return@map when (bottomNavViewButton) {
-        BottomNavViewButton.Search -> {
-          KurobaComposeIconPanel.MenuItem(
-            id = com.github.k1rakishou.chan.R.id.action_search,
-            iconId = com.github.k1rakishou.chan.R.drawable.ic_search_white_24dp
-          )
-        }
-        BottomNavViewButton.Archive -> {
-          KurobaComposeIconPanel.MenuItem(
-            id = com.github.k1rakishou.chan.R.id.action_archive,
-            iconId = com.github.k1rakishou.chan.R.drawable.ic_baseline_archive_24
-          )
-        }
-        BottomNavViewButton.MyPosts -> {
-          KurobaComposeIconPanel.MenuItem(
-            id = com.github.k1rakishou.chan.R.id.action_posts,
-            iconId = com.github.k1rakishou.chan.R.drawable.ic_baseline_posts
-          )
-        }
-        BottomNavViewButton.Bookmarks -> {
-          KurobaComposeIconPanel.MenuItem(
-            id = com.github.k1rakishou.chan.R.id.action_bookmarks,
-            iconId = com.github.k1rakishou.chan.R.drawable.ic_bookmark_white_24dp
-          )
-        }
-        BottomNavViewButton.Settings -> {
-          KurobaComposeIconPanel.MenuItem(
-            id = com.github.k1rakishou.chan.R.id.action_settings,
-            iconId = com.github.k1rakishou.chan.R.drawable.ic_baseline_settings
-          )
-        }
-      }
     }
   }
 

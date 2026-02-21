@@ -8,8 +8,8 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.snapshots.Snapshot
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
-import com.github.k1rakishou.chan.core.base.BaseViewModel
-import com.github.k1rakishou.chan.core.compose.AsyncData
+import com.github.k1rakishou.chan.core.base.viewmodel.KurobaViewModel
+import com.github.k1rakishou.chan.core.compose.AsyncUiData
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.shared.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.ReplyManager
@@ -42,7 +42,7 @@ class CreateSoundMediaControllerViewModel(
   private val replyManager: ReplyManager,
   private val fileHelper: FileHelper,
   private val uploadFileToCatBoxUseCase: UploadFileToCatBoxUseCase,
-) : BaseViewModel() {
+) : KurobaViewModel() {
 
   private val _activeRequests = mutableMapOf<UUID, Job>()
 
@@ -54,8 +54,8 @@ class CreateSoundMediaControllerViewModel(
   val attachments: List<Attachment>
     get() = _attachments
 
-  private val _processingAttachments = mutableStateMapOf<UUID, AsyncData<Unit>>()
-  val processingAttachments: Map<UUID, AsyncData<Unit>>
+  private val _processingAttachments = mutableStateMapOf<UUID, AsyncUiData<Unit>>()
+  val processingAttachments: Map<UUID, AsyncUiData<Unit>>
     get() = _processingAttachments
 
   override fun injectDependencies(component: ViewModelComponent) {
@@ -82,7 +82,7 @@ class CreateSoundMediaControllerViewModel(
 
     _selectedFiles.remove(clickedAttachment.fileUUID)
     _activeRequests.remove(clickedAttachment.fileUUID)?.cancel()
-    _processingAttachments[clickedAttachment.fileUUID] = AsyncData.NotInitialized
+    _processingAttachments[clickedAttachment.fileUUID] = AsyncUiData.NotInitialized
   }
 
   fun checkMediaAlreadyHasSoundAttached(
@@ -102,7 +102,7 @@ class CreateSoundMediaControllerViewModel(
     // TODO: consider allowing attaching videos after we start supporting sound posts with videos
 
     val job = viewModelScope.launch {
-      _processingAttachments[clickedAttachment.fileUUID] = AsyncData.Loading
+      _processingAttachments[clickedAttachment.fileUUID] = AsyncUiData.Loading
 
       try {
         val pickedFileUri = askUserToPickSoundFile(fileChooser, clickedAttachment)
@@ -159,7 +159,7 @@ class CreateSoundMediaControllerViewModel(
         }
 
         _selectedFiles.remove(clickedAttachment.fileUUID)
-        _processingAttachments[clickedAttachment.fileUUID] = AsyncData.Data(Unit)
+        _processingAttachments[clickedAttachment.fileUUID] = AsyncUiData.UiData(Unit)
         showSuccessToast(oldAttachmentName)
 
         Logger.debug(TAG) {
@@ -170,7 +170,7 @@ class CreateSoundMediaControllerViewModel(
         error.rethrowCancellationException()
 
         Logger.error(TAG) { "tryToCreateSoundMedia() error: ${error.errorMessageOrClassName()}" }
-        _processingAttachments[clickedAttachment.fileUUID] = AsyncData.Error(error)
+        _processingAttachments[clickedAttachment.fileUUID] = AsyncUiData.Error(error)
         showErrorToast(error)
       }
     }

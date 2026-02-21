@@ -14,8 +14,8 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.base.ViewModelSelectionHelper
+import com.github.k1rakishou.chan.core.base.viewmodel.KurobaViewModel
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.shared.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.BoardManager
@@ -53,7 +53,7 @@ class FiltersControllerViewModel(
   private val postHideManager: PostHideManager,
   private val boardManager: BoardManager,
   private val themeEngine: ThemeEngine,
-) : BaseViewModel() {
+) : KurobaViewModel() {
   private val _filters = mutableStateListOf<ChanFilterInfo>()
   val filters: SnapshotStateList<ChanFilterInfo>
     get() = _filters

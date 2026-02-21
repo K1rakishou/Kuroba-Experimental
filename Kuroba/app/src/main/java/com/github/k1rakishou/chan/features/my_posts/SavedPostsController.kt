@@ -31,7 +31,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.BaseSelectionHelper
-import com.github.k1rakishou.chan.core.compose.AsyncData
+import com.github.k1rakishou.chan.core.compose.AsyncUiData
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
@@ -189,15 +189,15 @@ class SavedPostsController(
     val myPostsViewModelState by viewModel.myPostsViewModelState.collectAsState()
 
     val savedRepliesGrouped = when (val savedRepliesAsync = myPostsViewModelState.savedRepliesGroupedAsync) {
-      AsyncData.NotInitialized -> return
-      AsyncData.Loading -> {
+      AsyncUiData.NotInitialized -> return
+      AsyncUiData.Loading -> {
         KurobaComposeProgressIndicator(
           modifier = Modifier.fillMaxSize()
         )
 
         return
       }
-      is AsyncData.Error -> {
+      is AsyncUiData.Error -> {
         KurobaComposeErrorMessage(
           modifier = Modifier.fillMaxSize(),
           error = savedRepliesAsync.throwable
@@ -205,7 +205,7 @@ class SavedPostsController(
 
         return
       }
-      is AsyncData.Data -> savedRepliesAsync.data
+      is AsyncUiData.UiData -> savedRepliesAsync.data
     }
 
     BuildSavedRepliesList(
@@ -538,7 +538,7 @@ class SavedPostsController(
 
   private fun enterSelectionModeOrUpdate() {
     val selectedItemsCount = viewModel.viewModelSelectionHelper.selectedItemsCount()
-    val totalItemsCount = (viewModel.myPostsViewModelState.value.savedRepliesGroupedAsync as? AsyncData.Data)
+    val totalItemsCount = (viewModel.myPostsViewModelState.value.savedRepliesGroupedAsync as? AsyncUiData.UiData)
       ?.data
       ?.sumOf { groupedSavedReplies -> groupedSavedReplies.savedReplyDataList.size }
       ?: 0

@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.ui.compose.reorder
 
+@Suppress("ConvertTwoComparisonsToRangeCheck")
 fun <T> MutableList<T>.move(fromIdx: Int, toIdx: Int): Boolean {
   if (fromIdx == toIdx) {
     return false

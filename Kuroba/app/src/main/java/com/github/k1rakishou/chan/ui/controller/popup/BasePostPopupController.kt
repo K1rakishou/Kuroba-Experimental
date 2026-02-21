@@ -35,7 +35,7 @@ import com.github.k1rakishou.chan.ui.adapter.PostAdapter
 import com.github.k1rakishou.chan.ui.adapter.PostRepliesAdapter
 import com.github.k1rakishou.chan.ui.cell.GenericPostCell
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface
-import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
+import com.github.k1rakishou.chan.ui.controller.base.BaseFloatingController
 import com.github.k1rakishou.chan.ui.helper.PostPopupHelper
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView
 import com.github.k1rakishou.chan.ui.view.LoadView

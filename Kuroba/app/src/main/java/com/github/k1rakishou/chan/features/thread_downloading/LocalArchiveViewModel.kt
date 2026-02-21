@@ -8,9 +8,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.base.ViewModelSelectionHelper
-import com.github.k1rakishou.chan.core.compose.AsyncData
+import com.github.k1rakishou.chan.core.base.viewmodel.KurobaViewModel
+import com.github.k1rakishou.chan.core.compose.AsyncUiData
 import com.github.k1rakishou.chan.core.concurrency.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.shared.ViewModelAssistedFactory
@@ -57,7 +57,7 @@ class LocalArchiveViewModel(
   private val exportDownloadedThreadAsHtmlUseCase: ExportDownloadedThreadAsHtmlUseCase,
   private val exportDownloadedThreadAsJsonUseCase: ExportDownloadedThreadAsJsonUseCase,
   private val exportDownloadedThreadMediaUseCase: ExportDownloadedThreadMediaUseCase,
-) : BaseViewModel() {
+) : KurobaViewModel() {
 
   private val recalculateAdditionalInfoExecutor = DebouncingCoroutineExecutor(viewModelScope)
   private val cachedThreadDownloadViews = mutableListWithCap<ThreadDownloadView>(32)
@@ -130,7 +130,7 @@ class LocalArchiveViewModel(
 
   fun updateQueryAndReload(searchQuery: String?) {
     // If state is not data then do nothing
-    if (_state.value.threadDownloadsAsync !is AsyncData.Data) {
+    if (_state.value.threadDownloadsAsync !is AsyncUiData.UiData) {
       return
     }
 
@@ -141,7 +141,7 @@ class LocalArchiveViewModel(
     val threadDownloadViews = filterThreadDownloads(searchQuery)
 
     _state.updateState {
-      copy(threadDownloadsAsync = AsyncData.Data(threadDownloadViews))
+      copy(threadDownloadsAsync = AsyncUiData.UiData(threadDownloadViews))
     }
 
     if (additionalThreadDownloadStats.isEmpty()) {
@@ -342,7 +342,7 @@ class LocalArchiveViewModel(
         cachedThreadDownloadViews.clear()
 
         _state.updateState {
-          copy(threadDownloadsAsync = AsyncData.Error(error))
+          copy(threadDownloadsAsync = AsyncUiData.Error(error))
         }
 
         return
@@ -540,7 +540,7 @@ class LocalArchiveViewModel(
   }
 
   data class ViewModelState(
-    val threadDownloadsAsync: AsyncData<List<ThreadDownloadView>> = AsyncData.NotInitialized
+    val threadDownloadsAsync: AsyncUiData<List<ThreadDownloadView>> = AsyncUiData.NotInitialized
   )
 
   data class ThreadDownloadView(

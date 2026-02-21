@@ -32,7 +32,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.compose.AsyncData
+import com.github.k1rakishou.chan.core.compose.AsyncUiData
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.ui.captcha.chan4.Chan4CaptchaLayout
 import com.github.k1rakishou.chan.ui.captcha.lynxchan.LynxchanCaptchaLayoutViewModel.VerifyCaptchaResult
@@ -70,7 +70,7 @@ fun LynxchanCaptchaSection(
   val coroutineScope = rememberCoroutineScope()
 
   val captchaInfoAsync by viewModel.captchaInfoToShow
-  val captchaInfo = (captchaInfoAsync as? AsyncData.Data)?.data
+  val captchaInfo = (captchaInfoAsync as? AsyncUiData.UiData)?.data
   val captchaBlockMut by viewModel.captchaBlock
   val captchaBlock = captchaBlockMut
   val verifyingCaptchaState = remember { mutableStateOf(false) }
@@ -264,7 +264,7 @@ private fun ElapsedTime() {
 
 @Composable
 private fun BuildCaptchaImageOrText(
-  captchaInfoAsync: AsyncData<LynxchanCaptchaLayoutViewModel.LynxchanCaptchaFull>
+  captchaInfoAsync: AsyncUiData<LynxchanCaptchaLayoutViewModel.LynxchanCaptchaFull>
 ) {
   var size by remember { mutableStateOf(IntSize.Zero) }
 
@@ -275,15 +275,15 @@ private fun BuildCaptchaImageOrText(
   ) {
     if (size != IntSize.Zero) {
       val captchaInfo = when (captchaInfoAsync) {
-        AsyncData.NotInitialized,
-        AsyncData.Loading -> {
+        AsyncUiData.NotInitialized,
+        AsyncUiData.Loading -> {
           KurobaComposeProgressIndicator(
             modifier = Modifier.fillMaxSize()
           )
 
           null
         }
-        is AsyncData.Error -> {
+        is AsyncUiData.Error -> {
           val error = captchaInfoAsync.throwable
           KurobaComposeErrorMessage(
             modifier = Modifier.fillMaxSize(),
@@ -292,7 +292,7 @@ private fun BuildCaptchaImageOrText(
 
           null
         }
-        is AsyncData.Data -> captchaInfoAsync.data
+        is AsyncUiData.UiData -> captchaInfoAsync.data
       }
 
       if (captchaInfo != null) {

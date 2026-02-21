@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
@@ -20,11 +19,8 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.material.Divider
-import androidx.compose.material.FloatingActionButton
-import androidx.compose.material.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -33,7 +29,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.Placeholder
@@ -60,6 +55,9 @@ import com.github.k1rakishou.chan.ui.compose.SelectableItem
 import com.github.k1rakishou.chan.ui.compose.addBottom
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeClickableText
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeDraggableElementContainer
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeFab
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeFabMargins
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeFabSize
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeIcon
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeMessage
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeSwitch
@@ -70,7 +68,6 @@ import com.github.k1rakishou.chan.ui.compose.lazylist.LazyColumnWithFastScroller
 import com.github.k1rakishou.chan.ui.compose.providers.ComposeEntrypoint
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.providers.LocalContentPaddings
-import com.github.k1rakishou.chan.ui.compose.providers.LocalWindowInsets
 import com.github.k1rakishou.chan.ui.compose.reorder.ReorderableItem
 import com.github.k1rakishou.chan.ui.compose.reorder.ReorderableLazyListState
 import com.github.k1rakishou.chan.ui.compose.reorder.detectReorder
@@ -240,38 +237,19 @@ class FiltersController(
 
   @Composable
   private fun BuildContent() {
-    val chanTheme = LocalChanTheme.current
-    val windowInsets = LocalWindowInsets.current
-
     Box(
       modifier = Modifier.fillMaxSize()
     ) {
       BuildFilterList()
 
-      val bottomPanelHeight by globalUiStateHolder.bottomPanel.bottomPanelHeight.collectAsState()
-
-      val fabBottomPadding = maxOf(
-        windowInsets.bottom,
-        bottomPanelHeight
-      )
-
-      FloatingActionButton(
-        modifier = Modifier
-          .size(FAB_SIZE)
-          .align(Alignment.BottomEnd)
-          .offset(x = -FAB_MARGIN, y = -(fabBottomPadding + (FAB_MARGIN / 2))),
-        backgroundColor = chanTheme.accentColorCompose,
-        contentColor = Color.White,
+      KurobaComposeFab(
+        controllerKey = controllerKey,
+        drawableId = R.drawable.ic_add_white_24dp,
         onClick = {
           viewModel.viewModelSelectionHelper.unselectAll()
           showCreateNewFilterController(null)
         }
-      ) {
-        Icon(
-          painter = painterResource(id = R.drawable.ic_add_white_24dp),
-          contentDescription = null
-        )
-      }
+      )
     }
   }
 
@@ -316,7 +294,7 @@ class FiltersController(
     val paddingValues = remember(contentPaddings, layoutDirection) {
       contentPaddings
         .asPaddingValues(controllerKey)
-        .addBottom(layoutDirection, FAB_SIZE + FAB_MARGIN)
+        .addBottom(layoutDirection, KurobaComposeFabSize + KurobaComposeFabMargins)
     }
 
     LazyColumnWithFastScroller(
@@ -760,9 +738,6 @@ class FiltersController(
 
   companion object {
     private const val TAG = "FiltersController"
-
-    private val FAB_SIZE = 52.dp
-    private val FAB_MARGIN = 16.dp
 
     private const val ACTION_EXPORT_FILTERS = 0
     private const val ACTION_IMPORT_FILTERS = 1

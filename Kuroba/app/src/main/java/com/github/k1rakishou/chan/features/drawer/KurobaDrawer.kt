@@ -134,14 +134,12 @@ fun KurobaDrawer(
           modifier = Modifier.fillMaxSize()
         )
       }
-
       is HistoryControllerState.Error -> {
         KurobaComposeMessage(
           modifier = Modifier.fillMaxSize(),
           message = (historyControllerState as HistoryControllerState.Error).errorText
         )
       }
-
       is HistoryControllerState.Data -> {
         val navHistoryEntryList = remember { kurobaDrawerState.navigationHistoryEntryList }
         if (navHistoryEntryList.isEmpty()) {

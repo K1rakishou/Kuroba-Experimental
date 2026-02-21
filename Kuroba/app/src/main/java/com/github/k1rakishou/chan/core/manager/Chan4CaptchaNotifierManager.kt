@@ -1,7 +1,7 @@
 package com.github.k1rakishou.chan.core.manager
 
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.compose.AsyncData
+import com.github.k1rakishou.chan.core.compose.AsyncUiData
 import com.github.k1rakishou.chan.core.helper.KurobaSystemNotifications
 import com.github.k1rakishou.chan.ui.captcha.chan4.Chan4CaptchaLayoutViewModel
 import com.github.k1rakishou.chan.ui.captcha.chan4.Chan4CaptchaLayoutViewModel.CaptchaGenericRateLimitError
@@ -74,11 +74,11 @@ class Chan4CaptchaNotifierManager(
             ?: continue
 
           val currentCaptchaInfo = callbacks.readCurrentCaptchaInfo()
-          if (currentCaptchaInfo is AsyncData.NotInitialized) {
+          if (currentCaptchaInfo is AsyncUiData.NotInitialized) {
             continue
           }
 
-          val previousError = (currentCaptchaInfo as? AsyncData.Error)?.throwable
+          val previousError = (currentCaptchaInfo as? AsyncUiData.Error)?.throwable
             ?: break
 
           val updatedError = when (previousError) {
@@ -105,7 +105,7 @@ class Chan4CaptchaNotifierManager(
             }
           }
 
-          callbacks.updateCurrentCaptchaInfo(AsyncData.Error(updatedError))
+          callbacks.updateCurrentCaptchaInfo(AsyncUiData.Error(updatedError))
         }
 
         if (!_captchaViewShown || applicationVisibilityManager.isAppInBackground()) {
@@ -154,8 +154,8 @@ class Chan4CaptchaNotifierManager(
   }
 
   interface CaptchaViewModelCallbacks {
-    fun readCurrentCaptchaInfo(): AsyncData<Chan4CaptchaLayoutViewModel.CaptchaInfo>
-    fun updateCurrentCaptchaInfo(captchaInfo: AsyncData<Chan4CaptchaLayoutViewModel.CaptchaInfo>)
+    fun readCurrentCaptchaInfo(): AsyncUiData<Chan4CaptchaLayoutViewModel.CaptchaInfo>
+    fun updateCurrentCaptchaInfo(captchaInfo: AsyncUiData<Chan4CaptchaLayoutViewModel.CaptchaInfo>)
   }
 
   companion object {

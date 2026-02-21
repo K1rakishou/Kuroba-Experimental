@@ -8,7 +8,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.base.BaseViewModel
+import com.github.k1rakishou.chan.core.base.viewmodel.KurobaViewModel
 import com.github.k1rakishou.chan.core.concurrency.ThrottleFirstCoroutineExecutor
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.shared.ViewModelAssistedFactory
@@ -33,8 +33,8 @@ import com.github.k1rakishou.chan.features.reply.data.SendReplyState
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder
 import com.github.k1rakishou.chan.ui.compose.snackbar.SnackbarScope
 import com.github.k1rakishou.chan.ui.compose.snackbar.manager.SnackbarManagerFactory
-import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
 import com.github.k1rakishou.chan.ui.controller.ThreadControllerType
+import com.github.k1rakishou.chan.ui.controller.base.BaseFloatingController
 import com.github.k1rakishou.chan.ui.controller.base.Controller
 import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
 import com.github.k1rakishou.chan.ui.globalstate.drawer.DrawerAppearanceEvent
@@ -98,7 +98,7 @@ class ReplyLayoutViewModel(
   private val twoCaptchaSolverLazy: Lazy<TwoCaptchaSolver>,
   private val clearPostingCookiesLazy: Lazy<ClearPostingCookies>,
   private val snackbarManagerFactoryLazy: Lazy<SnackbarManagerFactory>
-) : BaseViewModel(), ReplyLayoutState.Callbacks {
+) : KurobaViewModel(), ReplyLayoutState.Callbacks {
   private val appConstants: AppConstants
     get() = appConstantsLazy.get()
   private val siteManager: SiteManager
@@ -160,12 +160,12 @@ class ReplyLayoutViewModel(
     when (threadControllerType) {
       ThreadControllerType.Catalog -> {
         snackbarManagerFactoryLazy.get().snackbarManager(
-          SnackbarScope.PostList(mainLayoutAnchor = SnackbarScope.MainLayoutAnchor.Catalog)
+          SnackbarScope.PostList(layoutAnchor = SnackbarScope.LayoutAnchor.Catalog)
         )
       }
       ThreadControllerType.Thread -> {
         snackbarManagerFactoryLazy.get().snackbarManager(
-          SnackbarScope.PostList(mainLayoutAnchor = SnackbarScope.MainLayoutAnchor.Thread)
+          SnackbarScope.PostList(layoutAnchor = SnackbarScope.LayoutAnchor.Thread)
         )
       }
     }

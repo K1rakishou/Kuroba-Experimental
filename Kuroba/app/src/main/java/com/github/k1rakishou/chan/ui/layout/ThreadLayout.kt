@@ -255,12 +255,12 @@ class ThreadLayout @JvmOverloads constructor(
     this.snackbarManager = when (threadControllerType) {
       ThreadControllerType.Catalog -> {
         snackbarManagerFactory.snackbarManager(
-          SnackbarScope.PostList(mainLayoutAnchor = SnackbarScope.MainLayoutAnchor.Catalog)
+          SnackbarScope.PostList(layoutAnchor = SnackbarScope.LayoutAnchor.Catalog)
         )
       }
       ThreadControllerType.Thread -> {
         snackbarManagerFactory.snackbarManager(
-          SnackbarScope.PostList(mainLayoutAnchor = SnackbarScope.MainLayoutAnchor.Thread)
+          SnackbarScope.PostList(layoutAnchor = SnackbarScope.LayoutAnchor.Thread)
         )
       }
     }
@@ -281,12 +281,12 @@ class ThreadLayout @JvmOverloads constructor(
     when (threadControllerType) {
       ThreadControllerType.Catalog -> {
         snackbarContainerView.init(
-          SnackbarScope.PostList(mainLayoutAnchor = SnackbarScope.MainLayoutAnchor.Catalog)
+          SnackbarScope.PostList(layoutAnchor = SnackbarScope.LayoutAnchor.Catalog)
         )
       }
       ThreadControllerType.Thread -> {
         snackbarContainerView.init(
-          SnackbarScope.PostList(mainLayoutAnchor = SnackbarScope.MainLayoutAnchor.Thread)
+          SnackbarScope.PostList(layoutAnchor = SnackbarScope.LayoutAnchor.Thread)
         )
       }
     }

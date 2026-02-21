@@ -40,7 +40,6 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -48,7 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.compose.AsyncData
+import com.github.k1rakishou.chan.core.compose.AsyncUiData
 import com.github.k1rakishou.chan.core.concurrency.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.image.ImageLoaderDeprecated
@@ -209,12 +208,11 @@ class Chan4CaptchaLayout(
   @Composable
   private fun BuildCaptchaImageRows() {
     val chanTheme = LocalChanTheme.current
-    val density = LocalDensity.current
     val captchaInfoAsync by viewModel.captchaInfoToShow
 
     val captchaInfo = when (val captchaInfo = captchaInfoAsync) {
-      is AsyncData.Data<Chan4CaptchaLayoutViewModel.CaptchaInfo> -> captchaInfo
-      is AsyncData.Error -> {
+      is AsyncUiData.UiData<Chan4CaptchaLayoutViewModel.CaptchaInfo> -> captchaInfo
+      is AsyncUiData.Error -> {
         KurobaComposeErrorMessage(
           modifier = Modifier
             .fillMaxSize()
@@ -223,7 +221,7 @@ class Chan4CaptchaLayout(
         )
         return
       }
-      AsyncData.Loading -> {
+      AsyncUiData.Loading -> {
         KurobaComposeProgressIndicator(
           modifier = Modifier
             .fillMaxSize()
@@ -231,7 +229,7 @@ class Chan4CaptchaLayout(
         )
         return
       }
-      AsyncData.NotInitialized -> {
+      AsyncUiData.NotInitialized -> {
         return
       }
     }
@@ -395,7 +393,7 @@ class Chan4CaptchaLayout(
   private fun BuildCaptchaWindowFooter() {
     val captchaInfoAsync by viewModel.captchaInfoToShow
     val captchaDataJson by viewModel.captchaDataJson
-    val captchaInfo = (captchaInfoAsync as? AsyncData.Data)?.data
+    val captchaInfo = (captchaInfoAsync as? AsyncUiData.UiData)?.data
 
     Row(
       horizontalArrangement = Arrangement.End,

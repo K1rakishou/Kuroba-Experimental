@@ -36,7 +36,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheFileType
-import com.github.k1rakishou.chan.core.compose.AsyncData
+import com.github.k1rakishou.chan.core.compose.AsyncUiData
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.image.ImageLoaderDeprecated
 import com.github.k1rakishou.chan.features.toolbar.BackArrowMenuItem
@@ -59,6 +59,7 @@ import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.lazylist.LazyVerticalGridWithFastScroller
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.providers.LocalContentPaddings
+import com.github.k1rakishou.chan.ui.compose.snackbar.SnackbarScope
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.base.BaseComposeController
 import com.github.k1rakishou.chan.ui.controller.base.DeprecatedNavigationFlags
@@ -93,6 +94,8 @@ class ImageSearchController(
   @Inject
   lateinit var headlessWebViewTaskExecutor: HeadlessWebViewTaskExecutor
 
+  override val layoutAnchor: SnackbarScope.LayoutAnchor? = null
+
   override fun injectActivityDependencies(component: ActivityComponent) {
     component.inject(this)
   }
@@ -121,7 +124,7 @@ class ImageSearchController(
             }
 
             currentCaptchaController?.stopPresenting()
-            controllerViewModel.reload()
+            viewModel.reload()
           }
         )
       }
@@ -130,13 +133,13 @@ class ImageSearchController(
 
   override fun onPrepare() {
     controllerScope.launch {
-      controllerViewModel.searchErrorToastFlow
+      viewModel.searchErrorToastFlow
         .debounce(350L)
         .collect { errorMessage -> showToast(errorMessage) }
     }
 
     controllerScope.launch {
-      controllerViewModel.solvingCaptcha.collect { urlToOpen ->
+      viewModel.solvingCaptcha.collect { urlToOpen ->
         if (urlToOpen == null) {
           return@collect
         }
@@ -167,20 +170,20 @@ class ImageSearchController(
 
           if (cookieResult !is WebViewTaskResult.Result) {
             Logger.e(TAG, "Failed to bypass YandexSmartCaptcha, cookieResult: ${cookieResult}")
-            controllerViewModel.reloadCurrentPage()
+            viewModel.reloadCurrentPage()
             return@collect
           }
 
           val cookies = cookieResult.rawCookies
 
           Logger.d(TAG, "Get YandexSmartCaptcha cookies, cookies: ${cookies}")
-          controllerViewModel.updateYandexSmartCaptchaCookies(cookies)
-          controllerViewModel.reloadCurrentPage()
+          viewModel.updateYandexSmartCaptchaCookies(cookies)
+          viewModel.reloadCurrentPage()
         } catch (error: Throwable) {
           Logger.error(TAG, error) { "Failed to pass Yandex captcha" }
           snackbarManager.errorToast("Failed to pass Yandex captcha, error: ${error.errorMessageOrClassName()}")
         } finally {
-          controllerViewModel.finishedSolvingCaptcha()
+          viewModel.finishedSolvingCaptcha()
         }
       }
     }
@@ -189,7 +192,7 @@ class ImageSearchController(
   override fun onDestroy() {
     super.onDestroy()
 
-    controllerViewModel.cleanup()
+    viewModel.cleanup()
   }
 
   @Composable
@@ -198,21 +201,21 @@ class ImageSearchController(
     val focusManager = LocalFocusManager.current
     val contentPaddings = LocalContentPaddings.current
 
-    val lastUsedSearchInstanceMut by controllerViewModel.lastUsedSearchInstance
+    val lastUsedSearchInstanceMut by viewModel.lastUsedSearchInstance
     val lastUsedSearchInstance = lastUsedSearchInstanceMut
     if (lastUsedSearchInstance == null) {
       return
     }
 
-    val searchInstanceMut = controllerViewModel.searchInstances[lastUsedSearchInstance]
+    val searchInstanceMut = viewModel.searchInstances[lastUsedSearchInstance]
     val searchInstance = searchInstanceMut
     if (searchInstance == null) {
       return
     }
 
-    var baseUrl by controllerViewModel.baseUrl
-    var searchQuery by controllerViewModel.searchQuery
-    val baseUrlError by controllerViewModel.baseUrlError
+    var baseUrl by viewModel.baseUrl
+    var searchQuery by viewModel.searchQuery
+    val baseUrlError by viewModel.baseUrlError
 
     Column(
       modifier = Modifier
@@ -240,7 +243,7 @@ class ImageSearchController(
           .fillMaxWidth(),
         onValueChange = { newValue ->
           baseUrl = newValue
-          controllerViewModel.onBaseUrlChanged(newValue)
+          viewModel.onBaseUrlChanged(newValue)
         },
         singleLine = true,
         maxLines = 1,
@@ -269,7 +272,7 @@ class ImageSearchController(
           .fillMaxWidth(),
         onValueChange = { newValue ->
           searchQuery = newValue
-          controllerViewModel.onSearchQueryChanged(newValue)
+          viewModel.onSearchQueryChanged(newValue)
         },
         singleLine = true,
         maxLines = 1,
@@ -353,22 +356,22 @@ class ImageSearchController(
   ) {
     val chanTheme = LocalChanTheme.current
 
-    val searchInstance = controllerViewModel.searchInstances[lastUsedSearchInstance]
+    val searchInstance = viewModel.searchInstances[lastUsedSearchInstance]
       ?: return
-    val searchResults = controllerViewModel.searchResults[lastUsedSearchInstance]
+    val searchResults = viewModel.searchResults[lastUsedSearchInstance]
       ?: return
 
     val imageSearchResults = when (val result = searchResults) {
-      AsyncData.NotInitialized -> {
+      AsyncUiData.NotInitialized -> {
         return
       }
-      AsyncData.Loading -> {
+      AsyncUiData.Loading -> {
         KurobaComposeProgressIndicator(
           modifier = Modifier.fillMaxSize()
         )
         return
       }
-      is AsyncData.Error -> {
+      is AsyncUiData.Error -> {
         KurobaComposeErrorMessage(
           modifier = Modifier.fillMaxSize(),
           error = result.throwable
@@ -376,7 +379,7 @@ class ImageSearchController(
 
         return
       }
-      is AsyncData.Data -> result.data
+      is AsyncUiData.UiData -> result.data
     }
 
     val state = rememberLazyGridState(
@@ -388,7 +391,7 @@ class ImageSearchController(
       key1 = Unit,
       effect = {
         onDispose {
-          controllerViewModel.updatePrevLazyListState(
+          viewModel.updatePrevLazyListState(
             firstVisibleItemIndex = state.firstVisibleItemIndex,
             firstVisibleItemScrollOffset = state.firstVisibleItemScrollOffset
           )
@@ -436,7 +439,7 @@ class ImageSearchController(
           }
 
           LaunchedEffect(key1 = images.lastIndex) {
-            controllerViewModel.onNewPageRequested(page = searchInstance.currentPage + 1)
+            viewModel.onNewPageRequested(page = searchInstance.currentPage + 1)
           }
         }
       } else {
@@ -553,7 +556,7 @@ class ImageSearchController(
         val selectedImageSearchInstanceType = (clickedItem.value as? ImageSearchInstanceType)
           ?: return@FloatingListMenuController
 
-        controllerViewModel.changeSearchInstance(selectedImageSearchInstanceType)
+        viewModel.changeSearchInstance(selectedImageSearchInstanceType)
       }
     )
 

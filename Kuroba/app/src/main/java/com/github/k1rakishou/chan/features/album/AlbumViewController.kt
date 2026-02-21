@@ -17,7 +17,6 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.controller.ControllerComponent
 import com.github.k1rakishou.chan.core.helper.ThumbnailLongtapOptionsHelper
-import com.github.k1rakishou.chan.core.usecase.FilterOutHiddenImagesUseCase
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2OptionsController
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerOptions
@@ -73,8 +72,6 @@ class AlbumViewController(
   @Inject
   lateinit var mediaViewerOpenThreadHelper: MediaViewerOpenThreadHelper
   @Inject
-  lateinit var filterOutHiddenImagesUseCase: FilterOutHiddenImagesUseCase
-  @Inject
   lateinit var albumThreadControllerHelpers: AlbumThreadControllerHelpers
 
   override val viewModelScope: ViewModelScope
@@ -84,11 +81,11 @@ class AlbumViewController(
     component.inject(this)
   }
 
-  override val snackbarScope: SnackbarScope
+  override val layoutAnchor: SnackbarScope.LayoutAnchor?
     get() {
-      return when (controllerViewModel.currentListenMode) {
-        ListenMode.Catalog -> SnackbarScope.Album(mainLayoutAnchor = SnackbarScope.MainLayoutAnchor.Catalog)
-        ListenMode.Thread -> SnackbarScope.Album(mainLayoutAnchor = SnackbarScope.MainLayoutAnchor.Thread)
+      return when (viewModel.currentListenMode) {
+        ListenMode.Catalog -> SnackbarScope.LayoutAnchor.Catalog
+        ListenMode.Thread -> SnackbarScope.LayoutAnchor.Thread
       }
     }
 
@@ -119,7 +116,7 @@ class AlbumViewController(
         withMenuItem(
           id = ACTION_ENTER_DOWNLOAD_MODE,
           drawableId = com.github.k1rakishou.chan.R.drawable.ic_baseline_file_download_24,
-          onClick = { controllerViewModel.enterSelectionMode() }
+          onClick = { viewModel.enterSelectionMode() }
         )
 
         withOverflowMenu {
@@ -147,7 +144,7 @@ class AlbumViewController(
     }
 
     controllerScope.launch {
-      controllerViewModel.toolbarData
+      viewModel.toolbarData
         .onEach { toobarData ->
           toolbarState.default.updateTitle(
             newTitle = ToolbarText.Companion.from(toobarData.title),
@@ -158,7 +155,7 @@ class AlbumViewController(
     }
 
     controllerScope.launch {
-      controllerViewModel.albumLayoutGridMode
+      viewModel.albumLayoutGridMode
         .onEach { onAlbumLayoutGridModeToggled() }
         .collect()
     }
@@ -166,7 +163,7 @@ class AlbumViewController(
     controllerScope.launch {
       mediaViewerScrollerHelper.mediaViewerScrollEventsFlow
         .collect { scrollToImageEvent ->
-          val chanDescriptor = controllerViewModel.currentDescriptor.value
+          val chanDescriptor = viewModel.currentDescriptor.value
           if (chanDescriptor == null) {
             return@collect
           }
@@ -176,7 +173,7 @@ class AlbumViewController(
             return@collect
           }
 
-          controllerViewModel.requestScrollToImage(scrollToImageEvent.chanPostImage)
+          viewModel.requestScrollToImage(scrollToImageEvent.chanPostImage)
         }
     }
 
@@ -195,7 +192,7 @@ class AlbumViewController(
     controllerScope.launch {
       mediaViewerGoToPostHelper.mediaViewerGoToPostEventsFlow
         .collect { postDescriptor ->
-          val chanDescriptor = controllerViewModel.currentDescriptor.value
+          val chanDescriptor = viewModel.currentDescriptor.value
           if (chanDescriptor == null) {
             return@collect
           }
@@ -209,12 +206,12 @@ class AlbumViewController(
     }
 
     controllerScope.launch {
-      controllerViewModel.albumSelection
+      viewModel.albumSelection
         .collectLatest { albumSelection -> updateToolbarSelectionMode(albumSelection) }
     }
 
     controllerScope.launch {
-      controllerViewModel.presentController
+      viewModel.presentController
         .collectLatest { presentController ->
           when (presentController) {
             is AlbumViewControllerViewModel.PresentController.ImageSaverOptionsController -> {
@@ -251,13 +248,13 @@ class AlbumViewController(
     val density = LocalDensity.current
     val coroutineTask = rememberSingleInstanceCoroutineTask()
 
-    val albumSpanCountMut by controllerViewModel.albumSpanCount.collectAsState()
+    val albumSpanCountMut by viewModel.albumSpanCount.collectAsState()
     val albumSpanCount = albumSpanCountMut
     if (albumSpanCount == null) {
       return
     }
 
-    val albumLayoutGridModeMut by controllerViewModel.albumLayoutGridMode.collectAsState()
+    val albumLayoutGridModeMut by viewModel.albumLayoutGridMode.collectAsState()
     val albumLayoutGridMode = albumLayoutGridModeMut
     if (albumLayoutGridMode == null) {
       return
@@ -271,7 +268,7 @@ class AlbumViewController(
       if (albumLayoutGridMode) {
         AlbumItemsGrid(
           controllerKey = controllerKey,
-          controllerViewModel = controllerViewModel,
+          controllerViewModel = viewModel,
           albumSpanCount = actualSpanCount,
           onClick = { albumItemData ->
             coroutineTask.launch { onImageClick(albumItemData) }
@@ -280,13 +277,13 @@ class AlbumViewController(
             coroutineTask.launch { onImageLongClick(albumItemData) }
           },
           clearDownloadingAlbumItemState = { downloadingAlbumItem ->
-            controllerViewModel.clearDownloadingAlbumItemState(downloadingAlbumItem)
+            viewModel.clearDownloadingAlbumItemState(downloadingAlbumItem)
           }
         )
       } else {
         AlbumItemsStaggeredGrid(
           controllerKey = controllerKey,
-          controllerViewModel = controllerViewModel,
+          controllerViewModel = viewModel,
           albumSpanCount = actualSpanCount,
           onClick = { albumItemData ->
             coroutineTask.launch { onImageClick(albumItemData) }
@@ -295,7 +292,7 @@ class AlbumViewController(
             coroutineTask.launch { onImageLongClick(albumItemData) }
           },
           clearDownloadingAlbumItemState = { downloadingAlbumItem ->
-            controllerViewModel.clearDownloadingAlbumItemState(downloadingAlbumItem)
+            viewModel.clearDownloadingAlbumItemState(downloadingAlbumItem)
           }
         )
       }
@@ -308,19 +305,19 @@ class AlbumViewController(
   }
 
   private suspend fun onImageLongClick(albumItemData: AlbumItemData) {
-    if (controllerViewModel.isInSelectionMode()) {
+    if (viewModel.isInSelectionMode()) {
       // TODO: start "Move to select/unselect" mode.
       //  For now we will just toggle selection because that mode is not implemented yet.
-      controllerViewModel.toggleSelection(albumItemData)
+      viewModel.toggleSelection(albumItemData)
       return
     }
 
-    val chanDescriptor = controllerViewModel.currentDescriptor.value
+    val chanDescriptor = viewModel.currentDescriptor.value
     if (chanDescriptor == null) {
       return
     }
 
-    val postImage = controllerViewModel.findChanPostImage(albumItemData)
+    val postImage = viewModel.findChanPostImage(albumItemData)
     if (postImage == null) {
       return
     }
@@ -345,10 +342,10 @@ class AlbumViewController(
         }
       },
       selectFunc = { chanPostImage ->
-        controllerViewModel.enterSelectionMode(chanPostImage)
+        viewModel.enterSelectionMode(chanPostImage)
       },
       downloadMediaFileFunc = { chanPostImage, showOptions ->
-        controllerViewModel.downloadImage(chanPostImage, showOptions)
+        viewModel.downloadImage(chanPostImage, showOptions)
       }
     )
   }
@@ -358,14 +355,14 @@ class AlbumViewController(
     if (!isInSelectionMode) {
       if (toolbarState.isInSelectionMode()) {
         toolbarState.pop()
-        controllerViewModel.exitSelectionMode()
+        viewModel.exitSelectionMode()
       }
 
       return
     }
 
     val selectedItemsCount = albumSelection.selectedItems.size
-    val totalItemsCount = controllerViewModel.albumItems.size
+    val totalItemsCount = viewModel.albumItems.size
 
     if (!toolbarState.isInSelectionMode()) {
       toolbarState.enterSelectionMode(
@@ -373,7 +370,7 @@ class AlbumViewController(
           onClick = {
             if (toolbarState.isInSelectionMode()) {
               toolbarState.pop()
-              controllerViewModel.exitSelectionMode()
+              viewModel.exitSelectionMode()
             }
           }
         ),
@@ -383,12 +380,12 @@ class AlbumViewController(
           withMenuItem(
             ACTION_TOGGLE_SELECTION,
             com.github.k1rakishou.chan.R.drawable.ic_select_all_white_24dp
-          ) { controllerViewModel.toggleAlbumItemsSelection() }
+          ) { viewModel.toggleAlbumItemsSelection() }
 
           withMenuItem(
             ACTION_DOWNLOAD_SELECTED_IMAGES,
             com.github.k1rakishou.chan.R.drawable.ic_baseline_file_download_24
-          ) { controllerViewModel.downloadSelectedItems() }
+          ) { viewModel.downloadSelectedItems() }
         }
       )
     }
@@ -400,12 +397,12 @@ class AlbumViewController(
   }
 
   private suspend fun onImageClick(albumItemData: AlbumItemData) {
-    if (controllerViewModel.isInSelectionMode()) {
-      controllerViewModel.toggleSelection(albumItemData)
+    if (viewModel.isInSelectionMode()) {
+      viewModel.toggleSelection(albumItemData)
       return
     }
 
-    val chanDescriptor = controllerViewModel.currentDescriptor.value
+    val chanDescriptor = viewModel.currentDescriptor.value
     if (chanDescriptor == null) {
       return
     }
@@ -430,7 +427,7 @@ class AlbumViewController(
         MediaViewerActivity.threadMedia(
           context = context,
           threadDescriptor = chanDescriptor,
-          postDescriptorList = controllerViewModel.mapPostImagesToPostDescriptors(),
+          postDescriptorList = viewModel.mapPostImagesToPostDescriptors(),
           initialImageUrl = albumItemData.fullImageUrl?.toString(),
           transitionThumbnailUrl = transitionThumbnailUrl.toString(),
           lastTouchCoordinates = globalWindowInsetsManager.lastTouchCoordinates(),

@@ -18,6 +18,7 @@ import com.github.k1rakishou.chan.core.site.SiteUrlHandler
 import com.github.k1rakishou.chan.core.site.http.DeleteRequest
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
 import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitation
+import com.github.k1rakishou.chan.core.site.loader.ClientException
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.CommentParserType
 import com.github.k1rakishou.chan.core.site.parser.PostParser
@@ -36,7 +37,6 @@ import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.site.SiteBoards
 import com.github.k1rakishou.persist_state.ReplyMode
 import dagger.Lazy
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import okhttp3.HttpUrl
@@ -205,7 +205,8 @@ class CompositeCatalogSite : Site {
   override fun postInitialize() {
   }
 
-  override fun loadBoardInfo(callback: ((ModularResult<SiteBoards>) -> Unit)?): Job? = null
+  override suspend fun loadBoardInfo(): ModularResult<SiteBoards> =
+    ModularResult.error(ClientException("Not supported for composite catalogs"))
 
   override fun name(): String = "Composite catalogs"
 

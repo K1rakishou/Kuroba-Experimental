@@ -25,7 +25,6 @@ import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.helper.PinHelper
-import com.github.k1rakishou.chan.utils.appDependencies
 import com.github.k1rakishou.core_themes.ThemeEngine
 import kotlinx.coroutines.reactive.asFlow
 
@@ -42,8 +41,6 @@ sealed class MenuItemBadge {
 fun BoxScope.BottomPanelBadge(menuItemBadge: MenuItemBadge) {
   val chanTheme = LocalChanTheme.current
   val configuration = LocalConfiguration.current
-
-  val themeEngine = appDependencies().themeEngine
 
   when (menuItemBadge) {
     MenuItemBadge.Dot -> {

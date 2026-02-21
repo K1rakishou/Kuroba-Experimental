@@ -3,7 +3,7 @@ package com.github.k1rakishou.chan.features.drawer
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.ChanSettings
-import com.github.k1rakishou.chan.core.base.BaseViewModel
+import com.github.k1rakishou.chan.core.base.viewmodel.KurobaViewModel
 import com.github.k1rakishou.chan.core.concurrency.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.shared.ViewModelAssistedFactory
@@ -36,7 +36,7 @@ class MainControllerViewModel(
   private val chanThreadManagerLazy: Lazy<ChanThreadManager>,
   private val compositeCatalogManagerLazy: Lazy<CompositeCatalogManager>,
   private val imageLoaderDeprecatedLazy: Lazy<ImageLoaderDeprecated>,
-) : BaseViewModel() {
+) : KurobaViewModel() {
   private val isDevFlavor = AppModuleAndroidUtils.isDevBuild
 
   private val historyNavigationManager: HistoryNavigationManager

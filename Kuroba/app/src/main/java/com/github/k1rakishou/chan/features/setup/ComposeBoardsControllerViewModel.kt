@@ -2,7 +2,7 @@ package com.github.k1rakishou.chan.features.setup
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.SavedStateHandle
-import com.github.k1rakishou.chan.core.base.BaseViewModel
+import com.github.k1rakishou.chan.core.base.viewmodel.KurobaViewModel
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.shared.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.CompositeCatalogManager
@@ -16,7 +16,7 @@ import javax.inject.Inject
 class ComposeBoardsControllerViewModel(
   private val savedStateHandle: SavedStateHandle,
   private val compositeCatalogManager: CompositeCatalogManager,
-) : BaseViewModel() {
+) : KurobaViewModel() {
 
   private val _compositionSlots = mutableStateListOf<CatalogCompositionSlot>()
   val catalogCompositionSlots: List<CatalogCompositionSlot>

@@ -47,6 +47,6 @@
         android:layout_marginStart="6dp"
         android:layout_marginEnd="6dp"
         android:padding="6dp"
-        tools:src="@drawable/ic_reorder_white_24dp" />
+        tools:src="@drawable/ic_drag_handle_list_white_24dp" />
 
 </LinearLayout>

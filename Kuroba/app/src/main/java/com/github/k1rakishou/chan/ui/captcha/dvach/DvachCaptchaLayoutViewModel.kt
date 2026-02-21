@@ -7,9 +7,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
-import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
-import com.github.k1rakishou.chan.core.compose.AsyncData
+import com.github.k1rakishou.chan.core.base.viewmodel.KurobaViewModel
+import com.github.k1rakishou.chan.core.compose.AsyncUiData
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.shared.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.HapticFeedbackManager
@@ -42,10 +42,10 @@ class DvachCaptchaLayoutViewModel(
   private val siteManager: SiteManager,
   private val moshi: Moshi,
   private val hapticFeedbackManager: HapticFeedbackManager
-) : BaseViewModel() {
+) : KurobaViewModel() {
 
   private var activeJob: Job? = null
-  var captchaInfoToShow = mutableStateOf<AsyncData<CaptchaInfo>>(AsyncData.NotInitialized)
+  var captchaInfoToShow = mutableStateOf<AsyncUiData<CaptchaInfo>>(AsyncUiData.NotInitialized)
   var currentInputValue = mutableStateOf<String>("")
   var currentPuzzlePieceOffsetValue = mutableStateOf<Offset>(Offset.Unspecified)
 
@@ -64,17 +64,17 @@ class DvachCaptchaLayoutViewModel(
     currentPuzzlePieceOffsetValue.value = Offset.Unspecified
 
     activeJob = viewModelScope.launch {
-      captchaInfoToShow.value = AsyncData.Loading
+      captchaInfoToShow.value = AsyncUiData.Loading
 
       val result = ModularResult.Try { requestCaptchaIdInternal(captchaUrl) }
       captchaInfoToShow.value = when (result) {
         is ModularResult.Error -> {
           Logger.error(TAG, result.error) { "requestCaptcha(${captchaUrl}) error" }
-          AsyncData.Error(result.error)
+          AsyncUiData.Error(result.error)
         }
         is ModularResult.Value -> {
           Logger.debug(TAG) { "requestCaptcha(${captchaUrl}) success: ${result.value::class.java.name}" }
-          AsyncData.Data(result.value)
+          AsyncUiData.UiData(result.value)
         }
       }
     }
@@ -82,7 +82,7 @@ class DvachCaptchaLayoutViewModel(
 
   fun cleanup() {
     currentInputValue.value = ""
-    captchaInfoToShow.value = AsyncData.NotInitialized
+    captchaInfoToShow.value = AsyncUiData.NotInitialized
     currentPuzzlePieceOffsetValue.value = Offset.Unspecified
 
     activeJob?.cancel()
@@ -103,13 +103,13 @@ class DvachCaptchaLayoutViewModel(
     when (result) {
       is ModularResult.Error -> {
         Logger.error(TAG, result.error) { "onEmojiKeyboardKeyClicked(${keyIndex}) error" }
-        captchaInfoToShow.value = AsyncData.Error(result.error)
+        captchaInfoToShow.value = AsyncUiData.Error(result.error)
 
         return null
       }
       is ModularResult.Value -> {
         Logger.debug(TAG) { "onEmojiKeyboardKeyClicked(${keyIndex}) ${result.value::class.java.name}" }
-        captchaInfoToShow.value = AsyncData.Data(result.value)
+        captchaInfoToShow.value = AsyncUiData.UiData(result.value)
 
         return when (val newCaptchaInfo = result.value) {
           is CaptchaInfo.Puzzle,

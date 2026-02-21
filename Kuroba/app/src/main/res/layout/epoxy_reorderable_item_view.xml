@@ -25,6 +25,6 @@
         android:layout_width="36dp"
         android:layout_height="match_parent"
         android:layout_marginStart="4dp"
-        android:src="@drawable/ic_reorder_white_24dp" />
+        android:src="@drawable/ic_drag_handle_list_white_24dp" />
 
 </LinearLayout>

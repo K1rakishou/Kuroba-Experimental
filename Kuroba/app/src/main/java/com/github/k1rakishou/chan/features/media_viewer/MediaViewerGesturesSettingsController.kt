@@ -7,7 +7,7 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.ui.compose.snackbar.SnackbarScope
-import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
+import com.github.k1rakishou.chan.ui.controller.base.BaseFloatingController
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
 
 class MediaViewerGesturesSettingsController(context: Context) : BaseFloatingController(context) {

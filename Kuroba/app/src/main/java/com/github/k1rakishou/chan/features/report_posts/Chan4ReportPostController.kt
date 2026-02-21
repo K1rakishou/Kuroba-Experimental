@@ -23,7 +23,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.compose.AsyncData
+import com.github.k1rakishou.chan.core.compose.AsyncUiData
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.http.report.PostReportData
@@ -36,8 +36,8 @@ import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeProgressInd
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextBarButton
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
-import com.github.k1rakishou.chan.ui.controller.BaseFloatingComposeController
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
+import com.github.k1rakishou.chan.ui.controller.base.BaseFloatingComposeController
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.viewModelByKey
@@ -72,14 +72,14 @@ class Chan4ReportPostController(
 
   @Composable
   override fun BoxScope.BuildContent() {
-    val reportCategoriesAsync by produceState<AsyncData<List<Chan4ReportPostControllerViewModel.ReportCategory>>>(
-      initialValue = AsyncData.Loading,
+    val reportCategoriesAsync by produceState<AsyncUiData<List<Chan4ReportPostControllerViewModel.ReportCategory>>>(
+      initialValue = AsyncUiData.Loading,
       producer = {
         val result = viewModel.loadReportCategories(postDescriptor)
 
         value = when (result) {
-          is ModularResult.Error -> AsyncData.Error(result.error)
-          is ModularResult.Value -> AsyncData.Data(result.value)
+          is ModularResult.Error -> AsyncUiData.Error(result.error)
+          is ModularResult.Value -> AsyncUiData.UiData(result.value)
         }
       }
     )
@@ -96,8 +96,8 @@ class Chan4ReportPostController(
           .wrapContentHeight()
       ) {
         when (reportCategoriesAsync) {
-          AsyncData.NotInitialized,
-          AsyncData.Loading -> {
+          AsyncUiData.NotInitialized,
+          AsyncUiData.Loading -> {
             KurobaComposeProgressIndicator(
               modifier = Modifier
                 .fillMaxWidth()
@@ -105,17 +105,17 @@ class Chan4ReportPostController(
                 .padding(all = 16.dp),
             )
           }
-          is AsyncData.Error -> {
+          is AsyncUiData.Error -> {
             KurobaComposeErrorMessage(
               modifier = Modifier
                 .fillMaxWidth()
                 .wrapContentHeight()
                 .padding(all = 16.dp),
-              error = (reportCategoriesAsync as AsyncData.Error).throwable
+              error = (reportCategoriesAsync as AsyncUiData.Error).throwable
             )
           }
-          is AsyncData.Data -> {
-            val reportCategories = (reportCategoriesAsync as AsyncData.Data).data
+          is AsyncUiData.UiData -> {
+            val reportCategories = (reportCategoriesAsync as AsyncUiData.UiData).data
 
             BuildReportCategorySelector(
               reportCategories = reportCategories,

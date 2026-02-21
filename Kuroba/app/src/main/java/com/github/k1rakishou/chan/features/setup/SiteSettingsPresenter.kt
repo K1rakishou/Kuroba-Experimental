@@ -28,6 +28,7 @@ import com.github.k1rakishou.chan.features.settings.setting.InputSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.MapSettingV2
+import com.github.k1rakishou.chan.features.setup.boards.reorder.BoardsReorderController
 import com.github.k1rakishou.common.KurobaCookie
 import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.core_logger.Logger
@@ -317,7 +318,7 @@ class SiteSettingsPresenter(
             if (site.siteFeature(Site.SiteFeature.CATALOG_COMPOSITION)) {
               withViewNormal { pushController(CompositeCatalogsSetupController(context)) }
             } else {
-              withViewNormal { pushController(BoardsSetupController(context, siteDescriptor)) }
+              withViewNormal { pushController(BoardsReorderController(context, siteDescriptor)) }
             }
           }
         )

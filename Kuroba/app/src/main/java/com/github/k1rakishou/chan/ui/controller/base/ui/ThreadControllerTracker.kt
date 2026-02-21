@@ -263,7 +263,6 @@ class ThreadControllerTracker(
   private fun shouldIgnoreTouchEvent(
     navController: NavigationController
   ): Boolean {
-
     if (tracking) {
       return true
     }

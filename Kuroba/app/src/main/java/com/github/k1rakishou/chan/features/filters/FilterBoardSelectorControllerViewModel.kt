@@ -6,7 +6,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
-import com.github.k1rakishou.chan.core.base.BaseViewModel
+import com.github.k1rakishou.chan.core.base.viewmodel.KurobaViewModel
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.shared.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.BoardManager
@@ -26,7 +26,7 @@ class FilterBoardSelectorControllerViewModel(
   private val savedStateHandle: SavedStateHandle,
   private val siteManager: SiteManager,
   private val boardManager: BoardManager,
-)  : BaseViewModel() {
+)  : KurobaViewModel() {
 
   private var allBoardsSelected: Boolean = false
 

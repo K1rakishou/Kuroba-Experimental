@@ -5,7 +5,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
-import com.github.k1rakishou.chan.core.base.BaseViewModel
+import com.github.k1rakishou.chan.core.base.viewmodel.KurobaViewModel
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.shared.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager
@@ -19,7 +19,7 @@ import javax.inject.Inject
 class BookmarkGroupPatternSettingsControllerViewModel(
   private val savedStateHandle: SavedStateHandle,
   private val threadBookmarkGroupManager: ThreadBookmarkGroupManager
-) : BaseViewModel() {
+) : KurobaViewModel() {
 
   val mutableMatcherFlags = mutableStateListOf<MatchFlagMutable>()
 

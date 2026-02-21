@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.core.base
+package com.github.k1rakishou.chan.core.base.viewmodel
 
 import androidx.annotation.CallSuper
 import androidx.compose.runtime.Stable
@@ -12,7 +12,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 @Stable
-abstract class BaseViewModel : ViewModel() {
+abstract class KurobaViewModel : ViewModel() {
+  val controllerDelegate by lazy(LazyThreadSafetyMode.NONE) { ControllerDelegate() }
 
   init {
     Chan.getComponent()
@@ -43,4 +44,9 @@ abstract class BaseViewModel : ViewModel() {
 
   abstract fun injectDependencies(component: ViewModelComponent)
   abstract suspend fun onViewModelReady()
+
+  class ControllerDelegate(
+    private val snackbarDelegate: ControllerSnackbarDelegate = HasSnackbarDelegateImpl(),
+    private val navigationDelegate: ControllerNavigationDelegate = HasNavigationDelegateImpl()
+  ): ControllerSnackbarDelegate by snackbarDelegate, ControllerNavigationDelegate by navigationDelegate
 }

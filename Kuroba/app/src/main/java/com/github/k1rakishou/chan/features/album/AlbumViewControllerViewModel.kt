@@ -12,7 +12,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.base.BaseViewModel
+import com.github.k1rakishou.chan.core.base.viewmodel.KurobaViewModel
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.shared.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
@@ -87,7 +87,7 @@ class AlbumViewControllerViewModel(
   private val imageSaverV2ServiceDelegate: ImageSaverV2ServiceDelegate,
   private val revealedSpoilerImagesManager: RevealedSpoilerImagesManager,
   private val hapticFeedbackManager: HapticFeedbackManager
-) : BaseViewModel() {
+) : KurobaViewModel() {
   private val _albumItemIdCounter = AtomicLong(0)
 
   val currentListenMode: AlbumViewController.ListenMode
@@ -146,8 +146,8 @@ class AlbumViewControllerViewModel(
 
   private val snackbarManager by lazy {
     val snackbarScope = when (currentListenMode) {
-      AlbumViewController.ListenMode.Catalog -> SnackbarScope.Album(SnackbarScope.MainLayoutAnchor.Catalog)
-      AlbumViewController.ListenMode.Thread -> SnackbarScope.Album(SnackbarScope.MainLayoutAnchor.Thread)
+      AlbumViewController.ListenMode.Catalog -> SnackbarScope.Album(SnackbarScope.LayoutAnchor.Catalog)
+      AlbumViewController.ListenMode.Thread -> SnackbarScope.Album(SnackbarScope.LayoutAnchor.Thread)
     }
 
     snackbarManagerFactory.snackbarManager(snackbarScope)

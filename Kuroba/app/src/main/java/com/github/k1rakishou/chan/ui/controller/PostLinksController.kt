@@ -6,6 +6,7 @@ import android.text.Spanned
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
+import com.github.k1rakishou.chan.ui.controller.base.BaseFloatingController
 import com.github.k1rakishou.chan.ui.epoxy.epoxyPostLink
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.common.hashSetWithCap
