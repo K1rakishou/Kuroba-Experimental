@@ -82,6 +82,7 @@ class BoardSelectionController(
 
   override fun getLayoutId(): Int = R.layout.controller_board_selection
 
+  @Deprecated("All controllers should use controller scope! Switch this controller to injectControllerDependencies")
   override fun injectActivityDependencies(component: ActivityComponent) {
     component.inject(this)
   }

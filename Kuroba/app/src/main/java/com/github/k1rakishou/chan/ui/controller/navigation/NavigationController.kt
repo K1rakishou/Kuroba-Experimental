@@ -58,6 +58,13 @@ abstract class NavigationController(context: Context) : Controller(context), Con
       return false
     }
 
+    if (from != null) {
+      require(!from.isFloating) {
+        "pushController() \"from\" controller ${from.controllerKey.key} must not be floating!"
+      }
+    }
+    require(!to.isFloating) { "pushController() \"to\" controller ${to.controllerKey.key} must not be floating!" }
+
     var currentTransition = transition
     if (from == null) {
       // can't animate push if from is null, just disable the animation
@@ -96,7 +103,9 @@ abstract class NavigationController(context: Context) : Controller(context), Con
     if (isBlockingInput) {
       val currentControllerTransition = controllerTransition
       if (currentControllerTransition != null) {
-        Logger.debug(TAG) { "popController() isBlockingInput is true. Attaching to active transition and forcibly ending it." }
+        Logger.debug(TAG) {
+          "popController() isBlockingInput is true. Attaching to active transition and forcibly ending it."
+        }
 
         currentControllerTransition.forceEndTransition()
         currentControllerTransition.onTransitionFinished {
@@ -111,6 +120,11 @@ abstract class NavigationController(context: Context) : Controller(context), Con
     }
 
     val to = childControllers.getOrNull(childControllers.size - 2)
+
+    require(!from.isFloating) { "popController() \"from\" controller ${from.controllerKey.key} must not be floating!" }
+    if (to != null) {
+      require(!to.isFloating) { "popController() \"to\" controller ${to.controllerKey.key} must not be floating!" }
+    }
 
     Logger.verbose(TAG) {
       "popController() to: ${to?.controllerKey}, from: ${from.controllerKey}  with transition: ${transition}"

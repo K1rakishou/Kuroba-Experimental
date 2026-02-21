@@ -248,7 +248,7 @@ class StartActivity :
 
     setContentView(mainController.view)
     themeEngine.setRootView(this, mainController.view)
-    pushController(mainController)
+    pushControllerIntoStack(mainController)
 
     // Prevent overdraw
     // Do this after setContentView, or the decor creating will reset the background to a

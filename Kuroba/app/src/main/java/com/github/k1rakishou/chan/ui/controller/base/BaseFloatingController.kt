@@ -15,6 +15,8 @@ abstract class BaseFloatingController(
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
+  final override val isFloating: Boolean = true
+
   private var presenting = true
 
   override fun onCreate() {

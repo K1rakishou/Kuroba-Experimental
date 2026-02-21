@@ -8,7 +8,6 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.activity.ComponentActivity
 import androidx.annotation.CallSuper
 import androidx.annotation.StringRes
 import androidx.compose.runtime.mutableStateOf
@@ -179,6 +178,8 @@ abstract class Controller(
   val swipeable: Boolean
     get() = _navigationFlags.value.swipeable == true
 
+  open val isFloating: Boolean = false
+
   init {
     Logger.verbose(TAG) { "${controllerKey} initDependencies start" }
     initDependencies()
@@ -232,18 +233,14 @@ abstract class Controller(
     return requireNotNull(navigationController) { "navigationController was not set" }
   }
 
-  fun requireComponentActivity(): ComponentActivity {
-    return (context as? ComponentActivity)
-      ?: throw IllegalStateException("Wrong context! Expected ComponentActivity but got '${context::class.java.name}'")
-  }
-
   fun requireControllerHostActivity(): ControllerHostActivity {
     return (context as? ControllerHostActivity)
-      ?: throw IllegalStateException("Wrong context! Expected ControllerHostActivity but got '${context::class.java.name}'")
+      ?: error("Wrong context! Expected ControllerHostActivity but got '${context::class.java.name}'")
   }
 
   fun isViewInitialized(): Boolean = ::view.isInitialized
 
+  @Deprecated("All controllers should use controller scope! Switch this controller to injectControllerDependencies")
   protected open fun injectActivityDependencies(component: ActivityComponent) {
     error("Must be overridden!")
   }
@@ -448,11 +445,13 @@ abstract class Controller(
 
   @JvmOverloads
   open fun presentController(controller: Controller, animated: Boolean = true) {
+    require(controller.isFloating) { "presentController() controller ${controller.controllerKey.key} must be floating!" }
+
     val contentView = requireControllerHostActivity().contentView
     presentingThisController = controller
 
     controller.presentedByController = this
-    requireControllerHostActivity().pushController(controller)
+    requireControllerHostActivity().pushControllerIntoStack(controller)
 
     controller.onCreate()
     controller.attachToView(contentView)
@@ -480,6 +479,8 @@ abstract class Controller(
   }
 
   open fun stopPresenting(animated: Boolean) {
+    require(this.isFloating) { "stopPresenting() controller ${this.controllerKey.key} must be floating!" }
+
     val startActivity = requireControllerHostActivity()
     if (!startActivity.containsController(this)) {
       return

@@ -115,7 +115,7 @@ class MediaViewerActivity :
     globalWindowInsetsManager.updateDisplaySize(this)
 
     setContentView(mediaViewerController.view)
-    pushController(mediaViewerController)
+    pushControllerIntoStack(mediaViewerController)
 
     lifecycleScope.launch {
       if (!handleNewIntent(isNotActivityRecreation = savedInstanceState == null, intent = intent)) {

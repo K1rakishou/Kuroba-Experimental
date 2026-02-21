@@ -109,7 +109,7 @@ abstract class ControllerHostActivity :
     super.onBackPressed()
   }
 
-  fun pushController(controller: Controller) {
+  fun pushControllerIntoStack(controller: Controller) {
     stack.push(controller)
   }
 

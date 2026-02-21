@@ -45,6 +45,7 @@ abstract class BaseFloatingComposeController(
   open val contentAlignment: Alignment = Alignment.Center
   open val closableByClickingOutside = true
   open val currentlyInvisible = mutableStateOf(false)
+  final override val isFloating: Boolean = true
 
   override fun onCreate() {
     super.onCreate()
