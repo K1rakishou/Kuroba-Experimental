@@ -20,9 +20,9 @@ import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity
-import com.github.k1rakishou.chan.features.setup.BoardSelectionController
-import com.github.k1rakishou.chan.features.setup.SiteSettingsController
-import com.github.k1rakishou.chan.features.setup.SitesSetupController
+import com.github.k1rakishou.chan.features.setup.boards.selection.BoardSelectionController
+import com.github.k1rakishou.chan.features.setup.site.settings.SiteSettingsController
+import com.github.k1rakishou.chan.features.setup.site.setup.SitesSetupController
 import com.github.k1rakishou.chan.features.site_archive.BoardArchiveController
 import com.github.k1rakishou.chan.features.toolbar.HamburgMenuItem
 import com.github.k1rakishou.chan.features.toolbar.KurobaToolbarState

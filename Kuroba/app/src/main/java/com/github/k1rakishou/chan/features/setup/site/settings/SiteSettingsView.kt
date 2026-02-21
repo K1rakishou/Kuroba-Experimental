@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.features.setup
+package com.github.k1rakishou.chan.features.setup.site.settings
 
 import com.github.k1rakishou.chan.ui.controller.base.Controller
 

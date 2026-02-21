@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.features.setup
+package com.github.k1rakishou.chan.features.setup.boards.selection
 
 import android.content.Context
 import android.widget.FrameLayout

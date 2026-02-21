@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.features.setup
+package com.github.k1rakishou.chan.features.settings
 
 import android.content.Context
 import androidx.compose.foundation.layout.BoxScope
@@ -64,7 +64,7 @@ class CookieCaptchaInputController(
         return@remember ""
       }
 
-      return@remember (deltaTimeMillis / KurobaCookie.MillisPerMinute).toString()
+      return@remember (deltaTimeMillis / KurobaCookie.Companion.MillisPerMinute).toString()
     }
     val initialPath = remember(key1 = kurobaCookie) { kurobaCookie?.path ?: "/" }
 
@@ -74,7 +74,7 @@ class CookieCaptchaInputController(
 
     KurobaComposeCard {
       Column(
-        modifier = Modifier
+        modifier = Modifier.Companion
           .padding(
             horizontal = 16.dp,
             vertical = 16.dp
@@ -85,14 +85,14 @@ class CookieCaptchaInputController(
           fontSize = 20.ktu
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.Companion.height(16.dp))
 
         KurobaComposeTextFieldV2(
-          modifier = Modifier.fillMaxWidth(),
+          modifier = Modifier.Companion.fillMaxWidth(),
           state = cookieValueState,
           keyboardOptions = KeyboardOptions(
-            capitalization = KeyboardCapitalization.None,
-            keyboardType = KeyboardType.Text,
+            capitalization = KeyboardCapitalization.Companion.None,
+            keyboardType = KeyboardType.Companion.Text,
             autoCorrectEnabled = false
           ),
           label = { interactionSource ->
@@ -105,7 +105,7 @@ class CookieCaptchaInputController(
           }
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.Companion.height(16.dp))
 
         KurobaComposeText(
           text = stringResource(R.string.cookie_captcha_input_controller_expiration_description),
@@ -113,14 +113,14 @@ class CookieCaptchaInputController(
           fontSize = 14.ktu
         )
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.Companion.height(4.dp))
 
         KurobaComposeTextFieldV2(
-          modifier = Modifier.fillMaxWidth(),
+          modifier = Modifier.Companion.fillMaxWidth(),
           state = cookieLifetimeMinutesState,
           keyboardOptions = KeyboardOptions(
-            capitalization = KeyboardCapitalization.None,
-            keyboardType = KeyboardType.Number,
+            capitalization = KeyboardCapitalization.Companion.None,
+            keyboardType = KeyboardType.Companion.Number,
             autoCorrectEnabled = false
           ),
           label = { interactionSource ->
@@ -138,8 +138,9 @@ class CookieCaptchaInputController(
                 return@remember "(Expires: end of session)"
               }
 
-              val expirationTimeMillis = System.currentTimeMillis() + expirationInMinutes * KurobaCookie.MillisPerMinute
-              val expirationTimeFormatted = KurobaCookie.HttpDateFormatter.print(expirationTimeMillis)
+              val expirationTimeMillis =
+                System.currentTimeMillis() + expirationInMinutes * KurobaCookie.Companion.MillisPerMinute
+              val expirationTimeFormatted = KurobaCookie.Companion.HttpDateFormatter.print(expirationTimeMillis)
               return@remember "(Expires: ${expirationTimeFormatted})"
             }
 
@@ -152,7 +153,7 @@ class CookieCaptchaInputController(
           }
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.Companion.height(16.dp))
 
         KurobaComposeText(
           text = stringResource(R.string.cookie_captcha_input_controller_path_description),
@@ -160,14 +161,14 @@ class CookieCaptchaInputController(
           fontSize = 14.ktu
         )
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.Companion.height(4.dp))
 
         KurobaComposeTextFieldV2(
-          modifier = Modifier.fillMaxWidth(),
+          modifier = Modifier.Companion.fillMaxWidth(),
           state = cookiePathState,
           keyboardOptions = KeyboardOptions(
-            capitalization = KeyboardCapitalization.None,
-            keyboardType = KeyboardType.Text,
+            capitalization = KeyboardCapitalization.Companion.None,
+            keyboardType = KeyboardType.Companion.Text,
             autoCorrectEnabled = false
           ),
           label = { interactionSource ->
@@ -180,10 +181,10 @@ class CookieCaptchaInputController(
           }
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.Companion.height(16.dp))
 
         Row(
-          modifier = Modifier
+          modifier = Modifier.Companion
             .fillMaxWidth()
             .wrapContentHeight()
         ) {
@@ -195,14 +196,14 @@ class CookieCaptchaInputController(
             text = stringResource(id = R.string.reset)
           )
 
-          Spacer(modifier = Modifier.weight(1f))
+          Spacer(modifier = Modifier.Companion.weight(1f))
 
           KurobaComposeTextBarButton(
             onClick = { pop() },
             text = stringResource(id = R.string.cancel)
           )
 
-          Spacer(modifier = Modifier.width(24.dp))
+          Spacer(modifier = Modifier.Companion.width(24.dp))
 
           KurobaComposeTextBarButton(
             onClick = {
@@ -232,7 +233,7 @@ class CookieCaptchaInputController(
 
     val lifetimeMillis = cookieLifetimeMinutesState.text.toString()
       .toLongOrNull()
-      ?.times(KurobaCookie.MillisPerMinute)
+      ?.times(KurobaCookie.Companion.MillisPerMinute)
     if (lifetimeMillis == null) {
       showErrorToast("Invalid lifetime (cannot be converted into a number)")
       return

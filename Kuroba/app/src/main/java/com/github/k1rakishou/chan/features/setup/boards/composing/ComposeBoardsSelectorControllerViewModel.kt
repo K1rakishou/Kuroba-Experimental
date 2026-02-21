@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.features.setup
+package com.github.k1rakishou.chan.features.setup.boards.composing
 
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.mutableStateListOf
@@ -10,6 +10,7 @@ import com.github.k1rakishou.chan.core.di.module.shared.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.Site
+import com.github.k1rakishou.chan.features.setup.boards.selection.BoardSelectionPresenter
 import com.github.k1rakishou.chan.features.setup.data.CatalogCellData
 import com.github.k1rakishou.chan.features.setup.data.SiteCellData
 import com.github.k1rakishou.chan.features.setup.data.SiteEnableState

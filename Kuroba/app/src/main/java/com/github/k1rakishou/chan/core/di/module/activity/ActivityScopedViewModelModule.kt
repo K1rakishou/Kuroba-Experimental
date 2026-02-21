@@ -15,9 +15,9 @@ import com.github.k1rakishou.chan.features.my_posts.SavedPostsViewModel
 import com.github.k1rakishou.chan.features.remote_image_search.ImageSearchControllerViewModel
 import com.github.k1rakishou.chan.features.reply.ReplyLayoutViewModel
 import com.github.k1rakishou.chan.features.report_posts.Chan4ReportPostControllerViewModel
-import com.github.k1rakishou.chan.features.setup.ComposeBoardsControllerViewModel
-import com.github.k1rakishou.chan.features.setup.ComposeBoardsSelectorControllerViewModel
-import com.github.k1rakishou.chan.features.setup.CompositeCatalogsSetupControllerViewModel
+import com.github.k1rakishou.chan.features.setup.boards.composing.ComposeBoardsControllerViewModel
+import com.github.k1rakishou.chan.features.setup.boards.composing.ComposeBoardsSelectorControllerViewModel
+import com.github.k1rakishou.chan.features.setup.boards.composing.CompositeCatalogsSetupControllerViewModel
 import com.github.k1rakishou.chan.features.site_archive.BoardArchiveViewModel
 import com.github.k1rakishou.chan.features.thread_downloading.LocalArchiveViewModel
 import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloaderSettingsViewModel

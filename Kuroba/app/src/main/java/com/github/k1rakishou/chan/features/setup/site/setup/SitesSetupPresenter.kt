@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.features.setup
+package com.github.k1rakishou.chan.features.setup.site.setup
 
 import com.github.k1rakishou.chan.core.base.BasePresenter
 import com.github.k1rakishou.chan.core.manager.SiteManager

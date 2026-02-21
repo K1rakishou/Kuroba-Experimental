@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.features.setup
+package com.github.k1rakishou.chan.features.setup.site.settings
 
 import android.content.Context
 import com.airbnb.epoxy.EpoxyController

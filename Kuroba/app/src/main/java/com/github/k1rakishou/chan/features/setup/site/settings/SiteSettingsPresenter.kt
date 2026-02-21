@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.features.setup
+package com.github.k1rakishou.chan.features.setup.site.settings
 
 import android.content.Context
 import com.github.k1rakishou.OptionSettingItem
@@ -28,6 +28,7 @@ import com.github.k1rakishou.chan.features.settings.setting.InputSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.MapSettingV2
+import com.github.k1rakishou.chan.features.setup.boards.composing.CompositeCatalogsSetupController
 import com.github.k1rakishou.chan.features.setup.boards.reorder.BoardsReorderController
 import com.github.k1rakishou.common.KurobaCookie
 import com.github.k1rakishou.common.isNotNullNorBlank

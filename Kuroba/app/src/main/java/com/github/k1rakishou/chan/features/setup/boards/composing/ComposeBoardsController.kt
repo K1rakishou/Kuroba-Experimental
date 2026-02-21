@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.features.setup
+package com.github.k1rakishou.chan.features.setup.boards.composing
 
 import android.content.Context
 import androidx.compose.foundation.layout.Box
