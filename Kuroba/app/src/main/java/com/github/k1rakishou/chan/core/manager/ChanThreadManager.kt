@@ -531,7 +531,7 @@ class ChanThreadManager(
       is ChanDescriptor.CompositeCatalogDescriptor -> error("Cannot use CompositeCatalogDescriptor here")
     }
 
-    val site = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
+    val site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
     if (site == null) {
       val error = CommonClientException("Couldn't find site ${chanDescriptor.siteDescriptor()}")
       return ThreadLoadResult.Error(chanDescriptor, ChanLoaderException(error))

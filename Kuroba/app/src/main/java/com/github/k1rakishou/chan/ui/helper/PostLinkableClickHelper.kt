@@ -172,7 +172,7 @@ class PostLinkableClickHelper(
       val archiveDescriptor = archivesManager.getArchiveDescriptorByArchiveType(archiveThreadLink.archiveType)
         ?: return
 
-      val isSiteEnabled = siteManager.bySiteDescriptorAndActive(SiteDescriptor.create(archiveDescriptor.domain))
+      val isSiteEnabled = siteManager.bySiteDescriptor(SiteDescriptor.create(archiveDescriptor.domain))
         ?.enabled()
         ?: false
 
