@@ -54,6 +54,7 @@ import com.github.k1rakishou.prefs.GsonJsonSetting
 import com.github.k1rakishou.prefs.OptionsSetting
 import com.github.k1rakishou.prefs.StringSetting
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -515,16 +516,18 @@ class Dvach : CommonSite() {
       return super.delete(deleteRequest)
     }
 
-    override suspend fun boards(): ModularResult<SiteBoards> {
+    override suspend fun boards(): Flow<SiteBoards> {
       val dvachEndpoints = endpoints() as DvachEndpoints
 
-      return DvachBoardsRequest(
+      val siteBoards = DvachBoardsRequest(
         dvach = this@Dvach,
         siteDescriptor = siteDescriptor(),
         boardManager = boardManager,
         proxiedOkHttpClient = proxiedOkHttpClient,
         boardsRequestUrl = dvachEndpoints.boards(),
       ).execute()
+
+      return flowOf(siteBoards)
     }
 
     override suspend fun <T : AbstractLoginRequest> login(loginRequest: T): SiteActions.LoginResult {

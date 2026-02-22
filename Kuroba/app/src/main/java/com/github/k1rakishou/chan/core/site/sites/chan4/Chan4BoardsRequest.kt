@@ -47,7 +47,7 @@ class Chan4BoardsRequest(
       }
     }
     
-    return SiteBoards(siteDescriptor, list)
+    return SiteBoards.Result.Success(siteDescriptor, list)
   }
   
   @Throws(IOException::class)

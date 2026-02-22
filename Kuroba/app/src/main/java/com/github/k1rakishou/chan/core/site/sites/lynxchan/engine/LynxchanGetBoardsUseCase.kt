@@ -3,7 +3,6 @@ package com.github.k1rakishou.chan.core.site.sites.lynxchan.engine
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.usecase.ISuspendUseCase
 import com.github.k1rakishou.common.AppConstants
-import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.parallelForEach
 import com.github.k1rakishou.common.suspendConvertIntoJsonObjectWithAdapter
 import com.github.k1rakishou.core_logger.Logger
@@ -15,36 +14,45 @@ import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
 import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.ProducerScope
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import okhttp3.Request
+import kotlin.concurrent.atomics.AtomicInt
+import kotlin.concurrent.atomics.incrementAndFetch
 
 class LynxchanGetBoardsUseCase(
   private val appConstants: AppConstants,
   private val moshiLazy: Lazy<Moshi>,
   private val proxiedOkHttpClientLazy: Lazy<ProxiedOkHttpClient>
-) : ISuspendUseCase<LynxchanGetBoardsUseCase.Params, ModularResult<SiteBoards>> {
+) : ISuspendUseCase<LynxchanGetBoardsUseCase.Params, Flow<SiteBoards>> {
 
   private val moshi: Moshi
     get() = moshiLazy.get()
   private val proxiedOkHttpClient: ProxiedOkHttpClient
     get() = proxiedOkHttpClientLazy.get()
 
-  override suspend fun execute(parameter: Params): ModularResult<SiteBoards> {
-    return ModularResult.Try {
-      return@Try withContext(Dispatchers.IO) {
-        return@withContext executeInternal(
-          site = parameter.site,
-          boardsEndpoint = parameter.getBoardsEndpoint
-        )
+  override suspend fun execute(parameter: Params): Flow<SiteBoards> {
+    return channelFlow {
+      withContext(Dispatchers.IO) {
+        try {
+          executeInternal(
+            site = parameter.site,
+            boardsEndpoint = parameter.getBoardsEndpoint
+          )
+        } catch (error: Throwable) {
+          send(SiteBoards.Result.Error(error))
+        }
       }
     }
   }
 
-  private suspend fun executeInternal(
+  private suspend fun ProducerScope<SiteBoards>.executeInternal(
     site: LynxchanSite,
     boardsEndpoint: HttpUrl
-  ): SiteBoards {
+  ) {
     val siteDescriptor = site.siteDescriptor()
 
     val request = Request.Builder()
@@ -63,36 +71,34 @@ class LynxchanGetBoardsUseCase(
 
     if (lynxchanBoardsPage == null) {
       Logger.d(TAG, "execute() failed to load the first page")
-      return SiteBoards(siteDescriptor = siteDescriptor, boards = emptyList())
+      send(SiteBoards.Result.Success(siteDescriptor = siteDescriptor, boards = emptyList()))
+      return
     }
 
     if (!lynxchanBoardsPage.isStatusOk) {
       throw GetBoardsError("Response status is not ok. Status=\'${lynxchanBoardsPage.status}\'")
     }
 
-    val boards = lynxchanBoardsPage.boards
-    val pageCount = lynxchanBoardsPage.pageCount
+    val boards = lynxchanBoardsPage.boardsActual
+    val pageCount = lynxchanBoardsPage.pageCountActual ?: 1
 
     if (boards == null) {
       Logger.d(TAG, "execute() \'boards\' not found")
       throw GetBoardsError("\'boards\' not found in server response")
     }
 
-    if (pageCount == null) {
-      Logger.d(TAG, "execute() \'pageCount\' not found")
-      throw GetBoardsError("\'pageCount\' not found in server response")
-    }
-
+    send(SiteBoards.Progress(1, pageCount))
     totalLynxchanBoards += boards
-    Logger.d(TAG, "execute() site ${siteDescriptor.siteName} has ${lynxchanBoardsPage.pageCount} board pages")
+    Logger.d(TAG, "execute() site ${siteDescriptor.siteName} has ${lynxchanBoardsPage.pageCountActual} board pages")
 
     if (pageCount > 1) {
       val restOfBoards = loadRestOfBoards(
         boardsEndpoint = boardsEndpoint,
-        pageCount = pageCount
+        totalPagesCount = pageCount
       )
 
       totalLynxchanBoards.addAll(restOfBoards)
+      send(SiteBoards.Progress(pageCount, pageCount))
     }
 
     Logger.d(TAG, "execute() loaded all boards")
@@ -111,15 +117,21 @@ class LynxchanGetBoardsUseCase(
       )
     }
 
-    return SiteBoards(
+    val siteBoards = SiteBoards.Result.Success(
       siteDescriptor = siteDescriptor,
       boards = chanBoards
     )
+
+    send(siteBoards)
   }
 
-  private suspend fun loadRestOfBoards(boardsEndpoint: HttpUrl, pageCount: Int): List<LynxchanBoardsData> {
-    val pages = (2..pageCount).toList()
+  private suspend fun ProducerScope<SiteBoards>.loadRestOfBoards(
+    boardsEndpoint: HttpUrl,
+    totalPagesCount: Int
+  ): List<LynxchanBoardsData> {
+    val pages = (2..totalPagesCount).toList()
     val lynxchanBoardsPageAdapter = moshi.adapter<LynxchanBoardsPage>(LynxchanBoardsPage::class.java)
+    val pageCounter = AtomicInt(2)
 
     return parallelForEach(
       dataList = pages,
@@ -138,13 +150,14 @@ class LynxchanGetBoardsUseCase(
         adapter = lynxchanBoardsPageAdapter
       )
         .unwrap()
-        ?.boards
+        ?.boardsActual
 
       if (boards == null) {
-        throw IllegalStateException("Failed to parse board page: ${page}")
+        error("Failed to parse board page: ${page}")
       }
 
       Logger.d(TAG, "loadRestOfBoards() Loading page ${page}...done")
+      send(SiteBoards.Progress(pageCounter.incrementAndFetch().coerceAtMost(totalPagesCount), totalPagesCount))
 
       return@parallelForEach boards
     }.flatten()
@@ -165,38 +178,38 @@ class LynxchanGetBoardsUseCase(
 
   @JsonClass(generateAdapter = true)
   data class LynxchanBoardsPage(
-    @Json(name = "status") val status: String?,
-    @Json(name = "data") val data: LynxchanBoardsPage?,
-    @Json(name = "pageCount") val _pageCount: Int?,
-    @Json(name = "boards") val _boards: List<LynxchanBoardsData>?
+    @field:Json(name = "status") val status: String?,
+    @field:Json(name = "data") val data: LynxchanBoardsPage?,
+    @field:Json(name = "pageCount") val pageCount: Int?,
+    @field:Json(name = "boards") val boards: List<LynxchanBoardsData>?
   ) {
     val isStatusOk: Boolean
       get() = status == null || status.equals("ok", ignoreCase = true)
 
-    val pageCount: Int?
+    val pageCountActual: Int?
       get() {
         if (data != null) {
           return data.pageCount
         }
 
-        return _pageCount
+        return pageCount
       }
 
-    val boards: List<LynxchanBoardsData>?
+    val boardsActual: List<LynxchanBoardsData>?
       get() {
         if (data != null) {
           return data.boards
         }
 
-        return _boards
+        return boards
       }
   }
 
   @JsonClass(generateAdapter = true)
   data class LynxchanBoardsData(
-    @Json(name = "boardUri") val boardUri: String,
-    @Json(name = "boardName") val boardName: String,
-    @Json(name = "boardDescription") val boardDescription: String?
+    @field:Json(name = "boardUri") val boardUri: String,
+    @field:Json(name = "boardName") val boardName: String,
+    @field:Json(name = "boardDescription") val boardDescription: String?
   )
 
   companion object {

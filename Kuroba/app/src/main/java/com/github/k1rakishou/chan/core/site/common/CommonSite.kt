@@ -38,6 +38,7 @@ import com.github.k1rakishou.persist_state.ReplyMode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -530,19 +531,19 @@ abstract class CommonSite : SiteBase() {
     
     }
     
-    override suspend fun boards(): ModularResult<SiteBoards> {
-      return ModularResult.Try { SiteBoards(site.siteDescriptor(), site.staticBoards) }
+    override suspend fun boards(): Flow<SiteBoards> {
+      return flowOf(SiteBoards.Result.Success(site.siteDescriptor(), site.staticBoards))
     }
     
     protected suspend fun genericBoardsRequestResponseHandler(
       requestProvider: () -> AbstractRequest<List<ChanBoard>>,
       defaultBoardsProvider: () -> List<ChanBoard>
-    ): ModularResult<SiteBoards> {
-      return ModularResult.Try {
-        return@Try requestProvider().execute()
-          .mapValue { boardsList -> SiteBoards(site.siteDescriptor(), boardsList) }
-          .mapErrorToValue { SiteBoards(site.siteDescriptor(), defaultBoardsProvider()) }
-      }
+    ): Flow<SiteBoards> {
+      return flowOf(
+        requestProvider().execute()
+          .mapValue { boardsList -> SiteBoards.Result.Success(site.siteDescriptor(), boardsList) }
+          .mapErrorToValue { SiteBoards.Result.Success(site.siteDescriptor(), defaultBoardsProvider()) }
+      )
     }
     
     override suspend fun pages(

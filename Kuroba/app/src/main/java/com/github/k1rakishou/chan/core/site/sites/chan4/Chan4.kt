@@ -55,6 +55,7 @@ import com.github.k1rakishou.prefs.GsonJsonSetting
 import com.github.k1rakishou.prefs.OptionsSetting
 import com.github.k1rakishou.prefs.StringSetting
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -284,18 +285,22 @@ open class Chan4 : SiteBase() {
 
   private val actions: SiteActions = object : SiteActions {
 
-    override suspend fun boards(): ModularResult<SiteBoards> {
+    override suspend fun boards(): Flow<SiteBoards> {
       val request = Request.Builder()
         .url(endpoints().boards().toString())
         .get()
         .build()
 
-      return Chan4BoardsRequest(
+      val siteBoards = Chan4BoardsRequest(
         siteDescriptor = siteDescriptor(),
         boardManager = boardManager,
         request = request,
         proxiedOkHttpClient = proxiedOkHttpClient
-      ).execute()
+      )
+        .execute()
+        .mapErrorToValue { error -> SiteBoards.Result.Error(error) }
+
+      return flowOf(siteBoards)
     }
 
     override suspend fun pages(board: ChanBoard): JsonReaderRequest.JsonReaderResponse<BoardPages> {

@@ -19,7 +19,6 @@ import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.common.AppConstants
-import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.site.SiteBoards
 import com.github.k1rakishou.persist_state.ReplyMode
@@ -34,6 +33,9 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.onEach
 import okhttp3.HttpUrl
 import java.security.SecureRandom
 import java.util.Random
@@ -162,39 +164,34 @@ abstract class SiteBase : Site, CoroutineScope {
     ignoreReplyCooldowns = BooleanSetting(prefs, "ignore_reply_cooldowns", false)
   }
 
-  override suspend fun loadBoardInfo(): ModularResult<SiteBoards> {
+  override suspend fun loadBoardInfo(): Flow<SiteBoards> {
     if (!enabled()) {
-      return ModularResult.value(SiteBoards(siteDescriptor(), emptyList()))
+      return flowOf(SiteBoards.Result.Success(siteDescriptor(), emptyList()))
     }
 
     if (!boardsType().canList) {
-      return ModularResult.value(SiteBoards(siteDescriptor(), emptyList()))
+      return flowOf(SiteBoards.Result.Success(siteDescriptor(), emptyList()))
     }
 
-    val result = ModularResult.Try {
-      boardManager.awaitUntilInitialized()
-      Logger.d(TAG, "Requesting boards for site ${name()}")
+    return actions().boards()
+      .onEach { siteBoards ->
+        when (siteBoards) {
+          is SiteBoards.Progress -> {
+            // no-op
+          }
+          is SiteBoards.Result.Error -> {
+            Logger.error(TAG, siteBoards.error) { "loadBoardInfo(${siteDescriptor()}) error" }
+          }
+          is SiteBoards.Result.Success -> {
+            boardManager.createOrUpdateBoards(siteBoards.boards)
 
-      val readerResponse = actions().boards()
-      when (readerResponse) {
-        is ModularResult.Error -> {
-          Logger.e(TAG, "Couldn't get site boards", readerResponse.error)
-        }
-        is ModularResult.Value -> {
-          val siteBoards = readerResponse.value
-          boardManager.createOrUpdateBoards(siteBoards.boards)
-
-          Logger.d(TAG, "Got the boards for site ${siteBoards.siteDescriptor.siteName}, " +
-            "boards count = ${siteBoards.boards.size}")
+            Logger.debug(TAG) {
+              "Got the boards for site ${siteBoards.siteDescriptor.siteName}, " +
+                "boards count: ${siteBoards.boards.size}"
+            }
+          }
         }
       }
-
-      return@Try readerResponse.unwrap()
-    }.onError { error ->
-      Logger.e(TAG, "loadBoardInfo(${siteDescriptor()}) error", error)
-    }
-
-    return result
   }
 
   override fun <T : Setting<*>> getSettingBySettingId(settingId: SiteSetting.SiteSettingId): T? {

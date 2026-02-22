@@ -20,6 +20,7 @@ import com.github.k1rakishou.model.data.site.SiteBoards
 import com.github.k1rakishou.persist_state.ReplyMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import okhttp3.HttpUrl
 import okhttp3.Request
 
@@ -62,10 +63,11 @@ class FoolFuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
     return SiteActions.DeleteResult.DeleteError(error)
   }
 
-  override suspend fun boards(): ModularResult<SiteBoards> {
+  override suspend fun boards(): Flow<SiteBoards> {
     val boardsEndpoint = site.endpoints().boards()
     if (boardsEndpoint == null) {
-      return ModularResult.error(CommonClientException("Site ${site.name()} does not have support for boards request"))
+      val error = CommonClientException("Site ${site.name()} does not have support for boards request")
+      return flowOf(SiteBoards.Result.Error(error))
     }
 
     val request = Request.Builder()
@@ -73,11 +75,15 @@ class FoolFuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
       .get()
       .build()
 
-    return FoolFuukaBoardsRequest(
+    val siteBoards = FoolFuukaBoardsRequest(
       siteDescriptor = site.siteDescriptor(),
       request = request,
       proxiedOkHttpClient = site.proxiedOkHttpClient
-    ).execute()
+    )
+      .execute()
+      .mapErrorToValue { error -> SiteBoards.Result.Error(error) }
+
+    return flowOf(siteBoards)
   }
 
   override suspend fun pages(board: ChanBoard): JsonReaderRequest.JsonReaderResponse<BoardPages>? {

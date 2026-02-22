@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -123,6 +124,8 @@ class BoardsReorderController(
     val errorMut by viewModel.error
     val error = errorMut
 
+    val updatingBoardsMut by viewModel.updatingBoards
+    val updatingBoards = updatingBoardsMut
     val loading by viewModel.loading
     val reorderableBoards = viewModel.reorderableBoards
     val selectedBoards = viewModel.selectedBoards
@@ -191,7 +194,34 @@ class BoardsReorderController(
         }
 
         if (reorderableBoards.isEmpty()) {
-          if (loading) {
+          if (updatingBoards != null) {
+            item(key = "updating_boards") {
+              Box(
+                modifier = Modifier.fillParentMaxSize(),
+                contentAlignment = Alignment.Center
+              ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                  KurobaComposeProgressIndicator(modifier = Modifier.wrapContentSize())
+
+                  Spacer(modifier = Modifier.height(32.dp))
+
+                  KurobaComposeText(
+                    text = stringResource(R.string.controller_boards_reorder_loading_boards)
+                  )
+
+                  Spacer(modifier = Modifier.height(8.dp))
+
+                  KurobaComposeText(
+                    text = stringResource(
+                      R.string.controller_boards_reorder_loading_boards_progress,
+                      updatingBoards.currentPage,
+                      updatingBoards.totalPages
+                    )
+                  )
+                }
+              }
+            }
+          } else if (loading) {
             item(key = "boards_first_load") {
               KurobaComposeProgressIndicator(modifier = Modifier.fillParentMaxSize())
             }
@@ -241,6 +271,10 @@ class BoardsReorderController(
         }
       )
 
+      val canShowFab = !isInSelectionMode
+        && updatingBoards == null
+        && !loading
+
       AnimatedContent(
         modifier = Modifier
           .size(KurobaComposeFabSize)
@@ -252,36 +286,35 @@ class BoardsReorderController(
                 .roundToPx()
             )
           },
-        targetState = isInSelectionMode,
+        targetState = canShowFab,
         contentAlignment = Alignment.Center,
         transitionSpec = {
           scaleIn()
             .togetherWith(scaleOut())
         }
-      ) { selectionMode ->
-        if (selectionMode) {
+      ) { canShowFab ->
+        if (canShowFab) {
+          FloatingActionButton(
+            modifier = Modifier
+              .fillMaxSize(),
+            backgroundColor = chanTheme.accentColorCompose,
+            contentColor = ThemeEngine.resolveTextColor(chanTheme.accentColorCompose),
+            onClick = {
+              val controller = AddBoardsController(
+                context = context,
+                siteDescriptor = viewModel.siteDescriptor,
+                refreshBoardsFunc = { viewModel.displayActiveBoards() }
+              )
+
+              requireNavController().pushController(controller)
+            },
+            content = {
+              KurobaComposeIcon(drawableId = R.drawable.ic_add_white_24dp)
+            }
+          )
+        } else {
           Spacer(modifier = Modifier.fillMaxSize())
-          return@AnimatedContent
         }
-
-        FloatingActionButton(
-          modifier = Modifier
-            .fillMaxSize(),
-          backgroundColor = chanTheme.accentColorCompose,
-          contentColor = ThemeEngine.resolveTextColor(chanTheme.accentColorCompose),
-          onClick = {
-            val controller = AddBoardsController(
-              context = context,
-              siteDescriptor = viewModel.siteDescriptor,
-              refreshBoardsFunc = { viewModel.displayActiveBoards() }
-            )
-
-            requireNavController().pushController(controller)
-          },
-          content = {
-            KurobaComposeIcon(drawableId = R.drawable.ic_add_white_24dp)
-          }
-        )
       }
     }
   }

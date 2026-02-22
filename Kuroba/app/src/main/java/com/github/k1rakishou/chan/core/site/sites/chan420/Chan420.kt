@@ -12,11 +12,11 @@ import com.github.k1rakishou.chan.core.site.limitations.ConstantAttachablesCount
 import com.github.k1rakishou.chan.core.site.limitations.PasscodeDependantMaxAttachablesTotalSize
 import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitation
 import com.github.k1rakishou.chan.core.site.parser.CommentParserType
-import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
+import kotlinx.coroutines.flow.Flow
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
@@ -44,7 +44,7 @@ class Chan420 : CommonSite() {
     
     setEndpoints(TaimabaEndpoints(this, "https://api.420chan.org", "https://boards.420chan.org"))
     setActions(object : TaimabaActions(this@Chan420, replyManagerLazy) {
-      override suspend fun boards(): ModularResult<SiteBoards> {
+      override suspend fun boards(): Flow<SiteBoards> {
         return genericBoardsRequestResponseHandler(
           requestProvider = {
             val request = Request.Builder()

@@ -9,7 +9,6 @@ import com.github.k1rakishou.chan.core.site.http.DeleteRequest
 import com.github.k1rakishou.chan.core.site.http.HttpCall
 import com.github.k1rakishou.chan.core.site.http.HttpCallManager
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
-import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.board.pages.BoardPages
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -18,6 +17,7 @@ import com.github.k1rakishou.persist_state.ReplyMode
 import com.squareup.moshi.Moshi
 import dagger.Lazy
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
@@ -33,10 +33,10 @@ open class LynxchanActions(
   private val lynxchanGetBoardsUseCase: LynxchanGetBoardsUseCase
     get() = lynxchanGetBoardsUseCaseLazy.get()
 
-  override suspend fun boards(): ModularResult<SiteBoards> {
+  override suspend fun boards(): Flow<SiteBoards> {
     val getBoardsEndpoint = site.endpoints().boards()
     if (getBoardsEndpoint == null) {
-      return ModularResult.error(NullPointerException("Site.boards() returned null"))
+      return flowOf(SiteBoards.Result.Error(NullPointerException("Site.boards() returned null")))
     }
 
     val params = LynxchanGetBoardsUseCase.Params(

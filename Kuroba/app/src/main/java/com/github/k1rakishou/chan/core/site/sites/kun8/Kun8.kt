@@ -18,6 +18,8 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -95,18 +97,22 @@ class Kun8 : CommonSite() {
     })
 
     setActions(object : VichanActions(this@Kun8, proxiedOkHttpClientLazy, siteManager, replyManagerLazy) {
-      override suspend fun boards(): ModularResult<SiteBoards> {
+      override suspend fun boards(): Flow<SiteBoards> {
         val request = Request.Builder()
           .url(endpoints().boards().toString())
           .get()
           .build()
 
-        return Kun8BoardsRequest(
+        val siteBoards = Kun8BoardsRequest(
           siteDescriptor = siteDescriptor(),
           boardManager = boardManager,
           request = request,
           proxiedOkHttpClient = proxiedOkHttpClient
-        ).execute()
+        )
+          .execute()
+          .mapErrorToValue { error -> SiteBoards.Result.Error(error) }
+
+        return flowOf(siteBoards)
       }
 
       override fun setupPost(

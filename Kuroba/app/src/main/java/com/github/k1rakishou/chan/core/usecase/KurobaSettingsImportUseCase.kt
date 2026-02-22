@@ -32,11 +32,13 @@ import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.filter.ChanFilter
 import com.github.k1rakishou.model.data.filter.FilterAction
 import com.github.k1rakishou.model.data.post.ChanPostHide
+import com.github.k1rakishou.model.data.site.SiteBoards
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import com.google.gson.stream.JsonReader
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.flow.first
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.io.FileReader
@@ -268,12 +270,13 @@ class KurobaSettingsImportUseCase(
         "siteManager.bySiteDescriptor returned null for $siteDescriptor"
       }
 
-      site.loadBoardInfo()
-        .mapValue { Unit }
-        .safeUnwrap { error ->
-          Logger.e(TAG, "Failed to load board info for site ${siteDescriptor}", error)
-          return@mapNotNull null
-        }
+      val siteBoards = site.loadBoardInfo()
+        .first { siteBoards -> siteBoards is SiteBoards.Result }
+
+      if (siteBoards is SiteBoards.Result.Error) {
+        Logger.error(TAG, siteBoards.error) { "Failed to load board info for site ${siteDescriptor}" }
+        return@mapNotNull null
+      }
 
       Logger.d(TAG, "activateSitesAndLoadBoardInfo() loaded boards for $siteDescriptor")
       return@mapNotNull siteDescriptor

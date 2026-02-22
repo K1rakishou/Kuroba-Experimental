@@ -3,7 +3,6 @@ package com.github.k1rakishou.chan.core.site.sites.dvach
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.common.EmptyBodyResponseException
-import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.jsonArray
@@ -28,13 +27,13 @@ class DvachBoardsRequest internal constructor(
   private val boardsRequestUrl: HttpUrl
 ) {
 
-  suspend fun execute(): ModularResult<SiteBoards> {
+  suspend fun execute(): SiteBoards {
      return Try {
       return@Try genericDvachBoardRequest(
         url = boardsRequestUrl,
         readJsonFunc = { jsonReader -> readDvachBoards(jsonReader) }
       )
-    }
+    }.mapErrorToValue { error -> SiteBoards.Result.Error(error) }
   }
 
   private suspend fun <T> genericDvachBoardRequest(
@@ -86,7 +85,7 @@ class DvachBoardsRequest internal constructor(
       }
     }
 
-    return SiteBoards(siteDescriptor, boardList)
+    return SiteBoards.Result.Success(siteDescriptor, boardList)
   }
 
   private fun JsonReader.readDvachBoard(): ChanBoard? {

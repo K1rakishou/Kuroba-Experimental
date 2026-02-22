@@ -21,14 +21,18 @@ import com.github.k1rakishou.chan.ui.compose.reorder.move
 import com.github.k1rakishou.chan.ui.helper.AppResources
 import com.github.k1rakishou.chan.ui.helper.BoardHelper
 import com.github.k1rakishou.chan.utils.requireParams
-import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
+import com.github.k1rakishou.model.data.site.SiteBoards
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.onCompletion
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -47,6 +51,10 @@ class BoardsReorderControllerViewModel(
   private val _error = mutableStateOf<Throwable?>(null)
   val error: State<Throwable?>
     get() = _error
+
+  private val _updatingBoards = mutableStateOf<BoardsUpdateEvent?>(null)
+  val updatingBoards: State<BoardsUpdateEvent?>
+    get() = _updatingBoards
 
   private val _loading = mutableStateOf(false)
   val loading: State<Boolean>
@@ -91,6 +99,7 @@ class BoardsReorderControllerViewModel(
   fun updateBoardsFromServerAndDisplayActive() {
     viewModelScope.launch(Dispatchers.Default) {
       _error.value = null
+      _updatingBoards.value = null
       _loading.value = true
 
       try {
@@ -114,22 +123,37 @@ class BoardsReorderControllerViewModel(
           return@launch
         }
 
-        val loadedBoardsCount = site.loadBoardInfo()
-          .mapValue { siteBoards -> siteBoards.boards.size }
-          .safeUnwrap { error ->
-            Logger.e(TAG, "Error loading boards for site ${siteDescriptor}", error)
-            _error.value = Exception(error.errorMessageOrClassName())
-            return@launch
+        val siteBoardsResult = site.loadBoardInfo()
+          .onEach { siteBoards ->
+            if (siteBoards is SiteBoards.Progress) {
+              _updatingBoards.value = BoardsUpdateEvent(siteBoards.current, siteBoards.total)
+            }
           }
+          .onCompletion { _updatingBoards.value = null }
+          .filterIsInstance<SiteBoards.Result>()
+          .first()
 
-        displayActiveBoardsInternal()
+        when (siteBoardsResult) {
+          is SiteBoards.Result.Error -> {
+            Logger.error(TAG, siteBoardsResult.error) { "Error loading boards for site ${siteDescriptor}" }
+            _error.value = Exception(siteBoardsResult.error)
+          }
+          is SiteBoards.Result.Success -> {
+            val loadedBoardsCount = siteBoardsResult.boards.size
+            val message = appResources.string(
+              R.string.controller_boards_reorder_n_boards_loaded,
+              loadedBoardsCount
+            )
 
-        controllerDelegate.toast(
-          message = appResources.string(R.string.controller_boards_reorder_n_boards_loaded, loadedBoardsCount)
-        )
+            controllerDelegate.toast(message)
+          }
+        }
       } finally {
         _loading.value = false
+        _updatingBoards.value = null
       }
+
+      displayActiveBoardsInternal()
     }
   }
 
@@ -324,6 +348,7 @@ class BoardsReorderControllerViewModel(
       _reorderableBoards.addAll(reorderableBoards)
     } finally {
       _loading.value = false
+      _updatingBoards.value = null
     }
   }
 
@@ -331,6 +356,11 @@ class BoardsReorderControllerViewModel(
     val boardDescriptor: BoardDescriptor,
     val boardName: String,
     val description: String
+  )
+
+  data class BoardsUpdateEvent(
+    val currentPage: Int,
+    val totalPages: Int
   )
 
   class Exception(message: String) : ClientException(message)

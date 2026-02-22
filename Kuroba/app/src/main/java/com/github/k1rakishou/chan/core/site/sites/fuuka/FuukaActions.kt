@@ -21,6 +21,7 @@ import com.github.k1rakishou.model.data.site.SiteBoards
 import com.github.k1rakishou.persist_state.ReplyMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import okhttp3.HttpUrl
 import okhttp3.Request
 
@@ -63,10 +64,9 @@ class FuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
     return SiteActions.DeleteResult.DeleteError(error)
   }
 
-  override suspend fun boards(): ModularResult<SiteBoards> {
+  override suspend fun boards(): Flow<SiteBoards> {
     val error = CommonClientException("Catalog is not supported for site ${site.name()}")
-
-    return ModularResult.error(error)
+    return flowOf(SiteBoards.Result.Error(error))
   }
 
   override suspend fun pages(board: ChanBoard): JsonReaderRequest.JsonReaderResponse<BoardPages>? {

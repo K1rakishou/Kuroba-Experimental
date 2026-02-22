@@ -80,7 +80,7 @@ class FoolFuukaBoardsRequest(
       )
     }
 
-    return SiteBoards(siteDescriptor, boards)
+    return SiteBoards.Result.Success(siteDescriptor, boards)
   }
 
 }

@@ -606,7 +606,7 @@ class ReplyNotificationsHelper(
     return chanPostRepository.getCatalogOriginalPosts(threadDescriptors)
       .mapErrorToValue { error ->
         Logger.e(TAG, "chanPostRepository.getCatalogOriginalPosts() failed", error)
-        return@mapErrorToValue emptyMap<ChanDescriptor.ThreadDescriptor, ChanPost>()
+        return@mapErrorToValue linkedMapOf()
       }
   }
 

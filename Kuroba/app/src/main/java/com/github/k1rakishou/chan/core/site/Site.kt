@@ -5,10 +5,10 @@ import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitation
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.CommentParserType
 import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
-import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
+import kotlinx.coroutines.flow.Flow
 
 interface Site {
   val isSynthetic: Boolean
@@ -44,7 +44,7 @@ interface Site {
   fun enabled(): Boolean
   fun initialize()
   fun postInitialize()
-  suspend fun loadBoardInfo(): ModularResult<SiteBoards>
+  suspend fun loadBoardInfo(): Flow<SiteBoards>
   fun name(): String
   fun siteDescriptor(): SiteDescriptor
   fun icon(): SiteIcon

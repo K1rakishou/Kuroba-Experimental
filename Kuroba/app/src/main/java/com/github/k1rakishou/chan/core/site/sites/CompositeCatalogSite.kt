@@ -39,6 +39,8 @@ import com.github.k1rakishou.persist_state.ReplyMode
 import dagger.Lazy
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOf
 import okhttp3.HttpUrl
 import java.io.InputStream
 import javax.inject.Inject
@@ -164,8 +166,8 @@ class CompositeCatalogSite : Site {
   }
 
   private val noOpActions = object : SiteActions {
-    override suspend fun boards(): ModularResult<SiteBoards> {
-      return ModularResult.error(NotImplementedError())
+    override suspend fun boards(): Flow<SiteBoards> {
+      return flowOf(SiteBoards.Result.Error(NotImplementedError()))
     }
 
     override suspend fun pages(board: ChanBoard): JsonReaderRequest.JsonReaderResponse<BoardPages>? = null
@@ -205,8 +207,9 @@ class CompositeCatalogSite : Site {
   override fun postInitialize() {
   }
 
-  override suspend fun loadBoardInfo(): ModularResult<SiteBoards> =
-    ModularResult.error(ClientException("Not supported for composite catalogs"))
+  override suspend fun loadBoardInfo(): Flow<SiteBoards> = flow {
+    emit(SiteBoards.Result.Error(ClientException("Not supported for composite catalogs")))
+  }
 
   override fun name(): String = "Composite catalogs"
 
