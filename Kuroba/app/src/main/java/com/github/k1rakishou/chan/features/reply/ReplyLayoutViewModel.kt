@@ -78,6 +78,7 @@ import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
+@Suppress("LargeClass")
 class ReplyLayoutViewModel(
   private val savedStateHandle: SavedStateHandle,
   private val appContext: Context,

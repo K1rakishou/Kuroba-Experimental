@@ -73,6 +73,7 @@ import java.util.Locale
 import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
 
+@Suppress("LargeClass")
 class AlbumViewControllerViewModel(
   private val savedStateHandle: SavedStateHandle,
   private val appResources: AppResources,

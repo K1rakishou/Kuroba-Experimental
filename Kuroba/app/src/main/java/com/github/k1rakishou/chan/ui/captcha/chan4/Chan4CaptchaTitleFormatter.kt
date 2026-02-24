@@ -65,7 +65,7 @@ class Chan4CaptchaTitleFormatter {
       }
     }
 
-    return Title(
+    return Title.TextWithImage(
       annotated = text,
       images = images
     )
@@ -190,10 +190,16 @@ class Chan4CaptchaTitleFormatter {
     return allInnerText
   }
 
-  data class Title(
-    val annotated: AnnotatedString,
-    val images: List<ImageBitmap>
-  )
+  sealed interface Title {
+    data class TextWithImage(
+      val annotated: AnnotatedString,
+      val images: List<ImageBitmap>
+    ) : Title
+
+    data class Image(
+      val image: ImageBitmap
+    ) : Title
+  }
 
   interface StyleProcessor {
     fun matches(name: String, value: String): Boolean

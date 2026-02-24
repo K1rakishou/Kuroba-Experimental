@@ -306,7 +306,6 @@ class BoardsReorderControllerViewModel(
     return false
   }
 
-
   private suspend fun displayActiveBoardsInternal() {
     try {
       val site = siteManager.bySiteDescriptorAndActive(siteDescriptor)

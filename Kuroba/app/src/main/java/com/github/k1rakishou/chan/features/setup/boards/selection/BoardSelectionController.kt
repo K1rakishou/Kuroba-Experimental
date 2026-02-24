@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.runtime.Composable
@@ -174,61 +175,76 @@ class BoardSelectionController(
                 }
 
                 selectableBoardElements.forEach { selectableBoardElement ->
-                  when (val element = selectableBoardElement) {
-                    is BoardSelectionControllerViewModel.SelectableElement.SiteHeader -> {
-                      item(
-                        key = element.siteDescriptor,
-                        span = { GridItemSpan(maxLineSpan) }
-                      ) {
-                        HeaderElement(element)
-                      }
-                    }
-                    is BoardSelectionControllerViewModel.SelectableElement.Boards -> {
-                      val boards = element.selectableBoards
-
-                      items(
-                        count = element.selectableBoards.size,
-                        key = { index ->
-                          val selectableBoard = boards.getOrNull(index)
-                            ?: return@items "${element.siteDescriptor}_null"
-
-                          return@items when (val descriptor = selectableBoard.catalogDescriptor) {
-                            is ChanDescriptor.CatalogDescriptor -> descriptor.boardDescriptor.userReadableString()
-                            is ChanDescriptor.CompositeCatalogDescriptor -> {
-                              "CompositeCatalog_${descriptor.userReadableString()}"
-                            }
-                          }
-                        },
-                        span = { index ->
-                          val selectableBoard = boards.getOrNull(index)
-
-                          val span = if (selectableBoard?.catalogDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
-                            spanCount / 2
-                          } else {
-                            1
-                          }
-
-                          return@items GridItemSpan(span)
-                        },
-                        itemContent = { index ->
-                          val selectableBoard = boards.getOrNull(index)
-                            ?: return@items
-
-                          SelectableBoardElement(
-                            selectableBoard = selectableBoard,
-                            isCurrentlySelectedCatalog =
-                              selectableBoard.catalogDescriptor == currentlySelectedCatalogDescriptor,
-                            searchQuery = currentSearchQuery
-                          )
-                        }
-                      )
-                    }
-                  }
+                  selectableBoardsSection(
+                    spanCount = spanCount,
+                    selectableBoardElement = selectableBoardElement,
+                    currentlySelectedCatalogDescriptor = currentlySelectedCatalogDescriptor,
+                    currentSearchQuery = currentSearchQuery
+                  )
                 }
               }
             )
           },
           footer = null
+        )
+      }
+    }
+  }
+
+  private fun LazyGridScope.selectableBoardsSection(
+    spanCount: Int,
+    selectableBoardElement: BoardSelectionControllerViewModel.SelectableElement,
+    currentlySelectedCatalogDescriptor: ChanDescriptor.ICatalogDescriptor?,
+    currentSearchQuery: String
+  ) {
+    when (selectableBoardElement) {
+      is BoardSelectionControllerViewModel.SelectableElement.SiteHeader -> {
+        item(
+          key = selectableBoardElement.siteDescriptor,
+          span = { GridItemSpan(maxLineSpan) }
+        ) {
+          HeaderElement(selectableBoardElement)
+        }
+      }
+
+      is BoardSelectionControllerViewModel.SelectableElement.Boards -> {
+        val boards = selectableBoardElement.selectableBoards
+
+        items(
+          count = selectableBoardElement.selectableBoards.size,
+          key = { index ->
+            val selectableBoard = boards.getOrNull(index)
+              ?: return@items "${selectableBoardElement.siteDescriptor}_null"
+
+            return@items when (val descriptor = selectableBoard.catalogDescriptor) {
+              is ChanDescriptor.CatalogDescriptor -> descriptor.boardDescriptor.userReadableString()
+              is ChanDescriptor.CompositeCatalogDescriptor -> {
+                "CompositeCatalog_${descriptor.userReadableString()}"
+              }
+            }
+          },
+          span = { index ->
+            val selectableBoard = boards.getOrNull(index)
+
+            val span = if (selectableBoard?.catalogDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+              spanCount / 2
+            } else {
+              1
+            }
+
+            return@items GridItemSpan(span)
+          },
+          itemContent = { index ->
+            val selectableBoard = boards.getOrNull(index)
+              ?: return@items
+
+            SelectableBoardElement(
+              selectableBoard = selectableBoard,
+              isCurrentlySelectedCatalog =
+                selectableBoard.catalogDescriptor == currentlySelectedCatalogDescriptor,
+              searchQuery = currentSearchQuery
+            )
+          }
         )
       }
     }

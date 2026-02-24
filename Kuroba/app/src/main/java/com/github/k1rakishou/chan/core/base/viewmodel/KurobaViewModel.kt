@@ -27,9 +27,7 @@ abstract class KurobaViewModel : ViewModel() {
   }
 
   @CallSuper
-  override fun onCleared() {
-
-  }
+  override fun onCleared() {}
 
   protected inline fun <T> MutableStateFlow<T>.updateState(crossinline updater: T.() -> T?) {
     update { oldValue ->
@@ -48,5 +46,5 @@ abstract class KurobaViewModel : ViewModel() {
   class ControllerDelegate(
     private val snackbarDelegate: ControllerSnackbarDelegate = HasSnackbarDelegateImpl(),
     private val navigationDelegate: ControllerNavigationDelegate = HasNavigationDelegateImpl()
-  ): ControllerSnackbarDelegate by snackbarDelegate, ControllerNavigationDelegate by navigationDelegate
+  ) : ControllerSnackbarDelegate by snackbarDelegate, ControllerNavigationDelegate by navigationDelegate
 }

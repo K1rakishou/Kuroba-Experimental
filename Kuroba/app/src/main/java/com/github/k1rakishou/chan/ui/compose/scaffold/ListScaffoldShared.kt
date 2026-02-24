@@ -17,7 +17,7 @@ import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextBarButt
 import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.utils.appDependencies
 
-interface LazyListScaffoldShared {
+interface ListScaffoldShared {
   @Composable
   fun Header(modifier: Modifier, title: String) {
     Header(
@@ -38,9 +38,9 @@ interface LazyListScaffoldShared {
   @Composable
   fun Footer(
     modifier: Modifier,
-    negativeButton: LazyListScaffoldShared.Button?,
-    positiveButton: LazyListScaffoldShared.Button?,
-    extractButton: LazyListScaffoldShared.Button? = null
+    negativeButton: ListScaffoldShared.Button?,
+    positiveButton: ListScaffoldShared.Button?,
+    extractButton: ListScaffoldShared.Button? = null
   ) {
     Row(
       modifier = modifier

@@ -330,7 +330,9 @@ class LoadChan4CaptchaUseCase(
   @JsonClass(generateAdapter = true)
   data class CaptchaTaskRaw(
     @field:Json(name = "str")
-    val title: String?,
+    val textTitle: String?,
+    @field:Json(name = "img")
+    val imageTitle: String?,
     @field:Json(name = "items")
     val items: List<String>
   )

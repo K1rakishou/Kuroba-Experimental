@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.ui.compose.scaffold
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -10,9 +11,11 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -23,31 +26,29 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeDivider
 import com.github.k1rakishou.chan.ui.compose.consumeClicks
 import com.github.k1rakishou.chan.ui.compose.copy
+import com.github.k1rakishou.chan.ui.compose.isFullyScrolledBottom
+import com.github.k1rakishou.chan.ui.compose.isFullyScrolledTop
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
-import com.github.k1rakishou.chan.ui.compose.providers.LocalContentPaddings
-import com.github.k1rakishou.chan.ui.controller.base.ControllerKey
 
-interface NormalLazyListScaffold : ListScaffoldShared
+interface FloatingListScaffold : ListScaffoldShared
 
-class NormalLazyListScaffoldBuilder : NormalLazyListScaffold {
+class FloatingListScaffoldBuilder : FloatingListScaffold {
   @Composable
   fun Content(
     boxScope: BoxScope,
-    controllerKey: ControllerKey,
+    scrollState: ScrollState,
     header: (@Composable BoxScope.() -> Unit)? = null,
     body: @Composable BoxScope.(PaddingValues) -> Unit,
-    footer: (@Composable BoxScope.(Dp) -> Unit)? = null
+    footer: @Composable BoxScope.() -> Unit
   ) {
-    require(header != null || footer != null) { "Either header or footer must not be null!" }
-
     val chanTheme = LocalChanTheme.current
     val density = LocalDensity.current
     val layoutDirection = LocalLayoutDirection.current
-    val localContentPaddings = LocalContentPaddings.current
 
     val alphaAnimatable = remember { Animatable(initialValue = 0f) }
     var headerMeasured by remember { mutableStateOf(header == null) }
@@ -59,8 +60,8 @@ class NormalLazyListScaffoldBuilder : NormalLazyListScaffold {
           .fillMaxWidth()
           .wrapContentHeight()
           .consumeClicks()
-          .align(Alignment.Center)
           .background(chanTheme.backColorCompose)
+          .align(Alignment.Center)
       ) {
         var contentPaddings by remember { mutableStateOf(PaddingValues.Zero) }
 
@@ -69,7 +70,7 @@ class NormalLazyListScaffoldBuilder : NormalLazyListScaffold {
             modifier = Modifier
               .onSizeChanged { intSize ->
                 contentPaddings = with(density) {
-                  contentPaddings.copy(layoutDirection = layoutDirection, top = intSize.height.toDp())
+                  contentPaddings.copy(layoutDirection, top = intSize.height.toDp())
                 }
 
                 headerMeasured = true
@@ -77,27 +78,29 @@ class NormalLazyListScaffoldBuilder : NormalLazyListScaffold {
               .fillMaxWidth()
               .wrapContentHeight()
               .align(Alignment.TopCenter)
+              .background(chanTheme.backColorCompose)
               .consumeClicks(enabled = true)
               .zIndex(1f)
           ) {
-            Spacer(modifier = Modifier.height(localContentPaddings.calculateTopPadding()))
-
-            Box {
+            Spacer(modifier = Modifier.height(8.dp))
+            Box(modifier = Modifier.padding(horizontal = 8.dp)) {
               header()
             }
-          }
-        } else {
-          LaunchedEffect(key1 = localContentPaddings) {
-            contentPaddings = with(density) {
-              contentPaddings.copy(layoutDirection = layoutDirection, top = localContentPaddings.calculateTopPadding())
+            Spacer(modifier = Modifier.height(8.dp))
+
+            val fullyScrolledTop by remember { derivedStateOf { scrollState.isFullyScrolledTop() } }
+            if (!fullyScrolledTop) {
+              KurobaComposeDivider(modifier = Modifier.fillMaxWidth())
             }
           }
         }
 
         LaunchedEffect(key1 = headerMeasured, key2 = footerMeasured) {
-          if (headerMeasured || footerMeasured) {
-            alphaAnimatable.animateTo(1f, tween(durationMillis = 100))
+          if (!headerMeasured || !footerMeasured) {
+            return@LaunchedEffect
           }
+
+          alphaAnimatable.animateTo(1f, tween(durationMillis = 100))
         }
 
         Box(
@@ -107,33 +110,34 @@ class NormalLazyListScaffoldBuilder : NormalLazyListScaffold {
           body(contentPaddings)
         }
 
-        if (footer != null) {
-          Column(
-            modifier = Modifier
-              .onSizeChanged { intSize ->
-                contentPaddings = with(density) {
-                  contentPaddings.copy(layoutDirection = layoutDirection, bottom = intSize.height.toDp())
-                }
-
-                footerMeasured = true
+        Column(
+          modifier = Modifier
+            .onSizeChanged { intSize ->
+              contentPaddings = with(density) {
+                contentPaddings.copy(layoutDirection, bottom = intSize.height.toDp())
               }
-              .fillMaxWidth()
-              .wrapContentHeight()
-              .align(Alignment.BottomCenter)
-              .consumeClicks(enabled = true)
-              .zIndex(1f)
-          ) {
-            Box {
-              footer(localContentPaddings.calculateBottomPadding(controllerKey))
+
+              footerMeasured = true
             }
+            .fillMaxWidth()
+            .wrapContentHeight()
+            .background(chanTheme.backColorCompose)
+            .align(Alignment.BottomCenter)
+            .consumeClicks(enabled = true)
+            .zIndex(1f)
+        ) {
+          val isFullyScrolledBottom by remember { derivedStateOf { scrollState.isFullyScrolledBottom() } }
+          if (!isFullyScrolledBottom) {
+            KurobaComposeDivider(modifier = Modifier.fillMaxWidth())
           }
-        } else {
-          LaunchedEffect(key1 = localContentPaddings) {
-            contentPaddings = with(density) {
-              val bottom = localContentPaddings.calculateBottomPadding(controllerKey)
-              contentPaddings.copy(layoutDirection = layoutDirection, bottom = bottom)
-            }
+
+          scrollState.scrollIndicatorState
+
+          Spacer(modifier = Modifier.height(8.dp))
+          Box(modifier = Modifier.padding(horizontal = 8.dp)) {
+            footer()
           }
+          Spacer(modifier = Modifier.height(8.dp))
         }
       }
     }

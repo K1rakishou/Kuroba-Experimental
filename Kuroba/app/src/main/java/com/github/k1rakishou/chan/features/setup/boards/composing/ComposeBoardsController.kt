@@ -45,7 +45,7 @@ import com.github.k1rakishou.chan.ui.compose.reorder.detectReorder
 import com.github.k1rakishou.chan.ui.compose.reorder.rememberReorderableLazyListState
 import com.github.k1rakishou.chan.ui.compose.reorder.reorderable
 import com.github.k1rakishou.chan.ui.compose.scaffold.FloatingLazyListScaffoldBuilder
-import com.github.k1rakishou.chan.ui.compose.scaffold.LazyListScaffoldShared
+import com.github.k1rakishou.chan.ui.compose.scaffold.ListScaffoldShared
 import com.github.k1rakishou.chan.ui.controller.base.BaseFloatingComposeController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.viewModelByKey
@@ -142,14 +142,14 @@ class ComposeBoardsController(
             modifier = Modifier
               .fillMaxWidth()
               .wrapContentHeight(),
-            negativeButton = LazyListScaffoldShared.Button(
+            negativeButton = ListScaffoldShared.Button(
               text = stringResource(id = R.string.cancel),
               onClick = {
                 focusManager.clearFocus(force = true)
                 pop()
               }
             ),
-            positiveButton = LazyListScaffoldShared.Button(
+            positiveButton = ListScaffoldShared.Button(
               enabled = run {
                 val currentCatalogDescriptors = compositionSlots.mapNotNull { compositionSlot ->
                   if (compositionSlot is ComposeBoardsControllerViewModel.CatalogCompositionSlot.Empty) {

@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.ui.compose
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
@@ -186,4 +187,14 @@ fun LazyListState.isFullyScrolledBottom(): Boolean {
 
   return lastVisibleItem.index == layoutInfo.totalItemsCount - 1 &&
     lastVisibleItem.offset + lastVisibleItem.size <= layoutInfo.viewportEndOffset
+}
+
+@FrequentlyChangingValue
+fun ScrollState.isFullyScrolledTop(): Boolean {
+  return value == 0
+}
+
+@FrequentlyChangingValue
+fun ScrollState.isFullyScrolledBottom(): Boolean {
+  return value == maxValue && maxValue != Int.MAX_VALUE
 }

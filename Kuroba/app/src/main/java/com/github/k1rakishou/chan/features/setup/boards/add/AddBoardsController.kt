@@ -45,7 +45,7 @@ import com.github.k1rakishou.chan.ui.compose.forEachTextValue
 import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.lazylist.LazyColumnWithFastScroller
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
-import com.github.k1rakishou.chan.ui.compose.scaffold.LazyListScaffoldShared
+import com.github.k1rakishou.chan.ui.compose.scaffold.ListScaffoldShared
 import com.github.k1rakishou.chan.ui.compose.scaffold.NormalLazyListScaffoldBuilder
 import com.github.k1rakishou.chan.ui.compose.snackbar.SnackbarContainer
 import com.github.k1rakishou.chan.ui.compose.snackbar.SnackbarScope
@@ -251,7 +251,7 @@ class AddBoardsController(
               }
             },
             footer = { bottomPadding ->
-              val toggleAllButton = LazyListScaffoldShared.Button(
+              val toggleAllButton = ListScaffoldShared.Button(
                 text = stringResource(R.string.add_boards_controller_toggle_all),
                 fontSize = 18.ktu,
                 enabled = !processing,
@@ -263,7 +263,7 @@ class AddBoardsController(
               val positiveButton = if (checkedBoards.isEmpty()) {
                 null
               } else {
-                LazyListScaffoldShared.Button(
+                ListScaffoldShared.Button(
                   text = stringResource(R.string.add_boards_controller_add_boards, checkedBoards.size),
                   fontSize = 18.ktu,
                   enabled = !processing,

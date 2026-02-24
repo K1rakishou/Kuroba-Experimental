@@ -445,7 +445,9 @@ abstract class Controller(
 
   @JvmOverloads
   open fun presentController(controller: Controller, animated: Boolean = true) {
-    require(controller.isFloating) { "presentController() controller ${controller.controllerKey.key} must be floating!" }
+    require(controller.isFloating) {
+      "presentController() controller ${controller.controllerKey.key} must be floating!"
+    }
 
     val contentView = requireControllerHostActivity().contentView
     presentingThisController = controller

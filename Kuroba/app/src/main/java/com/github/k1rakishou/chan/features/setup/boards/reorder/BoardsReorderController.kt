@@ -487,5 +487,4 @@ class BoardsReorderController(
 
     private const val PANEL_DELETE_ITEM_ID = 0
   }
-
 }

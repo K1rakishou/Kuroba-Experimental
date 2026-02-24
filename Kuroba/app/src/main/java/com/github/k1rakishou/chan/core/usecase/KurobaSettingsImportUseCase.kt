@@ -284,8 +284,9 @@ class KurobaSettingsImportUseCase(
   }
 
   private fun JsonReader.readBookmarks(
-    siteIdMap: Map<Int, Int>, func: (BookmarksManager.SimpleThreadBookmark
-      ) -> Unit) {
+    siteIdMap: Map<Int, Int>,
+    func: (BookmarksManager.SimpleThreadBookmark) -> Unit
+  ) {
     jsonArray {
       while (hasNext()) {
         jsonObject {

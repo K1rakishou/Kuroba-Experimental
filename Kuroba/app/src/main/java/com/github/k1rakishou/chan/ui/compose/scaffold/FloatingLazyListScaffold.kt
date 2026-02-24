@@ -34,7 +34,7 @@ import com.github.k1rakishou.chan.ui.compose.isFullyScrolledBottom
 import com.github.k1rakishou.chan.ui.compose.isFullyScrolledTop
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 
-interface FloatingLazyListScaffold : LazyListScaffoldShared
+interface FloatingLazyListScaffold : ListScaffoldShared
 
 class FloatingLazyListScaffoldBuilder : FloatingLazyListScaffold {
   @Composable
@@ -62,14 +62,14 @@ class FloatingLazyListScaffoldBuilder : FloatingLazyListScaffold {
           .align(Alignment.Center)
           .background(chanTheme.backColorCompose)
       ) {
-        var lazyListPaddings by remember { mutableStateOf(PaddingValues.Zero) }
+        var contentPaddings by remember { mutableStateOf(PaddingValues.Zero) }
 
         if (header != null) {
           Column(
             modifier = Modifier
               .onSizeChanged { intSize ->
-                lazyListPaddings = with(density) {
-                  lazyListPaddings.copy(layoutDirection, top = intSize.height.toDp())
+                contentPaddings = with(density) {
+                  contentPaddings.copy(layoutDirection, top = intSize.height.toDp())
                 }
 
                 headerMeasured = true
@@ -103,14 +103,14 @@ class FloatingLazyListScaffoldBuilder : FloatingLazyListScaffold {
           modifier = Modifier
             .graphicsLayer { alpha = alphaAnimatable.value }
         ) {
-          body(lazyListPaddings)
+          body(contentPaddings)
         }
 
         Column(
           modifier = Modifier
             .onSizeChanged { intSize ->
-              lazyListPaddings = with(density) {
-                lazyListPaddings.copy(layoutDirection, bottom = intSize.height.toDp())
+              contentPaddings = with(density) {
+                contentPaddings.copy(layoutDirection, bottom = intSize.height.toDp())
               }
 
               footerMeasured = true

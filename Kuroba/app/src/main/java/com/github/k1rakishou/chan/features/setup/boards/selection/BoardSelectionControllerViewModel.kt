@@ -137,7 +137,7 @@ class BoardSelectionControllerViewModel(
   ): List<SelectableBoard> {
     val selectableBoards = mutableListOf<SelectableBoard>()
 
-    val iteratorFunc = iteratorFunc@ { compositeCatalog: CompositeCatalog ->
+    val iteratorFunc = iteratorFunc@{ compositeCatalog: CompositeCatalog ->
       val boardCodes = compositeCatalog.compositeCatalogDescriptor.userReadableString()
       val compositeCatalogName = compositeCatalog.name
 
@@ -200,7 +200,7 @@ class BoardSelectionControllerViewModel(
 
     val selectableBoards = mutableListWithCap<SelectableBoard>(initialCapacity = 512)
 
-    val iteratorFunc = iteratorFunc@ { chanBoard: ChanBoard ->
+    val iteratorFunc = iteratorFunc@{ chanBoard: ChanBoard ->
       val boardCode = chanBoard.formattedBoardCode()
       val boardName = chanBoard.boardName()
 
@@ -332,7 +332,6 @@ class BoardSelectionControllerViewModel(
   }
 
   companion object {
-    private const val TAG = "BoardSelectionControllerViewModel"
     const val MAX_CATALOGS_TO_SHOW_IN_SEARCH_MODE_PHONE = 5
     const val MAX_CATALOGS_TO_SHOW_IN_SEARCH_MODE_TABLET = 10
   }

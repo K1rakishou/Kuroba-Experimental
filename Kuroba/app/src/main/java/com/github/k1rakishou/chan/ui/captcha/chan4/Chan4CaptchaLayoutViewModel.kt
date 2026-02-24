@@ -27,6 +27,7 @@ import com.github.k1rakishou.chan.features.webview.task.AbstractWebViewTask
 import com.github.k1rakishou.chan.features.webview.task.SpurUsAntibotTask
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.StringUtils.asFormattedToken
+import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.prefs.GsonJsonSetting
@@ -360,7 +361,15 @@ class Chan4CaptchaLayoutViewModel(
         return@any aspectRatio > 1.5f
       }
 
-      val title = Chan4CaptchaTitleFormatter().format(captchaTaskRaw.title)
+      val title = when {
+        captchaTaskRaw.textTitle.isNotNullNorEmpty() -> Chan4CaptchaTitleFormatter().format(captchaTaskRaw.textTitle)
+        captchaTaskRaw.imageTitle.isNotNullNorEmpty() -> {
+          val decodedImageBytes = Base64.decode(captchaTaskRaw.imageTitle, Base64.DEFAULT)
+          val bitmapImage = BitmapFactory.decodeByteArray(decodedImageBytes, 0, decodedImageBytes.size).asImageBitmap()
+          Chan4CaptchaTitleFormatter.Title.Image(bitmapImage)
+        }
+        else -> null
+      }
 
       CaptchaInfo.Task(
         title = title,
@@ -529,7 +538,7 @@ class Chan4CaptchaLayoutViewModel(
     }
 
     data class Task(
-      val title: Chan4CaptchaTitleFormatter.Title,
+      val title: Chan4CaptchaTitleFormatter.Title?,
       val hasWideImages: Boolean,
       val images: List<TaskImage>
     )
