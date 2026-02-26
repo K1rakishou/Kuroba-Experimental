@@ -27,6 +27,8 @@ import com.github.k1rakishou.chan.features.webview.task.AbstractWebViewTask
 import com.github.k1rakishou.chan.features.webview.task.SpurUsAntibotTask
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.StringUtils.asFormattedToken
+import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.isCancellationException
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -180,8 +182,11 @@ class Chan4CaptchaLayoutViewModel(
               error = result.error
             )
           } catch (error: Throwable) {
-            Logger.d(TAG, "requestCaptcha() handleCaptchaRequestError")
-            _captchaInfoToShow.value = AsyncUiData.Error(error)
+            Logger.d(TAG, "requestCaptcha() handleCaptchaRequestError: ${error.errorMessageOrClassName()}")
+
+            if (!error.isCancellationException()) {
+              _captchaInfoToShow.value = AsyncUiData.Error(error)
+            }
           }
         }
         is ModularResult.Value -> {
@@ -392,7 +397,10 @@ class Chan4CaptchaLayoutViewModel(
     error: Throwable
   ) {
     Logger.e(TAG, "requestCaptcha()", error)
-    _captchaInfoToShow.value = AsyncUiData.Error(error)
+
+    if (!error.isCancellationException()) {
+      _captchaInfoToShow.value = AsyncUiData.Error(error)
+    }
 
     if (error is CaptchaCooldownError) {
       Logger.debug(TAG) {
@@ -541,7 +549,15 @@ class Chan4CaptchaLayoutViewModel(
       val title: Chan4CaptchaTitleFormatter.Title?,
       val hasWideImages: Boolean,
       val images: List<TaskImage>
-    )
+    ) {
+      fun isNotLikeTheOthersTaskType(): Boolean {
+        if (title is Chan4CaptchaTitleFormatter.Title.TextWithImage) {
+          return title.annotated.text.contains("not like the others", ignoreCase = true)
+        }
+
+        return false
+      }
+    }
 
     data class TaskImage(
       val imageBitmap: ImageBitmap,

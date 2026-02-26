@@ -1181,6 +1181,9 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="captcha_layout_captcha_is_ready_title">Captcha is ready!</string>
     <string name="captcha_layout_captcha_is_ready_description">Captcha is ready in \'%1$s\'</string>
 
+    <string name="captcha_4chan_updates_title">Captcha updates history</string>
+    <string name="captcha_4chan_update_26_02_2026">26.02.2026\nCaptcha was updated with a new task that is designed to be used with a slider.\nIn this captcha task, you need to pick a single image on which the arrows either point or do not point (may depend) to the current slider thumb location.\nIt should be generally pretty easy to tell, because on the unique image the arrows will point at a completely different location when compared to other images.\nIn order to make this task solvable in KurobaEx, a circle is displayed at the bottom of each image at the location where the slider\'s thumb would be displayed in the web version of captcha. There is a little problem though: since it\'s impossible to tell what a task\'s type is (there is no such info in the captcha json response), the circle may also be displayed for some other captcha tasks.\nYou can safely ignore it into such cases.</string>
+
     <string name="captcha_layout_v2_you_have_to_select_at_least_one_image">You have to select at least one image (if you see a captcha that does not have any matching images, then it is probably a bug; fill an issue and use the old captcha)</string>
     <string name="captcha_layout_v2_verification_already_in_progress">Verification is already in progress</string>
     <string name="captcha_layout_v2_captcha_request_is_already_in_progress">Captcha request is already in progress</string>
