@@ -21,10 +21,10 @@ class ChanBoard(
   val cooldownReplies: Int = -1,
   val cooldownImages: Int = -1,
   val customSpoilers: Int = -1,
-  val workSafe: Boolean = false,
-  val spoilers: Boolean = false,
-  val userIds: Boolean = false,
-  val countryFlags: Boolean = false,
+  val workSafe: Boolean? = null,
+  val spoilers: Boolean? = null,
+  val userIds: Boolean? = null,
+  val countryFlags: Boolean? = null,
   val isUnlimitedCatalog: Boolean = false
 ) {
 

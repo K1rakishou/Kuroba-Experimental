@@ -45,6 +45,7 @@ import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.core_themes.resolveIconTintColor
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
 import kotlin.coroutines.cancellation.CancellationException
@@ -184,7 +185,7 @@ fun SearchIcon(
   val chanTheme = LocalChanTheme.current
 
   val searchQuery = searchQueryState.collectText()
-  val iconTintColor = chanTheme.resolveIconTint(forColor = chanTheme.toolbarBackgroundComposeColor)
+  val iconTintColor = chanTheme.toolbarBackgroundComposeColor.resolveIconTintColor()
 
   AnimatedContent(targetState = searchQuery.isEmpty()) { searchQueryEmpty ->
     if (searchQueryEmpty) {

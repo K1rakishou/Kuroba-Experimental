@@ -23,6 +23,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.site.SiteBoards
 import com.github.k1rakishou.persist_state.ReplyMode
 import com.github.k1rakishou.prefs.BooleanSetting
+import com.github.k1rakishou.prefs.LongSetting
 import com.github.k1rakishou.prefs.MapSetting
 import com.github.k1rakishou.prefs.OptionsSetting
 import com.github.k1rakishou.prefs.StringSetting
@@ -113,12 +114,13 @@ abstract class SiteBase : Site, CoroutineScope {
   lateinit var cloudFlareClearanceCookieMap: MapSetting
   lateinit var lastUsedReplyMode: OptionsSetting<ReplyMode>
   lateinit var ignoreReplyCooldowns: BooleanSetting
+  lateinit var lastSiteBoardsRefreshTime: LongSetting
 
   private var initialized = false
 
   override fun initialize() {
     if (initialized) {
-      throw IllegalStateException("Already initialized")
+      error("Already initialized")
     }
 
     Chan.getComponent()
@@ -162,6 +164,7 @@ abstract class SiteBase : Site, CoroutineScope {
     )
 
     ignoreReplyCooldowns = BooleanSetting(prefs, "ignore_reply_cooldowns", false)
+    lastSiteBoardsRefreshTime = LongSetting(prefs, "last_site_boards_refresh_time", 0)
   }
 
   override suspend fun loadBoardInfo(): Flow<SiteBoards> {
@@ -249,6 +252,8 @@ abstract class SiteBase : Site, CoroutineScope {
 
   companion object {
     private const val TAG = "SiteBase"
+    const val BoardRefreshIntervalDays = 30
+
     val secureRandom: Random = SecureRandom()
 
     @JvmStatic

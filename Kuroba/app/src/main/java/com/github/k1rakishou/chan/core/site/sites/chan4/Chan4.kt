@@ -549,16 +549,6 @@ open class Chan4 : SiteBase() {
     return Site.CatalogType.STATIC
   }
 
-  override fun boardFeature(boardFeature: Site.BoardFeature, board: ChanBoard): Boolean {
-    return when (boardFeature) {
-      // yes, we support image posting.
-      Site.BoardFeature.POSTING_IMAGE -> true
-      // depends if the board supports it.
-      Site.BoardFeature.POSTING_SPOILER -> board.spoilers
-      else -> false
-    }
-  }
-
   override fun endpoints(): SiteEndpoints {
     return endpoints
   }

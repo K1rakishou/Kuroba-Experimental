@@ -56,13 +56,13 @@ data class ChanBoardEntity(
   @ColumnInfo(name = DESCRIPTION_COLUMN_NAME)
   val description: String = "",
   @ColumnInfo(name = WORK_SAFE_COLUMN_NAME)
-  val workSafe: Boolean = false,
+  val workSafe: Boolean? = null,
   @ColumnInfo(name = SPOILERS_COLUMN_NAME)
-  val spoilers: Boolean = false,
+  val spoilers: Boolean? = null,
   @ColumnInfo(name = USER_IDS_COLUMN_NAME)
-  val userIds: Boolean = false,
+  val userIds: Boolean? = null,
   @ColumnInfo(name = COUNTRY_FLAGS_COLUMN_NAME)
-  val countryFlags: Boolean = false,
+  val countryFlags: Boolean? = null,
   @ColumnInfo(name = IS_UNLIMITED_CATALOG_COLUMN_NAME)
   val isUnlimitedCatalog: Boolean = false
 ) {

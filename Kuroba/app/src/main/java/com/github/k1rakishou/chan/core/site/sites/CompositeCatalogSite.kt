@@ -229,8 +229,6 @@ class CompositeCatalogSite : Site {
     return false
   }
 
-  override fun boardFeature(boardFeature: Site.BoardFeature, board: ChanBoard): Boolean = false
-
   override fun settings(): List<SiteSetting> = emptyList()
 
   override fun endpoints(): SiteEndpoints = siteEndpoints

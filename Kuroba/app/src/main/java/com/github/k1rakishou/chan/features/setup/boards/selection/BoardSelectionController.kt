@@ -6,12 +6,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -40,6 +40,7 @@ import androidx.compose.ui.text.style.Hyphens
 import androidx.compose.ui.text.style.LineBreak
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.controller.ControllerComponent
@@ -69,6 +70,7 @@ import com.github.k1rakishou.chan.utils.ComposeAnnotatedStringHelperImpl
 import com.github.k1rakishou.chan.utils.ViewModelScope
 import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.core_themes.resolveTextColor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import kotlin.math.roundToInt
@@ -206,7 +208,6 @@ class BoardSelectionController(
           HeaderElement(selectableBoardElement)
         }
       }
-
       is BoardSelectionControllerViewModel.SelectableElement.Boards -> {
         val boards = selectableBoardElement.selectableBoards
 
@@ -320,94 +321,109 @@ class BoardSelectionController(
   ) {
     val chanTheme = LocalChanTheme.current
 
-    Column(
-      modifier = Modifier
-        .fillMaxWidth()
-        .height(IntrinsicSize.Max)
-        .drawBehind {
-          if (isCurrentlySelectedCatalog) {
-            drawRect(color = chanTheme.postHighlightedColorCompose)
-          }
-        }
-        .kurobaClickable(
-          bounded = true,
-          onClick = {
-            callback.onCatalogSelected(selectableBoard.catalogDescriptor)
-            requireNavController().popController()
-          }
-        )
-        .padding(all = 4.dp),
-      horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-      run {
-        val header = remember(
-          selectableBoard.header,
-          searchQuery,
-          chanTheme.textColorPrimaryCompose,
-          chanTheme.accentColorCompose
-        ) {
-          buildAnnotatedString {
-            pushStyle(SpanStyle(color = chanTheme.textColorPrimaryCompose))
-            append(selectableBoard.header)
-
-            with(ComposeAnnotatedStringHelperImpl()) {
-              val textMark = ComposeAnnotatedStringHelper.TextMark(
-                pattern = searchQuery,
-                backgroundColor = chanTheme.accentColorCompose,
-                textColor = ThemeEngine.resolveTextColor(chanTheme.accentColorCompose)
-              )
-
-              markText(
-                text = selectableBoard.header,
-                textMarks = listOf(textMark)
-              )
+    Box {
+      Column(
+        modifier = Modifier
+          .fillMaxWidth()
+          .fillMaxHeight()
+          .drawBehind {
+            if (isCurrentlySelectedCatalog) {
+              drawRect(color = chanTheme.postHighlightedColorCompose)
             }
           }
+          .kurobaClickable(
+            bounded = true,
+            onClick = {
+              callback.onCatalogSelected(selectableBoard.catalogDescriptor)
+              requireNavController().popController()
+            }
+          )
+          .padding(all = 4.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+      ) {
+        run {
+          val header = remember(
+            selectableBoard.header,
+            searchQuery,
+            chanTheme.textColorPrimaryCompose,
+            chanTheme.accentColorCompose
+          ) {
+            buildAnnotatedString {
+              pushStyle(SpanStyle(color = chanTheme.textColorPrimaryCompose))
+              append(selectableBoard.header)
+
+              with(ComposeAnnotatedStringHelperImpl()) {
+                val textMark = ComposeAnnotatedStringHelper.TextMark(
+                  pattern = searchQuery,
+                  backgroundColor = chanTheme.accentColorCompose,
+                  textColor = ThemeEngine.resolveTextColor(chanTheme.accentColorCompose)
+                )
+
+                markText(
+                  text = selectableBoard.header,
+                  textMarks = listOf(textMark)
+                )
+              }
+            }
+          }
+
+          KurobaComposeText(
+            text = header,
+            fontSize = 14.ktu,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            color = chanTheme.textColorPrimaryCompose,
+            textAlign = TextAlign.Center
+          )
         }
 
-        KurobaComposeText(
-          text = header,
-          fontSize = 14.ktu,
-          maxLines = 1,
-          overflow = TextOverflow.Ellipsis,
-          color = chanTheme.textColorPrimaryCompose,
-          textAlign = TextAlign.Center
-        )
+        if (selectableBoard.description.isNotNullNorBlank()) {
+          val description = remember(
+            selectableBoard.description,
+            searchQuery,
+            chanTheme.textColorSecondaryCompose,
+            chanTheme.accentColorCompose
+          ) {
+            buildAnnotatedString {
+              pushStyle(SpanStyle(color = chanTheme.textColorSecondaryCompose))
+              pushStyle(ParagraphStyle(lineBreak = LineBreak.Paragraph, hyphens = Hyphens.Auto))
+              append(selectableBoard.description)
+
+              with(ComposeAnnotatedStringHelperImpl()) {
+                val textMark = ComposeAnnotatedStringHelper.TextMark(
+                  pattern = searchQuery,
+                  backgroundColor = chanTheme.accentColorCompose,
+                  textColor = ThemeEngine.resolveTextColor(chanTheme.accentColorCompose)
+                )
+
+                markText(
+                  text = selectableBoard.description,
+                  textMarks = listOf(textMark)
+                )
+              }
+            }
+          }
+
+          KurobaComposeText(
+            text = description,
+            fontSize = 11.ktu,
+            maxLines = 4,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center
+          )
+        }
       }
 
-      if (selectableBoard.description.isNotNullNorBlank()) {
-        val description = remember(
-          selectableBoard.description,
-          searchQuery,
-          chanTheme.textColorSecondaryCompose,
-          chanTheme.accentColorCompose
-        ) {
-          buildAnnotatedString {
-            pushStyle(SpanStyle(color = chanTheme.textColorSecondaryCompose))
-            pushStyle(ParagraphStyle(lineBreak = LineBreak.Paragraph, hyphens = Hyphens.Auto))
-            append(selectableBoard.description)
-
-            with(ComposeAnnotatedStringHelperImpl()) {
-              val textMark = ComposeAnnotatedStringHelper.TextMark(
-                pattern = searchQuery,
-                backgroundColor = chanTheme.accentColorCompose,
-                textColor = ThemeEngine.resolveTextColor(chanTheme.accentColorCompose)
-              )
-
-              markText(
-                text = selectableBoard.description,
-                textMarks = listOf(textMark)
-              )
-            }
-          }
-        }
-
+      if (selectableBoard.safeForWork == false) {
         KurobaComposeText(
-          text = description,
-          fontSize = 11.ktu,
-          maxLines = 4,
-          overflow = TextOverflow.Ellipsis,
-          textAlign = TextAlign.Center
+          modifier = Modifier
+            .offset { IntOffset(x = 8.dp.roundToPx(), y = (-4).dp.roundToPx()) }
+            .background(color = chanTheme.accentColorCompose)
+            .padding(horizontal = 2.dp, vertical = 1.dp)
+            .align(Alignment.TopEnd),
+          text = stringResource(R.string.controller_board_nsfw_board_tag),
+          color = chanTheme.accentColorCompose.resolveTextColor(),
+          fontSize = 8.ktu.fixedSize()
         )
       }
     }

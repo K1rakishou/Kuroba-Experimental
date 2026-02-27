@@ -5,7 +5,6 @@ import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitation
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.CommentParserType
 import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
-import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
 import kotlinx.coroutines.flow.Flow
@@ -21,11 +20,6 @@ interface Site {
     LOGIN,
     IMAGE_FILE_HASH,
     CATALOG_COMPOSITION
-  }
-
-  enum class BoardFeature {
-    POSTING_IMAGE,
-    POSTING_SPOILER
   }
 
   enum class BoardsType(
@@ -52,7 +46,6 @@ interface Site {
   fun catalogType(): CatalogType
   fun resolvable(): SiteUrlHandler
   fun siteFeature(siteFeature: SiteFeature): Boolean
-  fun boardFeature(boardFeature: BoardFeature, board: ChanBoard): Boolean
   fun settings(): List<SiteSetting>
   fun endpoints(): SiteEndpoints
   fun requestModifier(): SiteRequestModifier<Site>

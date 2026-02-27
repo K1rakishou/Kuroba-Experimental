@@ -16,6 +16,7 @@ import com.github.k1rakishou.chan.core.di.module.shared.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.Site
+import com.github.k1rakishou.chan.core.site.SiteBase
 import com.github.k1rakishou.chan.core.site.loader.ClientException
 import com.github.k1rakishou.chan.ui.compose.reorder.move
 import com.github.k1rakishou.chan.ui.helper.AppResources
@@ -35,6 +36,8 @@ import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.joda.time.DateTime
+import org.joda.time.Duration
 import javax.inject.Inject
 
 class BoardsReorderControllerViewModel(
@@ -79,14 +82,25 @@ class BoardsReorderControllerViewModel(
       siteManager.awaitUntilInitialized()
       boardManager.awaitUntilInitialized()
 
-      val siteIsSynthetic = siteManager.bySiteDescriptorAndActive(siteDescriptor)?.isSynthetic
-        ?: false
+      val site = siteManager.bySiteDescriptorAndActive(siteDescriptor) as? SiteBase
+      if (site == null) {
+        Logger.error(TAG) { "Site does not exist or not active: ${siteDescriptor}" }
+        controllerDelegate.popController()
+        return@launch
+      }
+
+      val needAutoRefresh = run {
+        val currentTime = DateTime.now()
+        val refreshPeriod = Duration.standardDays(SiteBase.BoardRefreshIntervalDays.toLong())
+        val lastRefreshTime = DateTime(site.lastSiteBoardsRefreshTime.get())
+        return@run lastRefreshTime.plus(refreshPeriod) < currentTime
+      }
 
       val boardsCount = boardManager.boardsCount(siteDescriptor)
-      if (siteIsSynthetic || boardsCount > 0) {
-        displayActiveBoardsInternal()
-      } else {
+      if (!site.isSynthetic && (needAutoRefresh || boardsCount <= 0)) {
         updateBoardsFromServerAndDisplayActive()
+      } else {
+        displayActiveBoardsInternal()
       }
     }
   }
@@ -106,7 +120,7 @@ class BoardsReorderControllerViewModel(
         boardManager.awaitUntilInitialized()
         siteManager.awaitUntilInitialized()
 
-        val site = siteManager.bySiteDescriptorAndActive(siteDescriptor)
+        val site = siteManager.bySiteDescriptorAndActive(siteDescriptor) as? SiteBase
         if (site == null) {
           _error.value = Exception("No sites found by descriptor: ${siteDescriptor}")
           return@launch
@@ -139,6 +153,8 @@ class BoardsReorderControllerViewModel(
             _error.value = Exception(siteBoardsResult.error)
           }
           is SiteBoards.Result.Success -> {
+            site.lastSiteBoardsRefreshTime.set(System.currentTimeMillis())
+
             val loadedBoardsCount = siteBoardsResult.boards.size
             val message = appResources.string(
               R.string.controller_boards_reorder_n_boards_loaded,

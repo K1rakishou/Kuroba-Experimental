@@ -198,7 +198,8 @@ class AddBoardsControllerViewModel(
               matchedBoards += BoardForSelection(
                 boardDescriptor = chanBoard.boardDescriptor,
                 boardName = BoardHelper.formatName(chanBoard.boardDescriptor.boardCode, chanBoard.boardName()),
-                description = BoardHelper.formatDescription(chanBoard)
+                description = BoardHelper.formatDescription(chanBoard),
+                workSafe = chanBoard.workSafe
               )
             }
           }
@@ -235,7 +236,8 @@ class AddBoardsControllerViewModel(
   data class BoardForSelection(
     val boardDescriptor: BoardDescriptor,
     val boardName: String,
-    val description: String
+    val description: String,
+    val workSafe: Boolean?
   ) {
     fun composeKey(): BoardDescriptor = boardDescriptor
   }

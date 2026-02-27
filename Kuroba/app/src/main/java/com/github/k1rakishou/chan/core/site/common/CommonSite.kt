@@ -218,11 +218,7 @@ abstract class CommonSite : SiteBase() {
   override fun siteFeature(siteFeature: Site.SiteFeature): Boolean {
     return commonConfig!!.siteFeature(siteFeature)
   }
-  
-  override fun boardFeature(boardFeature: Site.BoardFeature, board: ChanBoard): Boolean {
-    return commonConfig!!.boardFeature(boardFeature, board)
-  }
-  
+
   override fun endpoints(): SiteEndpoints {
     return endpoints!!.value
   }
@@ -247,10 +243,6 @@ abstract class CommonSite : SiteBase() {
     
     open fun siteFeature(siteFeature: Site.SiteFeature): Boolean {
       return siteFeature == Site.SiteFeature.IMAGE_FILE_HASH
-    }
-    
-    fun boardFeature(boardFeature: Site.BoardFeature, board: ChanBoard): Boolean {
-      return false
     }
   }
   

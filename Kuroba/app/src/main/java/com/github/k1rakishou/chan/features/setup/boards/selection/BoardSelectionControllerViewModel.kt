@@ -152,7 +152,8 @@ class BoardSelectionControllerViewModel(
       selectableBoards += SelectableBoard(
         catalogDescriptor = compositeCatalog.compositeCatalogDescriptor,
         header = compositeCatalogName,
-        description = boardCodes.takeIf { str -> str.isNotBlank() }
+        description = boardCodes.takeIf { str -> str.isNotBlank() },
+        safeForWork = null
       )
     }
 
@@ -212,7 +213,8 @@ class BoardSelectionControllerViewModel(
         selectableBoards += SelectableBoard(
           catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(chanBoard.boardDescriptor),
           header = "/${chanBoard.boardDescriptor.boardCode}/",
-          description = chanBoard.boardName()
+          description = chanBoard.boardName(),
+          safeForWork = chanBoard.workSafe
         )
       }
 
@@ -247,7 +249,8 @@ class BoardSelectionControllerViewModel(
           val selectableBoard = SelectableBoard(
             catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(boardDescriptor),
             header = "/${query}/",
-            description = null
+            description = null,
+            safeForWork = null
           )
 
           selectableBoards += selectableBoard
@@ -303,7 +306,8 @@ class BoardSelectionControllerViewModel(
   data class SelectableBoard(
     val catalogDescriptor: ChanDescriptor.ICatalogDescriptor,
     val header: String,
-    val description: String?
+    val description: String?,
+    val safeForWork: Boolean?
   ) {
     val boardDescriptor: BoardDescriptor?
       get() {

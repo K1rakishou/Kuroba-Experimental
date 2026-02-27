@@ -378,14 +378,6 @@ open class ChanTheme(
     )
   }
 
-  fun resolveIconTint(forColor: Color): Color {
-    return if (ThemeEngine.isDarkColor(forColor)) {
-      Color.White
-    } else {
-      Color.Black
-    }
-  }
-
   data class DefaultColors(
     val disabledControlAlpha: Int,
     val controlNormalColor: Int,

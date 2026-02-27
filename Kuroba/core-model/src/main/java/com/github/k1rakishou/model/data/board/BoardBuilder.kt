@@ -23,11 +23,10 @@ class BoardBuilder(
   var cooldownImages: Int = -1
   var customSpoilers: Int = -1
   var description: String = ""
-  var saved: Boolean = false
-  var workSafe: Boolean = false
-  var spoilers: Boolean = false
-  var userIds: Boolean = false
-  var countryFlags: Boolean = false
+  var workSafe: Boolean? = null
+  var spoilers: Boolean? = null
+  var userIds: Boolean? = null
+  var countryFlags: Boolean? = null
   var isUnlimitedCatalog: Boolean = false
 
   fun hasMissingInfo(): Boolean {

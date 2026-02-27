@@ -55,6 +55,7 @@ import com.github.k1rakishou.chan.utils.ComposeAnnotatedStringHelper
 import com.github.k1rakishou.chan.utils.ComposeAnnotatedStringHelperImpl
 import com.github.k1rakishou.chan.utils.ViewModelScope
 import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.core_themes.resolveTextColor
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.android.awaitFrame
@@ -422,6 +423,19 @@ class AddBoardsController(
 
         if (description.text.isNotBlank()) {
           KurobaComposeText(text = description, fontSize = 14.ktu)
+        }
+
+        if (boardForSelection.workSafe == false) {
+          Spacer(modifier = Modifier.height(4.dp))
+
+          KurobaComposeText(
+            modifier = Modifier
+              .background(color = chanTheme.accentColorCompose)
+              .padding(horizontal = 4.dp, vertical = 2.dp),
+            text = stringResource(R.string.controller_board_nsfw_board_tag),
+            color = chanTheme.accentColorCompose.resolveTextColor(),
+            fontSize = 12.ktu
+          )
         }
       }
 
