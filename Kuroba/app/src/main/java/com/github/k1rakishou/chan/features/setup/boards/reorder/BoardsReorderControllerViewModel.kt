@@ -115,6 +115,8 @@ class BoardsReorderControllerViewModel(
       _error.value = null
       _updatingBoards.value = null
       _loading.value = true
+      _reorderableBoards.clear()
+      _selectedBoards.clear()
 
       try {
         boardManager.awaitUntilInitialized()
@@ -361,6 +363,8 @@ class BoardsReorderControllerViewModel(
 
       _reorderableBoards.clear()
       _reorderableBoards.addAll(reorderableBoards)
+
+      _selectedBoards.clear()
     } finally {
       _loading.value = false
       _updatingBoards.value = null

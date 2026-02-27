@@ -66,6 +66,8 @@
     <string name="unhandled_error">Unhandled error!</string>
     <string name="loading">Loading…</string>
     <string name="download">Download</string>
+    <string name="sfw">SFW</string>
+    <string name="nsfw">NSFW</string>
 
     <string name="mark_as_my_post">Mark as my post</string>
     <string name="unmark_as_my_post">Unmark as my post</string>
@@ -1069,8 +1071,8 @@ If you ever log out or if the passcode expires you will have to change reply mod
 
     <string name="controller_board_select_title">Pick a board</string>
     <string name="controller_board_go_to_sites">Sites</string>
-    <string name="controller_board_select_no_boards">No boards added. You can still select boards by using the search. Or you can add some in the boards settings.</string>
-    <string name="controller_board_nsfw_board_tag">NSFW</string>
+    <string name="controller_board_no_boards_added">No boards added. You can still select boards by using the search. Or you can add some in the boards settings.</string>
+    <string name="controller_board_no_boards_added_for_site">No boards added. Click here to add some.</string>
 
     <string name="controller_boards_selection_no_boards">No boards found</string>
     <string name="controller_boards_selection_sites">Sites</string>

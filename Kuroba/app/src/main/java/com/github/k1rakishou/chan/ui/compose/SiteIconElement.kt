@@ -1,9 +1,13 @@
 package com.github.k1rakishou.chan.ui.compose
 
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import coil.compose.AsyncImage
@@ -12,6 +16,8 @@ import coil.size.Size
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.utils.appDependencies
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun SiteIconElement(
@@ -22,37 +28,59 @@ fun SiteIconElement(
 
   val siteManager = appDependencies().siteManager
 
-  val imageRequest by produceState<ImageRequest?>(
-    initialValue = null,
-    key1 = siteDescriptor,
-    producer = {
-      val site = siteManager.bySiteDescriptorAndActive(siteDescriptor)
-      if (site == null) {
-        value = null
-        return@produceState
-      }
+  var siteIsNotActive by remember { mutableStateOf(false) }
+  var showShimmer by remember { mutableStateOf(false) }
 
-      val siteIcon = site.icon()
-        .getIconSuspend(context.applicationContext)
+  var imageRequestMut by remember { mutableStateOf<ImageRequest?>(null) }
+  val imageRequest = imageRequestMut
 
-      value = ImageRequest.Builder(context)
-        .data(siteIcon.bitmap)
-        .size(Size.ORIGINAL)
-        .build()
+  LaunchedEffect(key1 = siteDescriptor) {
+    imageRequestMut = null
+
+    val site = siteManager.bySiteDescriptorAndActive(siteDescriptor)
+    siteIsNotActive = site == null
+
+    if (site == null) {
+      return@LaunchedEffect
     }
-  )
 
-  if (imageRequest != null) {
-    AsyncImage(
-      modifier = Modifier.fillMaxSize(),
-      model = imageRequest,
-      contentDescription = "Site icon"
-    )
-  } else {
-    Shimmer(
-      modifier = Modifier.fillMaxSize(),
-      mainShimmerColor = chanTheme.toolbarBackgroundComposeColor,
-      secondaryShimmerColor = chanTheme.onToolbarBackgroundComposeColor
-    )
+    val job = launch {
+      delay(200)
+      showShimmer = true
+    }
+
+    val siteIcon = site.icon()
+      .getIconSuspend(context.applicationContext)
+
+    imageRequestMut = ImageRequest.Builder(context)
+      .data(siteIcon.bitmap)
+      .size(Size.ORIGINAL)
+      .build()
+
+    job.cancel()
   }
+
+  if (siteIsNotActive) {
+    return
+  }
+
+  if (imageRequest == null) {
+    if (showShimmer) {
+      Shimmer(
+        modifier = Modifier.fillMaxSize(),
+        mainShimmerColor = chanTheme.toolbarBackgroundComposeColor,
+        secondaryShimmerColor = chanTheme.onToolbarBackgroundComposeColor
+      )
+    } else {
+      Spacer(modifier = Modifier.fillMaxSize())
+    }
+
+    return
+  }
+
+  AsyncImage(
+    modifier = Modifier.fillMaxSize(),
+    model = imageRequest,
+    contentDescription = "Site icon"
+  )
 }

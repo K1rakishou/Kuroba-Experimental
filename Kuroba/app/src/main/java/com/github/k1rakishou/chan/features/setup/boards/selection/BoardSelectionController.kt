@@ -169,7 +169,7 @@ class BoardSelectionController(
                         .fillMaxWidth()
                         .wrapContentHeight()
                         .padding(vertical = 32.dp),
-                      message = stringResource(R.string.controller_board_select_no_boards)
+                      message = stringResource(R.string.controller_board_no_boards_added)
                     )
                   }
 
@@ -210,6 +210,28 @@ class BoardSelectionController(
       }
       is BoardSelectionControllerViewModel.SelectableElement.Boards -> {
         val boards = selectableBoardElement.selectableBoards
+        if (boards.isEmpty()) {
+          item(
+            span = { GridItemSpan(maxLineSpan) }
+          ) {
+            Box(
+              modifier = Modifier
+                .fillMaxWidth()
+                .kurobaClickable(
+                  bounded = true,
+                  onClick = { callback.onSiteSelected(selectableBoardElement.siteDescriptor) }
+                )
+                .padding(vertical = 8.dp),
+              contentAlignment = Alignment.Center
+            ) {
+              KurobaComposeText(
+                text = stringResource(R.string.controller_board_no_boards_added_for_site)
+              )
+            }
+
+            return@item
+          }
+        }
 
         items(
           count = selectableBoardElement.selectableBoards.size,
@@ -299,11 +321,11 @@ class BoardSelectionController(
           bounded = true,
           onClick = { callback.onSiteSelected(siteHeader.siteDescriptor) }
         )
-        .padding(vertical = 8.dp),
+        .padding(vertical = 4.dp),
       verticalAlignment = Alignment.CenterVertically
     ) {
       Spacer(modifier = Modifier.width(8.dp))
-      Box(modifier = Modifier.size(42.dp)) {
+      Box(modifier = Modifier.size(32.dp)) {
         SiteIconElement(siteDescriptor = siteHeader.siteDescriptor)
       }
       Spacer(modifier = Modifier.width(8.dp))
@@ -414,15 +436,21 @@ class BoardSelectionController(
         }
       }
 
-      if (selectableBoard.safeForWork == false) {
+      val (bgColor, textId) = when (selectableBoard.safeForWork) {
+        false -> chanTheme.accentColorCompose to R.string.nsfw
+        true -> chanTheme.backColorSecondaryCompose to R.string.sfw
+        null -> null to null
+      }
+
+      if (bgColor != null && textId != null) {
         KurobaComposeText(
           modifier = Modifier
             .offset { IntOffset(x = 8.dp.roundToPx(), y = (-4).dp.roundToPx()) }
-            .background(color = chanTheme.accentColorCompose)
+            .background(color = bgColor)
             .padding(horizontal = 2.dp, vertical = 1.dp)
             .align(Alignment.TopEnd),
-          text = stringResource(R.string.controller_board_nsfw_board_tag),
-          color = chanTheme.accentColorCompose.resolveTextColor(),
+          text = stringResource(textId),
+          color = bgColor.resolveTextColor(),
           fontSize = 8.ktu.fixedSize()
         )
       }

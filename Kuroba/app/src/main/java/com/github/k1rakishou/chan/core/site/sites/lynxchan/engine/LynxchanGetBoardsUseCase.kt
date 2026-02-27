@@ -109,10 +109,17 @@ class LynxchanGetBoardsUseCase(
         boardCode = lynxchanBoardsData.boardUri
       )
 
+      val workSafe = when {
+        lynxchanBoardsData.hasSfwTag -> true
+        lynxchanBoardsData.hasNsfwTag -> false
+        else -> null
+      }
+
       return@map ChanBoard(
         boardDescriptor = boardDescriptor,
         name = lynxchanBoardsData.boardName,
         description = lynxchanBoardsData.boardDescription ?: "",
+        workSafe = workSafe,
         isUnlimitedCatalog = true
       )
     }
@@ -209,8 +216,29 @@ class LynxchanGetBoardsUseCase(
   data class LynxchanBoardsData(
     @field:Json(name = "boardUri") val boardUri: String,
     @field:Json(name = "boardName") val boardName: String,
-    @field:Json(name = "boardDescription") val boardDescription: String?
-  )
+    @field:Json(name = "boardDescription") val boardDescription: String?,
+    @field:Json(name = "tags") val tags: List<String>?,
+    @field:Json(name = "specialSettings") val specialSettings: List<String>?,
+  ) {
+    val hasSfwTag: Boolean
+      get() = hasTagOrSpecialSetting(value = "sfw")
+
+    val hasNsfwTag: Boolean
+      get() = hasTagOrSpecialSetting(value = "nsfw")
+
+    private fun hasTagOrSpecialSetting(value: String): Boolean {
+      if (tags?.any { tag -> tag.equals(value, ignoreCase = true) } == true) {
+        return true
+      }
+
+      if (specialSettings?.any { tag -> tag.equals(value, ignoreCase = true) } == true) {
+        return true
+      }
+
+      return false
+    }
+
+  }
 
   companion object {
     private const val TAG = "LynxchanGetBoardsUseCase"

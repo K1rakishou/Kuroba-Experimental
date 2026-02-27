@@ -425,15 +425,21 @@ class AddBoardsController(
           KurobaComposeText(text = description, fontSize = 14.ktu)
         }
 
-        if (boardForSelection.workSafe == false) {
+        val (bgColor, textId) = when (boardForSelection.workSafe) {
+          false -> chanTheme.accentColorCompose to R.string.nsfw
+          true -> chanTheme.backColorSecondaryCompose to R.string.sfw
+          null -> null to null
+        }
+
+        if (bgColor != null && textId != null) {
           Spacer(modifier = Modifier.height(4.dp))
 
           KurobaComposeText(
             modifier = Modifier
-              .background(color = chanTheme.accentColorCompose)
+              .background(color = bgColor)
               .padding(horizontal = 4.dp, vertical = 2.dp),
-            text = stringResource(R.string.controller_board_nsfw_board_tag),
-            color = chanTheme.accentColorCompose.resolveTextColor(),
+            text = stringResource(textId),
+            color = bgColor.resolveTextColor(),
             fontSize = 12.ktu
           )
         }
