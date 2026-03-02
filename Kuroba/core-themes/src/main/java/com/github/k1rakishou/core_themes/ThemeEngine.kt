@@ -229,9 +229,9 @@ open class ThemeEngine(
 
     val drawableMutable = DrawableCompat.wrap(drawable).mutate()
     if (chanTheme.isLightTheme) {
-      DrawableCompat.setTint(drawableMutable, DARK_DRAWABLE_TINT)
+      DrawableCompat.setTint(drawableMutable, Color.BLACK)
     } else {
-      DrawableCompat.setTint(drawableMutable, LIGHT_DRAWABLE_TINT)
+      DrawableCompat.setTint(drawableMutable, Color.WHITE)
     }
 
     return drawableMutable
@@ -368,21 +368,6 @@ open class ThemeEngine(
   companion object {
     private const val TAG = "ThemeEngine"
 
-    val LIGHT_DRAWABLE_TINT = Color.parseColor("#EEEEEE")
-    val DARK_DRAWABLE_TINT = Color.parseColor("#7E7E7E")
-
-    val LIGHT_DRAWABLE_TINT_COMPOSE = ComposeColor(Color.parseColor("#EEEEEE"))
-    val DARK_DRAWABLE_TINT_COMPOSE = ComposeColor(Color.parseColor("#7E7E7E"))
-
-    @JvmStatic
-    fun resolveTextColor(chanTheme: ChanTheme): Int {
-      return if (chanTheme.isBackColorDark) {
-        Color.WHITE
-      } else {
-        Color.BLACK
-      }
-    }
-
     @JvmStatic
     fun resolveTextColor(color: ComposeColor): ComposeColor {
       return if (ThemeEngine.isDarkColor(color)) {
@@ -393,36 +378,11 @@ open class ThemeEngine(
     }
 
     @JvmStatic
-    fun resolveDrawableTintColor(chanTheme: ChanTheme): Int {
-      return if (chanTheme.isBackColorDark) {
-        LIGHT_DRAWABLE_TINT
-      } else {
-        DARK_DRAWABLE_TINT
-      }
-    }
-
-    @JvmStatic
     fun resolveDrawableTintColor(isCurrentColorDark: Boolean): Int {
       return if (isCurrentColorDark) {
-        LIGHT_DRAWABLE_TINT
+        Color.WHITE
       } else {
-        DARK_DRAWABLE_TINT
-      }
-    }
-
-    fun resolveDrawableTintColorCompose(isCurrentColorDark: Boolean): ComposeColor {
-      return if (isCurrentColorDark) {
-        LIGHT_DRAWABLE_TINT_COMPOSE
-      } else {
-        DARK_DRAWABLE_TINT_COMPOSE
-      }
-    }
-
-    fun resolveDrawableTintColorCompose(color: androidx.compose.ui.graphics.Color): ComposeColor {
-      return if (isDarkColor(color)) {
-        LIGHT_DRAWABLE_TINT_COMPOSE
-      } else {
-        DARK_DRAWABLE_TINT_COMPOSE
+        Color.BLACK
       }
     }
 

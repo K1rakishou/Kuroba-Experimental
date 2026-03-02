@@ -6,12 +6,11 @@ import androidx.compose.material.ContentAlpha
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.DefaultAlpha
 import androidx.compose.ui.res.painterResource
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
-import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.core_themes.resolveIconTintColor
 
 @Composable
 fun KurobaComposeClickableIcon(
@@ -27,12 +26,10 @@ fun KurobaComposeClickableIcon(
     return@remember when (iconTint) {
       is IconTint.DoNotTint -> null
       is IconTint.Tint -> {
-        val tintColor = Color(ThemeEngine.resolveDrawableTintColor(chanTheme))
-        ColorFilter.tint(tintColor)
+        ColorFilter.tint(chanTheme.backColorCompose.resolveIconTintColor())
       }
       is IconTint.TintWithColor -> {
-        val tintColor = iconTint.color
-        ColorFilter.tint(tintColor)
+        ColorFilter.tint(iconTint.color)
       }
     }
   }

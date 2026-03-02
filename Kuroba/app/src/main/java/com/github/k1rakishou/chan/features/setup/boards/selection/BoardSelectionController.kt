@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
@@ -346,8 +345,7 @@ class BoardSelectionController(
     Box {
       Column(
         modifier = Modifier
-          .fillMaxWidth()
-          .fillMaxHeight()
+          .fillMaxSize()
           .drawBehind {
             if (isCurrentlySelectedCatalog) {
               drawRect(color = chanTheme.postHighlightedColorCompose)
@@ -436,10 +434,12 @@ class BoardSelectionController(
         }
       }
 
-      val (bgColor, textId) = when (selectableBoard.safeForWork) {
-        false -> chanTheme.accentColorCompose to R.string.nsfw
-        true -> chanTheme.backColorSecondaryCompose to R.string.sfw
-        null -> null to null
+      val (bgColor, textId) = remember(key1 = selectableBoard.safeForWork, key2 = chanTheme) {
+        when (selectableBoard.safeForWork) {
+          false -> chanTheme.accentColorCompose.copy(alpha = 0.5f) to R.string.nsfw
+          true -> chanTheme.backColorSecondaryCompose.copy(alpha = 0.5f) to R.string.sfw
+          null -> null to null
+        }
       }
 
       if (bgColor != null && textId != null) {

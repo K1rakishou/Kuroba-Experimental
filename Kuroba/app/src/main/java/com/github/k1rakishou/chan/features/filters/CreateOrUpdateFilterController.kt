@@ -79,7 +79,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.SpannableHelper
 import com.github.k1rakishou.chan.utils.viewModelByKey
-import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.core_themes.resolveIconTintColor
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable
 import com.github.k1rakishou.model.data.filter.FilterAction
@@ -764,7 +764,7 @@ class CreateOrUpdateFilterController(
     val children: @Composable (String) -> Unit = {
       val chanTheme = LocalChanTheme.current
       val color = remember(key1 = chanTheme.backColorCompose) {
-        ThemeEngine.resolveDrawableTintColorCompose(ThemeEngine.isDarkColor(chanTheme.backColorCompose))
+        chanTheme.backColorCompose.resolveIconTintColor()
       }
 
       val dropdownArrowPainter = remember {

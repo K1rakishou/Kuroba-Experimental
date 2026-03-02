@@ -203,13 +203,20 @@ class AddBoardsController(
 
                 if (boardsForSelection.isEmpty()) {
                   item(key = "nothing_found") {
-                    KurobaComposeMessage(
-                      modifier = Modifier.fillParentMaxSize(),
-                      message = stringResource(
-                        R.string.add_boards_controller_nothing_found_by_query,
-                        currentSearchQuery
+                    if (currentSearchQuery.isNotEmpty()) {
+                      KurobaComposeMessage(
+                        modifier = Modifier.fillParentMaxSize(),
+                        message = stringResource(
+                          R.string.add_boards_controller_nothing_found_by_query,
+                          currentSearchQuery
+                        )
                       )
-                    )
+                    } else {
+                      KurobaComposeMessage(
+                        modifier = Modifier.fillParentMaxSize(),
+                        message = stringResource(R.string.add_boards_controller_no_boards)
+                      )
+                    }
                   }
 
                   return@LazyColumnWithFastScroller

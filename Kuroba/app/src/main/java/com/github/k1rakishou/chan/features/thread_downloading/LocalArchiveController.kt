@@ -87,6 +87,7 @@ import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.core_themes.resolveIconTintColor
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.callback.directory.DirectoryChooserCallback
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -540,9 +541,9 @@ class LocalArchiveController(
     val downloadProgressEvent by viewModel.collectDownloadProgressEventsAsState(threadDownloadView.threadDescriptor)
       .collectAsState(ThreadDownloadProgressNotifier.Event.Empty)
 
-    val isBackColorDark = LocalChanTheme.current.isBackColorDark
-    val color = remember(key1 = isBackColorDark) {
-      ThemeEngine.resolveDrawableTintColorCompose(isBackColorDark)
+    val chanTheme = LocalChanTheme.current
+    val color = remember(key1 = chanTheme) {
+      chanTheme.backColorCompose.resolveIconTintColor()
     }
 
     Box(modifier = Modifier
@@ -572,10 +573,10 @@ class LocalArchiveController(
     iconAlpha: Float
   ) {
     val downloadResultMsg = threadDownloadView.downloadResultMsg
-    val isBackColorDark = LocalChanTheme.current.isBackColorDark
+    val chanTheme = LocalChanTheme.current
 
-    val colorFilter = remember(key1 = isBackColorDark) {
-      ColorFilter.tint(ThemeEngine.resolveDrawableTintColorCompose(isBackColorDark))
+    val colorFilter = remember(key1 = chanTheme) {
+      ColorFilter.tint(chanTheme.backColorCompose.resolveIconTintColor())
     }
 
     if (downloadResultMsg == null) {
@@ -612,14 +613,10 @@ class LocalArchiveController(
     threadDownloadView: LocalArchiveViewModel.ThreadDownloadView,
     iconAlpha: Float
   ) {
-    val isBackColorDark = LocalChanTheme.current.isBackColorDark
+    val chanTheme = LocalChanTheme.current
 
-    val color = remember(key1 = isBackColorDark) {
-      ThemeEngine.resolveDrawableTintColorCompose(isBackColorDark)
-    }
-
-    val colorFilter = remember(key1 = isBackColorDark) {
-      ColorFilter.tint(color)
+    val colorFilter = remember(key1 = chanTheme) {
+      ColorFilter.tint(chanTheme.backColorCompose.resolveIconTintColor())
     }
 
     val painter = when (threadDownloadView.status) {

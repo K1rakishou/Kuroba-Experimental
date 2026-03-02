@@ -33,7 +33,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -55,7 +54,7 @@ import com.github.k1rakishou.chan.ui.compose.providers.LocalWindowInsets
 import com.github.k1rakishou.chan.ui.controller.base.ControllerKey
 import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
 import com.github.k1rakishou.chan.utils.appDependencies
-import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.core_themes.resolveIconTintColor
 
 @Composable
 fun KurobaIconPanel(
@@ -205,8 +204,9 @@ private fun BuildMenuItemColumn(
         onClick = { onMenuItemClicked(menuItem.id) }
       ),
   ) {
-    val color = ThemeEngine.resolveTextColor(chanTheme)
-    val targetColor = remember(key1 = color) { Color(color) }
+    val targetColor = remember(key1 = chanTheme) {
+      chanTheme.backColorCompose.resolveIconTintColor()
+    }
 
     val colorAnimated by animateColorAsState(
       targetValue = targetColor,
@@ -246,8 +246,9 @@ private fun BuildMenuItemRow(
       ),
     contentAlignment = Alignment.Center
   ) {
-    val color = ThemeEngine.resolveTextColor(chanTheme)
-    val targetColor = remember(key1 = color) { Color(color) }
+    val targetColor = remember(key1 = chanTheme) {
+      chanTheme.backColorCompose.resolveIconTintColor()
+    }
 
     val colorAnimated by animateColorAsState(
       targetValue = targetColor,

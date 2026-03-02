@@ -85,7 +85,7 @@ import com.github.k1rakishou.chan.utils.ViewModelScope
 import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.common.requireComponentActivity
-import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.core_themes.resolveIconTintColor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -522,8 +522,7 @@ class DvachCaptchaLayout(
     val chanTheme = LocalChanTheme.current
 
     val colorFilter = remember(key1 = chanTheme.backColorCompose) {
-      val tintColor = ThemeEngine.resolveDrawableTintColorCompose(chanTheme.backColorCompose)
-      return@remember ColorFilter.tint(tintColor)
+      ColorFilter.tint(chanTheme.backColorCompose.resolveIconTintColor())
     }
 
     val coroutineScope = rememberCoroutineScope()

@@ -208,7 +208,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_share_media_url">Share media url</string>
     <string name="action_share_media_content">Share media content</string>
 
-    <string name="open_link_not_matched">Cannot open this link: \'%1$s\'.</string>
+    <string name="open_link_not_matched">Couldn\'t open link: \'%1$s\'. Make sure the site is enabled in the settings.</string>
     <string name="open_by_board_code_or_thread_no_composite_catalog_error">Cannot be used in a composite catalog</string>
 
     <string name="dev_bookmark_every_thread">Bookmark every thread</string>
@@ -1632,6 +1632,7 @@ Actual error: \'%1$s\'</string>
     <string name="cookie_captcha_input_controller_path">Path</string>
 
     <string name="add_boards_controller_toolbar_title">Select boards</string>
+    <string name="add_boards_controller_no_boards">Site has no boards</string>
     <string name="add_boards_controller_nothing_found_by_query">Nothing found by query \'%1$s\'</string>
     <string name="add_boards_controller_toggle_all">Toggle\nall</string>
     <string name="add_boards_controller_add_boards">Add %1$d\nboards</string>

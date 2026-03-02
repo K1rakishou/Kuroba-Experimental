@@ -11,7 +11,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
-import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.core_themes.resolveIconTintColor
 
 @Composable
 fun KurobaComposeIcon(
@@ -26,8 +26,7 @@ fun KurobaComposeIcon(
     return@remember when (iconTint) {
       is IconTint.DoNotTint -> null
       is IconTint.Tint -> {
-        val tintColor = Color(ThemeEngine.resolveDrawableTintColor(chanTheme))
-        ColorFilter.tint(tintColor)
+        ColorFilter.tint(chanTheme.backColorCompose.resolveIconTintColor())
       }
       is IconTint.TintWithColor -> {
         val tintColor = iconTint.color
