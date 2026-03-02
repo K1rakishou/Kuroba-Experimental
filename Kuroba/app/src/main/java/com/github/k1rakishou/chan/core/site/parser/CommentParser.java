@@ -61,6 +61,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import kotlin.Pair;
 import okhttp3.HttpUrl;
 
 @AnyThread
@@ -357,8 +358,8 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
             return text;
         }
 
-        // TODO(KurobaEx / @GhostPosts):
-        long postSubNo = 0;
+        // TODO: GhostPosts
+        long postSubId = 0;
 
         PostLinkable.Type type;
         PostLinkable.Value value;
@@ -366,9 +367,9 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         if (callback.isInternal(postId)) {
             // Link to post in same thread with post number (>>post)
             type = PostLinkable.Type.QUOTE;
-            post.addReplyTo(postId);
+            post.addReplyTo(postId, postSubId);
 
-            value = new PostLinkable.Value.LongValue(postId);
+            value = new PostLinkable.Value.LongPairValue(postId, postSubId);
         } else {
             // Link to post not in same thread in this case it means that the post is dead.
             type = PostLinkable.Type.DEAD;
@@ -387,7 +388,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
                 value
         );
 
-        appendSuffixes(callback, post, link, postId, postSubNo);
+        appendSuffixes(callback, post, link, postId, postSubId);
 
         SpannableString res = new SpannableString(link.getKey());
         PostLinkable pl = new PostLinkable(
@@ -532,13 +533,14 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         if (handlerLink.getType() == PostLinkable.Type.QUOTE
                 || handlerLink.getType() == PostLinkable.Type.DEAD
                 || handlerLink.getType() == PostLinkable.Type.QUOTE_TO_HIDDEN_OR_REMOVED_POST) {
-            Long postNo = handlerLink.getLinkValue().extractValueOrNull();
+            Pair<Long, Long> value = handlerLink.getLinkValue().extractValueOrNull();
 
-            // TODO(KurobaEx / @GhostPosts): archive ghost posts
-            Long postSubNo = 0L;
+            if (value != null) {
+                Long postNo = value.getFirst();
+                // TODO: GhostPosts: archive ghost posts
+                Long postSubNo = value.getSecond();
 
-            if (postNo != null) {
-                post.addReplyTo(postNo);
+                post.addReplyTo(postNo, postSubNo);
                 appendSuffixes(callback, post, handlerLink, postNo, postSubNo);
             }
         }
@@ -735,6 +737,9 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
                 return new PostLinkable.Link(type, text, value);
             }
 
+            // TODO: GhostPosts
+            long postSubId = 0L;
+
             boolean isInternalQuote = board.equals(post.boardDescriptor.getBoardCode())
                     && callback.isInternal(postId)
                     && !callback.isParsingCatalogPosts();
@@ -742,7 +747,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
             if (isInternalQuote) {
                 // link to post in same thread with post number (>>post)
                 type = PostLinkable.Type.QUOTE;
-                value = new PostLinkable.Value.LongValue(postId);
+                value = new PostLinkable.Value.LongPairValue(postId, postSubId);
             } else {
                 // link to post not in same thread with post number (>>post or >>>/board/post)
                 type = PostLinkable.Type.THREAD;
@@ -758,8 +763,11 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
                     return new PostLinkable.Link(type, text, value);
                 }
 
+                // TODO: GhostPosts
+                long postSubId = 0L;
+
                 if (callback.isInternal(postId)) {
-                    // TODO(KurobaEx / @GhostPosts): archive ghost posts
+                    // TODO: GhostPosts: archive ghost posts
                     int hiddenOrRemoved = callback.isHiddenOrRemoved(post.getOpId(), postId, 0);
 
                     switch (hiddenOrRemoved) {
@@ -779,7 +787,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
                     type = PostLinkable.Type.DEAD;
                 }
 
-                value = new PostLinkable.Value.LongValue(postId);
+                value = new PostLinkable.Value.LongPairValue(postId, postSubId);
             } else {
                 Matcher boardLinkMatcher = matchBoardLink(href, post);
                 Matcher boardSearchMatcher = matchBoardSearch(href, post);

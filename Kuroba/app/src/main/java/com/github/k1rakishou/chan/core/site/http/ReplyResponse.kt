@@ -89,12 +89,11 @@ class ReplyResponse {
         return null
       }
 
-      return create(siteDescriptor!!.siteName, boardCode, threadNo, postNo)
+      // TODO: GhostPosts
+      return create(siteDescriptor!!.siteName, boardCode, threadNo, postNo, 0L)
     }
 
-  constructor() {
-
-  }
+  constructor()
 
   constructor(other: ReplyResponse) : this(
     other.posted,

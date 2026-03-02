@@ -33,17 +33,19 @@ object ThreadBookmarkReplyMapper {
 
     threadBookmarkReplyEntities.forEach { threadBookmarkReplyEntity ->
       val postDescriptor = PostDescriptor.create(
-        threadBookmarkFull.siteName,
-        threadBookmarkFull.boardCode,
-        threadBookmarkFull.threadNo,
-        threadBookmarkReplyEntity.replyPostNo
+        siteName = threadBookmarkFull.siteName,
+        boardCode = threadBookmarkFull.boardCode,
+        threadNo = threadBookmarkFull.threadNo,
+        postNo = threadBookmarkReplyEntity.replyPostNo,
+        postSubNo = 0L
       )
 
       val repliesToPostDescriptor = PostDescriptor.create(
-        threadBookmarkFull.siteName,
-        threadBookmarkFull.boardCode,
-        threadBookmarkFull.threadNo,
-        threadBookmarkReplyEntity.repliesToPostNo
+        siteName = threadBookmarkFull.siteName,
+        boardCode = threadBookmarkFull.boardCode,
+        threadNo = threadBookmarkFull.threadNo,
+        postNo = threadBookmarkReplyEntity.repliesToPostNo,
+        postSubNo = 0L
       )
 
       resultMap[postDescriptor] = ThreadBookmarkReply(

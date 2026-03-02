@@ -264,7 +264,7 @@ abstract class CommonSite : SiteBase() {
         || "www.${this.url!!.host}" == url.host
     }
     
-    override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?): String? {
+    override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?, postSubNo: Long?): String? {
       return when (chanDescriptor) {
         is ChanDescriptor.CatalogDescriptor -> {
           url!!.newBuilder().addPathSegment(chanDescriptor.boardCode()).toString()

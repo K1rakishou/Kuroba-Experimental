@@ -71,7 +71,7 @@ public class Vhschan extends CommonSite {
         }
 
         @Override
-        public String desktopUrl(ChanDescriptor chanDescriptor, @Nullable Long postNo) {
+        public String desktopUrl(ChanDescriptor chanDescriptor, @Nullable Long postNo, @Nullable Long postSubNo) {
             if (chanDescriptor instanceof ChanDescriptor.CatalogDescriptor) {
                 return getUrl().newBuilder().addPathSegment(chanDescriptor.boardCode()).toString();
             } else if (chanDescriptor instanceof ChanDescriptor.ThreadDescriptor) {

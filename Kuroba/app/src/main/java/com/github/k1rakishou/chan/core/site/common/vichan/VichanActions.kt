@@ -99,7 +99,7 @@ open class VichanActions(
     val site = siteManager.bySiteDescriptorAndActive(siteDescriptor)
       ?: return ModularResult.error(CommonClientException("Site ${siteDescriptor} is disabled or not active"))
 
-    val desktopUrl = site.resolvable().desktopUrl(replyChanDescriptor, null)?.toHttpUrl()
+    val desktopUrl = site.resolvable().desktopUrl(replyChanDescriptor, null, null)?.toHttpUrl()
       ?: return ModularResult.error(CommonClientException("Failed to get desktopUrl by chanDescriptor: $replyChanDescriptor"))
 
     val antispam = VichanAntispam(proxiedOkHttpClient, desktopUrl)

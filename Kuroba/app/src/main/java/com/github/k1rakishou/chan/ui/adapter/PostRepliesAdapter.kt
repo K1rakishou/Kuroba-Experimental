@@ -48,7 +48,7 @@ class PostRepliesAdapter(
     threadCellData.postViewMode = postViewMode
     threadCellData.defaultIsCompact = false
     threadCellData.defaultBoardPostViewMode = ChanSettings.BoardPostViewMode.LIST
-    threadCellData.defaultMarkedNo = clickedPostDescriptor?.postNo
+    threadCellData.defaultMarkedPostDescriptor = clickedPostDescriptor
     threadCellData.defaultShowDividerFunc = { postIndex: Int, totalPostsCount: Int -> postIndex < totalPostsCount - 1 }
   }
 

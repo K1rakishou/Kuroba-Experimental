@@ -69,49 +69,11 @@ import com.github.k1rakishou.model.entity.navigation.NavHistoryElementIdEntity
 import com.github.k1rakishou.model.entity.navigation.NavHistoryElementInfoEntity
 import com.github.k1rakishou.model.entity.view.ChanThreadsWithPosts
 import com.github.k1rakishou.model.entity.view.OldChanPostThread
-import com.github.k1rakishou.model.migrations.Migration_v10_to_v11
-import com.github.k1rakishou.model.migrations.Migration_v11_to_v12
-import com.github.k1rakishou.model.migrations.Migration_v12_to_v13
-import com.github.k1rakishou.model.migrations.Migration_v13_to_v14
-import com.github.k1rakishou.model.migrations.Migration_v14_to_v15
-import com.github.k1rakishou.model.migrations.Migration_v15_to_v16
-import com.github.k1rakishou.model.migrations.Migration_v16_to_v17
-import com.github.k1rakishou.model.migrations.Migration_v17_to_v18
-import com.github.k1rakishou.model.migrations.Migration_v18_to_v19
-import com.github.k1rakishou.model.migrations.Migration_v19_to_v20
-import com.github.k1rakishou.model.migrations.Migration_v1_to_v2
-import com.github.k1rakishou.model.migrations.Migration_v20_to_v21
-import com.github.k1rakishou.model.migrations.Migration_v21_to_v22
-import com.github.k1rakishou.model.migrations.Migration_v22_to_v23
-import com.github.k1rakishou.model.migrations.Migration_v23_to_v24
-import com.github.k1rakishou.model.migrations.Migration_v24_to_v25
-import com.github.k1rakishou.model.migrations.Migration_v25_to_v26
-import com.github.k1rakishou.model.migrations.Migration_v26_to_v27
-import com.github.k1rakishou.model.migrations.Migration_v27_to_v28
-import com.github.k1rakishou.model.migrations.Migration_v28_to_v29
-import com.github.k1rakishou.model.migrations.Migration_v29_to_v30
-import com.github.k1rakishou.model.migrations.Migration_v2_to_v3
-import com.github.k1rakishou.model.migrations.Migration_v30_to_v31
-import com.github.k1rakishou.model.migrations.Migration_v31_to_v32
-import com.github.k1rakishou.model.migrations.Migration_v32_to_v33
-import com.github.k1rakishou.model.migrations.Migration_v33_to_v34
-import com.github.k1rakishou.model.migrations.Migration_v34_to_v35
-import com.github.k1rakishou.model.migrations.Migration_v35_to_v36
-import com.github.k1rakishou.model.migrations.Migration_v36_to_v37
-import com.github.k1rakishou.model.migrations.Migration_v37_to_v38
-import com.github.k1rakishou.model.migrations.Migration_v38_to_v39
 import com.github.k1rakishou.model.migrations.Migration_v39_to_v40
-import com.github.k1rakishou.model.migrations.Migration_v3_to_v4
 import com.github.k1rakishou.model.migrations.Migration_v40_to_v41
 import com.github.k1rakishou.model.migrations.Migration_v41_to_v42
 import com.github.k1rakishou.model.migrations.Migration_v42_to_v43
 import com.github.k1rakishou.model.migrations.Migration_v43_to_v44
-import com.github.k1rakishou.model.migrations.Migration_v4_to_v5
-import com.github.k1rakishou.model.migrations.Migration_v5_to_v6
-import com.github.k1rakishou.model.migrations.Migration_v6_to_v7
-import com.github.k1rakishou.model.migrations.Migration_v7_to_v8
-import com.github.k1rakishou.model.migrations.Migration_v8_to_v9
-import com.github.k1rakishou.model.migrations.Migration_v9_to_v10
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.atomic.AtomicInteger
@@ -213,7 +175,7 @@ abstract class KurobaDatabase : RoomDatabase() {
     const val SQLITE_TRUE = 1
     const val SQLITE_FALSE = 0
 
-    private val CUSTOM_QUERY_EXECUTOR = Executors.newFixedThreadPool(4, object : ThreadFactory {
+    private class DatabaseQueryThreadFactory : ThreadFactory {
       private val THREAD_NAME_STEM = "database_query_%d"
       private val mThreadId = AtomicInteger(0)
 
@@ -222,9 +184,9 @@ abstract class KurobaDatabase : RoomDatabase() {
         t.name = String.format(THREAD_NAME_STEM, mThreadId.getAndIncrement())
         return t
       }
-    })
+    }
 
-    private val CUSTOM_TRANSACTION_EXECUTOR = Executors.newCachedThreadPool(object : ThreadFactory {
+    private class DatabaseTransactionThreadFactory : ThreadFactory {
       private val THREAD_NAME_STEM = "database_transaction_%d"
       private val mThreadId = AtomicInteger(0)
 
@@ -233,7 +195,10 @@ abstract class KurobaDatabase : RoomDatabase() {
         t.name = String.format(THREAD_NAME_STEM, mThreadId.getAndIncrement())
         return t
       }
-    })
+    }
+
+    private val CUSTOM_TRANSACTION_EXECUTOR = Executors.newCachedThreadPool(DatabaseTransactionThreadFactory())
+    private val CUSTOM_QUERY_EXECUTOR = Executors.newFixedThreadPool(4, DatabaseQueryThreadFactory())
 
     fun buildDatabase(application: Application): KurobaDatabase {
       return Room.databaseBuilder(
@@ -244,44 +209,6 @@ abstract class KurobaDatabase : RoomDatabase() {
         .setQueryExecutor(CUSTOM_QUERY_EXECUTOR)
         .setTransactionExecutor(CUSTOM_TRANSACTION_EXECUTOR)
         .addMigrations(
-          Migration_v1_to_v2(),
-          Migration_v2_to_v3(),
-          Migration_v3_to_v4(),
-          Migration_v4_to_v5(),
-          Migration_v5_to_v6(),
-          Migration_v6_to_v7(),
-          Migration_v7_to_v8(),
-          Migration_v8_to_v9(),
-          Migration_v9_to_v10(),
-          Migration_v10_to_v11(),
-          Migration_v11_to_v12(),
-          Migration_v12_to_v13(),
-          Migration_v13_to_v14(),
-          Migration_v14_to_v15(),
-          Migration_v15_to_v16(),
-          Migration_v16_to_v17(),
-          Migration_v17_to_v18(),
-          Migration_v18_to_v19(),
-          Migration_v19_to_v20(),
-          Migration_v20_to_v21(),
-          Migration_v21_to_v22(),
-          Migration_v22_to_v23(),
-          Migration_v23_to_v24(),
-          Migration_v24_to_v25(),
-          Migration_v25_to_v26(),
-          Migration_v26_to_v27(),
-          Migration_v27_to_v28(),
-          Migration_v28_to_v29(),
-          Migration_v29_to_v30(),
-          Migration_v30_to_v31(),
-          Migration_v31_to_v32(),
-          Migration_v32_to_v33(),
-          Migration_v33_to_v34(),
-          Migration_v34_to_v35(),
-          Migration_v35_to_v36(),
-          Migration_v36_to_v37(),
-          Migration_v37_to_v38(),
-          Migration_v38_to_v39(),
           Migration_v39_to_v40(),
           Migration_v40_to_v41(),
           Migration_v41_to_v42(),

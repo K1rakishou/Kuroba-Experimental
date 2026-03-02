@@ -67,14 +67,16 @@ class DvachSearchRequest(
           siteName = Dvach.SITE_DESCRIPTOR.siteName,
           boardCode = searchParams.boardCode,
           threadNo = dvachSearchPost.num,
-          postNo = dvachSearchPost.num
+          postNo = dvachSearchPost.num,
+          postSubNo = 0L
         )
       } else {
         PostDescriptor.create(
           siteName = Dvach.SITE_DESCRIPTOR.siteName,
           boardCode = searchParams.boardCode,
           threadNo = dvachSearchPost.parent,
-          postNo = dvachSearchPost.num
+          postNo = dvachSearchPost.num,
+          postSubNo = 0L
         )
       }
 

@@ -155,7 +155,7 @@ class ThemeControllerHelper(
     val post1 = postParser.parseFull(builder1, parserCallback)
     post1.repliesFrom.add(PostDescriptor.create(dummyThreadDescriptor, 234567890L))
 
-    val pd2 = PostDescriptor.create(dummyBoardDescriptor, 234567890L, 123456789L)
+    val pd2 = PostDescriptor.create(dummyBoardDescriptor, 234567890L, 123456789L, 0L)
     val builder2 = ChanPostBuilder()
       .boardDescriptor(dummyBoardDescriptor)
       .id(234567890)

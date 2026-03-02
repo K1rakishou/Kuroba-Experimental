@@ -1940,7 +1940,7 @@ class ThreadPresenter @Inject constructor(
           val site = siteManager.bySiteDescriptorAndActive(post.postDescriptor.siteDescriptor())
             ?: return@post
 
-          val url = site.resolvable().desktopUrl(post.postDescriptor.descriptor, post.postNo())
+          val url = site.resolvable().desktopUrl(post.postDescriptor.descriptor, post.postNo(), post.postSubNo())
           openLink(url)
         }
         POST_OPTION_OPEN_IN_ARCHIVE -> {
@@ -1957,7 +1957,7 @@ class ThreadPresenter @Inject constructor(
           val site = siteManager.bySiteDescriptorAndActive(post.postDescriptor.siteDescriptor())
             ?: return@post
 
-          val url = site.resolvable().desktopUrl(post.postDescriptor.descriptor, post.postNo())
+          val url = site.resolvable().desktopUrl(post.postDescriptor.descriptor, post.postNo(), post.postSubNo())
           shareLink(url)
         }
         POST_OPTION_REMOVE,
@@ -2118,10 +2118,13 @@ class ThreadPresenter @Inject constructor(
           )
 
           when (val postLinkableValue = linkable.linkableValue) {
-            is PostLinkable.Value.LongValue -> {
-              val postNo = postLinkableValue.extractValueOrNull()
-              if (postNo != null) {
-                val desktopUrl = site.resolvable().desktopUrl(postChanDescriptor, postNo)
+            is PostLinkable.Value.LongPairValue -> {
+              val value = postLinkableValue.extractValueOrNull()
+              if (value != null) {
+                val postNo = value.first
+                val postSubNo = value.second
+
+                val desktopUrl = site.resolvable().desktopUrl(postChanDescriptor, postNo, postSubNo)
                 floatingListMenuItems += createMenuItem(
                   menuItemId = COPY_LINK_VALUE,
                   stringId = R.string.action_copy_link_value,
@@ -2138,12 +2141,14 @@ class ThreadPresenter @Inject constructor(
                 siteName = site.name(),
                 boardCode = postLinkableValue.board,
                 threadNo = postLinkableValue.threadId,
-                postNo = postLinkableValue.postId
+                postNo = postLinkableValue.postId,
+                postSubNo = postLinkableValue.postSubId
               )
 
               val desktopUrl = site.resolvable().desktopUrl(
-                postDescriptor.descriptor,
-                postDescriptor.postNo
+                chanDescriptor = postDescriptor.descriptor,
+                postNo = postDescriptor.postNo,
+                postSubNo = postDescriptor.postSubNo,
               )
 
               floatingListMenuItems += createMenuItem(
@@ -2179,15 +2184,17 @@ class ThreadPresenter @Inject constructor(
             }
 
             val linkPostDescriptor = PostDescriptor.create(
-              site.name(),
-              threadLink.board,
-              threadLink.threadId,
-              threadLink.postId
+              siteName = site.name(),
+              boardCode = threadLink.board,
+              threadNo = threadLink.threadId,
+              postNo = threadLink.postId,
+              postSubNo = threadLink.postSubId
             )
 
             val desktopUrl = site.resolvable().desktopUrl(
               chanDescriptor = linkPostDescriptor.descriptor,
-              postNo = linkPostDescriptor.postNo
+              postNo = linkPostDescriptor.postNo,
+              postSubNo = linkPostDescriptor.postSubNo,
             )
 
             floatingListMenuItems += createMenuItem(
@@ -2204,7 +2211,7 @@ class ThreadPresenter @Inject constructor(
               BoardDescriptor.create(site.name(), link.toString())
             )
 
-            val desktopUrl = site.resolvable().desktopUrl(catalogDescriptor, null)
+            val desktopUrl = site.resolvable().desktopUrl(catalogDescriptor, null, null)
 
             floatingListMenuItems += createMenuItem(
               menuItemId = COPY_LINK_VALUE,
@@ -2225,7 +2232,7 @@ class ThreadPresenter @Inject constructor(
             BoardDescriptor.create(site.name(), searchLink.board)
           )
 
-          val desktopUrl = site.resolvable().desktopUrl(catalogDescriptor, null)
+          val desktopUrl = site.resolvable().desktopUrl(catalogDescriptor, null, null)
 
           floatingListMenuItems += createMenuItem(
             menuItemId = COPY_LINK_VALUE,
@@ -2250,12 +2257,14 @@ class ThreadPresenter @Inject constructor(
                 siteName = archiveDescriptor.siteDescriptor.siteName,
                 boardCode = archiveThreadLink.board,
                 threadNo = archiveThreadLink.threadId,
-                postNo = archiveThreadLink.postIdOrThreadId()
+                postNo = archiveThreadLink.postIdOrThreadId(),
+                postSubNo = archiveThreadLink.postSubId ?: 0L
               )
 
               val desktopUrl = site.resolvable().desktopUrl(
-                archivePostDescriptor.descriptor,
-                archivePostDescriptor.postNo
+                chanDescriptor = archivePostDescriptor.descriptor,
+                postNo = archivePostDescriptor.postNo,
+                postSubNo = archivePostDescriptor.postSubNo,
               )
 
               floatingListMenuItems += createMenuItem(
@@ -2678,7 +2687,7 @@ class ThreadPresenter @Inject constructor(
     siteManager.bySiteDescriptorAndActive(post.postDescriptor.siteDescriptor())?.let { site ->
       text
         .append("Full post link: ")
-        .append(site.resolvable().desktopUrl(descriptor, post.postDescriptor.postNo))
+        .append(site.resolvable().desktopUrl(descriptor, post.postDescriptor.postNo, post.postDescriptor.postSubNo))
         .appendLine()
     }
 

@@ -37,10 +37,11 @@ object ChanThreadMapper {
     postAdditionalData: ChanPostLocalSource.PostAdditionalData
   ): ChanOriginalPost {
     val postDescriptor = PostDescriptor.create(
-      threadDescriptor.siteName(),
-      threadDescriptor.boardCode(),
-      threadDescriptor.threadNo,
-      chanPostFull.chanPostIdEntity.postNo
+      siteName = threadDescriptor.siteName(),
+      boardCode = threadDescriptor.boardCode(),
+      threadNo = threadDescriptor.threadNo,
+      postNo = chanPostFull.chanPostIdEntity.postNo,
+      postSubNo = chanPostFull.chanPostIdEntity.postSubNo,
     )
 
     val postImages = postAdditionalData.postImageByPostIdMap[chanPostFull.chanPostIdEntity.postId]

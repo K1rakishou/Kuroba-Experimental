@@ -24,7 +24,7 @@ abstract class BaseFuukaSite : CommonSite() {
     private val siteClass: Class<out Site>
   ) : CommonSiteUrlHandler() {
 
-    override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?): String? {
+    override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?, postSubNo: Long?): String? {
       // https://warosu.org/
       val baseUrl = url.toString()
 
@@ -39,7 +39,14 @@ abstract class BaseFuukaSite : CommonSite() {
             "${baseUrl}${chanDescriptor.boardCode()}/thread/${chanDescriptor.threadNo}"
           } else {
             // https://warosu.org/g/thread/72382313#p72382341
-            "${baseUrl}${chanDescriptor.boardCode()}/thread/${chanDescriptor.threadNo}#p${postNo}"
+            buildString {
+              append("${baseUrl}${chanDescriptor.boardCode()}/thread/${chanDescriptor.threadNo}#p${postNo}")
+
+              if (postSubNo != null && postSubNo > 0) {
+                append("_")
+                append(postSubNo)
+              }
+            }
           }
         }
       }

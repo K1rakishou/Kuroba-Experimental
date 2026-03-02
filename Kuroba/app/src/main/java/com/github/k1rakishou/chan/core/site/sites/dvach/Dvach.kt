@@ -740,7 +740,7 @@ class Dvach : CommonSite() {
     override val names: Array<String>
       get() = arrayOf("dvach", "2ch")
 
-    override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?): String? {
+    override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?, postSubNo: Long?): String? {
       when (chanDescriptor) {
         is ChanDescriptor.CatalogDescriptor -> {
           val builtUrl = url.newBuilder()

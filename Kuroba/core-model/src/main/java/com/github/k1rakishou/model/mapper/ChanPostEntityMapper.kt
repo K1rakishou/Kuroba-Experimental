@@ -54,7 +54,8 @@ object ChanPostEntityMapper {
           siteName = chanDescriptor.siteName(),
           boardCode = chanDescriptor.boardCode(),
           threadNo = chanDescriptor.threadNo,
-          postNo = chanPostIdEntity.postNo
+          postNo = chanPostIdEntity.postNo,
+          postSubNo = chanPostIdEntity.postSubNo,
         )
       }
       is ChanDescriptor.CatalogDescriptor -> {

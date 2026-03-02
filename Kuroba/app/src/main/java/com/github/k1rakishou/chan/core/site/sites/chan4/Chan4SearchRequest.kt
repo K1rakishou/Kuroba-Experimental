@@ -505,10 +505,11 @@ class Chan4SearchRequest(
         }
 
         searchEntryPostBuilder.postDescriptor = PostDescriptor.create(
-          SITE_DESCRIPTOR.siteName,
-          boardCode,
-          threadNo,
-          threadNo
+          siteName = SITE_DESCRIPTOR.siteName,
+          boardCode = boardCode,
+          threadNo = threadNo,
+          postNo = threadNo,
+          postSubNo = 0L
         )
       }
     } else {
@@ -533,10 +534,11 @@ class Chan4SearchRequest(
         }
 
         searchEntryPostBuilder.postDescriptor = PostDescriptor.create(
-          SITE_DESCRIPTOR.siteName,
-          boardCode,
-          threadNo,
-          postNo
+          siteName = SITE_DESCRIPTOR.siteName,
+          boardCode = boardCode,
+          threadNo = threadNo,
+          postNo = postNo,
+          postSubNo = 0L
         )
       }
     }

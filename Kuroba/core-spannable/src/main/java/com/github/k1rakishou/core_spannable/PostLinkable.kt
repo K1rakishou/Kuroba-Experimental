@@ -47,13 +47,15 @@ open class PostLinkable(
     private set
 
   private var markedNo: Long = -1
+  private var markedSubNo: Long = -1
 
   override fun onClick(widget: View) {
     isSpoilerVisible = !isSpoilerVisible
   }
 
-  fun setMarkedNo(markedNo: Long) {
+  fun setMarkedPostDescriptor(markedNo: Long, markedSubNo: Long) {
     this.markedNo = markedNo
+    this.markedSubNo = markedSubNo
   }
 
   override fun updateDrawState(ds: TextPaint) {
@@ -70,12 +72,12 @@ open class PostLinkable(
       Type.DEAD,
       Type.ARCHIVE -> {
         if (type == Type.QUOTE || type == Type.QUOTE_TO_HIDDEN_OR_REMOVED_POST) {
-          val value = when (linkableValue) {
-            is Value.LongValue -> linkableValue.value
+          val matches = when (linkableValue) {
+            is Value.LongPairValue -> linkableValue.value == markedNo && linkableValue.subValue == markedSubNo
             else -> throw IllegalArgumentException("Unsupported value type: ${linkableValue::class.java.simpleName}")
           }
 
-          if (value == markedNo) {
+          if (matches) {
             ds.color = theme.postHighlightQuoteColor
             ds.typeface = theme.defaultBoldTypeface
 
@@ -117,14 +119,14 @@ open class PostLinkable(
       return false
     }
 
-    val value = when (linkableValue) {
-      is Value.LongValue -> linkableValue.value
-      else -> throw IllegalArgumentException(
-        "Unsupported value type: ${linkableValue::class.java.simpleName}"
-      )
+    when (linkableValue) {
+      is Value.LongPairValue -> {
+        return linkableValue.value == markedNo && linkableValue.subValue == markedSubNo
+      }
+      else -> {
+        throw IllegalArgumentException("Unsupported value type: ${linkableValue::class.java.simpleName}")
+      }
     }
-
-    return value == markedNo
   }
 
   open fun getTheme(): ChanTheme = themeEngine.chanTheme
@@ -176,24 +178,17 @@ open class PostLinkable(
     abstract override fun equals(other: Any?): Boolean
     abstract override fun hashCode(): Int
 
-    fun extractValueOrNull(): Long? {
+    fun extractValueOrNull(): Pair<Long, Long>? {
       return when (this) {
-        is LongValue -> value
-        is LongPairValue -> value
-        is StringValue,
-        is ThreadOrPostLink,
-        is ArchiveThreadLink,
-        is SearchLink,
-        NoValue -> null
-      }
-    }
-
-    fun extractSubValueOrNull(): Long? {
-      return when (this) {
-        is LongValue -> null
-        is LongPairValue -> subValue
-        is ThreadOrPostLink -> postSubId
-        is ArchiveThreadLink -> postSubId
+        is LongPairValue -> Pair(value, subValue)
+        is ThreadOrPostLink -> Pair(postId, postSubId)
+        is ArchiveThreadLink -> {
+          if (postId != null) {
+            Pair(postId, postSubId ?: 0L)
+          } else {
+            null
+          }
+        }
         is StringValue,
         is SearchLink,
         NoValue -> null
@@ -210,7 +205,6 @@ open class PostLinkable(
       }
     }
 
-    data class LongValue(val value: Long) : Value()
     data class LongPairValue(val value: Long, val subValue: Long) : Value()
     data class SearchLink(val board: String, val query: String) : Value()
 
@@ -233,7 +227,7 @@ open class PostLinkable(
       val board: String,
       val threadId: Long,
       val postId: Long,
-      val postSubId: Long = 0
+      val postSubId: Long
     ) : Value() {
       fun isThreadLink(): Boolean = threadId == postId
 
@@ -245,7 +239,7 @@ open class PostLinkable(
       val board: String,
       val threadId: Long,
       val postId: Long?,
-      val postSubId: Long? = null,
+      val postSubId: Long?,
     ) : Value() {
 
       fun isValid(): Boolean = threadId > 0 && (postId == null || postId > 0)

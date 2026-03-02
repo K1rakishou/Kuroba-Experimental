@@ -256,10 +256,10 @@ internal object ParcelableSpannableStringMapperV1 : ParcelableStringMapper {
           }
 
           spannableString.setSpanSafe(
-            postLinkable,
-            spanInfo.spanStart,
-            spanInfo.spanEnd,
-            spanInfo.flags
+            span = postLinkable,
+            start = spanInfo.spanStart,
+            end = spanInfo.spanEnd,
+            flags = spanInfo.flags
           )
         }
         ParcelableSpanType.Unknown -> parcelableSpannableString.text
@@ -292,24 +292,12 @@ internal object ParcelableSpannableStringMapperV1 : ParcelableStringMapper {
               )
             )
           }
-          is PostLinkable.Value.LongValue -> {
-            val postId = postLinkable.linkableValue.extractValueOrNull()
-            if (postId != null) {
-              parcelableSpan = ParcelableSpan.PostLinkable(
-                key = postLinkable.key.toString(),
-                postLinkableTypeRaw = PostLinkableType.Dead.value,
-                postLinkableValue = PostLinkableValue.Dead(
-                  postNo = postId,
-                  postSubNo = 0
-                )
-              )
-            }
-          }
           is PostLinkable.Value.LongPairValue -> {
-            val postId = postLinkable.linkableValue.extractValueOrNull()
-            val postSubId = postLinkable.linkableValue.extractSubValueOrNull() ?: 0
+            val value = postLinkable.linkableValue.extractValueOrNull()
+            if (value != null) {
+              val postId = value.first
+              val postSubId = value.second
 
-            if (postId != null) {
               parcelableSpan = ParcelableSpan.PostLinkable(
                 key = postLinkable.key.toString(),
                 postLinkableTypeRaw = PostLinkableType.Dead.value,
@@ -326,14 +314,17 @@ internal object ParcelableSpannableStringMapperV1 : ParcelableStringMapper {
         }
       }
       PostLinkable.Type.QUOTE -> {
-        val postId = postLinkable.linkableValue.extractValueOrNull()
-        if (postId != null) {
+        val value = postLinkable.linkableValue.extractValueOrNull()
+        if (value != null) {
+          val postId = value.first
+          val postSubId = value.second
+
           parcelableSpan = ParcelableSpan.PostLinkable(
             key = postLinkable.key.toString(),
             postLinkableTypeRaw = PostLinkableType.Quote.value,
             postLinkableValue = PostLinkableValue.Quote(
               postNo = postId,
-              postSubNo = 0
+              postSubNo = postSubId
             )
           )
         }
@@ -477,16 +468,10 @@ internal object ParcelableSpannableStringMapperV1 : ParcelableStringMapper {
       PostLinkableType.Quote -> {
         postLinkableValue as PostLinkableValue.Quote
 
-        val linkableValue = if (postLinkableValue.postSubNo > 0) {
-          PostLinkable.Value.LongPairValue(
-            value = postLinkableValue.postNo,
-            subValue = postLinkableValue.postSubNo
-          )
-        } else {
-          PostLinkable.Value.LongValue(
-            value = postLinkableValue.postNo
-          )
-        }
+        val linkableValue = PostLinkable.Value.LongPairValue(
+          value = postLinkableValue.postNo,
+          subValue = postLinkableValue.postSubNo.takeIf { value -> value >= 0L } ?: 0L
+        )
 
         return PostLinkable(
           key = key,
@@ -564,25 +549,17 @@ internal object ParcelableSpannableStringMapperV1 : ParcelableStringMapper {
             val postNo = when (postLinkableValue) {
               is PostLinkableValue.Dead -> postLinkableValue.postNo
               is PostLinkableValue.Quote -> postLinkableValue.postNo
-              else -> return null
             }
 
             val postSubNo = when (postLinkableValue) {
               is PostLinkableValue.Dead -> postLinkableValue.postSubNo
               is PostLinkableValue.Quote -> postLinkableValue.postSubNo
-              else -> return null
             }
 
-            if (postSubNo > 0) {
-              PostLinkable.Value.LongPairValue(
-                value = postNo,
-                subValue = postSubNo
-              )
-            } else {
-              PostLinkable.Value.LongValue(
-                value = postNo
-              )
-            }
+            PostLinkable.Value.LongPairValue(
+              value = postNo,
+              subValue = postSubNo.takeIf { value -> value >= 0L } ?: 0L
+            )
           }
           else -> return null
         }

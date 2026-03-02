@@ -89,7 +89,7 @@ class FuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
       .newBuilder()
       .addEncodedPathSegment(searchParams.boardDescriptor.boardCode)
       .addQueryParameter("offset", (searchParams.getCurrentPage() * FUUKA_SEARCH_ENTRIES_PER_PAGE).toString())
-      // TODO(KurobaEx / @GhostPosts): ghost posts are not supported yet
+      // TODO: GhostPosts: ghost posts are not supported yet
       .addQueryParameter("ghost", "no")
       .addQueryParameter("task", "search")
       .tryAddSearchParam("search_text", searchParams.query)

@@ -73,6 +73,8 @@ class FoolFuukaCommentParser(
 
         if (board != null && threadId != null) {
           val postId = externalMatcher.groupOrNull(3)?.toLongOrNull() ?: threadId
+          // TODO: GhostPosts
+          val postSubId = 0L
 
           val isInternalQuote = board == post.boardDescriptor!!.boardCode
             && !callback.isParsingCatalogPosts
@@ -83,17 +85,34 @@ class FoolFuukaCommentParser(
               PostParser.HIDDEN_POST,
               PostParser.REMOVED_POST -> {
                 // Quote pointing to a (locally) hidden or removed post
-                return PostLinkable.Link(PostLinkable.Type.QUOTE_TO_HIDDEN_OR_REMOVED_POST, text, PostLinkable.Value.LongValue(postId))
+                return PostLinkable.Link(
+                  type = PostLinkable.Type.QUOTE_TO_HIDDEN_OR_REMOVED_POST,
+                  key = text,
+                  linkValue = PostLinkable.Value.LongPairValue(postId, postSubId)
+                )
               }
               else -> {
                 // Normal post quote
-                return PostLinkable.Link(PostLinkable.Type.QUOTE, text, PostLinkable.Value.LongValue(postId))
+                return PostLinkable.Link(
+                  type = PostLinkable.Type.QUOTE,
+                  key = text,
+                  linkValue = PostLinkable.Value.LongPairValue(postId, postSubId)
+                )
               }
             }
           }
 
           // link to post not in same thread with post number (>>post or >>>/board/post)
-          return PostLinkable.Link(PostLinkable.Type.THREAD, text, ThreadOrPostLink(board, threadId, postId))
+          return PostLinkable.Link(
+            type = PostLinkable.Type.THREAD,
+            key = text,
+            linkValue = ThreadOrPostLink(
+              board = board,
+              threadId = threadId,
+              postId = postId,
+              postSubId = postSubId
+            )
+          )
         }
 
         // fallthrough
@@ -102,6 +121,9 @@ class FoolFuukaCommentParser(
       val quoteMatcher = getFoolFuukaInternalQuotePattern(post.postDescriptor)?.matcher(href)
       if (quoteMatcher != null && quoteMatcher.find()) {
         val postId = quoteMatcher.groupOrNull(3)?.toLongOrNull()
+        // TODO: GhostPosts
+        val postSubId = 0L
+
         if (postId != null) {
           val type = if (callback.isInternal(postId)) {
             // Normal post quote
@@ -112,7 +134,11 @@ class FoolFuukaCommentParser(
             PostLinkable.Type.DEAD
           }
 
-          return PostLinkable.Link(type, text, PostLinkable.Value.LongValue(postId))
+          return PostLinkable.Link(
+            type = type,
+            key = text,
+            linkValue = PostLinkable.Value.LongPairValue(postId, postSubId)
+          )
         }
 
         // fallthrough

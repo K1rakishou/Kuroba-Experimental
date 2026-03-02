@@ -63,7 +63,7 @@ class ThreadCellData(
   var postViewMode: PostCellData.PostViewMode = PostCellData.PostViewMode.Normal
   var defaultIsCompact: Boolean = false
   var defaultBoardPostViewMode: ChanSettings.BoardPostViewMode = ChanSettings.boardPostViewMode.get()
-  var defaultMarkedNo: Long? = null
+  var defaultMarkedPostDescriptor: PostDescriptor? = null
   var defaultSearchQuery = PostCellData.SearchQuery()
   var defaultShowDividerFunc = { postIndex: Int, totalPostsCount: Int -> true }
   var error: String? = null
@@ -324,7 +324,7 @@ class ThreadCellData(
           detailsSizeSp = detailsSizeSp,
           theme = chanTheme,
           postViewMode = postViewMode,
-          markedPostNo = defaultMarkedNo,
+          markedPostDescriptor = defaultMarkedPostDescriptor,
           showDivider = oldPostCellData?.showDivider ?: defaultShowDividerFunc.invoke(orderInList, totalPostsCount),
           compact = defaultIsCompact,
           boardPostViewMode = defaultBoardPostViewMode,
@@ -407,7 +407,7 @@ class ThreadCellData(
     postCellDataLazyList.clear()
 
     lastSeenIndicatorPosition = -1
-    defaultMarkedNo = null
+    defaultMarkedPostDescriptor = null
     error = null
     postCellCallback = null
     _chanDescriptor = null

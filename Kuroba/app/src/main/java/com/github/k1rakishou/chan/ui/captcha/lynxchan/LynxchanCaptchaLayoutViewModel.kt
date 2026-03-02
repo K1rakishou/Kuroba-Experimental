@@ -428,7 +428,7 @@ class LynxchanCaptchaLayoutViewModel(
       requestBuilder = requestBuilder
     )
 
-    val refererUrl = site.resolvable().desktopUrl(chanDescriptor, null)
+    val refererUrl = site.resolvable().desktopUrl(chanDescriptor, null, null)
     if (refererUrl.isNotNullNorBlank()) {
       requestBuilder.header("Referer", refererUrl)
     }

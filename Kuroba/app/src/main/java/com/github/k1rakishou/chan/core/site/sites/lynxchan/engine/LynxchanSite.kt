@@ -159,7 +159,7 @@ abstract class LynxchanSite : CommonSite() {
     private val siteClass: Class<out Site>
   ) : CommonSiteUrlHandler() {
 
-    override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?): String? {
+    override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?, postSubNo: Long?): String? {
       // https://endchan.net
       val baseUrl = url.toString().removeSuffix("/")
 

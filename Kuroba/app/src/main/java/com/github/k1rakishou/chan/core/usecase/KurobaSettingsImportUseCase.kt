@@ -427,7 +427,7 @@ class KurobaSettingsImportUseCase(
           val postDescriptor = if (wholeThread) {
             PostDescriptor.create(siteName, boardCode, postNo.toLong())
           } else {
-            PostDescriptor.create(siteName, boardCode, threadNo.toLong(), postNo.toLong())
+            PostDescriptor.create(siteName, boardCode, threadNo.toLong(), postNo.toLong(), 0L)
           }
 
           val postHide = ChanPostHide(

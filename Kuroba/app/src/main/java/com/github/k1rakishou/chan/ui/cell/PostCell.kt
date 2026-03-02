@@ -190,7 +190,12 @@ class PostCell @JvmOverloads constructor(
       val selection = try {
         comment.text.subSequence(comment.selectionStartSafe(), comment.selectionEndSafe())
       } catch (error: Throwable) {
-        Logger.e(TAG, "onActionItemClicked text=${comment.text}, start=${comment.selectionStartSafe()}, end=${comment.selectionEndSafe()}")
+        Logger.error(TAG, error) {
+          "onActionItemClicked text=${comment.text}, " +
+            "start=${comment.selectionStartSafe()}, " +
+            "end=${comment.selectionEndSafe()}"
+        }
+
         ""
       }
 
@@ -1016,13 +1021,16 @@ class PostCell @JvmOverloads constructor(
     )
 
     for (linkable in linkables) {
-      val markedNo = if (bind) {
-        postCellData.markedNo
+      val (markedPostNo, markedPostSubNo) = if (bind) {
+        (postCellData.markedPost?.postNo ?: -1L) to (postCellData.markedPost?.postSubNo ?: -1L)
       } else {
-        -1
+        -1L to -1L
       }
 
-      linkable.setMarkedNo(markedNo)
+      linkable.setMarkedPostDescriptor(
+        markedNo = markedPostNo,
+        markedSubNo = markedPostSubNo
+      )
     }
 
     if (!bind && commentSpanned is Spannable) {

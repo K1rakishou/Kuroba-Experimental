@@ -120,14 +120,26 @@ class DvachCommentParser : VichanCommentParser(), ICommentParser {
   ): PostLinkable.Link {
     if (boardCode == post.boardDescriptor!!.boardCode && callback.isInternal(postNo)) {
       // link to post in same thread with post number (>>post)
-      return PostLinkable.Link(PostLinkable.Type.QUOTE, text, PostLinkable.Value.LongValue(postNo))
+      return PostLinkable.Link(
+        type = PostLinkable.Type.QUOTE,
+        key = text,
+        linkValue = PostLinkable.Value.LongPairValue(
+          value = postNo,
+          subValue = 0L
+        )
+      )
     }
 
     // link to post not in same thread with post number (>>post or >>>/board/post)
     return PostLinkable.Link(
-      PostLinkable.Type.THREAD,
-      text,
-      PostLinkable.Value.ThreadOrPostLink(boardCode, threadNo, postNo)
+      type = PostLinkable.Type.THREAD,
+      key = text,
+      linkValue = PostLinkable.Value.ThreadOrPostLink(
+        board = boardCode,
+        threadId = threadNo,
+        postId = postNo,
+        postSubId = 0L
+      )
     )
   }
 
@@ -138,18 +150,30 @@ class DvachCommentParser : VichanCommentParser(), ICommentParser {
     postNo: Long
   ): PostLinkable.Link {
     if (!callback.isInternal(postNo)) {
-      return PostLinkable.Link(PostLinkable.Type.DEAD, text, PostLinkable.Value.LongValue(postNo))
+      return PostLinkable.Link(
+        type = PostLinkable.Type.DEAD,
+        key = text,
+        linkValue = PostLinkable.Value.LongPairValue(postNo, 0L)
+      )
     }
 
     when (callback.isHiddenOrRemoved(post.opId, postNo, 0)) {
       PostParser.HIDDEN_POST,
       PostParser.REMOVED_POST -> {
         // Quote pointing to a (locally) hidden or removed post
-        return PostLinkable.Link(PostLinkable.Type.QUOTE_TO_HIDDEN_OR_REMOVED_POST, text, PostLinkable.Value.LongValue(postNo))
+        return PostLinkable.Link(
+          type = PostLinkable.Type.QUOTE_TO_HIDDEN_OR_REMOVED_POST,
+          key = text,
+          linkValue = PostLinkable.Value.LongPairValue(postNo, 0L)
+        )
       }
       else -> {
         // Normal post quote
-        return PostLinkable.Link(PostLinkable.Type.QUOTE, text, PostLinkable.Value.LongValue(postNo))
+        return PostLinkable.Link(
+          type = PostLinkable.Type.QUOTE,
+          key = text,
+          linkValue = PostLinkable.Value.LongPairValue(postNo, 0L)
+        )
       }
     }
   }

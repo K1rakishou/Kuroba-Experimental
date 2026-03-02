@@ -97,7 +97,8 @@ class ShowPostsInExternalThreadHelper(
         siteName = postDescriptor.siteDescriptor().siteName,
         boardCode = postDescriptor.boardDescriptor().boardCode,
         threadNo = postDescriptor.postNo,
-        postNo = postDescriptor.postNo
+        postNo = postDescriptor.postNo,
+        postSubNo = 0L
       )
 
       if (threadLoadResult is ThreadLoadResult.Error) {

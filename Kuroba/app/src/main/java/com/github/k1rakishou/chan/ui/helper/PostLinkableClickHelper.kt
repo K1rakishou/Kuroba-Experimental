@@ -41,7 +41,7 @@ class PostLinkableClickHelper(
     Logger.d(TAG, "onPostLinkableClicked, postDescriptor: ${post.postDescriptor}, linkable: '${linkable}'")
 
     if (linkable.type == PostLinkable.Type.QUOTE) {
-      val postId = linkable.linkableValue.extractValueOrNull()
+      val postId = linkable.linkableValue.extractValueOrNull()?.first
       if (postId == null) {
         Logger.e(TAG, "Bad quote linkable: linkableValue = ${linkable.linkableValue}")
         return
@@ -52,7 +52,7 @@ class PostLinkableClickHelper(
     }
 
     if (linkable.type == PostLinkable.Type.QUOTE_TO_HIDDEN_OR_REMOVED_POST) {
-      val postId = linkable.linkableValue.extractValueOrNull()
+      val postId = linkable.linkableValue.extractValueOrNull()?.first
       if (postId == null) {
         Logger.e(TAG, "Bad quote linkable: linkableValue = ${linkable.linkableValue}")
         return
@@ -81,10 +81,11 @@ class PostLinkableClickHelper(
       }
 
       val postDescriptor = PostDescriptor.create(
-        siteName,
-        threadLink.board,
-        threadLink.threadId,
-        threadLink.postId
+        siteName = siteName,
+        boardCode = threadLink.board,
+        threadNo = threadLink.threadId,
+        postNo = threadLink.postId,
+        postSubNo = threadLink.postSubId,
       )
 
       onCrossThreadLinkClicked(postDescriptor)
@@ -122,9 +123,17 @@ class PostLinkableClickHelper(
 
     if (linkable.type == PostLinkable.Type.DEAD) {
       when (val postLinkableValue = linkable.linkableValue) {
-        is PostLinkable.Value.LongValue -> {
-          val postNo = postLinkableValue.extractValueOrNull()
-          if (postNo == null || postNo <= 0L) {
+        is PostLinkable.Value.LongPairValue -> {
+          val value = postLinkableValue.extractValueOrNull()
+          val postNo = value?.first
+          val postSubNo = value?.second ?: 0L
+
+          if (value == null || postNo == null) {
+            Logger.e(TAG, "PostLinkable is not valid: linkableValue = ${postLinkableValue}")
+            return
+          }
+
+          if (postNo <= 0L || postSubNo < 0L) {
             Logger.e(TAG, "PostLinkable is not valid: linkableValue = ${postLinkableValue}")
             return
           }
@@ -152,7 +161,8 @@ class PostLinkableClickHelper(
             siteName = siteName,
             boardCode = postLinkableValue.board,
             threadNo = postLinkableValue.threadId,
-            postNo = postLinkableValue.postId
+            postNo = postLinkableValue.postId,
+            postSubNo = postLinkableValue.postSubId,
           )
 
           onDeadQuoteClicked(archivePostDescriptor, true)
@@ -193,7 +203,8 @@ class PostLinkableClickHelper(
         siteName = archiveDescriptor.siteDescriptor.siteName,
         boardCode = archiveThreadLink.board,
         threadNo = archiveThreadLink.threadId,
-        postNo = archiveThreadLink.postIdOrThreadId()
+        postNo = archiveThreadLink.postIdOrThreadId(),
+        postSubNo = archiveThreadLink.postSubId ?: 0L
       )
 
       onArchiveQuoteClicked(archivePostDescriptor)

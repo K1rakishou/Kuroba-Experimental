@@ -767,7 +767,7 @@ open class Chan4 : SiteBase() {
         return hosts.contains(host)
       }
 
-      override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?): String {
+      override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?, postSubNo: Long?): String {
         if (chanDescriptor.isCatalogDescriptor()) {
           return if (postNo != null && postNo > 0) {
             "https://boards.4chan.org/" + chanDescriptor.boardCode() + "/thread/" + postNo

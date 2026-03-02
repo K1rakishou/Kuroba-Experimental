@@ -37,7 +37,7 @@ class FirewallBypassManager(
 
     val domainOrHost = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
       ?.resolvable()
-      ?.desktopUrl(chanDescriptor, null)
+      ?.desktopUrl(chanDescriptor, null, null)
       ?.toHttpUrlOrNull()
       ?.domainOrHost()
 

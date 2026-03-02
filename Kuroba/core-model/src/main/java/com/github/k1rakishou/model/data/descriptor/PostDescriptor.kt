@@ -1,16 +1,16 @@
 package com.github.k1rakishou.model.data.descriptor
 
 import com.github.k1rakishou.core_logger.Logger
-import java.util.*
+import java.util.Locale
 
-open class PostDescriptor protected constructor(
+data class PostDescriptor(
   /**
    * A post may belong to a thread or to a catalog (OP) that's why we use abstract
    * ChanDescriptor here and not a concrete Thread/Catalog descriptor
    * */
   val descriptor: ChanDescriptor,
   val postNo: Long,
-  open val postSubNo: Long = 0L
+  val postSubNo: Long
 ) : Comparable<PostDescriptor> {
 
   override fun compareTo(other: PostDescriptor): Int {
@@ -160,16 +160,25 @@ open class PostDescriptor protected constructor(
           val threadNo = parts.getOrNull(4)?.toLongOrNull() ?: return null
           val postNo = parts.getOrNull(5)?.toLongOrNull() ?: return null
           val postSubNo = parts.getOrNull(6)?.toLongOrNull() ?: return null
-
           val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(siteName, boardCode, threadNo)
-          return create(threadDescriptor, threadNo, postNo, postSubNo)
+
+          return create(
+            chanDescriptor = threadDescriptor,
+            threadNo = threadNo,
+            postNo = postNo,
+            postSubNo = postSubNo
+          )
         }
         "CD" -> {
           val postNo = parts.getOrNull(4)?.toLongOrNull() ?: return null
           val postSubNo = parts.getOrNull(5)?.toLongOrNull() ?: return null
-
           val chanDescriptor = ChanDescriptor.CatalogDescriptor.create(siteName, boardCode)
-          return create(chanDescriptor, postNo, postSubNo)
+
+          return create(
+            chanDescriptor = chanDescriptor,
+            postNo = postNo,
+            postSubNo = postSubNo
+          )
         }
         else -> {
           Logger.d(TAG, "Unknown descriptorType: $descriptorType")
@@ -179,7 +188,7 @@ open class PostDescriptor protected constructor(
     }
 
     @JvmStatic
-    fun create(chanDescriptor: ChanDescriptor, postNo: Long): PostDescriptor {
+    fun create(chanDescriptor: ChanDescriptor, postNo: Long, postSubNo: Long = 0): PostDescriptor {
       check(chanDescriptor !is ChanDescriptor.CompositeCatalogDescriptor) {
         "Cannot use ChanDescriptor.CompositeCatalogDescriptor for PostDescriptors"
       }
@@ -189,7 +198,8 @@ open class PostDescriptor protected constructor(
           siteName = chanDescriptor.siteName(),
           boardCode = chanDescriptor.boardCode(),
           threadNo = chanDescriptor.threadNo,
-          postNo = postNo
+          postNo = postNo,
+          postSubNo = postSubNo
         )
         is ChanDescriptor.CatalogDescriptor -> create(
           siteName = chanDescriptor.siteName(),
@@ -208,39 +218,73 @@ open class PostDescriptor protected constructor(
 
       return PostDescriptor(
         descriptor = ChanDescriptor.CatalogDescriptor.create(siteName, boardCode),
-        postNo = threadNo
+        postNo = threadNo,
+        postSubNo = 0L
       )
     }
 
     @JvmStatic
-    fun create(boardDescriptor: BoardDescriptor, threadNo: Long, postNo: Long, postSubNo: Long = 0L): PostDescriptor {
-      return create(boardDescriptor.siteName(), boardDescriptor.boardCode, threadNo, postNo, postSubNo)
+    fun create(boardDescriptor: BoardDescriptor, threadNo: Long, postNo: Long, postSubNo: Long): PostDescriptor {
+      return create(
+        siteName = boardDescriptor.siteName(),
+        boardCode = boardDescriptor.boardCode,
+        threadNo = threadNo,
+        postNo = postNo,
+        postSubNo = postSubNo
+      )
     }
 
     @JvmStatic
-    fun create(chanDescriptor: ChanDescriptor, threadNo: Long, postNo: Long, postSubNo: Long = 0L): PostDescriptor {
+    fun create(chanDescriptor: ChanDescriptor, threadNo: Long, postNo: Long, postSubNo: Long): PostDescriptor {
       check(chanDescriptor !is ChanDescriptor.CompositeCatalogDescriptor) {
         "Cannot use ChanDescriptor.CompositeCatalogDescriptor for PostDescriptors"
       }
 
-      return create(chanDescriptor.siteName(), chanDescriptor.boardCode(), threadNo, postNo, postSubNo)
+      return create(
+        siteName = chanDescriptor.siteName(),
+        boardCode = chanDescriptor.boardCode(),
+        threadNo = threadNo,
+        postNo = postNo,
+        postSubNo = postSubNo
+      )
     }
 
     @JvmStatic
     fun create(threadDescriptor: ChanDescriptor.ThreadDescriptor, postNo: Long): PostDescriptor {
-      return create(threadDescriptor.siteName(), threadDescriptor.boardCode(), threadDescriptor.threadNo, postNo, 0)
+      return create(
+        siteName = threadDescriptor.siteName(),
+        boardCode = threadDescriptor.boardCode(),
+        threadNo = threadDescriptor.threadNo,
+        postNo = postNo,
+        postSubNo = 0
+      )
     }
 
-    @JvmOverloads
     @JvmStatic
-    fun create(siteName: String, boardCode: String, threadNo: Long, postNo: Long, postSubNo: Long = 0L): PostDescriptor {
-      require(threadNo > 0) { "Bad threadNo: $threadNo. siteName=$siteName, boardCode=$boardCode, threadNo=$threadNo, postNo=$postNo, postSubNo=$postSubNo" }
-      require(postNo > 0) { "Bad postNo: $postNo. siteName=$siteName, boardCode=$boardCode, threadNo=$threadNo, postNo=$postNo, postSubNo=$postSubNo" }
+    fun create(
+      siteName: String,
+      boardCode: String,
+      threadNo: Long,
+      postNo: Long,
+      postSubNo: Long
+    ): PostDescriptor {
+      require(threadNo > 0) {
+        "Bad threadNo: $threadNo. siteName=$siteName, boardCode=$boardCode, " +
+          "threadNo=$threadNo, postNo=$postNo, postSubNo=$postSubNo"
+      }
+      require(postNo > 0) {
+        "Bad postNo: $postNo. siteName=$siteName, boardCode=$boardCode, " +
+          "threadNo=$threadNo, postNo=$postNo, postSubNo=$postSubNo"
+      }
 
       return PostDescriptor(
-        ChanDescriptor.ThreadDescriptor.create(siteName, boardCode, threadNo),
-        postNo,
-        postSubNo
+        descriptor = ChanDescriptor.ThreadDescriptor.create(
+          siteName = siteName,
+          boardCode = boardCode,
+          threadNo = threadNo
+        ),
+        postNo = postNo,
+        postSubNo = postSubNo
       )
     }
   }

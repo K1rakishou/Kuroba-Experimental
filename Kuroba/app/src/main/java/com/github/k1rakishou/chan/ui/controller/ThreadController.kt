@@ -711,10 +711,11 @@ abstract class ThreadController(
     preview: Boolean
   ) {
     val externalArchivePostDescriptor = PostDescriptor.create(
-      archiveDescriptor.domain,
-      postDescriptor.descriptor.boardCode(),
-      postDescriptor.getThreadNo(),
-      postDescriptor.postNo
+      siteName = archiveDescriptor.domain,
+      boardCode = postDescriptor.descriptor.boardCode(),
+      threadNo = postDescriptor.getThreadNo(),
+      postNo = postDescriptor.postNo,
+      postSubNo = postDescriptor.postSubNo,
     )
 
     if (!siteManager.isSiteActive(externalArchivePostDescriptor.siteDescriptor())) {

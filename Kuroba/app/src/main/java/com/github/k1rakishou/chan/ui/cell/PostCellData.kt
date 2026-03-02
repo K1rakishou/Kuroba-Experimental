@@ -57,7 +57,7 @@ data class PostCellData(
   val postCellDataWidthNoPaddings: Int,
   val textSizeSp: Int,
   val detailsSizeSp: Int,
-  private val markedPostNo: Long?,
+  private val markedPostDescriptor: PostDescriptor?,
   var showDivider: Boolean,
   var boardPostViewMode: ChanSettings.BoardPostViewMode,
   val boardPostsSortOrder: PostsFilter.CatalogSortingOrder,
@@ -154,8 +154,8 @@ data class PostCellData(
     get() = postViewMode == PostViewMode.MediaViewerPostsPopup
   val searchMode: Boolean
     get() = postViewMode == PostViewMode.Search
-  val markedNo: Long
-    get() = markedPostNo ?: -1
+  val markedPost: PostDescriptor?
+    get() = markedPostDescriptor
   val showImageFileName: Boolean
     get() = (singleImageMode || (postImages.size > 1 && searchMode)) && showPostFileInfo
 
@@ -286,7 +286,7 @@ data class PostCellData(
       postCellDataWidthNoPaddings = postCellDataWidthNoPaddings,
       textSizeSp = textSizeSp,
       detailsSizeSp = detailsSizeSp,
-      markedPostNo = markedPostNo,
+      markedPostDescriptor = markedPostDescriptor,
       showDivider = showDivider,
       boardPostViewMode = boardPostViewMode,
       boardPostsSortOrder = boardPostsSortOrder,
@@ -364,6 +364,10 @@ data class PostCellData(
       append("No.")
       append(" ")
       append(postNo.toString())
+      if (postSubNo > 0L) {
+        append(",")
+        append("$postSubNo")
+      }
       append(" ")
 
       var postSubject = formatPostSubjectSpannable()
@@ -454,9 +458,16 @@ data class PostCellData(
         ""
       }
 
-      val postNoTextFull = String
-        .format(Locale.ENGLISH, "%s%sNo. %d", siteBoardIndicator, postIndexText, post.postNo())
-        .replace(' ', StringUtils.UNBREAKABLE_SPACE_SYMBOL)
+      val postNoTextFull = buildString {
+        append(siteBoardIndicator)
+        append(postIndexText)
+        append("No. ")
+        append(post.postNo())
+        if (postSubNo > 0L) {
+          append(",")
+          append(postSubNo)
+        }
+      }.replace(' ', StringUtils.UNBREAKABLE_SPACE_SYMBOL)
 
       append(postNoTextFull)
 

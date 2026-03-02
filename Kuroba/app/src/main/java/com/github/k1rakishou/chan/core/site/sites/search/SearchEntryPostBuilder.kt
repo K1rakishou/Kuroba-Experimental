@@ -30,7 +30,14 @@ class SearchEntryPostBuilder(
         return null
       }
 
-      return PostDescriptor.Companion.create(siteName!!, boardCode!!, threadNo!!, postNo!!)
+      return PostDescriptor.Companion.create(
+        siteName = siteName!!,
+        boardCode = boardCode!!,
+        threadNo = threadNo!!,
+        postNo = postNo!!,
+        // TODO: GhostPosts
+        postSubNo = 0L
+      )
     }
 
   fun threadDescriptor(): ChanDescriptor.ThreadDescriptor {
