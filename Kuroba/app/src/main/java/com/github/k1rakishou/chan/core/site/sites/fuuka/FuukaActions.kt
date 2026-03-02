@@ -21,7 +21,6 @@ import com.github.k1rakishou.model.data.site.SiteBoards
 import com.github.k1rakishou.persist_state.ReplyMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.flowOf
 import okhttp3.HttpUrl
 import okhttp3.Request
 
@@ -65,8 +64,8 @@ class FuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
   }
 
   override suspend fun boards(): Flow<SiteBoards> {
-    val error = CommonClientException("Catalog is not supported for site ${site.name()}")
-    return flowOf(SiteBoards.Result.Error(error))
+    // Static boards
+    return super.boards()
   }
 
   override suspend fun pages(board: ChanBoard): JsonReaderRequest.JsonReaderResponse<BoardPages>? {
@@ -89,8 +88,7 @@ class FuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
       .newBuilder()
       .addEncodedPathSegment(searchParams.boardDescriptor.boardCode)
       .addQueryParameter("offset", (searchParams.getCurrentPage() * FUUKA_SEARCH_ENTRIES_PER_PAGE).toString())
-      // TODO: GhostPosts: ghost posts are not supported yet
-      .addQueryParameter("ghost", "no")
+      .addQueryParameter("ghost", "yes")
       .addQueryParameter("task", "search")
       .tryAddSearchParam("search_text", searchParams.query)
       .tryAddSearchParam("search_subject", searchParams.subject)
@@ -103,10 +101,10 @@ class FuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
     site.requestModifier().modifyGenericRequest(site, requestBuilder)
 
     return FuukaSearchRequest(
-      ChanSettings.verboseLogs.get(),
-      searchParams,
-      requestBuilder.build(),
-      site.proxiedOkHttpClientLazy.get()
+      verboseLogs = ChanSettings.verboseLogs.get(),
+      searchParams = searchParams,
+      request = requestBuilder.build(),
+      proxiedOkHttpClient = site.proxiedOkHttpClientLazy.get()
     ).execute()
   }
 

@@ -175,7 +175,7 @@ class Kun8 : CommonSite() {
       override val names: Array<String>
         get() = arrayOf("8kun")
 
-      override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?): String? {
+      override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?, postSubNo: Long?): String? {
         return when (chanDescriptor) {
           is CatalogDescriptor -> {
             url.newBuilder()

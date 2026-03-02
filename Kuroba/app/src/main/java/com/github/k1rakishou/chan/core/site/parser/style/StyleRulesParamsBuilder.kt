@@ -1,54 +1,46 @@
-package com.github.k1rakishou.chan.core.site.parser.style;
+package com.github.k1rakishou.chan.core.site.parser.style
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+import com.github.k1rakishou.chan.core.site.parser.PostParser
+import com.github.k1rakishou.core_parser.comment.HtmlTag
+import com.github.k1rakishou.model.data.post.ChanPostBuilder
+import java.util.Objects
 
-import com.github.k1rakishou.chan.core.site.parser.PostParser;
-import com.github.k1rakishou.core_parser.comment.HtmlTag;
-import com.github.k1rakishou.model.data.post.ChanPostBuilder;
+class StyleRulesParamsBuilder {
+  private var text: CharSequence? = null
+  private var htmlTag: HtmlTag? = null
+  private var callback: PostParser.Callback? = null
+  private var post: ChanPostBuilder? = null
+  private var forceHttpsScheme = true
 
-import java.util.Objects;
+  fun withCallback(callback: PostParser.Callback?): StyleRulesParamsBuilder {
+    this.callback = callback
+    return this
+  }
 
-public class StyleRulesParamsBuilder {
-    @NonNull
-    private CharSequence text;
-    @NonNull
-    private HtmlTag htmlTag;
-    @Nullable
-    private PostParser.Callback callback = null;
-    @Nullable
-    private ChanPostBuilder post = null;
-    private boolean forceHttpsScheme = true;
+  fun withPostBuilder(post: ChanPostBuilder?): StyleRulesParamsBuilder {
+    this.post = post
+    return this
+  }
 
-    public StyleRulesParamsBuilder withCallback(PostParser.Callback callback) {
-        this.callback = callback;
-        return this;
-    }
+  fun withText(text: CharSequence?): StyleRulesParamsBuilder {
+    this.text = text
+    return this
+  }
 
-    public StyleRulesParamsBuilder withPostBuilder(ChanPostBuilder post) {
-        this.post = post;
-        return this;
-    }
+  fun withHtmlTag(htmlTag: HtmlTag?): StyleRulesParamsBuilder {
+    this.htmlTag = htmlTag
+    return this
+  }
 
-    public StyleRulesParamsBuilder withText(CharSequence text) {
-        this.text = text;
-        return this;
-    }
+  fun forceHttpsScheme(forceHttpsScheme: Boolean): StyleRulesParamsBuilder {
+    this.forceHttpsScheme = forceHttpsScheme
+    return this
+  }
 
-    public StyleRulesParamsBuilder withHtmlTag(HtmlTag htmlTag) {
-        this.htmlTag = htmlTag;
-        return this;
-    }
+  fun build(): StyleRulesParams {
+    Objects.requireNonNull<CharSequence?>(text, "text must not bel null")
+    Objects.requireNonNull<HtmlTag?>(htmlTag, "htmlTag must not bel null")
 
-    public StyleRulesParamsBuilder forceHttpsScheme(boolean forceHttpsScheme) {
-        this.forceHttpsScheme = forceHttpsScheme;
-        return this;
-    }
-
-    public StyleRulesParams build() {
-        Objects.requireNonNull(text, "text must not bel null");
-        Objects.requireNonNull(htmlTag, "htmlTag must not bel null");
-
-        return new StyleRulesParams(text, htmlTag, callback, post, forceHttpsScheme);
-    }
+    return StyleRulesParams(text!!, htmlTag!!, callback, post, forceHttpsScheme)
+  }
 }

@@ -1,77 +1,59 @@
 package com.github.k1rakishou.chan.core.site.parser
 
 import com.github.k1rakishou.common.ModularResult.Companion.Try
+import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
-import java.util.*
+import com.github.k1rakishou.model.mapper.ChanPostMapper
 
 internal class PostParseWorker(
   private val postBuilder: ChanPostBuilder,
   private val postParser: PostParser,
-  private val internalIds: Set<Long>,
+  private val internalPostDescriptors: Set<PostDescriptor>,
   private val savedPosts: Set<PostDescriptor>,
   private val hiddenOrRemovedPosts: Map<PostDescriptor, Int>,
   private val isParsingCatalog: Boolean
 ) {
+  private val callback = object : PostParser.Callback {
+    override fun isSaved(postDescriptor: PostDescriptor): Boolean {
+      return savedPosts.contains(postDescriptor)
+    }
 
-  suspend fun parse(): ChanPost? {
-    return Try {
-      return@Try postParser.parseFull(postBuilder, object : PostParser.Callback {
+    override fun isHiddenOrRemoved(postDescriptor: PostDescriptor): Int {
+      return hiddenOrRemovedPosts[postDescriptor] ?: PostParser.NORMAL_POST
+    }
 
-        override fun isSaved(threadNo: Long, postNo: Long, postSubNo: Long): Boolean {
-          if (threadNo <= 0 || postNo <= 0) {
-            return false
-          }
+    override fun isInternal(postDescriptor: PostDescriptor): Boolean {
+      return internalPostDescriptors.contains(postDescriptor)
+    }
 
-          val postDescriptor = PostDescriptor.create(
-            chanDescriptor = postBuilder.postDescriptor.descriptor,
-            threadNo = threadNo,
-            postNo = postNo,
-            postSubNo = postSubNo
-          )
-
-          return savedPosts.contains(postDescriptor)
-        }
-
-        override fun isHiddenOrRemoved(threadNo: Long, postNo: Long, postSubNo: Long): Int {
-          if (threadNo <= 0 || postNo <= 0) {
-            return PostParser.NORMAL_POST
-          }
-
-          val postDescriptor = PostDescriptor.create(
-            chanDescriptor = postBuilder.postDescriptor.descriptor,
-            threadNo = threadNo,
-            postNo = postNo,
-            postSubNo = postSubNo
-          )
-
-          return hiddenOrRemovedPosts[postDescriptor] ?: PostParser.NORMAL_POST
-        }
-
-        override fun isInternal(postNo: Long): Boolean {
-          return internalIds.contains(postNo)
-        }
-
-        override fun isParsingCatalogPosts(): Boolean {
-          return isParsingCatalog
-        }
-
-      })
-    }.mapErrorToValue { error ->
-      Logger.e(TAG, "Error parsing post ${postBuilderToString(postBuilder)}", error)
-      return@mapErrorToValue null
+    override fun isParsingCatalogPosts(): Boolean {
+      return isParsingCatalog
     }
   }
 
-  private fun postBuilderToString(postBuilder: ChanPostBuilder): String {
-    return String.format(
-      Locale.ENGLISH,
-      "{postNo: %d, comment: '%s'}",
-      postBuilder.id,
-      postBuilder.postCommentBuilder.getComment()
-    )
+  fun parse(): ChanPost {
+    return Try {
+      return@Try postParser.parseFull(
+        builder = postBuilder,
+        callback = callback
+      )
+    }.mapErrorToValue { error ->
+      val errorMessage = """
+        Failed to parse post ${postBuilder.postDescriptor.userReadableString()}.
+        Post comment: '${postBuilder.postCommentBuilder.getComment()}'.
+        Error: '${error.errorMessageOrClassName()}'.
+      """.trimIndent()
+
+      Logger.error(TAG, error) { errorMessage }
+
+      val chanPost = ChanPostMapper.fromPostBuilder(postBuilder)
+      chanPost.postComment.updateComment { errorMessage }
+
+      return@mapErrorToValue chanPost
+    }
   }
 
   companion object {

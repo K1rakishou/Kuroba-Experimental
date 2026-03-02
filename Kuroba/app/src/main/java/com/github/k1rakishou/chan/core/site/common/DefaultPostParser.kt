@@ -1,267 +1,247 @@
-package com.github.k1rakishou.chan.core.site.common;
+package com.github.k1rakishou.chan.core.site.common
 
-import android.text.Spannable;
-import android.text.SpannableString;
-import android.text.SpannableStringBuilder;
-import android.text.TextUtils;
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.SpannableStringBuilder
+import android.text.TextUtils
+import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.chan.core.manager.ArchivesManager
+import com.github.k1rakishou.chan.core.site.common.PostParserHelper.detectAndMarkThemeJsonSpan
+import com.github.k1rakishou.chan.core.site.parser.CommentParser
+import com.github.k1rakishou.chan.core.site.parser.CommentParserHelper.detectLinks
+import com.github.k1rakishou.chan.core.site.parser.PostParser
+import com.github.k1rakishou.chan.core.site.sites.foolfuuka.FoolFuukaCommentParser
+import com.github.k1rakishou.common.groupOrNull
+import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_parser.comment.HtmlNode
+import com.github.k1rakishou.core_parser.comment.HtmlParser
+import com.github.k1rakishou.core_spannable.PostLinkable
+import com.github.k1rakishou.core_spannable.PostLinkable.Value.ArchiveThreadLink
+import com.github.k1rakishou.model.data.post.ChanPost
+import com.github.k1rakishou.model.data.post.ChanPostBuilder
+import org.jsoup.parser.Parser
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+open class DefaultPostParser(
+  private val commentParser: CommentParser,
+  private val archivesManager: ArchivesManager
+) : PostParser {
+  private val htmlParserThreadLocal = ThreadLocal<HtmlParser?>()
 
-import com.github.k1rakishou.ChanSettings;
-import com.github.k1rakishou.chan.core.manager.ArchivesManager;
-import com.github.k1rakishou.chan.core.site.parser.CommentParser;
-import com.github.k1rakishou.chan.core.site.parser.CommentParserHelper;
-import com.github.k1rakishou.chan.core.site.parser.PostParser;
-import com.github.k1rakishou.chan.core.site.sites.foolfuuka.FoolFuukaCommentParser;
-import com.github.k1rakishou.common.KotlinExtensionsKt;
-import com.github.k1rakishou.common.data.ArchiveType;
-import com.github.k1rakishou.core_logger.Logger;
-import com.github.k1rakishou.core_parser.comment.HtmlDocument;
-import com.github.k1rakishou.core_parser.comment.HtmlNode;
-import com.github.k1rakishou.core_parser.comment.HtmlParser;
-import com.github.k1rakishou.core_parser.comment.HtmlTag;
-import com.github.k1rakishou.core_spannable.PostLinkable;
-import com.github.k1rakishou.model.data.post.ChanPost;
-import com.github.k1rakishou.model.data.post.ChanPostBuilder;
+  open fun defaultName(): String {
+    return CHAN4_DEFAULT_POSTER_NAME
+  }
 
-import org.jsoup.parser.Parser;
+  override fun parseFull(builder: ChanPostBuilder, callback: PostParser.Callback): ChanPost {
+    parseNameAndSubject(builder)
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+    if (!builder.postCommentBuilder.commentAlreadyParsed()) {
+      if (builder.postCommentBuilder.hasUnparsedComment()) {
+        val parsedComment = parseComment(
+          builder,
+          builder.postCommentBuilder.getUnparsedComment(),
+          callback
+        )
 
-import kotlin.text.StringsKt;
+        detectAndMarkThemeJsonSpan(parsedComment)
 
-public class DefaultPostParser implements PostParser {
-    private static final String TAG = "DefaultPostParser";
-
-    static final String CHAN4_DEFAULT_POSTER_NAME = "Anonymous";
-    private final ThreadLocal<HtmlParser> htmlParserThreadLocal = new ThreadLocal<>();
-    private final CommentParser commentParser;
-    private final ArchivesManager archivesManager;
-
-    public DefaultPostParser(
-            CommentParser commentParser,
-            ArchivesManager archivesManager
-    ) {
-        this.commentParser = commentParser;
-        this.archivesManager = archivesManager;
+        builder.postCommentBuilder.setParsedComment(parsedComment)
+      } else {
+        builder.postCommentBuilder.setUnparsedComment("")
+        builder.postCommentBuilder.setParsedComment(SpannableString(""))
+      }
     }
 
-    public String defaultName() {
-        return CHAN4_DEFAULT_POSTER_NAME;
+    return builder.build()
+  }
+
+  override fun parseNameAndSubject(builder: ChanPostBuilder) {
+    if (!TextUtils.isEmpty(builder.name)) {
+      builder.name = Parser.unescapeEntities(builder.name, false)
     }
 
-    @Override
-    public ChanPost parseFull(ChanPostBuilder builder, Callback callback) {
-        parseNameAndSubject(builder);
-
-        if (!builder.postCommentBuilder.commentAlreadyParsed()) {
-            if (builder.postCommentBuilder.hasUnparsedComment()) {
-                Spannable parsedComment = parseComment(
-                        builder,
-                        builder.postCommentBuilder.getUnparsedComment(),
-                        callback
-                );
-
-                PostParserHelper.detectAndMarkThemeJsonSpan(parsedComment);
-
-                builder.postCommentBuilder.setParsedComment(parsedComment);
-            } else {
-                builder.postCommentBuilder.setUnparsedComment("");
-                builder.postCommentBuilder.setParsedComment(new SpannableString(""));
-            }
-        }
-
-        return builder.build();
+    if (!TextUtils.isEmpty(builder.subject)) {
+      builder.subject = Parser.unescapeEntities(builder.subject.toString(), false)
     }
 
-    @Override
-    public void parseNameAndSubject(ChanPostBuilder builder) {
-        if (!TextUtils.isEmpty(builder.name)) {
-            builder.name = Parser.unescapeEntities(builder.name, false);
-        }
+    val anonymize = ChanSettings.anonymize.get()
+    val anonymizeIds = ChanSettings.anonymizeIds.get()
 
-        if (!TextUtils.isEmpty(builder.subject)) {
-            builder.subject = Parser.unescapeEntities(builder.subject.toString(), false);
-        }
-
-        boolean anonymize = ChanSettings.anonymize.get();
-        boolean anonymizeIds = ChanSettings.anonymizeIds.get();
-
-        if (anonymize) {
-            builder.name("");
-            builder.tripcode("");
-        }
-
-        if (anonymizeIds) {
-            builder.posterId("");
-        }
-
-        if (builder.name.equals(defaultName()) && !ChanSettings.showAnonymousName.get()) {
-            builder.name("");
-        }
+    if (anonymize) {
+      builder.name("")
+      builder.tripcode("")
     }
 
-    @Override
-    public Spannable parseComment(
-            ChanPostBuilder post,
-            CharSequence commentRaw,
-            Callback callback
-    ) {
-        if (commentRaw.length() <= 0) {
-            return SpannableString.valueOf(commentRaw);
-        }
-
-        SpannableStringBuilder total = new SpannableStringBuilder("");
-
-        try {
-            String comment = commentRaw.toString().replace("<wbr>", "");
-
-            HtmlParser htmlParser = htmlParserThreadLocal.get();
-            if (htmlParser == null) {
-                htmlParserThreadLocal.set(new HtmlParser());
-                htmlParser = htmlParserThreadLocal.get();
-            }
-
-            HtmlDocument document = htmlParser.parse(comment);
-
-            List<HtmlNode> nodes = document.getNodes();
-            List<CharSequence> texts = new ArrayList<>(nodes.size());
-
-            for (HtmlNode node : nodes) {
-                CharSequence nodeParsed = parseNode(post, callback, node);
-                if (nodeParsed != null) {
-                    texts.add(nodeParsed);
-                }
-            }
-
-            for (CharSequence text : texts) {
-                total.append(text);
-            }
-        } catch (Throwable e) {
-            Logger.e(TAG, "Error parsing comment html", e);
-        }
-
-        return SpannableString.valueOf(total);
+    if (anonymizeIds) {
+      builder.posterId("")
     }
 
-    private CharSequence parseNode(
-            ChanPostBuilder post,
-            Callback callback,
-            HtmlNode node
-    ) {
-        if (node instanceof HtmlNode.Text) {
-            HtmlNode.Text textNode = (HtmlNode.Text) node;
-            String text = postProcessText(textNode, textNode.getText());
-            boolean forceHttpsScheme = ChanSettings.forceHttpsUrlScheme.get();
+    if (builder.name == defaultName() && !ChanSettings.showAnonymousName.get()) {
+      builder.name("")
+    }
+  }
 
-            return CommentParserHelper.detectLinks(
-                    post,
-                    text,
-                    forceHttpsScheme,
-                    this::handleLink
-            );
-        } else if (node instanceof HtmlNode.Tag) {
-            HtmlTag tag = commentParser.preprocessTag((HtmlNode.Tag) node);
-            String nodeName = tag.getTagName();
-
-            // Recursively call parseNode with the nodes of the paragraph.
-            List<HtmlNode> innerNodes = tag.getChildren();
-            List<CharSequence> texts = new ArrayList<>(innerNodes.size() + 1);
-
-            for (HtmlNode innerNode : innerNodes) {
-                CharSequence nodeParsed = parseNode(post, callback, innerNode);
-                if (nodeParsed != null) {
-                    texts.add(nodeParsed);
-                }
-            }
-
-            CharSequence allInnerText = TextUtils.concat(texts.toArray(new CharSequence[0]));
-
-            CharSequence result = commentParser.handleTag(
-                    callback,
-                    post,
-                    nodeName,
-                    allInnerText,
-                    tag
-            );
-
-            if (result != null) {
-                return result;
-            } else {
-                return allInnerText;
-            }
-        } else {
-            Logger.e(TAG, "Unknown node instance: " + node.getClass().getName());
-            return ""; // ?
-        }
+  override fun parseComment(
+    post: ChanPostBuilder,
+    commentRaw: CharSequence,
+    callback: PostParser.Callback
+  ): Spannable {
+    if (commentRaw.isEmpty()) {
+      return SpannableString.valueOf(commentRaw)
     }
 
-    protected @NonNull String postProcessText(@NonNull HtmlNode.Text textNode, @NonNull String text) {
-        return text;
+    val total = SpannableStringBuilder("")
+
+    try {
+      val comment = commentRaw.toString().replace("<wbr>", "")
+
+      val htmlParser = htmlParserThreadLocal.get()
+      val localParser = if (htmlParser != null) {
+        htmlParser
+      } else {
+        htmlParserThreadLocal.set(HtmlParser())
+        htmlParserThreadLocal.get()!!
+      }
+
+      val document = localParser.parse(comment)
+
+      val nodes = document.nodes
+      val texts = ArrayList<CharSequence?>(nodes.size)
+
+      for (node in nodes) {
+        val nodeParsed = parseNode(post, callback, node)
+        if (nodeParsed != null) {
+          texts.add(nodeParsed)
+        }
+      }
+
+      for (text in texts) {
+        total.append(text)
+      }
+    } catch (error: Throwable) {
+      Logger.error(TAG, error) { "Error parsing comment html" }
     }
 
-    @Nullable
-    private PostLinkable handleLink(CharSequence link) {
-        ArchiveType archiveType = archivesManager.extractArchiveTypeFromLinkOrNull(link);
-        if (archiveType == null) {
-            return null;
+    return SpannableString.valueOf(total)
+  }
+
+  private fun parseNode(
+    post: ChanPostBuilder,
+    callback: PostParser.Callback?,
+    node: HtmlNode
+  ): CharSequence? {
+    when (node) {
+      is HtmlNode.Text -> {
+        val text = postProcessText(node, node.text)
+        val forceHttpsScheme = ChanSettings.forceHttpsUrlScheme.get()
+
+        return detectLinks(
+          post = post,
+          text = text,
+          forceHttpsScheme = forceHttpsScheme,
+          linkHandler = { link -> this.handleLink(link) }
+        )
+      }
+      is HtmlNode.Tag -> {
+        val tag = commentParser.preprocessTag(node)
+        val nodeName = tag.tagName
+
+        // Recursively call parseNode with the nodes of the paragraph.
+        val innerNodes = tag.children
+        val texts = ArrayList<CharSequence?>(innerNodes.size + 1)
+
+        for (innerNode in innerNodes) {
+          val nodeParsed = parseNode(post, callback, innerNode)
+          if (nodeParsed != null) {
+            texts.add(nodeParsed)
+          }
         }
 
-        Pattern archiveLinkPattern = FoolFuukaCommentParser.ALL_ARCHIVE_LINKS_PATTERNS_MAP.get(archiveType);
-        if (archiveLinkPattern == null) {
-            return null;
+        val allInnerText = TextUtils.concat(*texts.toTypedArray<CharSequence?>())
+
+        val result = commentParser.handleTag(
+          callback = callback,
+          post = post,
+          tag = nodeName,
+          text = allInnerText,
+          htmlTag = tag
+        )
+
+        if (result != null) {
+          return result
         }
 
-        Matcher matcher = archiveLinkPattern.matcher(link);
-        if (!matcher.find()) {
-            return null;
-        }
-
-        String boardCode = KotlinExtensionsKt.groupOrNull(matcher, 1);
-        if (boardCode == null || TextUtils.isEmpty(boardCode)) {
-            return null;
-        }
-
-        String threadNoStr = KotlinExtensionsKt.groupOrNull(matcher, 2);
-        if (threadNoStr == null || TextUtils.isEmpty(threadNoStr)) {
-            return null;
-        }
-
-        String postNoStr = KotlinExtensionsKt.groupOrNull(matcher, 3);
-        Long postNo = null;
-        if (postNoStr != null) {
-            postNo = StringsKt.toLongOrNull(postNoStr);
-        }
-
-        if (postNo == null) {
-            return null;
-        }
-
-        Long threadNo = StringsKt.toLongOrNull(threadNoStr);
-        if (threadNo == null || threadNo <= 0) {
-            return null;
-        }
-
-        if (postNo <= 0) {
-            postNo = threadNo;
-        }
-
-        PostLinkable.Value.ArchiveThreadLink archiveThreadLink = new PostLinkable.Value.ArchiveThreadLink(
-                archiveType,
-                boardCode,
-                threadNo,
-                postNo,
-                0L
-        );
-
-        return new PostLinkable(
-                archiveThreadLink.urlText(),
-                archiveThreadLink,
-                PostLinkable.Type.ARCHIVE
-        );
+        return allInnerText
+      }
     }
+  }
+
+  protected open fun postProcessText(textNode: HtmlNode.Text, text: String): String {
+    return text
+  }
+
+  private fun handleLink(link: CharSequence): PostLinkable? {
+    val archiveType = archivesManager.extractArchiveTypeFromLinkOrNull(link)
+    if (archiveType == null) {
+      return null
+    }
+
+    val archiveLinkPattern = FoolFuukaCommentParser.ALL_ARCHIVE_LINKS_PATTERNS_MAP.get(archiveType)
+    if (archiveLinkPattern == null) {
+      return null
+    }
+
+    val matcher = archiveLinkPattern.matcher(link)
+    if (!matcher.find()) {
+      return null
+    }
+
+    val boardCode = matcher.groupOrNull(1)
+    if (boardCode == null || TextUtils.isEmpty(boardCode)) {
+      return null
+    }
+
+    val threadNoStr = matcher.groupOrNull(2)
+    if (threadNoStr == null || TextUtils.isEmpty(threadNoStr)) {
+      return null
+    }
+
+    val postNoStr = matcher.groupOrNull(3)
+    var postNo: Long? = null
+    if (postNoStr != null) {
+      postNo = postNoStr.toLongOrNull()
+    }
+
+    if (postNo == null) {
+      return null
+    }
+
+    val threadNo = threadNoStr.toLongOrNull()
+    if (threadNo == null || threadNo <= 0) {
+      return null
+    }
+
+    if (postNo <= 0) {
+      postNo = threadNo
+    }
+
+    val archiveThreadLink = ArchiveThreadLink(
+      archiveType = archiveType,
+      board = boardCode,
+      threadId = threadNo,
+      postId = postNo,
+      postSubId = 0L
+    )
+
+    return PostLinkable(
+      key = archiveThreadLink.urlText(),
+      linkableValue = archiveThreadLink,
+      type = PostLinkable.Type.ARCHIVE
+    )
+  }
+
+  companion object {
+    private const val TAG = "DefaultPostParser"
+
+    const val CHAN4_DEFAULT_POSTER_NAME: String = "Anonymous"
+  }
 }

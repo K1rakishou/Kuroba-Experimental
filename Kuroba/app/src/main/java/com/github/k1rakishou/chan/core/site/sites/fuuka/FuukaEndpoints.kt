@@ -13,11 +13,21 @@ class FuukaEndpoints(
 ) : CommonSite.CommonEndpoints(site) {
 
   override fun catalog(boardDescriptor: BoardDescriptor?): HttpUrl {
-    throw IllegalStateException("Catalog is not supported by ${site.name()}")
+    error("Catalog is not supported by ${site.name()}")
   }
 
+  // https://warosu.org/vt/?task=page&page=1
   override fun catalogPage(boardDescriptor: BoardDescriptor, page: Int?): HttpUrl {
-    throw IllegalStateException("CatalogPage is not supported by ${site.name()}")
+    val builder = rootUrl.newBuilder()
+      .addPathSegment(boardDescriptor.boardCode)
+
+    if (page != null && page >= 0) {
+      builder
+        .addQueryParameter("task", "page")
+        .addQueryParameter("page", page.toString())
+    }
+
+    return builder.build()
   }
 
   // https://warosu.org/g/thread/72382313

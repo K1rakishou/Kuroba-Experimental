@@ -235,10 +235,10 @@ class ChanPostRepository(
     }
   }
 
-  fun getCachedThreadPostsNos(threadDescriptor: ChanDescriptor.ThreadDescriptor): Set<Long> {
+  fun getCachedThreadPostDescriptors(threadDescriptor: ChanDescriptor.ThreadDescriptor): Set<PostDescriptor> {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
 
-    return chanThreadsCache.getThreadPostNoSet(threadDescriptor)
+    return chanThreadsCache.getThreadPostDescriptorSet(threadDescriptor)
   }
 
   fun getCachedPost(postDescriptor: PostDescriptor): ChanPost? {

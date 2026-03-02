@@ -105,15 +105,15 @@ class ThemeControllerHelper(
   }
 
   private val parserCallback: PostParser.Callback = object : PostParser.Callback {
-    override fun isSaved(threadNo: Long, postNo: Long, postSubNo: Long): Boolean {
+    override fun isSaved(postDescriptor: PostDescriptor): Boolean {
       return false
     }
 
-    override fun isHiddenOrRemoved(threadNo: Long, postNo: Long, postSubNo: Long): Int {
+    override fun isHiddenOrRemoved(postDescriptor: PostDescriptor): Int {
       return PostParser.NORMAL_POST
     }
 
-    override fun isInternal(postNo: Long): Boolean {
+    override fun isInternal(postDescriptor: PostDescriptor): Boolean {
       return true
     }
 

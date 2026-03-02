@@ -775,7 +775,6 @@
     <ID>CyclomaticComplexMethod:ExportDownloadedThreadAsHtmlUseCase.kt$ExportDownloadedThreadAsHtmlUseCase$private suspend fun exportThreadAsHtml( outputFile: AbstractFile, threadDescriptor: ChanDescriptor.ThreadDescriptor )</ID>
     <ID>CyclomaticComplexMethod:ExtractPostMapInfoHolderUseCase.kt$ExtractPostMapInfoHolderUseCase$private fun extractHotPostsPositionsFromPostList( params: Params, postsMap: Map&lt;PostDescriptor, ChanPost&gt; ): List&lt;PostMapInfoEntry&gt;</ID>
     <ID>CyclomaticComplexMethod:FileDownloadEventHandler.kt$FileDownloadEventHandler$suspend fun processResult( mediaUrl: HttpUrl, fileDownloadEvent: FileDownloadEvent )</ID>
-    <ID>CyclomaticComplexMethod:FilterEngine.kt$FilterEngine$@AnyThread fun matches(filter: ChanFilter, post: ChanPostBuilder): Boolean</ID>
     <ID>CyclomaticComplexMethod:FilterOutHiddenImagesUseCase.kt$FilterOutHiddenImagesUseCase$fun&lt;T&gt; filter(parameter: Input&lt;T&gt;): Output&lt;T&gt;</ID>
     <ID>CyclomaticComplexMethod:FoolFuukaApi.kt$FoolFuukaApi$private fun JsonReader.readPost( requestUrl: String, boardDescriptor: BoardDescriptor ): ArchivePost</ID>
     <ID>CyclomaticComplexMethod:FoolFuukaApi.kt$FoolFuukaApi$private fun JsonReader.readPostMedia( requestUrl: String ): ArchivePostMedia</ID>

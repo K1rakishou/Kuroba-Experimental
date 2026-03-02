@@ -261,14 +261,14 @@ class ChanThreadsCache(
     return resultList
   }
 
-  fun getThreadPostNoSet(threadDescriptor: ChanDescriptor.ThreadDescriptor): Set<Long> {
+  fun getThreadPostDescriptorSet(threadDescriptor: ChanDescriptor.ThreadDescriptor): Set<PostDescriptor> {
     val chanThread = chanThreads[threadDescriptor]
       ?: return emptySet()
 
-    val resultSet = hashSetWithCap<Long>(chanThread.postsCount)
+    val resultSet = hashSetWithCap<PostDescriptor>(chanThread.postsCount)
 
     chanThread.iteratePostsOrdered { chanPost ->
-      resultSet.add(chanPost.postDescriptor.postNo)
+      resultSet.add(chanPost.postDescriptor)
     }
 
     return resultSet

@@ -1,6 +1,5 @@
 package com.github.k1rakishou.common
 
-import androidx.annotation.AnyThread
 import java.util.Locale
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
@@ -18,7 +17,6 @@ object RegexPatternCompiler {
   private const val CASE_INSENSITIVE_FLAG = 'i'
   private const val CASE_MULTILINE_FLAG = 'm'
 
-  @AnyThread
   fun compile(rawPattern: String?, extraPatternFlags: Int = 0): PatternCompilationResult {
     if (rawPattern.isNullOrEmpty()) {
       return PatternCompilationResult.PatternIsEmpty

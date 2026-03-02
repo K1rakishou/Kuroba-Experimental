@@ -55,11 +55,6 @@ class ArchivePost(
   }
 
   fun isValid(): Boolean {
-    if (postSubNo > 0L) {
-      // Skip all archive ghost posts because we don't support them yet
-      return false
-    }
-
     return postNo > 0
       && threadNo > 0
       && unixTimestampSeconds > 0

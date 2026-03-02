@@ -93,8 +93,6 @@ class ReplyResponse {
       return create(siteDescriptor!!.siteName, boardCode, threadNo, postNo, 0L)
     }
 
-  constructor()
-
   constructor(other: ReplyResponse) : this(
     other.posted,
     other.errorMessage,
@@ -134,6 +132,8 @@ class ReplyResponse {
     this.additionalResponseData = additionalResponseData
     this.rateLimitInfo = rateLimitInfo
   }
+
+  constructor()
 
   fun asFormattedText(): String {
     return buildString(capacity = 128) {

@@ -533,7 +533,10 @@ abstract class CommonSite : SiteBase() {
     ): Flow<SiteBoards> {
       return flowOf(
         requestProvider().execute()
-          .mapValue { boardsList -> SiteBoards.Result.Success(site.siteDescriptor(), boardsList) }
+          .mapValue { boardsList ->
+            val boards = boardsList.ifEmpty { defaultBoardsProvider() }
+            SiteBoards.Result.Success(site.siteDescriptor(), boards)
+          }
           .mapErrorToValue { SiteBoards.Result.Success(site.siteDescriptor(), defaultBoardsProvider()) }
       )
     }

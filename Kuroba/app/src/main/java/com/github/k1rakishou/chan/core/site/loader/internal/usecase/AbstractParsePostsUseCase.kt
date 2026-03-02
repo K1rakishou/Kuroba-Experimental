@@ -13,6 +13,7 @@ import com.github.k1rakishou.common.parallelForEach
 import com.github.k1rakishou.common.parallelForEachIndexed
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.filter.ChanFilter
 import com.github.k1rakishou.model.data.filter.FilterAction
 import com.github.k1rakishou.model.data.post.ChanPost
@@ -178,26 +179,26 @@ abstract class AbstractParsePostsUseCase(
         )
       }
       FilterAction.WATCH -> {
-        throw IllegalStateException("Cannot auto-create WATCH filters")
+        error("Cannot auto-create WATCH filters")
       }
       FilterAction.AVOID_WATCH -> {
-        throw IllegalStateException("Cannot auto-create AVOID_WATCH filters")
+        error("Cannot auto-create AVOID_WATCH filters")
       }
     }
   }
 
-  protected fun getInternalIds(
+  protected fun getInternalPostDescriptors(
     chanDescriptor: ChanDescriptor,
     postBuildersToParse: List<ChanPostBuilder>
-  ): Set<Long> {
-    val postsToParseNoSet = postBuildersToParse.map { postBuilder -> postBuilder.id }.toSet()
+  ): Set<PostDescriptor> {
+    val postsToParseNoSet = postBuildersToParse.map { postBuilder -> postBuilder.postDescriptor }.toSet()
 
     if (chanDescriptor is ChanDescriptor.ICatalogDescriptor) {
       return postsToParseNoSet
     }
 
     chanDescriptor as ChanDescriptor.ThreadDescriptor
-    return postsToParseNoSet + chanPostRepository.getCachedThreadPostsNos(chanDescriptor)
+    return postsToParseNoSet + chanPostRepository.getCachedThreadPostDescriptors(chanDescriptor)
   }
 
   protected fun loadFilters(chanDescriptor: ChanDescriptor): List<ChanFilter> {

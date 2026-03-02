@@ -1,58 +1,26 @@
-package com.github.k1rakishou.chan.core.site.parser.style;
+package com.github.k1rakishou.chan.core.site.parser.style
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+import com.github.k1rakishou.chan.core.site.parser.PostParser
+import com.github.k1rakishou.core_parser.comment.HtmlTag
+import com.github.k1rakishou.model.data.post.ChanPostBuilder
 
-import com.github.k1rakishou.chan.core.site.parser.PostParser;
-import com.github.k1rakishou.core_parser.comment.HtmlTag;
-import com.github.k1rakishou.model.data.post.ChanPostBuilder;
+class StyleRulesParams(
+    @JvmField val text: CharSequence,
+    @JvmField val htmlTag: HtmlTag,
+    callback: PostParser.Callback?,
+    post: ChanPostBuilder?,
+    forceHttpsScheme: Boolean
+) {
+  var callback: PostParser.Callback? = null
+    private set
+  var post: ChanPostBuilder? = null
+    private set
+  var isForceHttpsScheme: Boolean = true
+    private set
 
-public class StyleRulesParams {
-    @NonNull
-    private CharSequence text;
-    @NonNull
-    private HtmlTag htmlTag;
-    @Nullable
-    private PostParser.Callback callback = null;
-    @Nullable
-    private ChanPostBuilder post = null;
-    private boolean forceHttpsScheme = true;
-
-    public StyleRulesParams(
-            @NonNull CharSequence text,
-            @NonNull HtmlTag htmlTag,
-            @Nullable PostParser.Callback callback,
-            @Nullable ChanPostBuilder post,
-            boolean forceHttpsScheme
-    ) {
-        this.text = text;
-        this.htmlTag = htmlTag;
-        this.callback = callback;
-        this.post = post;
-        this.forceHttpsScheme = forceHttpsScheme;
-    }
-
-    @NonNull
-    public CharSequence getText() {
-        return text;
-    }
-
-    @NonNull
-    public HtmlTag getHtmlTag() {
-        return htmlTag;
-    }
-
-    @Nullable
-    public PostParser.Callback getCallback() {
-        return callback;
-    }
-
-    @Nullable
-    public ChanPostBuilder getPost() {
-        return post;
-    }
-
-    public boolean isForceHttpsScheme() {
-        return forceHttpsScheme;
-    }
+  init {
+    this.callback = callback
+    this.post = post
+    this.isForceHttpsScheme = forceHttpsScheme
+  }
 }

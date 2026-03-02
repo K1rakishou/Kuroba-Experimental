@@ -31,6 +31,7 @@ object ArchiveThreadMapper {
     val postBuilder = ChanPostBuilder()
       .boardDescriptor(boardDescriptor)
       .id(archivePost.postNo)
+      .subId(archivePost.postSubNo)
       .opId(archivePost.threadNo)
       .op(archivePost.isOP)
       .sticky(archivePost.sticky)

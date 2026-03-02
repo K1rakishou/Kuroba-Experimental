@@ -14,6 +14,7 @@ import com.github.k1rakishou.core_parser.comment.HtmlTag
 import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.core_spannable.PostLinkable.Value.ThreadOrPostLink
 import com.github.k1rakishou.core_themes.ChanThemeColorId
+import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import java.util.regex.Pattern
@@ -63,25 +64,33 @@ class FoolFuukaCommentParser(
       return PostLinkable.Link(PostLinkable.Type.LINK, text, PostLinkable.Value.StringValue(anchorTag.text()))
     }
 
+    val boardDescriptor = checkNotNull(post.boardDescriptor) { "Board descriptor must not be null" }
+
     // Must be a valid archive link to avoid matching other site's links
-    val matcher = getFoolFuukaDefaultQuotePattern(post.postDescriptor)?.matcher(href)
+    val matcher = getFoolFuukaDefaultQuotePattern(boardDescriptor)?.matcher(href)
     if (matcher != null && matcher.matches()) {
-      val externalMatcher = getFoolFuukaFullQuotePattern(post.postDescriptor)?.matcher(href)
+      val externalMatcher = getFoolFuukaFullQuotePattern(boardDescriptor)?.matcher(href)
       if (externalMatcher != null && externalMatcher.find()) {
         val board = externalMatcher.groupOrNull(1)
         val threadId = externalMatcher.groupOrNull(2)?.toLong()
 
         if (board != null && threadId != null) {
           val postId = externalMatcher.groupOrNull(3)?.toLongOrNull() ?: threadId
-          // TODO: GhostPosts
-          val postSubId = 0L
+          val postSubId = externalMatcher.groupOrNull(4)?.toLongOrNull() ?: 0L
 
-          val isInternalQuote = board == post.boardDescriptor!!.boardCode
-            && !callback.isParsingCatalogPosts
-            && callback.isInternal(postId)
+          val postDescriptor = PostDescriptor.create(
+            boardDescriptor = boardDescriptor,
+            threadNo = threadId,
+            postNo = postId,
+            postSubNo = postSubId
+          )
+
+          val isInternalQuote = board == boardDescriptor.boardCode
+            && !callback.isParsingCatalogPosts()
+            && callback.isInternal(postDescriptor)
 
           if (isInternalQuote) {
-            when (callback.isHiddenOrRemoved(post.opId, postId, 0)) {
+            when (callback.isHiddenOrRemoved(postDescriptor)) {
               PostParser.HIDDEN_POST,
               PostParser.REMOVED_POST -> {
                 // Quote pointing to a (locally) hidden or removed post
@@ -118,47 +127,19 @@ class FoolFuukaCommentParser(
         // fallthrough
       }
 
-      val quoteMatcher = getFoolFuukaInternalQuotePattern(post.postDescriptor)?.matcher(href)
-      if (quoteMatcher != null && quoteMatcher.find()) {
-        val postId = quoteMatcher.groupOrNull(3)?.toLongOrNull()
-        // TODO: GhostPosts
-        val postSubId = 0L
-
-        if (postId != null) {
-          val type = if (callback.isInternal(postId)) {
-            // Normal post quote
-            PostLinkable.Type.QUOTE
-          } else {
-            // Most likely a quote to a deleted post (Or any other post that we don't have
-            // in the cache).
-            PostLinkable.Type.DEAD
-          }
-
-          return PostLinkable.Link(
-            type = type,
-            key = text,
-            linkValue = PostLinkable.Value.LongPairValue(postId, postSubId)
-          )
-        }
-
-        // fallthrough
-      }
-
       // fallthrough
     }
 
     // normal link
-    return PostLinkable.Link(PostLinkable.Type.LINK, text, PostLinkable.Value.StringValue(href))
+    return PostLinkable.Link(
+      type = PostLinkable.Type.LINK,
+      key = text,
+      linkValue = PostLinkable.Value.StringValue(href)
+    )
   }
 
-  private fun getFoolFuukaFullQuotePattern(postDescriptor: PostDescriptor?): Pattern? {
-    if (postDescriptor == null) {
-      return null
-    }
-
-    return when (getArchiveType(postDescriptor)) {
-      ArchiveType.WakarimasenMoe -> WAKARIMASEN_FULL_QUOTE_PATTERN
-
+  private fun getFoolFuukaFullQuotePattern(boardDescriptor: BoardDescriptor): Pattern? {
+    return when (getArchiveType(boardDescriptor)) {
       ArchiveType.ForPlebs,
       ArchiveType.Nyafuu,
       ArchiveType.Warosu,
@@ -171,40 +152,13 @@ class FoolFuukaCommentParser(
       ArchiveType.ArchiveOfSins,
       ArchiveType.TokyoChronos,
       ArchiveType.RozenArcana -> FULL_QUOTE_PATTERN
+      ArchiveType.WakarimasenMoe,
       null -> null
     }
   }
 
-  private fun getFoolFuukaInternalQuotePattern(postDescriptor: PostDescriptor?): Pattern? {
-    if (postDescriptor == null) {
-      return null
-    }
-
-    return when (getArchiveType(postDescriptor)) {
-      ArchiveType.WakarimasenMoe -> WAKARIMASEN_INTERNAL_QUOTE_PATTERN
-
-      ArchiveType.ForPlebs,
-      ArchiveType.Nyafuu,
-      ArchiveType.Warosu,
-      ArchiveType.DesuArchive,
-      ArchiveType.Fireden,
-      ArchiveType.B4k,
-      ArchiveType.Bstats,
-      ArchiveType.ArchivedMoe,
-      ArchiveType.TheBarchive,
-      ArchiveType.ArchiveOfSins,
-      ArchiveType.TokyoChronos,
-      ArchiveType.RozenArcana -> INTERNAL_QUOTE_PATTERN
-      null -> null
-    }
-  }
-
-  private fun getFoolFuukaDefaultQuotePattern(postDescriptor: PostDescriptor?): Pattern? {
-    if (postDescriptor == null) {
-      return null
-    }
-
-    return when (getArchiveType(postDescriptor)) {
+  private fun getFoolFuukaDefaultQuotePattern(boardDescriptor: BoardDescriptor): Pattern? {
+    return when (getArchiveType(boardDescriptor)) {
       ArchiveType.ForPlebs -> FOR_PLEBS_DEFAULT_QUOTE_PATTERN
       ArchiveType.Nyafuu -> NYAFUU_DEFAULT_QUOTE_PATTERN
       ArchiveType.DesuArchive -> DESU_ARCHIVE_DEFAULT_QUOTE_PATTERN
@@ -213,12 +167,13 @@ class FoolFuukaCommentParser(
       ArchiveType.ArchivedMoe -> ARCHIVED_MOE_DEFAULT_QUOTE_PATTERN
       ArchiveType.ArchiveOfSins -> ARCHIVE_OF_SINS_DEFAULT_QUOTE_PATTERN
       ArchiveType.TokyoChronos -> TOKYO_CHRONOS_DEFAULT_QUOTE_PATTERN
-      ArchiveType.WakarimasenMoe -> WAKARIMASEN_DEFAULT_QUOTE_PATTERN
       ArchiveType.RozenArcana -> ROZEN_ARCANA_QUOTE_PATTERN
 
       // Not a FoolFuuka archive
       ArchiveType.Warosu,
 
+      // Wakarimasen archive is dead
+      ArchiveType.WakarimasenMoe,
       // See ArchivesManager.disabledArchives
       ArchiveType.TheBarchive,
       ArchiveType.Bstats,
@@ -226,8 +181,8 @@ class FoolFuukaCommentParser(
     }
   }
 
-  private fun getArchiveType(postDescriptor: PostDescriptor): ArchiveType? {
-    val archiveDescriptor = archivesManager.byBoardDescriptor(postDescriptor.boardDescriptor())
+  private fun getArchiveType(boardDescriptor: BoardDescriptor): ArchiveType? {
+    val archiveDescriptor = archivesManager.byBoardDescriptor(boardDescriptor)
       ?: return null
 
     return archiveDescriptor.archiveType
@@ -243,16 +198,24 @@ class FoolFuukaCommentParser(
     // https://archive.domain/g/thread/75659307#p75659307
     // https://tokyochronos.net/jp/thread/35737800/#35738075
 
-    private val DESU_ARCHIVE_DEFAULT_QUOTE_PATTERN = Pattern.compile("(?:https:\\/\\/)?desuarchive\\.org\\/(.*?)\\/(?:post|thread)\\/(\\d+)\\/?(?:#)?q?(\\d+)?\\/?")
-    private val B4K_DEFAULT_QUOTE_PATTERN = Pattern.compile("(?:https:\\/\\/)?arch.b4k\\.co\\/(\\w+)\\/(?:post|thread)\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?")
-    private val FOR_PLEBS_DEFAULT_QUOTE_PATTERN = Pattern.compile("(?:https:\\/\\/)?archive.4plebs\\.org\\/(.*?)\\/(?:post|thread)\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?")
-    private val NYAFUU_DEFAULT_QUOTE_PATTERN = Pattern.compile("(?:https:\\/\\/)?archive.nyafuu\\.org\\/(.*?)\\/(?:post|thread)\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?")
-    private val FIREDEN_DEFAULT_QUOTE_PATTERN = Pattern.compile("(?:https:\\/\\/)?boards.fireden\\.net\\/(.*?)\\/(?:post|thread)\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?")
-    private val ARCHIVED_MOE_DEFAULT_QUOTE_PATTERN = Pattern.compile("(?:https:\\/\\/)?archived\\.moe\\/(.*?)\\/(?:post|thread)\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?")
-    private val ARCHIVE_OF_SINS_DEFAULT_QUOTE_PATTERN = Pattern.compile("(?:https:\\/\\/)?archiveofsins\\.com\\/(.*?)\\/(?:post|thread)\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?")
-    private val TOKYO_CHRONOS_DEFAULT_QUOTE_PATTERN = Pattern.compile("(?:https:\\/\\/)?tokyochronos\\.net\\/(.*?)\\/(?:post|thread)\\/?(\\d+)\\/(?:#)?(\\d+)?\\/?")
-    private val WAKARIMASEN_DEFAULT_QUOTE_PATTERN = Pattern.compile("(?:https:\\/\\/)?archive.wakarimasen\\.moe\\/(.*?)\\/(?:thread|post)\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?")
-    private val ROZEN_ARCANA_QUOTE_PATTERN = Pattern.compile("(?:https:\\/\\/)?archive.alice\\.al\\/(.*?)\\/(?:thread|post)\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?")
+    private val DESU_ARCHIVE_DEFAULT_QUOTE_PATTERN =
+      Pattern.compile("(?:https:\\/\\/)?desuarchive\\.org\\/(.*?)\\/(?:post|thread)\\/(\\d+)\\/?(?:#)?q?(\\d+)(_\\d+)?\\/?")
+    private val B4K_DEFAULT_QUOTE_PATTERN =
+      Pattern.compile("(?:https:\\/\\/)?arch.b4k\\.dev\\/(\\w+)\\/(?:post|thread)\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?")
+    private val FOR_PLEBS_DEFAULT_QUOTE_PATTERN =
+      Pattern.compile("(?:https:\\/\\/)?archive.4plebs\\.org\\/(.*?)\\/(?:post|thread)\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?")
+    private val NYAFUU_DEFAULT_QUOTE_PATTERN =
+      Pattern.compile("(?:https:\\/\\/)?archive.nyafuu\\.org\\/(.*?)\\/(?:post|thread)\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?")
+    private val FIREDEN_DEFAULT_QUOTE_PATTERN =
+      Pattern.compile("(?:https:\\/\\/)?boards.fireden\\.net\\/(.*?)\\/(?:post|thread)\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?")
+    private val ARCHIVED_MOE_DEFAULT_QUOTE_PATTERN =
+      Pattern.compile("(?:https:\\/\\/)?archived\\.moe\\/(.*?)\\/(?:post|thread)\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?")
+    private val ARCHIVE_OF_SINS_DEFAULT_QUOTE_PATTERN =
+      Pattern.compile("(?:https:\\/\\/)?archiveofsins\\.com\\/(.*?)\\/(?:post|thread)\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?")
+    private val TOKYO_CHRONOS_DEFAULT_QUOTE_PATTERN =
+      Pattern.compile("(?:https:\\/\\/)?tokyochronos\\.net\\/(.*?)\\/(?:post|thread)\\/?(\\d+)\\/(?:#)?(\\d+)?\\/?")
+    private val ROZEN_ARCANA_QUOTE_PATTERN =
+      Pattern.compile("(?:https:\\/\\/)?archive.alice\\.al\\/(.*?)\\/(?:thread|post)\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?")
 
     @JvmField
     val ALL_ARCHIVE_LINKS_PATTERNS_MAP = mapOf<ArchiveType, Pattern>(
@@ -264,14 +227,9 @@ class FoolFuukaCommentParser(
       ArchiveType.ArchivedMoe to ARCHIVED_MOE_DEFAULT_QUOTE_PATTERN,
       ArchiveType.ArchiveOfSins to ARCHIVE_OF_SINS_DEFAULT_QUOTE_PATTERN,
       ArchiveType.TokyoChronos to TOKYO_CHRONOS_DEFAULT_QUOTE_PATTERN,
-      ArchiveType.WakarimasenMoe to WAKARIMASEN_DEFAULT_QUOTE_PATTERN,
       ArchiveType.RozenArcana to ROZEN_ARCANA_QUOTE_PATTERN,
     )
 
-    private val FULL_QUOTE_PATTERN = Pattern.compile("\\/(\\w+)\\/\\w+\\/(\\d+)\\/?(?:#p?(\\d+))?")
-    private val INTERNAL_QUOTE_PATTERN = Pattern.compile("\\/(\\w+)\\/\\w+\\/(\\d+)\\/?(?:#p?(\\d+))?")
-
-    private val WAKARIMASEN_FULL_QUOTE_PATTERN = Pattern.compile("\\/(\\w+)\\/post\\/(\\d+)\\/?")
-    private val WAKARIMASEN_INTERNAL_QUOTE_PATTERN = Pattern.compile("\\/(\\w+)\\/thread\\/(\\d+)\\/?(?:#p?(\\d+))?")
+    private val FULL_QUOTE_PATTERN = Pattern.compile("\\/(\\w+)\\/\\w+\\/(\\d+)\\/?(?:#q?p?(\\d+)(?:_(\\d+))?)?")
   }
 }

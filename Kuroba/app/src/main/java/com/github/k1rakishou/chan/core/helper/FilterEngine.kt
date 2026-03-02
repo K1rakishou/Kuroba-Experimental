@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.core.helper
 
-import androidx.annotation.AnyThread
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.common.RegexPatternCompiler
 import com.github.k1rakishou.core_logger.Logger
@@ -81,7 +80,6 @@ class FilterEngine @Inject constructor(
    * @param post   the post content to test against
    * @return true if the filter matches and should be applied to the content, false if not
    */
-  @AnyThread
   fun matches(filter: ChanFilter, post: ChanPostBuilder): Boolean {
     if (!filter.enabled) {
       return false
@@ -187,22 +185,18 @@ class FilterEngine @Inject constructor(
     return false
   }
 
-  @AnyThread
   fun typeMatches(filter: ChanFilter, type: FilterType): Boolean {
     return typeMatches(filter.type, type)
   }
 
-  @AnyThread
   fun typeMatches(filter: ChanFilterMutable, type: FilterType): Boolean {
     return typeMatches(filter.type, type)
   }
 
-  @AnyThread
   private fun typeMatches(filterType: Int, type: FilterType): Boolean {
     return filterType and type.flag != 0
   }
 
-  @AnyThread
   fun matches(
     filter: ChanFilter,
     text: CharSequence?
@@ -215,7 +209,6 @@ class FilterEngine @Inject constructor(
     )
   }
 
-  @AnyThread
   fun matches(
     filter: ChanFilterMutable,
     text: CharSequence?,
@@ -229,7 +222,6 @@ class FilterEngine @Inject constructor(
     )
   }
 
-  @AnyThread
   private fun matchesInternal(
     patternRaw: String?,
     filterType: Int,
@@ -281,13 +273,11 @@ class FilterEngine @Inject constructor(
     }
   }
 
-  @AnyThread
   fun compile(rawPattern: String?, extraPatternFlags: Int): RegexPatternCompiler.PatternCompilationResult {
     return RegexPatternCompiler.compile(rawPattern, extraPatternFlags)
   }
 
   companion object {
     private const val TAG = "FilterEngine"
-
   }
 }

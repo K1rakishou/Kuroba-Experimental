@@ -1,31 +1,25 @@
-package com.github.k1rakishou.chan.core.site.parser;
+package com.github.k1rakishou.chan.core.site.parser
 
-import android.text.Spannable;
+import android.text.Spannable
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.post.ChanPost
+import com.github.k1rakishou.model.data.post.ChanPostBuilder
 
-import com.github.k1rakishou.model.data.post.ChanPost;
-import com.github.k1rakishou.model.data.post.ChanPostBuilder;
+interface PostParser {
+  fun parseNameAndSubject(builder: ChanPostBuilder)
+  fun parseFull(builder: ChanPostBuilder, callback: Callback): ChanPost
+  fun parseComment(post: ChanPostBuilder, commentRaw: CharSequence, callback: Callback): Spannable
 
-public interface PostParser {
-    int NORMAL_POST = -1;
-    int HIDDEN_POST = 0;
-    int REMOVED_POST = 1;
+  interface Callback {
+    fun isSaved(postDescriptor: PostDescriptor): Boolean
+    fun isHiddenOrRemoved(postDescriptor: PostDescriptor): Int
+    fun isInternal(postDescriptor: PostDescriptor): Boolean
+    fun isParsingCatalogPosts(): Boolean
+  }
 
-    void parseNameAndSubject(ChanPostBuilder builder);
-    ChanPost parseFull(ChanPostBuilder builder, Callback callback);
-    Spannable parseComment(ChanPostBuilder post, CharSequence commentRaw, Callback callback);
-
-    interface Callback {
-        boolean isSaved(long threadNo, long postNo, long postSubNo);
-        int isHiddenOrRemoved(long threadNo, long postNo, long postSubNo);
-
-        /**
-         * Is the post id from this thread.
-         *
-         * @param postNo the post id
-         * @return {@code true} if referring to a post in the thread, {@code false} otherwise.
-         */
-        boolean isInternal(long postNo);
-
-        boolean isParsingCatalogPosts();
-    }
+  companion object {
+    const val NORMAL_POST: Int = -1
+    const val HIDDEN_POST: Int = 0
+    const val REMOVED_POST: Int = 1
+  }
 }

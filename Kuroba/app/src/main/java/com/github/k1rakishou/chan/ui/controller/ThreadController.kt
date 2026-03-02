@@ -715,7 +715,7 @@ abstract class ThreadController(
       boardCode = postDescriptor.descriptor.boardCode(),
       threadNo = postDescriptor.getThreadNo(),
       postNo = postDescriptor.postNo,
-      postSubNo = postDescriptor.postSubNo,
+      postSubNo = postDescriptor.postSubNo
     )
 
     if (!siteManager.isSiteActive(externalArchivePostDescriptor.siteDescriptor())) {

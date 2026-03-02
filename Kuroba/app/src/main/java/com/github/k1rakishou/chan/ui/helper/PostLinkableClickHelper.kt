@@ -85,7 +85,7 @@ class PostLinkableClickHelper(
         boardCode = threadLink.board,
         threadNo = threadLink.threadId,
         postNo = threadLink.postId,
-        postSubNo = threadLink.postSubId,
+        postSubNo = threadLink.postSubId
       )
 
       onCrossThreadLinkClicked(postDescriptor)
@@ -146,7 +146,8 @@ class PostLinkableClickHelper(
 
           val archivePostDescriptor = PostDescriptor.create(
             chanDescriptor = threadDescriptor,
-            postNo = postNo
+            postNo = postNo,
+            postSubNo = postSubNo
           )
 
           onDeadQuoteClicked(archivePostDescriptor, true)
@@ -204,7 +205,7 @@ class PostLinkableClickHelper(
         boardCode = archiveThreadLink.board,
         threadNo = archiveThreadLink.threadId,
         postNo = archiveThreadLink.postIdOrThreadId(),
-        postSubNo = archiveThreadLink.postSubId ?: 0L
+        postSubNo = archiveThreadLink.postSubId ?: 0L,
       )
 
       onArchiveQuoteClicked(archivePostDescriptor)

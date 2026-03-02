@@ -106,7 +106,7 @@ class Wired7 : CommonSite() {
       override val names: Array<String>
         get() = arrayOf("Wired-7, wired7, Wired7")
 
-      override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?): String? {
+      override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?, postSubNo: Long?): String? {
         return when (chanDescriptor) {
           is ChanDescriptor.CatalogDescriptor -> {
             url.newBuilder()

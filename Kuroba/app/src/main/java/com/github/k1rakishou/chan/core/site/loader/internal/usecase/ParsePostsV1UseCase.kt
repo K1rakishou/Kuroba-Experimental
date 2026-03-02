@@ -55,7 +55,7 @@ class ParsePostsV1UseCase(
       return ParsingResult(emptyList(), Duration.ZERO, 0, Duration.ZERO)
     }
 
-    val internalIds = getInternalIds(chanDescriptor, postBuildersToParse)
+    val internalPostDescriptors = getInternalPostDescriptors(chanDescriptor, postBuildersToParse)
     processSavedReplies(postBuildersToParse)
 
     chanLoadProgressNotifier.sendProgressEvent(
@@ -109,7 +109,7 @@ class ParsePostsV1UseCase(
         val chanPost = PostParseWorker(
           postBuilder = postToParse,
           postParser = postParser,
-          internalIds = internalIds,
+          internalPostDescriptors = internalPostDescriptors,
           savedPosts = savedPosts,
           hiddenOrRemovedPosts = hiddenOrRemovedPosts,
           isParsingCatalog = chanDescriptor is ChanDescriptor.ICatalogDescriptor
@@ -148,7 +148,7 @@ class ParsePostsV1UseCase(
 
     Logger.d(TAG, "parseNewPostsPosts(chanDescriptor=$chanDescriptor, " +
       "postsToParseSize=${postBuildersToParse.size}), " +
-      "internalIds=${internalIds.size}, " +
+      "internalIds=${internalPostDescriptors.size}, " +
       "filters=${filters.size}")
 
     return ParsingResult(

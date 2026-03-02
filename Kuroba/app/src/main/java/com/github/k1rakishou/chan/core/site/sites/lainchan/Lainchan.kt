@@ -36,95 +36,98 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
 class Lainchan : CommonSite() {
-    private val chunkDownloaderSiteProperties = ChunkDownloaderSiteProperties(
-        enabled = true,
-        siteSendsCorrectFileSizeInBytes = true
+  private val chunkDownloaderSiteProperties = ChunkDownloaderSiteProperties(
+    enabled = true,
+    siteSendsCorrectFileSizeInBytes = true
+  )
+
+  override fun setup() {
+    setEnabled(true)
+    setName(SITE_NAME)
+    setIcon(fromFavicon(imageLoaderDeprecatedLazy, "https://lainchan.org/favicon.ico".toHttpUrl()))
+    setBoards(
+      create(create(siteDescriptor().siteName, "λ"), "Programming"),
+      create(create(siteDescriptor().siteName, "Δ"), "Do It Yourself"),
+      create(create(siteDescriptor().siteName, "sec"), "Security"),
+      create(create(siteDescriptor().siteName, "Ω"), "Technology"),
+      create(create(siteDescriptor().siteName, "inter"), "Games and Interactive Media"),
+      create(create(siteDescriptor().siteName, "lit"), "Literature"),
+      create(create(siteDescriptor().siteName, "music"), "Musical and Audible Media"),
+      create(create(siteDescriptor().siteName, "vis"), "Visual Media"),
+      create(create(siteDescriptor().siteName, "hum"), "Humanity"),
+      create(create(siteDescriptor().siteName, "drug"), "Drugs 3.0"),
+      create(create(siteDescriptor().siteName, "zzz"), "Consciousness and Dreams"),
+      create(create(siteDescriptor().siteName, "layer"), "layer"),
+      create(create(siteDescriptor().siteName, "q"), "Questions and Complaints"),
+      create(create(siteDescriptor().siteName, "r"), "Random"),
+      create(create(siteDescriptor().siteName, "lain"), "Lain"),
+      create(create(siteDescriptor().siteName, "culture"), "Culture 15 freshly bumped threads"),
+      create(create(siteDescriptor().siteName, "psy"), "Psychopharmacology 15 freshly bumped threads"),
+      create(create(siteDescriptor().siteName, "mega"), "15 freshly bumped threads")
     )
-    override fun setup() {
-        setEnabled(true)
-        setName(SITE_NAME)
-        setIcon(fromFavicon(imageLoaderDeprecatedLazy, "https://lainchan.org/favicon.ico".toHttpUrl()))
-        setBoards(
-            create(create(siteDescriptor().siteName, "λ"), "Programming"),
-            create(create(siteDescriptor().siteName, "Δ"), "Do It Yourself"),
-            create(create(siteDescriptor().siteName, "sec"), "Security"),
-            create(create(siteDescriptor().siteName, "Ω"), "Technology"),
-            create(create(siteDescriptor().siteName, "inter"), "Games and Interactive Media"),
-            create(create(siteDescriptor().siteName, "lit"), "Literature"),
-            create(create(siteDescriptor().siteName, "music"), "Musical and Audible Media"),
-            create(create(siteDescriptor().siteName, "vis"), "Visual Media"),
-            create(create(siteDescriptor().siteName, "hum"), "Humanity"),
-            create(create(siteDescriptor().siteName, "drug"), "Drugs 3.0"),
-            create(create(siteDescriptor().siteName, "zzz"), "Consciousness and Dreams"),
-            create(create(siteDescriptor().siteName, "layer"), "layer"),
-            create(create(siteDescriptor().siteName, "q"), "Questions and Complaints"),
-            create(create(siteDescriptor().siteName, "r"), "Random"),
-            create(create(siteDescriptor().siteName, "lain"), "Lain"),
-            create(create(siteDescriptor().siteName, "culture"),  "Culture 15 freshly bumped threads"),
-            create(create(siteDescriptor().siteName, "psy"), "Psychopharmacology 15 freshly bumped threads"),
-            create(create(siteDescriptor().siteName, "mega"), "15 freshly bumped threads")
+    setResolvable(URL_HANDLER)
+    setConfig(object : CommonConfig() {
+      override fun siteFeature(siteFeature: SiteFeature): Boolean {
+        return super.siteFeature(siteFeature) || siteFeature === SiteFeature.POSTING
+      }
+    })
+    setEndpoints(VichanEndpoints(this, "https://lainchan.org", "https://lainchan.org"))
+    setActions(LainchanActions(this, proxiedOkHttpClient, siteManager, replyManager))
+    setApi(VichanApi(siteManager, boardManager, this))
+    setParser(LainchanCommentParser())
+    setPostingLimitationInfo(
+      postingLimitationInfoLazy = lazy {
+        SitePostingLimitation(
+          postMaxAttachables = ConstantAttachablesCount(3),
+          postMaxAttachablesTotalSize = ConstantMaxTotalSizeInfo(75 * (1024 * 1024)) // 75 MB
         )
-        setResolvable(URL_HANDLER)
-        setConfig(object : CommonConfig() {
-            override fun siteFeature(siteFeature: SiteFeature): Boolean {
-                return super.siteFeature(siteFeature) || siteFeature === SiteFeature.POSTING
-            }
-        })
-        setEndpoints(VichanEndpoints(this, "https://lainchan.org", "https://lainchan.org"))
-        setActions(LainchanActions(this, proxiedOkHttpClient, siteManager, replyManager))
-        setApi(VichanApi(siteManager, boardManager, this))
-        setParser(LainchanCommentParser())
-        setPostingLimitationInfo(
-            postingLimitationInfoLazy = lazy {
-                SitePostingLimitation(
-                    postMaxAttachables = ConstantAttachablesCount(3),
-                    postMaxAttachablesTotalSize = ConstantMaxTotalSizeInfo(75 * (1024 * 1024)) // 75 MB
-                )
-            }
-        )
-    }
+      }
+    )
+  }
 
-    override fun commentParserType(): CommentParserType {
-        return CommentParserType.VichanParser
-    }
+  override fun commentParserType(): CommentParserType {
+    return CommentParserType.VichanParser
+  }
 
-    override fun getChunkDownloaderSiteProperties(): ChunkDownloaderSiteProperties {
-        return chunkDownloaderSiteProperties
-    }
+  override fun getChunkDownloaderSiteProperties(): ChunkDownloaderSiteProperties {
+    return chunkDownloaderSiteProperties
+  }
 
-    companion object {
-        const val SITE_NAME = "Lainchan"
-        val SITE_DESCRIPTOR = create(SITE_NAME)
-        val URL_HANDLER: CommonSiteUrlHandler = object : CommonSiteUrlHandler() {
-            private val ROOT = "https://lainchan.org/"
-            override fun getSiteClass(): Class<out Site?> {
-                return Lainchan::class.java
-            }
+  companion object {
+    const val SITE_NAME = "Lainchan"
+    val SITE_DESCRIPTOR = create(SITE_NAME)
+    val URL_HANDLER: CommonSiteUrlHandler = object : CommonSiteUrlHandler() {
+      private val ROOT = "https://lainchan.org/"
+      override fun getSiteClass(): Class<out Site?> {
+        return Lainchan::class.java
+      }
 
-            override val url: HttpUrl
-                get() = ROOT.toHttpUrl()
-            override val mediaHosts: Array<HttpUrl>
-                get() = arrayOf(url)
-            override val names: Array<String>
-                get() = arrayOf("lainchan")
+      override val url: HttpUrl
+        get() = ROOT.toHttpUrl()
+      override val mediaHosts: Array<HttpUrl>
+        get() = arrayOf(url)
+      override val names: Array<String>
+        get() = arrayOf("lainchan")
 
-            override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?): String? {
-                return when (chanDescriptor) {
-                    is ChanDescriptor.CatalogDescriptor -> {
-                        url.newBuilder()
-                            .addPathSegment(chanDescriptor.boardCode())
-                            .toString()
-                    }
-                    is ChanDescriptor.ThreadDescriptor -> {
-                        url.newBuilder()
-                            .addPathSegment(chanDescriptor.boardCode())
-                            .addPathSegment("res")
-                            .addPathSegment(chanDescriptor.threadNo.toString()  + ".html")
-                            .toString()
-                    }
-                    else -> null
-                }
-            }
+      override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?, postSubNo: Long?): String? {
+        return when (chanDescriptor) {
+          is ChanDescriptor.CatalogDescriptor -> {
+            url.newBuilder()
+              .addPathSegment(chanDescriptor.boardCode())
+              .toString()
+          }
+
+          is ChanDescriptor.ThreadDescriptor -> {
+            url.newBuilder()
+              .addPathSegment(chanDescriptor.boardCode())
+              .addPathSegment("res")
+              .addPathSegment(chanDescriptor.threadNo.toString() + ".html")
+              .toString()
+          }
+
+          else -> null
         }
+      }
     }
+  }
 }
