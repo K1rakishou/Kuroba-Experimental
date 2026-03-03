@@ -42,7 +42,7 @@ internal class PostParseWorker(
       )
     }.mapErrorToValue { error ->
       val errorMessage = """
-        Failed to parse post ${postBuilder.postDescriptor.userReadableString()}.
+        Failed to parse post ${postBuilder.postDescriptor().userReadableString()}.
         Post comment: '${postBuilder.postCommentBuilder.getComment()}'.
         Error: '${error.errorMessageOrClassName()}'.
       """.trimIndent()

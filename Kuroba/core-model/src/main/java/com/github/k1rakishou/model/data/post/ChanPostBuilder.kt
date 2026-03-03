@@ -1,398 +1,373 @@
-package com.github.k1rakishou.model.data.post;
+package com.github.k1rakishou.model.data.post
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+import com.github.k1rakishou.common.MurmurHashUtils
+import com.github.k1rakishou.core_spannable.PostLinkable
+import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.mapper.ChanPostMapper
+import com.github.k1rakishou.model.util.ChanPostUtils
 
-import com.github.k1rakishou.common.MurmurHashUtils;
-import com.github.k1rakishou.core_spannable.PostLinkable;
-import com.github.k1rakishou.model.data.descriptor.BoardDescriptor;
-import com.github.k1rakishou.model.data.descriptor.PostDescriptor;
-import com.github.k1rakishou.model.mapper.ChanPostMapper;
-import com.github.k1rakishou.model.util.ChanPostUtils;
+class ChanPostBuilder {
+  var boardDescriptor: BoardDescriptor? = null
+  var id: Long = -1
+  var subId: Long = 0
+  var opId: Long = -1
+  var op: Boolean = false
+  var totalRepliesCount: Int = -1
+  var threadImagesCount: Int = -1
+  var uniqueIps: Int = -1
+  var sticky: Boolean = false
+  var closed: Boolean = false
+  var archived: Boolean = false
+  var deleted: Boolean = false
+  var endless: Boolean = false
+  var sage: Boolean = false
+  var lastModified: Long = 0
+    private set
+  var name: String? = null
+  var postCommentBuilder = PostCommentBuilder.create()
+  var unixTimestampSeconds: Long = -1L
+  var postImages = ArrayList<ChanPostImage>()
+  var httpIcons = ArrayList<ChanPostHttpIcon>()
+  var posterId: String? = null
+  var moderatorCapcode: String? = null
+  var idColor: Int = 0
+  var isSavedReply: Boolean = false
+  var repliesToIds = HashSet<PostDescriptor>()
+  var tripcode: CharSequence? = null
+  var subject: CharSequence? = null
+  private var postDescriptor: PostDescriptor? = null
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+  private val postHash = lazy { ChanPostUtils.getPostHash(this) }
 
-import kotlin.Lazy;
-import kotlin.LazyKt;
+  constructor()
 
-public class ChanPostBuilder {
-  @Nullable
-  public BoardDescriptor boardDescriptor;
-  public long id = -1;
-  public long subId = 0;
-  private long opId = -1;
-  public boolean op;
-  public int totalRepliesCount = -1;
-  public int threadImagesCount = -1;
-  public int uniqueIps = -1;
-  public boolean sticky;
-  public boolean closed;
-  public boolean archived;
-  public boolean deleted;
-  public boolean endless;
-  public boolean sage;
-  private long lastModified;
-  public String name = "";
-  public PostCommentBuilder postCommentBuilder = PostCommentBuilder.create();
-  public long unixTimestampSeconds = -1L;
-  @NonNull
-  public List<ChanPostImage> postImages = new ArrayList<>();
-  @NonNull
-  public List<ChanPostHttpIcon> httpIcons = new ArrayList<>();
-  public String posterId = "";
-  public String moderatorCapcode = "";
-  public int idColor = 0;
-  public boolean isSavedReply;
-  public Set<PostDescriptor> repliesToIds = new HashSet<>();
-  @Nullable
-  public CharSequence tripcode;
-  @Nullable
-  public CharSequence subject;
-  private PostDescriptor postDescriptor;
+  constructor(other: ChanPostBuilder) {
+    this.boardDescriptor = other.boardDescriptor
+    this.id = other.id
+    this.subId = other.subId
+    this.opId = other.opId
+    this.op = other.op
+    this.totalRepliesCount = other.totalRepliesCount
+    this.threadImagesCount = other.threadImagesCount
+    this.uniqueIps = other.uniqueIps
+    this.sticky = other.sticky
+    this.closed = other.closed
+    this.archived = other.archived
+    this.deleted = other.deleted
+    this.lastModified = other.lastModified
+    this.name = other.name
+    this.postCommentBuilder = other.postCommentBuilder.copy()
+    this.unixTimestampSeconds = other.unixTimestampSeconds
+    this.posterId = other.posterId
+    this.moderatorCapcode = other.moderatorCapcode
+    this.idColor = other.idColor
+    this.isSavedReply = other.isSavedReply
+    this.tripcode = other.tripcode
+    this.subject = other.subject
+    this.postDescriptor = other.postDescriptor
 
-  private final Lazy<MurmurHashUtils.Murmur3Hash> postHash = LazyKt.lazy(
-    this,
-    () -> ChanPostUtils.getPostHash(this)
-  );
-
-  public ChanPostBuilder() {
+    this.postImages.addAll(other.postImages)
+    this.httpIcons.addAll(other.httpIcons)
+    this.repliesToIds.addAll(other.repliesToIds)
   }
 
-  public ChanPostBuilder(ChanPostBuilder other) {
-    this.boardDescriptor = other.boardDescriptor;
-    this.id = other.id;
-    this.subId = other.subId;
-    this.opId = other.opId;
-    this.op = other.op;
-    this.totalRepliesCount = other.totalRepliesCount;
-    this.threadImagesCount = other.threadImagesCount;
-    this.uniqueIps = other.uniqueIps;
-    this.sticky = other.sticky;
-    this.closed = other.closed;
-    this.archived = other.archived;
-    this.deleted = other.deleted;
-    this.lastModified = other.lastModified;
-    this.name = other.name;
-    this.postCommentBuilder = other.postCommentBuilder.copy();
-    this.unixTimestampSeconds = other.unixTimestampSeconds;
-    this.posterId = other.posterId;
-    this.moderatorCapcode = other.moderatorCapcode;
-    this.idColor = other.idColor;
-    this.isSavedReply = other.isSavedReply;
-    this.tripcode = other.tripcode;
-    this.subject = other.subject;
-    this.postDescriptor = other.postDescriptor;
+  @get:Synchronized
+  val getPostHash: MurmurHashUtils.Murmur3Hash
+    /**
+     * This hash is calculated on a raw post comment/subject/name/tripcode etc, before we add or
+     * remove any spans or other info into the comment or other stuff. Basically those values are
+     * the same as we receive them from the server at the moment of the hash calculation.
+     */
+    get() {
+      val commentUpdateCounter = postCommentBuilder.commentUpdateCounter
+      check(commentUpdateCounter <= 1) { "Bad commentUpdateCounter: $commentUpdateCounter" }
 
-    this.postImages.addAll(other.postImages);
-    this.httpIcons.addAll(other.httpIcons);
-    this.repliesToIds.addAll(other.repliesToIds);
-  }
-
-  /**
-   * This hash is calculated on a raw post comment/subject/name/tripcode etc, before we add or
-   * remove any spans or other info into the comment or other stuff. Basically those values are
-   * the same as we receive them from the server at the moment of the hash calculation.
-   */
-  public synchronized MurmurHashUtils.Murmur3Hash getGetPostHash() {
-    int commentUpdateCounter = postCommentBuilder.getCommentUpdateCounter();
-    if (commentUpdateCounter > 1) {
-      throw new IllegalStateException("Bad commentUpdateCounter: " + commentUpdateCounter);
+      return postHash.value
     }
 
-    return postHash.getValue();
-  }
-
-  public synchronized boolean hasPostDescriptor() {
+  @Synchronized
+  fun hasPostDescriptor(): Boolean {
     if (boardDescriptor == null) {
-      return false;
+      return false
     }
 
-    if (getOpId() < 0L) {
-      return false;
+    if (opId() < 0L) {
+      return false
     }
 
     if (id < 0L) {
-      return false;
+      return false
     }
 
-    return true;
+    return true
   }
 
-  public synchronized PostDescriptor getPostDescriptor() {
+  @Synchronized
+  fun postDescriptor(): PostDescriptor {
     if (postDescriptor != null) {
-      return postDescriptor;
+      return postDescriptor!!
     }
 
-    Objects.requireNonNull(boardDescriptor);
+    val bd = checkNotNull(boardDescriptor) { "boardDescriptor is null" }
 
-    long opId = getOpId();
-    if (opId < 0L) {
-      throw new IllegalArgumentException("Bad opId: " + opId);
-    }
+    val opId = opId()
+    require(opId >= 0L) { "Bad opId: $opId" }
+    require(id >= 0L) { "Bad post id: $id" }
+    require(subId >= 0L) { "Bad post subId: $subId" }
 
-    if (id < 0L) {
-      throw new IllegalArgumentException("Bad post id: " + id);
-    }
+    val pd = PostDescriptor.create(
+      siteName = bd.siteName(),
+      boardCode = bd.boardCode,
+      threadNo = opId,
+      postNo = id,
+      postSubNo = subId
+    )
 
-    if (subId < 0L) {
-      throw new IllegalArgumentException("Bad post subId: " + subId);
-    }
-
-    postDescriptor = PostDescriptor.create(
-      boardDescriptor.siteName(),
-      boardDescriptor.getBoardCode(),
-      opId,
-      id,
-      subId
-    );
-
-    return postDescriptor;
+    postDescriptor = pd
+    return pd
   }
 
-  public long getLastModified() {
-    return lastModified;
+  fun boardDescriptor(boardDescriptor: BoardDescriptor): ChanPostBuilder {
+    this.boardDescriptor = boardDescriptor
+    return this
   }
 
-  public ChanPostBuilder boardDescriptor(BoardDescriptor boardDescriptor) {
-    this.boardDescriptor = boardDescriptor;
-    return this;
+  fun id(id: Long): ChanPostBuilder {
+    this.id = id
+    return this
   }
 
-  public ChanPostBuilder id(long id) {
-    this.id = id;
-    return this;
+  fun subId(subId: Long): ChanPostBuilder {
+    this.subId = subId
+    return this
   }
 
-  public ChanPostBuilder subId(long subId) {
-    this.subId = subId;
-    return this;
+  fun opId(opId: Long): ChanPostBuilder {
+    this.opId = opId
+    return this
   }
 
-  public ChanPostBuilder opId(long opId) {
-    this.opId = opId;
-    return this;
+  fun op(op: Boolean): ChanPostBuilder {
+    this.op = op
+    return this
   }
 
-  public ChanPostBuilder op(boolean op) {
-    this.op = op;
-    return this;
+  fun replies(replies: Int): ChanPostBuilder {
+    this.totalRepliesCount = replies
+    return this
   }
 
-  public ChanPostBuilder replies(int replies) {
-    this.totalRepliesCount = replies;
-    return this;
+  fun threadImagesCount(imagesCount: Int): ChanPostBuilder {
+    this.threadImagesCount = imagesCount
+    return this
   }
 
-  public ChanPostBuilder threadImagesCount(int imagesCount) {
-    this.threadImagesCount = imagesCount;
-    return this;
+  fun uniqueIps(uniqueIps: Int): ChanPostBuilder {
+    this.uniqueIps = uniqueIps
+    return this
   }
 
-  public ChanPostBuilder uniqueIps(int uniqueIps) {
-    this.uniqueIps = uniqueIps;
-    return this;
+  fun sticky(sticky: Boolean): ChanPostBuilder {
+    this.sticky = sticky
+    return this
   }
 
-  public ChanPostBuilder sticky(boolean sticky) {
-    this.sticky = sticky;
-    return this;
+  fun archived(archived: Boolean): ChanPostBuilder {
+    this.archived = archived
+    return this
   }
 
-  public ChanPostBuilder archived(boolean archived) {
-    this.archived = archived;
-    return this;
+  fun deleted(deleted: Boolean): ChanPostBuilder {
+    this.deleted = deleted
+    return this
   }
 
-  public ChanPostBuilder deleted(boolean deleted) {
-    this.deleted = deleted;
-    return this;
-  }
-
-  public ChanPostBuilder lastModified(long lastModified) {
+  fun lastModified(lastModified: Long): ChanPostBuilder {
     if (lastModified < -1 && this.lastModified >= 0) {
-      return this;
+      return this
     }
 
     if (lastModified < -1) {
-      this.lastModified = 0;
-      return this;
+      this.lastModified = 0
+      return this
     }
 
-    this.lastModified = lastModified;
-    return this;
+    this.lastModified = lastModified
+    return this
   }
 
-  public ChanPostBuilder closed(boolean closed) {
-    this.closed = closed;
-    return this;
+  fun closed(closed: Boolean): ChanPostBuilder {
+    this.closed = closed
+    return this
   }
 
-  public ChanPostBuilder endless(boolean endless) {
-    this.endless = endless;
-    return this;
+  fun endless(endless: Boolean): ChanPostBuilder {
+    this.endless = endless
+    return this
   }
 
-  public ChanPostBuilder sage(boolean sage) {
-    this.sage = sage;
-    return this;
+  fun sage(sage: Boolean): ChanPostBuilder {
+    this.sage = sage
+    return this
   }
 
-  public ChanPostBuilder subject(CharSequence subject) {
-    this.subject = subject;
-    return this;
+  fun subject(subject: CharSequence?): ChanPostBuilder {
+    this.subject = subject
+    return this
   }
 
-  public ChanPostBuilder name(String name) {
-    this.name = name;
-    return this;
+  fun name(name: String?): ChanPostBuilder {
+    this.name = name ?: ""
+    return this
   }
 
-  public ChanPostBuilder comment(@Nullable String comment) {
+  fun comment(comment: String?): ChanPostBuilder {
     if (comment == null) {
-      this.postCommentBuilder.setUnparsedComment("");
+      this.postCommentBuilder.setUnparsedComment("")
     } else {
-      this.postCommentBuilder.setUnparsedComment(comment);
+      this.postCommentBuilder.setUnparsedComment(comment)
     }
 
-    return this;
+    return this
   }
 
-  public ChanPostBuilder tripcode(@Nullable CharSequence tripcode) {
-    this.tripcode = tripcode;
-    return this;
+  fun tripcode(tripcode: CharSequence?): ChanPostBuilder {
+    this.tripcode = tripcode
+    return this
   }
 
-  public ChanPostBuilder setUnixTimestampSeconds(long unixTimestampSeconds) {
-    this.unixTimestampSeconds = unixTimestampSeconds;
-    return this;
+  fun setUnixTimestampSeconds(unixTimestampSeconds: Long): ChanPostBuilder {
+    this.unixTimestampSeconds = unixTimestampSeconds
+    return this
   }
 
-  public ChanPostBuilder postImages(List<ChanPostImage> images, PostDescriptor ownerPostDescriptor) {
-    synchronized (this) {
-      this.postImages.addAll(images);
-
-      for (ChanPostImage postImage : this.postImages) {
-        postImage.setPostDescriptor(ownerPostDescriptor);
+  fun postImages(images: List<ChanPostImage>, ownerPostDescriptor: PostDescriptor): ChanPostBuilder {
+    synchronized(this) {
+      this.postImages.addAll(images)
+      for (postImage in this.postImages) {
+        postImage.setPostDescriptor(ownerPostDescriptor)
       }
     }
 
-    return this;
+    return this
   }
 
-  public ChanPostBuilder posterId(@Nullable String posterId) {
+  fun posterId(posterId: String?): ChanPostBuilder {
     if (posterId == null) {
-      return this;
+      return this
     }
 
-    this.posterId = posterId;
+    this.posterId = posterId
 
     // Only set the color if it's 0 to avoid overwriting it
     if (idColor == 0) {
       // Stolen from the 4chan extension
-      int hash = this.posterId.hashCode();
+      val hash = this.posterId.hashCode()
 
-      int r = (hash >> 24) & 0xff;
-      int g = (hash >> 16) & 0xff;
-      int b = (hash >> 8) & 0xff;
+      val r = (hash shr 24) and 0xff
+      val g = (hash shr 16) and 0xff
+      val b = (hash shr 8) and 0xff
 
-      this.idColor = (0xff << 24) + (r << 16) + (g << 8) + b;
+      this.idColor = (0xff shl 24) + (r shl 16) + (g shl 8) + b
     }
 
-    return this;
+    return this
   }
 
-  public ChanPostBuilder posterIdColor(int color) {
-    this.idColor = color;
-    return this;
+  fun posterIdColor(color: Int): ChanPostBuilder {
+    this.idColor = color
+    return this
   }
 
-  public ChanPostBuilder moderatorCapcode(String moderatorCapcode) {
-    this.moderatorCapcode = moderatorCapcode;
-    return this;
+  fun moderatorCapcode(moderatorCapcode: String?): ChanPostBuilder {
+    this.moderatorCapcode = moderatorCapcode ?: ""
+    return this
   }
 
-  public ChanPostBuilder addHttpIcon(ChanPostHttpIcon httpIcon) {
-    httpIcons.add(httpIcon);
-    return this;
+  fun addHttpIcon(httpIcon: ChanPostHttpIcon): ChanPostBuilder {
+    httpIcons.add(httpIcon)
+    return this
   }
 
-  public ChanPostBuilder httpIcons(List<ChanPostHttpIcon> httpIcons) {
-    this.httpIcons.clear();
-    this.httpIcons.addAll(httpIcons);
-    return this;
+  fun httpIcons(httpIcons: List<ChanPostHttpIcon>): ChanPostBuilder {
+    this.httpIcons.clear()
+    this.httpIcons.addAll(httpIcons)
+    return this
   }
 
-  public long getOpId() {
+  fun opId(): Long {
     if (!op) {
-      return opId;
+      return opId
     }
 
-    return id;
+    return id
   }
 
-  public ChanPostBuilder isSavedReply(boolean isSavedReply) {
-    this.isSavedReply = isSavedReply;
-    return this;
+  fun isSavedReply(isSavedReply: Boolean): ChanPostBuilder {
+    this.isSavedReply = isSavedReply
+    return this
   }
 
-  public ChanPostBuilder addLinkable(PostLinkable linkable) {
-    synchronized (this) {
-      this.postCommentBuilder.addPostLinkable(linkable);
-      return this;
+  fun addLinkable(linkable: PostLinkable): ChanPostBuilder {
+    synchronized(this) {
+      this.postCommentBuilder.addPostLinkable(linkable)
+      return this
     }
   }
 
-  public ChanPostBuilder postLinkables(List<PostLinkable> postLinkables) {
-    synchronized (this) {
-      postCommentBuilder.setPostLinkables(postLinkables);
+  fun postLinkables(postLinkables: List<PostLinkable>): ChanPostBuilder {
+    synchronized(this) {
+      postCommentBuilder.setPostLinkables(postLinkables)
     }
 
-    return this;
+    return this
   }
 
-  public ChanPostBuilder addReplyTo(long postId, long postSubNo) {
-    if (boardDescriptor == null) {
-      throw new NullPointerException("boardDescriptor is not initialized yet");
+  fun addReplyTo(postId: Long, postSubNo: Long): ChanPostBuilder {
+    val bd = boardDescriptor
+    if (bd == null) {
+      throw NullPointerException("boardDescriptor is not initialized yet")
     }
 
-    PostDescriptor postDescriptor = PostDescriptor.create(
-      boardDescriptor.siteName(),
-      boardDescriptor.getBoardCode(),
-      getOpId(),
-      postId,
-      postSubNo
-    );
+    val postDescriptor = PostDescriptor.create(
+      siteName = bd.siteName(),
+      boardCode = bd.boardCode,
+      threadNo = opId(),
+      postNo = postId,
+      postSubNo = postSubNo
+    )
 
-    repliesToIds.add(postDescriptor);
-    return this;
+    repliesToIds.add(postDescriptor)
+    return this
   }
 
-  public ChanPostBuilder repliesToIds(Set<PostDescriptor> replyIds) {
-    repliesToIds.clear();
-    repliesToIds.addAll(replyIds);
-    return this;
+  fun repliesToIds(replyIds: MutableSet<PostDescriptor>): ChanPostBuilder {
+    repliesToIds.clear()
+    repliesToIds.addAll(replyIds)
+    return this
   }
 
-  public ChanPost build() {
+  fun build(): ChanPost {
     if (boardDescriptor == null
       || id < 0
+      || subId < 0
       || opId < 0
       || unixTimestampSeconds < 0
       || !postCommentBuilder.hasUnparsedComment()
       || !postCommentBuilder.commentAlreadyParsed()
     ) {
-      throw new IllegalArgumentException("Post data not complete: " + toString());
+      error("Post data not complete. " +
+        "boardDescriptor: ${boardDescriptor}, id: ${id}, subId: ${subId}, opId: ${opId}, " +
+        "unixTimestampSeconds: ${unixTimestampSeconds}, " +
+        "hasUnparsedComment: ${postCommentBuilder.hasUnparsedComment()}, " +
+        "commentAlreadyParsed: ${postCommentBuilder.commentAlreadyParsed()}")
     }
 
-    return ChanPostMapper.fromPostBuilder(this);
+    return ChanPostMapper.fromPostBuilder(this)
   }
 
-  @Override
-  public String toString() {
+  override fun toString(): String {
     return "Builder{" +
       "id=" + id +
       ", subId=" + subId +
@@ -402,6 +377,6 @@ public class ChanPostBuilder {
       ", unixTimestampSeconds=" + unixTimestampSeconds +
       ", subject='" + subject + '\'' +
       ", postCommentBuilder=" + postCommentBuilder +
-      '}';
+      '}'
   }
 }

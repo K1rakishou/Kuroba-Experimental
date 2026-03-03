@@ -27,7 +27,7 @@ import com.github.k1rakishou.core_spannable.BackgroundColorSpanHashed
 import com.github.k1rakishou.core_spannable.ForegroundColorIdSpan
 import com.github.k1rakishou.core_spannable.ForegroundColorSpanHashed
 import com.github.k1rakishou.core_spannable.PostLinkable
-import com.github.k1rakishou.core_spannable.PostLinkable.Value.LongPairValue
+import com.github.k1rakishou.core_spannable.PostLinkable.Value.PostIdValue
 import com.github.k1rakishou.core_spannable.PostLinkable.Value.SearchLink
 import com.github.k1rakishou.core_spannable.PostLinkable.Value.ThreadOrPostLink
 import com.github.k1rakishou.core_themes.ChanThemeColorId
@@ -353,12 +353,15 @@ open class CommentParser : ICommentParser, HasQuotePatterns {
       return text
     }
 
+    val boardDescriptor = post.boardDescriptor
+      ?: return null
+
     val type: PostLinkable.Type?
     val value: PostLinkable.Value?
 
     val postDescriptor = PostDescriptor.create(
-      boardDescriptor = post.boardDescriptor!!,
-      threadNo = post.getPostDescriptor().threadDescriptor().threadNo,
+      boardDescriptor = boardDescriptor,
+      threadNo = post.postDescriptor().threadDescriptor().threadNo,
       postNo = postId,
       postSubNo = postSubId
     )
@@ -368,14 +371,14 @@ open class CommentParser : ICommentParser, HasQuotePatterns {
       type = PostLinkable.Type.QUOTE
       post.addReplyTo(postId, postSubId)
 
-      value = LongPairValue(postId, postSubId)
+      value = PostIdValue(postId, postSubId)
     } else {
       // Link to post not in same thread in this case it means that the post is dead.
       type = PostLinkable.Type.DEAD
 
       value = ThreadOrPostLink(
-        board = post.boardDescriptor!!.boardCode,
-        threadId = post.getOpId(),
+        board = boardDescriptor.boardCode,
+        threadId = post.opId(),
         postId = postId,
         postSubId = 0L
       )
@@ -447,7 +450,7 @@ open class CommentParser : ICommentParser, HasQuotePatterns {
     }
 
     post.postImages.add(
-      ChanPostImageBuilder(post.getPostDescriptor())
+      ChanPostImageBuilder(post.postDescriptor())
         .thumbnailUrl(AppConstants.INLINED_IMAGE_THUMBNAIL_URL)
         .imageUrl(httpUrl)
         .serverFilename(serverFileName)
@@ -528,10 +531,10 @@ open class CommentParser : ICommentParser, HasQuotePatterns {
       || handlerLink.type == PostLinkable.Type.DEAD
       || handlerLink.type == PostLinkable.Type.QUOTE_TO_HIDDEN_OR_REMOVED_POST
     ) {
-      val value = handlerLink.linkValue.extractValueOrNull()
+      val value = handlerLink.linkValue.extractPostIdOrNull()
       if (value != null) {
-        val postNo = value.first
-        val postSubNo = value.second
+        val postNo = value.postNo
+        val postSubNo = value.postSubNo
 
         post.addReplyTo(postNo, postSubNo)
         appendSuffixes(
@@ -581,7 +584,7 @@ open class CommentParser : ICommentParser, HasQuotePatterns {
     postSubNo: Long?
   ) {
     // Append (OP) when it's a reply to OP
-    if (postNo == post.getOpId()) {
+    if (postNo == post.opId()) {
       handlerLink.key = TextUtils.concat(
         handlerLink.key,
         CommentParserConstants.OP_REPLY_SUFFIX
@@ -589,7 +592,7 @@ open class CommentParser : ICommentParser, HasQuotePatterns {
     }
 
     // Append (You) when it's a reply to a saved reply, (Me) if it's a self reply
-    if (callback.isSaved(post.getPostDescriptor())) {
+    if (callback.isSaved(post.postDescriptor())) {
       if (post.isSavedReply) {
         handlerLink.key = TextUtils.concat(
           handlerLink.key,
@@ -603,7 +606,7 @@ open class CommentParser : ICommentParser, HasQuotePatterns {
       }
     }
 
-    val hiddenOrRemoved = callback.isHiddenOrRemoved(post.getPostDescriptor())
+    val hiddenOrRemoved = callback.isHiddenOrRemoved(post.postDescriptor())
     if (hiddenOrRemoved != PostParser.NORMAL_POST) {
       val suffix: String?
 
@@ -731,7 +734,7 @@ open class CommentParser : ICommentParser, HasQuotePatterns {
       if (isInternalQuote) {
         // link to post in same thread with post number (>>post)
         type = PostLinkable.Type.QUOTE
-        value = LongPairValue(postId, postSubId)
+        value = PostIdValue(postId, postSubId)
       } else {
         // link to post not in same thread with post number (>>post or >>>/board/post)
         type = PostLinkable.Type.THREAD
@@ -750,7 +753,7 @@ open class CommentParser : ICommentParser, HasQuotePatterns {
 
         val postDescriptor = PostDescriptor.create(
           boardDescriptor = post.boardDescriptor!!,
-          threadNo = post.getPostDescriptor().threadDescriptor().threadNo,
+          threadNo = post.postDescriptor().threadDescriptor().threadNo,
           postNo = postId,
           postSubNo = postSubId
         )
@@ -775,7 +778,7 @@ open class CommentParser : ICommentParser, HasQuotePatterns {
           type = PostLinkable.Type.DEAD
         }
 
-        value = LongPairValue(postId, postSubId)
+        value = PostIdValue(postId, postSubId)
       } else {
         val boardLinkMatcher = matchBoardLink(href)
         val boardSearchMatcher = matchBoardSearch(href)

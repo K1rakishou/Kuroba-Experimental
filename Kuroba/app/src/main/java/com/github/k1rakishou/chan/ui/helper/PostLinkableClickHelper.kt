@@ -25,8 +25,8 @@ class PostLinkableClickHelper(
     post: ChanPost,
     currentChanDescriptor: ChanDescriptor,
     linkable: PostLinkable,
-    onQuoteClicked: (Long) -> Unit,
-    onQuoteToHiddenOrRemovedPostClicked: (Long) -> Unit,
+    onQuoteClicked: (PostDescriptor) -> Unit,
+    onQuoteToHiddenOrRemovedPostClicked: (PostDescriptor) -> Unit,
     onLinkClicked: (String) -> Unit,
     onCrossThreadLinkClicked: suspend (PostDescriptor) -> Unit,
     onBoardLinkClicked: suspend (ChanDescriptor.CatalogDescriptor) -> Unit,
@@ -41,24 +41,36 @@ class PostLinkableClickHelper(
     Logger.d(TAG, "onPostLinkableClicked, postDescriptor: ${post.postDescriptor}, linkable: '${linkable}'")
 
     if (linkable.type == PostLinkable.Type.QUOTE) {
-      val postId = linkable.linkableValue.extractValueOrNull()?.first
+      val postId = linkable.linkableValue.extractPostIdOrNull()
       if (postId == null) {
         Logger.e(TAG, "Bad quote linkable: linkableValue = ${linkable.linkableValue}")
         return
       }
 
-      onQuoteClicked(postId)
+      val postDescriptor = PostDescriptor.create(
+        chanDescriptor = currentChanDescriptor,
+        postNo = postId.postNo,
+        postSubNo = postId.postSubNo
+      )
+
+      onQuoteClicked(postDescriptor)
       return
     }
 
     if (linkable.type == PostLinkable.Type.QUOTE_TO_HIDDEN_OR_REMOVED_POST) {
-      val postId = linkable.linkableValue.extractValueOrNull()?.first
+      val postId = linkable.linkableValue.extractPostIdOrNull()
       if (postId == null) {
         Logger.e(TAG, "Bad quote linkable: linkableValue = ${linkable.linkableValue}")
         return
       }
 
-      onQuoteToHiddenOrRemovedPostClicked(postId)
+      val postDescriptor = PostDescriptor.create(
+        chanDescriptor = currentChanDescriptor,
+        postNo = postId.postNo,
+        postSubNo = postId.postSubNo
+      )
+
+      onQuoteToHiddenOrRemovedPostClicked(postDescriptor)
       return
     }
 
@@ -123,10 +135,10 @@ class PostLinkableClickHelper(
 
     if (linkable.type == PostLinkable.Type.DEAD) {
       when (val postLinkableValue = linkable.linkableValue) {
-        is PostLinkable.Value.LongPairValue -> {
-          val value = postLinkableValue.extractValueOrNull()
-          val postNo = value?.first
-          val postSubNo = value?.second ?: 0L
+        is PostLinkable.Value.PostIdValue -> {
+          val value = postLinkableValue.extractPostIdOrNull()
+          val postNo = value?.postNo
+          val postSubNo = value?.postSubNo ?: 0L
 
           if (value == null || postNo == null) {
             Logger.e(TAG, "PostLinkable is not valid: linkableValue = ${postLinkableValue}")

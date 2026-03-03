@@ -48,7 +48,7 @@ abstract class AbstractParsePostsUseCase(
 
     parallelForEach(postBuildersToParse, THREAD_COUNT * 2, Dispatchers.IO) { postToParse ->
       // needed for "Apply to own posts" to work correctly
-      postToParse.isSavedReply(savedReplyManager.isSaved(postToParse.postDescriptor))
+      postToParse.isSavedReply(savedReplyManager.isSaved(postToParse.postDescriptor()))
     }
   }
 
@@ -90,7 +90,7 @@ abstract class AbstractParsePostsUseCase(
 
   private fun processFilters(postToParse: ChanPostBuilder, filters: List<ChanFilter>) {
     // Process the filters before finish, because parsing the html is dependent on filter matches
-    val postDescriptor = postToParse.postDescriptor
+    val postDescriptor = postToParse.postDescriptor()
 
     if (postFilterManager.contains(postDescriptor)) {
       // Fast path. We have already processed this post so we don't want to do that again. This
@@ -191,7 +191,7 @@ abstract class AbstractParsePostsUseCase(
     chanDescriptor: ChanDescriptor,
     postBuildersToParse: List<ChanPostBuilder>
   ): Set<PostDescriptor> {
-    val postsToParseNoSet = postBuildersToParse.map { postBuilder -> postBuilder.postDescriptor }.toSet()
+    val postsToParseNoSet = postBuildersToParse.map { postBuilder -> postBuilder.postDescriptor() }.toSet()
 
     if (chanDescriptor is ChanDescriptor.ICatalogDescriptor) {
       return postsToParseNoSet

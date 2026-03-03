@@ -90,7 +90,7 @@ class DvachCommentParser : VichanCommentParser(), ICommentParser {
     }
 
     // Append (You) when it's a reply to a saved reply, (Me) if it's a self reply
-    if (callback.isSaved(post.postDescriptor)) {
+    if (callback.isSaved(post.postDescriptor())) {
       if (post.isSavedReply) {
         handlerLink.key = TextUtils.concat(handlerLink.key, CommentParserConstants.SAVED_REPLY_SELF_SUFFIX)
       } else {
@@ -98,7 +98,7 @@ class DvachCommentParser : VichanCommentParser(), ICommentParser {
       }
     }
 
-    val hiddenOrRemoved = callback.isHiddenOrRemoved(post.postDescriptor)
+    val hiddenOrRemoved = callback.isHiddenOrRemoved(post.postDescriptor())
     if (hiddenOrRemoved != PostParser.NORMAL_POST) {
       val suffix = if (hiddenOrRemoved == PostParser.HIDDEN_POST) {
         CommentParserConstants.HIDDEN_POST_SUFFIX
@@ -118,14 +118,13 @@ class DvachCommentParser : VichanCommentParser(), ICommentParser {
     threadNo: Long,
     postNo: Long
   ): PostLinkable.Link {
-    if (boardCode == post.boardDescriptor!!.boardCode && callback.isInternal(post.postDescriptor)) {
+    if (boardCode == post.boardDescriptor!!.boardCode && callback.isInternal(post.postDescriptor())) {
       // link to post in same thread with post number (>>post)
       return PostLinkable.Link(
         type = PostLinkable.Type.QUOTE,
         key = text,
-        linkValue = PostLinkable.Value.LongPairValue(
-          value = postNo,
-          subValue = 0L
+        linkValue = PostLinkable.Value.PostIdValue(
+          postNo = postNo
         )
       )
     }
@@ -137,8 +136,7 @@ class DvachCommentParser : VichanCommentParser(), ICommentParser {
       linkValue = PostLinkable.Value.ThreadOrPostLink(
         board = boardCode,
         threadId = threadNo,
-        postId = postNo,
-        postSubId = 0L
+        postId = postNo
       )
     )
   }
@@ -149,27 +147,25 @@ class DvachCommentParser : VichanCommentParser(), ICommentParser {
     text: CharSequence,
     postNo: Long
   ): PostLinkable.Link {
-    if (!callback.isInternal(post.postDescriptor)) {
+    if (!callback.isInternal(post.postDescriptor())) {
       return PostLinkable.Link(
         type = PostLinkable.Type.DEAD,
         key = text,
-        linkValue = PostLinkable.Value.LongPairValue(
-          value = postNo,
-          subValue = 0L
+        linkValue = PostLinkable.Value.PostIdValue(
+          postNo = postNo
         )
       )
     }
 
-    return when (callback.isHiddenOrRemoved(post.postDescriptor)) {
+    return when (callback.isHiddenOrRemoved(post.postDescriptor())) {
       PostParser.HIDDEN_POST,
       PostParser.REMOVED_POST -> {
         // Quote pointing to a (locally) hidden or removed post
         PostLinkable.Link(
           type = PostLinkable.Type.QUOTE_TO_HIDDEN_OR_REMOVED_POST,
           key = text,
-          linkValue = PostLinkable.Value.LongPairValue(
-            value = postNo,
-            subValue = 0L
+          linkValue = PostLinkable.Value.PostIdValue(
+            postNo = postNo
           )
         )
       }
@@ -178,9 +174,8 @@ class DvachCommentParser : VichanCommentParser(), ICommentParser {
         PostLinkable.Link(
           type = PostLinkable.Type.QUOTE,
           key = text,
-          linkValue = PostLinkable.Value.LongPairValue(
-            value = postNo,
-            subValue = 0L
+          linkValue = PostLinkable.Value.PostIdValue(
+            postNo = postNo
           )
         )
       }

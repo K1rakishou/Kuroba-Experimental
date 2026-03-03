@@ -292,18 +292,18 @@ internal object ParcelableSpannableStringMapperV1 : ParcelableStringMapper {
               )
             )
           }
-          is PostLinkable.Value.LongPairValue -> {
-            val value = postLinkable.linkableValue.extractValueOrNull()
-            if (value != null) {
-              val postId = value.first
-              val postSubId = value.second
+          is PostLinkable.Value.PostIdValue -> {
+            val postId = postLinkable.linkableValue.extractPostIdOrNull()
+            if (postId != null) {
+              val postNo = postId.postNo
+              val postSubNo = postId.postSubNo
 
               parcelableSpan = ParcelableSpan.PostLinkable(
                 key = postLinkable.key.toString(),
                 postLinkableTypeRaw = PostLinkableType.Dead.value,
                 postLinkableValue = PostLinkableValue.Dead(
-                  postNo = postId,
-                  postSubNo = postSubId
+                  postNo = postNo,
+                  postSubNo = postSubNo
                 )
               )
             }
@@ -314,17 +314,17 @@ internal object ParcelableSpannableStringMapperV1 : ParcelableStringMapper {
         }
       }
       PostLinkable.Type.QUOTE -> {
-        val value = postLinkable.linkableValue.extractValueOrNull()
-        if (value != null) {
-          val postId = value.first
-          val postSubId = value.second
+        val postId = postLinkable.linkableValue.extractPostIdOrNull()
+        if (postId != null) {
+          val postNo = postId.postNo
+          val postSubNo = postId.postSubNo
 
           parcelableSpan = ParcelableSpan.PostLinkable(
             key = postLinkable.key.toString(),
             postLinkableTypeRaw = PostLinkableType.Quote.value,
             postLinkableValue = PostLinkableValue.Quote(
-              postNo = postId,
-              postSubNo = postSubId
+              postNo = postNo,
+              postSubNo = postSubNo
             )
           )
         }
@@ -468,9 +468,9 @@ internal object ParcelableSpannableStringMapperV1 : ParcelableStringMapper {
       PostLinkableType.Quote -> {
         postLinkableValue as PostLinkableValue.Quote
 
-        val linkableValue = PostLinkable.Value.LongPairValue(
-          value = postLinkableValue.postNo,
-          subValue = postLinkableValue.postSubNo.takeIf { value -> value >= 0L } ?: 0L
+        val linkableValue = PostLinkable.Value.PostIdValue(
+          postNo = postLinkableValue.postNo,
+          postSubNo = postLinkableValue.postSubNo.takeIf { value -> value >= 0L } ?: 0L
         )
 
         return PostLinkable(
@@ -556,9 +556,9 @@ internal object ParcelableSpannableStringMapperV1 : ParcelableStringMapper {
               is PostLinkableValue.Quote -> postLinkableValue.postSubNo
             }
 
-            PostLinkable.Value.LongPairValue(
-              value = postNo,
-              subValue = postSubNo.takeIf { value -> value >= 0L } ?: 0L
+            PostLinkable.Value.PostIdValue(
+              postNo = postNo,
+              postSubNo = postSubNo.takeIf { value -> value >= 0L } ?: 0L
             )
           }
           else -> return null

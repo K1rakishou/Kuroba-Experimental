@@ -64,7 +64,7 @@ object ChanPostMapper {
 
   @JvmStatic
   fun fromPostBuilder(chanPostBuilder: ChanPostBuilder): ChanPost {
-    val postDescriptor = chanPostBuilder.postDescriptor
+    val postDescriptor = chanPostBuilder.postDescriptor()
 
     val postComment = PostComment(
       originalComment = SpannableString(chanPostBuilder.postCommentBuilder.getComment()),

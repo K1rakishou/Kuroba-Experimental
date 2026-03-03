@@ -128,7 +128,7 @@ class FoolFuukaReadCatalogThreadsHelper {
       ?.let { threadImageBoxElement -> convertToChanPostImages(requestUrl, threadImageBoxElement) }
 
     if (chanPostImages != null && chanPostImages.isNotEmpty()) {
-      chanPostBuilder.postImages(chanPostImages, chanPostBuilder.postDescriptor)
+      chanPostBuilder.postImages(chanPostImages, chanPostBuilder.postDescriptor())
     }
 
     val postComment = originalPostElement.getFirstElementByClassWithValue("text")

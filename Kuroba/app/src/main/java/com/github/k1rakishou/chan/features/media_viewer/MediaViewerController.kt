@@ -253,17 +253,13 @@ class MediaViewerController(
           post = post,
           currentChanDescriptor = currentChanDescriptor,
           linkable = linkable,
-          onQuoteClicked = { postNo ->
+          onQuoteClicked = { postDescriptor ->
             val postDescriptor = when (currentChanDescriptor) {
               is ChanDescriptor.CompositeCatalogDescriptor -> {
                 error("Cannot use CompositeCatalogDescriptor here")
               }
-              is ChanDescriptor.CatalogDescriptor -> {
-                PostDescriptor.create(currentChanDescriptor, postNo)
-              }
-              is ChanDescriptor.ThreadDescriptor -> {
-                PostDescriptor.create(currentChanDescriptor, postNo)
-              }
+              is ChanDescriptor.CatalogDescriptor -> postDescriptor
+              is ChanDescriptor.ThreadDescriptor -> postDescriptor
             }
 
             showPost(postDescriptor)

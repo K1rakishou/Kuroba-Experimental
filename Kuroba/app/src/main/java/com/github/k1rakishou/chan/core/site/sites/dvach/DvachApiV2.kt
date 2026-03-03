@@ -264,7 +264,7 @@ class DvachApiV2(
         ?.mapNotNull { postFile -> postFile.toChanPostImage(board, boardDescriptor, endpoints) }
         ?: emptyList()
 
-      builder.postImages(postImages, builder.postDescriptor)
+      builder.postImages(postImages, builder.postDescriptor())
 
       if (threadPost.icon.isNotNullNorEmpty()) {
         val document = Jsoup.parseBodyFragment(threadPost.icon)

@@ -55,7 +55,7 @@ class ChanReaderProcessor(
         toParse.add(postBuilder)
       }
 
-      postOrderedList.add(postBuilder.postDescriptor)
+      postOrderedList.add(postBuilder.postDescriptor())
       return@withLock postOrderedList.size
     }
 
@@ -100,7 +100,7 @@ class ChanReaderProcessor(
       Logger.d(TAG, "applyChanReadOptions() postDescriptorsToDelete=${postDescriptorsToDelete.size}")
 
       postOrderedList.removeAll(postDescriptorsToDelete)
-      toParse.removeIfKt { postToParse -> postToParse.postDescriptor in postDescriptorsToDelete }
+      toParse.removeIfKt { postToParse -> postToParse.postDescriptor() in postDescriptorsToDelete }
     }
   }
 
@@ -111,7 +111,7 @@ class ChanReaderProcessor(
   override suspend fun getThreadDescriptors(): List<ChanDescriptor.ThreadDescriptor> {
     return lock.withLock {
       return@withLock toParse
-        .map { chanPostBuilder -> chanPostBuilder.postDescriptor.threadDescriptor() }
+        .map { chanPostBuilder -> chanPostBuilder.postDescriptor().threadDescriptor() }
     }
   }
 
@@ -134,24 +134,26 @@ class ChanReaderProcessor(
       return true
     }
 
-    if (chanLoadOptions.isForceUpdating(builder.postDescriptor)) {
+    val postDescriptor = builder.postDescriptor()
+
+    if (chanLoadOptions.isForceUpdating(postDescriptor)) {
       return true
     }
 
-    val chanPost = chanPostRepository.getCachedPost(builder.postDescriptor)
+    val chanPost = chanPostRepository.getCachedPost(postDescriptor)
     if (chanPost == null) {
-      chanPostRepository.putPostHash(builder.postDescriptor, builder.getPostHash)
+      chanPostRepository.putPostHash(postDescriptor, builder.getPostHash)
       return true
     }
 
-    val cachedPostHash = chanPostRepository.getPostHash(builder.postDescriptor)
+    val cachedPostHash = chanPostRepository.getPostHash(postDescriptor)
     if (cachedPostHash == null) {
-      chanPostRepository.putPostHash(builder.postDescriptor, builder.getPostHash)
+      chanPostRepository.putPostHash(postDescriptor, builder.getPostHash)
       return true
     }
 
     if (builder.getPostHash != cachedPostHash) {
-      chanPostRepository.putPostHash(builder.postDescriptor, builder.getPostHash)
+      chanPostRepository.putPostHash(postDescriptor, builder.getPostHash)
       return true
     }
 

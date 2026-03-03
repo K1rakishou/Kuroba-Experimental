@@ -12,6 +12,7 @@ import com.github.k1rakishou.chan.core.site.parser.CommentParserHelper.detectLin
 import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.core.site.sites.foolfuuka.FoolFuukaCommentParser
 import com.github.k1rakishou.common.groupOrNull
+import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_parser.comment.HtmlNode
 import com.github.k1rakishou.core_parser.comment.HtmlParser
@@ -55,12 +56,12 @@ open class DefaultPostParser(
   }
 
   override fun parseNameAndSubject(builder: ChanPostBuilder) {
-    if (!TextUtils.isEmpty(builder.name)) {
-      builder.name = Parser.unescapeEntities(builder.name, false)
+    if (builder.name.isNotNullNorEmpty()) {
+      builder.name = Parser.unescapeEntities(builder.name!!, false)
     }
 
-    if (!TextUtils.isEmpty(builder.subject)) {
-      builder.subject = Parser.unescapeEntities(builder.subject.toString(), false)
+    if (builder.subject.isNotNullNorEmpty()) {
+      builder.subject = Parser.unescapeEntities(builder.subject!!.toString(), false)
     }
 
     val anonymize = ChanSettings.anonymize.get()

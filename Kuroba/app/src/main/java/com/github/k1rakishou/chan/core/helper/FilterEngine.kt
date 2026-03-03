@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.core.helper
 
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.common.RegexPatternCompiler
+import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.filter.ChanFilter
@@ -90,7 +91,7 @@ class FilterEngine @Inject constructor(
       return false
     }
 
-    if (post.moderatorCapcode.isNotEmpty() || post.sticky) {
+    if (post.moderatorCapcode.isNotNullNorEmpty() || post.sticky) {
       return false
     }
 

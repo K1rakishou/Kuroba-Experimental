@@ -2028,8 +2028,8 @@ class ThreadPresenter @Inject constructor(
         post = post,
         currentChanDescriptor = currentDescriptor,
         linkable = linkable,
-        onQuoteClicked = { postNo ->
-          val chanPost = chanThreadManager.findPostByPostNo(currentThreadDescriptor, postNo)
+        onQuoteClicked = { postDescriptor ->
+          val chanPost = chanThreadManager.findPostByPostDescriptor(postDescriptor)
           if (chanPost == null) {
             return@onPostLinkableClicked
           }
@@ -2051,8 +2051,8 @@ class ThreadPresenter @Inject constructor(
             listOf(chanPost)
           )
         },
-        onQuoteToHiddenOrRemovedPostClicked = { postNo ->
-          val chanPost = chanThreadManager.findPostByPostNo(currentThreadDescriptor, postNo)
+        onQuoteToHiddenOrRemovedPostClicked = { postDescriptor ->
+          val chanPost = chanThreadManager.findPostByPostDescriptor(postDescriptor)
           if (chanPost == null) {
             return@onPostLinkableClicked
           }
@@ -2118,11 +2118,11 @@ class ThreadPresenter @Inject constructor(
           )
 
           when (val postLinkableValue = linkable.linkableValue) {
-            is PostLinkable.Value.LongPairValue -> {
-              val value = postLinkableValue.extractValueOrNull()
-              if (value != null) {
-                val postNo = value.first
-                val postSubNo = value.second
+            is PostLinkable.Value.PostIdValue -> {
+              val postId = postLinkableValue.extractPostIdOrNull()
+              if (postId != null) {
+                val postNo = postId.postNo
+                val postSubNo = postId.postSubNo
 
                 val desktopUrl = site.resolvable().desktopUrl(postChanDescriptor, postNo, postSubNo)
                 floatingListMenuItems += createMenuItem(

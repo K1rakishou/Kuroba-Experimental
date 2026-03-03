@@ -214,7 +214,7 @@ class FutabaChanReader(
       files.add(0, image)
     }
 
-    builder.postImages(files, builder.postDescriptor)
+    builder.postImages(files, builder.postDescriptor())
 
     if (builder.op) {
       // Update OP fields later on the main thread

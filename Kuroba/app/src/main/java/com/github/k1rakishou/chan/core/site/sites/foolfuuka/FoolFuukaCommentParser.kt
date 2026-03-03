@@ -97,7 +97,7 @@ class FoolFuukaCommentParser(
                 return PostLinkable.Link(
                   type = PostLinkable.Type.QUOTE_TO_HIDDEN_OR_REMOVED_POST,
                   key = text,
-                  linkValue = PostLinkable.Value.LongPairValue(postId, postSubId)
+                  linkValue = PostLinkable.Value.PostIdValue(postId, postSubId)
                 )
               }
               else -> {
@@ -105,7 +105,7 @@ class FoolFuukaCommentParser(
                 return PostLinkable.Link(
                   type = PostLinkable.Type.QUOTE,
                   key = text,
-                  linkValue = PostLinkable.Value.LongPairValue(postId, postSubId)
+                  linkValue = PostLinkable.Value.PostIdValue(postId, postSubId)
                 )
               }
             }

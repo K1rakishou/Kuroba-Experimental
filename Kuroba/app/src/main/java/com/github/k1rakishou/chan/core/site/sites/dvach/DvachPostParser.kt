@@ -7,6 +7,7 @@ import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.site.common.DefaultPostParser
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.core.site.parser.PostParser
+import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
@@ -24,16 +25,18 @@ class DvachPostParser(
   }
 
   override fun parseFull(builder: ChanPostBuilder, callback: PostParser.Callback): ChanPost {
-    builder.name = Parser.unescapeEntities(builder.name, false)
+    if (builder.name.isNotNullNorEmpty()) {
+      builder.name(Parser.unescapeEntities(builder.name!!, false))
+    }
+
     parseNameForColor(builder)
     return super.parseFull(builder, callback)
   }
 
   private fun parseNameForColor(builder: ChanPostBuilder) {
-    val nameRaw: CharSequence = builder.name
+    val name = builder.name ?: ""
 
     try {
-      val name = nameRaw.toString()
       val document = Jsoup.parseBodyFragment(name)
       val span = document.body().getElementsByTag("span").first()
 

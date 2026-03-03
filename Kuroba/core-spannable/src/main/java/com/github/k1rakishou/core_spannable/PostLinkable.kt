@@ -73,8 +73,8 @@ open class PostLinkable(
       Type.ARCHIVE -> {
         if (type == Type.QUOTE || type == Type.QUOTE_TO_HIDDEN_OR_REMOVED_POST) {
           val matches = when (linkableValue) {
-            is Value.LongPairValue -> linkableValue.value == markedNo && linkableValue.subValue == markedSubNo
-            else -> throw IllegalArgumentException("Unsupported value type: ${linkableValue::class.java.simpleName}")
+            is Value.PostIdValue -> linkableValue.postNo == markedNo && linkableValue.postSubNo == markedSubNo
+            else -> error("Unsupported value type: ${linkableValue::class.java.simpleName}")
           }
 
           if (matches) {
@@ -119,13 +119,9 @@ open class PostLinkable(
       return false
     }
 
-    when (linkableValue) {
-      is Value.LongPairValue -> {
-        return linkableValue.value == markedNo && linkableValue.subValue == markedSubNo
-      }
-      else -> {
-        throw IllegalArgumentException("Unsupported value type: ${linkableValue::class.java.simpleName}")
-      }
+    return when (linkableValue) {
+      is Value.PostIdValue -> linkableValue.postSubNo == markedNo && linkableValue.postSubNo == markedSubNo
+      else -> error("Unsupported value type: ${linkableValue::class.java.simpleName}")
     }
   }
 
@@ -174,17 +170,16 @@ open class PostLinkable(
   }
 
   sealed class Value {
-
     abstract override fun equals(other: Any?): Boolean
     abstract override fun hashCode(): Int
 
-    fun extractValueOrNull(): Pair<Long, Long>? {
+    fun extractPostIdOrNull(): PostId? {
       return when (this) {
-        is LongPairValue -> Pair(value, subValue)
-        is ThreadOrPostLink -> Pair(postId, postSubId)
+        is PostIdValue -> PostLinkable.PostId(postNo, postSubNo)
+        is ThreadOrPostLink -> PostId(postId, postSubId)
         is ArchiveThreadLink -> {
           if (postId != null) {
-            Pair(postId, postSubId ?: 0L)
+            PostId(postId, postSubId ?: 0L)
           } else {
             null
           }
@@ -205,11 +200,17 @@ open class PostLinkable(
       }
     }
 
-    data class LongPairValue(val value: Long, val subValue: Long) : Value()
-    data class SearchLink(val board: String, val query: String) : Value()
+    data class PostIdValue(
+      val postNo: Long,
+      val postSubNo: Long = 0L,
+    ) : Value()
+
+    data class SearchLink(
+      val board: String,
+      val query: String
+    ) : Value()
 
     data class StringValue(val value: CharSequence) : Value() {
-
       override fun equals(other: Any?): Boolean {
         if (other == null) return false
         if (other !is StringValue) return false
@@ -227,7 +228,7 @@ open class PostLinkable(
       val board: String,
       val threadId: Long,
       val postId: Long,
-      val postSubId: Long
+      val postSubId: Long = 0L
     ) : Value() {
       fun isThreadLink(): Boolean = threadId == postId
 
@@ -266,7 +267,11 @@ open class PostLinkable(
         }
       }
     }
-
   }
+
+  data class PostId(
+    val postNo: Long,
+    val postSubNo: Long = 0L
+  )
 
 }

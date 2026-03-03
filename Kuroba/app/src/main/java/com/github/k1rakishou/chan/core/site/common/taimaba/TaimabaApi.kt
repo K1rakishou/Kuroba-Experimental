@@ -88,7 +88,6 @@ class TaimabaApi(
     var opId: Int
     builder.op(true)
     builder.opId(0)
-    var postcom: String? = null
     val files: MutableList<ChanPostImage> = ArrayList()
 
     // Country flag
@@ -175,7 +174,7 @@ class TaimabaApi(
       files.add(0, image)
     }
 
-    builder.postImages(files, builder.postDescriptor)
+    builder.postImages(files, builder.postDescriptor())
 
     if (builder.op) {
       // Update OP fields later on the main thread

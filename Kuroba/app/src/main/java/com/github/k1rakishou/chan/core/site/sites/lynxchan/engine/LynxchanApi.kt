@@ -366,7 +366,7 @@ open class LynxchanApi(
         ?.mapNotNull { postFile -> postFile.toChanPostImage(board, endpoints) }
         ?: emptyList()
 
-      builder.postImages(postImages, builder.postDescriptor)
+      builder.postImages(postImages, builder.postDescriptor())
 
       chanReaderProcessor.addPost(builder)
     }
