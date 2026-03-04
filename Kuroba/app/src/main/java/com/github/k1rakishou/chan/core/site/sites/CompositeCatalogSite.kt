@@ -30,6 +30,7 @@ import com.github.k1rakishou.model.data.board.pages.BoardPages
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoObject
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.filter.FilterWatchCatalogInfoObject
 import com.github.k1rakishou.model.data.post.ChanPost
@@ -102,44 +103,81 @@ class CompositeCatalogSite : Site {
   }
 
   private val siteEndpoints = object : SiteEndpoints {
-    override fun catalog(boardDescriptor: BoardDescriptor?): HttpUrl {
+    override fun catalog(
+      boardDescriptor: BoardDescriptor,
+      contentType: SiteEndpoints.ContentType
+    ): HttpUrl? {
       error("Cannot be used by this site")
     }
 
-    override fun catalogPage(boardDescriptor: BoardDescriptor?, page: Int?): HttpUrl {
+    override fun thread(
+      threadDescriptor: ChanDescriptor.ThreadDescriptor,
+      contentType: SiteEndpoints.ContentType,
+      archive: Boolean
+    ): HttpUrl? {
       error("Cannot be used by this site")
     }
 
-    override fun thread(threadDescriptor: ChanDescriptor.ThreadDescriptor?): HttpUrl {
+    override fun threadPartial(
+      afterPost: PostDescriptor,
+      contentType: SiteEndpoints.ContentType
+    ): HttpUrl? {
       error("Cannot be used by this site")
     }
 
-    override fun imageUrl(boardDescriptor: BoardDescriptor?, arg: MutableMap<String, String>?): HttpUrl {
+    override fun boards(): HttpUrl? {
+      error("Cannot be used by this site")
+    }
+
+    override fun report(post: ChanPost): HttpUrl? {
+      error("Cannot be used by this site")
+    }
+
+    override fun passCodeInfo(): HttpUrl? {
+      error("Cannot be used by this site")
+    }
+
+    override fun search(): HttpUrl? {
+      error("Cannot be used by this site")
+    }
+
+    override fun boardArchive(
+      boardDescriptor: BoardDescriptor,
+      page: Int?
+    ): HttpUrl? {
+      error("Cannot be used by this site")
+    }
+
+    override fun catalogPage(boardDescriptor: BoardDescriptor, page: Int?): HttpUrl {
+      error("Cannot be used by this site")
+    }
+
+    override fun imageUrl(boardDescriptor: BoardDescriptor, arg: Map<String, String>?): HttpUrl {
       error("Cannot be used by this site")
     }
 
     override fun thumbnailUrl(
-      boardDescriptor: BoardDescriptor?,
+      boardDescriptor: BoardDescriptor,
       spoiler: Boolean,
       customSpoilers: Int,
-      arg: MutableMap<String, String>?
-    ): HttpUrl {
+      arg: Map<String, String>?
+    ): HttpUrl? {
       error("Cannot be used by this site")
     }
 
-    override fun icon(icon: String?, arg: MutableMap<String, String>?): HttpUrl {
+    override fun icon(icon: String, arg: Map<String, String>?): HttpUrl? {
       error("Cannot be used by this site")
     }
 
-    override fun pages(board: ChanBoard?): HttpUrl {
+    override fun pages(board: ChanBoard): HttpUrl {
       error("Cannot be used by this site")
     }
 
-    override fun reply(chanDescriptor: ChanDescriptor?): HttpUrl {
+    override fun reply(chanDescriptor: ChanDescriptor): HttpUrl {
       error("Cannot be used by this site")
     }
 
-    override fun delete(post: ChanPost?): HttpUrl {
+    override fun delete(post: ChanPost): HttpUrl {
       error("Cannot be used by this site")
     }
 

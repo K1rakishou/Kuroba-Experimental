@@ -293,12 +293,10 @@ class DvachApi(
             continue
           }
 
-          val iconUrl = endpoints.icon(
-            title,
-            SiteEndpoints.makeArgument("icon", imageUrl)
-          )
-
-          builder.addHttpIcon(ChanPostHttpIcon(iconUrl, title))
+          val iconUrl = endpoints.icon(title, SiteEndpoints.makeArgument("icon", imageUrl))
+          if (iconUrl != null) {
+            builder.addHttpIcon(ChanPostHttpIcon(iconUrl, title))
+          }
         }
       }
 
@@ -408,7 +406,10 @@ class DvachApi(
             return@let null
           }
 
-          val args = SiteEndpoints.makeArgument("path", file.path, "thumbnail", file.thumbnail)
+          val path = file.path
+            ?: return@let null
+
+          val args = SiteEndpoints.makeArgument("path", path, "thumbnail", file.thumbnail)
           return@let endpoints.thumbnailUrl(boardDescriptor, false, 0, args)
         }
 
@@ -429,7 +430,7 @@ class DvachApi(
 
   @JsonClass(generateAdapter = true)
   data class DvachError(
-    @Json(name = "code")
+    @field:Json(name = "code")
     val errorCode: Int
   ) {
 
@@ -493,39 +494,39 @@ class DvachApi(
 
   @JsonClass(generateAdapter = true)
   data class DvachThreadsFresh(
-    @Json(name = "board")
+    @field:Json(name = "board")
     val board: DvachThreadBoardInfo?,
-    @Json(name = "threads")
+    @field:Json(name = "threads")
     val threads: List<DvachThreadFresh>?,
-    @Json(name = "unique_posters")
+    @field:Json(name = "unique_posters")
     val posters: Int?,
-    @Json(name = "error")
+    @field:Json(name = "error")
     val error: DvachError?
   )
 
   @JsonClass(generateAdapter = true)
   data class DvachThreadFresh(
-    @Json(name = "posts")
+    @field:Json(name = "posts")
     val posts: List<DvachPost>?,
-    @Json(name = "error")
+    @field:Json(name = "error")
     val error: DvachError?
   )
 
   @JsonClass(generateAdapter = true)
   data class DvachThreadIncremental(
-    @Json(name = "posts")
+    @field:Json(name = "posts")
     val posts: List<DvachPost>?,
-    @Json(name = "unique_posters")
+    @field:Json(name = "unique_posters")
     val posters: Int?,
-    @Json(name = "error")
+    @field:Json(name = "error")
     val error: DvachError?
   )
 
   @JsonClass(generateAdapter = true)
   data class DvachCatalog(
-    @Json(name = "threads")
+    @field:Json(name = "threads")
     val threads: List<DvachPost>?,
-    @Json(name = "error")
+    @field:Json(name = "error")
     val error: DvachError?
   )
 
@@ -547,9 +548,9 @@ class DvachApi(
     val trip: String,
     val icon: String?,
     val lasthit: Long,
-    @Json(name = "posts_count")
+    @field:Json(name = "posts_count")
     val postsCount: Int?,
-    @Json(name = "files_count")
+    @field:Json(name = "files_count")
     val filesCount: Int?,
     val files: List<DvachFile>?
   ) {
@@ -586,9 +587,9 @@ class DvachApi(
     val path: String?,
     val size: Long,
     val thumbnail: String,
-    @Json(name = "tn_height")
+    @field:Json(name = "tn_height")
     val tnHeight: Long,
-    @Json(name = "tn_width")
+    @field:Json(name = "tn_width")
     val tnWidth: Long,
     val type: Long,
     val width: Int,
@@ -654,21 +655,21 @@ class DvachApi(
 
   @JsonClass(generateAdapter = true)
   data class DvachBookmarkCatalogInfo(
-    @Json(name = "board")
+    @field:Json(name = "board")
     val board: DvachThreadBoardInfo?,
-    @Json(name = "threads")
+    @field:Json(name = "threads")
     val threads: List<DvachThreadPostInfo>,
   )
 
   @JsonClass(generateAdapter = true)
   data class DvachThreadBoardInfo(
-    @Json(name = "bump_limit")
+    @field:Json(name = "bump_limit")
     val bumpLimit: Int,
   )
 
   @JsonClass(generateAdapter = true)
   data class DvachThreadPostInfo(
-    @Json(name = "posts")
+    @field:Json(name = "posts")
     val posts: List<DvachBookmarkPostInfo>
   )
 
@@ -687,7 +688,7 @@ class DvachApi(
 
   @JsonClass(generateAdapter = true)
   data class DvachFilterWatchCatalogInfo(
-    @Json(name = "threads")
+    @field:Json(name = "threads")
     val threads: List<DvachFilterWatchPostInfo>
   )
 

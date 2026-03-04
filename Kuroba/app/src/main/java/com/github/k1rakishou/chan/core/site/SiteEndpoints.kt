@@ -5,17 +5,19 @@ import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import okhttp3.HttpUrl
 
 @Suppress("MaxLineLength")
 interface SiteEndpoints {
   fun catalogPage(boardDescriptor: BoardDescriptor, page: Int?): HttpUrl? = null
-  fun catalog(boardDescriptor: BoardDescriptor, contentType: ContentType): HttpUrl? = null
-  fun thread(threadDescriptor: ThreadDescriptor, contentType: ContentType, archive: Boolean, partialLoad: Boolean): HttpUrl? = null
-  fun imageUrl(boardDescriptor: BoardDescriptor, arg: Map<String, String>): HttpUrl? = null
-  fun thumbnailUrl(boardDescriptor: BoardDescriptor, spoiler: Boolean, customSpoilers: Int, arg: Map<String, String>): HttpUrl?
-  fun icon(icon: String, arg: Map<String, String>): HttpUrl? = null
+  fun catalog(boardDescriptor: BoardDescriptor, contentType: ContentType = ContentType.Json): HttpUrl? = null
+  fun thread(threadDescriptor: ThreadDescriptor, contentType: ContentType = ContentType.Json, archive: Boolean = false): HttpUrl? = null
+  fun threadPartial(afterPost: PostDescriptor, contentType: ContentType = ContentType.Json): HttpUrl? = null
+  fun imageUrl(boardDescriptor: BoardDescriptor, arg: Map<String, String>?): HttpUrl? = null
+  fun thumbnailUrl(boardDescriptor: BoardDescriptor, spoiler: Boolean, customSpoilers: Int, arg: Map<String, String>?): HttpUrl?
+  fun icon(icon: String, arg: Map<String, String>?): HttpUrl? = null
   fun boards(): HttpUrl? = null
   fun pages(board: ChanBoard): HttpUrl? = null
   fun reply(chanDescriptor: ChanDescriptor): HttpUrl? = null

@@ -237,7 +237,7 @@ class DvachActions(
     board: ChanBoard
   ): JsonReaderRequest.JsonReaderResponse<BoardPages> {
     val requestBuilder = Request.Builder()
-      .url(dvach.endpoints.pages(board))
+      .url(requireNotNull(dvach.endpoints.pages(board)))
       .get()
 
     dvach.requestModifier.modifyGenericRequest(dvach, requestBuilder)

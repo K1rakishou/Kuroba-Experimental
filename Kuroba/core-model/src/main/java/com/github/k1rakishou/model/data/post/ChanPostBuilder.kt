@@ -9,6 +9,7 @@ import com.github.k1rakishou.model.util.ChanPostUtils
 
 class ChanPostBuilder {
   var boardDescriptor: BoardDescriptor? = null
+    private set
   var id: Long = -1
   var subId: Long = 0
   var opId: Long = -1
@@ -85,6 +86,10 @@ class ChanPostBuilder {
 
       return postHash.value
     }
+
+  fun requireBoardDescriptor(): BoardDescriptor {
+    return requireNotNull(boardDescriptor) { "boardDescriptor is null" }
+  }
 
   @Synchronized
   fun hasPostDescriptor(): Boolean {

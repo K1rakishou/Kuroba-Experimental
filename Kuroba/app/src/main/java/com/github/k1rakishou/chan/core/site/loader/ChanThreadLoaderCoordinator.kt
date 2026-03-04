@@ -638,7 +638,7 @@ class ChanThreadLoaderCoordinator(
     forceFullLoad: Boolean = false
   ): ChanLoadUrl {
     if (chanDescriptor is ChanDescriptor.ThreadDescriptor && postProcessFlags?.reloadingAfter404 == true) {
-      val url = site.endpoints.threadArchive(chanDescriptor)
+      val url = site.endpoints.thread(threadDescriptor = chanDescriptor, archive = true)
       if (url != null) {
         return ChanLoadUrl(url = url, isIncremental = false, page = page)
       }
@@ -707,6 +707,10 @@ class ChanThreadLoaderCoordinator(
       is ChanDescriptor.CompositeCatalogDescriptor -> {
         error("Cannot use CompositeCatalogDescriptor here")
       }
+    }
+
+    if (url == null) {
+      error("Posting is not supported by ${chanDescriptor.siteName()}")
     }
 
     return ChanLoadUrl(url = url, isIncremental = false, page = page)

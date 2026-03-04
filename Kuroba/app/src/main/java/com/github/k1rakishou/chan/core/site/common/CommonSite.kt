@@ -30,10 +30,8 @@ import com.github.k1rakishou.common.groupOrNull
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.board.pages.BoardPages
-import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
-import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.site.SiteBoards
 import com.github.k1rakishou.persist_state.ReplyMode
 import kotlinx.coroutines.Dispatchers
@@ -201,45 +199,7 @@ abstract class CommonSite : SiteBase() {
   
   abstract class CommonEndpoints(
     protected val site: CommonSite
-  ) : SiteEndpoints {
-
-    override fun thread(threadDescriptor: ChanDescriptor.ThreadDescriptor): HttpUrl {
-      error("Attempt to call abstract method")
-    }
-
-    override fun imageUrl(boardDescriptor: BoardDescriptor, arg: Map<String, String>): HttpUrl {
-      error("Attempt to call abstract method")
-    }
-    
-    override fun thumbnailUrl(
-      boardDescriptor: BoardDescriptor,
-      spoiler: Boolean,
-      customSpoilers: Int,
-      arg: Map<String, String>
-    ): HttpUrl {
-      error("Attempt to call abstract method")
-    }
-    
-    override fun icon(icon: String, arg: Map<String, String>): HttpUrl {
-      error("Attempt to call abstract method")
-    }
-
-    override fun pages(board: ChanBoard): HttpUrl {
-      error("Attempt to call abstract method")
-    }
-
-    override fun reply(chanDescriptor: ChanDescriptor): HttpUrl {
-      error("Attempt to call abstract method")
-    }
-    
-    override fun delete(post: ChanPost): HttpUrl {
-      error("Attempt to call abstract method")
-    }
-
-    override fun login(): HttpUrl {
-      error("Attempt to call abstract method")
-    }
-  }
+  ) : SiteEndpoints
   
   class SimpleHttpUrl {
     var url: HttpUrl.Builder

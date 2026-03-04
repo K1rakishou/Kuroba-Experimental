@@ -76,7 +76,7 @@ class LynxchanReplyHttpCall(
         null
       }
 
-      val replyUrl = site.endpoints.reply(replyChanDescriptor)
+      val replyUrl = requireNotNull(site.endpoints.reply(replyChanDescriptor))
       Logger.d(TAG, "setup() replyUrl=${replyUrl}")
 
       if (lynxchanSite.postingViaFormData) {

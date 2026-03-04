@@ -469,6 +469,9 @@ class BookmarkFilterWatchableThreadsUseCase(
       }
 
       val catalogJsonEndpoint = site.endpoints.catalog(boardDescriptor)
+      if (catalogJsonEndpoint == null) {
+        return@parallelForEach null
+      }
 
       return@parallelForEach fetchBoardCatalog(
         boardDescriptor = boardDescriptor,

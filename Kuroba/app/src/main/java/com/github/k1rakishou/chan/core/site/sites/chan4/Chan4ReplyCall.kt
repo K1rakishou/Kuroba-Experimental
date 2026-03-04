@@ -144,15 +144,17 @@ class Chan4ReplyCall(
   }
 
   override fun addHeaders(requestBuilder: Request.Builder, boundary: String) {
-    arrayOf("Referer", "User-Agent", "Accept-Encoding", "Cookie", "Content-Type", "Content-Length", "Host", "Connection")
+    arrayOf("Referer", "User-Agent", "Accept-Encoding", "Cookie",
+      "Content-Type", "Content-Length", "Host", "Connection")
       .forEach { header -> requestBuilder.removeHeader(header) }
 
-    val replyUrl = site.endpoints.reply(replyChanDescriptor)
+    val replyUrl = requireNotNull(site.endpoints.reply(replyChanDescriptor))
 
     requestBuilder.addHeader("Host", "sys.4chan.org")
     requestBuilder.addHeader("User-Agent", appConstants.userAgentMightBeOverridden)
     requestBuilder.addHeader("Accept-Encoding", "gzip")
-    requestBuilder.addHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7")
+    requestBuilder.addHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif," +
+      "image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7")
     requestBuilder.addHeader("Accept-Language", "en-US,en;q=0.5")
     requestBuilder.addHeader("Content-Type", "multipart/form-data; boundary=${boundary}")
     requestBuilder.addHeader("Origin", "https://boards.4chan.org")

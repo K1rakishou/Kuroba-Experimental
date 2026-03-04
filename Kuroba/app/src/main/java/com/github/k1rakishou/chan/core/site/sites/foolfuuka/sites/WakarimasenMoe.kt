@@ -19,7 +19,11 @@ class WakarimasenMoe: BaseFoolFuukaSite() {
     site: BaseFoolFuukaSite,
   ) : FoolFuukaEndpoints(site, site.rootUrl) {
     // https://archived.moe/_/api/chan/thread/?board=a&num=208364509
-    override fun thread(threadDescriptor: ChanDescriptor.ThreadDescriptor): HttpUrl {
+    override fun thread(
+      threadDescriptor: ChanDescriptor.ThreadDescriptor,
+      contentType: SiteEndpoints.ContentType,
+      archive: Boolean
+    ): HttpUrl {
       return site.archivesManager.getRequestLink(
         archiveType = ArchiveType.WakarimasenMoe,
         boardCode = threadDescriptor.boardCode(),

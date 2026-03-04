@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.core.site.sites.fuuka
 
+import com.github.k1rakishou.chan.core.site.SiteEndpoints
 import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
@@ -12,9 +13,10 @@ class FuukaEndpoints(
   private val rootUrl: HttpUrl
 ) : CommonSite.CommonEndpoints(site) {
 
-  override fun catalog(boardDescriptor: BoardDescriptor): HttpUrl {
-    error("Catalog is not supported by ${site.name}")
-  }
+  override fun catalog(
+    boardDescriptor: BoardDescriptor,
+    contentType: SiteEndpoints.ContentType
+  ): HttpUrl? = null
 
   // https://warosu.org/vt/?task=page&page=1
   override fun catalogPage(boardDescriptor: BoardDescriptor, page: Int?): HttpUrl {
@@ -31,7 +33,11 @@ class FuukaEndpoints(
   }
 
   // https://warosu.org/g/thread/72382313
-  override fun thread(threadDescriptor: ChanDescriptor.ThreadDescriptor): HttpUrl {
+  override fun thread(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    contentType: SiteEndpoints.ContentType,
+    archive: Boolean
+  ): HttpUrl? {
     return rootUrl.newBuilder()
       .addPathSegment(threadDescriptor.boardCode())
       .addPathSegment("thread")
@@ -39,7 +45,7 @@ class FuukaEndpoints(
       .build()
   }
 
-  override fun imageUrl(boardDescriptor: BoardDescriptor, arg: Map<String, String>): HttpUrl {
+  override fun imageUrl(boardDescriptor: BoardDescriptor, arg: Map<String, String>?): HttpUrl {
     throw NotImplementedError("imageUrl")
   }
 
@@ -47,7 +53,7 @@ class FuukaEndpoints(
     boardDescriptor: BoardDescriptor,
     spoiler: Boolean,
     customSpoilers: Int,
-    arg: Map<String, String>
+    arg: Map<String, String>?
   ): HttpUrl {
     throw NotImplementedError("thumbnailUrl")
   }
@@ -56,7 +62,7 @@ class FuukaEndpoints(
     return rootUrl
   }
 
-  override fun icon(icon: String, arg: Map<String, String>): HttpUrl {
+  override fun icon(icon: String, arg: Map<String, String>?): HttpUrl {
     throw NotImplementedError("icon")
   }
 

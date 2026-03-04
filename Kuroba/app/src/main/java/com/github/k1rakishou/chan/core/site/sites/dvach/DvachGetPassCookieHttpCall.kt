@@ -29,7 +29,7 @@ class DvachGetPassCookieHttpCall(
     formBuilder
       .add("passcode", dvachLoginRequest.passcode)
 
-    requestBuilder.url(site.endpoints.login())
+    requestBuilder.url(requireNotNull(site.endpoints.login()))
     requestBuilder.post(formBuilder.build())
 
     site.requestModifier.modifyGenericRequest(site, requestBuilder)

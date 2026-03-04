@@ -4,6 +4,7 @@ import android.os.SystemClock
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
+import com.github.k1rakishou.chan.core.site.SiteEndpoints
 import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
 import com.github.k1rakishou.chan.core.site.loader.UnknownClientException
 import com.github.k1rakishou.common.ModularResult
@@ -90,7 +91,10 @@ class Chan4CheckPostExistsRequest(
         "attempt: ${attempt + 1} / ${MAX_ATTEMPTS}"
     }
 
-    val url = chan4.endpoints.catalogHtml(replyPostDescriptor.catalogDescriptor())
+    val url = chan4.endpoints.catalog(
+      boardDescriptor = replyPostDescriptor.boardDescriptor(),
+      contentType = SiteEndpoints.ContentType.Html
+    )
     if (url == null) {
       throw UnknownClientException("Site '${chan4.name}' doesn't support 'catalogHtml' endpoint")
     }
@@ -165,7 +169,10 @@ class Chan4CheckPostExistsRequest(
   private suspend fun checkOurPostExists(attempt: Int): Boolean {
     Logger.d(TAG, "checkPostExists() postDescriptor: ${replyPostDescriptor}, attempt: ${attempt + 1} / ${MAX_ATTEMPTS}")
 
-    val url = chan4.endpoints.threadHtml(replyPostDescriptor.threadDescriptor())
+    val url = chan4.endpoints.thread(
+      threadDescriptor = replyPostDescriptor.threadDescriptor(),
+      contentType = SiteEndpoints.ContentType.Html
+    )
     if (url == null) {
       throw UnknownClientException("Site '${chan4.name}' doesn't support 'threadHtml' endpoint")
     }

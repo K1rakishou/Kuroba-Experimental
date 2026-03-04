@@ -14,8 +14,10 @@ class LeftypolEndpoints(
     boardDescriptor: BoardDescriptor,
     spoiler: Boolean,
     customSpoilers: Int,
-    arg: Map<String, String>
+    arg: Map<String, String>?
   ): HttpUrl {
+    requireNotNull(arg)
+
     var u = root.builder()
     for (s in arg.getValue("thumb_path").split('/')) {
       u = u.s(s)
@@ -23,7 +25,9 @@ class LeftypolEndpoints(
     return u.url()
   }
 
-  override fun imageUrl(boardDescriptor: BoardDescriptor, arg: Map<String, String>): HttpUrl {
+  override fun imageUrl(boardDescriptor: BoardDescriptor, arg: Map<String, String>?): HttpUrl {
+    requireNotNull(arg)
+
     var u = root.builder()
     for (s in arg.getValue("file_path").split('/')) {
       u = u.s(s)

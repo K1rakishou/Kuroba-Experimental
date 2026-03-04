@@ -158,9 +158,9 @@ class TaimabaApi(
       val customSpoilers = board?.customSpoilers ?: -1
 
       val image = ChanPostImageBuilder()
-        .thumbnailUrl(endpoints.thumbnailUrl(builder.boardDescriptor, false, customSpoilers, args))
-        .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder.boardDescriptor, true, customSpoilers, args))
-        .imageUrl(endpoints.imageUrl(builder.boardDescriptor, args))
+        .thumbnailUrl(endpoints.thumbnailUrl(builder.requireBoardDescriptor(), false, customSpoilers, args))
+        .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder.requireBoardDescriptor(), true, customSpoilers, args))
+        .imageUrl(endpoints.imageUrl(builder.requireBoardDescriptor(), args))
         .filename(Parser.unescapeEntities(fileName, false))
         .serverFilename(fileName)
         .extension(fileExt)
@@ -191,12 +191,16 @@ class TaimabaApi(
 
     if (countryCode != null && countryName != null) {
       val countryUrl = endpoints.icon("country", SiteEndpoints.makeArgument("country_code", countryCode))
-      builder.addHttpIcon(ChanPostHttpIcon(countryUrl, "$countryName/$countryCode"))
+      if (countryUrl != null) {
+        builder.addHttpIcon(ChanPostHttpIcon(countryUrl, "$countryName/$countryCode"))
+      }
     }
 
     if (trollCountryCode != null && countryName != null) {
       val countryUrl = endpoints.icon("troll_country", SiteEndpoints.makeArgument("troll_country_code", trollCountryCode))
-      builder.addHttpIcon(ChanPostHttpIcon(countryUrl, "$countryName/t_$trollCountryCode"))
+      if (countryUrl != null) {
+        builder.addHttpIcon(ChanPostHttpIcon(countryUrl, "$countryName/t_$trollCountryCode"))
+      }
     }
 
     chanReaderProcessor.addPost(builder)
@@ -255,9 +259,9 @@ class TaimabaApi(
       val customSpoilers = board?.customSpoilers ?: -1
 
       return ChanPostImageBuilder()
-        .thumbnailUrl(endpoints.thumbnailUrl(builder.boardDescriptor, false, customSpoilers, args))
-        .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder.boardDescriptor, true, customSpoilers, args))
-        .imageUrl(endpoints.imageUrl(builder.boardDescriptor, args))
+        .thumbnailUrl(endpoints.thumbnailUrl(builder.requireBoardDescriptor(), false, customSpoilers, args))
+        .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder.requireBoardDescriptor(), true, customSpoilers, args))
+        .imageUrl(endpoints.imageUrl(builder.requireBoardDescriptor(), args))
         .filename(Parser.unescapeEntities(fileName, false))
         .extension(fileExt)
         .imageWidth(fileWidth)

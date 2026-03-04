@@ -200,7 +200,7 @@ class FutabaSiteApi(
         .serverFilename(fileId)
         .thumbnailUrl(endpoints.thumbnailUrl(boardDescriptor, false, customSpoilers, args))
         .spoilerThumbnailUrl(endpoints.thumbnailUrl(boardDescriptor, true, customSpoilers, args))
-        .imageUrl(endpoints.imageUrl(builder.boardDescriptor, args))
+        .imageUrl(endpoints.imageUrl(builder.requireBoardDescriptor(), args))
         .filename(Parser.unescapeEntities(fileName, false))
         .extension(fileExt)
         .imageWidth(fileWidth)
@@ -232,7 +232,9 @@ class FutabaSiteApi(
 
     if (countryCode != null && countryName != null) {
       val countryUrl = endpoints.icon("country", SiteEndpoints.makeArgument("country_code", countryCode))
-      builder.addHttpIcon(ChanPostHttpIcon(countryUrl, "$countryName/$countryCode"))
+      if (countryUrl != null) {
+        builder.addHttpIcon(ChanPostHttpIcon(countryUrl, "$countryName/$countryCode"))
+      }
     }
 
     if (boardFlagCode != null && boardFlagName != null) {
@@ -244,12 +246,16 @@ class FutabaSiteApi(
       )
 
       val countryUrl = endpoints.icon("board_flag", argument)
-      builder.addHttpIcon(ChanPostHttpIcon(countryUrl, "$boardFlagName/t_$boardFlagCode"))
+      if (countryUrl != null) {
+        builder.addHttpIcon(ChanPostHttpIcon(countryUrl, "$boardFlagName/t_$boardFlagCode"))
+      }
     }
 
     if (since4pass != 0) {
       val iconUrl = endpoints.icon("since4pass", null)
-      builder.addHttpIcon(ChanPostHttpIcon(iconUrl, since4pass.toString()))
+      if (iconUrl != null) {
+        builder.addHttpIcon(ChanPostHttpIcon(iconUrl, since4pass.toString()))
+      }
     }
 
     chanReaderProcessor.addPost(builder)
@@ -295,9 +301,9 @@ class FutabaSiteApi(
 
       return ChanPostImageBuilder()
         .serverFilename(fileId)
-        .thumbnailUrl(endpoints.thumbnailUrl(builder.boardDescriptor, false, customSpoilers, args))
-        .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder.boardDescriptor, true, customSpoilers, args))
-        .imageUrl(endpoints.imageUrl(builder.boardDescriptor, args))
+        .thumbnailUrl(endpoints.thumbnailUrl(builder.requireBoardDescriptor(), false, customSpoilers, args))
+        .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder.requireBoardDescriptor(), true, customSpoilers, args))
+        .imageUrl(endpoints.imageUrl(builder.requireBoardDescriptor(), args))
         .filename(Parser.unescapeEntities(fileName, false))
         .extension(fileExt)
         .imageWidth(fileWidth)

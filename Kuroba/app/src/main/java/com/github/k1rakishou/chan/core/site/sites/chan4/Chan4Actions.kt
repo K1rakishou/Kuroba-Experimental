@@ -11,6 +11,7 @@ import com.github.k1rakishou.chan.core.site.http.login.Chan4LoginRequest
 import com.github.k1rakishou.chan.core.site.http.login.Chan4LoginResponse
 import com.github.k1rakishou.chan.core.site.http.report.PostReportData
 import com.github.k1rakishou.chan.core.site.http.report.PostReportResult
+import com.github.k1rakishou.chan.core.site.loader.ClientException
 import com.github.k1rakishou.chan.core.site.sites.archive.NativeArchivePostList
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4.CaptchaType
 import com.github.k1rakishou.chan.core.site.sites.search.Chan4SearchParams
@@ -54,8 +55,15 @@ class Chan4Actions(
   }
 
   override suspend fun pages(board: ChanBoard): JsonReaderRequest.JsonReaderResponse<BoardPages> {
+    val pagesUrl = chan4.endpoints.pages(board)
+    if (pagesUrl == null) {
+      return JsonReaderRequest.JsonReaderResponse.UnknownServerError(
+        ClientException("Pages request not supported by ${board.boardDescriptor}")
+      )
+    }
+
     val request = Request.Builder()
-      .url(chan4.endpoints.pages(board))
+      .url(pagesUrl)
       .get()
       .build()
 

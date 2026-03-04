@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.core.site.sites.foolfuuka
 
+import com.github.k1rakishou.chan.core.site.SiteEndpoints
 import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
@@ -12,9 +13,10 @@ open class FoolFuukaEndpoints(
   protected val rootUrl: HttpUrl
 ) : CommonSite.CommonEndpoints(site) {
 
-  override fun catalog(boardDescriptor: BoardDescriptor?): HttpUrl {
-    error("Catalog is not supported by ${site.name}")
-  }
+  override fun catalog(
+    boardDescriptor: BoardDescriptor,
+    contentType: SiteEndpoints.ContentType
+  ): HttpUrl? = null
 
   // https://archived.moe/a/
   // https://archived.moe/a/page/2/
@@ -32,7 +34,11 @@ open class FoolFuukaEndpoints(
   }
 
   // https://archived.moe/_/api/chan/thread/?board=a&num=208364509
-  override fun thread(threadDescriptor: ChanDescriptor.ThreadDescriptor): HttpUrl {
+  override fun thread(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    contentType: SiteEndpoints.ContentType,
+    archive: Boolean
+  ): HttpUrl? {
     return rootUrl.newBuilder()
       .addPathSegments("_/api/chan/thread")
       .addQueryParameter("board", threadDescriptor.boardCode())
@@ -40,7 +46,7 @@ open class FoolFuukaEndpoints(
       .build()
   }
 
-  override fun imageUrl(boardDescriptor: BoardDescriptor, arg: Map<String, String>): HttpUrl {
+  override fun imageUrl(boardDescriptor: BoardDescriptor, arg: Map<String, String>?): HttpUrl {
     throw NotImplementedError("imageUrl")
   }
 
@@ -49,8 +55,10 @@ open class FoolFuukaEndpoints(
     boardDescriptor: BoardDescriptor,
     spoiler: Boolean,
     customSpoilers: Int,
-    arg: Map<String, String>
+    arg: Map<String, String>?
   ): HttpUrl {
+    requireNotNull(arg)
+
     val param1 = requireNotNull(arg[THUMBNAIL_PARAM_1]) { "THUMBNAIL_PARAM_1_NAME not provided" }
     val param2 = requireNotNull(arg[THUMBNAIL_PARAM_2]) { "THUMBNAIL_PARAM_2_NAME not provided" }
     val fileId = requireNotNull(arg[THUMBNAIL_FILE_ID]) { "THUMBNAIL_FILE_ID not provided" }
@@ -69,7 +77,7 @@ open class FoolFuukaEndpoints(
     return rootUrl
   }
 
-  override fun icon(icon: String, arg: Map<String, String>): HttpUrl {
+  override fun icon(icon: String, arg: Map<String, String>?): HttpUrl {
     throw NotImplementedError("icon")
   }
 

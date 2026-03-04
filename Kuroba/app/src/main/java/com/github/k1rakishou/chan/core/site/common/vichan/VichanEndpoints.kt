@@ -31,8 +31,7 @@ open class VichanEndpoints(
   override fun thread(
     threadDescriptor: ThreadDescriptor,
     contentType: SiteEndpoints.ContentType,
-    archive: Boolean,
-    partialLoad: Boolean
+    archive: Boolean
   ): HttpUrl? {
     return root.builder()
       .s(threadDescriptor.boardCode())
@@ -45,8 +44,10 @@ open class VichanEndpoints(
     boardDescriptor: BoardDescriptor,
     spoiler: Boolean,
     customSpoilers: Int,
-    arg: Map<String, String>
+    arg: Map<String, String>?
   ): HttpUrl {
+    requireNotNull(arg)
+
     return root.builder()
       .s(boardDescriptor.boardCode)
       .s("thumb")
@@ -54,7 +55,9 @@ open class VichanEndpoints(
       .url()
   }
 
-  override fun imageUrl(boardDescriptor: BoardDescriptor, arg: Map<String, String>): HttpUrl {
+  override fun imageUrl(boardDescriptor: BoardDescriptor, arg: Map<String, String>?): HttpUrl {
+    requireNotNull(arg)
+
     return root.builder()
       .s(boardDescriptor.boardCode)
       .s("src")
@@ -62,7 +65,9 @@ open class VichanEndpoints(
       .url()
   }
 
-  override fun icon(icon: String, arg: Map<String, String>): HttpUrl {
+  override fun icon(icon: String, arg: Map<String, String>?): HttpUrl {
+    requireNotNull(arg)
+
     val stat = root.builder().s("static")
 
     if (icon == "country") {

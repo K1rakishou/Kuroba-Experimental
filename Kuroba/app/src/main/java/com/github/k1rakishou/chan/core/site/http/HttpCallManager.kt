@@ -17,6 +17,7 @@
 package com.github.k1rakishou.chan.core.site.http
 
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.site.loader.ClientException
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.suspendCall
@@ -29,7 +30,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.withContext
 import okhttp3.Request
-import java.io.IOException
 import javax.inject.Inject
 import kotlin.time.measureTimedValue
 
@@ -50,8 +50,19 @@ class HttpCallManager @Inject constructor(
   ): Flow<HttpCall.HttpCallWithProgressResult<T>> {
     return channelFlow {
       try {
+        val replyUrl = httpCall.site.endpoints.reply(replyChanDescriptor)
+        if (replyUrl == null) {
+          val fail = HttpCall.HttpCallWithProgressResult.Fail(
+            httpCall = httpCall,
+            error = ClientException("Posting is not supported by ${replyChanDescriptor.siteName()}")
+          )
+
+          send(fail)
+          return@channelFlow
+        }
+
         val requestBuilder = Request.Builder()
-        requestBuilder.url(httpCall.site.endpoints.reply(replyChanDescriptor))
+        requestBuilder.url(replyUrl)
 
         try {
           httpCall.setup(
@@ -126,13 +137,7 @@ class HttpCallManager @Inject constructor(
 
       Logger.d(TAG, "Request (${httpCall.javaClass.simpleName}, ${request.url}) execution success, took $duration")
 
-      val body = response.body
-        ?: return@withContext HttpCall.HttpCallResult.Fail(
-          httpCall,
-          IOException("Response body is null, status = ${response.code}")
-        )
-
-      return@withContext body.use { responseBody ->
+      return@withContext response.body.use { responseBody ->
         try {
           val responseString = responseBody.string()
           httpCall.process(response, responseString)

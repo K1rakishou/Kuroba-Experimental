@@ -50,6 +50,9 @@ class FetchThreadBookmarkInfoUseCase(
       }
 
       val threadJsonEndpoint = site.endpoints.thread(threadDescriptor)
+      if (threadJsonEndpoint == null) {
+        return@parallelForEach null
+      }
 
       return@parallelForEach fetchThreadBookmarkInfo(
         threadDescriptor = threadDescriptor,

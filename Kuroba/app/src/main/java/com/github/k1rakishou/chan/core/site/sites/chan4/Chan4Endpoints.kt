@@ -20,31 +20,45 @@ class Chan4Endpoints : SiteEndpoints {
   private val b = HttpUrl.Builder().scheme("https").host("boards.4chan.org").build()
   private val search = HttpUrl.Builder().scheme("https").host("find.4chan.org").build()
 
-  override fun catalog(boardDescriptor: BoardDescriptor): HttpUrl {
-    return a.newBuilder()
-      .addPathSegment(boardDescriptor.boardCode)
-      .addPathSegment("catalog.json")
-      .build()
+  override fun catalog(
+    boardDescriptor: BoardDescriptor,
+    contentType: SiteEndpoints.ContentType
+  ): HttpUrl? {
+    return when (contentType) {
+      SiteEndpoints.ContentType.Html -> {
+        "https://boards.4chan.org/${boardDescriptor.boardCode}/".toHttpUrl()
+      }
+      SiteEndpoints.ContentType.Json -> {
+        a.newBuilder()
+          .addPathSegment(boardDescriptor.boardCode)
+          .addPathSegment("catalog.json")
+          .build()
+      }
+    }
   }
 
-  override fun thread(threadDescriptor: ChanDescriptor.ThreadDescriptor): HttpUrl {
-    return a.newBuilder()
-      .addPathSegment(threadDescriptor.boardCode())
-      .addPathSegment("thread")
-      .addPathSegment(threadDescriptor.threadNo.toString() + ".json")
-      .build()
+  override fun thread(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    contentType: SiteEndpoints.ContentType,
+    archive: Boolean
+  ): HttpUrl? {
+    return when (contentType) {
+      SiteEndpoints.ContentType.Html -> {
+        "https://boards.4chan.org/${threadDescriptor.boardDescriptor.boardCode}/thread/${threadDescriptor.threadNo}"
+          .toHttpUrl()
+      }
+      SiteEndpoints.ContentType.Json -> {
+        a.newBuilder()
+          .addPathSegment(threadDescriptor.boardCode())
+          .addPathSegment("thread")
+          .addPathSegment(threadDescriptor.threadNo.toString() + ".json")
+          .build()
+      }
+    }
   }
 
-  override fun catalogHtml(catalogDescriptor: ChanDescriptor.CatalogDescriptor): HttpUrl {
-    return "https://boards.4chan.org/${catalogDescriptor.boardDescriptor.boardCode}/".toHttpUrl()
-  }
-
-  override fun threadHtml(threadDescriptor: ChanDescriptor.ThreadDescriptor): HttpUrl {
-    return ("https://boards.4chan.org/${threadDescriptor.boardDescriptor.boardCode}/thread/" +
-      "${threadDescriptor.threadNo}").toHttpUrl()
-  }
-
-  override fun imageUrl(boardDescriptor: BoardDescriptor, arg: Map<String, String>): HttpUrl {
+  override fun imageUrl(boardDescriptor: BoardDescriptor, arg: Map<String, String>?): HttpUrl? {
+    requireNotNull(arg) { "arg is null" }
     val imageFile = arg["tim"].toString() + "." + arg["ext"]
 
     return i.newBuilder()
@@ -57,8 +71,9 @@ class Chan4Endpoints : SiteEndpoints {
     boardDescriptor: BoardDescriptor,
     spoiler: Boolean,
     customSpoilers: Int,
-    arg: Map<String, String>
+    arg: Map<String, String>?
   ): HttpUrl {
+    requireNotNull(arg) { "arg is null" }
     val boardCode = boardDescriptor.boardCode
 
     return if (spoiler) {

@@ -83,15 +83,21 @@ class LeftypolApi(
 
     reader.endObject()
 
-    if (fileId.isNotNullNorEmpty() && fileName.isNotNullNorEmpty() && fileExt.isNotNullNorEmpty()) {
+    if (
+      fileId.isNotNullNorEmpty() &&
+      fileName.isNotNullNorEmpty() &&
+      fileExt.isNotNullNorEmpty() &&
+      filePath.isNotNullNorEmpty() &&
+      thumbPath.isNotNullNorEmpty()
+    ) {
       val args = SiteEndpoints.makeArgument("file_path", filePath, "thumb_path", thumbPath)
       val customSpoilers = board?.customSpoilers ?: -1
 
       return imageBuilder
         .serverFilename(fileId)
-        .thumbnailUrl(endpoints.thumbnailUrl(builder.boardDescriptor, false, customSpoilers, args))
-        .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder.boardDescriptor, true, customSpoilers, args))
-        .imageUrl(endpoints.imageUrl(builder.boardDescriptor, args))
+        .thumbnailUrl(endpoints.thumbnailUrl(builder.requireBoardDescriptor(), false, customSpoilers, args))
+        .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder.requireBoardDescriptor(), true, customSpoilers, args))
+        .imageUrl(endpoints.imageUrl(builder.requireBoardDescriptor(), args))
         .filename(Parser.unescapeEntities(fileName, false))
         .extension(fileExt)
         .build()

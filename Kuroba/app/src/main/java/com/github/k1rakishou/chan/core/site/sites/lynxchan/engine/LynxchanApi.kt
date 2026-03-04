@@ -343,7 +343,10 @@ open class LynxchanApi(
           LynxchanEndpoints.COUNTRY_FLAG_ICON_KEY,
           SiteEndpoints.makeArgument(LynxchanEndpoints.COUNTRY_FLAG_PATH_KEY, flag)
         )
-        builder.addHttpIcon(ChanPostHttpIcon(countryUrl, "$flagName/$flagCode"))
+
+        if (countryUrl != null) {
+          builder.addHttpIcon(ChanPostHttpIcon(countryUrl, "$flagName/$flagCode"))
+        }
       }
 
       val timestampSeconds = if (post.creation != null) {

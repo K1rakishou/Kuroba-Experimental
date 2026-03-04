@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.core.site.sites.lynxchan.engine
 
+import com.github.k1rakishou.chan.core.site.SiteEndpoints
 import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -20,7 +21,10 @@ open class LynxchanEndpoints(site: LynxchanSite) : CommonSite.CommonEndpoints(si
       .addQueryParameter("json", "1").build()
   }
 
-  override fun catalog(boardDescriptor: BoardDescriptor): HttpUrl {
+  override fun catalog(
+    boardDescriptor: BoardDescriptor,
+    contentType: SiteEndpoints.ContentType
+  ): HttpUrl? {
     return lynxchanDomainUrl.newBuilder()
       .addPathSegment(boardDescriptor.boardCode)
       .addPathSegment("catalog.json")
@@ -36,7 +40,11 @@ open class LynxchanEndpoints(site: LynxchanSite) : CommonSite.CommonEndpoints(si
       .build()
   }
 
-  override fun thread(threadDescriptor: ChanDescriptor.ThreadDescriptor): HttpUrl {
+  override fun thread(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    contentType: SiteEndpoints.ContentType,
+    archive: Boolean
+  ): HttpUrl? {
     return lynxchanDomainUrl.newBuilder()
       .addPathSegment(threadDescriptor.boardCode())
       .addPathSegment("res")
@@ -46,8 +54,9 @@ open class LynxchanEndpoints(site: LynxchanSite) : CommonSite.CommonEndpoints(si
 
   override fun imageUrl(
     boardDescriptor: BoardDescriptor,
-    arg: Map<String, String>
+    arg: Map<String, String>?
   ): HttpUrl {
+    requireNotNull(arg)
     val path = arg[PATH_ARGUMENT_KEY]!!
 
     return "${lynxchanDomain}/${path}".toHttpUrl()
@@ -57,14 +66,17 @@ open class LynxchanEndpoints(site: LynxchanSite) : CommonSite.CommonEndpoints(si
     boardDescriptor: BoardDescriptor,
     spoiler: Boolean,
     customSpoilers: Int,
-    arg: Map<String, String>
+    arg: Map<String, String>?
   ): HttpUrl {
+    requireNotNull(arg)
     val thumb = arg[THUMB_ARGUMENT_KEY]!!
 
     return "${lynxchanDomain}/${thumb}".toHttpUrl()
   }
 
-  override fun icon(icon: String, arg: Map<String, String>): HttpUrl {
+  override fun icon(icon: String, arg: Map<String, String>?): HttpUrl? {
+    requireNotNull(arg)
+
     // https://endchan.net/.static/flags/de.png
     if (icon == COUNTRY_FLAG_ICON_KEY) {
       // .static/flags/de.png
@@ -77,13 +89,9 @@ open class LynxchanEndpoints(site: LynxchanSite) : CommonSite.CommonEndpoints(si
   }
 
   override fun reply(chanDescriptor: ChanDescriptor): HttpUrl {
-    when (chanDescriptor) {
-      is ChanDescriptor.ICatalogDescriptor -> {
-        return "${lynxchanDomain}/.api/newThread".toHttpUrl()
-      }
-      is ChanDescriptor.ThreadDescriptor -> {
-        return "${lynxchanDomain}/.api/replyThread".toHttpUrl()
-      }
+    return when (chanDescriptor) {
+      is ChanDescriptor.ICatalogDescriptor -> "${lynxchanDomain}/.api/newThread".toHttpUrl()
+      is ChanDescriptor.ThreadDescriptor -> "${lynxchanDomain}/.api/replyThread".toHttpUrl()
     }
   }
 
