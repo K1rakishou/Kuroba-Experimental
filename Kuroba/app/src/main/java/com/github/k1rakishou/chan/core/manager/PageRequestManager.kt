@@ -255,7 +255,7 @@ class PageRequestManager(
         return
       }
 
-      when (val response = site.actions().pages(board)) {
+      when (val response = site.actions.pages(board)) {
         is JsonReaderRequest.JsonReaderResponse.Success -> {
           onPagesReceived(response.result.boardDescriptor, response.result)
         }

@@ -10,8 +10,8 @@ import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.site.SiteConfiguration
 import com.github.k1rakishou.chan.core.site.sites.search.SearchBoard
-import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
 import com.github.k1rakishou.chan.features.search.data.GlobalSearchControllerState
 import com.github.k1rakishou.chan.features.search.data.GlobalSearchControllerStateData
 import com.github.k1rakishou.chan.features.search.data.SearchParameters
@@ -218,16 +218,16 @@ class GlobalSearchController(
 
     val selectedSite = dataState.sitesWithSearch.selectedSite
 
-    val canRenderSearchButton = when (selectedSite.siteGlobalSearchType) {
-      SiteGlobalSearchType.SimpleQuerySearch,
-      SiteGlobalSearchType.SimpleQueryBoardSearch -> {
-        renderSimpleQuerySearch(dataState, selectedSite.siteGlobalSearchType)
+    val canRenderSearchButton = when (selectedSite.siteGlobalSearchConfig) {
+      SiteConfiguration.GlobalSearchConfig.SimpleQuerySearch,
+      SiteConfiguration.GlobalSearchConfig.SimpleQueryBoardSearch -> {
+        renderSimpleQuerySearch(dataState, selectedSite.siteGlobalSearchConfig)
       }
-      SiteGlobalSearchType.FuukaSearch,
-      SiteGlobalSearchType.FoolFuukaSearch -> {
+      SiteConfiguration.GlobalSearchConfig.FuukaSearch,
+      SiteConfiguration.GlobalSearchConfig.FoolFuukaSearch -> {
         renderFoolFuukaSearch(dataState)
       }
-      SiteGlobalSearchType.SearchNotSupported -> false
+      SiteConfiguration.GlobalSearchConfig.SearchNotSupported -> false
     }
 
     if (!canRenderSearchButton) {
@@ -256,21 +256,21 @@ class GlobalSearchController(
       subject: String,
       searchBoard: SearchBoard?,
     ): SearchParameters.AdvancedSearchParameters? {
-      val searchType = siteManager.bySiteDescriptorAndActive(siteDescriptor)?.siteGlobalSearchType()
+      val searchType = siteManager.bySiteDescriptorAndActive(siteDescriptor)?.configuration?.globalSearchConfig
         ?: return null
 
       when (searchType) {
-        SiteGlobalSearchType.SearchNotSupported,
-        SiteGlobalSearchType.SimpleQuerySearch,
-        SiteGlobalSearchType.SimpleQueryBoardSearch,
-        SiteGlobalSearchType.FuukaSearch -> {
+        SiteConfiguration.GlobalSearchConfig.SearchNotSupported,
+        SiteConfiguration.GlobalSearchConfig.SimpleQuerySearch,
+        SiteConfiguration.GlobalSearchConfig.SimpleQueryBoardSearch,
+        SiteConfiguration.GlobalSearchConfig.FuukaSearch -> {
           return SearchParameters.FuukaSearchParameters(
             query = query,
             subject = subject,
             searchBoard = searchBoard
           )
         }
-        SiteGlobalSearchType.FoolFuukaSearch -> {
+        SiteConfiguration.GlobalSearchConfig.FoolFuukaSearch -> {
           return SearchParameters.FoolFuukaSearchParameters(
             query = query,
             subject = subject,
@@ -399,7 +399,7 @@ class GlobalSearchController(
 
   private fun EpoxyController.renderSimpleQuerySearch(
     dataState: GlobalSearchControllerStateData,
-    siteGlobalSearchType: SiteGlobalSearchType
+    siteGlobalSearchConfig: SiteConfiguration.GlobalSearchConfig
   ): Boolean {
     val sitesWithSearch = dataState.sitesWithSearch
     val searchParameters = dataState.searchParameters as SearchParameters.SimpleQuerySearchParameters
@@ -438,7 +438,7 @@ class GlobalSearchController(
       onUnbind { _, view -> removeViewFromInputViewRefSet(view) }
     }
 
-    if (siteGlobalSearchType == SiteGlobalSearchType.SimpleQueryBoardSearch) {
+    if (siteGlobalSearchConfig == SiteConfiguration.GlobalSearchConfig.SimpleQueryBoardSearch) {
       epoxyBoardSelectionButtonView {
         id("global_search_board_selection_button_view_$selectedSiteName")
         boardCode(selectedBoardCode)

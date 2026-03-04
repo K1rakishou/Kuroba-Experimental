@@ -10,8 +10,7 @@ import com.github.k1rakishou.chan.core.site.common.taimaba.TaimabaCommentParser
 import com.github.k1rakishou.chan.core.site.common.taimaba.TaimabaEndpoints
 import com.github.k1rakishou.chan.core.site.limitations.ConstantAttachablesCount
 import com.github.k1rakishou.chan.core.site.limitations.PasscodeDependantMaxAttachablesTotalSize
-import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitation
-import com.github.k1rakishou.chan.core.site.parser.CommentParserType
+import com.github.k1rakishou.chan.core.site.limitations.PostingLimitationConfig
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -53,7 +52,7 @@ class Chan420 : CommonSite() {
               .build()
 
             return@genericBoardsRequestResponseHandler Chan420BoardsRequest(
-              siteDescriptor = siteDescriptor(),
+              siteDescriptor = descriptor(),
               boardManager = boardManager,
               request = request,
               proxiedOkHttpClient = proxiedOkHttpClient
@@ -61,10 +60,10 @@ class Chan420 : CommonSite() {
           },
           defaultBoardsProvider = {
             return@genericBoardsRequestResponseHandler ArrayList<ChanBoard>().apply {
-              add(ChanBoard.create(BoardDescriptor.create(siteDescriptor().siteName, "weed"), "Cannabis Discussion"))
-              add(ChanBoard.create(BoardDescriptor.create(siteDescriptor().siteName, "hooch"), "Alcohol Discussion"))
-              add(ChanBoard.create(BoardDescriptor.create(siteDescriptor().siteName, "dr"), "Dream Discussion"))
-              add(ChanBoard.create(BoardDescriptor.create(siteDescriptor().siteName, "detox"), "Detoxing & Rehabilitation"))
+              add(ChanBoard.create(BoardDescriptor.create(descriptor().siteName, "weed"), "Cannabis Discussion"))
+              add(ChanBoard.create(BoardDescriptor.create(descriptor().siteName, "hooch"), "Alcohol Discussion"))
+              add(ChanBoard.create(BoardDescriptor.create(descriptor().siteName, "dr"), "Dream Discussion"))
+              add(ChanBoard.create(BoardDescriptor.create(descriptor().siteName, "detox"), "Detoxing & Rehabilitation"))
             }
           }
         )
@@ -75,7 +74,7 @@ class Chan420 : CommonSite() {
 
     setPostingLimitationInfo(
       postingLimitationInfoLazy = lazy {
-        SitePostingLimitation(
+        PostingLimitationConfig(
           postMaxAttachables = ConstantAttachablesCount(1),
           postMaxAttachablesTotalSize = PasscodeDependantMaxAttachablesTotalSize(
             siteManager = siteManager

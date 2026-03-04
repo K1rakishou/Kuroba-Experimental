@@ -25,6 +25,7 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.ThreadFollowHistoryManager
 import com.github.k1rakishou.chan.core.manager.ThreadPostSearchManager
 import com.github.k1rakishou.chan.core.site.Site
+import com.github.k1rakishou.chan.core.site.SiteConfiguration
 import com.github.k1rakishou.chan.features.album.AlbumViewController
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.features.filters.FiltersController
@@ -370,7 +371,7 @@ abstract class ThreadController(
       return
     }
 
-    if (site.siteDescriptor().is4chan()) {
+    if (site.descriptor.is4chan()) {
       val chan4ReportPostController = Chan4ReportPostController(
         context = context,
         postDescriptor = post.postDescriptor,
@@ -391,7 +392,7 @@ abstract class ThreadController(
 
       requireNavController().presentController(chan4ReportPostController)
       return
-    } else if (site.siteDescriptor().isDvach()) {
+    } else if (site.descriptor.isDvach()) {
       dialogFactory.createSimpleDialogWithInput(
         context = context,
         titleText = getString(R.string.dvach_report_post_title, post.postDescriptor.userReadableString()),
@@ -569,7 +570,7 @@ abstract class ThreadController(
       ?: return
 
     val supportedArchiveDescriptors = archivesManager.getSupportedArchiveDescriptors(descriptor)
-      .filter { ad -> siteManager.bySiteDescriptor(ad.siteDescriptor)?.enabled() ?: false }
+      .filter { ad -> siteManager.bySiteDescriptor(ad.siteDescriptor)?.enabled ?: false }
 
     if (supportedArchiveDescriptors.isEmpty()) {
       Logger.d(TAG, "showAvailableArchives($descriptor) supportedThreadDescriptors is empty")
@@ -693,11 +694,11 @@ abstract class ThreadController(
   }
 
   private fun openWebViewReportController(post: ChanPost, site: Site) {
-    if (!site.siteFeature(Site.SiteFeature.POST_REPORT)) {
+    if (!site.hasSiteFeature(SiteConfiguration.SiteFeature.PostReporting)) {
       return
     }
 
-    if (site.endpoints().report(post) == null) {
+    if (site.endpoints.report(post) == null) {
       return
     }
 

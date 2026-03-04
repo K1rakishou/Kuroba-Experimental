@@ -3,8 +3,8 @@ package com.github.k1rakishou.chan.features.search
 import com.github.k1rakishou.chan.core.base.BasePresenter
 import com.github.k1rakishou.chan.core.concurrency.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.site.SiteConfiguration
 import com.github.k1rakishou.chan.core.site.sites.search.SearchBoard
-import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
 import com.github.k1rakishou.chan.features.search.data.GlobalSearchControllerState
 import com.github.k1rakishou.chan.features.search.data.GlobalSearchControllerStateData
 import com.github.k1rakishou.chan.features.search.data.SearchParameters
@@ -146,7 +146,7 @@ internal class GlobalSearchPresenter(
     val sitesSupportingSearch = mutableListOf<SiteDescriptor>()
 
     siteManager.viewActiveSitesOrderedWhile { chanSiteData, site ->
-      if (site.siteGlobalSearchType() != SiteGlobalSearchType.SearchNotSupported) {
+      if (site.configuration.globalSearchConfig != SiteConfiguration.GlobalSearchConfig.SearchNotSupported) {
         sitesSupportingSearch += chanSiteData.siteDescriptor
       }
 
@@ -177,8 +177,8 @@ internal class GlobalSearchPresenter(
       return
     }
 
-    val siteIconUrl = site.icon().url?.toString()
-    val searchType = site.siteGlobalSearchType()
+    val siteIconUrl = site.configuration.icon.url?.toString()
+    val siteGlobalSearchConfig = site.configuration.globalSearchConfig
 
     val dataState = GlobalSearchControllerStateData(
       currentTheme = themeEngine.chanTheme.copyTheme(),
@@ -187,7 +187,7 @@ internal class GlobalSearchPresenter(
         selectedSite = SelectedSite(
           siteDescriptor = selectedSiteDescriptor,
           siteIconUrl = siteIconUrl,
-          siteGlobalSearchType = searchType
+          siteGlobalSearchConfig = siteGlobalSearchConfig
         )
       ),
       searchParameters = searchParameters
@@ -197,15 +197,15 @@ internal class GlobalSearchPresenter(
   }
 
   private fun getDefaultSearchParameters(siteDescriptor: SiteDescriptor): SearchParameters? {
-    val searchType = siteManager.bySiteDescriptorAndActive(siteDescriptor)?.siteGlobalSearchType()
+    val searchType = siteManager.bySiteDescriptorAndActive(siteDescriptor)?.configuration?.globalSearchConfig
       ?: return null
 
     when (searchType) {
-      SiteGlobalSearchType.SearchNotSupported -> {
-        throw IllegalStateException("Must not be used here")
+      SiteConfiguration.GlobalSearchConfig.SearchNotSupported -> {
+        error("Must not be used here")
       }
-      SiteGlobalSearchType.SimpleQuerySearch,
-      SiteGlobalSearchType.SimpleQueryBoardSearch -> {
+      SiteConfiguration.GlobalSearchConfig.SimpleQuerySearch,
+      SiteConfiguration.GlobalSearchConfig.SimpleQueryBoardSearch -> {
         if (siteDescriptor.is4chan()) {
           return SearchParameters.Chan4SearchParams(
             query = "",
@@ -220,14 +220,14 @@ internal class GlobalSearchPresenter(
 
         throw IllegalArgumentException("Unsupported site: $siteDescriptor")
       }
-      SiteGlobalSearchType.FuukaSearch -> {
+      SiteConfiguration.GlobalSearchConfig.FuukaSearch -> {
         return SearchParameters.FuukaSearchParameters(
           query = "",
           subject = "",
           searchBoard = null
         )
       }
-      SiteGlobalSearchType.FoolFuukaSearch -> {
+      SiteConfiguration.GlobalSearchConfig.FoolFuukaSearch -> {
         return SearchParameters.FoolFuukaSearchParameters(
           query = "",
           subject = "",

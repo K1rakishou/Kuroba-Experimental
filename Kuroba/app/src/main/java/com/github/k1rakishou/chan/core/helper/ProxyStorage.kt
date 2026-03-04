@@ -76,7 +76,7 @@ class ProxyStorage(
     loadProxies()
     awaitBlockingUntilDependenciesAreInitialized()
 
-    val siteDescriptor = siteResolver.findSiteForUrl(uri.host.toString())?.siteDescriptor()
+    val siteDescriptor = siteResolver.findSiteForUrl(uri.host.toString())?.descriptor
     if (siteDescriptor == null) {
       return emptyList()
     }

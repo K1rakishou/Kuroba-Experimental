@@ -53,12 +53,12 @@ class LynxchanGetBoardsUseCase(
     site: LynxchanSite,
     boardsEndpoint: HttpUrl
   ) {
-    val siteDescriptor = site.siteDescriptor()
+    val siteDescriptor = site.descriptor
 
     val request = Request.Builder()
       .url(boardsPageEndpoint(boardsEndpoint = boardsEndpoint, page = 1))
       .get()
-      .also { builder -> site.requestModifier().modifyGenericRequest(site, builder) }
+      .also { builder -> site.requestModifier.modifyGenericRequest(site, builder) }
       .build()
 
     val totalLynxchanBoards = mutableListOf<LynxchanBoardsData>()

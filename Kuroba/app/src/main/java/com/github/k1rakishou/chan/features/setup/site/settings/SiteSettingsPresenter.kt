@@ -10,6 +10,7 @@ import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.CompositeCatalogManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.Site
+import com.github.k1rakishou.chan.core.site.SiteConfiguration
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.features.login.LoginController
 import com.github.k1rakishou.chan.features.settings.BuildOptions
@@ -80,13 +81,13 @@ class SiteSettingsPresenter(
   private fun collectGroupBuilders(context: Context, site: Site): List<SettingsGroup.SettingsGroupBuilder> {
     val groups = mutableListOf<SettingsGroup.SettingsGroupBuilder>()
 
-    groups += buildGeneralGroup(context, site.siteDescriptor())
+    groups += buildGeneralGroup(context, site.descriptor)
 
-    if (site.siteFeature(Site.SiteFeature.LOGIN)) {
+    if (site.hasSiteFeature(SiteConfiguration.SiteFeature.Login)) {
       groups += buildAuthenticationGroup(context, site)
     }
 
-    if (site.settings().isNotEmpty()) {
+    if (site.settings.isNotEmpty()) {
       groups += buildSiteSpecificSettingsGroup(context, site)
     }
 
@@ -107,7 +108,7 @@ class SiteSettingsPresenter(
 
         val groupId = SiteSettingsScreen.AdditionalSettingsGroup.getGroupIdentifier().id
 
-        site.settings().forEach { siteSetting ->
+        site.settings.forEach { siteSetting ->
           val settingId = groupId + "_" + siteSetting.settingTitle
           val identifier = SiteSettingsScreen.AdditionalSettingsGroup(settingId)
 
@@ -265,7 +266,7 @@ class SiteSettingsPresenter(
           identifier = SiteSettingsScreen.AuthenticationGroup.Login,
           topDescriptionStringFunc = { "Login" },
           bottomDescriptionStringFunc = {
-            if (site.actions().isLoggedIn()) {
+            if (site.actions.isLoggedIn()) {
               "On"
             } else {
               "Off"
@@ -301,7 +302,7 @@ class SiteSettingsPresenter(
           topDescriptionStringFunc = { "Set up boards" },
           bottomDescriptionStringFunc = {
             val isCatalogCompositionSite = siteManager.bySiteDescriptorAndActive(siteDescriptor)
-              ?.siteFeature(Site.SiteFeature.CATALOG_COMPOSITION) == true
+              ?.hasSiteFeature(SiteConfiguration.SiteFeature.CatalogComposition) == true
 
             if (isCatalogCompositionSite) {
               "${compositeCatalogManager.count()} composite catalog(s) created"
@@ -316,7 +317,7 @@ class SiteSettingsPresenter(
               return@createBuilder
             }
 
-            if (site.siteFeature(Site.SiteFeature.CATALOG_COMPOSITION)) {
+            if (site.hasSiteFeature(SiteConfiguration.SiteFeature.CatalogComposition)) {
               withViewNormal { pushController(CompositeCatalogsSetupController(context)) }
             } else {
               withViewNormal { pushController(BoardsReorderController(context, siteDescriptor)) }

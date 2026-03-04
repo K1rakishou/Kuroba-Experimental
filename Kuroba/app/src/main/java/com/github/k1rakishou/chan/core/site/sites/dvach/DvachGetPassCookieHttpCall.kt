@@ -8,7 +8,6 @@ import com.github.k1rakishou.chan.core.site.http.login.DvachLoginResponse
 import com.github.k1rakishou.core_logger.Logger
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
-import dagger.Lazy
 import okhttp3.FormBody
 import okhttp3.Request
 import okhttp3.Response
@@ -16,7 +15,7 @@ import java.net.HttpCookie
 
 class DvachGetPassCookieHttpCall(
   site: Site,
-  private val moshi: Lazy<Moshi>,
+  private val moshi: Moshi,
   private val dvachLoginRequest: DvachLoginRequest
 ) : HttpCall(site) {
   var loginResponse: DvachLoginResponse? = null
@@ -30,11 +29,11 @@ class DvachGetPassCookieHttpCall(
     formBuilder
       .add("passcode", dvachLoginRequest.passcode)
 
-    requestBuilder.url(site.endpoints().login())
+    requestBuilder.url(site.endpoints.login())
     requestBuilder.post(formBuilder.build())
 
-    site.requestModifier().modifyGenericRequest(site, requestBuilder)
-    site.requestModifier().modifyHttpCall(this, requestBuilder)
+    site.requestModifier.modifyGenericRequest(site, requestBuilder)
+    site.requestModifier.modifyHttpCall(this, requestBuilder)
   }
 
   override fun process(response: Response, result: String) {
@@ -43,7 +42,7 @@ class DvachGetPassCookieHttpCall(
       return
     }
 
-    val passcodeResult = moshi.get()
+    val passcodeResult = moshi
       .adapter(PasscodeResult::class.java)
       .fromJson(result)
 

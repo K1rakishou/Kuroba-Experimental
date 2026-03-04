@@ -117,7 +117,7 @@ class Chan8MoeInterceptor(
   ): Request {
     val requestBuilder = prevRequest.newBuilder()
 
-    chan8Moe.requestModifier()
+    chan8Moe.requestModifier
       .modifyGenericRequest(chan8Moe, requestBuilder)
 
     return requestBuilder
@@ -128,15 +128,15 @@ class Chan8MoeInterceptor(
   @Suppress("ThrowsCount")
   private fun tryPass8chanMoePOWBlock(chan8Moe: Chan8Moe): Boolean {
     val threadId = Thread.currentThread().id
-    val siteDescriptor = chan8Moe.siteDescriptor()
+    val siteDescriptor = chan8Moe.descriptor
 
     val initialResponse = run {
-      // Initial request to check whether or not we need to bypass the POW block
+      // Initial request to check whether we need to bypass the POW block
       val initialRequest = Request.Builder()
         .url("${chan8Moe.domainString}/".toHttpUrl())
         .get()
 
-      chan8Moe.requestModifier()
+      chan8Moe.requestModifier
         .modifyGenericRequest(chan8Moe, initialRequest)
 
       val response = _noRedirectHttpClient.newCall(initialRequest.build()).execute()
@@ -207,7 +207,7 @@ class Chan8MoeInterceptor(
       .tag(RequestTag())
       .get()
 
-    chan8Moe.requestModifier()
+    chan8Moe.requestModifier
       .modifyGenericRequest(chan8Moe, firstSubmitSolutionRequest)
 
     val firstSubmitSolutionResponse = _noRedirectHttpClient.newCall(firstSubmitSolutionRequest.build()).execute()

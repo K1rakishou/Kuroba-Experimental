@@ -39,6 +39,7 @@ import com.github.k1rakishou.chan.core.manager.SeenPostsManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteActions
+import com.github.k1rakishou.chan.core.site.SiteConfiguration
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.http.DeleteRequest
 import com.github.k1rakishou.chan.core.site.http.report.PostReportData
@@ -1351,9 +1352,10 @@ class ThreadPresenter @Inject constructor(
       is ChanDescriptor.CatalogDescriptor -> {
         val site = siteManager.bySiteDescriptorAndActive(localChanDescriptor.siteDescriptor())
           ?: return
+        val siteIconUrl = site.configuration.icon.url
+          ?: return
 
-        val siteIconUrl = site.icon().url!!
-        val title = String.format(Locale.ENGLISH, "%s/%s", site.name(), localChanDescriptor.boardCode())
+        val title = String.format(Locale.ENGLISH, "%s/%s", site.name, localChanDescriptor.boardCode())
 
         historyNavigationManager.createNewNavElement(
           descriptor = localChanDescriptor,
@@ -1377,7 +1379,10 @@ class ThreadPresenter @Inject constructor(
           ?.actualThumbnailUrl
 
         if (opThumbnailUrl == null) {
-          opThumbnailUrl = siteManager.bySiteDescriptorAndActive(localChanDescriptor.siteDescriptor())?.icon()?.url
+          opThumbnailUrl = siteManager.bySiteDescriptorAndActive(localChanDescriptor.siteDescriptor())
+            ?.configuration
+            ?.icon
+            ?.url
         }
 
         val title = ChanPostUtils.getTitle(
@@ -1758,7 +1763,7 @@ class ThreadPresenter @Inject constructor(
       menu.add(createMenuItem(POST_OPTION_QUOTE_TEXT, R.string.post_quote_text))
     }
 
-    if (site?.siteFeature(Site.SiteFeature.POST_REPORT) == true) {
+    if (site?.hasSiteFeature(SiteConfiguration.SiteFeature.PostReporting) == true) {
       menu.add(createMenuItem(POST_OPTION_REPORT, R.string.post_report))
     }
 
@@ -1784,7 +1789,7 @@ class ThreadPresenter @Inject constructor(
     val siteDescriptor = post.postDescriptor.boardDescriptor().siteDescriptor
     val containsSite = siteManager.bySiteDescriptorAndActive(siteDescriptor) != null
 
-    if (site?.siteFeature(Site.SiteFeature.POST_DELETE) == true) {
+    if (site?.hasSiteFeature(SiteConfiguration.SiteFeature.PostDeletion) == true) {
       if (containsSite && !post.isOP()) {
         val savedReply = savedReplyManager.getSavedReply(post.postDescriptor)
         if (savedReply?.password != null) {
@@ -1940,7 +1945,7 @@ class ThreadPresenter @Inject constructor(
           val site = siteManager.bySiteDescriptorAndActive(post.postDescriptor.siteDescriptor())
             ?: return@post
 
-          val url = site.resolvable().desktopUrl(post.postDescriptor.descriptor, post.postNo(), post.postSubNo())
+          val url = site.urlHandler.desktopUrl(post.postDescriptor.descriptor, post.postNo(), post.postSubNo())
           openLink(url)
         }
         POST_OPTION_OPEN_IN_ARCHIVE -> {
@@ -1957,7 +1962,7 @@ class ThreadPresenter @Inject constructor(
           val site = siteManager.bySiteDescriptorAndActive(post.postDescriptor.siteDescriptor())
             ?: return@post
 
-          val url = site.resolvable().desktopUrl(post.postDescriptor.descriptor, post.postNo(), post.postSubNo())
+          val url = site.urlHandler.desktopUrl(post.postDescriptor.descriptor, post.postNo(), post.postSubNo())
           shareLink(url)
         }
         POST_OPTION_REMOVE,
@@ -2124,7 +2129,7 @@ class ThreadPresenter @Inject constructor(
                 val postNo = postId.postNo
                 val postSubNo = postId.postSubNo
 
-                val desktopUrl = site.resolvable().desktopUrl(postChanDescriptor, postNo, postSubNo)
+                val desktopUrl = site.urlHandler.desktopUrl(postChanDescriptor, postNo, postSubNo)
                 floatingListMenuItems += createMenuItem(
                   menuItemId = COPY_LINK_VALUE,
                   stringId = R.string.action_copy_link_value,
@@ -2138,14 +2143,14 @@ class ThreadPresenter @Inject constructor(
               }
 
               val postDescriptor = PostDescriptor.create(
-                siteName = site.name(),
+                siteName = site.name,
                 boardCode = postLinkableValue.board,
                 threadNo = postLinkableValue.threadId,
                 postNo = postLinkableValue.postId,
                 postSubNo = postLinkableValue.postSubId
               )
 
-              val desktopUrl = site.resolvable().desktopUrl(
+              val desktopUrl = site.urlHandler.desktopUrl(
                 chanDescriptor = postDescriptor.descriptor,
                 postNo = postDescriptor.postNo,
                 postSubNo = postDescriptor.postSubNo,
@@ -2184,14 +2189,14 @@ class ThreadPresenter @Inject constructor(
             }
 
             val linkPostDescriptor = PostDescriptor.create(
-              siteName = site.name(),
+              siteName = site.name,
               boardCode = threadLink.board,
               threadNo = threadLink.threadId,
               postNo = threadLink.postId,
               postSubNo = threadLink.postSubId
             )
 
-            val desktopUrl = site.resolvable().desktopUrl(
+            val desktopUrl = site.urlHandler.desktopUrl(
               chanDescriptor = linkPostDescriptor.descriptor,
               postNo = linkPostDescriptor.postNo,
               postSubNo = linkPostDescriptor.postSubNo,
@@ -2208,10 +2213,10 @@ class ThreadPresenter @Inject constructor(
           val link = (linkable.linkableValue as? PostLinkable.Value.StringValue)?.value
           if (link != null) {
             val catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(
-              BoardDescriptor.create(site.name(), link.toString())
+              BoardDescriptor.create(site.name, link.toString())
             )
 
-            val desktopUrl = site.resolvable().desktopUrl(catalogDescriptor, null, null)
+            val desktopUrl = site.urlHandler.desktopUrl(catalogDescriptor, null, null)
 
             floatingListMenuItems += createMenuItem(
               menuItemId = COPY_LINK_VALUE,
@@ -2229,10 +2234,10 @@ class ThreadPresenter @Inject constructor(
           }
 
           val catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(
-            BoardDescriptor.create(site.name(), searchLink.board)
+            BoardDescriptor.create(site.name, searchLink.board)
           )
 
-          val desktopUrl = site.resolvable().desktopUrl(catalogDescriptor, null, null)
+          val desktopUrl = site.urlHandler.desktopUrl(catalogDescriptor, null, null)
 
           floatingListMenuItems += createMenuItem(
             menuItemId = COPY_LINK_VALUE,
@@ -2261,7 +2266,7 @@ class ThreadPresenter @Inject constructor(
                 postSubNo = archiveThreadLink.postSubId ?: 0L
               )
 
-              val desktopUrl = site.resolvable().desktopUrl(
+              val desktopUrl = site.urlHandler.desktopUrl(
                 chanDescriptor = archivePostDescriptor.descriptor,
                 postNo = archivePostDescriptor.postNo,
                 postSubNo = archivePostDescriptor.postSubNo,
@@ -2616,7 +2621,7 @@ class ThreadPresenter @Inject constructor(
       }
 
       val deleteRequest = DeleteRequest(post, savedReply, onlyImageDelete)
-      val deleteResult = site.actions().delete(deleteRequest)
+      val deleteResult = site.actions.delete(deleteRequest)
 
       when (deleteResult) {
         is SiteActions.DeleteResult.DeleteComplete -> {
@@ -2687,7 +2692,7 @@ class ThreadPresenter @Inject constructor(
     siteManager.bySiteDescriptorAndActive(post.postDescriptor.siteDescriptor())?.let { site ->
       text
         .append("Full post link: ")
-        .append(site.resolvable().desktopUrl(descriptor, post.postDescriptor.postNo, post.postDescriptor.postSubNo))
+        .append(site.urlHandler.desktopUrl(descriptor, post.postDescriptor.postNo, post.postDescriptor.postSubNo))
         .appendLine()
     }
 
@@ -2940,7 +2945,7 @@ class ThreadPresenter @Inject constructor(
       val postReportData = PostReportData.Dvach(post.postDescriptor, reason)
       showToast(context, R.string.dvach_report_post_sending)
 
-      when (val postReportResult = site.actions().reportPost(postReportData)) {
+      when (val postReportResult = site.actions.reportPost(postReportData)) {
         is PostReportResult.NotSupported -> {
           showToast(context, R.string.post_report_not_supported)
         }

@@ -250,7 +250,7 @@ class FoolFuukaApi(
     requestUrl: String,
     responseBodyStream: InputStream,
   ): ModularResult<ThreadBookmarkInfoObject> {
-    val error = CommonClientException("Bookmarks are not supported for site ${site.name()}")
+    val error = CommonClientException("Bookmarks are not supported for site ${site.name}")
 
     return ModularResult.error(error)
   }
@@ -260,7 +260,7 @@ class FoolFuukaApi(
     requestUrl: String,
     responseBodyStream: InputStream,
   ): ModularResult<FilterWatchCatalogInfoObject> {
-    val error = CommonClientException("Filter watching is not supported for site ${site.name()}")
+    val error = CommonClientException("Filter watching is not supported for site ${site.name}")
 
     return ModularResult.error(error)
   }

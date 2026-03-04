@@ -28,13 +28,13 @@ class FuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
 
   override suspend fun post(replyChanDescriptor: ChanDescriptor, replyMode: ReplyMode): Flow<SiteActions.PostResult> {
     return flow {
-      val error = CommonClientException("Posting is not supported for site ${site.name()}")
+      val error = CommonClientException("Posting is not supported for site ${site.name}")
       emit(SiteActions.PostResult.PostError(error))
     }
   }
 
   override fun setupPost(replyChanDescriptor: ChanDescriptor, call: MultipartHttpCall): ModularResult<Unit> {
-    val error = CommonClientException("Posting is not supported for site ${site.name()}")
+    val error = CommonClientException("Posting is not supported for site ${site.name}")
 
     return ModularResult.error(error)
   }
@@ -52,13 +52,13 @@ class FuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
     replyChanDescriptor: ChanDescriptor,
     replyResponse: ReplyResponse
   ): ModularResult<Unit> {
-    val error = CommonClientException("Posting is not supported for site ${site.name()}")
+    val error = CommonClientException("Posting is not supported for site ${site.name}")
 
     return ModularResult.error(error)
   }
 
   override suspend fun delete(deleteRequest: DeleteRequest): SiteActions.DeleteResult {
-    val error = CommonClientException("Post deletion is not supported for site ${site.name()}")
+    val error = CommonClientException("Post deletion is not supported for site ${site.name}")
 
     return SiteActions.DeleteResult.DeleteError(error)
   }
@@ -74,7 +74,7 @@ class FuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
 
   override suspend fun <T : AbstractLoginRequest> login(loginRequest: T): SiteActions.LoginResult {
     return SiteActions.LoginResult.LoginError(
-      "Login is not supported for site ${site.name()}"
+      "Login is not supported for site ${site.name}"
     )
   }
 
@@ -84,7 +84,7 @@ class FuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
     searchParams as FuukaSearchParams
 
     // https://warosu.org/g/?offset=0&ghost=no&task=search&search_text=test&search_subject=test123
-    val searchUrl = requireNotNull(site.endpoints().search())
+    val searchUrl = requireNotNull(site.endpoints.search())
       .newBuilder()
       .addEncodedPathSegment(searchParams.boardDescriptor.boardCode)
       .addQueryParameter("offset", (searchParams.getCurrentPage() * FUUKA_SEARCH_ENTRIES_PER_PAGE).toString())
@@ -98,7 +98,7 @@ class FuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
       .url(searchUrl)
       .get()
 
-    site.requestModifier().modifyGenericRequest(site, requestBuilder)
+    site.requestModifier.modifyGenericRequest(site, requestBuilder)
 
     return FuukaSearchRequest(
       verboseLogs = ChanSettings.verboseLogs.get(),

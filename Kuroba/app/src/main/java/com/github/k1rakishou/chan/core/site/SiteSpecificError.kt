@@ -1,6 +1,6 @@
 package com.github.k1rakishou.chan.core.site
 
-import com.github.k1rakishou.chan.core.site.sites.dvach.DvachApiV2
+import com.github.k1rakishou.chan.core.site.sites.dvach.DvachApi
 
 sealed class SiteSpecificError {
   abstract fun isNotFoundError(): Boolean
@@ -11,7 +11,7 @@ sealed class SiteSpecificError {
   ) : SiteSpecificError() {
 
     override fun isNotFoundError(): Boolean {
-      return DvachApiV2.DvachError.isNotFoundError(errorCode)
+      return DvachApi.DvachError.isNotFoundError(errorCode)
     }
 
   }

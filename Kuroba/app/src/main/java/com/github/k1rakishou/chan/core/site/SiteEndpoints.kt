@@ -1,111 +1,51 @@
-/*
- * KurobaEx - *chan browser https://github.com/K1rakishou/Kuroba-Experimental/
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-package com.github.k1rakishou.chan.core.site;
+package com.github.k1rakishou.chan.core.site
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
-import androidx.collection.ArrayMap;
+import com.github.k1rakishou.common.mutableMapWithCap
+import com.github.k1rakishou.model.data.board.ChanBoard
+import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
+import com.github.k1rakishou.model.data.post.ChanPost
+import okhttp3.HttpUrl
 
-import com.github.k1rakishou.model.data.board.ChanBoard;
-import com.github.k1rakishou.model.data.descriptor.BoardDescriptor;
-import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
-import com.github.k1rakishou.model.data.descriptor.PostDescriptor;
-import com.github.k1rakishou.model.data.post.ChanPost;
+@Suppress("MaxLineLength")
+interface SiteEndpoints {
+  fun catalogPage(boardDescriptor: BoardDescriptor, page: Int?): HttpUrl? = null
+  fun catalog(boardDescriptor: BoardDescriptor, contentType: ContentType): HttpUrl? = null
+  fun thread(threadDescriptor: ThreadDescriptor, contentType: ContentType, archive: Boolean, partialLoad: Boolean): HttpUrl? = null
+  fun imageUrl(boardDescriptor: BoardDescriptor, arg: Map<String, String>): HttpUrl? = null
+  fun thumbnailUrl(boardDescriptor: BoardDescriptor, spoiler: Boolean, customSpoilers: Int, arg: Map<String, String>): HttpUrl?
+  fun icon(icon: String, arg: Map<String, String>): HttpUrl? = null
+  fun boards(): HttpUrl? = null
+  fun pages(board: ChanBoard): HttpUrl? = null
+  fun reply(chanDescriptor: ChanDescriptor): HttpUrl? = null
+  fun delete(post: ChanPost): HttpUrl? = null
+  fun report(post: ChanPost): HttpUrl? = null
+  fun login(): HttpUrl? = null
+  fun passCodeInfo(): HttpUrl? = null
+  fun search(): HttpUrl? = null
+  fun boardArchive(boardDescriptor: BoardDescriptor, page: Int?): HttpUrl? = null
 
-import java.util.Map;
+  enum class ContentType {
+    Json,
+    Html
+  }
 
-import okhttp3.HttpUrl;
+  companion object {
+    fun makeArgument(vararg toMap: String): Map<String, String> {
+      if (toMap.isEmpty()) {
+        return emptyMap()
+      }
 
-/**
- * Endpoints for {@link Site}.
- */
-public interface SiteEndpoints {
+      val map = mutableMapWithCap<String, String>(initialCapacity = toMap.size)
 
-    @Nullable
-    default HttpUrl catalogPage(BoardDescriptor boardDescriptor, @Nullable Integer page) {
-        return null;
+      toMap
+        .toList()
+        .asSequence()
+        .chunked(2)
+        .forEach { (key, value) -> map[key] = value }
+
+      return map
     }
-
-    @NonNull HttpUrl catalog(BoardDescriptor boardDescriptor);
-
-    HttpUrl thread(ChanDescriptor.ThreadDescriptor threadDescriptor);
-
-    @Nullable
-    default HttpUrl catalogHtml(@NonNull ChanDescriptor.CatalogDescriptor catalogDescriptor) {
-        return null;
-    }
-
-    @Nullable
-    default HttpUrl threadHtml(@NonNull ChanDescriptor.ThreadDescriptor threadDescriptor) {
-        return null;
-    }
-
-    @Nullable
-    default HttpUrl threadArchive(@NonNull ChanDescriptor.ThreadDescriptor threadDescriptor) {
-        return null;
-    }
-
-    @Nullable
-    default HttpUrl threadPartial(@NonNull PostDescriptor fromPostDescriptor) {
-        return null;
-    }
-
-    HttpUrl imageUrl(BoardDescriptor boardDescriptor, Map<String, String> arg);
-    HttpUrl thumbnailUrl(BoardDescriptor boardDescriptor, boolean spoiler, int customSpoilers, Map<String, String> arg);
-    HttpUrl icon(String icon, Map<String, String> arg);
-
-    @Nullable
-    default HttpUrl boards() {
-        return null;
-    }
-
-    HttpUrl pages(ChanBoard board);
-    HttpUrl reply(ChanDescriptor chanDescriptor);
-    HttpUrl delete(ChanPost post);
-
-    @Nullable
-    default HttpUrl report(ChanPost post) {
-        return null;
-    }
-
-    HttpUrl login();
-
-    @Nullable
-    default HttpUrl passCodeInfo() {
-        return null;
-    }
-
-    @Nullable
-    default HttpUrl search() {
-        return null;
-    }
-
-    @Nullable
-    default HttpUrl boardArchive(BoardDescriptor boardDescriptor, @Nullable Integer page) {
-        return null;
-    }
-
-    static Map<String, String> makeArgument(String... toMap) {
-        Map<String, String> map = new ArrayMap<String, String>();
-        for (int i = 0; i + 1 < toMap.length; i += 2) {
-            String key = toMap[i];
-            String value = toMap[i + 1];
-            map.put(key, value);
-        }
-        return map;
-    }
+  }
 }

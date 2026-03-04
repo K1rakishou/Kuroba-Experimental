@@ -127,20 +127,20 @@ public class Vhschan extends CommonSite {
         setIcon(SiteIcon.fromFavicon(getImageLoaderDeprecatedLazy(), HttpUrl.parse("https://vhschan.org/stylesheets/favicon.ico")));
 
         setBoards(
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "b"), "Betamax"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "n64"), "Jogos"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "k7"), "Musicas"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "warhol"), "Artes"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "sebo"), "Cafe, livros e Londres"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "uhf"), "TV, Filmes e series"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "ego"), "how to dress well"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "meth"), "The krystal ship"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "oprah"), "baw"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "toth"), "pineal gland"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "win95"), "CyberTech"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "loverboy"), "Good Old-Fashioned Lover Boy"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "sac"), "Serviço de atendimento ao channer"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "Recentes"), "Recentes")
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "b"), "Betamax"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "n64"), "Jogos"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "k7"), "Musicas"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "warhol"), "Artes"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "sebo"), "Cafe, livros e Londres"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "uhf"), "TV, Filmes e series"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "ego"), "how to dress well"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "meth"), "The krystal ship"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "oprah"), "baw"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "toth"), "pineal gland"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "win95"), "CyberTech"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "loverboy"), "Good Old-Fashioned Lover Boy"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "sac"), "Serviço de atendimento ao channer"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "Recentes"), "Recentes")
         );
 
         setResolvable(URL_HANDLER);

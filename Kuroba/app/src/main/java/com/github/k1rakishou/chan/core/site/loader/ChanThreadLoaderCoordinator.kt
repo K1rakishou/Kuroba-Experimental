@@ -30,8 +30,8 @@ import com.github.k1rakishou.chan.core.site.loader.internal.DatabasePostLoader
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ParsePostsV1UseCase
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ReloadPostsFromDatabaseUseCase
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.StorePostsInRepositoryUseCase
-import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.PostParser
+import com.github.k1rakishou.chan.core.site.parser.SiteApi
 import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
@@ -147,7 +147,7 @@ class ChanThreadLoaderCoordinator(
           postProcessFlags = postProcessFlags
         )
 
-        val chanReader = site.chanReader()
+        val chanReader = site.api
 
         val chanReaderProcessorOptions = ChanReaderProcessor.Options(
           isDownloadingThread = false,
@@ -179,7 +179,7 @@ class ChanThreadLoaderCoordinator(
           .get()
 
         siteResolver.findSiteForUrl(chanLoadUrl.urlString)?.let { site ->
-          site.requestModifier().modifyCatalogOrThreadGetRequest(
+          site.requestModifier.modifyCatalogOrThreadGetRequest(
             site = site,
             chanDescriptor = chanDescriptor,
             requestBuilder = requestBuilder
@@ -233,7 +233,7 @@ class ChanThreadLoaderCoordinator(
               chanReadOptions = chanReadOptions,
               chanLoadOptions = chanLoadOptions,
               chanReaderProcessorOptions = chanReaderProcessorOptions,
-              chanReader = chanReader
+              siteApi = chanReader
             ).unwrap()
           }
         }
@@ -485,7 +485,7 @@ class ChanThreadLoaderCoordinator(
     val isThreadDeleted = (error is BadStatusResponseException && error.status == 404) && !isThreadDownloaded
 
     // Check for null beforehand to avoid infinite recursion
-    if (postProcessFlags == null && isThreadDeleted && site.redirectsToArchiveThread()) {
+    if (postProcessFlags == null && isThreadDeleted && site.configuration.redirectsToArchiveThread) {
       return loadThreadOrCatalog(
         page = page,
         site = site,
@@ -583,7 +583,7 @@ class ChanThreadLoaderCoordinator(
     chanReadOptions: ChanReadOptions,
     chanLoadOptions: ChanLoadOptions,
     chanReaderProcessorOptions: ChanReaderProcessor.Options,
-    chanReader: ChanReader
+    siteApi: SiteApi
   ): ModularResult<ChanReaderProcessor> {
     BackgroundUtils.ensureBackgroundThread()
 
@@ -601,13 +601,13 @@ class ChanThreadLoaderCoordinator(
       when (chanDescriptor) {
         is ChanDescriptor.ThreadDescriptor -> {
           if (chanLoadUrl.isIncremental) {
-            chanReader.loadThreadIncremental(
+            siteApi.loadThreadIncremental(
               requestUrl = chanLoadUrl.urlString,
               responseBodyStream = responseBodyStream,
               chanReaderProcessor = chanReaderProcessor
             )
           } else {
-            chanReader.loadThreadFresh(
+            siteApi.loadThreadFresh(
               requestUrl = chanLoadUrl.urlString,
               responseBodyStream = responseBodyStream,
               chanReaderProcessor = chanReaderProcessor
@@ -615,7 +615,7 @@ class ChanThreadLoaderCoordinator(
           }
         }
         is ChanDescriptor.CatalogDescriptor -> {
-          chanReader.loadCatalog(
+          siteApi.loadCatalog(
             requestUrl = chanLoadUrl.urlString,
             responseBodyStream = responseBodyStream,
             chanReaderProcessor = chanReaderProcessor
@@ -624,7 +624,6 @@ class ChanThreadLoaderCoordinator(
         is ChanDescriptor.CompositeCatalogDescriptor -> {
           error("Cannot use CompositeCatalogDescriptor here")
         }
-        else -> throw IllegalArgumentException("Unknown mode")
       }
 
       return@Try chanReaderProcessor
@@ -639,7 +638,7 @@ class ChanThreadLoaderCoordinator(
     forceFullLoad: Boolean = false
   ): ChanLoadUrl {
     if (chanDescriptor is ChanDescriptor.ThreadDescriptor && postProcessFlags?.reloadingAfter404 == true) {
-      val url = site.endpoints().threadArchive(chanDescriptor)
+      val url = site.endpoints.threadArchive(chanDescriptor)
       if (url != null) {
         return ChanLoadUrl(url = url, isIncremental = false, page = page)
       }
@@ -655,7 +654,7 @@ class ChanThreadLoaderCoordinator(
 
     if (forceFullLoad || !isThreadCached || chanDescriptor is ChanDescriptor.ICatalogDescriptor) {
       if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
-        lastFullThreadUpdate.put(chanDescriptor, currentTime)
+        lastFullThreadUpdate[chanDescriptor] = currentTime
       }
 
       return getChanUrlFullLoad(site, chanDescriptor, page)
@@ -665,14 +664,14 @@ class ChanThreadLoaderCoordinator(
 
     val lastPost = chanThreadsCache.getLastPost(threadDescriptor)
     if (lastPost == null) {
-      lastFullThreadUpdate.put(chanDescriptor, currentTime)
+      lastFullThreadUpdate[chanDescriptor] = currentTime
       return getChanUrlFullLoad(site, chanDescriptor, page)
     }
 
     val threadPartialLoadUrl = getChanUrlIncrementalLoad(site, threadDescriptor, lastPost.postDescriptor)
     if (threadPartialLoadUrl == null) {
       // Not supported by the site
-      lastFullThreadUpdate.put(chanDescriptor, currentTime)
+      lastFullThreadUpdate[chanDescriptor] = currentTime
       return getChanUrlFullLoad(site, chanDescriptor, page)
     }
 
@@ -681,7 +680,7 @@ class ChanThreadLoaderCoordinator(
     val timeout = if (AppModuleAndroidUtils.isDevBuild) { ONE_MINUTE } else { THREE_MINUTES }
 
     if (currentTime - lastUpdateTime > timeout) {
-      lastFullThreadUpdate.put(chanDescriptor, currentTime)
+      lastFullThreadUpdate[chanDescriptor] = currentTime
       return getChanUrlFullLoad(site, chanDescriptor, page)
     }
 
@@ -695,12 +694,12 @@ class ChanThreadLoaderCoordinator(
   ): ChanLoadUrl {
     val url = when (chanDescriptor) {
       is ChanDescriptor.ThreadDescriptor -> {
-        site.endpoints().thread(chanDescriptor)
+        site.endpoints.thread(chanDescriptor)
       }
       is ChanDescriptor.CatalogDescriptor -> {
-        var catalog = site.endpoints().catalogPage(chanDescriptor.boardDescriptor, page)
+        var catalog = site.endpoints.catalogPage(chanDescriptor.boardDescriptor, page)
         if (catalog == null) {
-          catalog = site.endpoints().catalog(chanDescriptor.boardDescriptor)
+          catalog = site.endpoints.catalog(chanDescriptor.boardDescriptor)
         }
 
         catalog
@@ -708,7 +707,6 @@ class ChanThreadLoaderCoordinator(
       is ChanDescriptor.CompositeCatalogDescriptor -> {
         error("Cannot use CompositeCatalogDescriptor here")
       }
-      else -> throw IllegalArgumentException("Unknown mode: ${chanDescriptor.javaClass.simpleName}")
     }
 
     return ChanLoadUrl(url = url, isIncremental = false, page = page)
@@ -723,7 +721,7 @@ class ChanThreadLoaderCoordinator(
       return null
     }
 
-    val incrementalLoadUrl = site.endpoints().threadPartial(postDescriptor)
+    val incrementalLoadUrl = site.endpoints.threadPartial(postDescriptor)
     if (incrementalLoadUrl == null) {
       return null
     }

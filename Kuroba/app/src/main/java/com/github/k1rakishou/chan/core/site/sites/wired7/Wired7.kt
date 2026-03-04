@@ -24,8 +24,7 @@ import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.common.vichan.VichanCommentParser
 import com.github.k1rakishou.chan.core.site.limitations.ConstantAttachablesCount
 import com.github.k1rakishou.chan.core.site.limitations.ConstantMaxTotalSizeInfo
-import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitation
-import com.github.k1rakishou.chan.core.site.parser.CommentParserType
+import com.github.k1rakishou.chan.core.site.limitations.PostingLimitationConfig
 import com.github.k1rakishou.chan.core.site.sites.lainchan.LainchanActions
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
@@ -45,19 +44,19 @@ class Wired7 : CommonSite() {
     setIcon(SiteIcon.fromFavicon(imageLoaderDeprecatedLazy, "https://wired-7.org/favicon_144.png".toHttpUrl()))
 
     setBoards(
-      ChanBoard.create(BoardDescriptor.create(siteDescriptor().siteName, "a"), "Anime"),
-      ChanBoard.create(BoardDescriptor.create(siteDescriptor().siteName, "b"), "Random"),
-      ChanBoard.create(BoardDescriptor.create(siteDescriptor().siteName, "jp"), "Japón"),
-      ChanBoard.create(BoardDescriptor.create(siteDescriptor().siteName, "h"), "Hentai"),
-      ChanBoard.create(BoardDescriptor.create(siteDescriptor().siteName, "hum"), "Humanidad"),
-      ChanBoard.create(BoardDescriptor.create(siteDescriptor().siteName, "meta"), "Wired-7 Metaboard"),
-      ChanBoard.create(BoardDescriptor.create(siteDescriptor().siteName, "mu"), "Música"),
-      ChanBoard.create(BoardDescriptor.create(siteDescriptor().siteName, "lain"), "Lain"),
-      ChanBoard.create(BoardDescriptor.create(siteDescriptor().siteName, "tech"), "Tecnología"),
-      ChanBoard.create(BoardDescriptor.create(siteDescriptor().siteName, "v"), "Videojuegos"),
-      ChanBoard.create(BoardDescriptor.create(siteDescriptor().siteName, "vis"), "Audiovisuales"),
-      ChanBoard.create(BoardDescriptor.create(siteDescriptor().siteName, "x"), "Paranormal"),
-      ChanBoard.create(BoardDescriptor.create(siteDescriptor().siteName, "all"), "Nexo")
+      ChanBoard.create(BoardDescriptor.create(descriptor().siteName, "a"), "Anime"),
+      ChanBoard.create(BoardDescriptor.create(descriptor().siteName, "b"), "Random"),
+      ChanBoard.create(BoardDescriptor.create(descriptor().siteName, "jp"), "Japón"),
+      ChanBoard.create(BoardDescriptor.create(descriptor().siteName, "h"), "Hentai"),
+      ChanBoard.create(BoardDescriptor.create(descriptor().siteName, "hum"), "Humanidad"),
+      ChanBoard.create(BoardDescriptor.create(descriptor().siteName, "meta"), "Wired-7 Metaboard"),
+      ChanBoard.create(BoardDescriptor.create(descriptor().siteName, "mu"), "Música"),
+      ChanBoard.create(BoardDescriptor.create(descriptor().siteName, "lain"), "Lain"),
+      ChanBoard.create(BoardDescriptor.create(descriptor().siteName, "tech"), "Tecnología"),
+      ChanBoard.create(BoardDescriptor.create(descriptor().siteName, "v"), "Videojuegos"),
+      ChanBoard.create(BoardDescriptor.create(descriptor().siteName, "vis"), "Audiovisuales"),
+      ChanBoard.create(BoardDescriptor.create(descriptor().siteName, "x"), "Paranormal"),
+      ChanBoard.create(BoardDescriptor.create(descriptor().siteName, "all"), "Nexo")
     )
 
     setResolvable(URL_HANDLER)
@@ -73,7 +72,7 @@ class Wired7 : CommonSite() {
     setParser(VichanCommentParser())
     setPostingLimitationInfo(
       postingLimitationInfoLazy = lazy {
-        SitePostingLimitation(
+        PostingLimitationConfig(
           postMaxAttachables = ConstantAttachablesCount(3),
           postMaxAttachablesTotalSize = ConstantMaxTotalSizeInfo(20 * (1024 * 1024)) // 20MB
         )

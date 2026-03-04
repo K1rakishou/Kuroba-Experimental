@@ -7,7 +7,6 @@ import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.getFirstElementByClassWithValue
 import com.github.k1rakishou.common.groupOrNull
 import com.github.k1rakishou.common.suspendConvertIntoJsoupDocument
-import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.Request
@@ -17,13 +16,13 @@ import java.util.regex.Pattern
 
 class DvachArchiveThreadsRequest(
   private val request: Request,
-  private val proxiedOkHttpClient: Lazy<ProxiedOkHttpClient>
+  private val proxiedOkHttpClient: ProxiedOkHttpClient
 ) {
 
   suspend fun execute(): ModularResult<NativeArchivePostList> {
     return withContext(Dispatchers.IO) {
       return@withContext ModularResult.Try {
-        val htmlDocument = proxiedOkHttpClient.get().okHttpClient()
+        val htmlDocument = proxiedOkHttpClient.okHttpClient()
           .suspendConvertIntoJsoupDocument(request)
           .unwrap()
 

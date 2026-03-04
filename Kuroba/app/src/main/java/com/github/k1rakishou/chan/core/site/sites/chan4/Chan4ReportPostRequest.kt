@@ -27,7 +27,7 @@ class Chan4ReportPostRequest(
     val site = siteManager.bySiteDescriptorAndActive(postDescriptor.siteDescriptor())
       ?: return PostReportResult.Error("Site is not active")
 
-    val endpoints = site.endpoints() as? Chan4.Chan4Endpoints
+    val endpoints = site.endpoints as? Chan4Endpoints
       ?: return PostReportResult.Error("Bad endpoints()")
 
     val result: ModularResult<PostReportResult> = ModularResult.Try {
@@ -65,7 +65,7 @@ class Chan4ReportPostRequest(
           .post(body)
       }
 
-      site.requestModifier().modifyPostReportRequest(site, requestBuilder)
+      site.requestModifier.modifyPostReportRequest(site, requestBuilder)
 
       val document = proxiedOkHttpClient.okHttpClient()
         .suspendConvertIntoJsoupDocument(requestBuilder.build())

@@ -31,26 +31,18 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
-import dagger.Lazy
 import org.joda.time.format.ISODateTimeFormat
 import org.jsoup.parser.Parser
 import java.io.InputStream
 import java.util.regex.Pattern
 
 open class LynxchanApi(
-  private val moshiLazy: Lazy<Moshi>,
-  private val siteManagerLazy: Lazy<SiteManager>,
-  private val boardManagerLazy: Lazy<BoardManager>,
+  private val moshi: Moshi,
+  private val siteManager: SiteManager,
+  private val boardManager: BoardManager,
   site: LynxchanSite
 ) : CommonSite.CommonApi(site) {
   private val lynxchanCatalogList = Types.newParameterizedType(List::class.java, LynxchanCatalogThread::class.java)
-
-  private val moshi: Moshi
-    get() = moshiLazy.get()
-  private val siteManager: SiteManager
-    get() = siteManagerLazy.get()
-  private val boardManager: BoardManager
-    get() = boardManagerLazy.get()
 
   override suspend fun loadThreadFresh(
     requestUrl: String,
@@ -64,7 +56,7 @@ open class LynxchanApi(
     val board = boardManager.byBoardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
       ?: return
 
-    val endpoints = site.endpoints()
+    val endpoints = site.endpoints
 
     val lynxchanPostAdapter = moshi.adapter(LynxchanPost::class.java)
     val lynxchanThread = responseBodyStream
@@ -103,7 +95,7 @@ open class LynxchanApi(
     val board = boardManager.byBoardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
       ?: return
 
-    val endpoints = site.endpoints()
+    val endpoints = site.endpoints
 
     val lynxchanCatalogAdapter = moshi.adapter(LynxchanCatalogPage::class.java)
     val lynxchanCatalog = responseBodyStream
@@ -220,7 +212,7 @@ open class LynxchanApi(
   ): ModularResult<FilterWatchCatalogInfoObject> {
 
     return ModularResult.Try {
-      val endpoints = site.endpoints()
+      val endpoints = site.endpoints
 
       val lynxchanCatalogAdapter = moshi.adapter<List<LynxchanCatalogThread>>(lynxchanCatalogList)
       val lynxchanCatalogThreads = responseBodyStream

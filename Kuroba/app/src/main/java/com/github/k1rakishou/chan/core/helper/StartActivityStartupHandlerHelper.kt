@@ -16,7 +16,7 @@ import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.CompositeCatalogManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.core.site.Site
+import com.github.k1rakishou.chan.core.site.SiteConfiguration
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.core.site.sites.CompositeCatalogSite
 import com.github.k1rakishou.chan.features.drawer.MainController
@@ -38,13 +38,13 @@ import dagger.Lazy
 
 
 class StartActivityStartupHandlerHelper(
-  private val _historyNavigationManager: Lazy<HistoryNavigationManager>,
-  private val _siteManager: Lazy<SiteManager>,
-  private val _boardManager: Lazy<BoardManager>,
-  private val _bookmarksManager: Lazy<BookmarksManager>,
-  private val _chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>,
-  private val _siteResolver: Lazy<SiteResolver>,
-  private val _compositeCatalogManager: Lazy<CompositeCatalogManager>,
+  private val historyNavigationManagerLazy: Lazy<HistoryNavigationManager>,
+  private val siteManagerLazy: Lazy<SiteManager>,
+  private val boardManagerLazy: Lazy<BoardManager>,
+  private val bookmarksManagerLazy: Lazy<BookmarksManager>,
+  private val chanThreadViewableInfoManagerLazy: Lazy<ChanThreadViewableInfoManager>,
+  private val siteResolverLazy: Lazy<SiteResolver>,
+  private val compositeCatalogManagerLazy: Lazy<CompositeCatalogManager>,
   private val notificationManagerCompat: NotificationManagerCompat
 ) {
   // We only want to load a board upon the application start when nothing is loaded yet. Afterwards
@@ -58,19 +58,19 @@ class StartActivityStartupHandlerHelper(
   private var startActivityCallbacks: StartActivityCallbacks? = null
 
   private val historyNavigationManager: HistoryNavigationManager
-    get() = _historyNavigationManager.get()
+    get() = historyNavigationManagerLazy.get()
   private val siteManager: SiteManager
-    get() = _siteManager.get()
+    get() = siteManagerLazy.get()
   private val boardManager: BoardManager
-    get() = _boardManager.get()
+    get() = boardManagerLazy.get()
   private val bookmarksManager: BookmarksManager
-    get() = _bookmarksManager.get()
+    get() = bookmarksManagerLazy.get()
   private val chanThreadViewableInfoManager: ChanThreadViewableInfoManager
-    get() = _chanThreadViewableInfoManager.get()
+    get() = chanThreadViewableInfoManagerLazy.get()
   private val siteResolver: SiteResolver
-    get() = _siteResolver.get()
+    get() = siteResolverLazy.get()
   private val compositeCatalogManager: CompositeCatalogManager
-    get() = _compositeCatalogManager.get()
+    get() = compositeCatalogManagerLazy.get()
 
   fun onCreate(
     context: Context,
@@ -202,10 +202,10 @@ class StartActivityStartupHandlerHelper(
       }
 
       val isCompositeCatalogsSite = siteManager.bySiteDescriptorAndActive(siteDescriptor)
-        ?.siteFeature(Site.SiteFeature.CATALOG_COMPOSITION) == true
+        ?.hasSiteFeature(SiteConfiguration.SiteFeature.CatalogComposition) == true
 
       if (isCompositeCatalogsSite) {
-        Logger.d(TAG, "getCatalogToOpen() -> siteDescriptor has SiteFeature.CATALOG_COMPOSITION")
+        Logger.d(TAG, "getCatalogToOpen() -> siteDescriptor has SiteFeature.CatalogComposition")
 
         val compositeCatalogDescriptor = compositeCatalogManager.firstCompositeCatalog()
           ?.compositeCatalogDescriptor
@@ -240,7 +240,7 @@ class StartActivityStartupHandlerHelper(
       Logger.d(TAG, "getCatalogToOpen() -> catalogDescriptor is CompositeCatalogDescriptor")
 
       val siteEnabled = siteManager.bySiteDescriptorAndActive(CompositeCatalogSite.SITE_DESCRIPTOR)
-        ?.enabled()
+        ?.enabled
         ?: false
 
       if (!siteEnabled) {
@@ -249,7 +249,10 @@ class StartActivityStartupHandlerHelper(
       }
 
       if (compositeCatalogManager.byCompositeCatalogDescriptor(catalogDescriptor) == null) {
-        Logger.d(TAG, "getCatalogToOpen() -> compositeCatalogManager.byCompositeCatalogDescriptor($catalogDescriptor) == null")
+        Logger.debug(TAG) {
+          "getCatalogToOpen() -> compositeCatalogManager.byCompositeCatalogDescriptor($catalogDescriptor) == null"
+        }
+
         return null
       }
 

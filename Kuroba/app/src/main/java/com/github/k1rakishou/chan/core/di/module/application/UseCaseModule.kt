@@ -95,7 +95,6 @@ class UseCaseModule {
   @Provides
   @Singleton
   fun provideFetchThreadBookmarkInfoUseCase(
-    appScope: CoroutineScope,
     okHttpClient: Lazy<ProxiedOkHttpClient>,
     siteManager: SiteManager,
     bookmarksManager: BookmarksManager,
@@ -104,8 +103,6 @@ class UseCaseModule {
     deps("FetchThreadBookmarkInfoUseCase")
     return FetchThreadBookmarkInfoUseCase(
       AppModuleAndroidUtils.isDevBuild,
-      ChanSettings.verboseLogs.get(),
-      appScope,
       okHttpClient,
       siteManager,
       bookmarksManager,

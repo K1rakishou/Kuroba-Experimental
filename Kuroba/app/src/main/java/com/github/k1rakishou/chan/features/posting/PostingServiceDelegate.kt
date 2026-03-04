@@ -444,7 +444,7 @@ class PostingServiceDelegate(
     chanDescriptor: ChanDescriptor,
     postedSuccessfully: AtomicBoolean
   ) {
-    Logger.d(TAG, "runPostWaitQueueLoop(${site.siteDescriptor()}, $chanDescriptor)")
+    Logger.d(TAG, "runPostWaitQueueLoop(${site.descriptor}, $chanDescriptor)")
     ensureNotCanceled(chanDescriptor)
 
     readReplyInfo(chanDescriptor) {
@@ -567,7 +567,7 @@ class PostingServiceDelegate(
     actualPostResult: AtomicReference<ActualPostResult>
   ) {
     val serviceName = twoCaptchaSolver.name
-    Logger.d(TAG, "runPostWaitForCaptchaLoop(${site.siteDescriptor()}, $chanDescriptor)")
+    Logger.d(TAG, "runPostWaitForCaptchaLoop(${site.descriptor}, $chanDescriptor)")
 
     readReplyInfo(chanDescriptor) {
       updateStatus(PostingStatus.WaitingForAdditionalService(serviceName, chanDescriptor))
@@ -695,7 +695,7 @@ class PostingServiceDelegate(
     chanDescriptor: ChanDescriptor,
     actualPostResult: AtomicReference<ActualPostResult>
   ) {
-    Logger.d(TAG, "callPostDelegate(${site.siteDescriptor()}, $chanDescriptor)")
+    Logger.d(TAG, "callPostDelegate(${site.descriptor}, $chanDescriptor)")
     val replyMode = readReplyInfo(chanDescriptor) { replyModeRef.get() }
 
     if (replyMode == ReplyMode.Unknown) {
@@ -705,7 +705,7 @@ class PostingServiceDelegate(
 
     var prevUploadingProgressNotifyTime = 0L
 
-    site.actions()
+    site.actions
       .post(chanDescriptor, replyMode)
       .catch { error ->
         Logger.e(TAG, "SiteActions.PostResult.PostError($chanDescriptor) " +
@@ -855,7 +855,10 @@ class PostingServiceDelegate(
 
     // Fast path. The server has returned a fake PostDescriptor with ThreadDescriptor that is not the same as
     // the one where we are trying to make a post in.
-    if (chanDescriptor is ChanDescriptor.ThreadDescriptor && responsePostDescriptor.threadDescriptor() != chanDescriptor) {
+    if (
+      chanDescriptor is ChanDescriptor.ThreadDescriptor
+      && responsePostDescriptor.threadDescriptor() != chanDescriptor
+    ) {
       throw ServerReturnedUnexpectedThreadId(responsePostDescriptor.threadDescriptor(), chanDescriptor)
     }
 
@@ -865,9 +868,13 @@ class PostingServiceDelegate(
     )
 
     // Slow path. Actually check whether the post exists on the server or not.
-    return site.actions().checkPostExists(chanDescriptor, responsePostDescriptor)
-      .onError { error -> Logger.e(TAG, "checkPostActuallyExists(${responsePostDescriptor}) error: ${error.errorMessageOrClassName()}") }
-      .onSuccess { postFound -> Logger.d(TAG, "checkPostActuallyExists(${responsePostDescriptor}) postFound: ${postFound}") }
+    return site.actions.checkPostExists(chanDescriptor, responsePostDescriptor)
+      .onError { error ->
+        Logger.e(TAG, "checkPostActuallyExists(${responsePostDescriptor}) error: ${error.errorMessageOrClassName()}")
+      }
+      .onSuccess { postFound ->
+        Logger.d(TAG, "checkPostActuallyExists(${responsePostDescriptor}) postFound: ${postFound}")
+      }
       .mapErrorToValue { true }
   }
 
@@ -946,7 +953,7 @@ class PostingServiceDelegate(
   ): AntiCaptchaServiceResult {
     val replyMode = readReplyInfo(chanDescriptor) { replyModeRef.get() }
 
-    if (site.actions().isLoggedIn() && replyMode == ReplyMode.ReplyModeUsePasscode) {
+    if (site.actions.isLoggedIn() && replyMode == ReplyMode.ReplyModeUsePasscode) {
       Logger.d(TAG, "processAntiCaptchaService($chanDescriptor) logged in and reply mode is ReplyModeUsePasscode")
       return AntiCaptchaServiceResult.AlreadyHaveSolution(null)
     }
@@ -1295,7 +1302,7 @@ class PostingServiceDelegate(
     }
 
     val newThreadDescriptor = ChanDescriptor.ThreadDescriptor.create(
-      localSite.name(),
+      localSite.name,
       boardDescriptor.boardCode,
       threadNo
     )
@@ -1314,12 +1321,7 @@ class PostingServiceDelegate(
 
     val responsePostDescriptor = replyResponse.postDescriptorOrNull
     if (responsePostDescriptor != null) {
-      val password = if (replyResponse.password.isNotEmpty()) {
-        replyResponse.password
-      } else {
-        null
-      }
-
+      val password = replyResponse.password.ifEmpty { null }
       val comment = replyManager.readReply(prevChanDescriptor) { prevReply -> prevReply.comment }
       val subject = chanThreadManager.getChanThread(responsePostDescriptor.threadDescriptor())
         ?.getOriginalPost()

@@ -1,0 +1,156 @@
+package com.github.k1rakishou.chan.core.site.sites.dvach
+
+import com.github.k1rakishou.chan.core.site.common.vichan.VichanEndpoints
+import com.github.k1rakishou.model.data.board.ChanBoard
+import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import okhttp3.HttpUrl
+
+class DvachEndpoints(
+  private val dvach: Dvach
+) : VichanEndpoints(
+  commonSite = dvach,
+  rootUrl = dvach.domainString,
+  sysUrl = dvach.domainString
+) {
+  val siteHost: String
+    get() = dvach.domainUrl.value.host
+
+  override fun imageUrl(boardDescriptor: BoardDescriptor, arg: Map<String, String>): HttpUrl {
+    val path = requireNotNull(arg["path"]) { "\"path\" parameter not found" }
+
+    return root.builder().s(path).url()
+  }
+
+  override fun thumbnailUrl(
+    boardDescriptor: BoardDescriptor,
+    spoiler: Boolean,
+    customSpoilers: Int,
+    arg: Map<String, String>
+  ): HttpUrl {
+    val thumbnail = requireNotNull(arg["thumbnail"]) { "\"thumbnail\" parameter not found" }
+
+    return root.builder().s(thumbnail).url()
+  }
+
+  override fun boards(): HttpUrl {
+    return HttpUrl.Builder()
+      .scheme("https")
+      .host(siteHost)
+      .addPathSegment("api")
+      .addPathSegment("mobile")
+      .addPathSegment("v2")
+      .addPathSegment("boards")
+      .build()
+  }
+
+  // /api/mobile/v2/after/{board}/{thread}/{num}
+  override fun threadPartial(fromPostDescriptor: PostDescriptor): HttpUrl {
+    return HttpUrl.Builder()
+      .scheme("https")
+      .host(siteHost)
+      .addPathSegment("api")
+      .addPathSegment("mobile")
+      .addPathSegment("v2")
+      .addPathSegment("after")
+      .addPathSegment(fromPostDescriptor.boardDescriptor().boardCode)
+      .addPathSegment(fromPostDescriptor.getThreadNo().toString())
+      .addPathSegment(fromPostDescriptor.postNo.toString())
+      .build()
+  }
+
+  // https://2ch.hk/board_code/arch/res/thread_no.json
+  override fun threadArchive(threadDescriptor: ChanDescriptor.ThreadDescriptor): HttpUrl {
+    return HttpUrl.Builder()
+      .scheme("https")
+      .host(siteHost)
+      .addPathSegment(threadDescriptor.boardCode())
+      .addPathSegment("arch")
+      .addPathSegment("res")
+      .addPathSegment("${threadDescriptor.threadNo}.json")
+      .build()
+  }
+
+  override fun pages(board: ChanBoard): HttpUrl {
+    return HttpUrl.Builder()
+      .scheme("https")
+      .host(siteHost)
+      .addPathSegment(board.boardCode())
+      .addPathSegment("catalog.json")
+      .build()
+  }
+
+  override fun reply(chanDescriptor: ChanDescriptor): HttpUrl {
+    return HttpUrl.Builder()
+      .scheme("https")
+      .host(siteHost)
+      .addPathSegment("user")
+      .addPathSegment("posting")
+      .build()
+  }
+
+  override fun login(): HttpUrl {
+    return HttpUrl.Builder()
+      .scheme("https")
+      .host(siteHost)
+      .addPathSegment("user")
+      .addPathSegment("passlogin")
+      .addQueryParameter("json", "1")
+      .build()
+  }
+
+  override fun passCodeInfo(): HttpUrl? {
+    if (!dvach.actions.isLoggedIn()) {
+      return null
+    }
+
+    val passcode = dvach.passCode.get()
+    if (passcode.isEmpty()) {
+      return null
+    }
+
+    return HttpUrl.Builder()
+      .scheme("https")
+      .host(siteHost)
+      .addPathSegment("makaba")
+      .addPathSegment("makaba.fcgi")
+      .addQueryParameter("task", "auth")
+      .addQueryParameter("usercode", passcode)
+      .addQueryParameter("json", "1")
+      .build()
+  }
+
+  override fun search(): HttpUrl {
+    return HttpUrl.Builder()
+      .scheme("https")
+      .host(siteHost)
+      .addPathSegment("user")
+      .addPathSegment("search")
+      .addQueryParameter("json", "1")
+      .build()
+  }
+
+  override fun boardArchive(boardDescriptor: BoardDescriptor, page: Int?): HttpUrl {
+    val builder = HttpUrl.Builder()
+      .scheme("https")
+      .host(siteHost)
+      .addPathSegment(boardDescriptor.boardCode)
+      .addPathSegment("arch")
+
+    if (page != null) {
+      builder.addPathSegment("${page}.html")
+    }
+
+    return builder.build()
+  }
+
+  override fun icon(icon: String, arg: Map<String, String>): HttpUrl {
+    return HttpUrl.Builder()
+      .scheme("https")
+      .host(siteHost)
+      .addPathSegment(requireNotNull(arg.get("icon")) { "Bad arg map: $arg" })
+      .build()
+  }
+
+}

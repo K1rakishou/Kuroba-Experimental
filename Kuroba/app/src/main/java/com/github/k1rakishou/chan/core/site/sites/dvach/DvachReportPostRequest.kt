@@ -5,7 +5,6 @@ import com.github.k1rakishou.chan.core.site.common.CommonClientException
 import com.github.k1rakishou.chan.core.site.http.report.PostReportData
 import com.github.k1rakishou.chan.core.site.http.report.PostReportResult
 import com.github.k1rakishou.common.BadStatusResponseException
-import com.github.k1rakishou.common.EmptyBodyResponseException
 import com.github.k1rakishou.common.FirewallDetectedException
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
@@ -16,7 +15,6 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
-import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
@@ -26,21 +24,16 @@ import okhttp3.Request
 
 class DvachReportPostRequest(
   private val site: Dvach,
-  private val moshiLazy: Lazy<Moshi>,
-  private val proxiedOkHttpClientLazy: Lazy<ProxiedOkHttpClient>,
+  private val moshi: Moshi,
+  private val proxiedOkHttpClient: ProxiedOkHttpClient,
   private val postReportData: PostReportData.Dvach
 ) {
-  private val moshi: Moshi
-    get() = moshiLazy.get()
-  private val proxiedOkHttpClient: ProxiedOkHttpClient
-    get() = proxiedOkHttpClientLazy.get()
-
   suspend fun execute(): PostReportResult {
     val postDescriptor = postReportData.postDescriptor
 
     val result: ModularResult<PostReportResult> = ModularResult.Try {
-      val siteHost = (site.endpoints() as Dvach.DvachEndpoints).siteHost
-      val requestModifier = (site.requestModifier() as Dvach.DvachSiteRequestModifier)
+      val siteHost = (site.endpoints as DvachEndpoints).siteHost
+      val requestModifier = (site.requestModifier as DvachSiteRequestModifier)
       val reportReason = postReportData.message
 
       val reportPostEndpoint = HttpUrl.Builder()
@@ -119,10 +112,6 @@ class DvachReportPostRequest(
         }
 
         val body = response.body
-        if (body == null) {
-          throw EmptyBodyResponseException()
-        }
-
         Logger.d(TAG, "sendDvachReportRequest() contentType=${body.contentType()}")
 
         if (body.contentType()?.type?.equals("application", ignoreCase = true) == false) {
@@ -142,8 +131,8 @@ class DvachReportPostRequest(
 
   @JsonClass(generateAdapter = true)
   data class ReportResponseData(
-    @Json(name = "result") val result: Int?,
-    @Json(name = "error") val error: DvachError?
+    @field:Json(name = "result") val result: Int?,
+    @field:Json(name = "error") val error: DvachError?
   )
 
   @JsonClass(generateAdapter = true)

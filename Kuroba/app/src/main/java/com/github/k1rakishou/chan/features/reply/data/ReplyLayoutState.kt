@@ -1039,7 +1039,7 @@ class ReplyLayoutState(
       .getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)?.get()
       ?: return
 
-    val siteDoesNotRequireAuthentication = site.actions().postAuthenticate().type == SiteAuthentication.Type.NONE
+    val siteDoesNotRequireAuthentication = site.actions.postAuthenticate().type == SiteAuthentication.Type.NONE
     if (siteDoesNotRequireAuthentication) {
       _displayCaptchaPresolveButton.value = false
       return
@@ -1396,7 +1396,7 @@ class ReplyLayoutState(
     }
 
     val newThreadDescriptor = ChanDescriptor.ThreadDescriptor.create(
-      siteName = localSite.name(),
+      siteName = localSite.name,
       boardCode = boardDescriptor.boardCode,
       threadNo = threadNo
     )

@@ -93,19 +93,19 @@ public class Diochan extends CommonSite {
         setIcon(SiteIcon.fromFavicon(getImageLoaderDeprecatedLazy(), HttpUrl.parse("https://diochan.com/favicon.ico")));
 
         setBoards(
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "b"), "Random"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "s"), "( ͡° ͜ʖ ͡°)"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "x"), "Ics"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "hd"), "Help Desk"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "aco"), "Anime, Fumetti & Cartoni"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "v"), "Videogiochi da tavolo"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "cul"), "Cultura"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "yt"), "YouTube, TikTok, etc"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "ck"), "Cucina"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "mu"), "Musica"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "pol"), "Politica & Affari"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "sug"), "Suggerimenti & Lamentele"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "p"), "Prova")
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "b"), "Random"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "s"), "( ͡° ͜ʖ ͡°)"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "x"), "Ics"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "hd"), "Help Desk"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "aco"), "Anime, Fumetti & Cartoni"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "v"), "Videogiochi da tavolo"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "cul"), "Cultura"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "yt"), "YouTube, TikTok, etc"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "ck"), "Cucina"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "mu"), "Musica"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "pol"), "Politica & Affari"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "sug"), "Suggerimenti & Lamentele"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "p"), "Prova")
         );
 
         setResolvable(URL_HANDLER);

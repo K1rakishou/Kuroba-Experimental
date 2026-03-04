@@ -8,10 +8,9 @@ import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager
-import com.github.k1rakishou.chan.core.site.parser.ChanReader
+import com.github.k1rakishou.chan.core.site.parser.SiteApi
 import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser
 import com.github.k1rakishou.common.AppConstants
-import com.github.k1rakishou.common.EmptyBodyResponseException
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isNotNullNorEmpty
@@ -469,12 +468,12 @@ class BookmarkFilterWatchableThreadsUseCase(
         return@parallelForEach null
       }
 
-      val catalogJsonEndpoint = site.endpoints().catalog(boardDescriptor)
+      val catalogJsonEndpoint = site.endpoints.catalog(boardDescriptor)
 
       return@parallelForEach fetchBoardCatalog(
-        boardDescriptor,
-        catalogJsonEndpoint,
-        site.chanReader()
+        boardDescriptor = boardDescriptor,
+        catalogJsonEndpoint = catalogJsonEndpoint,
+        siteApi = site.api
       )
     }
   }
@@ -482,7 +481,7 @@ class BookmarkFilterWatchableThreadsUseCase(
   private suspend fun fetchBoardCatalog(
     boardDescriptor: BoardDescriptor,
     catalogJsonEndpoint: HttpUrl,
-    chanReader: ChanReader
+    siteApi: SiteApi
   ): CatalogFetchResult {
     if (verboseLogsEnabled) {
       Logger.d(TAG, "fetchBoardCatalog() catalogJsonEndpoint=$catalogJsonEndpoint")
@@ -493,7 +492,7 @@ class BookmarkFilterWatchableThreadsUseCase(
       .get()
 
     siteManager.bySiteDescriptorAndActive(boardDescriptor.siteDescriptor)?.let { site ->
-      site.requestModifier().modifyCatalogOrThreadGetRequest(
+      site.requestModifier.modifyCatalogOrThreadGetRequest(
         site = site,
         chanDescriptor = ChanDescriptor.CatalogDescriptor.create(boardDescriptor),
         requestBuilder = requestBilder
@@ -518,16 +517,11 @@ class BookmarkFilterWatchableThreadsUseCase(
       return CatalogFetchResult.Error(error)
     }
 
-    val responseBody = response.body
-    if (responseBody == null) {
-      return CatalogFetchResult.Error(EmptyBodyResponseException())
-    }
-
-    val filterWatchCatalogInfoObjectResult = responseBody.byteStream().use { inputStream ->
-      return@use chanReader.readFilterWatchCatalogInfoObject(
-        boardDescriptor,
-        request.url.toString(),
-        inputStream
+    val filterWatchCatalogInfoObjectResult = response.body.byteStream().use { inputStream ->
+      return@use siteApi.readFilterWatchCatalogInfoObject(
+        boardDescriptor = boardDescriptor,
+        requestUrl = request.url.toString(),
+        responseBodyStream = inputStream
       )
     }
 

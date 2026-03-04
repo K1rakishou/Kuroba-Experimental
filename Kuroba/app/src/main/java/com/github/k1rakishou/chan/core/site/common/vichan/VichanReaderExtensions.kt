@@ -10,7 +10,6 @@ import com.github.k1rakishou.model.data.filter.FilterWatchCatalogThreadInfoObjec
 import com.google.gson.stream.JsonReader
 import okhttp3.HttpUrl
 
-@Suppress("BlockingMethodInNonBlockingContext")
 class VichanReaderExtensions {
 
   suspend fun iteratePostsInThread(reader: JsonReader, iterator: suspend (JsonReader) -> Unit) {

@@ -112,7 +112,10 @@ class Chan4CaptchaNotifierManager(
           val chanDescriptorReadable = waitDescriptor.userReadableString()
           val largeIconUrl = when (waitDescriptor) {
             is ChanDescriptor.CatalogDescriptor -> {
-              siteManager.bySiteDescriptorAndActive(waitDescriptor.siteDescriptor())?.icon()?.url
+              siteManager.bySiteDescriptorAndActive(waitDescriptor.siteDescriptor())
+                ?.configuration
+                ?.icon
+                ?.url
             }
             is ChanDescriptor.ThreadDescriptor -> {
               chanThreadManager.getChanThread(waitDescriptor)?.getOriginalPostSafe()?.firstImage()?.actualThumbnailUrl

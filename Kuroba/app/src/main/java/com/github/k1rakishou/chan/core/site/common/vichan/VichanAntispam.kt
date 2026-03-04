@@ -1,119 +1,80 @@
-/*
- * KurobaEx - *chan browser https://github.com/K1rakishou/Kuroba-Experimental/
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-package com.github.k1rakishou.chan.core.site.common.vichan;
+package com.github.k1rakishou.chan.core.site.common.vichan
 
-import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
-import com.github.k1rakishou.common.ModularResult;
-import com.github.k1rakishou.core_logger.Logger;
-
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import dagger.Lazy;
-import okhttp3.HttpUrl;
-import okhttp3.Request;
-import okhttp3.Response;
-import okhttp3.ResponseBody;
+import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
+import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.core_logger.Logger
+import okhttp3.HttpUrl
+import okhttp3.Request
+import org.jsoup.Jsoup
+import java.io.IOException
 
 /**
  * Vichan applies garbage looking fields to the post form, to combat bots.
  * Load up the normal html, parse the form, and get these fields for our post.
- * <p>
- * {@link #get()} blocks, run it off the main thread.
+ * 
+ * 
+ * [get] blocks, run it off the main thread.
  */
-public class VichanAntispam {
-    private static final String TAG = "Antispam";
+class VichanAntispam(
+  private val proxiedOkHttpClient: ProxiedOkHttpClient,
+  private val url: HttpUrl
+) {
+  private val fieldsToIgnore = ArrayList<String>()
 
-    private Lazy<ProxiedOkHttpClient> proxiedOkHttpClient;
+  init {
+    fieldsToIgnore.addAll(
+      mutableListOf(
+        "board", "thread", "name", "email", "subject", "body", "password",
+        "file", "spoiler", "json_response", "file_url1", "file_url2", "file_url3"
+      )
+    )
+  }
 
-    private HttpUrl url;
-    private List<String> fieldsToIgnore = new ArrayList<>();
+  fun get(): ModularResult<Map<String, String>> {
+    val res = HashMap<String, String>()
 
-    public VichanAntispam(Lazy<ProxiedOkHttpClient> proxiedOkHttpClient, HttpUrl url) {
-        this.proxiedOkHttpClient = proxiedOkHttpClient;
-        this.url = url;
+    try {
+      val request = Request.Builder().url(url).build()
+      val response = proxiedOkHttpClient.okHttpClient().newCall(request).execute()
+      if (!response.isSuccessful) {
+        return ModularResult.error(IOException("(Antispam) Bad response status code: " + response.code))
+      }
 
-        fieldsToIgnore.addAll(Arrays.asList(
-                "board",
-                "thread",
-                "name",
-                "email",
-                "subject",
-                "body",
-                "password",
-                "file",
-                "spoiler",
-                "json_response",
-                "file_url1",
-                "file_url2",
-                "file_url3"
-        ));
-    }
+      val body = response.body
+      if (body == null) {
+        Logger.debug(TAG) { "(Antispam) Response body is null" }
+        return ModularResult.value(res)
+      }
 
-    public ModularResult<Map<String, String>> get() {
-        Map<String, String> res = new HashMap<>();
+      val document = Jsoup.parse(body.string())
+      val form = document.body().getElementsByTag("form")
 
-        try {
-            Request request = new Request.Builder().url(url).build();
-            Response response = proxiedOkHttpClient.get().okHttpClient().newCall(request).execute();
-            if (!response.isSuccessful()) {
-                return ModularResult.error(new IOException("(Antispam) Bad response status code: " + response.code()));
+      for (element in form) {
+        if (element.attr("name") == "post") {
+          // Add all <input> and <textarea> elements.
+          val inputs = element.getElementsByTag("input")
+          inputs.addAll(element.getElementsByTag("textarea"))
+
+          for (input in inputs) {
+            val name = input.attr("name")
+            val value = input.`val`()
+
+            if (!fieldsToIgnore.contains(name)) {
+              res[name] = value
             }
+          }
 
-            ResponseBody body = response.body();
-            if (body == null) {
-                Logger.d(TAG, "(Antispam) Response body is null");
-                return ModularResult.value(res);
-            }
-
-            Document document = Jsoup.parse(body.string());
-            Elements form = document.body().getElementsByTag("form");
-
-            for (Element element : form) {
-                if (element.attr("name").equals("post")) {
-                    // Add all <input> and <textarea> elements.
-                    Elements inputs = element.getElementsByTag("input");
-                    inputs.addAll(element.getElementsByTag("textarea"));
-
-                    for (Element input : inputs) {
-                        String name = input.attr("name");
-                        String value = input.val();
-
-                        if (!fieldsToIgnore.contains(name)) {
-                            res.put(name, value);
-                        }
-                    }
-
-                    break;
-                }
-            }
-        } catch (Throwable error) {
-            return ModularResult.error(error);
+          break
         }
-
-        return ModularResult.value(res);
+      }
+    } catch (error: Throwable) {
+      return ModularResult.error(error)
     }
+
+    return ModularResult.value(res)
+  }
+
+  companion object {
+    private const val TAG = "Antispam"
+  }
 }

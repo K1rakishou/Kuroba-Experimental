@@ -7,7 +7,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 
-class SitePostingLimitation(
+class PostingLimitationConfig(
   val postMaxAttachables: PostAttachableLimitation,
   val postMaxAttachablesTotalSize: PostAttachlesMaxTotalSize
 )
@@ -48,8 +48,8 @@ class PasscodeDependantMaxAttachablesTotalSize(
     val boardDescriptor = params.boardDescriptor
 
     val site = siteManager.bySiteDescriptorAndActive(boardDescriptor.siteDescriptor)
-    if (site != null && site.actions().isLoggedIn()) {
-      val getPasscodeInfoResult = site.actions().getOrRefreshPasscodeInfo(resetCached = false)
+    if (site != null && site.actions.isLoggedIn()) {
+      val getPasscodeInfoResult = site.actions.getOrRefreshPasscodeInfo(resetCached = false)
       if (getPasscodeInfoResult !is SiteActions.GetPasscodeInfoResult.Success) {
         return null
       }
@@ -104,12 +104,12 @@ class PasscodeDependantAttachablesCount(
       return defaultMaxAttachablesPerPost
     }
 
-    if (!site.actions().isLoggedIn()) {
+    if (!site.actions.isLoggedIn()) {
       Logger.d(TAG, "Not logged in, siteDescriptor='$siteDescriptor'")
       return defaultMaxAttachablesPerPost
     }
 
-    when (val getPasscodeInfoResult = site.actions().getOrRefreshPasscodeInfo(resetCached = false)) {
+    when (val getPasscodeInfoResult = site.actions.getOrRefreshPasscodeInfo(resetCached = false)) {
       null -> {
         Logger.d(TAG, "getOrRefreshPasscodeInfo() == null, siteDescriptor='$siteDescriptor'")
         return defaultMaxAttachablesPerPost
@@ -119,7 +119,9 @@ class PasscodeDependantAttachablesCount(
         return defaultMaxAttachablesPerPost
       }
       is SiteActions.GetPasscodeInfoResult.Failure -> {
-        Logger.e(TAG, "getOrRefreshPasscodeInfo() is Failure, siteDescriptor='$siteDescriptor'", getPasscodeInfoResult.error)
+        Logger.error(TAG, getPasscodeInfoResult.error) {
+          "getOrRefreshPasscodeInfo() is Failure, siteDescriptor='$siteDescriptor'"
+        }
         return defaultMaxAttachablesPerPost
       }
       SiteActions.GetPasscodeInfoResult.NotAllowedToRefreshFromNetwork -> {

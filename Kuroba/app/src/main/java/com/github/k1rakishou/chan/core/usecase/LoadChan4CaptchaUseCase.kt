@@ -81,7 +81,7 @@ class LoadChan4CaptchaUseCase(
     }
 
     siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())?.let { chan4 ->
-      chan4.requestModifier().modifyGenericRequest(chan4, requestBuilder)
+      chan4.requestModifier.modifyGenericRequest(chan4, requestBuilder)
     }
 
     val request = requestBuilder.build()

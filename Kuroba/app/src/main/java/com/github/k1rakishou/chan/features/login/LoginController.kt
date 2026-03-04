@@ -77,7 +77,7 @@ class LoginController(
         onClick = { requireNavController().popController() }
       ),
       middleContent = ToolbarMiddleContent.Title(
-        title = ToolbarText.String(getString(R.string.settings_screen_pass_title, site.name()))
+        title = ToolbarText.String(getString(R.string.settings_screen_pass_title, site.name))
       )
     )
     
@@ -154,7 +154,7 @@ class LoginController(
   }
 
   private fun applyLoginDetails() {
-    val loginDetails = requireNotNull(site.actions().loginDetails()) { "loginDetails is null" }
+    val loginDetails = requireNotNull(site.actions.loginDetails()) { "loginDetails is null" }
     if (loginDetails.type != SiteActions.LoginType.TokenAndPass) {
       inputPin.visibility = View.GONE
     } else {
@@ -184,7 +184,7 @@ class LoginController(
         }
 
         enableDisableControls(enable = false)
-        loginPresenter.updatePasscodeInfo(site.siteDescriptor())
+        loginPresenter.updatePasscodeInfo(site.descriptor)
       }
     }
   }
@@ -229,7 +229,7 @@ class LoginController(
     
     hideError()
 
-    when (val loginResult = site.actions().login(createLoginRequest())) {
+    when (val loginResult = site.actions.login(createLoginRequest())) {
       is SiteActions.LoginResult.LoginComplete -> {
         onLoginComplete(loginResult.loginResponse)
       }
@@ -293,7 +293,7 @@ class LoginController(
   }
   
   private fun deauth() {
-    site.actions().logout()
+    site.actions.logout()
 
     resetReplyLayoutMode()
   }
@@ -315,6 +315,6 @@ class LoginController(
   }
   
   private fun loggedIn(): Boolean {
-    return site.actions().isLoggedIn()
+    return site.actions.isLoggedIn()
   }
 }

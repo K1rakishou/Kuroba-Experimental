@@ -180,7 +180,7 @@ class LastReplyRepository(
     }
 
     val postingWithPasscode = replyMode == ReplyMode.ReplyModeUsePasscode
-      && site.actions().isLoggedIn()
+      && site.actions.isLoggedIn()
 
     val lastReplyCooldown = checkLastReplyCooldown(
       creatingNewThread = false,
@@ -245,7 +245,7 @@ class LastReplyRepository(
       return 0L
     }
 
-    val postingWithPasscode = replyMode == ReplyMode.ReplyModeUsePasscode && site.actions().isLoggedIn()
+    val postingWithPasscode = replyMode == ReplyMode.ReplyModeUsePasscode && site.actions.isLoggedIn()
 
     val lastReplyCooldown = checkLastReplyCooldown(
       creatingNewThread = true,
@@ -272,7 +272,7 @@ class LastReplyRepository(
       return 0L
     }
 
-    if (replyMode == ReplyMode.ReplyModeUsePasscode && site.actions().isLoggedIn()) {
+    if (replyMode == ReplyMode.ReplyModeUsePasscode && site.actions.isLoggedIn()) {
       Logger.d(TAG, "getTimeUntilNewThread($boardDescriptor, $replyMode) halving " +
         "currentPostingCooldownMs because of passcode")
 

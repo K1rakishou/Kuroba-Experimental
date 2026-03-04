@@ -93,7 +93,7 @@ class CaptchaContainerController(
 
     captchaContainer.removeAllViews()
 
-    var postAuthentication = site.actions().postAuthenticate()
+    var postAuthentication = site.actions.postAuthenticate()
 
     if (afterPostingAttempt && postAuthentication.type == SiteAuthentication.Type.CAPTCHA2_INVISIBLE) {
       if (site is Dvach) {

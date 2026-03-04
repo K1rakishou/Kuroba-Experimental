@@ -1213,7 +1213,7 @@ class BrowseController(
       return
     }
 
-    val link = site.resolvable().desktopUrl(chanDescriptor, null, null)
+    val link = site.urlHandler.desktopUrl(chanDescriptor, null, null)
     if (share) {
       AppModuleAndroidUtils.shareLink(link)
     } else {

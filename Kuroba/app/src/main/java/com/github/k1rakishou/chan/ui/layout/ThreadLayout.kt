@@ -28,7 +28,7 @@ import com.github.k1rakishou.chan.core.manager.PostHideManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter.ThreadPresenterCallback
-import com.github.k1rakishou.chan.core.site.Site
+import com.github.k1rakishou.chan.core.site.SiteConfiguration
 import com.github.k1rakishou.chan.core.site.loader.ChanLoaderException
 import com.github.k1rakishou.chan.features.create_sound_media.CreateSoundMediaController
 import com.github.k1rakishou.chan.features.reencoding.ImageOptionsHelper
@@ -414,7 +414,8 @@ class ThreadLayout @JvmOverloads constructor(
     }
 
     val supportsPosting = chanDescriptor?.siteDescriptor()?.let { siteDescriptor ->
-      return@let siteManager.bySiteDescriptorAndActive(siteDescriptor)?.siteFeature(Site.SiteFeature.POSTING)
+      return@let siteManager.bySiteDescriptorAndActive(siteDescriptor)
+        ?.hasSiteFeature(SiteConfiguration.SiteFeature.Posting)
     } ?: false
 
     if (!supportsPosting) {

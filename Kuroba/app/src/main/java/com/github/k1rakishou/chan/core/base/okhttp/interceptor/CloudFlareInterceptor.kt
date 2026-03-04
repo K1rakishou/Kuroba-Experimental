@@ -182,7 +182,7 @@ class CloudFlareInterceptor(
     }
 
     val newBuilder = prevRequest.newBuilder()
-    site.requestModifier().modifyGenericRequest(site, newBuilder)
+    site.requestModifier.modifyGenericRequest(site, newBuilder)
     return newBuilder.build()
   }
 

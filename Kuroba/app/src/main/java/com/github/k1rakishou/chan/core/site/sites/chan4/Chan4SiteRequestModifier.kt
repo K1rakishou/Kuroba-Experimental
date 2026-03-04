@@ -1,0 +1,127 @@
+package com.github.k1rakishou.chan.core.site.sites.chan4
+
+import com.github.k1rakishou.chan.core.site.SiteRequestModifier
+import com.github.k1rakishou.chan.core.site.SiteSetting
+import com.github.k1rakishou.chan.core.site.http.HttpCall
+import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4.Companion.CAPTCHA_COOKIE_KEY
+import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.common.CookieBuilder
+import com.github.k1rakishou.common.StringUtils.formatToken
+import com.github.k1rakishou.common.addOrReplaceCookieHeader
+import com.github.k1rakishou.common.isNotNullNorBlank
+import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.persist_state.ReplyMode
+import com.github.k1rakishou.prefs.GsonJsonSetting
+import okhttp3.HttpUrl
+import okhttp3.Request
+
+class Chan4SiteRequestModifier(
+  site: Chan4,
+  appConstants: AppConstants
+) : SiteRequestModifier<Chan4>(site, appConstants) {
+
+  override fun modifyHttpCall(httpCall: HttpCall, requestBuilder: Request.Builder) {
+    super.modifyHttpCall(httpCall, requestBuilder)
+
+    if (httpCall is Chan4ReplyCall && httpCall.replyMode == ReplyMode.ReplyModeUsePasscode) {
+      if (site.actions.isLoggedIn()) {
+        val passTokenSetting = site.passToken
+        requestBuilder.addOrReplaceCookieHeader("pass_id=" + passTokenSetting.get())
+      }
+    }
+
+    if (httpCall is Chan4ReplyCall) {
+      addChan4CookieHeader(site, requestBuilder)
+    }
+  }
+
+  override fun modifyCookieBuilder(urlToOpen: HttpUrl, cookieBuilder: CookieBuilder) {
+    super.modifyCookieBuilder(urlToOpen, cookieBuilder)
+
+    if (site.actions.isLoggedIn()) {
+      cookieBuilder.addOrReplace("pass_enabled", "1")
+      cookieBuilder.addOrReplace("pass_id", site.passToken.get())
+    }
+
+    val captchaCookie = get4chanPassCookie(site)
+    if (captchaCookie.isNotNullNorBlank()) {
+      cookieBuilder.addOrReplace(CAPTCHA_COOKIE_KEY, captchaCookie)
+    }
+
+    val cloudFlareCookies = getCloudFlareCookies(urlToOpen)
+    if (cloudFlareCookies.isNotNullNorBlank()) {
+      cookieBuilder.addOrReplace(cloudFlareCookies)
+    }
+
+    if (cookieBuilder.isEmpty()) {
+      Logger.d(TAG, "modifyWebView() full cookie is empty")
+      return
+    }
+
+    val cookieParts = cookieBuilder.cookieParts()
+    Logger.debug(TAG) { "modifyWebView('${urlToOpen}') cookieParts size: '${cookieParts.size}'" }
+
+    cookieParts.forEach { cookiePart ->
+      Logger.debug(TAG) { "modifyWebView('${urlToOpen}') '${cookiePart.key}'='${cookiePart.value}'" }
+    }
+  }
+
+  override fun modifyGenericRequest(
+    site: Chan4,
+    requestBuilder: Request.Builder
+  ) {
+    super.modifyGenericRequest(site, requestBuilder)
+
+    addChan4CookieHeader(site, requestBuilder)
+  }
+
+  override fun modifyPostReportRequest(site: Chan4, requestBuilder: Request.Builder) {
+    super.modifyPostReportRequest(site, requestBuilder)
+
+    if (site.actions.isLoggedIn()) {
+      val passTokenSetting = site.passToken
+      requestBuilder.addOrReplaceCookieHeader("pass_id=" + passTokenSetting.get())
+    }
+
+    addChan4CookieHeader(site, requestBuilder)
+  }
+
+  private fun addChan4CookieHeader(site: Chan4, requestBuilder: Request.Builder) {
+    val url = requestBuilder.build().url
+    val captchaCookie = get4chanPassCookie(site)
+
+    if (captchaCookie.isNullOrEmpty()) {
+      Logger.error(TAG) {
+        "addChan4CookieHeader() ${CAPTCHA_COOKIE_KEY} for url '${url}' " +
+          "is null or empty captchaCookie: '${formatToken(captchaCookie)}'"
+      }
+
+      return
+    }
+
+    Logger.debug(TAG) {
+      "addChan4CookieHeader(), url: '${url}', ${CAPTCHA_COOKIE_KEY}: '${formatToken(captchaCookie)}'"
+    }
+
+    requestBuilder.addOrReplaceCookieHeader("$CAPTCHA_COOKIE_KEY=${captchaCookie}")
+  }
+
+  private fun get4chanPassCookie(site: Chan4): String? {
+    val rememberCaptchaCookies = site
+      .getSettingBySettingId<GsonJsonSetting<Chan4CaptchaSettings>>(SiteSetting.SiteSettingId.Chan4CaptchaSettings)
+      ?.get()
+      ?.rememberCaptchaCookies
+      ?: false
+
+    if (!rememberCaptchaCookies) {
+      Logger.d(TAG, "addChan4CookieHeader(), rememberCaptchaCookies is false")
+      return null
+    }
+
+    return site.chan4CaptchaCookie.get()
+  }
+
+  companion object {
+    private const val TAG = "Chan4SiteRequestModifier"
+  }
+}

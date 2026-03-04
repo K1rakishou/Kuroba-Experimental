@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.core.helper.migration
 
 import android.content.Context
+import com.github.k1rakishou.chan.core.site.SiteConfiguration
 import com.github.k1rakishou.chan.core.site.SiteRegistry
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.utils.appDependencies
@@ -27,7 +28,7 @@ class AppMigration_V2_V3 : ApplicationMigration {
 
     for (siteDescriptor in SiteRegistry.SITE_CLASSES_MAP.keys) {
       val site = siteManager.bySiteDescriptorAndActive(siteDescriptor)
-      if (site == null || site.isSynthetic) {
+      if (site == null || site.hasSiteFeature(SiteConfiguration.SiteFeature.CatalogComposition)) {
         Logger.debug(TAG) { "Skipping ${siteDescriptor} site." }
         continue
       }

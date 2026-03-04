@@ -3,9 +3,8 @@ package com.github.k1rakishou.chan.core.usecase
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.core.site.parser.ChanReader
+import com.github.k1rakishou.chan.core.site.parser.SiteApi
 import com.github.k1rakishou.common.AppConstants
-import com.github.k1rakishou.common.EmptyBodyResponseException
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.parallelForEach
@@ -15,25 +14,23 @@ import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoObject
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoPostObject
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import dagger.Lazy
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import okhttp3.HttpUrl
 import okhttp3.Request
 import java.io.IOException
 import kotlin.math.max
 
-@Suppress("FoldInitializerAndIfToElvis")
 class FetchThreadBookmarkInfoUseCase(
   private val isDevFlavor: Boolean,
-  private val verboseLogsEnabled: Boolean,
-  private val appScope: CoroutineScope,
   private val proxiedOkHttpClient: Lazy<ProxiedOkHttpClient>,
   private val siteManager: SiteManager,
   private val bookmarksManager: BookmarksManager,
   private val appConstants: AppConstants
 ) : ISuspendUseCase<List<ChanDescriptor.ThreadDescriptor>, ModularResult<List<ThreadBookmarkFetchResult>>> {
 
-  override suspend fun execute(parameter: List<ChanDescriptor.ThreadDescriptor>): ModularResult<List<ThreadBookmarkFetchResult>> {
+  override suspend fun execute(
+    parameter: List<ChanDescriptor.ThreadDescriptor>
+  ): ModularResult<List<ThreadBookmarkFetchResult>> {
     Logger.d(TAG, "FetchThreadBookmarkInfoUseCase.execute(${parameter.size})")
     return Try { fetchThreadBookmarkInfoBatched(parameter) }
   }
@@ -52,12 +49,12 @@ class FetchThreadBookmarkInfoUseCase(
         return@parallelForEach null
       }
 
-      val threadJsonEndpoint = site.endpoints().thread(threadDescriptor)
+      val threadJsonEndpoint = site.endpoints.thread(threadDescriptor)
 
       return@parallelForEach fetchThreadBookmarkInfo(
-        threadDescriptor,
-        threadJsonEndpoint,
-        site.chanReader()
+        threadDescriptor = threadDescriptor,
+        threadJsonEndpoint = threadJsonEndpoint,
+        siteApi = site.api
       )
     }
   }
@@ -65,14 +62,14 @@ class FetchThreadBookmarkInfoUseCase(
   private suspend fun fetchThreadBookmarkInfo(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
     threadJsonEndpoint: HttpUrl,
-    chanReader: ChanReader
+    siteApi: SiteApi
   ): ThreadBookmarkFetchResult {
     val requestBuilder = Request.Builder()
       .url(threadJsonEndpoint)
       .get()
 
     siteManager.bySiteDescriptorAndActive(threadDescriptor.siteDescriptor())?.let { site ->
-      site.requestModifier().modifyCatalogOrThreadGetRequest(
+      site.requestModifier.modifyCatalogOrThreadGetRequest(
         site = site,
         chanDescriptor = threadDescriptor,
         requestBuilder = requestBuilder
@@ -95,10 +92,7 @@ class FetchThreadBookmarkInfoUseCase(
       return ThreadBookmarkFetchResult.BadStatusCode(response.code, threadDescriptor)
     }
 
-    val body = response.body
-      ?: return ThreadBookmarkFetchResult.Error(EmptyBodyResponseException(), threadDescriptor)
-
-    return body.byteStream().use { inputStream ->
+    return response.body.byteStream().use { inputStream ->
       val postsCount = bookmarksManager.mapBookmark(threadDescriptor) { threadBookmarkView ->
         threadBookmarkView.postsCount()
       }
@@ -107,14 +101,19 @@ class FetchThreadBookmarkInfoUseCase(
         return@use ThreadBookmarkFetchResult.AlreadyDeleted(threadDescriptor)
       }
 
-      val threadBookmarkInfoObject = chanReader.readThreadBookmarkInfoObject(
+      val threadBookmarkInfoObject = siteApi.readThreadBookmarkInfoObject(
         threadDescriptor,
-        max(postsCount, ChanReader.DEFAULT_POST_LIST_CAPACITY),
+        max(postsCount, SiteApi.DEFAULT_POST_LIST_CAPACITY),
         request.url.toString(),
         inputStream
       ).safeUnwrap { error -> return@use ThreadBookmarkFetchResult.Error(error, threadDescriptor) }
 
-      if (isDevFlavor && !threadDescriptor.siteDescriptor().isLainchan() && !threadDescriptor.siteDescriptor().isDiochan()) {
+      // TODO: move this into the SiteConfiguration
+      if (
+        isDevFlavor
+        && !threadDescriptor.siteDescriptor().isLainchan()
+        && !threadDescriptor.siteDescriptor().isDiochan()
+      ) {
         ensureCorrectPostOrder(threadBookmarkInfoObject.simplePostObjects)
       }
 

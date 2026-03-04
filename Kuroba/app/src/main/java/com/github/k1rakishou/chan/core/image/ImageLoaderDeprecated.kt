@@ -559,7 +559,7 @@ class ImageLoaderDeprecated(
     BackgroundUtils.ensureBackgroundThread()
 
     val site = siteResolver.findSiteForUrl(url)
-    val requestModifier = site?.requestModifier()
+    val requestModifier = site?.requestModifier
 
     val requestBuilder = Request.Builder()
       .url(url)

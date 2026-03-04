@@ -72,7 +72,7 @@ class TaimabaApi(
       ?: return
     val board = boardManager.byBoardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
 
-    val endpoints = site.endpoints()
+    val endpoints = site.endpoints
 
     // File
     var fileExt: String? = null
@@ -310,7 +310,7 @@ class TaimabaApi(
     responseBodyStream: InputStream,
   ): ModularResult<FilterWatchCatalogInfoObject> {
     val endpoints = siteManager.bySiteDescriptorAndActive(boardDescriptor.siteDescriptor)
-      ?.endpoints()
+      ?.endpoints
       ?: return ModularResult.error(SiteManager.SiteNotFoundException(boardDescriptor.siteDescriptor))
 
     return ModularResult.Try {

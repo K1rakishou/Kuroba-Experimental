@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.core.site.sites.dvach
 
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.manager.BoardManager
-import com.github.k1rakishou.common.EmptyBodyResponseException
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.jsonArray
@@ -43,16 +42,12 @@ class DvachBoardsRequest internal constructor(
     val request = Request.Builder()
       .url(url)
       .get()
-      .also { requestBuilder -> dvach.requestModifier().modifyGenericRequest(dvach, requestBuilder) }
+      .also { requestBuilder -> dvach.requestModifier.modifyGenericRequest(dvach, requestBuilder) }
       .build()
 
     val response = proxiedOkHttpClient.okHttpClient().suspendCall(request)
     if (!response.isSuccessful) {
       throw DvachBoardsRequestException.ServerErrorException(response.code)
-    }
-
-    if (response.body == null) {
-      throw DvachBoardsRequestException.UnknownServerError(EmptyBodyResponseException())
     }
 
     try {

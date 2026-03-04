@@ -5,7 +5,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
+import com.github.k1rakishou.chan.core.site.SiteConfiguration
 import com.github.k1rakishou.chan.features.search.epoxy.epoxySearchSiteView
 import com.github.k1rakishou.chan.ui.controller.base.BaseFloatingController
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
@@ -59,11 +59,11 @@ class SelectSiteForSearchController(
     val sites = mutableListOf<SiteSupportingSearchData>()
 
     siteManager.viewActiveSitesOrderedWhile { _, site ->
-      if (site.siteGlobalSearchType() != SiteGlobalSearchType.SearchNotSupported) {
+      if (site.configuration.globalSearchConfig != SiteConfiguration.GlobalSearchConfig.SearchNotSupported) {
         sites += SiteSupportingSearchData(
-          siteDescriptor = site.siteDescriptor(),
-          siteIconUrl = site.icon().url?.toString(),
-          isSelected = site.siteDescriptor() == selectedSite
+          siteDescriptor = site.descriptor,
+          siteIconUrl = site.configuration.icon.url?.toString(),
+          isSelected = site.descriptor == selectedSite
         )
       }
 

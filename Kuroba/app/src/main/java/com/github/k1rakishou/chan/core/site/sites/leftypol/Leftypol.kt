@@ -23,8 +23,7 @@ import com.github.k1rakishou.chan.core.site.SiteIcon.Companion.fromFavicon
 import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.limitations.ConstantAttachablesCount
 import com.github.k1rakishou.chan.core.site.limitations.ConstantMaxTotalSizeInfo
-import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitation
-import com.github.k1rakishou.chan.core.site.parser.CommentParserType
+import com.github.k1rakishou.chan.core.site.limitations.PostingLimitationConfig
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor.Companion.create
 import okhttp3.HttpUrl
@@ -53,7 +52,7 @@ class Leftypol : CommonSite() {
     setParser(LeftypolCommentParser())
     setPostingLimitationInfo(
       postingLimitationInfoLazy = lazy {
-        SitePostingLimitation(
+        PostingLimitationConfig(
           postMaxAttachables = ConstantAttachablesCount(5),
           postMaxAttachablesTotalSize = ConstantMaxTotalSizeInfo(80 * (1000 * 1000)) // 80 MB
         )

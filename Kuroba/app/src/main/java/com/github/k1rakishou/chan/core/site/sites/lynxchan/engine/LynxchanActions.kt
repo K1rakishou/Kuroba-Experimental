@@ -15,26 +15,23 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
 import com.github.k1rakishou.persist_state.ReplyMode
 import com.squareup.moshi.Moshi
-import dagger.Lazy
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
 open class LynxchanActions(
-  private val replyManager: Lazy<ReplyManager>,
-  private val moshi: Lazy<Moshi>,
-  private val httpCallManager: Lazy<HttpCallManager>,
-  private val lynxchanGetBoardsUseCaseLazy: Lazy<LynxchanGetBoardsUseCase>,
+  private val replyManager: ReplyManager,
+  private val moshi: Moshi,
+  private val httpCallManager: HttpCallManager,
+  private val lynxchanGetBoardsUseCase: LynxchanGetBoardsUseCase,
   site: LynxchanSite
 ) : CommonSite.CommonActions(site) {
   private val lynxchanSite: LynxchanSite
     get() = site as LynxchanSite
-  private val lynxchanGetBoardsUseCase: LynxchanGetBoardsUseCase
-    get() = lynxchanGetBoardsUseCaseLazy.get()
 
   override suspend fun boards(): Flow<SiteBoards> {
-    val getBoardsEndpoint = site.endpoints().boards()
+    val getBoardsEndpoint = site.endpoints.boards()
     if (getBoardsEndpoint == null) {
       return flowOf(SiteBoards.Result.Error(NullPointerException("Site.boards() returned null")))
     }
@@ -57,12 +54,11 @@ open class LynxchanActions(
     val replyCall = LynxchanReplyHttpCall(
       site = lynxchanSite,
       replyChanDescriptor = replyChanDescriptor,
-      replyMode = replyMode,
       replyManager = replyManager,
       moshi = moshi,
     )
 
-    return httpCallManager.get().makePostHttpCallWithProgress(replyCall, replyChanDescriptor)
+    return httpCallManager.makePostHttpCallWithProgress(replyCall, replyChanDescriptor)
       .map { replyCallResult ->
         when (replyCallResult) {
           is HttpCall.HttpCallWithProgressResult.Success -> {

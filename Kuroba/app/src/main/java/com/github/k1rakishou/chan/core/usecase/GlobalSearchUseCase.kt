@@ -37,7 +37,6 @@ class GlobalSearchUseCase(
     }
   }
 
-  @Suppress("MoveVariableDeclarationIntoWhen")
   private suspend fun doSearch(parameter: SearchParams): SearchResult {
     siteManager.awaitUntilInitialized()
 
@@ -47,7 +46,7 @@ class GlobalSearchUseCase(
       return SearchResult.Failure(SearchError.SiteNotFound(parameter.siteDescriptor))
     }
 
-    val result = Try { site.actions().search(parameter) }
+    val result = Try { site.actions.search(parameter) }
 
     when (result) {
       is ModularResult.Value -> {

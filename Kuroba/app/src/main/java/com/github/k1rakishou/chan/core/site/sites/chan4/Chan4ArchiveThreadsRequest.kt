@@ -8,7 +8,6 @@ import com.github.k1rakishou.common.EmptyBodyResponseException
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.common.suspendCall
-import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.Request
@@ -19,13 +18,13 @@ import java.nio.charset.StandardCharsets
 
 class Chan4ArchiveThreadsRequest(
   private val request: Request,
-  private val proxiedOkHttpClient: Lazy<ProxiedOkHttpClient>
+  private val proxiedOkHttpClient: ProxiedOkHttpClient
 ) {
 
   suspend fun execute(): ModularResult<NativeArchivePostList> {
     return withContext(Dispatchers.IO) {
       return@withContext ModularResult.Try {
-        val response = proxiedOkHttpClient.get().okHttpClient().suspendCall(request)
+        val response = proxiedOkHttpClient.okHttpClient().suspendCall(request)
 
         if (!response.isSuccessful) {
           throw BadStatusResponseException(response.code)

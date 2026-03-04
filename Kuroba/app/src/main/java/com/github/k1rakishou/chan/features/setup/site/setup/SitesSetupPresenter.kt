@@ -72,17 +72,17 @@ class SitesSetupPresenter(
     siteManager.viewSitesOrdered { chanSiteData, site ->
       val siteEnableState = SiteEnableState.create(
         active = chanSiteData.active,
-        enabled = site.enabled()
+        enabled = site.enabled
       )
 
       val siteCellData = SiteCellData(
         siteDescriptor = chanSiteData.siteDescriptor,
-        siteIcon = site.icon(),
-        siteName = site.name(),
+        siteIcon = site.configuration.icon,
+        siteName = site.name,
         siteEnableState = siteEnableState
       )
 
-      if (site.enabled()) {
+      if (site.enabled) {
         allSites += siteCellData
       } else {
         disabledSites += siteCellData

@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.core.site
 
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -31,14 +32,8 @@ open class SiteResolver @Inject constructor(
     var httpUrl = sanitizeUrl(url)
 
     if (httpUrl == null) {
-      return siteManager.firstActiveSiteOrNull { _, site ->
-        val siteUrlHandler = site.resolvable()
-        if (siteUrlHandler.matchesName(url)) {
-          return@firstActiveSiteOrNull true
-        }
-
-        return@firstActiveSiteOrNull false
-      }
+      Logger.error(TAG) { "findSiteForUrl('${url}') -> null" }
+      return null
     }
 
     if (httpUrl.scheme != "https") {
@@ -46,7 +41,7 @@ open class SiteResolver @Inject constructor(
     }
 
     return siteManager.firstActiveSiteOrNull { _, site ->
-      val siteUrlHandler = site.resolvable()
+      val siteUrlHandler = site.urlHandler
       if (siteUrlHandler.respondsTo(httpUrl)) {
         return@firstActiveSiteOrNull true
       }
@@ -64,11 +59,11 @@ open class SiteResolver @Inject constructor(
       ?: return null
 
     val resolveChanDescriptor = siteManager.mapFirstActiveSiteOrNull { _, site ->
-      if (!site.resolvable().respondsTo(httpUrl)) {
+      if (!site.urlHandler.respondsTo(httpUrl)) {
         return@mapFirstActiveSiteOrNull null
       }
 
-      return@mapFirstActiveSiteOrNull site.resolvable().resolveChanDescriptor(site, httpUrl)
+      return@mapFirstActiveSiteOrNull site.urlHandler.resolveChanDescriptor(site, httpUrl)
     }
 
     if (resolveChanDescriptor == null) {
@@ -112,5 +107,9 @@ open class SiteResolver @Inject constructor(
       this.chanDescriptor = chanDescriptor
       this.markedPostNo = markedPostNo
     }
+  }
+
+  companion object {
+    private const val TAG = "SiteResolver"
   }
 }

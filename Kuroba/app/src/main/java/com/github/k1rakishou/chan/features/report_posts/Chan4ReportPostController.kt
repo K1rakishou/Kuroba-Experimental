@@ -217,7 +217,7 @@ class Chan4ReportPostController(
             ?: return@KurobaComposeTextBarButton
 
           val isLoggedIn = siteManager.bySiteDescriptorAndActive(postDescriptor.siteDescriptor())
-            ?.actions()
+            ?.actions
             ?.isLoggedIn() == true
           val captchaSolution = captchaHolder.consumeCaptchaSolution() as? CaptchaSolution.ChallengeWithSolution
 

@@ -15,8 +15,8 @@ import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.shared.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteBase
+import com.github.k1rakishou.chan.core.site.SiteConfiguration
 import com.github.k1rakishou.chan.core.site.loader.ClientException
 import com.github.k1rakishou.chan.ui.compose.reorder.move
 import com.github.k1rakishou.chan.ui.helper.AppResources
@@ -97,7 +97,9 @@ class BoardsReorderControllerViewModel(
       }
 
       val boardsCount = boardManager.boardsCount(siteDescriptor)
-      if (!site.isSynthetic && (needAutoRefresh || boardsCount <= 0)) {
+      val isCompositeCatalogSite = site.hasSiteFeature(SiteConfiguration.SiteFeature.CatalogComposition)
+
+      if (!isCompositeCatalogSite && (needAutoRefresh || boardsCount <= 0)) {
         updateBoardsFromServerAndDisplayActive()
       } else {
         displayActiveBoardsInternal()
@@ -106,8 +108,10 @@ class BoardsReorderControllerViewModel(
   }
 
   fun isSyntheticSite(): Boolean {
-    val site = siteManager.bySiteDescriptorAndActive(siteDescriptor)!!
-    return site.isSynthetic
+    val site = siteManager.bySiteDescriptorAndActive(siteDescriptor)
+      ?: return false
+
+    return site.hasSiteFeature(SiteConfiguration.SiteFeature.CatalogComposition)
   }
 
   fun updateBoardsFromServerAndDisplayActive() {
@@ -128,7 +132,7 @@ class BoardsReorderControllerViewModel(
           return@launch
         }
 
-        if (site.siteFeature(Site.SiteFeature.CATALOG_COMPOSITION)) {
+        if (site.hasSiteFeature(SiteConfiguration.SiteFeature.CatalogComposition)) {
           displayActiveBoardsInternal()
           return@launch
         }
@@ -139,7 +143,7 @@ class BoardsReorderControllerViewModel(
           return@launch
         }
 
-        val siteBoardsResult = site.loadBoardInfo()
+        val siteBoardsResult = site.actions.loadBoardInfo()
           .onEach { siteBoards ->
             if (siteBoards is SiteBoards.Progress) {
               _updatingBoards.value = BoardsUpdateEvent(siteBoards.current, siteBoards.total)
@@ -338,7 +342,7 @@ class BoardsReorderControllerViewModel(
         return
       }
 
-      if (site.siteFeature(Site.SiteFeature.CATALOG_COMPOSITION)) {
+      if (site.hasSiteFeature(SiteConfiguration.SiteFeature.CatalogComposition)) {
         error("Cannot use sites with 'CATALOG_COMPOSITION' feature here")
       }
 

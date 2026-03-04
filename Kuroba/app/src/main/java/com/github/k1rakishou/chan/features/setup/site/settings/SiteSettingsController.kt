@@ -68,7 +68,7 @@ class SiteSettingsController(
     )
 
     val siteName = siteManager.bySiteDescriptorAndActive(siteDescriptor)
-      ?.name()
+      ?.name
       ?: siteDescriptor.siteName
 
     toolbarState.enterDefaultMode(

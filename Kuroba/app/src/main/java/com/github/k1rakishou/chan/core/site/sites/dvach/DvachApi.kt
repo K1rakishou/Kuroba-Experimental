@@ -33,7 +33,7 @@ import org.jsoup.parser.Parser
 import java.io.InputStream
 import java.util.concurrent.ConcurrentHashMap
 
-class DvachApiV2(
+class DvachApi(
   private val moshi: Lazy<Moshi>,
   private val siteManager: SiteManager,
   private val boardManager: BoardManager,
@@ -53,7 +53,7 @@ class DvachApiV2(
     val board = boardManager.byBoardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
       ?: return
 
-    val endpoints = site.endpoints()
+    val endpoints = site.endpoints
 
     val dvachThreadsFreshAdapter = moshi.get().adapter(DvachThreadsFresh::class.java)
     val dvachThreadsFresh = responseBodyStream
@@ -79,7 +79,7 @@ class DvachApiV2(
     val threadPosts = dvachThreadsFresh?.threads?.firstOrNull()?.posts
 
     if (threadPosts == null) {
-      throw IllegalStateException("No posts parsed for '$requestUrl'")
+      error("No posts parsed for '$requestUrl'")
     }
 
     if (threadPosts.isEmpty()) {
@@ -111,7 +111,7 @@ class DvachApiV2(
     val board = boardManager.byBoardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
       ?: return
 
-    val endpoints = site.endpoints()
+    val endpoints = site.endpoints
     val dvachThreadIncrementalAdapter = moshi.get().adapter(DvachThreadIncremental::class.java)
 
     val dvachThreadIncremental = responseBodyStream
@@ -162,7 +162,7 @@ class DvachApiV2(
       ?: return
     val board = boardManager.byBoardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
 
-    val endpoints = site.endpoints()
+    val endpoints = site.endpoints
 
     val dvachCatalogAdapter = moshi.get().adapter(DvachCatalog::class.java)
     val dvachCatalog = responseBodyStream
@@ -378,7 +378,7 @@ class DvachApiV2(
     responseBodyStream: InputStream
   ): ModularResult<FilterWatchCatalogInfoObject> {
     return ModularResult.Try {
-      val endpoints = site.endpoints()
+      val endpoints = site.endpoints
 
       val dvachFilterWatchCatalogInfoAdapter = moshi.get().adapter(DvachFilterWatchCatalogInfo::class.java)
       val catalogThreadPosts = responseBodyStream

@@ -609,7 +609,7 @@ class ChanThreadManager(
         val siteDescriptor = chanDescriptor.siteDescriptor()
 
         val postParser = siteManager.bySiteDescriptorAndActive(siteDescriptor)
-          ?.chanReader()
+          ?.api
           ?.getParser()
 
         if (postParser == null) {
@@ -657,7 +657,7 @@ class ChanThreadManager(
         val siteDescriptor = chanDescriptor.siteDescriptor()
 
         val postParser = siteManager.bySiteDescriptorAndActive(siteDescriptor)
-          ?.chanReader()
+          ?.api
           ?.getParser()
 
         if (postParser == null) {

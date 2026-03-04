@@ -35,7 +35,7 @@ internal class ChunkDownloader(
       .url(mediaUrl)
 
     siteResolver.findSiteForUrl(mediaUrl.toString())?.let { site ->
-      site.requestModifier().modifyGenericRequest(site, requestBuilder)
+      site.requestModifier.modifyGenericRequest(site, requestBuilder)
     }
 
     if (!chunk.isWholeFile()) {

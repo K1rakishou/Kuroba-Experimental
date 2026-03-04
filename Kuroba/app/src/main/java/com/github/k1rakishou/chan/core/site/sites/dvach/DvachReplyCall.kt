@@ -1,19 +1,3 @@
-/*
- * KurobaEx - *chan browser https://github.com/K1rakishou/Kuroba-Experimental/
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 package com.github.k1rakishou.chan.core.site.sites.dvach
 
 import android.text.TextUtils
@@ -41,7 +25,6 @@ import com.github.k1rakishou.prefs.StringSetting
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
-import dagger.Lazy
 import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
@@ -56,8 +39,8 @@ class DvachReplyCall internal constructor(
   site: Dvach,
   replyChanDescriptor: ChanDescriptor,
   val replyMode: ReplyMode,
-  private val moshi: Lazy<Moshi>,
-  private val replyManager: Lazy<ReplyManager>
+  private val moshi: Moshi,
+  private val replyManager: ReplyManager
 ) : CommonReplyHttpCall(site, replyChanDescriptor) {
 
   override fun addParameters(
@@ -69,11 +52,11 @@ class DvachReplyCall internal constructor(
       "reply.chanDescriptor == null"
     )
 
-    if (!replyManager.get().containsReply(chanDescriptor)) {
+    if (!replyManager.containsReply(chanDescriptor)) {
       throw IOException("No reply found for chanDescriptor=$chanDescriptor")
     }
 
-    replyManager.get().readReply(chanDescriptor) { reply ->
+    replyManager.readReply(chanDescriptor) { reply ->
       val threadNo = if (chanDescriptor is ThreadDescriptor) {
         chanDescriptor.threadNo
       } else {
@@ -126,9 +109,9 @@ class DvachReplyCall internal constructor(
   }
 
   override fun addHeaders(requestBuilder: Request.Builder, boundary: String) {
-    site.requestModifier().modifyHttpCall(this, requestBuilder)
+    site.requestModifier.modifyHttpCall(this, requestBuilder)
 
-    val replyUrl = site.endpoints().reply(replyChanDescriptor)
+    val replyUrl = site.endpoints.reply(replyChanDescriptor)
     requestBuilder.addHeader("Referer", replyUrl.toString())
   }
 
@@ -139,7 +122,7 @@ class DvachReplyCall internal constructor(
     val challenge = captchaSolution.challenge
     val solution = captchaSolution.solution
 
-    if (site.actions().postAuthenticate().type == SiteAuthentication.Type.EMOJI_CAPTCHA) {
+    if (site.actions.postAuthenticate().type == SiteAuthentication.Type.EMOJI_CAPTCHA) {
       formBuilder.addFormDataPart("captcha_type", "emoji_captcha")
       formBuilder.addFormDataPart("emoji_captcha_id", solution)
       return
@@ -214,7 +197,7 @@ class DvachReplyCall internal constructor(
 
   override fun process(response: Response, result: String) {
     val postingResult = try {
-      moshi.get()
+      moshi
         .adapter(PostingResult::class.java)
         .fromJson(result)
     } catch (error: Throwable) {

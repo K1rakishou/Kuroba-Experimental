@@ -402,7 +402,7 @@ class ThreadDownloadingDelegate(
     }
 
     val site = siteResolver.findSiteForUrl(imageUrl.toString())
-    val requestModifier = site?.requestModifier()
+    val requestModifier = site?.requestModifier
 
     val requestBuilder = Request.Builder()
       .url(imageUrl)
@@ -425,14 +425,7 @@ class ThreadDownloadingDelegate(
       return
     }
 
-    val responseBody = if (response.body == null) {
-      Logger.e(TAG, "downloadImage(isThumbnail=$isThumbnail, name=$name, imageUrl=$imageUrl) " +
-        "response body is null")
-      fileManager.delete(outputFile)
-      return
-    } else {
-      response.body!!
-    }
+    val responseBody = response.body
 
     try {
       val outputStream = fileManager.getOutputStream(outputFile)

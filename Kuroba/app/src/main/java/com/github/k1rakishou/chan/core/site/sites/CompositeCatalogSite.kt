@@ -5,23 +5,22 @@ import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderDeprecated
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
-import com.github.k1rakishou.chan.core.site.ChunkDownloaderSiteProperties
 import com.github.k1rakishou.chan.core.site.ResolvedChanDescriptor
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
+import com.github.k1rakishou.chan.core.site.SiteConfiguration
 import com.github.k1rakishou.chan.core.site.SiteEndpoints
 import com.github.k1rakishou.chan.core.site.SiteIcon
 import com.github.k1rakishou.chan.core.site.SiteRequestModifier
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.SiteUrlHandler
+import com.github.k1rakishou.chan.core.site.common.CommonSiteConfiguration
 import com.github.k1rakishou.chan.core.site.http.DeleteRequest
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
-import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitation
 import com.github.k1rakishou.chan.core.site.loader.ClientException
-import com.github.k1rakishou.chan.core.site.parser.ChanReader
-import com.github.k1rakishou.chan.core.site.parser.CommentParserType
 import com.github.k1rakishou.chan.core.site.parser.PostParser
+import com.github.k1rakishou.chan.core.site.parser.SiteApi
 import com.github.k1rakishou.chan.core.site.parser.processor.AbstractChanReaderProcessor
 import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
 import com.github.k1rakishou.common.AppConstants
@@ -48,25 +47,50 @@ import javax.inject.Inject
 class CompositeCatalogSite : Site {
 
   @Inject
-  lateinit var _imageLoaderDeprecated: Lazy<ImageLoaderDeprecated>
+  lateinit var imageLoaderDeprecatedLazy: Lazy<ImageLoaderDeprecated>
   @Inject
   lateinit var appConstants: AppConstants
 
-  private val _siteIcon by lazy { SiteIcon.fromDrawable(_imageLoaderDeprecated, R.drawable.composition_icon) }
+  override val enabled: Boolean = true
+  override val name: String = "Composite catalogs"
+  override val descriptor: SiteDescriptor = SITE_DESCRIPTOR
+  override val urlHandler: SiteUrlHandler by lazy { siteUrlHandler }
+  override val endpoints: SiteEndpoints by lazy { siteEndpoints }
+  override val requestModifier: SiteRequestModifier<Site> by lazy { noOpSiteRequestModifier }
+  override val api: SiteApi by lazy { noOpSiteApi }
+  override val actions: SiteActions by lazy { noOpActions }
+  override val configuration: SiteConfiguration by lazy {
+    CommonSiteConfiguration(
+      icon = SiteIcon.fromDrawable(imageLoaderDeprecatedLazy, R.drawable.composition_icon),
+      boardsType = SiteConfiguration.BoardsType.Static,
+      catalogType = SiteConfiguration.CatalogType.Dynamic,
+      nsfwBoardDisplayType = SiteConfiguration.NsfwBoardDisplayType.NotSupported,
+      commentParserType = SiteConfiguration.CommentParserType.Default,
+      chunkedDownloaderConfig = SiteConfiguration.ChunkedDownloaderConfig(
+        enabled = false,
+        siteSendsCorrectFileSizeInBytes = false
+      ),
+      globalSearchConfig = SiteConfiguration.GlobalSearchConfig.SearchNotSupported,
+      postingLimitationConfig = null,
+      redirectsToArchiveThread = false
+    )
+  }
 
-  override val isSynthetic: Boolean
-    get() = true
+  override val settings: List<SiteSetting> = emptyList()
 
-  override fun catalogType(): Site.CatalogType {
-    // Doesn't matter
-    return Site.CatalogType.DYNAMIC
+  override suspend fun initialize() {
+    Chan.getComponent()
+      .inject(this)
+  }
+
+  override fun <T : Setting<*>> getSettingBySettingId(settingId: SiteSetting.SiteSettingId): T? = null
+
+
+  override fun hasSiteFeature(siteFeature: SiteConfiguration.SiteFeature): Boolean {
+    return siteFeature == SiteConfiguration.SiteFeature.CatalogComposition
   }
 
   private val siteUrlHandler = object : SiteUrlHandler {
-
-    override fun getSiteClass(): Class<out Site> = this@CompositeCatalogSite.javaClass
-
-    override fun matchesName(value: String): Boolean = false
 
     override fun respondsTo(url: HttpUrl): Boolean = false
 
@@ -130,7 +154,7 @@ class CompositeCatalogSite : Site {
     }
   }
 
-  private val noOpChanReader = object : ChanReader() {
+  private val noOpSiteApi = object : SiteApi() {
     override suspend fun getParser(): PostParser? = null
 
     override suspend fun loadThreadFresh(
@@ -195,65 +219,14 @@ class CompositeCatalogSite : Site {
     override fun isLoggedIn(): Boolean = false
 
     override fun loginDetails(): AbstractLoginRequest? = null
-  }
 
-  override fun enabled(): Boolean = true
-
-  override fun initialize() {
-    Chan.getComponent()
-      .inject(this)
-  }
-
-  override fun postInitialize() {
-  }
-
-  override suspend fun loadBoardInfo(): Flow<SiteBoards> = flow {
-    emit(SiteBoards.Result.Error(ClientException("Not supported for composite catalogs")))
-  }
-
-  override fun name(): String = "Composite catalogs"
-
-  override fun siteDescriptor(): SiteDescriptor = SITE_DESCRIPTOR
-
-  override fun icon(): SiteIcon = _siteIcon
-
-  override fun boardsType(): Site.BoardsType = Site.BoardsType.STATIC
-
-  override fun resolvable(): SiteUrlHandler = siteUrlHandler
-
-  override fun siteFeature(siteFeature: Site.SiteFeature): Boolean {
-    if (siteFeature == Site.SiteFeature.CATALOG_COMPOSITION) {
-      return true
+    override suspend fun loadBoardInfo(): Flow<SiteBoards> = flow {
+      emit(SiteBoards.Result.Error(ClientException("Not supported for composite catalogs")))
     }
-
-    return false
   }
-
-  override fun settings(): List<SiteSetting> = emptyList()
-
-  override fun endpoints(): SiteEndpoints = siteEndpoints
-
-  override fun requestModifier(): SiteRequestModifier<Site> = noOpSiteRequestModifier
-
-  override fun chanReader(): ChanReader = noOpChanReader
-
-  override fun actions(): SiteActions = noOpActions
-
-  override fun commentParserType(): CommentParserType = CommentParserType.Default
-
-  override fun getChunkDownloaderSiteProperties(): ChunkDownloaderSiteProperties {
-    return ChunkDownloaderSiteProperties(
-      enabled = false,
-      siteSendsCorrectFileSizeInBytes = false
-    )
-  }
-
-  override fun postingLimitationInfo(): SitePostingLimitation? = null
-
-  override fun <T : Setting<*>> getSettingBySettingId(settingId: SiteSetting.SiteSettingId): T? = null
 
   companion object {
-    val SITE_NAME = "composite-catalog-site"
+    const val SITE_NAME = "composite-catalog-site"
     val SITE_DESCRIPTOR = SiteDescriptor.create(SITE_NAME)
   }
 

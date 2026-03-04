@@ -26,8 +26,7 @@ import com.github.k1rakishou.chan.core.site.common.vichan.VichanApi
 import com.github.k1rakishou.chan.core.site.common.vichan.VichanEndpoints
 import com.github.k1rakishou.chan.core.site.limitations.ConstantAttachablesCount
 import com.github.k1rakishou.chan.core.site.limitations.ConstantMaxTotalSizeInfo
-import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitation
-import com.github.k1rakishou.chan.core.site.parser.CommentParserType
+import com.github.k1rakishou.chan.core.site.limitations.PostingLimitationConfig
 import com.github.k1rakishou.model.data.board.ChanBoard.Companion.create
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor.Companion.create
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -46,24 +45,24 @@ class Lainchan : CommonSite() {
     setName(SITE_NAME)
     setIcon(fromFavicon(imageLoaderDeprecatedLazy, "https://lainchan.org/favicon.ico".toHttpUrl()))
     setBoards(
-      create(create(siteDescriptor().siteName, "λ"), "Programming"),
-      create(create(siteDescriptor().siteName, "Δ"), "Do It Yourself"),
-      create(create(siteDescriptor().siteName, "sec"), "Security"),
-      create(create(siteDescriptor().siteName, "Ω"), "Technology"),
-      create(create(siteDescriptor().siteName, "inter"), "Games and Interactive Media"),
-      create(create(siteDescriptor().siteName, "lit"), "Literature"),
-      create(create(siteDescriptor().siteName, "music"), "Musical and Audible Media"),
-      create(create(siteDescriptor().siteName, "vis"), "Visual Media"),
-      create(create(siteDescriptor().siteName, "hum"), "Humanity"),
-      create(create(siteDescriptor().siteName, "drug"), "Drugs 3.0"),
-      create(create(siteDescriptor().siteName, "zzz"), "Consciousness and Dreams"),
-      create(create(siteDescriptor().siteName, "layer"), "layer"),
-      create(create(siteDescriptor().siteName, "q"), "Questions and Complaints"),
-      create(create(siteDescriptor().siteName, "r"), "Random"),
-      create(create(siteDescriptor().siteName, "lain"), "Lain"),
-      create(create(siteDescriptor().siteName, "culture"), "Culture 15 freshly bumped threads"),
-      create(create(siteDescriptor().siteName, "psy"), "Psychopharmacology 15 freshly bumped threads"),
-      create(create(siteDescriptor().siteName, "mega"), "15 freshly bumped threads")
+      create(create(descriptor().siteName, "λ"), "Programming"),
+      create(create(descriptor().siteName, "Δ"), "Do It Yourself"),
+      create(create(descriptor().siteName, "sec"), "Security"),
+      create(create(descriptor().siteName, "Ω"), "Technology"),
+      create(create(descriptor().siteName, "inter"), "Games and Interactive Media"),
+      create(create(descriptor().siteName, "lit"), "Literature"),
+      create(create(descriptor().siteName, "music"), "Musical and Audible Media"),
+      create(create(descriptor().siteName, "vis"), "Visual Media"),
+      create(create(descriptor().siteName, "hum"), "Humanity"),
+      create(create(descriptor().siteName, "drug"), "Drugs 3.0"),
+      create(create(descriptor().siteName, "zzz"), "Consciousness and Dreams"),
+      create(create(descriptor().siteName, "layer"), "layer"),
+      create(create(descriptor().siteName, "q"), "Questions and Complaints"),
+      create(create(descriptor().siteName, "r"), "Random"),
+      create(create(descriptor().siteName, "lain"), "Lain"),
+      create(create(descriptor().siteName, "culture"), "Culture 15 freshly bumped threads"),
+      create(create(descriptor().siteName, "psy"), "Psychopharmacology 15 freshly bumped threads"),
+      create(create(descriptor().siteName, "mega"), "15 freshly bumped threads")
     )
     setResolvable(URL_HANDLER)
     setConfig(object : CommonConfig() {
@@ -77,7 +76,7 @@ class Lainchan : CommonSite() {
     setParser(LainchanCommentParser())
     setPostingLimitationInfo(
       postingLimitationInfoLazy = lazy {
-        SitePostingLimitation(
+        PostingLimitationConfig(
           postMaxAttachables = ConstantAttachablesCount(3),
           postMaxAttachablesTotalSize = ConstantMaxTotalSizeInfo(75 * (1024 * 1024)) // 75 MB
         )

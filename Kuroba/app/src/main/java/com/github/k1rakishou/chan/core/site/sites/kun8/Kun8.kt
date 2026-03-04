@@ -11,7 +11,6 @@ import com.github.k1rakishou.chan.core.site.common.MultipartHttpCall
 import com.github.k1rakishou.chan.core.site.common.vichan.VichanActions
 import com.github.k1rakishou.chan.core.site.common.vichan.VichanApi
 import com.github.k1rakishou.chan.core.site.common.vichan.VichanEndpoints
-import com.github.k1rakishou.chan.core.site.parser.CommentParserType
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -104,7 +103,7 @@ class Kun8 : CommonSite() {
           .build()
 
         val siteBoards = Kun8BoardsRequest(
-          siteDescriptor = siteDescriptor(),
+          siteDescriptor = descriptor(),
           boardManager = boardManager,
           request = request,
           proxiedOkHttpClient = proxiedOkHttpClient

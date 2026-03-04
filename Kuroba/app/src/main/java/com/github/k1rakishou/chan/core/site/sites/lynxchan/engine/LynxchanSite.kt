@@ -2,129 +2,100 @@ package com.github.k1rakishou.chan.core.site.sites.lynxchan.engine
 
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.manager.BoardManager
-import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.core.site.ChunkDownloaderSiteProperties
 import com.github.k1rakishou.chan.core.site.Site
+import com.github.k1rakishou.chan.core.site.SiteConfiguration
 import com.github.k1rakishou.chan.core.site.SiteIcon
 import com.github.k1rakishou.chan.core.site.SiteRequestModifier
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.limitations.BoardDependantAttachablesCount
 import com.github.k1rakishou.chan.core.site.limitations.BoardDependantPostAttachablesMaxTotalSize
-import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitation
-import com.github.k1rakishou.chan.core.site.parser.CommentParser
-import com.github.k1rakishou.chan.core.site.parser.CommentParserType
+import com.github.k1rakishou.chan.core.site.limitations.PostingLimitationConfig
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.LynxchanBoardMeta
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.prefs.CookieSetting
-import com.squareup.moshi.Moshi
-import dagger.Lazy
 import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import javax.inject.Inject
 
 abstract class LynxchanSite : CommonSite() {
-
   @Inject
-  lateinit var _lynxchanGetBoardsUseCase: Lazy<LynxchanGetBoardsUseCase>
-  @Inject
-  lateinit var _moshi: Lazy<Moshi>
-  @Inject
-  lateinit var _siteManager: Lazy<SiteManager>
-  @Inject
-  lateinit var _boardManager: Lazy<BoardManager>
-
-  protected val lynxchanEndpoints = lazy { LynxchanEndpoints(this) }
+  lateinit var lynxchanGetBoardsUseCase: LynxchanGetBoardsUseCase
 
   open val initialPageIndex: Int = 1
-
   abstract val defaultDomain: HttpUrl
-  abstract val siteName: String
-  abstract val siteIcon: SiteIcon
-  abstract val urlHandler: kotlin.Lazy<BaseLynxchanUrlHandler>
-  abstract val endpoints: kotlin.Lazy<LynxchanEndpoints>
+  open val mediaHosts: Array<HttpUrl> by lazy { arrayOf(domainUrl) }
 
   // When false, json payload will be used.
   // When true, form data parameters will be used.
-  abstract val postingViaFormData: Boolean
-  open val enabled: Boolean = true
+  open val postingViaFormData: Boolean = false
 
-  val captchaIdCookie by lazy { CookieSetting(moshiLazy, prefs, "captcha_id") }
-  val bypassCookie by lazy { CookieSetting(moshiLazy, prefs, "bypass_cookie") }
-  val extraCookie by lazy { CookieSetting(moshiLazy, prefs, "extra_cookie") }
-
-  val domainUrl: kotlin.Lazy<HttpUrl> = lazy {
-    val siteDomain = siteDomainSetting?.get()
-    if (siteDomain != null) {
-      val siteDomainUrl = siteDomain.toHttpUrlOrNull()
-      if (siteDomainUrl != null) {
-        Logger.d(TAG, "Using domain: \'${siteDomainUrl}\'")
-        return@lazy siteDomainUrl
-      }
-    }
-
-    Logger.debug(TAG) {
-      "Using default domain: \'${defaultDomain}\' since custom domain seems to be incorrect: \'$siteDomain\'"
-    }
-    return@lazy defaultDomain
-  }
-
-  val domainString by lazy {
-    return@lazy domainUrl.value.toString().removeSuffix("/")
-  }
-
-  override fun initialize() {
-    Chan.getComponent()
-      .inject(this)
-
-    super.initialize()
-  }
-
-  override fun setup() {
-    setEnabled(enabled)
-    setName(siteName)
-    setIcon(siteIcon)
-    setBoardsType(Site.BoardsType.DYNAMIC)
-    setCatalogType(Site.CatalogType.DYNAMIC)
-    setLazyResolvable(urlHandler)
-    setConfig(LynxchanConfig())
-    setEndpointsLazy(endpoints)
-    setActions(LynxchanActions(replyManagerLazy, moshiLazy, httpCallManagerLazy, _lynxchanGetBoardsUseCase, this))
-    setRequestModifier(LynxchanRequestModifier(this, appConstants) as SiteRequestModifier<Site>)
-    setApi(LynxchanApi(_moshi, _siteManager, _boardManager, this))
-    setParser(LynxchanCommentParser())
-
-    setPostingLimitationInfo(
-      postingLimitationInfoLazy = lazy {
-        SitePostingLimitation(
-          postMaxAttachables = BoardDependantAttachablesCount(
-            boardManager = boardManager,
-            defaultMaxAttachablesPerPost = 5,
-            selector = { chanBoard -> (chanBoard.chanBoardMeta as? LynxchanBoardMeta)?.maxFileCount }
-          ),
-          postMaxAttachablesTotalSize = BoardDependantPostAttachablesMaxTotalSize(
-            boardManager = boardManager,
-            // Seems like most boards have 350MB limit but lets use more sane numbers by default
-            defaultMaxAttachablesSize = 64 * 1000 * 1000L,
-            selector = { chanBoard -> chanBoard.maxFileSize.toLong() }
-          )
-        )
-      }
+  override val enabled: Boolean = true
+  override val commentParserType = SiteConfiguration.CommentParserType.LynxchanParser
+  override val globalSearchConfig = SiteConfiguration.GlobalSearchConfig.SearchNotSupported
+  override val icon by lazy {
+    SiteIcon.fromFavicon(
+      imageLoaderDeprecated = imageLoaderDeprecatedLazy,
+      url = "${domainString}/favicon.ico".toHttpUrl()
     )
   }
-
-  override fun setParser(commentParser: CommentParser) {
-    postParser = LynxchanPostParser(commentParser as LynxchanCommentParser, archivesManager)
+  override val boardsType = SiteConfiguration.BoardsType.Dynamic
+  override val catalogType = SiteConfiguration.CatalogType.Dynamic
+  override val postParser by lazy { LynxchanPostParser(LynxchanCommentParser(), archivesManager) }
+  override val postingLimitationInfo by lazy {
+    PostingLimitationConfig(
+      postMaxAttachables = BoardDependantAttachablesCount(
+        boardManager = boardManager,
+        defaultMaxAttachablesPerPost = 5,
+        selector = { chanBoard -> (chanBoard.chanBoardMeta as? LynxchanBoardMeta)?.maxFileCount }
+      ),
+      postMaxAttachablesTotalSize = BoardDependantPostAttachablesMaxTotalSize(
+        boardManager = boardManager,
+        // Seems like most boards have 350MB limit but lets use more sane numbers by default
+        defaultMaxAttachablesSize = 64 * 1000 * 1000L,
+        selector = { chanBoard -> chanBoard.maxFileSize.toLong() }
+      )
+    )
+  }
+  override val chunkedDownloaderConfig by lazy {
+    SiteConfiguration.ChunkedDownloaderConfig(
+      enabled = true,
+      siteSendsCorrectFileSizeInBytes = true
+    )
+  }
+  override val urlHandler by lazy { BaseLynxchanUrlHandler(domainUrl, mediaHosts) }
+  override val endpoints by lazy { LynxchanEndpoints(this) }
+  override val api by lazy {
+    LynxchanApi(
+      moshi = moshi,
+      siteManager = siteManager,
+      boardManager = boardManager,
+      site = this
+    )
+  }
+  override val actions by lazy {
+    LynxchanActions(
+      replyManager = replyManager,
+      moshi = moshi,
+      httpCallManager = httpCallManager,
+      lynxchanGetBoardsUseCase = lynxchanGetBoardsUseCase,
+      site = this
+    )
+  }
+  override val requestModifier by lazy {
+    LynxchanRequestModifier(
+      site = this,
+      appConstants = appConstants
+    ) as SiteRequestModifier<Site>
   }
 
-  override fun commentParserType(): CommentParserType = CommentParserType.LynxchanParser
 
-  override fun settings(): List<SiteSetting> {
+  override val settings: List<SiteSetting> by lazy {
     val settings = mutableListOf<SiteSetting>()
-    settings.addAll(super.settings())
+    settings.addAll(super.settings)
 
     settings += SiteSetting.SiteCookieSetting(
       settingName = "captchaIdCookie",
@@ -142,21 +113,46 @@ abstract class LynxchanSite : CommonSite() {
       setting = extraCookie
     )
 
-    return settings
+    return@lazy settings
   }
 
-  override fun getChunkDownloaderSiteProperties(): ChunkDownloaderSiteProperties {
-    return ChunkDownloaderSiteProperties(
-      enabled = true,
-      siteSendsCorrectFileSizeInBytes = true
-    )
+  val captchaIdCookie by lazy { CookieSetting(moshiLazy, prefs, "captcha_id") }
+  val bypassCookie by lazy { CookieSetting(moshiLazy, prefs, "bypass_cookie") }
+  val extraCookie by lazy { CookieSetting(moshiLazy, prefs, "extra_cookie") }
+
+  val domainUrl by lazy {
+    val siteDomain = siteDomainSetting?.get()
+    if (siteDomain != null) {
+      val siteDomainUrl = siteDomain.toHttpUrlOrNull()
+      if (siteDomainUrl != null) {
+        Logger.d(TAG, "Using domain: \'${siteDomainUrl}\'")
+        return@lazy siteDomainUrl
+      }
+    }
+
+    Logger.debug(TAG) {
+      "Using default domain: \'${defaultDomain}\' since custom domain seems to be incorrect: \'$siteDomain\'"
+    }
+    return@lazy defaultDomain
+  }
+
+  val domainString by lazy { domainUrl.toString().removeSuffix("/") }
+
+  override suspend fun initialize() {
+    Chan.getComponent()
+      .inject(this)
+
+    super.initialize()
+  }
+
+  override fun hasSiteFeature(siteFeature: SiteConfiguration.SiteFeature): Boolean {
+    return super.hasSiteFeature(siteFeature)
+      || siteFeature == SiteConfiguration.SiteFeature.Posting
   }
 
   open class BaseLynxchanUrlHandler(
     override val url: HttpUrl,
     override val mediaHosts: Array<HttpUrl>,
-    override val names: Array<String>,
-    private val siteClass: Class<out Site>
   ) : CommonSiteUrlHandler() {
 
     override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?, postSubNo: Long?): String? {
@@ -179,8 +175,6 @@ abstract class LynxchanSite : CommonSite() {
         }
       }
     }
-
-    override fun getSiteClass(): Class<out Site> = siteClass
   }
 
   companion object {

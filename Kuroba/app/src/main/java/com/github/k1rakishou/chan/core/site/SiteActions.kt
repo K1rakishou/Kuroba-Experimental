@@ -55,6 +55,8 @@ interface SiteActions {
 
   fun clearPostingCookies() = Unit
 
+  suspend fun loadBoardInfo(): Flow<SiteBoards>
+
   enum class LoginType {
     Passcode,
     TokenAndPass

@@ -12,7 +12,7 @@ import com.squareup.moshi.Moshi
 import dagger.Lazy
 
 class MapSetting(
-  private val _moshi: Lazy<Moshi>,
+  private val moshiLazy: Lazy<Moshi>,
   private val mapperTo: (KeyValue) -> MapSettingEntry,
   private val mapperFrom: (MapSettingEntry) -> KeyValue,
   settingProvider: SettingProvider,
@@ -21,14 +21,14 @@ class MapSetting(
 ) : Setting<Map<String, String>>(settingProvider, key, def) {
 
   private val moshi: Moshi
-    get() = _moshi.get()
+    get() = moshiLazy.get()
 
   @Volatile
   @GuardedBy("this")
   private var cache: MutableMap<String, String>? = null
 
   private fun <T : Any?> withCache(func: MutableMap<String, String>.() -> T): T {
-    val _cache = if (cache != null) {
+    val cachedMap = if (cache != null) {
       cache!!
     } else {
       val cacheData = get()
@@ -39,7 +39,7 @@ class MapSetting(
       }
     }
 
-    return func(_cache)
+    return func(cachedMap)
   }
 
   fun put(key: String, value: String, sync: Boolean = false) {
@@ -85,28 +85,30 @@ class MapSetting(
       return cached
     }
 
-    cache = mutableMapOf<String, String>()
-    val json = settingProvider.getString(key, ChanSettings.EMPTY_JSON)
+    return synchronized(this) {
+      cache = mutableMapOf<String, String>()
+      val json = settingProvider.getString(key, ChanSettings.EMPTY_JSON)
 
-    try {
-      val mapSettingEntries = moshi
-        .adapter<MapSettingEntries>(MapSettingEntries::class.java)
-        .fromJson(json)
+      try {
+        val mapSettingEntries = moshi
+          .adapter<MapSettingEntries>(MapSettingEntries::class.java)
+          .fromJson(json)
 
-      if (mapSettingEntries != null) {
-        mapSettingEntries.entries.forEach { mapSettingEntry ->
-          val mapped = mapperFrom(mapSettingEntry)
-          cache!!.put(mapped.key, mapped.value)
+        if (mapSettingEntries != null) {
+          mapSettingEntries.entries.forEach { mapSettingEntry ->
+            val mapped = mapperFrom(mapSettingEntry)
+            cache!![mapped.key] = mapped.value
+          }
         }
+      } catch (error: Throwable) {
+        Logger.e(TAG, "MapSetting.get()", error)
+
+        settingProvider.putString(key, convertMapToJson(getDefault()))
+        cache = def.toMutableMap()
       }
-    } catch (error: Throwable) {
-      Logger.e(TAG, "MapSetting.get()", error)
 
-      settingProvider.putString(key, convertMapToJson(getDefault()))
-      cache = def.toMutableMap()
+      return@synchronized cache!!
     }
-
-    return cache!!
   }
 
   override fun set(value: Map<String, String>) {
@@ -155,13 +157,13 @@ class MapSetting(
 
   @JsonClass(generateAdapter = true)
   data class MapSettingEntries(
-    @Json(name = "entries") val entries: List<MapSettingEntry>
+    @field:Json(name = "entries") val entries: List<MapSettingEntry>
   )
 
   @JsonClass(generateAdapter = true)
   data class MapSettingEntry(
-    @Json(name = "key") val key: String,
-    @Json(name = "value") val value: String
+    @field:Json(name = "key") val key: String,
+    @field:Json(name = "value") val value: String
   )
 
   data class KeyValue(

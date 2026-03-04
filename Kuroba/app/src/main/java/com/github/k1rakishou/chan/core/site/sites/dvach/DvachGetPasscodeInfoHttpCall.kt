@@ -21,14 +21,14 @@ class DvachGetPasscodeInfoHttpCall(
     requestBuilder: Request.Builder,
     progressListener: ProgressRequestBody.ProgressRequestListener?
   ) {
-    val passcodeInfoUrl = requireNotNull(site.endpoints().passCodeInfo()) { "Must not be null!" }
+    val passcodeInfoUrl = requireNotNull(site.endpoints.passCodeInfo()) { "Must not be null!" }
 
     requestBuilder
       .url(passcodeInfoUrl)
       .get()
 
-    site.requestModifier().modifyGenericRequest(site, requestBuilder)
-    site.requestModifier().modifyHttpCall(this, requestBuilder)
+    site.requestModifier.modifyGenericRequest(site, requestBuilder)
+    site.requestModifier.modifyHttpCall(this, requestBuilder)
   }
 
   override fun process(response: Response, result: String) {

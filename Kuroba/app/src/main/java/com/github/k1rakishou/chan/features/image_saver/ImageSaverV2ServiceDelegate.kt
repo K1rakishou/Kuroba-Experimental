@@ -1078,7 +1078,7 @@ class ImageSaverV2ServiceDelegate(
       .url(imageUrl)
 
     siteResolver.findSiteForUrl(imageUrl.toString())?.let { site ->
-      site.requestModifier().modifyGenericRequest(site, requestBuilder)
+      site.requestModifier.modifyGenericRequest(site, requestBuilder)
     }
 
     val response = downloaderOkHttpClient.okHttpClient().suspendCall(requestBuilder.build())

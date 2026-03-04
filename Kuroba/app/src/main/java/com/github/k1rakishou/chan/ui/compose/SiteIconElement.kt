@@ -49,7 +49,7 @@ fun SiteIconElement(
       showShimmer = true
     }
 
-    val siteIcon = site.icon()
+    val siteIcon = site.configuration.icon
       .getIconSuspend(context.applicationContext)
 
     imageRequestMut = ImageRequest.Builder(context)

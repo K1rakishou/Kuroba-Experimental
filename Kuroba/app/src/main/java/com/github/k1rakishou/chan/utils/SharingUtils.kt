@@ -15,7 +15,7 @@ object SharingUtils {
       return null
     }
 
-    return site.resolvable().desktopUrl(chanDescriptor, null, null)
+    return site.urlHandler.desktopUrl(chanDescriptor, null, null)
   }
 
 }

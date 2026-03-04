@@ -8,6 +8,7 @@ import com.github.k1rakishou.chan.core.concurrency.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.ProxyStorage
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.site.SiteConfiguration
 import com.github.k1rakishou.chan.core.site.SiteRegistry
 import com.github.k1rakishou.chan.features.toolbar.BackArrowMenuItem
 import com.github.k1rakishou.chan.features.toolbar.ToolbarMiddleContent
@@ -92,7 +93,10 @@ class ProxyEditorController(
     enableForFullMedia = view.findViewById(R.id.enable_for_full_media)
 
     siteRegistry.SITE_CLASSES_MAP.keys.forEach { siteDescriptor ->
-      if (siteManager.bySiteDescriptorAndActive(siteDescriptor)?.isSynthetic == true) {
+      val isCompositeCatalogSite = siteManager.bySiteDescriptorAndActive(siteDescriptor)
+        ?.hasSiteFeature(SiteConfiguration.SiteFeature.CatalogComposition) == true
+
+      if (isCompositeCatalogSite) {
         return@forEach
       }
 

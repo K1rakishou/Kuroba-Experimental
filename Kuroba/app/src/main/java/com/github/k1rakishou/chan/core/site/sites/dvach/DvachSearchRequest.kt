@@ -16,25 +16,24 @@ import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
-import dagger.Lazy
 import okhttp3.Request
 import org.joda.time.DateTime
 import org.jsoup.parser.Parser
 
 class DvachSearchRequest(
-  private val moshi: Lazy<Moshi>,
+  private val moshi: Moshi,
   private val request: Request,
-  private val proxiedOkHttpClient: Lazy<ProxiedOkHttpClient>,
+  private val proxiedOkHttpClient: ProxiedOkHttpClient,
   private val searchParams: DvachSearchParams,
   private val siteManager: SiteManager
 ) {
 
   suspend fun execute(): SearchResult {
-    val dvachSearchResult = proxiedOkHttpClient.get()
+    val dvachSearchResult = proxiedOkHttpClient
       .okHttpClient()
       .suspendConvertIntoJsonObjectWithAdapter(
         request,
-        moshi.get().adapter(DvachSearchResult::class.java)
+        moshi.adapter(DvachSearchResult::class.java)
       )
 
     val dvachSearch = if (dvachSearchResult is ModularResult.Error) {
@@ -56,7 +55,7 @@ class DvachSearchRequest(
       return SearchResult.Success(searchParams, emptyList(), PageCursor.End, null)
     }
 
-    val endpoints = siteManager.bySiteDescriptorAndActive(Dvach.SITE_DESCRIPTOR)?.endpoints()
+    val endpoints = siteManager.bySiteDescriptorAndActive(Dvach.SITE_DESCRIPTOR)?.endpoints
     val boardDescriptor = BoardDescriptor.create(Dvach.SITE_DESCRIPTOR, searchParams.boardCode)
 
     val searchPosts = dvachSearchResult.posts.map { dvachSearchPost ->

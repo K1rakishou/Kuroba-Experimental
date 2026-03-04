@@ -190,7 +190,7 @@ class LynxchanCaptchaLayoutViewModel(
           throw LynxchanCaptchaError("Site ${chanDescriptor.siteDescriptor()} is not active")
         }
 
-        lynxchanSite.requestModifier().modifyGenericRequest(
+        lynxchanSite.requestModifier.modifyGenericRequest(
           site = lynxchanSite,
           requestBuilder = requestBuilder
         )
@@ -316,7 +316,7 @@ class LynxchanCaptchaLayoutViewModel(
         .url(url)
         .get()
 
-      lynxchanSite.requestModifier()
+      lynxchanSite.requestModifier
         .modifyGenericRequest(lynxchanSite, requestBuilder)
 
       val response = proxiedOkHttpClient.okHttpClient()
@@ -348,7 +348,7 @@ class LynxchanCaptchaLayoutViewModel(
       lynxchanSite.bypassCookie.setSync(bypassCookie)
       lynxchanSite.extraCookie.setSync(extraCookie)
 
-      Logger.debug(TAG) { "Successfully received HashCash challenge cookies (site: ${lynxchanSite.siteDescriptor()})!" }
+      Logger.debug(TAG) { "Successfully received HashCash challenge cookies (site: ${lynxchanSite.descriptor})!" }
 
       val captchaIdCookie = lynxchanSite.captchaIdCookie.get()
       if (captchaIdCookie == null) {
@@ -371,7 +371,7 @@ class LynxchanCaptchaLayoutViewModel(
       val site = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
         ?: throw LynxchanCaptchaError("Site ${chanDescriptor.siteDescriptor()} does not exist or not active")
 
-      site.requestModifier().modifyGenericRequest(
+      site.requestModifier.modifyGenericRequest(
         site = site,
         requestBuilder = requestBuilder
       )
@@ -423,12 +423,12 @@ class LynxchanCaptchaLayoutViewModel(
     val site = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
       ?: throw LynxchanCaptchaError("Site ${chanDescriptor.siteDescriptor()} does not exist or not active")
 
-    site.requestModifier().modifyGenericRequest(
+    site.requestModifier.modifyGenericRequest(
       site = site,
       requestBuilder = requestBuilder
     )
 
-    val refererUrl = site.resolvable().desktopUrl(chanDescriptor, null, null)
+    val refererUrl = site.urlHandler.desktopUrl(chanDescriptor, null, null)
     if (refererUrl.isNotNullNorBlank()) {
       requestBuilder.header("Referer", refererUrl)
     }
@@ -549,7 +549,7 @@ class LynxchanCaptchaLayoutViewModel(
 
       val site = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
       if (site != null) {
-        site.requestModifier().modifyGenericRequest(
+        site.requestModifier.modifyGenericRequest(
           site = site,
           requestBuilder = requestBuilder
         )
@@ -662,8 +662,8 @@ class LynxchanCaptchaLayoutViewModel(
   // {"status":"hashcash","data":null}
   @JsonClass(generateAdapter = true)
   data class BlockBypassStatus(
-    @Json(name = "status") val status: String,
-    @Json(name = "data") val data: String?
+    @field:Json(name = "status") val status: String,
+    @field:Json(name = "data") val data: String?
   ) {
     val isOk: Boolean = status.equals("ok", ignoreCase = true)
     val isHashcash: Boolean = status.equals("hashcash", ignoreCase = true)
@@ -673,15 +673,15 @@ class LynxchanCaptchaLayoutViewModel(
   // {"status":"ok","data":{"valid":false,"mode":1}}
   @JsonClass(generateAdapter = true)
   data class BlockBypassWithStatusJson(
-    @Json(name = "status") val status: String,
-    @Json(name = "data") val data: BlockBypassJson
+    @field:Json(name = "status") val status: String,
+    @field:Json(name = "data") val data: BlockBypassJson
   )
 
   @JsonClass(generateAdapter = true)
   data class BlockBypassJson(
-    @Json(name = "valid") val valid: Boolean,
-    @Json(name = "validated") val validated: Boolean?,
-    @Json(name = "mode") val mode: Int
+    @field:Json(name = "valid") val valid: Boolean,
+    @field:Json(name = "validated") val validated: Boolean?,
+    @field:Json(name = "mode") val mode: Int
   )
 
   class ViewModelFactory @Inject constructor(

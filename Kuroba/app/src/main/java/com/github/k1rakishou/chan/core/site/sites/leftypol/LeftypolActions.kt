@@ -22,12 +22,12 @@ class LeftypolActions(
 
   override suspend fun boards(): Flow<SiteBoards> {
     val requestBuilder = Request.Builder()
-      .url(site.endpoints().boards().toString())
+      .url(site.endpoints.boards().toString())
 
-    site.requestModifier().modifyGenericRequest(site, requestBuilder)
+    site.requestModifier.modifyGenericRequest(site, requestBuilder)
 
     val siteBoards = LeftypolBoardsRequest(
-      siteDescriptor = site.siteDescriptor(),
+      siteDescriptor = site.descriptor,
       boardManager = site.boardManager,
       request = requestBuilder.build(),
       proxiedOkHttpClient = proxiedOkHttpClient

@@ -4,9 +4,9 @@ import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteEndpoints
-import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.core.site.parser.PostParser
+import com.github.k1rakishou.chan.core.site.parser.SiteApi
 import com.github.k1rakishou.chan.core.site.parser.processor.AbstractChanReaderProcessor
 import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
 import com.github.k1rakishou.common.ModularResult
@@ -35,11 +35,11 @@ import java.io.InputStream
 import java.io.InputStreamReader
 import kotlin.math.max
 
-class FutabaChanReader(
+class FutabaSiteApi(
   private val archivesManager: ArchivesManager,
   private val siteManager: SiteManager,
   private val boardManager: BoardManager
-) : ChanReader() {
+) : SiteApi() {
   private val mutex = Mutex()
   private var parser: PostParser? = null
 
@@ -100,7 +100,7 @@ class FutabaChanReader(
       ?: return
 
     val board = boardManager.byBoardDescriptor(boardDescriptor)
-    val endpoints = site.endpoints()
+    val endpoints = site.endpoints
 
     // File
     var fileId: String? = null
@@ -415,7 +415,7 @@ class FutabaChanReader(
     responseBodyStream: InputStream,
   ): ModularResult<FilterWatchCatalogInfoObject> {
     val endpoints = siteManager.bySiteDescriptorAndActive(boardDescriptor.siteDescriptor)
-      ?.endpoints()
+      ?.endpoints
       ?: return ModularResult.error(SiteManager.SiteNotFoundException(boardDescriptor.siteDescriptor))
 
     return ModularResult.Try {

@@ -95,21 +95,21 @@ public class SoyjakParty
         setIcon(SiteIcon.fromFavicon(getImageLoaderDeprecatedLazy(), HttpUrl.parse("https://soyjak.party/favicon.ico")));
 
         setBoards(
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "q"), "the 'party"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "soy"), "soyjaks"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "jak"), "jaks"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "qa"), "question & answer"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "r"), "requests and soy art"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "caca"), "cacaborea"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "a"), "tranime"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "raid"), "raid: shadow legends"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "int"), "international"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "mtv"), "music, television, video games"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "pol"), "international politics"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "sci"), "soyence and technology"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "craft"), "minecraft"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "fnac"), "five nights at cobson's"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "nate"), "coals")
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "q"), "the 'party"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "soy"), "soyjaks"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "jak"), "jaks"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "qa"), "question & answer"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "r"), "requests and soy art"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "caca"), "cacaborea"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "a"), "tranime"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "raid"), "raid: shadow legends"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "int"), "international"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "mtv"), "music, television, video games"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "pol"), "international politics"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "sci"), "soyence and technology"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "craft"), "minecraft"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "fnac"), "five nights at cobson's"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "nate"), "coals")
         );
 
         setResolvable(URL_HANDLER);

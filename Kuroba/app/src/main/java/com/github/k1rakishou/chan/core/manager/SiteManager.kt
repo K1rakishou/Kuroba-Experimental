@@ -69,19 +69,24 @@ open class SiteManager(
 
       result as ModularResult.Value
 
+      val initializedSites = result.value
+        .mapNotNull { chanSiteData ->
+          val site = instantiateSite(chanSiteData)
+            ?: return@mapNotNull null
+
+          return@mapNotNull site to chanSiteData
+        }
+
       lock.write {
         siteDataMap.clear()
         siteMap.clear()
         orders.clear()
 
-        result.value.forEach { chanSiteData ->
-          val site = instantiateSite(chanSiteData)
-            ?: return@forEach
+        initializedSites.forEach { (site, chanSiteData) ->
+          siteDataMap[site.descriptor] = chanSiteData
+          siteMap[site.descriptor] = site
 
-          siteDataMap[chanSiteData.siteDescriptor] = chanSiteData
-          siteMap[chanSiteData.siteDescriptor] = site
-
-          orders.add(0, chanSiteData.siteDescriptor)
+          orders.add(0, site.descriptor)
         }
 
         allSitesDeferred.complete(siteDataMap.values.toList())
@@ -146,7 +151,7 @@ open class SiteManager(
     ensureSitesAndOrdersConsistency()
 
     val updated = lock.write {
-      val enabled = siteMap[siteDescriptor]?.enabled() ?: false
+      val enabled = siteMap[siteDescriptor]?.enabled ?: false
       if (!enabled) {
         return@write false
       }
@@ -181,7 +186,7 @@ open class SiteManager(
     ensureSitesAndOrdersConsistency()
 
     return lock.read {
-      val enabled = siteMap[siteDescriptor]?.enabled()
+      val enabled = siteMap[siteDescriptor]?.enabled
         ?: false
 
       if (!enabled) {
@@ -197,7 +202,7 @@ open class SiteManager(
     check(isReady()) { "SiteManager is not ready yet! Use awaitUntilInitialized()" }
     ensureSitesAndOrdersConsistency()
 
-    return lock.read { siteMap[siteDescriptor]?.enabled() ?: false }
+    return lock.read { siteMap[siteDescriptor]?.enabled ?: false }
   }
 
   fun areSitesSetup(): Boolean {
@@ -206,7 +211,7 @@ open class SiteManager(
 
     return lock.read {
       for ((siteDescriptor, site) in siteMap) {
-        if (!site.enabled()) {
+        if (!site.enabled) {
           continue
         }
 
@@ -402,7 +407,7 @@ open class SiteManager(
     }
   }
 
-  private fun instantiateSite(chanSiteData: ChanSiteData): Site? {
+  private suspend fun instantiateSite(chanSiteData: ChanSiteData): Site? {
     val clazz = siteRegistry.SITE_CLASSES_MAP[chanSiteData.siteDescriptor]
     if (clazz == null) {
       Logger.e(TAG, "Unknown site descriptor: ${chanSiteData.siteDescriptor}")
@@ -416,7 +421,6 @@ open class SiteManager(
     }
 
     site.initialize()
-    site.postInitialize()
     return site
   }
 

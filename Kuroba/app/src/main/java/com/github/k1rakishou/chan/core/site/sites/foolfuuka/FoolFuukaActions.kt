@@ -28,13 +28,13 @@ class FoolFuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
 
   override suspend fun post(replyChanDescriptor: ChanDescriptor, replyMode: ReplyMode): Flow<SiteActions.PostResult> {
     return flow {
-      val error = CommonClientException("Posting is not supported for site ${site.name()}")
+      val error = CommonClientException("Posting is not supported for site ${site.name}")
       emit(SiteActions.PostResult.PostError(error))
     }
   }
 
   override fun setupPost(replyChanDescriptor: ChanDescriptor, call: MultipartHttpCall): ModularResult<Unit> {
-    val error = CommonClientException("Posting is not supported for site ${site.name()}")
+    val error = CommonClientException("Posting is not supported for site ${site.name}")
 
     return ModularResult.error(error)
   }
@@ -52,21 +52,21 @@ class FoolFuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
     replyChanDescriptor: ChanDescriptor,
     replyResponse: ReplyResponse
   ): ModularResult<Unit> {
-    val error = CommonClientException("Posting is not supported for site ${site.name()}")
+    val error = CommonClientException("Posting is not supported for site ${site.name}")
 
     return ModularResult.error(error)
   }
 
   override suspend fun delete(deleteRequest: DeleteRequest): SiteActions.DeleteResult {
-    val error = CommonClientException("Post deletion is not supported for site ${site.name()}")
+    val error = CommonClientException("Post deletion is not supported for site ${site.name}")
 
     return SiteActions.DeleteResult.DeleteError(error)
   }
 
   override suspend fun boards(): Flow<SiteBoards> {
-    val boardsEndpoint = site.endpoints().boards()
+    val boardsEndpoint = site.endpoints.boards()
     if (boardsEndpoint == null) {
-      val error = CommonClientException("Site ${site.name()} does not have support for boards request")
+      val error = CommonClientException("Site ${site.name} does not have support for boards request")
       return flowOf(SiteBoards.Result.Error(error))
     }
 
@@ -76,7 +76,7 @@ class FoolFuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
       .build()
 
     val siteBoards = FoolFuukaBoardsRequest(
-      siteDescriptor = site.siteDescriptor(),
+      siteDescriptor = site.descriptor,
       request = request,
       proxiedOkHttpClient = site.proxiedOkHttpClient
     )
@@ -92,7 +92,7 @@ class FoolFuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
 
   override suspend fun <T : AbstractLoginRequest> login(loginRequest: T): SiteActions.LoginResult {
     return SiteActions.LoginResult.LoginError(
-      "Login is not supported for site ${site.name()}"
+      "Login is not supported for site ${site.name}"
     )
   }
 
@@ -101,7 +101,7 @@ class FoolFuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
   ): SearchResult {
     searchParams as FoolFuukaSearchParams
 
-    val searchUrl = requireNotNull(site.endpoints().search())
+    val searchUrl = requireNotNull(site.endpoints.search())
       .newBuilder()
       .addEncodedPathSegment(searchParams.boardDescriptor.boardCode)
       .addEncodedPathSegment("search")
@@ -115,7 +115,7 @@ class FoolFuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
       .url(searchUrl)
       .get()
 
-    site.requestModifier().modifyGenericRequest(site, requestBuilder)
+    site.requestModifier.modifyGenericRequest(site, requestBuilder)
 
     return FoolFuukaSearchRequest(
       searchParams,

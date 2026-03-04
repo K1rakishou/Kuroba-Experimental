@@ -681,7 +681,7 @@ class ReplyLayoutView @JvmOverloads constructor(
     val site = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
     val groupId = "reply_mode"
 
-    if (site?.actions()?.postAuthenticate()?.type != SiteAuthentication.Type.NONE) {
+    if (site?.actions?.postAuthenticate()?.type != SiteAuthentication.Type.NONE) {
       availableReplyModes += CheckableFloatingListMenuItem(
         key = ReplyMode.ReplyModeSolveCaptchaManually,
         name = appResources.string(R.string.reply_mode_solve_captcha_and_post),
@@ -706,7 +706,7 @@ class ReplyLayoutView @JvmOverloads constructor(
       )
     }
 
-    if (site?.actions()?.isLoggedIn() == true) {
+    if (site?.actions?.isLoggedIn() == true) {
       availableReplyModes += CheckableFloatingListMenuItem(
         key = ReplyMode.ReplyModeUsePasscode,
         name = appResources.string(R.string.reply_mode_post_with_passcode),

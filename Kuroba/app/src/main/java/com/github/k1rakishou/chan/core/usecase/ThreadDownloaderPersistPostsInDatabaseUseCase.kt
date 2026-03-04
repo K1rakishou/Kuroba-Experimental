@@ -5,7 +5,6 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ParsePostsV1UseCase
 import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
-import com.github.k1rakishou.common.EmptyBodyResponseException
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
@@ -62,7 +61,7 @@ class ThreadDownloaderPersistPostsInDatabaseUseCase(
       .url(chanLoadUrl.url)
       .get()
 
-    site.requestModifier().modifyCatalogOrThreadGetRequest(
+    site.requestModifier.modifyCatalogOrThreadGetRequest(
       site = site,
       chanDescriptor = threadDescriptor,
       requestBuilder = requestBuilder
@@ -76,7 +75,7 @@ class ThreadDownloaderPersistPostsInDatabaseUseCase(
           deleted = true
         )
 
-        if (!isReloadingAfter404 && site.redirectsToArchiveThread()) {
+        if (!isReloadingAfter404 && site.configuration.redirectsToArchiveThread) {
           // Fix for 2ch.hk archived threads
           return downloadThreadPosts(
             ownerThreadDatabaseId = ownerThreadDatabaseId,
@@ -96,12 +95,7 @@ class ThreadDownloaderPersistPostsInDatabaseUseCase(
       throw ThreadDownloadException("Bad response code for '${chanLoadUrl.url}', code: ${response.code}")
     }
 
-    val body = response.body
-      ?: throw EmptyBodyResponseException()
-
-    val chanReader = site.chanReader()
-
-    val chanReaderProcessor = body.byteStream().use { inputStream ->
+    val chanReaderProcessor = response.body.byteStream().use { inputStream ->
       return@use chanThreadLoaderCoordinator.get().readPostsFromResponse(
         page = null,
         chanLoadUrl = chanLoadUrl,
@@ -110,11 +104,11 @@ class ThreadDownloaderPersistPostsInDatabaseUseCase(
         chanReadOptions = ChanReadOptions.default(),
         chanLoadOptions = ChanLoadOptions.retainAll(),
         chanReaderProcessorOptions = ChanReaderProcessor.Options(isDownloadingThread = true),
-        chanReader = chanReader
+        siteApi = site.api
       ).unwrap()
     }
 
-    val postParser = chanReader.getParser()
+    val postParser = site.api.getParser()
       ?: throw NullPointerException("PostParser cannot be null!")
 
     val parsingResult = parsePostsV1UseCase.parseNewPostsPosts(

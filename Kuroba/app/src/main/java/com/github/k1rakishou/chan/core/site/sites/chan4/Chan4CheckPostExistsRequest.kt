@@ -90,9 +90,9 @@ class Chan4CheckPostExistsRequest(
         "attempt: ${attempt + 1} / ${MAX_ATTEMPTS}"
     }
 
-    val url = chan4.endpoints().catalogHtml(replyPostDescriptor.catalogDescriptor())
+    val url = chan4.endpoints.catalogHtml(replyPostDescriptor.catalogDescriptor())
     if (url == null) {
-      throw UnknownClientException("Site '${chan4.name()}' doesn't support 'catalogHtml' endpoint")
+      throw UnknownClientException("Site '${chan4.name}' doesn't support 'catalogHtml' endpoint")
     }
 
     Logger.d(TAG, "checkStrangerPostExists() url: '${url}'")
@@ -165,9 +165,9 @@ class Chan4CheckPostExistsRequest(
   private suspend fun checkOurPostExists(attempt: Int): Boolean {
     Logger.d(TAG, "checkPostExists() postDescriptor: ${replyPostDescriptor}, attempt: ${attempt + 1} / ${MAX_ATTEMPTS}")
 
-    val url = chan4.endpoints().threadHtml(replyPostDescriptor.threadDescriptor())
+    val url = chan4.endpoints.threadHtml(replyPostDescriptor.threadDescriptor())
     if (url == null) {
-      throw UnknownClientException("Site '${chan4.name()}' doesn't support 'threadHtml' endpoint")
+      throw UnknownClientException("Site '${chan4.name}' doesn't support 'threadHtml' endpoint")
     }
 
     Logger.d(TAG, "checkPostExists() url: '${url}'")

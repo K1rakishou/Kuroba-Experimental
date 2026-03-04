@@ -15,7 +15,7 @@ import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.CompositeCatalogManager
 import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.core.site.Site
+import com.github.k1rakishou.chan.core.site.SiteConfiguration
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.InputWithQuerySorter
 import com.github.k1rakishou.common.isNotNullNorBlank
@@ -101,7 +101,7 @@ class BoardSelectionControllerViewModel(
       siteManager.viewActiveSitesOrderedWhile { chanSiteData, site ->
         siteHeaders += SelectableElement.SiteHeader(
           siteDescriptor = chanSiteData.siteDescriptor,
-          name = site.name()
+          name = site.name
         )
 
         return@viewActiveSitesOrderedWhile true
@@ -112,7 +112,7 @@ class BoardSelectionControllerViewModel(
         val site = siteManager.bySiteDescriptorAndActive(siteHeader.siteDescriptor)
           ?: return@forEach
 
-        val boards = if (site.siteFeature(Site.SiteFeature.CATALOG_COMPOSITION)) {
+        val boards = if (site.hasSiteFeature(SiteConfiguration.SiteFeature.CatalogComposition)) {
           collectBoardsFromCompositeCatalogs(query, activeSiteCount)
         } else {
           collectBoardsFromBoardManager(query, siteHeader.siteDescriptor, activeSiteCount)

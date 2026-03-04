@@ -11,7 +11,7 @@ import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.shared.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.core.site.Site
+import com.github.k1rakishou.chan.core.site.SiteConfiguration
 import com.github.k1rakishou.chan.features.setup.data.CatalogCellData
 import com.github.k1rakishou.chan.features.setup.data.SiteCellData
 import com.github.k1rakishou.chan.features.setup.data.SiteEnableState
@@ -59,7 +59,7 @@ class FilterBoardSelectorControllerViewModel(
     this.allBoardsSelected = newCurrentlySelectedBoards == null
 
     siteManager.viewActiveSitesOrderedWhile { chanSiteData, site ->
-      if (site.siteFeature(Site.SiteFeature.CATALOG_COMPOSITION)) {
+      if (site.hasSiteFeature(SiteConfiguration.SiteFeature.CatalogComposition)) {
         return@viewActiveSitesOrderedWhile true
       }
 
@@ -67,8 +67,8 @@ class FilterBoardSelectorControllerViewModel(
       if (collectedBoards.isNotEmpty()) {
         val siteCellData = SiteCellData(
           siteDescriptor = chanSiteData.siteDescriptor,
-          siteIcon = site.icon(),
-          siteName = site.name(),
+          siteIcon = site.configuration.icon,
+          siteName = site.name,
           siteEnableState = SiteEnableState.Active
         )
 
@@ -80,12 +80,12 @@ class FilterBoardSelectorControllerViewModel(
 
     if (newCurrentlySelectedBoards != null) {
       newCurrentlySelectedBoards.forEach { boardDescriptor ->
-        this._currentlySelectedBoards.put(boardDescriptor, Unit)
+        this._currentlySelectedBoards[boardDescriptor] = Unit
       }
     } else {
       resultMap.entries.forEach { (_, boardCellDataList) ->
         boardCellDataList.forEach { boardCellData ->
-          this._currentlySelectedBoards.put(boardCellData.requireBoardDescriptor(), Unit)
+          this._currentlySelectedBoards[boardCellData.requireBoardDescriptor()] = Unit
         }
       }
     }
@@ -103,7 +103,7 @@ class FilterBoardSelectorControllerViewModel(
     if (_currentlySelectedBoards.contains(boardDescriptor)) {
       _currentlySelectedBoards.remove(boardDescriptor)
     } else {
-      _currentlySelectedBoards.put(boardDescriptor, Unit)
+      _currentlySelectedBoards[boardDescriptor] = Unit
     }
   }
 

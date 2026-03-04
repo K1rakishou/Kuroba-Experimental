@@ -138,7 +138,7 @@ class OpenUrlInWebViewController(
 
     val urlToOpenString = urlToOpen.toString()
 
-    val siteRequestModifier = siteResolver.findSiteForUrl(urlToOpenString)?.requestModifier()
+    val siteRequestModifier = siteResolver.findSiteForUrl(urlToOpenString)?.requestModifier
     if (siteRequestModifier != null) {
       val cookieManager = CookieManager.getInstance()
       val cookieBuilder = CookieBuilder()

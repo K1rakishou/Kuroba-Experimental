@@ -90,20 +90,21 @@ public class Sushichan
     public void setup() {
         setEnabled(true);
         setName(SITE_NAME);
+        // TODO: https://sushigirl.cafe/
         setIcon(SiteIcon.fromFavicon(getImageLoaderDeprecatedLazy(), HttpUrl.parse("https://sushigirl.us/favicon.ico")));
 
         setBoards(
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "wildcard"), "artsy"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "lounge"), "sushi social"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "arcade"), "vidya gaems"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "kawaii"), "cute things"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "kitchen"), "tasty morsels & delights"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "tunes"), "enjoyable sounds"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "culture"), "arts & literature"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "silicon"), "technology"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "yakuza"), "site meta-discussion"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "hell"), "internet death cult"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "lewd"), "dat ecchi & hentai goodness")
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "wildcard"), "artsy"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "lounge"), "sushi social"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "arcade"), "vidya gaems"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "kawaii"), "cute things"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "kitchen"), "tasty morsels & delights"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "tunes"), "enjoyable sounds"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "culture"), "arts & literature"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "silicon"), "technology"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "yakuza"), "site meta-discussion"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "hell"), "internet death cult"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "lewd"), "dat ecchi & hentai goodness")
         );
 
         setResolvable(URL_HANDLER);

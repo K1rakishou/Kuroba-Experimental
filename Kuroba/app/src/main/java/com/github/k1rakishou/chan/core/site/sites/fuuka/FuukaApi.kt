@@ -75,7 +75,7 @@ class FuukaApi(
     responseBodyStream: InputStream,
     chanReaderProcessor: AbstractChanReaderProcessor
   ) {
-    throw CommonClientException("Catalog is not supported for site ${site.name()}")
+    throw CommonClientException("Catalog is not supported for site ${site.name}")
   }
 
   override suspend fun readThreadBookmarkInfoObject(
@@ -84,7 +84,7 @@ class FuukaApi(
     requestUrl: String,
     responseBodyStream: InputStream,
   ): ModularResult<ThreadBookmarkInfoObject> {
-    val error = CommonClientException("Bookmarks are not supported for site ${site.name()}")
+    val error = CommonClientException("Bookmarks are not supported for site ${site.name}")
 
     return ModularResult.error(error)
   }
@@ -94,7 +94,7 @@ class FuukaApi(
     requestUrl: String,
     responseBodyStream: InputStream,
   ): ModularResult<FilterWatchCatalogInfoObject> {
-    val error = CommonClientException("Filter watching is not supported for site ${site.name()}")
+    val error = CommonClientException("Filter watching is not supported for site ${site.name}")
 
     return ModularResult.error(error)
   }

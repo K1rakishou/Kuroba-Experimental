@@ -51,7 +51,7 @@ class HttpCallManager @Inject constructor(
     return channelFlow {
       try {
         val requestBuilder = Request.Builder()
-        requestBuilder.url(httpCall.site.endpoints().reply(replyChanDescriptor))
+        requestBuilder.url(httpCall.site.endpoints.reply(replyChanDescriptor))
 
         try {
           httpCall.setup(
@@ -104,12 +104,11 @@ class HttpCallManager @Inject constructor(
     val requestBuilder = Request.Builder()
     
     httpCall.setup(requestBuilder, null)
-    httpCall.site.requestModifier().modifyHttpCall(httpCall, requestBuilder)
+    httpCall.site.requestModifier.modifyHttpCall(httpCall, requestBuilder)
     
     return makeHttpCallInternal(requestBuilder, httpCall)
   }
   
-  @Suppress("BlockingMethodInNonBlockingContext")
   private suspend fun <T : HttpCall> makeHttpCallInternal(
     requestBuilder: Request.Builder,
     httpCall: T

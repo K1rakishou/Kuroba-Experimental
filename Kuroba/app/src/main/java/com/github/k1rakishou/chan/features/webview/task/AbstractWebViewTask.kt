@@ -188,7 +188,7 @@ abstract class AbstractWebViewTask(
       }
       is Loadable.Url -> {
         val siteName = siteResolver.findSiteForUrl(loadable.url.toString())
-          ?.siteDescriptor()
+          ?.descriptor
           ?.siteName
 
         if (siteName.isNullOrBlank()) {
@@ -293,7 +293,7 @@ abstract class AbstractWebViewTask(
       is Loadable.Url -> {
         val urlToOpenString = loadable.url.toString()
 
-        val siteRequestModifier = siteResolver.findSiteForUrl(urlToOpenString)?.requestModifier()
+        val siteRequestModifier = siteResolver.findSiteForUrl(urlToOpenString)?.requestModifier
         if (siteRequestModifier != null) {
           val cookieBuilder = CookieBuilder()
           siteRequestModifier.modifyCookieBuilder(loadable.url, cookieBuilder)

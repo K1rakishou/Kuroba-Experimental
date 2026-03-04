@@ -5,7 +5,7 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteEndpoints
 import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.common.CommonSite.CommonApi
-import com.github.k1rakishou.chan.core.site.parser.ChanReader
+import com.github.k1rakishou.chan.core.site.parser.SiteApi
 import com.github.k1rakishou.chan.core.site.parser.processor.AbstractChanReaderProcessor
 import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
 import com.github.k1rakishou.common.ModularResult
@@ -30,7 +30,6 @@ import java.io.InputStream
 import java.io.InputStreamReader
 import kotlin.math.max
 
-@Suppress("BlockingMethodInNonBlockingContext")
 class Wired7Api(
   private val siteManager: SiteManager,
   private val boardManager: BoardManager,
@@ -74,7 +73,7 @@ class Wired7Api(
       ?: return
     val board = boardManager.byBoardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
 
-    val endpoints = site.endpoints()
+    val endpoints = site.endpoints
 
     // File
     var fpath = 1
@@ -274,7 +273,7 @@ class Wired7Api(
   ): ModularResult<ThreadBookmarkInfoObject> {
     return ModularResult.Try {
       val postObjects = ArrayList<ThreadBookmarkInfoPostObject>(
-        max(expectedCapacity, ChanReader.DEFAULT_POST_LIST_CAPACITY)
+        max(expectedCapacity, SiteApi.DEFAULT_POST_LIST_CAPACITY)
       )
 
       JsonReader(InputStreamReader(responseBodyStream)).use { jsonReader ->
@@ -306,7 +305,7 @@ class Wired7Api(
     responseBodyStream: InputStream,
   ): ModularResult<FilterWatchCatalogInfoObject> {
     val endpoints = siteManager.bySiteDescriptorAndActive(boardDescriptor.siteDescriptor)
-      ?.endpoints()
+      ?.endpoints
       ?: return ModularResult.error(SiteManager.SiteNotFoundException(boardDescriptor.siteDescriptor))
 
     return ModularResult.Try {

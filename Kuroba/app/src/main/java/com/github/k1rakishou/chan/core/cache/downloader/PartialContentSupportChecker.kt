@@ -51,7 +51,8 @@ internal class PartialContentSupportChecker(
 
     val site = siteResolver.findSiteForUrl(host) as? SiteBase
 
-    val enabled = site?.getChunkDownloaderSiteProperties()
+    val enabled = site?.configuration
+      ?.chunkedDownloaderConfig
       ?.enabled
       ?: false
 
@@ -76,9 +77,9 @@ internal class PartialContentSupportChecker(
       // supports partial content or not
       if (hostAlreadyChecked) {
         val siteSendsFileSizeInBytes = site
-          ?.getChunkDownloaderSiteProperties()
-          ?.siteSendsCorrectFileSizeInBytes
-          ?: false
+          .configuration
+          .chunkedDownloaderConfig
+          .siteSendsCorrectFileSizeInBytes
 
         // Some sites may send file size in KBs (2ch.hk does that) so we can't use fileSize
         // that we get with json for such sites and we have to determine the file size
@@ -120,7 +121,7 @@ internal class PartialContentSupportChecker(
       .head()
       .url(mediaUrl)
 
-    site.let { it.requestModifier().modifyGenericRequest(it, headRequestBuilder) }
+    site.let { it.requestModifier.modifyGenericRequest(it, headRequestBuilder) }
 
     val headRequest = headRequestBuilder.build()
     val startTime = System.currentTimeMillis()
@@ -198,7 +199,7 @@ internal class PartialContentSupportChecker(
   ): PartialContentCheckResult {
     val statusCode = response.code
     if (statusCode == 404) {
-      val notFoundOnServer = site?.redirectsToArchiveThread() != true
+      val notFoundOnServer = site?.configuration?.redirectsToArchiveThread != true
 
       // Fast path: the server returned 404 so that mean we don't have to do any other GET
       // requests since the file does not exist
@@ -288,7 +289,8 @@ internal class PartialContentSupportChecker(
     }
 
     return siteResolver.findSiteForUrl(host)
-      ?.getChunkDownloaderSiteProperties()
+      ?.configuration
+      ?.chunkedDownloaderConfig
       ?.siteSendsCorrectFileSizeInBytes
       ?: false
   }

@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.core.site.common
 
 import android.text.TextUtils
+import androidx.annotation.CallSuper
 import com.github.k1rakishou.chan.core.net.AbstractRequest
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.ResolvedChanDescriptor
@@ -8,9 +9,10 @@ import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.core.site.SiteBase
+import com.github.k1rakishou.chan.core.site.SiteConfiguration
+import com.github.k1rakishou.chan.core.site.SiteConfiguration.NsfwBoardDisplayType
 import com.github.k1rakishou.chan.core.site.SiteEndpoints
 import com.github.k1rakishou.chan.core.site.SiteIcon
-import com.github.k1rakishou.chan.core.site.SiteRequestModifier
 import com.github.k1rakishou.chan.core.site.SiteUrlHandler
 import com.github.k1rakishou.chan.core.site.common.vichan.VichanReaderExtensions
 import com.github.k1rakishou.chan.core.site.http.DeleteRequest
@@ -20,10 +22,9 @@ import com.github.k1rakishou.chan.core.site.http.ReplyResponse
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
 import com.github.k1rakishou.chan.core.site.limitations.ConstantAttachablesCount
 import com.github.k1rakishou.chan.core.site.limitations.ConstantMaxTotalSizeInfo
-import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitation
-import com.github.k1rakishou.chan.core.site.parser.ChanReader
-import com.github.k1rakishou.chan.core.site.parser.CommentParser
+import com.github.k1rakishou.chan.core.site.limitations.PostingLimitationConfig
 import com.github.k1rakishou.chan.core.site.parser.PostParser
+import com.github.k1rakishou.chan.core.site.parser.SiteApi
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.groupOrNull
 import com.github.k1rakishou.core_logger.Logger
@@ -41,236 +42,79 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
 import okhttp3.HttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Response
 import java.lang.Long.toHexString
 import java.util.regex.Pattern
 
 abstract class CommonSite : SiteBase() {
-  private var enabled: Boolean = true
-  private var name: String? = null
-  private var icon: SiteIcon? = null
-  private var boardsType: Site.BoardsType? = null
-  private var catalogType: Site.CatalogType = Site.CatalogType.STATIC
-  private var commonConfig: CommonConfig? = null
-  private var resolvable: Lazy<CommonSiteUrlHandler>? = null
-  private var endpoints: Lazy<CommonEndpoints>? = null
-  private var actions: CommonActions? = null
-  private var api: CommonApi? = null
-  private var requestModifier: SiteRequestModifier<Site>? = null
-  private var postingLimitationInfoLazy: Lazy<SitePostingLimitation>? = null
-  
-  @JvmField
-  var postParser: PostParser? = null
+  abstract val globalSearchConfig: SiteConfiguration.GlobalSearchConfig
+  abstract val icon: SiteIcon
+  abstract val boardsType: SiteConfiguration.BoardsType
+  abstract val catalogType: SiteConfiguration.CatalogType
+  open val nsfwBoardDisplayType: NsfwBoardDisplayType = NsfwBoardDisplayType.NotSupported
+  abstract val commentParserType: SiteConfiguration.CommentParserType
+  abstract val postParser: PostParser
+  abstract val postingLimitationInfo: PostingLimitationConfig?
+  abstract val chunkedDownloaderConfig: SiteConfiguration.ChunkedDownloaderConfig
+  open val redirectsToArchiveThread: Boolean = false
+  open val staticBoards: List<ChanBoard> = emptyList()
 
-  private val defaultPostingLimitationInfo = lazy {
-    SitePostingLimitation(
-      postMaxAttachables = ConstantAttachablesCount(DEFAULT_ATTACHABLES_PER_POST_COUNT),
-      postMaxAttachablesTotalSize = ConstantMaxTotalSizeInfo(DEFAULT_MAX_ATTACHABLES_SIZE)
+  final override val descriptor: SiteDescriptor
+    get() = SiteDescriptor.create(name)
+
+  final override val configuration: SiteConfiguration
+    get() = siteConfiguration
+
+  private val siteConfiguration: CommonSiteConfiguration by lazy {
+    val postingLimitationConfig = postingLimitationInfo ?: run {
+      PostingLimitationConfig(
+        postMaxAttachables = ConstantAttachablesCount(DEFAULT_ATTACHABLES_PER_POST_COUNT),
+        postMaxAttachablesTotalSize = ConstantMaxTotalSizeInfo(DEFAULT_MAX_ATTACHABLES_SIZE)
+      )
+    }
+
+    val boardsType = boardsType.takeIf { staticBoards.isEmpty() }
+      ?: SiteConfiguration.BoardsType.Static
+
+    return@lazy CommonSiteConfiguration(
+      icon = icon,
+      boardsType = boardsType,
+      catalogType = catalogType,
+      nsfwBoardDisplayType = nsfwBoardDisplayType,
+      commentParserType = commentParserType,
+      chunkedDownloaderConfig = chunkedDownloaderConfig,
+      globalSearchConfig = globalSearchConfig,
+      postingLimitationConfig = postingLimitationConfig,
+      redirectsToArchiveThread = redirectsToArchiveThread
     )
   }
 
-  private val defaultRequestModifier by lazy {
-    object : SiteRequestModifier<Site>(this@CommonSite, appConstants) {
-      // Default implementation.
-    }
+  @CallSuper
+  override fun hasSiteFeature(siteFeature: SiteConfiguration.SiteFeature): Boolean {
+    return siteFeature == SiteConfiguration.SiteFeature.ImageFileHash
   }
 
-  private val staticBoards: MutableList<ChanBoard> = ArrayList()
-  
-  override fun initialize() {
-    super.initialize()
-    setup()
-
-    if (name == null) {
-      throw NullPointerException("setName not called")
-    }
-    if (icon == null) {
-      throw NullPointerException("setIcon not called")
-    }
-    if (boardsType == null) {
-      throw NullPointerException("setBoardsType not called")
-    }
-    if (commonConfig == null) {
-      throw NullPointerException("setConfig not called")
-    }
-    if (resolvable == null) {
-      throw NullPointerException("setResolvable not called")
-    }
-    if (endpoints == null) {
-      throw NullPointerException("setEndpoints not called")
-    }
-    if (actions == null) {
-      throw NullPointerException("setActions not called")
-    }
-    if (api == null) {
-      throw NullPointerException("setApi not called")
-    }
-    if (postParser == null) {
-      throw NullPointerException("setParser not called")
-    }
-    if (requestModifier == null) {
-      requestModifier = defaultRequestModifier
-    }
-    if (postingLimitationInfoLazy == null) {
-      postingLimitationInfoLazy = defaultPostingLimitationInfo
-    }
-  }
-  
-  abstract fun setup()
-
-  fun setEnabled(enabled: Boolean) {
-    this.enabled = enabled
-  }
-  
-  fun setName(name: String?) {
-    this.name = name
-  }
-  
-  fun setIcon(icon: SiteIcon?) {
-    this.icon = icon
-  }
-  
-  fun setBoardsType(boardsType: Site.BoardsType?) {
-    this.boardsType = boardsType
-  }
-
-  fun setCatalogType(catalogType: Site.CatalogType) {
-    this.catalogType = catalogType
-  }
-  
-  fun setBoards(vararg boards: ChanBoard) {
-    boardsType = Site.BoardsType.STATIC
-    staticBoards.addAll(listOf(*boards))
-  }
-  
-  fun setConfig(commonConfig: CommonConfig?) {
-    this.commonConfig = commonConfig
-  }
-  
-  fun setResolvable(resolvable: CommonSiteUrlHandler) {
-    this.resolvable = lazy { resolvable }
-  }
-
-  fun setLazyResolvable(resolvable: Lazy<CommonSiteUrlHandler>) {
-    this.resolvable = resolvable
-  }
-  
-  fun setEndpoints(endpoints: CommonEndpoints) {
-    this.endpoints = lazy { endpoints }
-  }
-
-  fun setEndpointsLazy(endpoints: Lazy<CommonEndpoints>) {
-    this.endpoints = endpoints
-  }
-  
-  fun setActions(actions: CommonActions?) {
-    this.actions = actions
-  }
-  
-  fun setApi(api: CommonApi?) {
-    this.api = api
-  }
-
-  fun setRequestModifier(requestModifier: SiteRequestModifier<Site>) {
-    this.requestModifier = requestModifier
-  }
-
-  fun setPostingLimitationInfo(postingLimitationInfoLazy: Lazy<SitePostingLimitation>) {
-    this.postingLimitationInfoLazy = postingLimitationInfoLazy
-  }
-
-  open fun setParser(commentParser: CommentParser) {
-    postParser = DefaultPostParser(commentParser, archivesManager)
-  }
-
-  override fun enabled(): Boolean {
-    return enabled
-  }
-
-  /**
-   * Site implementation:
-   * */
-  override fun name(): String {
-    return name!!
-  }
-  
-  override fun siteDescriptor(): SiteDescriptor {
-    return SiteDescriptor.create(name())
-  }
-  
-  override fun icon(): SiteIcon {
-    return icon!!
-  }
-  
-  override fun boardsType(): Site.BoardsType {
-    return boardsType!!
-  }
-
-  override fun catalogType(): Site.CatalogType {
-    return catalogType
-  }
-
-  override fun resolvable(): SiteUrlHandler {
-    return resolvable!!.value
-  }
-  
-  override fun siteFeature(siteFeature: Site.SiteFeature): Boolean {
-    return commonConfig!!.siteFeature(siteFeature)
-  }
-
-  override fun endpoints(): SiteEndpoints {
-    return endpoints!!.value
-  }
-  
-  override fun actions(): SiteActions {
-    return actions!!
-  }
-  
-  override fun requestModifier(): SiteRequestModifier<Site> {
-    return requestModifier!!
-  }
-  
-  override fun chanReader(): ChanReader {
-    return api!!
-  }
-
-  override fun postingLimitationInfo(): SitePostingLimitation {
-    return postingLimitationInfoLazy!!.value
-  }
-
-  abstract class CommonConfig {
-    
-    open fun siteFeature(siteFeature: Site.SiteFeature): Boolean {
-      return siteFeature == Site.SiteFeature.IMAGE_FILE_HASH
-    }
-  }
-  
   abstract class CommonSiteUrlHandler : SiteUrlHandler {
-    open val url: HttpUrl? = null
+    abstract val url: HttpUrl
     open val mediaHosts: Array<HttpUrl> = emptyArray()
-    open val names: Array<String> = emptyArray()
-    
-    override fun matchesName(value: String): Boolean {
-      return names.contains(value)
-    }
-    
+
     override fun matchesMediaHost(url: HttpUrl): Boolean {
       return containsMediaHostUrl(url, mediaHosts)
     }
 
     override fun respondsTo(url: HttpUrl): Boolean {
-      return this.url!!.host == url.host
-        || "www.${this.url!!.host}" == url.host
+      return this.url.host == url.host
+        || "www.${this.url.host}" == url.host
     }
     
     override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?, postSubNo: Long?): String? {
       return when (chanDescriptor) {
         is ChanDescriptor.CatalogDescriptor -> {
-          url!!.newBuilder().addPathSegment(chanDescriptor.boardCode()).toString()
+          url.newBuilder().addPathSegment(chanDescriptor.boardCode()).toString()
         }
         is ChanDescriptor.ThreadDescriptor -> {
-          url!!.newBuilder()
+          url.newBuilder()
             .addPathSegment(chanDescriptor.boardCode())
             .addPathSegment("res")
             .addPathSegment(chanDescriptor.threadNo.toString())
@@ -280,7 +124,6 @@ abstract class CommonSite : SiteBase() {
       }
     }
     
-    @Suppress("RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS", "NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
     override fun resolveChanDescriptor(site: Site, url: HttpUrl): ResolvedChanDescriptor? {
       try {
         val threadPattern = threadPattern().matcher(url.encodedPath)
@@ -296,9 +139,9 @@ abstract class CommonSite : SiteBase() {
           }
 
           val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
-            site.name(),
-            boardCode,
-            threadNo
+            siteName = site.name,
+            boardCode = boardCode,
+            threadNo = threadNo
           )
           
           val markedNo = if (!TextUtils.isEmpty(url.fragment)) {
@@ -323,8 +166,8 @@ abstract class CommonSite : SiteBase() {
           }
 
           val catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(
-            site.name(),
-            boardCode
+            siteNameInput = site.name,
+            boardCodeInput = boardCode
           )
 
           return ResolvedChanDescriptor(catalogDescriptor)
@@ -357,39 +200,44 @@ abstract class CommonSite : SiteBase() {
   }
   
   abstract class CommonEndpoints(
-    protected var site: CommonSite
+    protected val site: CommonSite
   ) : SiteEndpoints {
 
     override fun thread(threadDescriptor: ChanDescriptor.ThreadDescriptor): HttpUrl {
-      throw IllegalStateException("Attempt to call abstract method")
+      error("Attempt to call abstract method")
     }
 
     override fun imageUrl(boardDescriptor: BoardDescriptor, arg: Map<String, String>): HttpUrl {
-      throw IllegalStateException("Attempt to call abstract method")
+      error("Attempt to call abstract method")
     }
     
-    override fun thumbnailUrl(boardDescriptor: BoardDescriptor, spoiler: Boolean, customSpoilers: Int, arg: Map<String, String>): HttpUrl {
-      throw IllegalStateException("Attempt to call abstract method")
+    override fun thumbnailUrl(
+      boardDescriptor: BoardDescriptor,
+      spoiler: Boolean,
+      customSpoilers: Int,
+      arg: Map<String, String>
+    ): HttpUrl {
+      error("Attempt to call abstract method")
     }
     
-    override fun icon(icon: String, arg: Map<String, String>?): HttpUrl {
-      throw IllegalStateException("Attempt to call abstract method")
+    override fun icon(icon: String, arg: Map<String, String>): HttpUrl {
+      error("Attempt to call abstract method")
     }
 
     override fun pages(board: ChanBoard): HttpUrl {
-      throw IllegalStateException("Attempt to call abstract method")
+      error("Attempt to call abstract method")
     }
 
     override fun reply(chanDescriptor: ChanDescriptor): HttpUrl {
-      throw IllegalStateException("Attempt to call abstract method")
+      error("Attempt to call abstract method")
     }
     
     override fun delete(post: ChanPost): HttpUrl {
-      throw IllegalStateException("Attempt to call abstract method")
+      error("Attempt to call abstract method")
     }
 
     override fun login(): HttpUrl {
-      throw IllegalStateException("Attempt to call abstract method")
+      error("Attempt to call abstract method")
     }
   }
   
@@ -397,10 +245,7 @@ abstract class CommonSite : SiteBase() {
     var url: HttpUrl.Builder
     
     constructor(from: String) {
-      val res: HttpUrl = from.toHttpUrlOrNull()
-        ?: throw NullPointerException()
-      
-      url = res.newBuilder()
+      url = from.toHttpUrl().newBuilder()
     }
     
     constructor(from: HttpUrl.Builder) {
@@ -421,9 +266,14 @@ abstract class CommonSite : SiteBase() {
     }
   }
   
-  abstract class CommonActions(protected var site: CommonSite) : SiteActions {
+  abstract class CommonActions(
+    protected val site: CommonSite
+  ) : SiteActions {
     
-    override suspend fun post(replyChanDescriptor: ChanDescriptor, replyMode: ReplyMode): Flow<SiteActions.PostResult> {
+    override suspend fun post(
+      replyChanDescriptor: ChanDescriptor,
+      replyMode: ReplyMode
+    ): Flow<SiteActions.PostResult> {
       val replyResponse = ReplyResponse()
 
       site.replyManagerLazy.get().readReply(replyChanDescriptor) { reply ->
@@ -440,7 +290,7 @@ abstract class CommonSite : SiteBase() {
         }
       }
       
-      call.url(site.endpoints().reply(replyChanDescriptor))
+      call.url(site.endpoints.reply(replyChanDescriptor))
       
       return flow {
         if (requirePrepare()) {
@@ -502,7 +352,7 @@ abstract class CommonSite : SiteBase() {
         }
       }
       
-      call.url(site.endpoints().delete(deleteRequest.post))
+      call.url(site.endpoints.delete(deleteRequest.post))
       setupDelete(deleteRequest, call)
       
       return when (val result = site.httpCallManagerLazy.get().makeHttpCall(call)) {
@@ -524,7 +374,7 @@ abstract class CommonSite : SiteBase() {
     }
     
     override suspend fun boards(): Flow<SiteBoards> {
-      return flowOf(SiteBoards.Result.Success(site.siteDescriptor(), site.staticBoards))
+      return flowOf(SiteBoards.Result.Success(site.descriptor, site.staticBoards))
     }
     
     protected suspend fun genericBoardsRequestResponseHandler(
@@ -535,9 +385,9 @@ abstract class CommonSite : SiteBase() {
         requestProvider().execute()
           .mapValue { boardsList ->
             val boards = boardsList.ifEmpty { defaultBoardsProvider() }
-            SiteBoards.Result.Success(site.siteDescriptor(), boards)
+            SiteBoards.Result.Success(site.descriptor, boards)
           }
-          .mapErrorToValue { SiteBoards.Result.Success(site.siteDescriptor(), defaultBoardsProvider()) }
+          .mapErrorToValue { SiteBoards.Result.Success(site.descriptor, defaultBoardsProvider()) }
       )
     }
     
@@ -562,18 +412,23 @@ abstract class CommonSite : SiteBase() {
     override fun isLoggedIn(): Boolean {
       return false
     }
-    
+
+    override suspend fun loadBoardInfo(): Flow<SiteBoards> {
+      return LoadBoardInfo(
+        site = site,
+        boardManager = site.boardManager
+      ).execute()
+    }
   }
   
-  abstract class CommonApi(protected var site: CommonSite) : ChanReader() {
+  abstract class CommonApi(protected val site: CommonSite) : SiteApi() {
     val vichanReaderExtensions = VichanReaderExtensions()
 
     override suspend fun getParser(): PostParser? {
       return site.postParser
     }
-
   }
-  
+
   companion object {
     private const val TAG = "CommonSite"
 

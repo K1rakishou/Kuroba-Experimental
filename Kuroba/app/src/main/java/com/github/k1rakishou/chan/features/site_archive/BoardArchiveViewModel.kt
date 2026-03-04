@@ -87,7 +87,7 @@ class BoardArchiveViewModel(
     Logger.d(TAG, "loadPageOfArchiveThreads() catalogDescriptor: ${catalogDescriptor} page: ${page.value}")
 
     val nativeArchivePostListResult = siteManager.bySiteDescriptorAndActive(catalogDescriptor.siteDescriptor())
-      ?.actions()
+      ?.actions
       ?.archive(catalogDescriptor.boardDescriptor, page.value)
 
     if (_archiveThreads.isEmpty() && nativeArchivePostListResult == null) {
@@ -143,7 +143,7 @@ class BoardArchiveViewModel(
 
           return@mapIndexed ArchiveThread(
             threadDescriptor = threadDescriptor,
-            comment = nativeArchivePost.comment.toString()
+            comment = nativeArchivePost.comment
           )
         }
         is NativeArchivePost.DvachNativeArchivePost -> {
@@ -151,7 +151,7 @@ class BoardArchiveViewModel(
 
           return@mapIndexed ArchiveThread(
             threadDescriptor = threadDescriptor,
-            comment = nativeArchivePost.comment.toString()
+            comment = nativeArchivePost.comment
           )
         }
       }

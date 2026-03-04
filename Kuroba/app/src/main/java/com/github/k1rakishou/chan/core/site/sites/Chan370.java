@@ -95,14 +95,14 @@ public class Chan370
         setIcon(SiteIcon.fromFavicon(getImageLoaderDeprecatedLazy(), HttpUrl.parse("https://370ch.lt/favicon.ico")));
 
         setBoards(
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "a"), "anime ir manga"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "b"), "apie viską"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "g"), "technologijos ir žaidimai"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "fo"), "fotografija"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "mu"), "muzika"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "int"), "internacionalus"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "t"), "teptukas"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "meta"), "svetainės aptarimas")
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "a"), "anime ir manga"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "b"), "apie viską"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "g"), "technologijos ir žaidimai"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "fo"), "fotografija"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "mu"), "muzika"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "int"), "internacionalus"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "t"), "teptukas"),
+                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "meta"), "svetainės aptarimas")
         );
 
         setResolvable(URL_HANDLER);

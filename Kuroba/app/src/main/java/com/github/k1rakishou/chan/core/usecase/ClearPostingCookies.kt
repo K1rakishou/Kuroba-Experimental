@@ -12,7 +12,7 @@ class ClearPostingCookies(
     Logger.debug(TAG) { "perform(${siteDescriptor})" }
 
     siteManager.bySiteDescriptorAndActive(siteDescriptor)
-      ?.actions()
+      ?.actions
       ?.clearPostingCookies()
   }
 

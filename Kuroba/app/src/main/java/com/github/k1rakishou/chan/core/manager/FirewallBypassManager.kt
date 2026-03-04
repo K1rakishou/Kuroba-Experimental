@@ -36,7 +36,7 @@ class FirewallBypassManager(
     siteManager.awaitUntilInitialized()
 
     val domainOrHost = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
-      ?.resolvable()
+      ?.urlHandler
       ?.desktopUrl(chanDescriptor, null, null)
       ?.toHttpUrlOrNull()
       ?.domainOrHost()
@@ -201,12 +201,6 @@ class FirewallBypassManager(
     }
 
   }
-
-  class ShowFirewallControllerInfo(
-    val firewallType: FirewallType,
-    val urlToOpen: HttpUrl,
-    val onFinished: CompletableDeferred<Boolean>
-  )
 
   companion object {
     private const val TAG = "FirewallBypassManager"

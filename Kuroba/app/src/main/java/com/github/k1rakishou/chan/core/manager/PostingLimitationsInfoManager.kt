@@ -17,16 +17,16 @@ class PostingLimitationsInfoManager(
       return ModularResult.value(false)
     }
 
-    if (!site.actions().isLoggedIn()) {
+    if (!site.actions.isLoggedIn()) {
       return ModularResult.value(false)
     }
 
-    val passcodeInfoUrl = site.endpoints().passCodeInfo()
+    val passcodeInfoUrl = site.endpoints.passCodeInfo()
     if (passcodeInfoUrl == null) {
       return ModularResult.value(false)
     }
 
-    val getPasscodeInfoResult = site.actions().getOrRefreshPasscodeInfo(resetCached = true)
+    val getPasscodeInfoResult = site.actions.getOrRefreshPasscodeInfo(resetCached = true)
     if (getPasscodeInfoResult == null) {
       return ModularResult.value(false)
     }
@@ -46,7 +46,9 @@ class PostingLimitationsInfoManager(
     }
 
     val params = PostAttachableLimitation.Params(boardDescriptor)
-    return site.postingLimitationInfo()
+    return site
+      .configuration
+      .postingLimitationConfig
       ?.postMaxAttachables
       ?.getMaxAllowedAttachablesPerPost(params)
   }
@@ -58,7 +60,9 @@ class PostingLimitationsInfoManager(
     }
 
     val params = PostAttachlesMaxTotalSize.Params(boardDescriptor)
-    return site.postingLimitationInfo()
+    return site
+      .configuration
+      .postingLimitationConfig
       ?.postMaxAttachablesTotalSize
       ?.getMaxTotalAttachablesSize(params)
   }

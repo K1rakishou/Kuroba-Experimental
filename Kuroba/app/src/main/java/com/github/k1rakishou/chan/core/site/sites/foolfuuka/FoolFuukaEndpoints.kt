@@ -13,7 +13,7 @@ open class FoolFuukaEndpoints(
 ) : CommonSite.CommonEndpoints(site) {
 
   override fun catalog(boardDescriptor: BoardDescriptor?): HttpUrl {
-    throw IllegalStateException("Catalog is not supported by ${site.name()}")
+    error("Catalog is not supported by ${site.name}")
   }
 
   // https://archived.moe/a/
@@ -45,7 +45,12 @@ open class FoolFuukaEndpoints(
   }
 
   // https://archived.moe/files/a/thumb/1599/43/1599433446565s.jpg
-  override fun thumbnailUrl(boardDescriptor: BoardDescriptor, spoiler: Boolean, customSpoilers: Int, arg: Map<String, String>): HttpUrl {
+  override fun thumbnailUrl(
+    boardDescriptor: BoardDescriptor,
+    spoiler: Boolean,
+    customSpoilers: Int,
+    arg: Map<String, String>
+  ): HttpUrl {
     val param1 = requireNotNull(arg[THUMBNAIL_PARAM_1]) { "THUMBNAIL_PARAM_1_NAME not provided" }
     val param2 = requireNotNull(arg[THUMBNAIL_PARAM_2]) { "THUMBNAIL_PARAM_2_NAME not provided" }
     val fileId = requireNotNull(arg[THUMBNAIL_FILE_ID]) { "THUMBNAIL_FILE_ID not provided" }
@@ -64,7 +69,7 @@ open class FoolFuukaEndpoints(
     return rootUrl
   }
 
-  override fun icon(icon: String, arg: Map<String, String>?): HttpUrl {
+  override fun icon(icon: String, arg: Map<String, String>): HttpUrl {
     throw NotImplementedError("icon")
   }
 

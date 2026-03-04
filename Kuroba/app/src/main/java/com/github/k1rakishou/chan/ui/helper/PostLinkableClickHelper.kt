@@ -196,7 +196,7 @@ class PostLinkableClickHelper(
         ?: return
 
       val isSiteEnabled = siteManager.bySiteDescriptor(SiteDescriptor.create(archiveDescriptor.domain))
-        ?.enabled()
+        ?.enabled
         ?: false
 
       if (!isSiteEnabled) {

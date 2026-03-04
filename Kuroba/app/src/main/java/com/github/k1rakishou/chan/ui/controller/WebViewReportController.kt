@@ -113,7 +113,7 @@ class WebViewReportController(
   }
 
   private suspend fun initUi() {
-    val urlToOpen = site.endpoints().report(post)
+    val urlToOpen = site.endpoints.report(post)
     if (urlToOpen == null) {
       requireNavController().popController()
       return
@@ -129,7 +129,7 @@ class WebViewReportController(
 
     try {
       val webView = WebView(context)
-      val siteRequestModifier = site.requestModifier()
+      val siteRequestModifier = site.requestModifier
 
       suspendCancellableCoroutine { cont ->
         cookieManager.removeAllCookies {

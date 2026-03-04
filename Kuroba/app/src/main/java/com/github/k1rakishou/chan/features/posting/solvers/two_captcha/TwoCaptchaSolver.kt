@@ -61,7 +61,7 @@ class TwoCaptchaSolver(
       return false
     }
 
-    return when (site.actions().postAuthenticate().type) {
+    return when (site.actions.postAuthenticate().type) {
       SiteAuthentication.Type.NONE,
       SiteAuthentication.Type.GENERIC_WEBVIEW,
       SiteAuthentication.Type.ID_BASED_CAPTCHA,
@@ -104,8 +104,8 @@ class TwoCaptchaSolver(
         return@Try TwoCaptchaResult.NotSupported(solverName = name, siteDescriptor = siteDescriptor)
       }
 
-      val postAuthenticate = site.actions().postAuthenticate()
-      val captchaType = postAuthenticate.type!!
+      val postAuthenticate = site.actions.postAuthenticate()
+      val captchaType = postAuthenticate.type
       Logger.d(TAG, "solve() captchaType=$captchaType")
 
       val siteAuthentication = when (captchaType) {

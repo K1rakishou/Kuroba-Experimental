@@ -12,8 +12,8 @@ class FuukaEndpoints(
   private val rootUrl: HttpUrl
 ) : CommonSite.CommonEndpoints(site) {
 
-  override fun catalog(boardDescriptor: BoardDescriptor?): HttpUrl {
-    error("Catalog is not supported by ${site.name()}")
+  override fun catalog(boardDescriptor: BoardDescriptor): HttpUrl {
+    error("Catalog is not supported by ${site.name}")
   }
 
   // https://warosu.org/vt/?task=page&page=1
@@ -56,7 +56,7 @@ class FuukaEndpoints(
     return rootUrl
   }
 
-  override fun icon(icon: String, arg: Map<String, String>?): HttpUrl {
+  override fun icon(icon: String, arg: Map<String, String>): HttpUrl {
     throw NotImplementedError("icon")
   }
 

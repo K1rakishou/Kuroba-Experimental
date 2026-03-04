@@ -9,7 +9,7 @@ import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.shared.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.core.site.Site
+import com.github.k1rakishou.chan.core.site.SiteConfiguration
 import com.github.k1rakishou.chan.features.setup.boards.selection.BoardSelectionControllerViewModel
 import com.github.k1rakishou.chan.features.setup.data.CatalogCellData
 import com.github.k1rakishou.chan.features.setup.data.SiteCellData
@@ -51,11 +51,11 @@ class ComposeBoardsSelectorControllerViewModel(
     val activeSiteCount = siteManager.activeSiteCount()
 
     siteManager.viewActiveSitesOrderedWhile { chanSiteData, site ->
-      if (site.siteFeature(Site.SiteFeature.CATALOG_COMPOSITION)) {
+      if (site.hasSiteFeature(SiteConfiguration.SiteFeature.CatalogComposition)) {
         return@viewActiveSitesOrderedWhile true
       }
 
-      if (site.catalogType() == Site.CatalogType.DYNAMIC) {
+      if (site.configuration.catalogType == SiteConfiguration.CatalogType.Dynamic) {
         return@viewActiveSitesOrderedWhile true
       }
 
@@ -63,8 +63,8 @@ class ComposeBoardsSelectorControllerViewModel(
       if (collectedBoards.isNotEmpty()) {
         val siteCellData = SiteCellData(
           siteDescriptor = chanSiteData.siteDescriptor,
-          siteIcon = site.icon(),
-          siteName = site.name(),
+          siteIcon = site.configuration.icon,
+          siteName = site.name,
           siteEnableState = SiteEnableState.Active
         )
 

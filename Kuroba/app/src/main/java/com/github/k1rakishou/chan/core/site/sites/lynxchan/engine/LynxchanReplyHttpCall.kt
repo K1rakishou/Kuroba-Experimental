@@ -18,11 +18,9 @@ import com.github.k1rakishou.common.groupOrNull
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
-import com.github.k1rakishou.persist_state.ReplyMode
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
-import dagger.Lazy
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.Request
@@ -37,9 +35,8 @@ import java.util.regex.Pattern
 class LynxchanReplyHttpCall(
   site: LynxchanSite,
   private val replyChanDescriptor: ChanDescriptor,
-  private val replyMode: ReplyMode,
-  private val replyManager: Lazy<ReplyManager>,
-  private val moshi: Lazy<Moshi>
+  private val replyManager: ReplyManager,
+  private val moshi: Moshi
 ) : HttpCall(site) {
   private val lynxchanSite: LynxchanSite
     get() = site as LynxchanSite
@@ -55,15 +52,15 @@ class LynxchanReplyHttpCall(
       "replyChanDescriptor == null"
     )
 
-    if (!replyManager.get().containsReply(chanDescriptor)) {
+    if (!replyManager.containsReply(chanDescriptor)) {
       throw IOException("No reply found for chanDescriptor=$chanDescriptor")
     }
 
     replyResponse.siteDescriptor = chanDescriptor.siteDescriptor()
     replyResponse.boardCode = chanDescriptor.boardCode()
-    site.requestModifier().modifyHttpCall(this, requestBuilder)
+    site.requestModifier.modifyHttpCall(this, requestBuilder)
 
-    replyManager.get().readReply(chanDescriptor) { reply ->
+    replyManager.readReply(chanDescriptor) { reply ->
       val threadNo = if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
         chanDescriptor.threadNo
       } else {
@@ -79,7 +76,7 @@ class LynxchanReplyHttpCall(
         null
       }
 
-      val replyUrl = site.endpoints().reply(replyChanDescriptor)
+      val replyUrl = site.endpoints.reply(replyChanDescriptor)
       Logger.d(TAG, "setup() replyUrl=${replyUrl}")
 
       if (lynxchanSite.postingViaFormData) {
@@ -251,7 +248,7 @@ class LynxchanReplyHttpCall(
       ),
     )
 
-    val content = moshi.get()
+    val content = moshi
       .adapter(LynxchanReplyData::class.java)
       .toJson(lynxchanReplyData)
 

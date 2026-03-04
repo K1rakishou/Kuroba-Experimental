@@ -147,7 +147,7 @@ class Chan4ReplyCall(
     arrayOf("Referer", "User-Agent", "Accept-Encoding", "Cookie", "Content-Type", "Content-Length", "Host", "Connection")
       .forEach { header -> requestBuilder.removeHeader(header) }
 
-    val replyUrl = site.endpoints().reply(replyChanDescriptor)
+    val replyUrl = site.endpoints.reply(replyChanDescriptor)
 
     requestBuilder.addHeader("Host", "sys.4chan.org")
     requestBuilder.addHeader("User-Agent", appConstants.userAgentMightBeOverridden)
@@ -164,7 +164,7 @@ class Chan4ReplyCall(
     requestBuilder.addHeader("Sec-Fetch-Site", "none")
     requestBuilder.addHeader("Sec-Fetch-User", "?1")
 
-    site.requestModifier().modifyHttpCall(this, requestBuilder)
+    site.requestModifier.modifyHttpCall(this, requestBuilder)
   }
 
   override fun process(response: Response, result: String) {
@@ -443,7 +443,6 @@ class Chan4ReplyCall(
 
     private const val SET_COOKIE_HEADER = "set-cookie"
     private const val CAPTCHA_COOKIE_PREFIX = "4chan_pass="
-    private const val DOMAIN_PREFIX = "domain="
 
     private val THREAD_NO_PATTERN = Pattern.compile("<!-- thread:([0-9]+),no:([0-9]+) -->")
 
