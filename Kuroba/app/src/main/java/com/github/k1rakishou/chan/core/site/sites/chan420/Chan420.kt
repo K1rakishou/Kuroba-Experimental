@@ -1,9 +1,8 @@
 package com.github.k1rakishou.chan.core.site.sites.chan420
 
-import com.github.k1rakishou.chan.core.site.ChunkDownloaderSiteProperties
-import com.github.k1rakishou.chan.core.site.Site
-import com.github.k1rakishou.chan.core.site.SiteIcon
+import com.github.k1rakishou.chan.core.site.SiteConfiguration
 import com.github.k1rakishou.chan.core.site.common.CommonSite
+import com.github.k1rakishou.chan.core.site.common.DefaultPostParser
 import com.github.k1rakishou.chan.core.site.common.taimaba.TaimabaActions
 import com.github.k1rakishou.chan.core.site.common.taimaba.TaimabaApi
 import com.github.k1rakishou.chan.core.site.common.taimaba.TaimabaCommentParser
@@ -21,116 +20,108 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 
 class Chan420 : CommonSite() {
-  private val chunkDownloaderSiteProperties = ChunkDownloaderSiteProperties(
-    enabled = true,
-    siteSendsCorrectFileSizeInBytes = false
-  )
-  
-  override fun setup() {
-    setEnabled(false)
-    setName(SITE_NAME)
-    setIcon(SiteIcon.fromFavicon(imageLoaderDeprecatedLazy, "https://420chan.org/favicon.ico".toHttpUrl()))
-    setBoardsType(Site.BoardsType.DYNAMIC)
-    setResolvable(URL_HANDLER)
-    
-    setConfig(object : CommonConfig() {
-      override fun siteFeature(siteFeature: Site.SiteFeature): Boolean {
-        // 420chan doesn't support file hashes
-        return (super.siteFeature(siteFeature) && siteFeature !== Site.SiteFeature.IMAGE_FILE_HASH
-          || siteFeature === Site.SiteFeature.POSTING || siteFeature === Site.SiteFeature.POST_REPORT)
-      }
-    })
-    
-    setEndpoints(TaimabaEndpoints(this, "https://api.420chan.org", "https://boards.420chan.org"))
-    setActions(object : TaimabaActions(this@Chan420, replyManagerLazy) {
-      override suspend fun boards(): Flow<SiteBoards> {
-        return genericBoardsRequestResponseHandler(
-          requestProvider = {
-            val request = Request.Builder()
-              .url(site.endpoints().boards().toString())
-              .get()
-              .build()
-
-            return@genericBoardsRequestResponseHandler Chan420BoardsRequest(
-              siteDescriptor = descriptor(),
-              boardManager = boardManager,
-              request = request,
-              proxiedOkHttpClient = proxiedOkHttpClient
-            )
-          },
-          defaultBoardsProvider = {
-            return@genericBoardsRequestResponseHandler ArrayList<ChanBoard>().apply {
-              add(ChanBoard.create(BoardDescriptor.create(descriptor().siteName, "weed"), "Cannabis Discussion"))
-              add(ChanBoard.create(BoardDescriptor.create(descriptor().siteName, "hooch"), "Alcohol Discussion"))
-              add(ChanBoard.create(BoardDescriptor.create(descriptor().siteName, "dr"), "Dream Discussion"))
-              add(ChanBoard.create(BoardDescriptor.create(descriptor().siteName, "detox"), "Detoxing & Rehabilitation"))
-            }
-          }
-        )
-      }
-    })
-    setApi(TaimabaApi(siteManager, boardManager, this))
-    setParser(TaimabaCommentParser())
-
-    setPostingLimitationInfo(
-      postingLimitationInfoLazy = lazy {
-        PostingLimitationConfig(
-          postMaxAttachables = ConstantAttachablesCount(1),
-          postMaxAttachablesTotalSize = PasscodeDependantMaxAttachablesTotalSize(
-            siteManager = siteManager
-          )
-        )
-      }
+  override val enabled: Boolean = false
+  override val name: String = SITE_NAME
+  override val siteIconUrl: HttpUrl = "https://420chan.org/favicon.ico".toHttpUrl()
+  override val commentParserType = SiteConfiguration.CommentParserType.TaimabaParser
+  override val globalSearchType = SiteConfiguration.GlobalSearchType.SearchNotSupported
+  override val boardsType = SiteConfiguration.BoardsType.Dynamic
+  override val catalogType = SiteConfiguration.CatalogType.Static
+  override val postParser by lazy { DefaultPostParser(TaimabaCommentParser(), archivesManager) }
+  override val chunkedDownloaderConfig by lazy {
+    SiteConfiguration.ChunkedDownloaderConfig(
+      enabled = true,
+      siteSendsCorrectFileSizeInBytes = false
     )
   }
+  override val postingLimitationConfig by lazy {
+    PostingLimitationConfig(
+      postMaxAttachables = ConstantAttachablesCount(1),
+      postMaxAttachablesTotalSize = PasscodeDependantMaxAttachablesTotalSize(
+        siteManager = siteManager
+      )
+    )
+  }
+  override val urlHandler by lazy { Chan420UrlHandler() }
+  override val endpoints by lazy {
+    TaimabaEndpoints(
+      commonSite = this,
+      rootUrl = "https://api.420chan.org",
+      sysUrl = "https://boards.420chan.org"
+    )
+  }
+  override val api by lazy { TaimabaApi(siteManager, boardManager, this) }
+  override val actions by lazy { Chan420Actions(this) }
 
-  override fun commentParserType(): CommentParserType {
-    return CommentParserType.TaimabaParser
+
+  override fun hasSiteFeature(siteFeature: SiteConfiguration.SiteFeature): Boolean {
+    return super.hasSiteFeature(siteFeature)
+      && siteFeature !== SiteConfiguration.SiteFeature.ImageFileHash
+      || siteFeature === SiteConfiguration.SiteFeature.Posting
+      || siteFeature === SiteConfiguration.SiteFeature.PostReporting
   }
 
-  override fun getChunkDownloaderSiteProperties(): ChunkDownloaderSiteProperties {
-    return chunkDownloaderSiteProperties
-  }
-  
-  companion object {
-    private const val TAG = "420Chan"
-    const val SITE_NAME = "420Chan"
-    const val DEFAULT_MAX_FILE_SIZE = 20480 * 1024
+  class Chan420Actions(
+    chan420: Chan420
+  ) : TaimabaActions(chan420, chan420.replyManager) {
+    override suspend fun boards(): Flow<SiteBoards> {
+      return genericBoardsRequestResponseHandler(
+        requestProvider = {
+          val request = Request.Builder()
+            .url(requireNotNull(site.endpoints.boards()))
+            .get()
+            .build()
 
-    @JvmStatic
-    val URL_HANDLER: CommonSiteUrlHandler = object : CommonSiteUrlHandler() {
-      
-      override val mediaHosts = arrayOf("https://boards.420chan.org/".toHttpUrl())
-      
-      override fun getSiteClass(): Class<out Site?> {
-        return Chan420::class.java
-      }
-      
-      override val url: HttpUrl
-        get() = "https://420chan.org/".toHttpUrl()
-      
-      override val names: Array<String>
-        get() = arrayOf("420chan", "420")
-      
-      override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?, postSubNo: Long?): String? {
-        val boardCode = chanDescriptor.boardCode()
+          return@genericBoardsRequestResponseHandler Chan420BoardsRequest(
+            siteDescriptor = site.descriptor,
+            boardManager = site.boardManager,
+            request = request,
+            proxiedOkHttpClient = site.proxiedOkHttpClient
+          )
+        },
+        defaultBoardsProvider = {
+          return@genericBoardsRequestResponseHandler ArrayList<ChanBoard>().apply {
+            val siteName = site.descriptor.siteName
 
-        when (chanDescriptor) {
-          is ChanDescriptor.CatalogDescriptor -> {
-            return "https://boards.420chan.org/$boardCode/"
+            add(ChanBoard.create(BoardDescriptor.create(siteName, "weed"), "Cannabis Discussion"))
+            add(ChanBoard.create(BoardDescriptor.create(siteName, "hooch"), "Alcohol Discussion"))
+            add(ChanBoard.create(BoardDescriptor.create(siteName, "dr"), "Dream Discussion"))
+            add(ChanBoard.create(BoardDescriptor.create(siteName, "detox"), "Detoxing & Rehabilitation"))
           }
-          is ChanDescriptor.ThreadDescriptor -> {
-            var url = "https://boards.420chan.org/$boardCode/thread/" + chanDescriptor.threadNo
-            if (postNo != null && chanDescriptor.threadNo != postNo) {
-              url += "#${postNo}"
-            }
-
-            return url
-          }
-          else -> return null
         }
+      )
+    }
+  }
+
+  class Chan420UrlHandler: CommonSiteUrlHandler() {
+    override val mediaHosts = arrayOf("https://boards.420chan.org/".toHttpUrl())
+
+    override val url: HttpUrl
+      get() = "https://420chan.org/".toHttpUrl()
+
+    override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?, postSubNo: Long?): String? {
+      val boardCode = chanDescriptor.boardCode()
+
+      when (chanDescriptor) {
+        is ChanDescriptor.CatalogDescriptor -> {
+          return "https://boards.420chan.org/$boardCode/"
+        }
+        is ChanDescriptor.ThreadDescriptor -> {
+          var url = "https://boards.420chan.org/$boardCode/thread/" + chanDescriptor.threadNo
+          if (postNo != null && chanDescriptor.threadNo != postNo) {
+            url += "#${postNo}"
+          }
+
+          return url
+        }
+        else -> return null
       }
     }
+  }
+
+  companion object {
+    const val SITE_NAME = "420Chan"
+    const val DEFAULT_MAX_FILE_SIZE = 20480 * 1024
   }
   
 }

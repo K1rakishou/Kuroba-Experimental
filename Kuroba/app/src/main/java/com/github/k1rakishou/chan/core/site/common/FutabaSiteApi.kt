@@ -1,11 +1,8 @@
 package com.github.k1rakishou.chan.core.site.common
 
-import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteEndpoints
-import com.github.k1rakishou.chan.core.site.parser.CommentParser
-import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.core.site.parser.SiteApi
 import com.github.k1rakishou.chan.core.site.parser.processor.AbstractChanReaderProcessor
 import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
@@ -26,8 +23,6 @@ import com.github.k1rakishou.model.data.post.ChanPostHttpIcon
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.ChanPostImageBuilder
 import com.google.gson.stream.JsonReader
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import okhttp3.HttpUrl
 import org.jsoup.parser.Parser
 import java.io.IOException
@@ -36,31 +31,9 @@ import java.io.InputStreamReader
 import kotlin.math.max
 
 class FutabaSiteApi(
-  private val archivesManager: ArchivesManager,
   private val siteManager: SiteManager,
   private val boardManager: BoardManager
 ) : SiteApi() {
-  private val mutex = Mutex()
-  private var parser: PostParser? = null
-
-  override suspend fun getParser(): PostParser {
-    return mutex.withLock {
-      if (parser == null) {
-        val commentParser = CommentParser()
-          .addDefaultRules()
-
-        val defaultPostParser = DefaultPostParser(
-          commentParser,
-          archivesManager
-        )
-
-        parser = defaultPostParser
-      }
-
-      return@withLock parser!!
-    }
-  }
-
   @Throws(Exception::class)
   override suspend fun loadThreadFresh(
     requestUrl: String,

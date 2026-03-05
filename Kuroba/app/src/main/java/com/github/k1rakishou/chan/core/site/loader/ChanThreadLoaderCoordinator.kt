@@ -147,8 +147,6 @@ class ChanThreadLoaderCoordinator(
           postProcessFlags = postProcessFlags
         )
 
-        val chanReader = site.api
-
         val chanReaderProcessorOptions = ChanReaderProcessor.Options(
           isDownloadingThread = false,
           isIncrementalUpdate = chanLoadUrl.isIncremental
@@ -157,8 +155,7 @@ class ChanThreadLoaderCoordinator(
         Logger.d(TAG, "loadThreadOrCatalog(chanLoadUrl=$chanLoadUrl, " +
           "compositeCatalogDescriptor=$compositeCatalogDescriptor, chanDescriptor=$chanDescriptor, " +
           "chanCacheOptions=$chanCacheOptions, chanCacheUpdateOptions=$chanCacheUpdateOptions, " +
-          "chanReadOptions=$chanReadOptions, chanReader=${chanReader.javaClass.simpleName}, " +
-          "postProcessFlags=$postProcessFlags)")
+          "chanReadOptions=$chanReadOptions, postProcessFlags=$postProcessFlags)")
 
         val isThreadDownloaded = chanDescriptor is ChanDescriptor.ThreadDescriptor
           && threadDownloadManager.isThreadFullyDownloaded(chanDescriptor)
@@ -233,7 +230,7 @@ class ChanThreadLoaderCoordinator(
               chanReadOptions = chanReadOptions,
               chanLoadOptions = chanLoadOptions,
               chanReaderProcessorOptions = chanReaderProcessorOptions,
-              siteApi = chanReader
+              siteApi = site.api
             ).unwrap()
           }
         }
@@ -250,11 +247,10 @@ class ChanThreadLoaderCoordinator(
             is SiteSpecificError.DvachError -> {
               throw SiteError(error.errorCode, error.errorMessage)
             }
-            else -> error("Unknown error: ${error}")
           }
         }
 
-        val postParser = chanReader.getParser()
+        val postParser = site.postParser
           ?: throw NullPointerException("PostParser cannot be null!")
 
         val (threadLoadResult, loadTimeInfo) = chanPostPersister.persistPosts(

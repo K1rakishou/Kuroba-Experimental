@@ -38,8 +38,7 @@ import java.util.Map;
 
 import okhttp3.HttpUrl;
 
-public class Chan370
-        extends CommonSite {
+public class Chan370 extends CommonSite {
     private final ChunkDownloaderSiteProperties chunkDownloaderSiteProperties;
     public static final String SITE_NAME = "370chan";
 

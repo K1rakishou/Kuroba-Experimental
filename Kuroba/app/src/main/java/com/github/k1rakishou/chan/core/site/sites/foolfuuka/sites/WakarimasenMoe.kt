@@ -9,8 +9,8 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 
 class WakarimasenMoe: BaseFoolFuukaSite() {
   override val enabled: Boolean = false
-  override val iconUrl: HttpUrl = "https://archive.wakarimasen.moe/favicon.ico".toHttpUrl()
   override val rootUrl: HttpUrl = "https://archive.wakarimasen.moe/".toHttpUrl()
+  override val siteIconUrl: HttpUrl = "https://archive.wakarimasen.moe/favicon.ico".toHttpUrl()
   override val mediaHosts: Array<HttpUrl> by lazy { arrayOf(rootUrl) + MediaHosts }
   override val name: String = SITE_NAME
   override val endpoints: SiteEndpoints by lazy { WakarimasenEndpoints(this) }

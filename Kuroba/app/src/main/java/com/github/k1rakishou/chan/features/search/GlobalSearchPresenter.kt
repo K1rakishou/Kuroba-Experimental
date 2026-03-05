@@ -146,7 +146,7 @@ internal class GlobalSearchPresenter(
     val sitesSupportingSearch = mutableListOf<SiteDescriptor>()
 
     siteManager.viewActiveSitesOrderedWhile { chanSiteData, site ->
-      if (site.configuration.globalSearchConfig != SiteConfiguration.GlobalSearchConfig.SearchNotSupported) {
+      if (site.configuration.globalSearchType != SiteConfiguration.GlobalSearchType.SearchNotSupported) {
         sitesSupportingSearch += chanSiteData.siteDescriptor
       }
 
@@ -178,7 +178,7 @@ internal class GlobalSearchPresenter(
     }
 
     val siteIconUrl = site.configuration.icon.url?.toString()
-    val siteGlobalSearchConfig = site.configuration.globalSearchConfig
+    val siteGlobalSearchConfig = site.configuration.globalSearchType
 
     val dataState = GlobalSearchControllerStateData(
       currentTheme = themeEngine.chanTheme.copyTheme(),
@@ -187,7 +187,7 @@ internal class GlobalSearchPresenter(
         selectedSite = SelectedSite(
           siteDescriptor = selectedSiteDescriptor,
           siteIconUrl = siteIconUrl,
-          siteGlobalSearchConfig = siteGlobalSearchConfig
+          siteGlobalSearchType = siteGlobalSearchConfig
         )
       ),
       searchParameters = searchParameters
@@ -197,15 +197,15 @@ internal class GlobalSearchPresenter(
   }
 
   private fun getDefaultSearchParameters(siteDescriptor: SiteDescriptor): SearchParameters? {
-    val searchType = siteManager.bySiteDescriptorAndActive(siteDescriptor)?.configuration?.globalSearchConfig
+    val searchType = siteManager.bySiteDescriptorAndActive(siteDescriptor)?.configuration?.globalSearchType
       ?: return null
 
     when (searchType) {
-      SiteConfiguration.GlobalSearchConfig.SearchNotSupported -> {
+      SiteConfiguration.GlobalSearchType.SearchNotSupported -> {
         error("Must not be used here")
       }
-      SiteConfiguration.GlobalSearchConfig.SimpleQuerySearch,
-      SiteConfiguration.GlobalSearchConfig.SimpleQueryBoardSearch -> {
+      SiteConfiguration.GlobalSearchType.SimpleQuerySearch,
+      SiteConfiguration.GlobalSearchType.SimpleQueryBoardSearch -> {
         if (siteDescriptor.is4chan()) {
           return SearchParameters.Chan4SearchParams(
             query = "",
@@ -220,14 +220,14 @@ internal class GlobalSearchPresenter(
 
         throw IllegalArgumentException("Unsupported site: $siteDescriptor")
       }
-      SiteConfiguration.GlobalSearchConfig.FuukaSearch -> {
+      SiteConfiguration.GlobalSearchType.FuukaSearch -> {
         return SearchParameters.FuukaSearchParameters(
           query = "",
           subject = "",
           searchBoard = null
         )
       }
-      SiteConfiguration.GlobalSearchConfig.FoolFuukaSearch -> {
+      SiteConfiguration.GlobalSearchType.FoolFuukaSearch -> {
         return SearchParameters.FoolFuukaSearchParameters(
           query = "",
           subject = "",

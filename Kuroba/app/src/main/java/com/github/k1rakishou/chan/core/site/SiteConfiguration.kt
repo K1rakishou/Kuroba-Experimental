@@ -9,17 +9,21 @@ abstract class SiteConfiguration {
   abstract val nsfwBoardDisplayType: NsfwBoardDisplayType
   abstract val commentParserType: CommentParserType
   abstract val chunkedDownloaderConfig: ChunkedDownloaderConfig
-  abstract val globalSearchConfig: GlobalSearchConfig
+  abstract val globalSearchType: GlobalSearchType
   abstract val postingLimitationConfig: PostingLimitationConfig?
   abstract val redirectsToArchiveThread: Boolean
 
   enum class BoardsType {
+    // Boards are hardcoded as there is no endpoint to retrieve them
     Static,
+    // Boards are loaded from some endpoint
     Dynamic
   }
 
   enum class CatalogType {
+    // Whole catalog is loaded in one request
     Static,
+    // Catalog has pages, and you load the whole thing in multiple requests
     Dynamic
   }
 
@@ -41,7 +45,7 @@ abstract class SiteConfiguration {
     LynxchanParser
   }
 
-  enum class GlobalSearchConfig {
+  enum class GlobalSearchType {
     SearchNotSupported,
     SimpleQuerySearch,
     SimpleQueryBoardSearch,

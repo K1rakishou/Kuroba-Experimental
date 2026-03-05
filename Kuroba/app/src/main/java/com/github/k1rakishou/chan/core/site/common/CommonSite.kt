@@ -13,6 +13,7 @@ import com.github.k1rakishou.chan.core.site.SiteConfiguration
 import com.github.k1rakishou.chan.core.site.SiteConfiguration.NsfwBoardDisplayType
 import com.github.k1rakishou.chan.core.site.SiteEndpoints
 import com.github.k1rakishou.chan.core.site.SiteIcon
+import com.github.k1rakishou.chan.core.site.SiteRequestModifier
 import com.github.k1rakishou.chan.core.site.SiteUrlHandler
 import com.github.k1rakishou.chan.core.site.common.vichan.VichanReaderExtensions
 import com.github.k1rakishou.chan.core.site.http.DeleteRequest
@@ -23,7 +24,6 @@ import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
 import com.github.k1rakishou.chan.core.site.limitations.ConstantAttachablesCount
 import com.github.k1rakishou.chan.core.site.limitations.ConstantMaxTotalSizeInfo
 import com.github.k1rakishou.chan.core.site.limitations.PostingLimitationConfig
-import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.core.site.parser.SiteApi
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.groupOrNull
@@ -46,15 +46,35 @@ import java.lang.Long.toHexString
 import java.util.regex.Pattern
 
 abstract class CommonSite : SiteBase() {
-  abstract val globalSearchConfig: SiteConfiguration.GlobalSearchConfig
-  abstract val icon: SiteIcon
-  abstract val boardsType: SiteConfiguration.BoardsType
-  abstract val catalogType: SiteConfiguration.CatalogType
-  open val nsfwBoardDisplayType: NsfwBoardDisplayType = NsfwBoardDisplayType.NotSupported
+  private val DefaultRequestModifier by lazy {
+    object : SiteRequestModifier<Site>(this@CommonSite, appConstants) {
+      // Default implementation.
+    }
+  }
+
+  // TODO:
+  private val DefaultPostingLimitationConfig = PostingLimitationConfig(
+    postMaxAttachables = ConstantAttachablesCount(DEFAULT_ATTACHABLES_PER_POST_COUNT),
+    postMaxAttachablesTotalSize = ConstantMaxTotalSizeInfo(DEFAULT_MAX_ATTACHABLES_SIZE)
+  )
+
+  // TODO:
+  private val DefaultChunkedDownloaderConfig = SiteConfiguration.ChunkedDownloaderConfig(
+    enabled = true,
+    siteSendsCorrectFileSizeInBytes = true
+  )
+
+  // TODO:
+//  override val enabled: Boolean = true
+  abstract val globalSearchType: SiteConfiguration.GlobalSearchType /*= SiteConfiguration.GlobalSearchType.SearchNotSupported*/
+  abstract val siteIconUrl: HttpUrl
+  abstract val boardsType: SiteConfiguration.BoardsType /*= SiteConfiguration.BoardsType.Dynamic*/
+  abstract val catalogType: SiteConfiguration.CatalogType /*= SiteConfiguration.CatalogType.Dynamic*/
   abstract val commentParserType: SiteConfiguration.CommentParserType
-  abstract val postParser: PostParser
-  abstract val postingLimitationInfo: PostingLimitationConfig?
-  abstract val chunkedDownloaderConfig: SiteConfiguration.ChunkedDownloaderConfig
+  abstract val chunkedDownloaderConfig: SiteConfiguration.ChunkedDownloaderConfig /*= DefaultChunkedDownloaderConfig*/
+
+  open val nsfwBoardDisplayType: NsfwBoardDisplayType = NsfwBoardDisplayType.NotSupported
+  open val postingLimitationConfig: PostingLimitationConfig? = null
   open val redirectsToArchiveThread: Boolean = false
   open val staticBoards: List<ChanBoard> = emptyList()
 
@@ -64,25 +84,22 @@ abstract class CommonSite : SiteBase() {
   final override val configuration: SiteConfiguration
     get() = siteConfiguration
 
-  private val siteConfiguration: CommonSiteConfiguration by lazy {
-    val postingLimitationConfig = postingLimitationInfo ?: run {
-      PostingLimitationConfig(
-        postMaxAttachables = ConstantAttachablesCount(DEFAULT_ATTACHABLES_PER_POST_COUNT),
-        postMaxAttachablesTotalSize = ConstantMaxTotalSizeInfo(DEFAULT_MAX_ATTACHABLES_SIZE)
-      )
-    }
+  override val requestModifier: SiteRequestModifier<Site> = DefaultRequestModifier
 
+  private val siteConfiguration: CommonSiteConfiguration by lazy {
     val boardsType = boardsType.takeIf { staticBoards.isEmpty() }
       ?: SiteConfiguration.BoardsType.Static
 
+    val siteIcon = SiteIcon.fromFavicon(imageLoaderDeprecatedLazy, siteIconUrl)
+
     return@lazy CommonSiteConfiguration(
-      icon = icon,
+      icon = siteIcon,
       boardsType = boardsType,
       catalogType = catalogType,
       nsfwBoardDisplayType = nsfwBoardDisplayType,
       commentParserType = commentParserType,
       chunkedDownloaderConfig = chunkedDownloaderConfig,
-      globalSearchConfig = globalSearchConfig,
+      globalSearchType = globalSearchType,
       postingLimitationConfig = postingLimitationConfig,
       redirectsToArchiveThread = redirectsToArchiveThread
     )
@@ -381,12 +398,10 @@ abstract class CommonSite : SiteBase() {
     }
   }
   
-  abstract class CommonApi(protected val site: CommonSite) : SiteApi() {
+  abstract class CommonApi(
+    protected val site: CommonSite
+  ) : SiteApi() {
     val vichanReaderExtensions = VichanReaderExtensions()
-
-    override suspend fun getParser(): PostParser? {
-      return site.postParser
-    }
   }
 
   companion object {

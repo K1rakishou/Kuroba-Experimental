@@ -1,26 +1,9 @@
-/*
- * KurobaEx - *chan browser https://github.com/K1rakishou/Kuroba-Experimental/
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 package com.github.k1rakishou.chan.core.site.sites.wired7
 
-import com.github.k1rakishou.chan.core.site.ChunkDownloaderSiteProperties
-import com.github.k1rakishou.chan.core.site.Site
-import com.github.k1rakishou.chan.core.site.Site.SiteFeature
-import com.github.k1rakishou.chan.core.site.SiteIcon
+import com.github.k1rakishou.chan.core.site.SiteConfiguration
+import com.github.k1rakishou.chan.core.site.SiteUrlHandler
 import com.github.k1rakishou.chan.core.site.common.CommonSite
+import com.github.k1rakishou.chan.core.site.common.DefaultPostParser
 import com.github.k1rakishou.chan.core.site.common.vichan.VichanCommentParser
 import com.github.k1rakishou.chan.core.site.limitations.ConstantAttachablesCount
 import com.github.k1rakishou.chan.core.site.limitations.ConstantMaxTotalSizeInfo
@@ -33,96 +16,80 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
 class Wired7 : CommonSite() {
-  private val chunkDownloaderSiteProperties = ChunkDownloaderSiteProperties(
-    enabled = true,
-    siteSendsCorrectFileSizeInBytes = true
-  )
-
-  override fun setup() {
-    setEnabled(true)
-    setName(SITE_NAME)
-    setIcon(SiteIcon.fromFavicon(imageLoaderDeprecatedLazy, "https://wired-7.org/favicon_144.png".toHttpUrl()))
-
-    setBoards(
-      ChanBoard.create(BoardDescriptor.create(descriptor().siteName, "a"), "Anime"),
-      ChanBoard.create(BoardDescriptor.create(descriptor().siteName, "b"), "Random"),
-      ChanBoard.create(BoardDescriptor.create(descriptor().siteName, "jp"), "Japón"),
-      ChanBoard.create(BoardDescriptor.create(descriptor().siteName, "h"), "Hentai"),
-      ChanBoard.create(BoardDescriptor.create(descriptor().siteName, "hum"), "Humanidad"),
-      ChanBoard.create(BoardDescriptor.create(descriptor().siteName, "meta"), "Wired-7 Metaboard"),
-      ChanBoard.create(BoardDescriptor.create(descriptor().siteName, "mu"), "Música"),
-      ChanBoard.create(BoardDescriptor.create(descriptor().siteName, "lain"), "Lain"),
-      ChanBoard.create(BoardDescriptor.create(descriptor().siteName, "tech"), "Tecnología"),
-      ChanBoard.create(BoardDescriptor.create(descriptor().siteName, "v"), "Videojuegos"),
-      ChanBoard.create(BoardDescriptor.create(descriptor().siteName, "vis"), "Audiovisuales"),
-      ChanBoard.create(BoardDescriptor.create(descriptor().siteName, "x"), "Paranormal"),
-      ChanBoard.create(BoardDescriptor.create(descriptor().siteName, "all"), "Nexo")
-    )
-
-    setResolvable(URL_HANDLER)
-    setConfig(object : CommonConfig() {
-      override fun siteFeature(siteFeature: SiteFeature): Boolean {
-        return super.siteFeature(siteFeature) || siteFeature === SiteFeature.POSTING
-      }
-    })
-
-    setEndpoints(Wired7Endpoints(this, "https://wired-7.org", "https://wired-7.org"))
-    setActions(LainchanActions(this, proxiedOkHttpClient, siteManager, replyManager))
-    setApi(Wired7Api(siteManager, boardManager, this))
-    setParser(VichanCommentParser())
-    setPostingLimitationInfo(
-      postingLimitationInfoLazy = lazy {
-        PostingLimitationConfig(
-          postMaxAttachables = ConstantAttachablesCount(3),
-          postMaxAttachablesTotalSize = ConstantMaxTotalSizeInfo(20 * (1024 * 1024)) // 20MB
-        )
-      }
-    )
+  private val boards = buildList {
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "a"), "Anime"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "b"), "Random"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "jp"), "Japón"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "h"), "Hentai"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "hum"), "Humanidad"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "meta"), "Wired-7 Metaboard"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "mu"), "Música"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "lain"), "Lain"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "tech"), "Tecnología"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "v"), "Videojuegos"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "vis"), "Audiovisuales"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "x"), "Paranormal"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "all"), "Nexo"))
   }
 
-  override fun commentParserType(): CommentParserType {
-    return CommentParserType.VichanParser
+  override val enabled: Boolean = true
+  override val name: String = SITE_NAME
+  override val siteIconUrl = "https://wired-7.org/favicon_144.png".toHttpUrl()
+  override val commentParserType = SiteConfiguration.CommentParserType.VichanParser
+  override val globalSearchType = SiteConfiguration.GlobalSearchType.SearchNotSupported
+  override val boardsType = SiteConfiguration.BoardsType.Static
+  override val catalogType = SiteConfiguration.CatalogType.Static
+  override val chunkedDownloaderConfig by lazy {
+    SiteConfiguration.ChunkedDownloaderConfig(
+      enabled = true,
+      siteSendsCorrectFileSizeInBytes = true
+    )
+  }
+  override val postingLimitationConfig by lazy {
+    PostingLimitationConfig(
+      postMaxAttachables = ConstantAttachablesCount(3),
+      postMaxAttachablesTotalSize = ConstantMaxTotalSizeInfo(20 * (1024 * 1024)) // 20MB
+    )
+  }
+  override val urlHandler: SiteUrlHandler by lazy { Wired7UrlHandler() }
+  override val endpoints by lazy { Wired7Endpoints(this, "https://wired-7.org", "https://wired-7.org") }
+  override val api by lazy { Wired7Api(siteManager, boardManager, this) }
+  override val actions by lazy { LainchanActions(this, proxiedOkHttpClient, siteManager, replyManager) }
+  override val postParser by lazy { DefaultPostParser(VichanCommentParser(), archivesManager) }
+  override val staticBoards: List<ChanBoard> = boards
+
+  override fun hasSiteFeature(siteFeature: SiteConfiguration.SiteFeature): Boolean {
+    return super.hasSiteFeature(siteFeature)
+      || siteFeature === SiteConfiguration.SiteFeature.Posting
   }
 
-  override fun getChunkDownloaderSiteProperties(): ChunkDownloaderSiteProperties {
-    return chunkDownloaderSiteProperties
+  class Wired7UrlHandler : CommonSiteUrlHandler() {
+    private val ROOT = "https://wired-7.org/"
+
+    override val url: HttpUrl = ROOT.toHttpUrl()
+    override val mediaHosts: Array<HttpUrl> = arrayOf(url)
+
+    override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?, postSubNo: Long?): String? {
+      return when (chanDescriptor) {
+        is ChanDescriptor.CatalogDescriptor -> {
+          url.newBuilder()
+            .addPathSegment(chanDescriptor.boardCode())
+            .toString()
+        }
+        is ChanDescriptor.ThreadDescriptor -> {
+          url.newBuilder()
+            .addPathSegment(chanDescriptor.boardCode())
+            .addPathSegment("res")
+            .addPathSegment(chanDescriptor.threadNo.toString())
+            .toString()
+        }
+        else -> null
+      }
+    }
   }
 
   companion object {
     const val SITE_NAME = "Wired-7"
-
-    val URL_HANDLER: CommonSiteUrlHandler = object : CommonSiteUrlHandler() {
-      private val ROOT = "https://wired-7.org/"
-
-      override fun getSiteClass(): Class<out Site> {
-        return Wired7::class.java
-      }
-
-      override val url: HttpUrl
-        get() = ROOT.toHttpUrl()
-      override val mediaHosts: Array<HttpUrl>
-        get() = arrayOf(url)
-      override val names: Array<String>
-        get() = arrayOf("Wired-7, wired7, Wired7")
-
-      override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?, postSubNo: Long?): String? {
-        return when (chanDescriptor) {
-          is ChanDescriptor.CatalogDescriptor -> {
-            url.newBuilder()
-              .addPathSegment(chanDescriptor.boardCode())
-              .toString()
-          }
-          is ChanDescriptor.ThreadDescriptor -> {
-            url.newBuilder()
-              .addPathSegment(chanDescriptor.boardCode())
-              .addPathSegment("res")
-              .addPathSegment(chanDescriptor.threadNo.toString())
-              .toString()
-          }
-          else -> null
-        }
-      }
-    }
   }
 
 }

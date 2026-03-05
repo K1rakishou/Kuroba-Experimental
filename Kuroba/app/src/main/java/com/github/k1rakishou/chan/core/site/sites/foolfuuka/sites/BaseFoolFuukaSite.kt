@@ -4,7 +4,6 @@ import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.SiteConfiguration
 import com.github.k1rakishou.chan.core.site.SiteEndpoints
-import com.github.k1rakishou.chan.core.site.SiteIcon
 import com.github.k1rakishou.chan.core.site.SiteRequestModifier
 import com.github.k1rakishou.chan.core.site.SiteUrlHandler
 import com.github.k1rakishou.chan.core.site.common.CommonSite
@@ -21,16 +20,14 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl
 
 abstract class BaseFoolFuukaSite : CommonSite() {
-  abstract val iconUrl: HttpUrl
   abstract val rootUrl: HttpUrl
   abstract val mediaHosts: Array<HttpUrl>
-  override val globalSearchConfig = SiteConfiguration.GlobalSearchConfig.FoolFuukaSearch
+  override val globalSearchType = SiteConfiguration.GlobalSearchType.FoolFuukaSearch
   override val commentParserType = SiteConfiguration.CommentParserType.FoolFuukaParser
   override val boardsType: SiteConfiguration.BoardsType = SiteConfiguration.BoardsType.Dynamic
   override val catalogType: SiteConfiguration.CatalogType = SiteConfiguration.CatalogType.Dynamic
-  override val icon by lazy { SiteIcon.fromFavicon(imageLoaderDeprecatedLazy, iconUrl) }
   override val postParser by lazy { DefaultPostParser(FoolFuukaCommentParser(archivesManager), archivesManager) }
-  override val postingLimitationInfo: PostingLimitationConfig? = null
+  override val postingLimitationConfig: PostingLimitationConfig? = null
   override val chunkedDownloaderConfig = SiteConfiguration.ChunkedDownloaderConfig(
     enabled = true,
     siteSendsCorrectFileSizeInBytes = true

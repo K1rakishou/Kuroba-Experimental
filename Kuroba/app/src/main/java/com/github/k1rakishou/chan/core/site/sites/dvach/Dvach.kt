@@ -8,7 +8,6 @@ import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.core.site.SiteConfiguration
 import com.github.k1rakishou.chan.core.site.SiteEndpoints
-import com.github.k1rakishou.chan.core.site.SiteIcon
 import com.github.k1rakishou.chan.core.site.SiteRequestModifier
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.SiteSetting.SiteOptionsSetting
@@ -31,8 +30,6 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 class Dvach : CommonSite() {
   lateinit var captchaType: OptionsSetting<CaptchaType>
   lateinit var passCodeInfo: GsonJsonSetting<DvachPasscodeInfo>
-  private val siteRequestModifier by lazy { DvachSiteRequestModifier(this, appConstants) }
-
   lateinit var passCode: StringSetting
   lateinit var passCookie: StringSetting
   lateinit var userCodeCookie: StringSetting
@@ -96,6 +93,61 @@ class Dvach : CommonSite() {
     )
   }
 
+  override val enabled: Boolean = true
+  override val siteIconUrl: HttpUrl by lazy { "${domainString}/favicon.ico".toHttpUrl() }
+  override val commentParserType: SiteConfiguration.CommentParserType = SiteConfiguration.CommentParserType.DvachParser
+  override val redirectsToArchiveThread: Boolean = true
+  override val globalSearchType = SiteConfiguration.GlobalSearchType.SimpleQueryBoardSearch
+  override val boardsType: SiteConfiguration.BoardsType = SiteConfiguration.BoardsType.Dynamic
+  override val catalogType: SiteConfiguration.CatalogType = SiteConfiguration.CatalogType.Static
+  override val postParser: PostParser by lazy { DvachPostParser(DvachCommentParser(), archivesManager) }
+  override val postingLimitationConfig: PostingLimitationConfig by lazy {
+    PostingLimitationConfig(
+      postMaxAttachables = PasscodeDependantAttachablesCount(
+        siteManager = siteManager,
+        defaultMaxAttachablesPerPost = 4
+      ),
+      postMaxAttachablesTotalSize = PasscodeDependantMaxAttachablesTotalSize(
+        siteManager = siteManager
+      )
+    )
+  }
+  override val chunkedDownloaderConfig by lazy {
+    SiteConfiguration.ChunkedDownloaderConfig(
+      enabled = true,
+      // 2ch.hk sends file size in KB
+      siteSendsCorrectFileSizeInBytes = false
+    )
+  }
+  override val name: String = SITE_NAME
+  override val urlHandler: SiteUrlHandler by lazy { DvachSiteUrlHandler(domainUrl) }
+  override val endpoints: SiteEndpoints by lazy { DvachEndpoints(this) }
+  override val requestModifier by lazy {
+    DvachSiteRequestModifier(
+      site = this,
+      appConstants = appConstants
+    ) as SiteRequestModifier<Site>
+  }
+  override val api: SiteApi by lazy { DvachApi(moshi, siteManager, boardManager, this) }
+  override val actions: SiteActions by lazy { DvachActions(this) }
+  override val settings: List<SiteSetting> by lazy {
+    val settings = ArrayList<SiteSetting>()
+
+    settings.addAll(super.settings)
+
+    settings.add(SiteOptionsSetting(
+      settingName = "Captcha type",
+      settingDescription = null,
+      groupId = "captcha_type",
+      options = captchaType,
+      optionNames = mutableListOf("Javascript", "Noscript", "Invisible")
+    ))
+    settings.add(SiteSetting.SiteStringSetting("User code cookie", null, userCodeCookie))
+    settings.add(SiteSetting.SiteStringSetting("Anti-spam cookie", null, antiSpamCookie))
+
+    return@lazy settings
+  }
+
   override val siteDomainSetting: StringSetting? by lazy {
     StringSetting(prefs, "site_domain", DEFAULT_DOMAIN.toString())
   }
@@ -122,58 +174,6 @@ class Dvach : CommonSite() {
       "preference_pass_code_info",
       DvachPasscodeInfo()
     )
-  }
-
-  override val enabled: Boolean = true
-  override val commentParserType: SiteConfiguration.CommentParserType = SiteConfiguration.CommentParserType.DvachParser
-  override val redirectsToArchiveThread: Boolean = true
-  override val globalSearchConfig = SiteConfiguration.GlobalSearchConfig.SimpleQueryBoardSearch
-  override val icon: SiteIcon by lazy {
-    SiteIcon.fromFavicon(imageLoaderDeprecatedLazy, "${domainString}/favicon.ico".toHttpUrl())
-  }
-  override val boardsType: SiteConfiguration.BoardsType = SiteConfiguration.BoardsType.Dynamic
-  override val catalogType: SiteConfiguration.CatalogType = SiteConfiguration.CatalogType.Static
-  override val postParser: PostParser by lazy { DvachPostParser(DvachCommentParser(), archivesManager) }
-  override val postingLimitationInfo: PostingLimitationConfig by lazy {
-    PostingLimitationConfig(
-      postMaxAttachables = PasscodeDependantAttachablesCount(
-        siteManager = siteManager,
-        defaultMaxAttachablesPerPost = 4
-      ),
-      postMaxAttachablesTotalSize = PasscodeDependantMaxAttachablesTotalSize(
-        siteManager = siteManager
-      )
-    )
-  }
-  override val chunkedDownloaderConfig by lazy {
-    SiteConfiguration.ChunkedDownloaderConfig(
-      enabled = true,
-      // 2ch.hk sends file size in KB
-      siteSendsCorrectFileSizeInBytes = false
-    )
-  }
-  override val name: String = SITE_NAME
-  override val urlHandler: SiteUrlHandler by lazy { DvachSiteUrlHandler(domainUrl) }
-  override val endpoints: SiteEndpoints by lazy { DvachEndpoints(this) }
-  override val requestModifier: SiteRequestModifier<Site> by lazy { siteRequestModifier as SiteRequestModifier<Site> }
-  override val api: SiteApi by lazy { DvachApi(moshiLazy, siteManager, boardManager, this) }
-  override val actions: SiteActions by lazy { DvachActions(this) }
-  override val settings: List<SiteSetting> by lazy {
-    val settings = ArrayList<SiteSetting>()
-
-    settings.addAll(super.settings)
-
-    settings.add(SiteOptionsSetting(
-      settingName = "Captcha type",
-      settingDescription = null,
-      groupId = "captcha_type",
-      options = captchaType,
-      optionNames = mutableListOf("Javascript", "Noscript", "Invisible")
-    ))
-    settings.add(SiteSetting.SiteStringSetting("User code cookie", null, userCodeCookie))
-    settings.add(SiteSetting.SiteStringSetting("Anti-spam cookie", null, antiSpamCookie))
-
-    return@lazy settings
   }
 
   override fun <T : Setting<*>> getSettingBySettingId(settingId: SiteSetting.SiteSettingId): T? {

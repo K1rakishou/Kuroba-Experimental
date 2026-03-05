@@ -6,8 +6,8 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 
 class ArchivedMoe : BaseFoolFuukaSite() {
   override val enabled: Boolean = true
-  override val iconUrl: HttpUrl = "https://archived.moe/favicon.ico".toHttpUrl()
   override val rootUrl: HttpUrl = "https://archived.moe/".toHttpUrl()
+  override val siteIconUrl: HttpUrl = "https://archived.moe/favicon.ico".toHttpUrl()
   override val mediaHosts: Array<HttpUrl> by lazy { arrayOf(rootUrl) }
   override val name: String = SITE_NAME
 

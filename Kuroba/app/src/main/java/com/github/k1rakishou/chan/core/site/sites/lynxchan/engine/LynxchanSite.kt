@@ -4,7 +4,6 @@ import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteConfiguration
-import com.github.k1rakishou.chan.core.site.SiteIcon
 import com.github.k1rakishou.chan.core.site.SiteRequestModifier
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.common.CommonSite
@@ -26,26 +25,21 @@ abstract class LynxchanSite : CommonSite() {
   lateinit var lynxchanGetBoardsUseCase: LynxchanGetBoardsUseCase
 
   open val initialPageIndex: Int = 1
-  abstract val defaultDomain: HttpUrl
   open val mediaHosts: Array<HttpUrl> by lazy { arrayOf(domainUrl) }
-
   // When false, json payload will be used.
   // When true, form data parameters will be used.
   open val postingViaFormData: Boolean = false
 
+  abstract val defaultDomain: HttpUrl
+
   override val enabled: Boolean = true
+  override val siteIconUrl by lazy { "${domainString}/favicon.ico".toHttpUrl() }
   override val commentParserType = SiteConfiguration.CommentParserType.LynxchanParser
-  override val globalSearchConfig = SiteConfiguration.GlobalSearchConfig.SearchNotSupported
-  override val icon by lazy {
-    SiteIcon.fromFavicon(
-      imageLoaderDeprecated = imageLoaderDeprecatedLazy,
-      url = "${domainString}/favicon.ico".toHttpUrl()
-    )
-  }
+  override val globalSearchType = SiteConfiguration.GlobalSearchType.SearchNotSupported
   override val boardsType = SiteConfiguration.BoardsType.Dynamic
   override val catalogType = SiteConfiguration.CatalogType.Dynamic
   override val postParser by lazy { LynxchanPostParser(LynxchanCommentParser(), archivesManager) }
-  override val postingLimitationInfo by lazy {
+  override val postingLimitationConfig by lazy {
     PostingLimitationConfig(
       postMaxAttachables = BoardDependantAttachablesCount(
         boardManager = boardManager,

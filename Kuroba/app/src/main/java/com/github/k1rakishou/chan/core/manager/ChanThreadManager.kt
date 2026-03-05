@@ -608,10 +608,7 @@ class ChanThreadManager(
       is ChanDescriptor.ThreadDescriptor -> {
         val siteDescriptor = chanDescriptor.siteDescriptor()
 
-        val postParser = siteManager.bySiteDescriptorAndActive(siteDescriptor)
-          ?.api
-          ?.getParser()
-
+        val postParser = siteManager.bySiteDescriptorAndActive(siteDescriptor)?.postParser
         if (postParser == null) {
           val threadLoadResult = ThreadLoadResult.Error(
             chanDescriptor,
@@ -656,10 +653,7 @@ class ChanThreadManager(
       is ChanDescriptor.CatalogDescriptor -> {
         val siteDescriptor = chanDescriptor.siteDescriptor()
 
-        val postParser = siteManager.bySiteDescriptorAndActive(siteDescriptor)
-          ?.api
-          ?.getParser()
-
+        val postParser = siteManager.bySiteDescriptorAndActive(siteDescriptor)?.postParser
         if (postParser == null) {
           val threadLoadResult = ThreadLoadResult.Error(
             chanDescriptor,

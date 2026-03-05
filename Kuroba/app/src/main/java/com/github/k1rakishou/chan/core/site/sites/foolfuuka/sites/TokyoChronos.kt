@@ -6,8 +6,8 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 
 class TokyoChronos : BaseFoolFuukaSite() {
   override val enabled: Boolean = false
-  override val iconUrl: HttpUrl = "https://tokyochronos.net/upload/htvr0u.png".toHttpUrl()
   override val rootUrl: HttpUrl = "https://tokyochronos.net/".toHttpUrl()
+  override val siteIconUrl: HttpUrl = "https://tokyochronos.net/upload/htvr0u.png".toHttpUrl()
   override val mediaHosts: Array<HttpUrl> by lazy { arrayOf(rootUrl) + MediaHosts }
   override val name: String = SITE_NAME
 

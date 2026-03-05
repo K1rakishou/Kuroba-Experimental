@@ -11,7 +11,7 @@ data class CommonSiteConfiguration(
   override val nsfwBoardDisplayType: NsfwBoardDisplayType,
   override val commentParserType: CommentParserType,
   override val chunkedDownloaderConfig: ChunkedDownloaderConfig,
-  override val globalSearchConfig: GlobalSearchConfig,
+  override val globalSearchType: GlobalSearchType,
   override val postingLimitationConfig: PostingLimitationConfig?,
   override val redirectsToArchiveThread: Boolean
 ) : SiteConfiguration()

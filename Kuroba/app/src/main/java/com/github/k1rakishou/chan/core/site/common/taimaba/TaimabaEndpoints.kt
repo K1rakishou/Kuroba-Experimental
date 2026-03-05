@@ -1,131 +1,117 @@
-/*
- * KurobaEx - *chan browser https://github.com/K1rakishou/Kuroba-Experimental/
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-package com.github.k1rakishou.chan.core.site.common.taimaba;
+package com.github.k1rakishou.chan.core.site.common.taimaba
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+import com.github.k1rakishou.chan.core.site.SiteEndpoints
+import com.github.k1rakishou.chan.core.site.common.CommonSite
+import com.github.k1rakishou.chan.core.site.common.CommonSite.CommonEndpoints
+import com.github.k1rakishou.chan.core.site.common.CommonSite.SimpleHttpUrl
+import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.model.data.board.ChanBoard
+import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
+import com.github.k1rakishou.model.data.post.ChanPost
+import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
-import com.github.k1rakishou.chan.core.site.common.CommonSite;
-import com.github.k1rakishou.common.AppConstants;
-import com.github.k1rakishou.model.data.board.ChanBoard;
-import com.github.k1rakishou.model.data.descriptor.BoardDescriptor;
-import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
-import com.github.k1rakishou.model.data.post.ChanPost;
+class TaimabaEndpoints(
+  commonSite: CommonSite,
+  rootUrl: String,
+  sysUrl: String
+) : CommonEndpoints(commonSite) {
+  private val root = SimpleHttpUrl(rootUrl)
+  private val sys = SimpleHttpUrl(sysUrl)
 
-import java.util.Locale;
-import java.util.Map;
+  private val report = HttpUrl.Builder()
+    .scheme("https")
+    .host("cdn.420chan.org")
+    .port(8443)
+    .build()
 
-import okhttp3.HttpUrl;
+  override fun catalog(
+    boardDescriptor: BoardDescriptor,
+    contentType: SiteEndpoints.ContentType
+  ): HttpUrl? {
+    return root.builder()
+      .s(boardDescriptor.boardCode)
+      .s("catalog.json")
+      .url()
+  }
 
-public class TaimabaEndpoints
-        extends CommonSite.CommonEndpoints {
-    protected final CommonSite.SimpleHttpUrl root;
-    protected final CommonSite.SimpleHttpUrl sys;
-    private final HttpUrl report = new HttpUrl.Builder().scheme("https").host("cdn.420chan.org").port(8443).build();
+  override fun boards(): HttpUrl {
+    return root.builder().s("boards.json").url()
+  }
 
-    public TaimabaEndpoints(CommonSite commonSite, String rootUrl, String sysUrl) {
-        super(commonSite);
-        root = new CommonSite.SimpleHttpUrl(rootUrl);
-        sys = new CommonSite.SimpleHttpUrl(sysUrl);
+  override fun thread(
+    threadDescriptor: ThreadDescriptor,
+    contentType: SiteEndpoints.ContentType,
+    archive: Boolean
+  ): HttpUrl? {
+    return root.builder()
+      .s(threadDescriptor.boardCode())
+      .s("res")
+      .s(threadDescriptor.threadNo.toString() + ".json")
+      .url()
+  }
+
+  override fun thumbnailUrl(
+    boardDescriptor: BoardDescriptor,
+    spoiler: Boolean,
+    customSpoilers: Int,
+    arg: Map<String, String>?
+  ): HttpUrl? {
+    requireNotNull(arg)
+
+    return when (arg["ext"]) {
+      "swf" -> (AppConstants.RESOURCES_ENDPOINT + "swf_thumb.png").toHttpUrlOrNull()
+      "mp3", "m4a", "ogg", "flac" -> (AppConstants.RESOURCES_ENDPOINT + "audio_thumb.png").toHttpUrlOrNull()
+      else -> sys.builder()
+        .s(boardDescriptor.boardCode)
+        .s("thumb")
+        .s(arg["tim"] + "s.jpg")
+        .url()
+    }
+  }
+
+  override fun imageUrl(boardDescriptor: BoardDescriptor, arg: Map<String, String>?): HttpUrl {
+    requireNotNull(arg)
+
+    return sys.builder()
+      .s(boardDescriptor.boardCode)
+      .s("src")
+      .s(arg.get("tim") + "." + arg.get("ext"))
+      .url()
+  }
+
+  override fun icon(icon: String, arg: Map<String, String>?): HttpUrl {
+    requireNotNull(arg)
+    val stat = sys.builder().s("static")
+
+    if (icon == "country") {
+      stat.s("flags").s(arg.get("country_code")!!.lowercase() + ".png")
     }
 
-    @NonNull
-    @Override
-    public HttpUrl catalog(BoardDescriptor boardDescriptor) {
-        return root.builder()
-                .s(boardDescriptor.getBoardCode())
-                .s("catalog.json")
-                .url();
-    }
+    return stat.url()
+  }
 
-    @Override
-    public HttpUrl boards() {
-        return root.builder().s("boards.json").url();
-    }
+  override fun pages(board: ChanBoard): HttpUrl {
+    return root.builder().s(board.boardCode()).s("threads.json").url()
+  }
 
-    @Override
-    public HttpUrl thread(ChanDescriptor.ThreadDescriptor threadDescriptor) {
-        return root.builder()
-                .s(threadDescriptor.boardCode())
-                .s("res")
-                .s(threadDescriptor.getThreadNo() + ".json")
-                .url();
-    }
+  override fun reply(chanDescriptor: ChanDescriptor): HttpUrl {
+    return sys.builder().s(chanDescriptor.boardCode()).s("taimaba.pl").url()
+  }
 
-    @Override
-    public HttpUrl thumbnailUrl(BoardDescriptor boardDescriptor, boolean spoiler, int customSpoilers, Map<String, String> arg) {
-        switch (arg.get("ext")) {
-            case "swf":
-                return HttpUrl.parse(AppConstants.RESOURCES_ENDPOINT + "swf_thumb.png");
-            case "mp3":
-            case "m4a":
-            case "ogg":
-            case "flac":
-                return HttpUrl.parse(AppConstants.RESOURCES_ENDPOINT + "audio_thumb.png");
-            default:
-                return sys.builder()
-                        .s(boardDescriptor.getBoardCode())
-                        .s("thumb")
-                        .s(arg.get("tim") + "s.jpg")
-                        .url();
-        }
-    }
-
-    @Override
-    public HttpUrl imageUrl(BoardDescriptor boardDescriptor, Map<String, String> arg) {
-        return sys.builder()
-                .s(boardDescriptor.getBoardCode())
-                .s("src")
-                .s(arg.get("tim") + "." + arg.get("ext"))
-                .url();
-    }
-
-    @Override
-    public HttpUrl icon(String icon, @Nullable Map<String, String> arg) {
-        CommonSite.SimpleHttpUrl stat = sys.builder().s("static");
-
-        if (icon.equals("country")) {
-            stat.s("flags").s(arg.get("country_code").toLowerCase(Locale.ENGLISH) + ".png");
-        }
-
-        return stat.url();
-    }
-
-    @Override
-    public HttpUrl pages(ChanBoard board) {
-        return root.builder().s(board.boardCode()).s("threads.json").url();
-    }
-
-    @Override
-    public HttpUrl reply(ChanDescriptor chanDescriptor) {
-        return sys.builder().s(chanDescriptor.boardCode()).s("taimaba.pl").url();
-    }
-
-    @Override
-    public HttpUrl report(ChanPost post) {
-        return report.newBuilder()
-                .addPathSegment("narcbot")
-                .addPathSegment("ajaxReport.jsp")
-                .addQueryParameter("postId", String.valueOf(post.postNo()))
-                .addQueryParameter("reason", "RULE_VIOLATION")
-                .addQueryParameter("note", "")
-                .addQueryParameter("location",
-                        "http://boards.420chan.org/" + post.getBoardDescriptor().getBoardCode() + "/" + post.postNo()
-                )
-                .build();
-    }
+  override fun report(post: ChanPost): HttpUrl {
+    return report.newBuilder()
+      .addPathSegment("narcbot")
+      .addPathSegment("ajaxReport.jsp")
+      .addQueryParameter("postId", post.postNo().toString())
+      .addQueryParameter("reason", "RULE_VIOLATION")
+      .addQueryParameter("note", "")
+      .addQueryParameter(
+        "location",
+        "http://boards.420chan.org/" + post.boardDescriptor.boardCode + "/" + post.postNo()
+      )
+      .build()
+  }
 }

@@ -108,7 +108,7 @@ class ThreadDownloaderPersistPostsInDatabaseUseCase(
       ).unwrap()
     }
 
-    val postParser = site.api.getParser()
+    val postParser = site.postParser
       ?: throw NullPointerException("PostParser cannot be null!")
 
     val parsingResult = parsePostsV1UseCase.parseNewPostsPosts(

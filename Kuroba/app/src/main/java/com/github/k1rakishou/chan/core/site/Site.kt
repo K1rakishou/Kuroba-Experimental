@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.core.site
 import com.github.k1rakishou.Setting
 import com.github.k1rakishou.chan.core.site.SiteConfiguration.CatalogFeature
 import com.github.k1rakishou.chan.core.site.SiteConfiguration.SiteFeature
+import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.core.site.parser.SiteApi
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 
@@ -16,6 +17,7 @@ interface Site {
   val api: SiteApi
   val actions: SiteActions
   val configuration: SiteConfiguration
+  val postParser: PostParser?
   val settings: List<SiteSetting>
 
   suspend fun initialize()

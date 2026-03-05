@@ -13,10 +13,12 @@ import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.SiteSetting.SiteOptionsSetting
 import com.github.k1rakishou.chan.core.site.SiteUrlHandler
 import com.github.k1rakishou.chan.core.site.common.CommonSiteConfiguration
+import com.github.k1rakishou.chan.core.site.common.DefaultPostParser
 import com.github.k1rakishou.chan.core.site.common.FutabaSiteApi
 import com.github.k1rakishou.chan.core.site.limitations.ConstantAttachablesCount
 import com.github.k1rakishou.chan.core.site.limitations.PasscodeDependantMaxAttachablesTotalSize
 import com.github.k1rakishou.chan.core.site.limitations.PostingLimitationConfig
+import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.core.site.parser.SiteApi
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.prefs.BooleanSetting
@@ -59,9 +61,17 @@ class Chan4 : SiteBase() {
   override val requestModifier by lazy { Chan4SiteRequestModifier(this, appConstants) as SiteRequestModifier<Site> }
   override val api: SiteApi by lazy {
     FutabaSiteApi(
-      archivesManager = archivesManager,
       siteManager = siteManager,
       boardManager = boardManager
+    )
+  }
+  override val postParser by lazy {
+    val commentParser = CommentParser()
+      .addDefaultRules()
+
+    return@lazy DefaultPostParser(
+      commentParser = commentParser,
+      archivesManager = archivesManager
     )
   }
   override val actions: SiteActions by lazy { Chan4Actions(this) }
@@ -102,7 +112,7 @@ class Chan4 : SiteBase() {
         enabled = true,
         siteSendsCorrectFileSizeInBytes = true
       ),
-      globalSearchConfig = SiteConfiguration.GlobalSearchConfig.SimpleQueryBoardSearch,
+      globalSearchType = SiteConfiguration.GlobalSearchType.SimpleQueryBoardSearch,
       postingLimitationConfig = PostingLimitationConfig(
         postMaxAttachables = ConstantAttachablesCount(count = 1),
         postMaxAttachablesTotalSize = PasscodeDependantMaxAttachablesTotalSize(

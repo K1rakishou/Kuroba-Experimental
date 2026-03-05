@@ -60,6 +60,8 @@ class CompositeCatalogSite : Site {
   override val requestModifier: SiteRequestModifier<Site> by lazy { noOpSiteRequestModifier }
   override val api: SiteApi by lazy { noOpSiteApi }
   override val actions: SiteActions by lazy { noOpActions }
+  override val postParser: PostParser? = null
+
   override val configuration: SiteConfiguration by lazy {
     CommonSiteConfiguration(
       icon = SiteIcon.fromDrawable(imageLoaderDeprecatedLazy, R.drawable.composition_icon),
@@ -71,7 +73,7 @@ class CompositeCatalogSite : Site {
         enabled = false,
         siteSendsCorrectFileSizeInBytes = false
       ),
-      globalSearchConfig = SiteConfiguration.GlobalSearchConfig.SearchNotSupported,
+      globalSearchType = SiteConfiguration.GlobalSearchType.SearchNotSupported,
       postingLimitationConfig = null,
       redirectsToArchiveThread = false
     )
@@ -193,8 +195,6 @@ class CompositeCatalogSite : Site {
   }
 
   private val noOpSiteApi = object : SiteApi() {
-    override suspend fun getParser(): PostParser? = null
-
     override suspend fun loadThreadFresh(
       requestUrl: String,
       responseBodyStream: InputStream,

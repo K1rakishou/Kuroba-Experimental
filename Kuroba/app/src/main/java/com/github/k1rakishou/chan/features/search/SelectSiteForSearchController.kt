@@ -59,7 +59,7 @@ class SelectSiteForSearchController(
     val sites = mutableListOf<SiteSupportingSearchData>()
 
     siteManager.viewActiveSitesOrderedWhile { _, site ->
-      if (site.configuration.globalSearchConfig != SiteConfiguration.GlobalSearchConfig.SearchNotSupported) {
+      if (site.configuration.globalSearchType != SiteConfiguration.GlobalSearchType.SearchNotSupported) {
         sites += SiteSupportingSearchData(
           siteDescriptor = site.descriptor,
           siteIconUrl = site.configuration.icon.url?.toString(),
