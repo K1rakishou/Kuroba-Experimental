@@ -8,6 +8,7 @@ import com.github.k1rakishou.common.CommentParserConstants
 import com.github.k1rakishou.common.groupOrNull
 import com.github.k1rakishou.core_parser.comment.HtmlTag
 import com.github.k1rakishou.core_spannable.PostLinkable
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import java.util.regex.Matcher
 import java.util.regex.Pattern
@@ -89,8 +90,13 @@ class DvachCommentParser : VichanCommentParser(), ICommentParser {
       handlerLink.key = TextUtils.concat(handlerLink.key, CommentParserConstants.DEAD_REPLY_SUFFIX)
     }
 
+    val quotePostDescriptor = post.postDescriptor().copy(
+      postNo = postNo,
+      postSubNo = postSubNo ?: 0L
+    )
+
     // Append (You) when it's a reply to a saved reply, (Me) if it's a self reply
-    if (callback.isSaved(post.postDescriptor())) {
+    if (callback.isSaved(quotePostDescriptor)) {
       if (post.isSavedReply) {
         handlerLink.key = TextUtils.concat(handlerLink.key, CommentParserConstants.SAVED_REPLY_SELF_SUFFIX)
       } else {
@@ -98,7 +104,7 @@ class DvachCommentParser : VichanCommentParser(), ICommentParser {
       }
     }
 
-    val hiddenOrRemoved = callback.isHiddenOrRemoved(post.postDescriptor())
+    val hiddenOrRemoved = callback.isHiddenOrRemoved(quotePostDescriptor)
     if (hiddenOrRemoved != PostParser.NORMAL_POST) {
       val suffix = if (hiddenOrRemoved == PostParser.HIDDEN_POST) {
         CommentParserConstants.HIDDEN_POST_SUFFIX
@@ -118,15 +124,26 @@ class DvachCommentParser : VichanCommentParser(), ICommentParser {
     threadNo: Long,
     postNo: Long
   ): PostLinkable.Link {
-    if (boardCode == post.boardDescriptor!!.boardCode && callback.isInternal(post.postDescriptor())) {
-      // link to post in same thread with post number (>>post)
-      return PostLinkable.Link(
-        type = PostLinkable.Type.QUOTE,
-        key = text,
-        linkValue = PostLinkable.Value.PostIdValue(
-          postNo = postNo
-        )
+    val boardDescriptor = requireNotNull(post.boardDescriptor)
+
+    if (boardCode == boardDescriptor.boardCode) {
+      val quotePostDescriptor = PostDescriptor.create(
+        boardDescriptor = boardDescriptor,
+        threadNo = threadNo,
+        postNo = postNo,
+        postSubNo = 0L
       )
+
+      if (callback.isInternal(quotePostDescriptor)) {
+        // link to post in same thread with post number (>>post)
+        return PostLinkable.Link(
+          type = PostLinkable.Type.QUOTE,
+          key = text,
+          linkValue = PostLinkable.Value.PostIdValue(
+            postNo = postNo
+          )
+        )
+      }
     }
 
     // link to post not in same thread with post number (>>post or >>>/board/post)
@@ -147,7 +164,12 @@ class DvachCommentParser : VichanCommentParser(), ICommentParser {
     text: CharSequence,
     postNo: Long
   ): PostLinkable.Link {
-    if (!callback.isInternal(post.postDescriptor())) {
+    val quotePostDescriptor = post.postDescriptor().copy(
+      postNo = postNo,
+      postSubNo = 0L
+    )
+
+    if (!callback.isInternal(quotePostDescriptor)) {
       return PostLinkable.Link(
         type = PostLinkable.Type.DEAD,
         key = text,
@@ -157,7 +179,7 @@ class DvachCommentParser : VichanCommentParser(), ICommentParser {
       )
     }
 
-    return when (callback.isHiddenOrRemoved(post.postDescriptor())) {
+    return when (callback.isHiddenOrRemoved(quotePostDescriptor)) {
       PostParser.HIDDEN_POST,
       PostParser.REMOVED_POST -> {
         // Quote pointing to a (locally) hidden or removed post

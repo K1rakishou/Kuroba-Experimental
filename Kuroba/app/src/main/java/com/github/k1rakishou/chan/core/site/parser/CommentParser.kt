@@ -592,8 +592,13 @@ open class CommentParser : ICommentParser, HasQuotePatterns {
       )
     }
 
+    val quotePostDescriptor = post.postDescriptor().copy(
+      postNo = postNo,
+      postSubNo = postSubNo ?: 0L
+    )
+
     // Append (You) when it's a reply to a saved reply, (Me) if it's a self reply
-    if (callback.isSaved(post.postDescriptor())) {
+    if (callback.isSaved(quotePostDescriptor)) {
       if (post.isSavedReply) {
         handlerLink.key = TextUtils.concat(
           handlerLink.key,
@@ -607,7 +612,7 @@ open class CommentParser : ICommentParser, HasQuotePatterns {
       }
     }
 
-    val hiddenOrRemoved = callback.isHiddenOrRemoved(post.postDescriptor())
+    val hiddenOrRemoved = callback.isHiddenOrRemoved(quotePostDescriptor)
     if (hiddenOrRemoved != PostParser.NORMAL_POST) {
       val suffix: String?
 
@@ -621,7 +626,10 @@ open class CommentParser : ICommentParser, HasQuotePatterns {
     }
   }
 
-  private fun isPostLinkableAlreadyAdded(res: SpannableString, linkValue: PostLinkable.Value): Boolean {
+  private fun isPostLinkableAlreadyAdded(
+    res: SpannableString,
+    linkValue: PostLinkable.Value
+  ): Boolean {
     val alreadySetPostLinkables = res.getSpans<PostLinkable>(0, res.length, PostLinkable::class.java)
     if (alreadySetPostLinkables.size == 0) {
       return false
@@ -753,9 +761,7 @@ open class CommentParser : ICommentParser, HasQuotePatterns {
           return PostLinkable.Link(type, text, value)
         }
 
-        val postDescriptor = PostDescriptor.create(
-          boardDescriptor = post.boardDescriptor!!,
-          threadNo = post.postDescriptor().threadDescriptor().threadNo,
+        val postDescriptor = post.postDescriptor().copy(
           postNo = postId,
           postSubNo = postSubId
         )
