@@ -33,8 +33,8 @@ import kotlin.math.max
 open class VichanApi(
   private val siteManager: SiteManager,
   private val boardManager: BoardManager,
-  commonSite: CommonSite
-) : CommonApi(commonSite) {
+  site: CommonSite
+) : CommonApi(site) {
 
   @Throws(Exception::class)
   override suspend fun loadThreadFresh(

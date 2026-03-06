@@ -1,164 +1,131 @@
-/*
- * KurobaEx - *chan browser https://github.com/K1rakishou/Kuroba-Experimental/
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-package com.github.k1rakishou.chan.core.site.sites.soyjakparty;
+package com.github.k1rakishou.chan.core.site.sites.soyjakparty
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+import com.github.k1rakishou.chan.core.site.SiteActions
+import com.github.k1rakishou.chan.core.site.SiteConfiguration
+import com.github.k1rakishou.chan.core.site.SiteEndpoints
+import com.github.k1rakishou.chan.core.site.common.CommonSite
+import com.github.k1rakishou.chan.core.site.common.DefaultPostParser
+import com.github.k1rakishou.chan.core.site.common.vichan.VichanActions
+import com.github.k1rakishou.chan.core.site.common.vichan.VichanApi
+import com.github.k1rakishou.chan.core.site.common.vichan.VichanCommentParser
+import com.github.k1rakishou.chan.core.site.common.vichan.VichanEndpoints
+import com.github.k1rakishou.model.data.board.ChanBoard
+import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
+import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrl
 
-import com.github.k1rakishou.chan.core.site.ChunkDownloaderSiteProperties;
-import com.github.k1rakishou.chan.core.site.Site;
-import com.github.k1rakishou.chan.core.site.SiteIcon;
-import com.github.k1rakishou.chan.core.site.common.CommonSite;
-import com.github.k1rakishou.chan.core.site.common.vichan.VichanActions;
-import com.github.k1rakishou.chan.core.site.common.vichan.VichanApi;
-import com.github.k1rakishou.chan.core.site.common.vichan.VichanCommentParser;
-import com.github.k1rakishou.chan.core.site.common.vichan.VichanEndpoints;
-import com.github.k1rakishou.chan.core.site.parser.CommentParserType;
-import com.github.k1rakishou.model.data.board.ChanBoard;
-import com.github.k1rakishou.model.data.descriptor.BoardDescriptor;
-import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
+class SoyjakParty : CommonSite() {
+  private val boards = buildList {
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "q"), "the 'party"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "soy"), "soyjaks"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "jak"), "jaks"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "qa"), "question & answer"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "r"), "requests and soy art"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "caca"), "cacaborea"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "a"), "tranime"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "raid"), "raid: shadow legends"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "int"), "international"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "mtv"), "music, television, video games"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "pol"), "international politics"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "sci"), "soyence and technology"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "craft"), "minecraft"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "fnac"), "five nights at cobson's"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "nate"), "coals"))
+  }
 
-import org.jetbrains.annotations.NotNull;
+  override val enabled: Boolean = true
+  override val name: String = SITE_NAME
+  override val siteIconUrl = "https://soyjak.party/favicon.ico".toHttpUrl()
+  override val commentParserType = SiteConfiguration.CommentParserType.VichanParser
+  override val globalSearchType = SiteConfiguration.GlobalSearchType.SearchNotSupported
+  override val boardsType = SiteConfiguration.BoardsType.Static
+  override val catalogType = SiteConfiguration.CatalogType.Static
+  override val chunkedDownloaderConfig = SiteConfiguration.ChunkedDownloaderConfig(
+    enabled = true,
+    siteSendsCorrectFileSizeInBytes = true
+  )
+  override val urlHandler by lazy { SoyjakPartyUrlHandler() }
+  override val endpoints by lazy { SoyjakPartyEndpoints(this) }
+  override val api by lazy { VichanApi(siteManager, boardManager, this) }
+  override val actions: SiteActions by lazy {
+    VichanActions(
+      commonSite = this,
+      proxiedOkHttpClient = proxiedOkHttpClient,
+      siteManager = siteManager,
+      replyManager = replyManager
+    )
+  }
+  override val postParser by lazy { DefaultPostParser(VichanCommentParser(), archivesManager) }
+  override val staticBoards = boards
 
-import java.util.Map;
+  class SoyjakPartyEndpoints(
+    soyjakParty: SoyjakParty
+  ) : VichanEndpoints(soyjakParty, "https://soyjak.party/", "https://soyjak.party/") {
+    override fun thumbnailUrl(
+      boardDescriptor: BoardDescriptor,
+      spoiler: Boolean,
+      customSpoilers: Int,
+      arg: Map<String, String>?
+    ): HttpUrl {
+      requireNotNull(arg)
 
-import okhttp3.HttpUrl;
-
-public class SoyjakParty
-        extends CommonSite {
-    private final ChunkDownloaderSiteProperties chunkDownloaderSiteProperties;
-    public static final String SITE_NAME = "Soyjak.party";
-
-    public static final CommonSiteUrlHandler URL_HANDLER = new CommonSiteUrlHandler() {
-        private static final String ROOT = "https://soyjak.party/";
-
-        @Override
-        public Class<? extends Site> getSiteClass() {
-            return SoyjakParty.class;
-        }
-
-        @Override
-        public HttpUrl getUrl() {
-            return HttpUrl.parse(ROOT);
-        }
-
-        @Override
-        public HttpUrl[] getMediaHosts() {
-            return new HttpUrl[]{getUrl()};
-        }
-
-        @Override
-        public String[] getNames() {
-            return new String[]{"Soyjak.party"};
-        }
-
-        @Override
-        public String desktopUrl(ChanDescriptor chanDescriptor, @Nullable Long postNo, @Nullable Long postSubNo) {
-            if (chanDescriptor instanceof ChanDescriptor.CatalogDescriptor) {
-                return getUrl().newBuilder()
-                        .addPathSegment(chanDescriptor.boardCode())
-                        .toString();
-            } else if (chanDescriptor instanceof ChanDescriptor.ThreadDescriptor) {
-                return getUrl().newBuilder()
-                        .addPathSegment(chanDescriptor.boardCode())
-                        .addPathSegment("thread")
-                        .addPathSegment(((ChanDescriptor.ThreadDescriptor) chanDescriptor).getThreadNo() + ".html")
-                        .toString();
-            } else {
-                return null;
-            }
-        }
-    };
-
-    public SoyjakParty() {
-        chunkDownloaderSiteProperties = new ChunkDownloaderSiteProperties(true, true);
+      val extension = when (arg.get("ext")) {
+        "jpg", "jpeg", "gif", "webp" -> "." + arg.get("ext")
+        "webm", "mp4" -> ".jpg"
+        else -> ".png"
+      }
+      return root.builder()
+        .s(boardDescriptor.boardCode)
+        .s("thumb")
+        .s(arg.get("tim") + extension)
+        .url()
     }
 
-    @Override
-    public void setup() {
-        setEnabled(true);
-        setName(SITE_NAME);
-        setIcon(SiteIcon.fromFavicon(getImageLoaderDeprecatedLazy(), HttpUrl.parse("https://soyjak.party/favicon.ico")));
-
-        setBoards(
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "q"), "the 'party"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "soy"), "soyjaks"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "jak"), "jaks"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "qa"), "question & answer"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "r"), "requests and soy art"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "caca"), "cacaborea"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "a"), "tranime"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "raid"), "raid: shadow legends"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "int"), "international"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "mtv"), "music, television, video games"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "pol"), "international politics"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "sci"), "soyence and technology"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "craft"), "minecraft"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "fnac"), "five nights at cobson's"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "nate"), "coals")
-        );
-
-        setResolvable(URL_HANDLER);
-
-        setConfig(new CommonConfig() {
-            @Override
-            public boolean siteFeature(SiteFeature siteFeature) {
-                return super.siteFeature(siteFeature); //features are not implemented.
-            }
-        });
-
-        setEndpoints(new VichanEndpoints(this, "https://soyjak.party/", "https://soyjak.party/")
-        {
-            @Override
-            public HttpUrl thumbnailUrl(BoardDescriptor boardDescriptor, boolean spoiler, int customSpoilers, Map<String, String> arg) {
-                String extension = switch (arg.get("ext")){
-                    case "jpg", "jpeg", "gif", "webp" -> "." + arg.get("ext");
-                    case "webm", "mp4" -> ".jpg";
-                    default -> ".png";
-                };
-                return root.builder()
-                        .s(boardDescriptor.getBoardCode())
-                        .s("thumb")
-                        .s(arg.get("tim") + extension)
-                        .url();
-            }
-            @Override
-            public HttpUrl thread(ChanDescriptor.ThreadDescriptor threadDescriptor) {
-                return root.builder()
-                        .s(threadDescriptor.boardCode())
-                        .s("thread")
-                        .s(threadDescriptor.getThreadNo() + ".json")
-                        .url();
-            }
-        });
-        setActions(new VichanActions(this, getProxiedOkHttpClientLazy(), getSiteManager(), getReplyManagerLazy()));
-        setApi(new VichanApi(getSiteManager(), getBoardManager(), this));
-        setParser(new VichanCommentParser());
+    override fun thread(
+      threadDescriptor: ThreadDescriptor,
+      contentType: SiteEndpoints.ContentType,
+      archive: Boolean
+    ): HttpUrl? {
+      return root.builder()
+        .s(threadDescriptor.boardCode())
+        .s("thread")
+        .s(threadDescriptor.threadNo.toString() + ".json")
+        .url()
     }
+  }
 
-    @NotNull
-    @Override
-    public CommentParserType commentParserType() {
-        return CommentParserType.VichanParser;
-    }
+  class SoyjakPartyUrlHandler : CommonSiteUrlHandler() {
+    private val ROOT = "https://soyjak.party/"
 
-    @NonNull
-    @Override
-    public ChunkDownloaderSiteProperties getChunkDownloaderSiteProperties() {
-        return chunkDownloaderSiteProperties;
+    override val url = ROOT.toHttpUrl()
+    override val mediaHosts = arrayOf(url)
+
+    override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?, postSubNo: Long?): String? {
+      when (chanDescriptor) {
+        is CatalogDescriptor -> {
+          return url.newBuilder()
+            .addPathSegment(chanDescriptor.boardCode())
+            .toString()
+        }
+        is ThreadDescriptor -> {
+          return url.newBuilder()
+            .addPathSegment(chanDescriptor.boardCode())
+            .addPathSegment("thread")
+            .addPathSegment(chanDescriptor.threadNo.toString() + ".html")
+            .toString()
+        }
+        else -> {
+          return null
+        }
+      }
     }
+  }
+
+
+  companion object {
+    const val SITE_NAME: String = "Soyjak.party"
+  }
 }

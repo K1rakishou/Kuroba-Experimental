@@ -1,136 +1,99 @@
-/*
- * KurobaEx - *chan browser https://github.com/K1rakishou/Kuroba-Experimental/
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-package com.github.k1rakishou.chan.core.site.sites;
+package com.github.k1rakishou.chan.core.site.sites
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+import com.github.k1rakishou.chan.core.site.SiteConfiguration
+import com.github.k1rakishou.chan.core.site.common.CommonSite
+import com.github.k1rakishou.chan.core.site.common.DefaultPostParser
+import com.github.k1rakishou.chan.core.site.common.vichan.VichanActions
+import com.github.k1rakishou.chan.core.site.common.vichan.VichanApi
+import com.github.k1rakishou.chan.core.site.common.vichan.VichanCommentParser
+import com.github.k1rakishou.chan.core.site.common.vichan.VichanEndpoints
+import com.github.k1rakishou.model.data.board.ChanBoard
+import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
+import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrl
 
-import com.github.k1rakishou.chan.core.site.ChunkDownloaderSiteProperties;
-import com.github.k1rakishou.chan.core.site.Site;
-import com.github.k1rakishou.chan.core.site.SiteIcon;
-import com.github.k1rakishou.chan.core.site.common.CommonSite;
-import com.github.k1rakishou.chan.core.site.common.vichan.VichanActions;
-import com.github.k1rakishou.chan.core.site.common.vichan.VichanApi;
-import com.github.k1rakishou.chan.core.site.common.vichan.VichanCommentParser;
-import com.github.k1rakishou.chan.core.site.common.vichan.VichanEndpoints;
-import com.github.k1rakishou.chan.core.site.parser.CommentParserType;
-import com.github.k1rakishou.model.data.board.ChanBoard;
-import com.github.k1rakishou.model.data.descriptor.BoardDescriptor;
-import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
+class Sushichan : CommonSite() {
+  private val boards = buildList {
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "wildcard"), "artsy"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "lounge"), "sushi social"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "arcade"), "vidya gaems"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "kawaii"), "cute things"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "kitchen"), "tasty morsels & delights"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "tunes"), "enjoyable sounds"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "culture"), "arts & literature"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "silicon"), "technology"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "yakuza"), "site meta-discussion"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "hell"), "internet death cult"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "lewd"), "dat ecchi & hentai goodness"))
+  }
 
-import org.jetbrains.annotations.NotNull;
+  override val enabled: Boolean = true
+  override val name: String = SITE_NAME
+  override val siteIconUrl = "https://sushigirl.cafe/favicon.ico".toHttpUrl()
+  override val commentParserType = SiteConfiguration.CommentParserType.VichanParser
+  override val globalSearchType = SiteConfiguration.GlobalSearchType.SearchNotSupported
+  override val boardsType = SiteConfiguration.BoardsType.Static
+  override val catalogType = SiteConfiguration.CatalogType.Static
+  override val chunkedDownloaderConfig = SiteConfiguration.ChunkedDownloaderConfig(
+    enabled = true,
+    siteSendsCorrectFileSizeInBytes = true
+  )
+  override val urlHandler by lazy { SushichanUrlHandler() }
+  override val endpoints by lazy {
+    VichanEndpoints(
+      site = this,
+      rootUrl = "https://sushigirl.cafe/",
+      sysUrl = "https://sushigirl.cafe/"
+    )
+  }
+  override val api by lazy { VichanApi(siteManager, boardManager, this) }
+  override val actions by lazy {
+    VichanActions(
+      commonSite = this,
+      proxiedOkHttpClient = proxiedOkHttpClient,
+      siteManager = siteManager,
+      replyManager = replyManager
+    )
+  }
+  override val postParser by lazy { DefaultPostParser(VichanCommentParser(), archivesManager) }
+  override val staticBoards = boards
 
-import okhttp3.HttpUrl;
+  override fun hasSiteFeature(siteFeature: SiteConfiguration.SiteFeature): Boolean {
+    return super.hasSiteFeature(siteFeature)
+      || siteFeature === SiteConfiguration.SiteFeature.Posting
+  }
 
-public class Sushichan
-        extends CommonSite {
-    private final ChunkDownloaderSiteProperties chunkDownloaderSiteProperties;
-    public static final String SITE_NAME = "Sushichan";
+  class SushichanUrlHandler : CommonSiteUrlHandler() {
+    private val ROOT = "https://sushigirl.cafe/"
 
-    public static final CommonSiteUrlHandler URL_HANDLER = new CommonSiteUrlHandler() {
-        private static final String ROOT = "https://sushigirl.us/";
+    override val url = ROOT.toHttpUrl()
+    override val mediaHosts = arrayOf<HttpUrl>(url)
 
-        @Override
-        public Class<? extends Site> getSiteClass() {
-            return Sushichan.class;
+    override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?, postSubNo: Long?): String? {
+      when (chanDescriptor) {
+        is CatalogDescriptor -> {
+          return url.newBuilder()
+            .addPathSegment(chanDescriptor.boardCode())
+            .toString()
         }
-
-        @Override
-        public HttpUrl getUrl() {
-            return HttpUrl.parse(ROOT);
+        is ThreadDescriptor -> {
+          return url.newBuilder()
+            .addPathSegment(chanDescriptor.boardCode())
+            .addPathSegment("res")
+            .addPathSegment(chanDescriptor.threadNo.toString() + ".html")
+            .toString()
         }
-
-        @Override
-        public HttpUrl[] getMediaHosts() {
-            return new HttpUrl[]{getUrl()};
+        else -> {
+          return null
         }
-
-        @Override
-        public String[] getNames() {
-            return new String[]{"sushichan"};
-        }
-
-        @Override
-        public String desktopUrl(ChanDescriptor chanDescriptor, @Nullable Long postNo, @Nullable Long postSubNo) {
-            if (chanDescriptor instanceof ChanDescriptor.CatalogDescriptor) {
-                return getUrl().newBuilder()
-                        .addPathSegment(chanDescriptor.boardCode())
-                        .toString();
-            } else if (chanDescriptor instanceof ChanDescriptor.ThreadDescriptor) {
-                return getUrl().newBuilder()
-                        .addPathSegment(chanDescriptor.boardCode())
-                        .addPathSegment("res")
-                        .addPathSegment(((ChanDescriptor.ThreadDescriptor) chanDescriptor).getThreadNo() + ".html")
-                        .toString();
-            } else {
-                return null;
-            }
-        }
-    };
-
-    public Sushichan() {
-        chunkDownloaderSiteProperties = new ChunkDownloaderSiteProperties(true, true);
+      }
     }
+  }
 
-    @Override
-    public void setup() {
-        setEnabled(true);
-        setName(SITE_NAME);
-        // TODO: https://sushigirl.cafe/
-        setIcon(SiteIcon.fromFavicon(getImageLoaderDeprecatedLazy(), HttpUrl.parse("https://sushigirl.us/favicon.ico")));
-
-        setBoards(
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "wildcard"), "artsy"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "lounge"), "sushi social"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "arcade"), "vidya gaems"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "kawaii"), "cute things"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "kitchen"), "tasty morsels & delights"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "tunes"), "enjoyable sounds"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "culture"), "arts & literature"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "silicon"), "technology"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "yakuza"), "site meta-discussion"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "hell"), "internet death cult"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "lewd"), "dat ecchi & hentai goodness")
-        );
-
-        setResolvable(URL_HANDLER);
-
-        setConfig(new CommonConfig() {
-            @Override
-            public boolean siteFeature(SiteFeature siteFeature) {
-                return super.siteFeature(siteFeature) || siteFeature == SiteFeature.POSTING;
-            }
-        });
-
-        setEndpoints(new VichanEndpoints(this, "https://sushigirl.us/", "https://sushigirl.us/"));
-        setActions(new VichanActions(this, getProxiedOkHttpClientLazy(), getSiteManager(), getReplyManagerLazy()));
-        setApi(new VichanApi(getSiteManager(), getBoardManager(), this));
-        setParser(new VichanCommentParser());
-    }
-
-    @NotNull
-    @Override
-    public CommentParserType commentParserType() {
-        return CommentParserType.VichanParser;
-    }
-
-    @NonNull
-    @Override
-    public ChunkDownloaderSiteProperties getChunkDownloaderSiteProperties() {
-        return chunkDownloaderSiteProperties;
-    }
+  companion object {
+    const val SITE_NAME: String = "Sushichan"
+  }
 }

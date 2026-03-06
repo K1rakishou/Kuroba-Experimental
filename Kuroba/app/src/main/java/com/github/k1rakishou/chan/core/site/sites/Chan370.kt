@@ -1,151 +1,114 @@
-/*
- * KurobaEx - *chan browser https://github.com/K1rakishou/Kuroba-Experimental/
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-package com.github.k1rakishou.chan.core.site.sites;
+package com.github.k1rakishou.chan.core.site.sites
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+import com.github.k1rakishou.chan.core.site.SiteConfiguration
+import com.github.k1rakishou.chan.core.site.common.CommonSite
+import com.github.k1rakishou.chan.core.site.common.DefaultPostParser
+import com.github.k1rakishou.chan.core.site.common.vichan.VichanActions
+import com.github.k1rakishou.chan.core.site.common.vichan.VichanApi
+import com.github.k1rakishou.chan.core.site.common.vichan.VichanCommentParser
+import com.github.k1rakishou.chan.core.site.common.vichan.VichanEndpoints
+import com.github.k1rakishou.model.data.board.ChanBoard
+import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrl
 
-import com.github.k1rakishou.chan.core.site.ChunkDownloaderSiteProperties;
-import com.github.k1rakishou.chan.core.site.Site;
-import com.github.k1rakishou.chan.core.site.SiteIcon;
-import com.github.k1rakishou.chan.core.site.common.CommonSite;
-import com.github.k1rakishou.chan.core.site.common.vichan.VichanActions;
-import com.github.k1rakishou.chan.core.site.common.vichan.VichanApi;
-import com.github.k1rakishou.chan.core.site.common.vichan.VichanCommentParser;
-import com.github.k1rakishou.chan.core.site.common.vichan.VichanEndpoints;
-import com.github.k1rakishou.chan.core.site.parser.CommentParserType;
-import com.github.k1rakishou.model.data.board.ChanBoard;
-import com.github.k1rakishou.model.data.descriptor.BoardDescriptor;
-import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
+class Chan370 : CommonSite() {
+  private val boards = buildList {
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "a"), "anime ir manga"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "b"), "apie viską"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "g"), "technologijos ir žaidimai"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "fo"), "fotografija"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "mu"), "muzika"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "int"), "internacionalus"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "t"), "teptukas"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "meta"), "svetainės aptarimas"))
+  }
 
-import org.jetbrains.annotations.NotNull;
+  override val enabled: Boolean = true
+  override val name: String = SITE_NAME
+  override val siteIconUrl = "https://370ch.lt/favicon.ico".toHttpUrl()
+  override val commentParserType = SiteConfiguration.CommentParserType.VichanParser
+  override val globalSearchType = SiteConfiguration.GlobalSearchType.SearchNotSupported
+  override val boardsType = SiteConfiguration.BoardsType.Static
+  override val catalogType = SiteConfiguration.CatalogType.Static
+  override val chunkedDownloaderConfig = SiteConfiguration.ChunkedDownloaderConfig(
+    enabled = true,
+    siteSendsCorrectFileSizeInBytes = true
+  )
+  override val urlHandler by lazy { Chan370UrlHandler() }
+  override val endpoints by lazy { Chan370Endpoints(this) }
+  override val api by lazy {
+    VichanApi(
+      siteManager = siteManager,
+      boardManager = boardManager,
+      site = this
+    )
+  }
+  override val actions by lazy {
+    VichanActions(
+      commonSite = this,
+      proxiedOkHttpClient = proxiedOkHttpClient,
+      siteManager = siteManager,
+      replyManager = replyManager
+    )
+  }
+  override val postParser by lazy { DefaultPostParser(VichanCommentParser(), archivesManager) }
+  override val staticBoards: List<ChanBoard> = boards
 
-import java.util.Map;
+  class Chan370Endpoints(
+    chan370: Chan370
+  ) : VichanEndpoints(chan370, "https://370ch.lt/", "https://370ch.lt/") {
+    override fun thumbnailUrl(
+      boardDescriptor: BoardDescriptor,
+      spoiler: Boolean,
+      customSpoilers: Int,
+      arg: Map<String, String>?
+    ): HttpUrl {
+      requireNotNull(arg)
 
-import okhttp3.HttpUrl;
+      val extension = when (arg.get("ext")) {
+        "jpg", "jpeg" -> "." + arg.get("ext")
+        "webm", "mp4", "gif" -> ".gif"
+        else -> ".png"
+      }
 
-public class Chan370 extends CommonSite {
-    private final ChunkDownloaderSiteProperties chunkDownloaderSiteProperties;
-    public static final String SITE_NAME = "370chan";
-
-    public static final CommonSiteUrlHandler URL_HANDLER = new CommonSiteUrlHandler() {
-        private static final String ROOT = "https://370ch.lt/";
-
-        @Override
-        public Class<? extends Site> getSiteClass() {
-            return Chan370.class;
-        }
-
-        @Override
-        public HttpUrl getUrl() {
-            return HttpUrl.parse(ROOT);
-        }
-
-        @Override
-        public HttpUrl[] getMediaHosts() {
-            return new HttpUrl[]{getUrl()};
-        }
-
-        @Override
-        public String[] getNames() {
-            return new String[]{"370chan"};
-        }
-
-        @Override
-        public String desktopUrl(ChanDescriptor chanDescriptor, @Nullable Long postNo, @Nullable Long postSubNo) {
-            if (chanDescriptor instanceof ChanDescriptor.CatalogDescriptor) {
-                return getUrl().newBuilder()
-                        .addPathSegment(chanDescriptor.boardCode())
-                        .toString();
-            } else if (chanDescriptor instanceof ChanDescriptor.ThreadDescriptor) {
-                return getUrl().newBuilder()
-                        .addPathSegment(chanDescriptor.boardCode())
-                        .addPathSegment("res")
-                        .addPathSegment(((ChanDescriptor.ThreadDescriptor) chanDescriptor).getThreadNo() + ".html")
-                        .toString();
-            } else {
-                return null;
-            }
-        }
-    };
-
-    public Chan370() {
-        chunkDownloaderSiteProperties = new ChunkDownloaderSiteProperties(true, true);
+      return root.builder()
+        .s(boardDescriptor.boardCode)
+        .s("thumb")
+        .s(arg.get("tim") + extension)
+        .url()
     }
+  }
 
-    @Override
-    public void setup() {
-        setEnabled(true);
-        setName(SITE_NAME);
-        setIcon(SiteIcon.fromFavicon(getImageLoaderDeprecatedLazy(), HttpUrl.parse("https://370ch.lt/favicon.ico")));
+  class Chan370UrlHandler : CommonSiteUrlHandler() {
+    private val ROOT = "https://370ch.lt/"
 
-        setBoards(
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "a"), "anime ir manga"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "b"), "apie viską"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "g"), "technologijos ir žaidimai"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "fo"), "fotografija"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "mu"), "muzika"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "int"), "internacionalus"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "t"), "teptukas"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "meta"), "svetainės aptarimas")
-        );
+    override val url = ROOT.toHttpUrl()
+    override val mediaHosts: Array<HttpUrl> = arrayOf<HttpUrl>(url)
 
-        setResolvable(URL_HANDLER);
-
-        setConfig(new CommonConfig() {
-            @Override
-            public boolean siteFeature(SiteFeature siteFeature) {
-                return super.siteFeature(siteFeature); //features are not implemented.
-            }
-        });
-
-        setEndpoints(new VichanEndpoints(this, "https://370ch.lt/", "https://370ch.lt/")
-        {
-            @Override
-            public HttpUrl thumbnailUrl(BoardDescriptor boardDescriptor, boolean spoiler, int customSpoilers, Map<String, String> arg) {
-                String extension = switch (arg.get("ext")){
-                    // for an unknown reason, not all media files follow the same rules
-                    // i.e. some jpg images have png thumbnails, others have jpg
-                    // this makes some amount of media files have 404 thumbnails
-                    case "jpg", "jpeg" -> "." + arg.get("ext");
-                    case "webm", "mp4", "gif" -> ".gif";
-                    default -> ".png";
-                };
-                return root.builder()
-                        .s(boardDescriptor.getBoardCode())
-                        .s("thumb")
-                        .s(arg.get("tim") + extension)
-                        .url();
-            }
-        });
-        setActions(new VichanActions(this, getProxiedOkHttpClientLazy(), getSiteManager(), getReplyManagerLazy()));
-        setApi(new VichanApi(getSiteManager(), getBoardManager(), this));
-        setParser(new VichanCommentParser());
+    override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?, postSubNo: Long?): String? {
+      when (chanDescriptor) {
+        is ChanDescriptor.CatalogDescriptor -> {
+          return url.newBuilder()
+            .addPathSegment(chanDescriptor.boardCode())
+            .toString()
+        }
+        is ChanDescriptor.ThreadDescriptor -> {
+          return url.newBuilder()
+            .addPathSegment(chanDescriptor.boardCode())
+            .addPathSegment("res")
+            .addPathSegment(chanDescriptor.threadNo.toString() + ".html")
+            .toString()
+        }
+        else -> {
+          return null
+        }
+      }
     }
+  }
 
-    @NotNull
-    @Override
-    public CommentParserType commentParserType() {
-        return CommentParserType.VichanParser;
-    }
-
-    @NonNull
-    @Override
-    public ChunkDownloaderSiteProperties getChunkDownloaderSiteProperties() {
-        return chunkDownloaderSiteProperties;
-    }
+  companion object {
+    const val SITE_NAME: String = "370chan"
+  }
 }

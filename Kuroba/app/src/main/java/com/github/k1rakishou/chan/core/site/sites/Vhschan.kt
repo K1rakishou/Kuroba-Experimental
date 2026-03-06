@@ -1,172 +1,138 @@
-/*
- * KurobaEx - *chan browser https://github.com/K1rakishou/Kuroba-Experimental/
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-package com.github.k1rakishou.chan.core.site.sites;
+package com.github.k1rakishou.chan.core.site.sites
 
-import android.text.TextUtils;
-import android.webkit.MimeTypeMap;
+import android.text.TextUtils
+import android.webkit.MimeTypeMap
+import com.github.k1rakishou.chan.core.site.SiteConfiguration
+import com.github.k1rakishou.chan.core.site.common.CommonSite
+import com.github.k1rakishou.chan.core.site.common.DefaultPostParser
+import com.github.k1rakishou.chan.core.site.common.vichan.VichanActions
+import com.github.k1rakishou.chan.core.site.common.vichan.VichanApi
+import com.github.k1rakishou.chan.core.site.common.vichan.VichanCommentParser
+import com.github.k1rakishou.chan.core.site.common.vichan.VichanEndpoints
+import com.github.k1rakishou.model.data.board.ChanBoard
+import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
+import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
+import com.github.k1rakishou.model.data.descriptor.SiteDescriptor.Companion.create
+import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrl
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+class Vhschan : CommonSite() {
+  private val boards = buildList {
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "b"), "Betamax"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "n64"), "Jogos"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "k7"), "Musicas"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "warhol"), "Artes"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "sebo"), "Cafe, livros e Londres"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "uhf"), "TV, Filmes e series"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "ego"), "how to dress well"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "meth"), "The krystal ship"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "oprah"), "baw"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "toth"), "pineal gland"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "win95"), "CyberTech"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "loverboy"), "Good Old-Fashioned Lover Boy"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "sac"), "Serviço de atendimento ao channer"))
+    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "Recentes"), "Recentes"))
+  }
 
-import com.github.k1rakishou.chan.core.site.ChunkDownloaderSiteProperties;
-import com.github.k1rakishou.chan.core.site.Site;
-import com.github.k1rakishou.chan.core.site.SiteIcon;
-import com.github.k1rakishou.chan.core.site.common.CommonSite;
-import com.github.k1rakishou.chan.core.site.common.vichan.VichanActions;
-import com.github.k1rakishou.chan.core.site.common.vichan.VichanApi;
-import com.github.k1rakishou.chan.core.site.common.vichan.VichanCommentParser;
-import com.github.k1rakishou.chan.core.site.common.vichan.VichanEndpoints;
-import com.github.k1rakishou.chan.core.site.parser.CommentParserType;
-import com.github.k1rakishou.model.data.board.ChanBoard;
-import com.github.k1rakishou.model.data.descriptor.BoardDescriptor;
-import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
-import com.github.k1rakishou.model.data.descriptor.SiteDescriptor;
+  override val enabled: Boolean = false
+  override val name: String = SITE_NAME
+  override val siteIconUrl = "https://vhschan.org/stylesheets/favicon.ico".toHttpUrl()
+  override val commentParserType = SiteConfiguration.CommentParserType.VichanParser
+  override val globalSearchType = SiteConfiguration.GlobalSearchType.SearchNotSupported
+  override val boardsType = SiteConfiguration.BoardsType.Static
+  override val catalogType = SiteConfiguration.CatalogType.Static
+  override val chunkedDownloaderConfig = SiteConfiguration.ChunkedDownloaderConfig(
+    enabled = true,
+    siteSendsCorrectFileSizeInBytes = true
+  )
+  override val urlHandler by lazy { VhsChanUrlHandler() }
+  override val endpoints by lazy {
+    VhschanEndpoints(
+      commonSite = this,
+      rootUrl = "https://vhschan.org",
+      sysUrl = "https://vhschan.org"
+    )
+  }
+  override val api by lazy { VichanApi(siteManager, boardManager, this) }
+  override val actions by lazy {
+    VichanActions(
+      commonSite = this,
+      proxiedOkHttpClient = proxiedOkHttpClient,
+      siteManager = siteManager,
+      replyManager = replyManager
+    )
+  }
+  override val postParser by lazy { DefaultPostParser(VichanCommentParser(), archivesManager) }
+  override val staticBoards = boards
 
-import org.jetbrains.annotations.NotNull;
+  override fun hasSiteFeature(siteFeature: SiteConfiguration.SiteFeature): Boolean {
+    return super.hasSiteFeature(siteFeature)
+      || siteFeature === SiteConfiguration.SiteFeature.Posting
+  }
 
-import java.util.Map;
+  class VhschanEndpoints(
+    commonSite: CommonSite,
+    rootUrl: String,
+    sysUrl: String
+  ) : VichanEndpoints(commonSite, rootUrl, sysUrl) {
+    override fun thumbnailUrl(
+      boardDescriptor: BoardDescriptor,
+      spoiler: Boolean,
+      customSpoilers: Int,
+      arg: Map<String, String>?
+    ): HttpUrl {
+      requireNotNull(arg)
 
-import okhttp3.HttpUrl;
+      val tim = arg.get("tim")
+      var ext = arg.get("ext")
 
-public class Vhschan extends CommonSite {
-    private final ChunkDownloaderSiteProperties chunkDownloaderSiteProperties;
-    public static final String SITE_NAME = "vhschan";
-    public static final SiteDescriptor SITE_DESCRIPTOR = SiteDescriptor.Companion.create(SITE_NAME);
+      val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext)
+      if (!TextUtils.isEmpty(mimeType) && !mimeType!!.startsWith("image/")) {
+        ext = "jpg"
+      }
 
-    public static final CommonSiteUrlHandler URL_HANDLER = new CommonSiteUrlHandler() {
-        private static final String ROOT = "https://vhschan.org/";
+      if (!ext!!.startsWith(".")) {
+        ext = "." + ext
+      }
 
-        @Override
-        public Class<? extends Site> getSiteClass() {
-            return Vhschan.class;
-        }
-
-        @Override
-        public HttpUrl getUrl() {
-            return HttpUrl.parse(ROOT);
-        }
-
-        @Override
-        public HttpUrl[] getMediaHosts() {
-            return new HttpUrl[]{getUrl()};
-        }
-
-        @Override
-        public String[] getNames() {
-            return new String[]{"vhschan"};
-        }
-
-        @Override
-        public String desktopUrl(ChanDescriptor chanDescriptor, @Nullable Long postNo, @Nullable Long postSubNo) {
-            if (chanDescriptor instanceof ChanDescriptor.CatalogDescriptor) {
-                return getUrl().newBuilder().addPathSegment(chanDescriptor.boardCode()).toString();
-            } else if (chanDescriptor instanceof ChanDescriptor.ThreadDescriptor) {
-                return getUrl().newBuilder()
-                        .addPathSegment(chanDescriptor.boardCode())
-                        .addPathSegment("res")
-                        .addPathSegment(((ChanDescriptor.ThreadDescriptor) chanDescriptor).getThreadNo() + ".html")
-                        .toString();
-            } else {
-                //return getUrl().toString();
-                return null;
-            }
-        }
-    };
-
-    private class VhschanEndpoints extends VichanEndpoints {
-
-        public VhschanEndpoints(CommonSite commonSite, String rootUrl, String sysUrl) {
-            super(commonSite, rootUrl, sysUrl);
-        }
-
-        @NonNull
-        @Override
-        public HttpUrl thumbnailUrl(BoardDescriptor boardDescriptor, boolean spoiler, int customSpoilers, Map<String, String> arg) {
-            String tim = arg.get("tim");
-            String ext = arg.get("ext");
-
-            String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext);
-            if (!TextUtils.isEmpty(mimeType) && !mimeType.startsWith("image/")) {
-                ext = "jpg";
-            }
-
-            if (!ext.startsWith(".")) {
-                ext = "." + ext;
-            }
-
-            return root.builder()
-                    .s(boardDescriptor.getBoardCode())
-                    .s("thumb")
-                    .s(tim + ext)
-                    .url();
-        }
+      return root.builder()
+        .s(boardDescriptor.boardCode)
+        .s("thumb")
+        .s(tim + ext)
+        .url()
     }
+  }
 
-    public Vhschan() {
-        chunkDownloaderSiteProperties = new ChunkDownloaderSiteProperties(true, true);
+  class VhsChanUrlHandler : CommonSiteUrlHandler() {
+    private val ROOT = "https://vhschan.org/"
+
+    override val url = ROOT.toHttpUrl()
+    override val mediaHosts = arrayOf(url)
+
+    override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?, postSubNo: Long?): String? {
+      when (chanDescriptor) {
+        is CatalogDescriptor -> {
+          return url.newBuilder().addPathSegment(chanDescriptor.boardCode()).toString()
+        }
+        is ThreadDescriptor -> {
+          return url.newBuilder()
+            .addPathSegment(chanDescriptor.boardCode())
+            .addPathSegment("res")
+            .addPathSegment(chanDescriptor.threadNo.toString() + ".html")
+            .toString()
+        }
+        else -> {
+          return null
+        }
+      }
     }
+  }
 
-    @Override
-    public void setup() {
-        setEnabled(false);
-        setName(SITE_NAME);
-        setIcon(SiteIcon.fromFavicon(getImageLoaderDeprecatedLazy(), HttpUrl.parse("https://vhschan.org/stylesheets/favicon.ico")));
-
-        setBoards(
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "b"), "Betamax"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "n64"), "Jogos"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "k7"), "Musicas"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "warhol"), "Artes"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "sebo"), "Cafe, livros e Londres"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "uhf"), "TV, Filmes e series"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "ego"), "how to dress well"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "meth"), "The krystal ship"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "oprah"), "baw"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "toth"), "pineal gland"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "win95"), "CyberTech"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "loverboy"), "Good Old-Fashioned Lover Boy"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "sac"), "Serviço de atendimento ao channer"),
-                ChanBoard.create(BoardDescriptor.create(descriptor().getSiteName(), "Recentes"), "Recentes")
-        );
-
-        setResolvable(URL_HANDLER);
-
-        setConfig(new CommonConfig() {
-            @Override
-            public boolean siteFeature(SiteFeature siteFeature) {
-                return super.siteFeature(siteFeature) || siteFeature == SiteFeature.POSTING;
-            }
-        });
-
-        setEndpoints(new VhschanEndpoints(this, "https://vhschan.org", "https://vhschan.org"));
-        setActions(new VichanActions(this, getProxiedOkHttpClientLazy(), getSiteManager(), getReplyManagerLazy()));
-        setApi(new VichanApi(getSiteManager(), getBoardManager(), this));
-        setParser(new VichanCommentParser());
-    }
-
-    @NotNull
-    @Override
-    public CommentParserType commentParserType() {
-        return CommentParserType.VichanParser;
-    }
-
-    @NonNull
-    @Override
-    public ChunkDownloaderSiteProperties getChunkDownloaderSiteProperties() {
-        return chunkDownloaderSiteProperties;
-    }
+  companion object {
+    const val SITE_NAME: String = "vhschan"
+    val SITE_DESCRIPTOR: SiteDescriptor = create(SITE_NAME)
+  }
 }

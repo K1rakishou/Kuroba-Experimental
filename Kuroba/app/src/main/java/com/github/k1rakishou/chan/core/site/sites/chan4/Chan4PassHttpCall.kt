@@ -1,107 +1,81 @@
-/*
- * KurobaEx - *chan browser https://github.com/K1rakishou/Kuroba-Experimental/
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
-package com.github.k1rakishou.chan.core.site.sites.chan4;
+package com.github.k1rakishou.chan.core.site.sites.chan4
 
-import androidx.annotation.Nullable;
+import com.github.k1rakishou.chan.core.site.Site
+import com.github.k1rakishou.chan.core.site.http.HttpCall
+import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody.ProgressRequestListener
+import com.github.k1rakishou.chan.core.site.http.login.Chan4LoginRequest
+import com.github.k1rakishou.chan.core.site.http.login.Chan4LoginResponse
+import com.github.k1rakishou.core_logger.Logger
+import okhttp3.FormBody
+import okhttp3.Request
+import okhttp3.Response
+import java.net.HttpCookie
 
-import com.github.k1rakishou.chan.core.site.Site;
-import com.github.k1rakishou.chan.core.site.http.HttpCall;
-import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody;
-import com.github.k1rakishou.chan.core.site.http.login.Chan4LoginRequest;
-import com.github.k1rakishou.chan.core.site.http.login.Chan4LoginResponse;
-import com.github.k1rakishou.core_logger.Logger;
+class Chan4PassHttpCall(
+  site: Site,
+  private val chan4LoginRequest: Chan4LoginRequest
+) : HttpCall(site) {
+  var loginResponse: Chan4LoginResponse? = null
 
-import java.net.HttpCookie;
-import java.util.List;
+  override fun setup(
+    requestBuilder: Request.Builder,
+    progressListener: ProgressRequestListener?
+  ) {
+    val formBuilder = FormBody.Builder()
 
-import okhttp3.FormBody;
-import okhttp3.Request;
-import okhttp3.Response;
+    formBuilder.add("act", "do_login")
+    formBuilder.add("id", chan4LoginRequest.user)
+    formBuilder.add("pin", chan4LoginRequest.pass)
 
-public class Chan4PassHttpCall extends HttpCall {
-    private static final String TAG = "Chan4PassHttpCall";
+    requestBuilder.url(requireNotNull(site.endpoints.login()))
+    requestBuilder.post(formBuilder.build())
+    site.requestModifier.modifyHttpCall(this, requestBuilder)
+  }
 
-    private final Chan4LoginRequest chan4LoginRequest;
-    @Nullable
-    public Chan4LoginResponse loginResponse = null;
+  override fun process(response: Response, result: String) {
+    if (result.contains("Success! Your device is now authorized")) {
+      val cookies = response.headers("Set-Cookie")
+      var passId: String? = null
 
-    public Chan4PassHttpCall(Site site, Chan4LoginRequest chan4LoginRequest) {
-        super(site);
-        this.chan4LoginRequest = chan4LoginRequest;
-    }
-
-    @Override
-    public void setup(
-            Request.Builder requestBuilder,
-            @Nullable ProgressRequestBody.ProgressRequestListener progressListener
-    ) {
-        FormBody.Builder formBuilder = new FormBody.Builder();
-
-        formBuilder.add("act", "do_login");
-        formBuilder.add("id", chan4LoginRequest.getUser());
-        formBuilder.add("pin", chan4LoginRequest.getPass());
-
-        requestBuilder.url(getSite().endpoints().login());
-        requestBuilder.post(formBuilder.build());
-        getSite().requestModifier().modifyHttpCall(this, requestBuilder);
-    }
-
-    @Override
-    public void process(Response response, String result) {
-        if (result.contains("Success! Your device is now authorized")) {
-            List<String> cookies = response.headers("Set-Cookie");
-            String passId = null;
-
-            for (String cookie : cookies) {
-                try {
-                    List<HttpCookie> parsedList = HttpCookie.parse(cookie);
-                    for (HttpCookie parsed : parsedList) {
-                        if (parsed.getName().equals("pass_id") && !parsed.getValue().equals("0")) {
-                            passId = parsed.getValue();
-                        }
-                    }
-                } catch (IllegalArgumentException error) {
-                    Logger.e(TAG, "Error while processing cookies", error);
-                }
+      for (cookie in cookies) {
+        try {
+          val parsedList = HttpCookie.parse(cookie)
+          for (parsed in parsedList) {
+            if (parsed.name == "pass_id" && parsed.value != "0") {
+              passId = parsed.value
             }
-
-            if (passId != null) {
-                loginResponse = new Chan4LoginResponse.Success(
-                        "Success! Your device is now authorized.",
-                        passId
-                );
-            } else {
-                loginResponse = new Chan4LoginResponse.Failure("Could not get pass id");
-            }
-
-            return;
+          }
+        } catch (error: IllegalArgumentException) {
+          Logger.e(TAG, "Error while processing cookies", error)
         }
+      }
 
-        String message;
-        if (result.contains("Your Token must be exactly 10 characters")) {
-            message = "Incorrect token";
-        } else if (result.contains("You have left one or more fields blank")) {
-            message = "You have left one or more fields blank";
-        } else if (result.contains("Incorrect Token or PIN")) {
-            message = "Incorrect Token or PIN";
-        } else {
-            message = "Unknown error";
-        }
+      if (passId != null) {
+        loginResponse = Chan4LoginResponse.Success(
+          successMessage = "Success! Your device is now authorized.",
+          authCookie = passId
+        )
+      } else {
+        loginResponse = Chan4LoginResponse.Failure(errorMessage = "Could not get pass id")
+      }
 
-        loginResponse = new Chan4LoginResponse.Failure(message);
+      return
     }
+
+    val message = if (result.contains("Your Token must be exactly 10 characters")) {
+      "Incorrect token"
+    } else if (result.contains("You have left one or more fields blank")) {
+      "You have left one or more fields blank"
+    } else if (result.contains("Incorrect Token or PIN")) {
+      "Incorrect Token or PIN"
+    } else {
+      "Unknown error"
+    }
+
+    loginResponse = Chan4LoginResponse.Failure(message)
+  }
+
+  companion object {
+    private const val TAG = "Chan4PassHttpCall"
+  }
 }

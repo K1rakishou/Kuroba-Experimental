@@ -12,10 +12,10 @@ import com.github.k1rakishou.model.data.post.ChanPost
 import okhttp3.HttpUrl
 
 open class VichanEndpoints(
-  commonSite: CommonSite,
+  site: CommonSite,
   rootUrl: String,
   sysUrl: String
-) : CommonEndpoints(commonSite) {
+) : CommonEndpoints(site) {
   protected val root = SimpleHttpUrl(rootUrl)
   protected val sys = SimpleHttpUrl(sysUrl)
 

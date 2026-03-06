@@ -11,7 +11,7 @@ import okhttp3.HttpUrl
 class DvachEndpoints(
   private val dvach: Dvach
 ) : VichanEndpoints(
-  commonSite = dvach,
+  site = dvach,
   rootUrl = dvach.domainString,
   sysUrl = dvach.domainString
 ) {

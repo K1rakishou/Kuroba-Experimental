@@ -24,6 +24,7 @@ import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
 import com.github.k1rakishou.chan.core.site.limitations.ConstantAttachablesCount
 import com.github.k1rakishou.chan.core.site.limitations.ConstantMaxTotalSizeInfo
 import com.github.k1rakishou.chan.core.site.limitations.PostingLimitationConfig
+import com.github.k1rakishou.chan.core.site.loader.ClientException
 import com.github.k1rakishou.chan.core.site.parser.SiteApi
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.groupOrNull
@@ -267,9 +268,16 @@ abstract class CommonSite : SiteBase() {
         }
       }
       
-      call.url(site.endpoints.reply(replyChanDescriptor))
-      
       return flow {
+        val replyUrl = site.endpoints.reply(replyChanDescriptor)
+        if (replyUrl == null) {
+          val error = ClientException("Posting is not supported by ${replyChanDescriptor.siteName()}")
+          emit(SiteActions.PostResult.PostError(error))
+          return@flow
+        }
+
+        call.url(replyUrl)
+
         if (requirePrepare()) {
           prepare(call, replyChanDescriptor, replyResponse).safeUnwrap { error ->
             emit(SiteActions.PostResult.PostError(error))
@@ -321,15 +329,22 @@ abstract class CommonSite : SiteBase() {
     }
     
     override suspend fun delete(deleteRequest: DeleteRequest): SiteActions.DeleteResult {
+      val deleteUrl = site.endpoints.delete(deleteRequest.post)
+      if (deleteUrl == null) {
+        val error =
+          ClientException("Post deletion is not supported by ${deleteRequest.post.boardDescriptor.siteName()}")
+        return SiteActions.DeleteResult.DeleteError(error)
+      }
+
       val deleteResponse = DeleteResponse()
       
-      val call: MultipartHttpCall = object : MultipartHttpCall(site) {
+      val call = object : MultipartHttpCall(site) {
         override fun process(response: Response, result: String) {
           handleDelete(deleteResponse, response, result)
         }
       }
       
-      call.url(site.endpoints.delete(deleteRequest.post))
+      call.url(deleteUrl)
       setupDelete(deleteRequest, call)
       
       return when (val result = site.httpCallManagerLazy.get().makeHttpCall(call)) {
