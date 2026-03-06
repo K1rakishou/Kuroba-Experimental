@@ -47,14 +47,14 @@ jobs:
           chmod +x ./gradlew
           ./gradlew testDevDebugUnitTest --stacktrace -Dorg.gradle.jvmargs="-Xmx4096m"
 
-  build-beta:
+  publish-beta:
       needs: [precheck, unit-test]
       uses: ./.github/workflows/build-setup.yml
       with:
         publish-type: beta
       secrets: inherit
   
-  build-stable:
+  publish-stable:
     needs: [precheck, unit-test]
     uses: ./.github/workflows/build-setup.yml
     with:
