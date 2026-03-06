@@ -14,7 +14,6 @@ import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.image.loader.KurobaImageLoader
 import com.github.k1rakishou.chan.core.image.loader.KurobaImageSize
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
-import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
@@ -97,8 +96,6 @@ class MediaViewerController(
   @Inject
   lateinit var siteManagerLazy: Lazy<SiteManager>
   @Inject
-  lateinit var boardManagerLazy: Lazy<BoardManager>
-  @Inject
   lateinit var archivesManagerLazy: Lazy<ArchivesManager>
   @Inject
   lateinit var postHideManagerLazy: Lazy<PostHideManager>
@@ -145,8 +142,6 @@ class MediaViewerController(
     get() = siteManagerLazy.get()
   private val imageSaverV2: ImageSaverV2
     get() = imageSaverV2Lazy.get()
-  private val boardManager: BoardManager
-    get() = boardManagerLazy.get()
   private val archivesManager: ArchivesManager
     get() = archivesManagerLazy.get()
   private val postHideManager: PostHideManager
@@ -182,7 +177,6 @@ class MediaViewerController(
   private val postLinkableClickHelper by lazy {
     PostLinkableClickHelper(
       siteManager = siteManager,
-      boardManager = boardManager,
       archivesManager = archivesManager
     )
   }

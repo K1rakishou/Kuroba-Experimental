@@ -3,7 +3,6 @@ package com.github.k1rakishou.chan.ui.helper
 import android.content.Context
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
-import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.core_logger.Logger
@@ -16,10 +15,10 @@ import com.github.k1rakishou.model.data.post.ChanPost
 
 class PostLinkableClickHelper(
   private val siteManager: SiteManager,
-  private val boardManager: BoardManager,
   private val archivesManager: ArchivesManager
 ) {
 
+  @Suppress("CyclomaticComplexMethod")
   suspend fun onPostLinkableClicked(
     context: Context,
     post: ChanPost,

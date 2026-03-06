@@ -40,6 +40,7 @@ import java.nio.charset.StandardCharsets
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
+@Suppress("LargeClass")
 open class CommentParser : ICommentParser, HasQuotePatterns {
   private val rules = mutableMapWithCap<String, MutableList<StyleRule>>(initialCapacity = 16)
 
@@ -683,6 +684,7 @@ open class CommentParser : ICommentParser, HasQuotePatterns {
 
     // Overrides the text (possibly) parsed by child nodes.
     return span(
+      @Suppress("SpreadOperator")
       TextUtils.concat(*parts.toTypedArray<CharSequence?>()),
       ForegroundColorIdSpan(ChanThemeColorId.PostInlineQuoteColor),
       AbsoluteSizeSpanHashed(sp(12f))

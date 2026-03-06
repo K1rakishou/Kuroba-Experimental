@@ -310,7 +310,6 @@ class ThreadPresenter @Inject constructor(
   private val postLinkableClickHelper by lazy {
     PostLinkableClickHelper(
       siteManager = siteManager,
-      boardManager = boardManager,
       archivesManager = archivesManager
     )
   }

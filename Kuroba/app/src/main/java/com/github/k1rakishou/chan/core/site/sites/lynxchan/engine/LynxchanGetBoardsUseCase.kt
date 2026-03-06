@@ -237,7 +237,6 @@ class LynxchanGetBoardsUseCase(
 
       return false
     }
-
   }
 
   companion object {

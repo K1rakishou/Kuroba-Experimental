@@ -211,6 +211,7 @@ class StyleRule {
     return false
   }
 
+  @Suppress("CyclomaticComplexMethod")
   fun apply(styleRulesParams: StyleRulesParams): CharSequence? {
     if (nullify) {
       return null
@@ -386,10 +387,12 @@ class StyleRule {
   }
 
   fun interface Action {
-    fun execute(callback: PostParser.Callback,
-                post: ChanPostBuilder,
-                text: CharSequence?,
-                htmlTag: HtmlTag): CharSequence?
+    fun execute(
+      callback: PostParser.Callback,
+      post: ChanPostBuilder,
+      text: CharSequence?,
+      htmlTag: HtmlTag
+    ): CharSequence?
   }
 
   companion object {

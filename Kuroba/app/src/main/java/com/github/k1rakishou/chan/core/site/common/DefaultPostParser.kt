@@ -157,6 +157,7 @@ open class DefaultPostParser(
           }
         }
 
+        @Suppress("SpreadOperator")
         val allInnerText = TextUtils.concat(*texts.toTypedArray<CharSequence?>())
 
         val result = commentParser.handleTag(
