@@ -47,86 +47,16 @@ jobs:
           chmod +x ./gradlew
           ./gradlew testDevDebugUnitTest --stacktrace -Dorg.gradle.jvmargs="-Xmx4096m"
 
-  build:
-    runs-on: ubuntu-latest
+build-beta:
     needs: [precheck, unit-test]
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: '0'
+    uses: ./.github/workflows/build-setup.yml
+    with:
+      publish-type: beta
+    secrets: inherit
 
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: 'gradle'
-
-      - name: Check user permission
-        id: check
-        if: |
-          github.event_name == 'push' &&
-          (startsWith(github.event.head_commit.message, '[beta]') || startsWith(github.event.head_commit.message, '[stable]') || startsWith(github.event.head_commit.message, '[patch]'))
-        uses: scherermichael-oss/action-has-permission@master
-        with:
-          required-permission: write
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set up Python
-        if: steps.check.outputs.has-permission
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.x'
-
-      - name: Install/Upgrade pip and requests
-        if: steps.check.outputs.has-permission
-        run: |
-          python -m pip install --upgrade pip
-          pip install requests
-
-      - name: Decode Keystore File
-        if: steps.check.outputs.has-permission
-        run: |
-          echo ${{ secrets.KEYSTORE }} | base64 -d > ${{ github.workspace }}/kurobaex.jks
-
-      - name: Publish Beta APK
-        if: steps.check.outputs.has-permission
-        run: |
-          cd Kuroba
-          chmod +x ./gradlew
-
-          MSG="${{ github.event.head_commit.message }}"
-          if [[ "$MSG" == "[beta]"* || "$MSG" == "[stable]"* ]]; then
-            echo "Publishing beta release"
-            ./gradlew assembleBetaRelease \
-              -Pandroid.injected.signing.store.file=${{ github.workspace }}/kurobaex.jks \
-              -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
-              -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
-              -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }} \
-              -Dorg.gradle.jvmargs="-Xmx4096m"
-            python ${{ github.workspace }}/.github/workflows/publish/main.py beta ${{ github.workspace }}
-          fi
-        env:
-          PAT: ${{ secrets.PAT }}
-
-      - name: Publish Stable APK
-        if: steps.check.outputs.has-permission
-        run: |
-          cd Kuroba
-          chmod +x ./gradlew
-          
-          MSG="${{ github.event.head_commit.message }}"
-          if [[ "$MSG" == "[stable]"* ]]; then
-            echo "Publishing stable release"
-            ./gradlew assembleStableRelease \
-              -Pandroid.injected.signing.store.file=${{ github.workspace }}/kurobaex.jks \
-              -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
-              -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
-              -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }} \
-              -Dorg.gradle.jvmargs="-Xmx4096m"
-            python ${{ github.workspace }}/.github/workflows/publish/main.py stable ${{ github.workspace }}
-          fi
-        env:
-          PAT: ${{ secrets.PAT }}
-      
+build-stable:
+  needs: [precheck, unit-test]
+  uses: ./.github/workflows/build-setup.yml
+  with:
+    publish-type: stable
+  secrets: inherit
