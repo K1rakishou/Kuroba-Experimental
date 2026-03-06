@@ -82,6 +82,7 @@ class ReplyResponse {
   val errorMessageShort: CharSequence?
     get() = errorMessage?.take(256)
 
+  @Suppress("ForbiddenComment")
   @get:Synchronized
   val postDescriptorOrNull: PostDescriptor?
     get() {

@@ -24,6 +24,7 @@ class SearchEntryPostBuilder(
 
   val postImageUrlRawList = mutableListOf<HttpUrl>()
 
+  @Suppress("ForbiddenComment")
   val postDescriptor: PostDescriptor?
     get() {
       if (siteName == null || boardCode == null || threadNo == null || postNo == null) {

@@ -41,15 +41,20 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.compose.AsyncUiData
 import com.github.k1rakishou.chan.core.concurrency.KurobaCoroutineScope
@@ -86,6 +91,7 @@ import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.requireComponentActivity
 import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.core_themes.resolveTextColor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import javax.inject.Inject
@@ -217,6 +223,10 @@ class Chan4CaptchaLayout(
                 onClick = {
                   val title = appResources.string(R.string.captcha_4chan_updates_title)
                   val description = buildString {
+                    appendLine(appResources.string(R.string.captcha_4chan_updates_new))
+                    appendLine()
+                    appendLine(appResources.string(R.string.captcha_4chan_update_06_03_2026))
+                    appendLine()
                     appendLine(appResources.string(R.string.captcha_4chan_update_26_02_2026))
                   }
 
@@ -267,6 +277,17 @@ class Chan4CaptchaLayout(
   private fun BuildCaptchaImageRows() {
     val chanTheme = LocalChanTheme.current
     val captchaInfoAsync by viewModel.captchaInfoToShow
+
+    val textMeasurer = rememberTextMeasurer()
+    val nextButtonTextLayoutResult = remember {
+      textMeasurer.measure(
+        text = "Next",
+        style = TextStyle(
+          color = chanTheme.textColorHintCompose,
+          fontSize = 10.sp
+        )
+      )
+    }
 
     val captchaInfo = when (val captchaInfo = captchaInfoAsync) {
       is AsyncUiData.UiData<Chan4CaptchaLayoutViewModel.CaptchaInfo> -> captchaInfo
@@ -380,29 +401,59 @@ class Chan4CaptchaLayout(
                           )
                         }
 
-                        if (task.isNotLikeTheOthersTaskType()) {
-                          val sliderWidth = this.size.width
-                          val sliderHeight = this.size.height
-                          val sliderThumbSize = 6.dp.toPx()
+                        if (task.drawFakeSliderAndNextButton()) {
+                          // Draw the "next" button
+                          run {
+                            val verticalPadding = 2.dp.toPx()
+                            val horizontalPadding = 4.dp.toPx()
+                            val buttonWidth =
+                              (nextButtonTextLayoutResult.size.width + horizontalPadding.toInt()).toFloat()
+                            val buttonHeight =
+                              (nextButtonTextLayoutResult.size.height + verticalPadding.toInt()).toFloat()
 
-                          val thumbOffsetStep = (sliderWidth - (sliderThumbSize * 2)) / (task.images.size).toFloat()
-                          val thumbOffset = ((imageIndex + 1) * thumbOffsetStep) + sliderThumbSize
+                            translate(
+                              left = size.width - buttonWidth,
+                              top = 0f
+                            ) {
+                              drawRect(
+                                color = chanTheme.backColorCompose,
+                                size = Size(width = buttonWidth, height = buttonHeight)
+                              )
 
-                          drawCircle(
-                            color = if (ThemeEngine.isDarkColor(chanTheme.accentColorCompose)) {
-                              Color.White
-                            } else {
-                              Color.Black
-                            },
-                            center = Offset(x = thumbOffset, y = sliderHeight),
-                            radius = sliderThumbSize + 1.dp.toPx()
-                          )
+                              translate(left = horizontalPadding / 2f, top = verticalPadding / 2f) {
+                                drawText(
+                                  textLayoutResult = nextButtonTextLayoutResult,
+                                  color = chanTheme.backColorCompose.resolveTextColor()
+                                )
+                              }
+                            }
+                          }
 
-                          drawCircle(
-                            color = chanTheme.accentColorCompose,
-                            center = Offset(x = thumbOffset, y = sliderHeight),
-                            radius = sliderThumbSize
-                          )
+                          // Draw the slider's thumb
+                          run {
+                            val sliderWidth = this.size.width
+                            val sliderHeight = this.size.height
+                            val sliderThumbSize = 6.dp.toPx()
+
+                            val thumbOffsetStep = (sliderWidth - (sliderThumbSize * 2)) / (task.images.size).toFloat()
+                            val thumbOffset = ((imageIndex + 1) * thumbOffsetStep) + sliderThumbSize
+
+                            drawCircle(
+                              color = if (ThemeEngine.isDarkColor(chanTheme.accentColorCompose)) {
+                                Color.White
+                              } else {
+                                Color.Black
+                              },
+                              center = Offset(x = thumbOffset, y = sliderHeight),
+                              radius = sliderThumbSize + 1.dp.toPx()
+                            )
+
+                            drawCircle(
+                              color = chanTheme.accentColorCompose,
+                              center = Offset(x = thumbOffset, y = sliderHeight),
+                              radius = sliderThumbSize
+                            )
+                          }
                         }
                       },
                     bitmap = taskImage.imageBitmap,

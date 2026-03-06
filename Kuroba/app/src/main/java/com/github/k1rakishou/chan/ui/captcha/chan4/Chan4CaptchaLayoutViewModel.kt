@@ -550,7 +550,11 @@ class Chan4CaptchaLayoutViewModel(
       val hasWideImages: Boolean,
       val images: List<TaskImage>
     ) {
-      fun isNotLikeTheOthersTaskType(): Boolean {
+      fun drawFakeSliderAndNextButton(): Boolean {
+        if (title is Chan4CaptchaTitleFormatter.Title.Image) {
+          return true
+        }
+
         if (title is Chan4CaptchaTitleFormatter.Title.TextWithImage) {
           return title.annotated.text.contains("not like the others", ignoreCase = true)
         }
