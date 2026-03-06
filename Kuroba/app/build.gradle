@@ -52,10 +52,10 @@ android {
         buildConfigField "String", "DEBUG_SIGNATURE", "\"DC5195CC40E42B95267D500B6E93E46EC51028C67BDD3D09BBB9C208BF20C8FE\""
         buildConfigField "String", "COMMIT_HASH", "\"" + gitHashProvider.get() + "\""
 
-        //           M -> Major version
-        //           m -> Minor version
-        //           p -> patch
-        //           MmmPP
+        //          M -> Major version
+        //          m -> Minor version
+        //          p -> patch
+        //          MmmPP
         versionCode 10338
         versionName "v1.3.38"
 
