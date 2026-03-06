@@ -16,18 +16,20 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
 class Sushichan : CommonSite() {
-  private val boards = buildList {
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "wildcard"), "artsy"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "lounge"), "sushi social"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "arcade"), "vidya gaems"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "kawaii"), "cute things"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "kitchen"), "tasty morsels & delights"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "tunes"), "enjoyable sounds"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "culture"), "arts & literature"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "silicon"), "technology"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "yakuza"), "site meta-discussion"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "hell"), "internet death cult"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "lewd"), "dat ecchi & hentai goodness"))
+  private val boards by lazy {
+    buildList {
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "wildcard"), "artsy"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "lounge"), "sushi social"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "arcade"), "vidya gaems"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "kawaii"), "cute things"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "kitchen"), "tasty morsels & delights"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "tunes"), "enjoyable sounds"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "culture"), "arts & literature"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "silicon"), "technology"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "yakuza"), "site meta-discussion"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "hell"), "internet death cult"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "lewd"), "dat ecchi & hentai goodness"))
+    }
   }
 
   override val enabled: Boolean = true

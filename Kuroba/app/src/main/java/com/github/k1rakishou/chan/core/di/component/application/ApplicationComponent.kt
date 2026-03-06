@@ -24,7 +24,7 @@ import com.github.k1rakishou.chan.core.receiver.PostingServiceBroadcastReceiver
 import com.github.k1rakishou.chan.core.receiver.ReplyNotificationDeleteIntentBroadcastReceiver
 import com.github.k1rakishou.chan.core.site.SiteBase
 import com.github.k1rakishou.chan.core.site.sites.CompositeCatalogSite
-import com.github.k1rakishou.chan.core.site.sites.lynxchan.engine.LynxchanSite
+import com.github.k1rakishou.chan.core.site.sites.lynxchan.engine.BaseLynxchanSite
 import com.github.k1rakishou.chan.core.watcher.BookmarkBackgroundWatcherWorker
 import com.github.k1rakishou.chan.core.watcher.FilterWatcherWorker
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2Service
@@ -73,7 +73,7 @@ interface ApplicationComponent : ApplicationDependencies {
   fun inject(imageSaverBroadcastReceiver: ImageSaverBroadcastReceiver)
   fun inject(postingServiceBroadcastReceiver: PostingServiceBroadcastReceiver)
   fun inject(siteBase: SiteBase)
-  fun inject(lynxchanSite: LynxchanSite)
+  fun inject(lynxchanSite: BaseLynxchanSite)
 
   @Component.Builder
   interface Builder {

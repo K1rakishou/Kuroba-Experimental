@@ -50,7 +50,7 @@ class LynxchanGetBoardsUseCase(
   }
 
   private suspend fun ProducerScope<SiteBoards>.executeInternal(
-    site: LynxchanSite,
+    site: BaseLynxchanSite,
     boardsEndpoint: HttpUrl
   ) {
     val siteDescriptor = site.descriptor
@@ -177,7 +177,7 @@ class LynxchanGetBoardsUseCase(
   }
 
   data class Params(
-    val site: LynxchanSite,
+    val site: BaseLynxchanSite,
     val getBoardsEndpoint: HttpUrl
   )
 

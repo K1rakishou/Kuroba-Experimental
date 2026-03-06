@@ -40,7 +40,7 @@ open class LynxchanApi(
   private val moshi: Moshi,
   private val siteManager: SiteManager,
   private val boardManager: BoardManager,
-  site: LynxchanSite
+  site: BaseLynxchanSite
 ) : CommonSite.CommonApi(site) {
   private val lynxchanCatalogList = Types.newParameterizedType(List::class.java, LynxchanCatalogThread::class.java)
 

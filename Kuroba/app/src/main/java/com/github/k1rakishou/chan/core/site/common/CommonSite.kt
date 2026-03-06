@@ -47,12 +47,6 @@ import java.lang.Long.toHexString
 import java.util.regex.Pattern
 
 abstract class CommonSite : SiteBase() {
-  private val DefaultRequestModifier by lazy {
-    object : SiteRequestModifier<Site>(this@CommonSite, appConstants) {
-      // Default implementation.
-    }
-  }
-
   // TODO:
   private val DefaultPostingLimitationConfig = PostingLimitationConfig(
     postMaxAttachables = ConstantAttachablesCount(DEFAULT_ATTACHABLES_PER_POST_COUNT),
@@ -85,7 +79,7 @@ abstract class CommonSite : SiteBase() {
   final override val configuration: SiteConfiguration
     get() = siteConfiguration
 
-  override val requestModifier: SiteRequestModifier<Site> = DefaultRequestModifier
+  override val requestModifier: SiteRequestModifier by lazy { DefaultRequestModifier(this) }
 
   private val siteConfiguration: CommonSiteConfiguration by lazy {
     val boardsType = boardsType.takeIf { staticBoards.isEmpty() }
@@ -109,6 +103,12 @@ abstract class CommonSite : SiteBase() {
   @CallSuper
   override fun hasSiteFeature(siteFeature: SiteConfiguration.SiteFeature): Boolean {
     return siteFeature == SiteConfiguration.SiteFeature.ImageFileHash
+  }
+
+  open class DefaultRequestModifier(
+    site: CommonSite
+  ) : SiteRequestModifier(site, site.appConstants) {
+    // Default implementation.
   }
 
   abstract class CommonSiteUrlHandler : SiteUrlHandler {

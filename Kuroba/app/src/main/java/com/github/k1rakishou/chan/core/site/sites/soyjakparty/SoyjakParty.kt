@@ -18,22 +18,24 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
 class SoyjakParty : CommonSite() {
-  private val boards = buildList {
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "q"), "the 'party"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "soy"), "soyjaks"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "jak"), "jaks"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "qa"), "question & answer"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "r"), "requests and soy art"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "caca"), "cacaborea"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "a"), "tranime"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "raid"), "raid: shadow legends"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "int"), "international"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "mtv"), "music, television, video games"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "pol"), "international politics"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "sci"), "soyence and technology"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "craft"), "minecraft"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "fnac"), "five nights at cobson's"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "nate"), "coals"))
+  private val boards by lazy {
+    buildList {
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "q"), "the 'party"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "soy"), "soyjaks"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "jak"), "jaks"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "qa"), "question & answer"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "r"), "requests and soy art"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "caca"), "cacaborea"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "a"), "tranime"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "raid"), "raid: shadow legends"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "int"), "international"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "mtv"), "music, television, video games"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "pol"), "international politics"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "sci"), "soyence and technology"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "craft"), "minecraft"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "fnac"), "five nights at cobson's"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "nate"), "coals"))
+    }
   }
 
   override val enabled: Boolean = true

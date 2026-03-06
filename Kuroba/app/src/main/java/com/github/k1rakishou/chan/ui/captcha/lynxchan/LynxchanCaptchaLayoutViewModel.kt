@@ -18,7 +18,7 @@ import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.core.site.loader.ClientException
 import com.github.k1rakishou.chan.core.site.sites.lynxchan.Krautchan
 import com.github.k1rakishou.chan.core.site.sites.lynxchan.chan8.Chan8Moe
-import com.github.k1rakishou.chan.core.site.sites.lynxchan.engine.LynxchanSite
+import com.github.k1rakishou.chan.core.site.sites.lynxchan.engine.BaseLynxchanSite
 import com.github.k1rakishou.chan.ui.captcha.lynxchan.pow.LynxchanProofOfWork
 import com.github.k1rakishou.chan.ui.helper.AppResources
 import com.github.k1rakishou.common.BadStatusResponseException
@@ -108,7 +108,7 @@ class LynxchanCaptchaLayoutViewModel(
         currentInputValue.value = ""
 
         val site = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
-        if (site == null || site !is LynxchanSite) {
+        if (site == null || site !is BaseLynxchanSite) {
           val message = if (site == null) {
             "Site is not active "
           } else {
@@ -185,7 +185,7 @@ class LynxchanCaptchaLayoutViewModel(
           .url(verifyCaptchaEndpoint)
           .post(requestBody)
 
-        val lynxchanSite = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor()) as? LynxchanSite
+        val lynxchanSite = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor()) as? BaseLynxchanSite
         if (lynxchanSite == null) {
           throw LynxchanCaptchaError("Site ${chanDescriptor.siteDescriptor()} is not active")
         }
@@ -310,7 +310,7 @@ class LynxchanCaptchaLayoutViewModel(
       val lynxchanSite = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
         ?: throw LynxchanCaptchaError("Site ${chanDescriptor.siteDescriptor()} does not exist or not active")
 
-      lynxchanSite as LynxchanSite
+      lynxchanSite as BaseLynxchanSite
 
       val requestBuilder = Request.Builder()
         .url(url)
@@ -604,7 +604,7 @@ class LynxchanCaptchaLayoutViewModel(
     val site = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
       ?: return
 
-    if (site !is LynxchanSite) {
+    if (site !is BaseLynxchanSite) {
       return
     }
 

@@ -1,22 +1,20 @@
 package com.github.k1rakishou.chan.core.site.sites.lynxchan.chan8
 
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.site.Site
-import com.github.k1rakishou.chan.core.site.SiteRequestModifier
 import com.github.k1rakishou.chan.core.site.SiteSetting
-import com.github.k1rakishou.chan.core.site.sites.lynxchan.engine.LynxchanSite
+import com.github.k1rakishou.chan.core.site.sites.lynxchan.engine.BaseLynxchanSite
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.prefs.CookieSetting
 import com.github.k1rakishou.prefs.StringSetting
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
-class Chan8Moe : LynxchanSite() {
+class Chan8Moe : BaseLynxchanSite() {
   override val name: String = SITE_NAME
   override val defaultDomain: HttpUrl = DEFAULT_DOMAIN
   override val postingViaFormData: Boolean = true
   override val endpoints by lazy { Chan8MoeEndpoints(this) }
-  override val requestModifier by lazy { Chan8MoeRequestModifier(this, appConstants) as SiteRequestModifier<Site> }
+  override val requestModifier by lazy { Chan8MoeRequestModifier(this, appConstants) }
   override val urlHandler by lazy { Chan8MoeUrlHandler(domainUrl, mediaHosts) }
 
   override val settings: List<SiteSetting> by lazy {

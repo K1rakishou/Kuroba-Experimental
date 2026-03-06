@@ -13,7 +13,7 @@ interface Site {
   val descriptor: SiteDescriptor
   val urlHandler: SiteUrlHandler
   val endpoints: SiteEndpoints
-  val requestModifier: SiteRequestModifier<Site>
+  val requestModifier: SiteRequestModifier
   val api: SiteApi
   val actions: SiteActions
   val configuration: SiteConfiguration

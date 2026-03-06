@@ -3,12 +3,10 @@ package com.github.k1rakishou.chan.core.site.sites.dvach
 import androidx.annotation.CallSuper
 import com.github.k1rakishou.OptionSettingItem
 import com.github.k1rakishou.Setting
-import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.core.site.SiteConfiguration
 import com.github.k1rakishou.chan.core.site.SiteEndpoints
-import com.github.k1rakishou.chan.core.site.SiteRequestModifier
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.SiteSetting.SiteOptionsSetting
 import com.github.k1rakishou.chan.core.site.SiteUrlHandler
@@ -126,7 +124,7 @@ class Dvach : CommonSite() {
     DvachSiteRequestModifier(
       site = this,
       appConstants = appConstants
-    ) as SiteRequestModifier<Site>
+    )
   }
   override val api: SiteApi by lazy { DvachApi(moshi, siteManager, boardManager, this) }
   override val actions: SiteActions by lazy { DvachActions(this) }

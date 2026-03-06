@@ -25,10 +25,10 @@ open class LynxchanActions(
   private val moshi: Moshi,
   private val httpCallManager: HttpCallManager,
   private val lynxchanGetBoardsUseCase: LynxchanGetBoardsUseCase,
-  site: LynxchanSite
+  site: BaseLynxchanSite
 ) : CommonSite.CommonActions(site) {
-  private val lynxchanSite: LynxchanSite
-    get() = site as LynxchanSite
+  private val lynxchanSite: BaseLynxchanSite
+    get() = site as BaseLynxchanSite
 
   override suspend fun boards(): Flow<SiteBoards> {
     val getBoardsEndpoint = site.endpoints.boards()

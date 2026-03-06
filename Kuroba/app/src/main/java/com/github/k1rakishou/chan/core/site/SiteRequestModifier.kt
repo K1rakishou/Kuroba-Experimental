@@ -14,8 +14,8 @@ import com.github.k1rakishou.prefs.MapSetting
 import okhttp3.HttpUrl
 import okhttp3.Request
 
-abstract class SiteRequestModifier<T : Site>(
-  protected val site: T,
+abstract class SiteRequestModifier(
+  protected val site: Site,
   protected val appConstants: AppConstants
 ) {
 
@@ -32,14 +32,14 @@ abstract class SiteRequestModifier<T : Site>(
   }
 
   @CallSuper
-  open fun modifyGenericRequest(site: T, requestBuilder: Request.Builder) {
+  open fun modifyGenericRequest(site: Site, requestBuilder: Request.Builder) {
     requestBuilder.addDefaultHeaders(appConstants)
     addCloudFlareCookie(requestBuilder)
   }
 
   @CallSuper
   open fun modifyCatalogOrThreadGetRequest(
-    site: T,
+    site: Site,
     chanDescriptor: ChanDescriptor,
     requestBuilder: Request.Builder
   ) {
@@ -49,7 +49,7 @@ abstract class SiteRequestModifier<T : Site>(
 
   @CallSuper
   open fun modifyVideoStreamRequest(
-    site: T,
+    site: Site,
     requestProperties: MutableMap<String, String>,
     url: HttpUrl
   ) {
@@ -61,7 +61,7 @@ abstract class SiteRequestModifier<T : Site>(
   }
 
   @CallSuper
-  open fun modifyPostReportRequest(site: T, requestBuilder: Request.Builder) {
+  open fun modifyPostReportRequest(site: Site, requestBuilder: Request.Builder) {
     requestBuilder.addDefaultHeaders(appConstants)
     addCloudFlareCookie(requestBuilder)
   }

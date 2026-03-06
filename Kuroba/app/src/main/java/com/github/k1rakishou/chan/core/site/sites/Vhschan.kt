@@ -20,21 +20,23 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
 class Vhschan : CommonSite() {
-  private val boards = buildList {
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "b"), "Betamax"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "n64"), "Jogos"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "k7"), "Musicas"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "warhol"), "Artes"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "sebo"), "Cafe, livros e Londres"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "uhf"), "TV, Filmes e series"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "ego"), "how to dress well"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "meth"), "The krystal ship"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "oprah"), "baw"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "toth"), "pineal gland"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "win95"), "CyberTech"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "loverboy"), "Good Old-Fashioned Lover Boy"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "sac"), "Serviço de atendimento ao channer"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "Recentes"), "Recentes"))
+  private val boards by lazy {
+    buildList {
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "b"), "Betamax"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "n64"), "Jogos"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "k7"), "Musicas"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "warhol"), "Artes"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "sebo"), "Cafe, livros e Londres"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "uhf"), "TV, Filmes e series"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "ego"), "how to dress well"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "meth"), "The krystal ship"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "oprah"), "baw"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "toth"), "pineal gland"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "win95"), "CyberTech"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "loverboy"), "Good Old-Fashioned Lover Boy"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "sac"), "Serviço de atendimento ao channer"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "Recentes"), "Recentes"))
+    }
   }
 
   override val enabled: Boolean = false

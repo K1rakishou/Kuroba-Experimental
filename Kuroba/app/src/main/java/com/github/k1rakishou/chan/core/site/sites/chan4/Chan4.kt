@@ -2,13 +2,11 @@ package com.github.k1rakishou.chan.core.site.sites.chan4
 
 import com.github.k1rakishou.OptionSettingItem
 import com.github.k1rakishou.Setting
-import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.SiteBase
 import com.github.k1rakishou.chan.core.site.SiteConfiguration
 import com.github.k1rakishou.chan.core.site.SiteEndpoints
 import com.github.k1rakishou.chan.core.site.SiteIcon
-import com.github.k1rakishou.chan.core.site.SiteRequestModifier
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.SiteSetting.SiteOptionsSetting
 import com.github.k1rakishou.chan.core.site.SiteUrlHandler
@@ -58,7 +56,7 @@ class Chan4 : SiteBase() {
   override val descriptor: SiteDescriptor = SITE_DESCRIPTOR
   override val urlHandler: SiteUrlHandler by lazy { Chan4UrlHandler() }
   override val endpoints: SiteEndpoints by lazy { Chan4Endpoints() }
-  override val requestModifier by lazy { Chan4SiteRequestModifier(this, appConstants) as SiteRequestModifier<Site> }
+  override val requestModifier by lazy { Chan4SiteRequestModifier(this, appConstants) }
   override val api: SiteApi by lazy {
     FutabaSiteApi(
       siteManager = siteManager,

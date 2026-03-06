@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.core.site.sites.foolfuuka.sites
 
-import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.SiteConfiguration
 import com.github.k1rakishou.chan.core.site.SiteEndpoints
@@ -35,14 +34,14 @@ abstract class BaseFoolFuukaSite : CommonSite() {
   override val staticBoards: List<ChanBoard> = emptyList()
   override val urlHandler: SiteUrlHandler by lazy { BaseFoolFuukaUrlHandler(rootUrl, mediaHosts) }
   override val endpoints: SiteEndpoints by lazy { FoolFuukaEndpoints(this, rootUrl) }
-  override val requestModifier: SiteRequestModifier<Site> by lazy { BaseFoolFuukaRequestModifier(this, appConstants) }
+  override val requestModifier: SiteRequestModifier by lazy { BaseFoolFuukaRequestModifier(this, appConstants) }
   override val api: SiteApi by lazy { FoolFuukaApi(this) }
   override val actions: SiteActions by lazy { FoolFuukaActions(this) }
 
   open class BaseFoolFuukaRequestModifier(
     site: BaseFoolFuukaSite,
     appConstants: AppConstants
-  ) : SiteRequestModifier<Site>(site, appConstants)
+  ) : SiteRequestModifier(site, appConstants)
 
   open class BaseFoolFuukaUrlHandler(
     override val url: HttpUrl,

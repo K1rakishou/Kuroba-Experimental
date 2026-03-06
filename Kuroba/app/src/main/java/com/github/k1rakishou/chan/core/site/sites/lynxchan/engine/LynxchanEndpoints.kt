@@ -7,9 +7,9 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
-open class LynxchanEndpoints(site: LynxchanSite) : CommonSite.CommonEndpoints(site) {
-  private val lynxchan: LynxchanSite
-    get() = (site as LynxchanSite)
+open class LynxchanEndpoints(site: BaseLynxchanSite) : CommonSite.CommonEndpoints(site) {
+  private val lynxchan: BaseLynxchanSite
+    get() = (site as BaseLynxchanSite)
   protected val lynxchanDomainUrl: HttpUrl
     get() = lynxchan.domainUrl
   protected val lynxchanDomain: String

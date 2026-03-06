@@ -15,20 +15,22 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
 class Diochan : CommonSite() {
-  private val boards = buildList {
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "b"), "Random"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "s"), "( ͡° ͜ʖ ͡°)"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "x"), "Ics"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "hd"), "Help Desk"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "aco"), "Anime, Fumetti & Cartoni"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "v"), "Videogiochi da tavolo"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "cul"), "Cultura"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "yt"), "YouTube, TikTok, etc"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "ck"), "Cucina"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "mu"), "Musica"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "pol"), "Politica & Affari"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "sug"), "Suggerimenti & Lamentele"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "p"), "Prova"))
+  private val boards by lazy {
+    buildList {
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "b"), "Random"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "s"), "( ͡° ͜ʖ ͡°)"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "x"), "Ics"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "hd"), "Help Desk"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "aco"), "Anime, Fumetti & Cartoni"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "v"), "Videogiochi da tavolo"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "cul"), "Cultura"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "yt"), "YouTube, TikTok, etc"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "ck"), "Cucina"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "mu"), "Musica"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "pol"), "Politica & Affari"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "sug"), "Suggerimenti & Lamentele"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "p"), "Prova"))
+    }
   }
 
   override val enabled: Boolean = true

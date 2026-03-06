@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.core.site.sites.lynxchan.engine
 
+import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteRequestModifier
 import com.github.k1rakishou.chan.core.site.http.HttpCall
 import com.github.k1rakishou.common.AppConstants
@@ -9,10 +10,10 @@ import com.github.k1rakishou.common.isNotNullNorBlank
 import okhttp3.HttpUrl
 import okhttp3.Request
 
-open class LynxchanRequestModifier<S : LynxchanSite>(
-  site: S,
+open class LynxchanRequestModifier(
+  site: Site,
   appConstants: AppConstants
-) : SiteRequestModifier<S>(site, appConstants) {
+) : SiteRequestModifier(site, appConstants) {
 
   override fun modifyHttpCall(httpCall: HttpCall, requestBuilder: Request.Builder) {
     super.modifyHttpCall(httpCall, requestBuilder)
@@ -29,7 +30,7 @@ open class LynxchanRequestModifier<S : LynxchanSite>(
     }
   }
 
-  override fun modifyGenericRequest(site: S, requestBuilder: Request.Builder) {
+  override fun modifyGenericRequest(site: Site, requestBuilder: Request.Builder) {
     super.modifyGenericRequest(site, requestBuilder)
 
     addCookies(requestBuilder)
@@ -43,6 +44,7 @@ open class LynxchanRequestModifier<S : LynxchanSite>(
   }
 
   private fun buildCookies(): String {
+    site as BaseLynxchanSite
     val captchaIdCookie = site.captchaIdCookie.get()?.value
     val bypassCookie = site.bypassCookie.get()?.value
     val extraCookie = site.extraCookie.get()?.value

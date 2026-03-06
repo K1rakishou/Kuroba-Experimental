@@ -22,27 +22,29 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
 class Lainchan : CommonSite() {
-  private val boards = buildList {
-    val siteName = descriptor.siteName
+  private val boards by lazy {
+    buildList {
+      val siteName = descriptor.siteName
 
-    add(ChanBoard.create(BoardDescriptor.create(siteName, "λ"), "Programming"))
-    add(ChanBoard.create(BoardDescriptor.create(siteName, "Δ"), "Do It Yourself"))
-    add(ChanBoard.create(BoardDescriptor.create(siteName, "sec"), "Security"))
-    add(ChanBoard.create(BoardDescriptor.create(siteName, "Ω"), "Technology"))
-    add(ChanBoard.create(BoardDescriptor.create(siteName, "inter"), "Games and Interactive Media"))
-    add(ChanBoard.create(BoardDescriptor.create(siteName, "lit"), "Literature"))
-    add(ChanBoard.create(BoardDescriptor.create(siteName, "music"), "Musical and Audible Media"))
-    add(ChanBoard.create(BoardDescriptor.create(siteName, "vis"), "Visual Media"))
-    add(ChanBoard.create(BoardDescriptor.create(siteName, "hum"), "Humanity"))
-    add(ChanBoard.create(BoardDescriptor.create(siteName, "drug"), "Drugs 3.0"))
-    add(ChanBoard.create(BoardDescriptor.create(siteName, "zzz"), "Consciousness and Dreams"))
-    add(ChanBoard.create(BoardDescriptor.create(siteName, "layer"), "layer"))
-    add(ChanBoard.create(BoardDescriptor.create(siteName, "q"), "Questions and Complaints"))
-    add(ChanBoard.create(BoardDescriptor.create(siteName, "r"), "Random"))
-    add(ChanBoard.create(BoardDescriptor.create(siteName, "lain"), "Lain"))
-    add(ChanBoard.create(BoardDescriptor.create(siteName, "culture"), "Culture 15 freshly bumped threads"))
-    add(ChanBoard.create(BoardDescriptor.create(siteName, "psy"), "Psychopharmacology 15 freshly bumped threads"))
-    add(ChanBoard.create(BoardDescriptor.create(siteName, "mega"), "15 freshly bumped threads"))
+      add(ChanBoard.create(BoardDescriptor.create(siteName, "λ"), "Programming"))
+      add(ChanBoard.create(BoardDescriptor.create(siteName, "Δ"), "Do It Yourself"))
+      add(ChanBoard.create(BoardDescriptor.create(siteName, "sec"), "Security"))
+      add(ChanBoard.create(BoardDescriptor.create(siteName, "Ω"), "Technology"))
+      add(ChanBoard.create(BoardDescriptor.create(siteName, "inter"), "Games and Interactive Media"))
+      add(ChanBoard.create(BoardDescriptor.create(siteName, "lit"), "Literature"))
+      add(ChanBoard.create(BoardDescriptor.create(siteName, "music"), "Musical and Audible Media"))
+      add(ChanBoard.create(BoardDescriptor.create(siteName, "vis"), "Visual Media"))
+      add(ChanBoard.create(BoardDescriptor.create(siteName, "hum"), "Humanity"))
+      add(ChanBoard.create(BoardDescriptor.create(siteName, "drug"), "Drugs 3.0"))
+      add(ChanBoard.create(BoardDescriptor.create(siteName, "zzz"), "Consciousness and Dreams"))
+      add(ChanBoard.create(BoardDescriptor.create(siteName, "layer"), "layer"))
+      add(ChanBoard.create(BoardDescriptor.create(siteName, "q"), "Questions and Complaints"))
+      add(ChanBoard.create(BoardDescriptor.create(siteName, "r"), "Random"))
+      add(ChanBoard.create(BoardDescriptor.create(siteName, "lain"), "Lain"))
+      add(ChanBoard.create(BoardDescriptor.create(siteName, "culture"), "Culture 15 freshly bumped threads"))
+      add(ChanBoard.create(BoardDescriptor.create(siteName, "psy"), "Psychopharmacology 15 freshly bumped threads"))
+      add(ChanBoard.create(BoardDescriptor.create(siteName, "mega"), "15 freshly bumped threads"))
+    }
   }
 
   override val enabled: Boolean = true

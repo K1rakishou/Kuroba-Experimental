@@ -16,20 +16,22 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
 class Wired7 : CommonSite() {
-  private val boards = buildList {
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "a"), "Anime"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "b"), "Random"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "jp"), "Japón"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "h"), "Hentai"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "hum"), "Humanidad"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "meta"), "Wired-7 Metaboard"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "mu"), "Música"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "lain"), "Lain"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "tech"), "Tecnología"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "v"), "Videojuegos"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "vis"), "Audiovisuales"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "x"), "Paranormal"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "all"), "Nexo"))
+  private val boards by lazy {
+    buildList {
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "a"), "Anime"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "b"), "Random"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "jp"), "Japón"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "h"), "Hentai"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "hum"), "Humanidad"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "meta"), "Wired-7 Metaboard"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "mu"), "Música"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "lain"), "Lain"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "tech"), "Tecnología"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "v"), "Videojuegos"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "vis"), "Audiovisuales"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "x"), "Paranormal"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "all"), "Nexo"))
+    }
   }
 
   override val enabled: Boolean = true

@@ -57,7 +57,7 @@ class CompositeCatalogSite : Site {
   override val descriptor: SiteDescriptor = SITE_DESCRIPTOR
   override val urlHandler: SiteUrlHandler by lazy { siteUrlHandler }
   override val endpoints: SiteEndpoints by lazy { siteEndpoints }
-  override val requestModifier: SiteRequestModifier<Site> by lazy { noOpSiteRequestModifier }
+  override val requestModifier: SiteRequestModifier by lazy { noOpSiteRequestModifier }
   override val api: SiteApi by lazy { noOpSiteApi }
   override val actions: SiteActions by lazy { noOpActions }
   override val postParser: PostParser? = null
@@ -189,7 +189,7 @@ class CompositeCatalogSite : Site {
   }
 
   private val noOpSiteRequestModifier by lazy {
-    object : SiteRequestModifier<Site>(this@CompositeCatalogSite, appConstants) {
+    object : SiteRequestModifier(this@CompositeCatalogSite, appConstants) {
 
     }
   }

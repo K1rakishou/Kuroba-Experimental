@@ -14,15 +14,17 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
 class Chan370 : CommonSite() {
-  private val boards = buildList {
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "a"), "anime ir manga"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "b"), "apie viską"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "g"), "technologijos ir žaidimai"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "fo"), "fotografija"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "mu"), "muzika"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "int"), "internacionalus"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "t"), "teptukas"))
-    add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "meta"), "svetainės aptarimas"))
+  private val boards by lazy {
+    buildList {
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "a"), "anime ir manga"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "b"), "apie viską"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "g"), "technologijos ir žaidimai"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "fo"), "fotografija"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "mu"), "muzika"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "int"), "internacionalus"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "t"), "teptukas"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "meta"), "svetainės aptarimas"))
+    }
   }
 
   override val enabled: Boolean = true

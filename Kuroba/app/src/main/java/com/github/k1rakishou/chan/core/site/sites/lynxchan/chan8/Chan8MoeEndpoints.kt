@@ -1,12 +1,12 @@
 package com.github.k1rakishou.chan.core.site.sites.lynxchan.chan8
 
+import com.github.k1rakishou.chan.core.site.sites.lynxchan.engine.BaseLynxchanSite
 import com.github.k1rakishou.chan.core.site.sites.lynxchan.engine.LynxchanEndpoints
-import com.github.k1rakishou.chan.core.site.sites.lynxchan.engine.LynxchanSite
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
-class Chan8MoeEndpoints(lynxchanSite: LynxchanSite) : LynxchanEndpoints(lynxchanSite) {
+class Chan8MoeEndpoints(lynxchanSite: BaseLynxchanSite) : LynxchanEndpoints(lynxchanSite) {
   override fun reply(chanDescriptor: ChanDescriptor): HttpUrl {
     when (chanDescriptor) {
       is ChanDescriptor.ICatalogDescriptor -> {

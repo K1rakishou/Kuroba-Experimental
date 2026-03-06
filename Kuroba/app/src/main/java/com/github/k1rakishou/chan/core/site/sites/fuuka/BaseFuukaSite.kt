@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.core.site.sites.fuuka
 
-import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.SiteConfiguration
 import com.github.k1rakishou.chan.core.site.SiteEndpoints
@@ -10,10 +9,6 @@ import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.common.DefaultPostParser
 import com.github.k1rakishou.chan.core.site.limitations.PostingLimitationConfig
 import com.github.k1rakishou.chan.core.site.parser.SiteApi
-import com.github.k1rakishou.chan.core.site.sites.foolfuuka.FoolFuukaActions
-import com.github.k1rakishou.chan.core.site.sites.foolfuuka.FoolFuukaApi
-import com.github.k1rakishou.chan.core.site.sites.foolfuuka.FoolFuukaCommentParser
-import com.github.k1rakishou.chan.core.site.sites.foolfuuka.FoolFuukaEndpoints
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -34,16 +29,16 @@ abstract class BaseFuukaSite : CommonSite() {
   )
   override val staticBoards: List<ChanBoard> = emptyList()
   override val urlHandler: SiteUrlHandler by lazy { BaseFuukaUrlHandler(rootUrl, mediaHosts) }
-  override val endpoints: SiteEndpoints by lazy { FoolFuukaEndpoints(this, rootUrl) }
-  override val requestModifier: SiteRequestModifier<Site> by lazy { BaseFuukaRequestModifier(this, appConstants) }
-  override val api: SiteApi by lazy { FoolFuukaApi(this) }
-  override val actions: SiteActions by lazy { FoolFuukaActions(this) }
-  open val commentParser by lazy { FoolFuukaCommentParser(archivesManager) }
+  override val endpoints: SiteEndpoints by lazy { FuukaEndpoints(this, rootUrl) }
+  override val requestModifier: SiteRequestModifier by lazy { BaseFuukaRequestModifier(this, appConstants) }
+  override val api: SiteApi by lazy { FuukaApi(this) }
+  override val actions: SiteActions by lazy { FuukaActions(this) }
+  open val commentParser by lazy { FuukaCommentParser() }
 
   open class BaseFuukaRequestModifier(
     site: BaseFuukaSite,
     appConstants: AppConstants
-  ) : SiteRequestModifier<Site>(site, appConstants)
+  ) : SiteRequestModifier(site, appConstants)
 
   open class BaseFuukaUrlHandler(
     override val url: HttpUrl,

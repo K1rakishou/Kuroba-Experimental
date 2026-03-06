@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.core.site.sites.lynxchan.chan8
 
+import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.http.HttpCall
 import com.github.k1rakishou.chan.core.site.sites.lynxchan.chan8.Chan8Moe.Companion.POW_ID
 import com.github.k1rakishou.chan.core.site.sites.lynxchan.chan8.Chan8Moe.Companion.POW_TOKEN
@@ -13,9 +14,9 @@ import okhttp3.HttpUrl
 import okhttp3.Request
 
 class Chan8MoeRequestModifier(
-  site: Chan8Moe,
+  site: Site,
   appConstants: AppConstants
-) : LynxchanRequestModifier<Chan8Moe>(site, appConstants) {
+) : LynxchanRequestModifier(site, appConstants) {
   override fun modifyHttpCall(
     httpCall: HttpCall,
     requestBuilder: Request.Builder
@@ -37,7 +38,7 @@ class Chan8MoeRequestModifier(
   }
 
   override fun modifyGenericRequest(
-    site: Chan8Moe,
+    site: Site,
     requestBuilder: Request.Builder
   ) {
     super.modifyGenericRequest(site, requestBuilder)
@@ -45,7 +46,7 @@ class Chan8MoeRequestModifier(
   }
 
   override fun modifyCatalogOrThreadGetRequest(
-    site: Chan8Moe,
+    site: Site,
     chanDescriptor: ChanDescriptor,
     requestBuilder: Request.Builder
   ) {
@@ -55,7 +56,7 @@ class Chan8MoeRequestModifier(
 
   @Suppress("ForbiddenComment")
   override fun modifyVideoStreamRequest(
-    site: Chan8Moe,
+    site: Site,
     requestProperties: MutableMap<String, String>,
     url: HttpUrl
   ) {
@@ -66,12 +67,13 @@ class Chan8MoeRequestModifier(
       requestProperties.updateCookieHeader(cookies)
     }
 
+    site as Chan8Moe
     // Can be just the root url
     requestProperties["Referer"] = site.domainString
   }
 
   override fun modifyPostReportRequest(
-    site: Chan8Moe,
+    site: Site,
     requestBuilder: Request.Builder
   ) {
     super.modifyPostReportRequest(site, requestBuilder)
@@ -84,11 +86,14 @@ class Chan8MoeRequestModifier(
       addOrReplaceCookieHeader(cookies)
     }
 
+    site as Chan8Moe
     // Can be just the root url
     header("Referer", site.domainString)
   }
 
   private fun buildCookies(): String {
+    site as Chan8Moe
+
     val powToken = site.powToken.get()?.value
     val powId = site.powId.get()?.value
 

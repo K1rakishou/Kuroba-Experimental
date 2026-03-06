@@ -33,13 +33,13 @@ import java.util.Objects
 import java.util.regex.Pattern
 
 class LynxchanReplyHttpCall(
-  site: LynxchanSite,
+  site: BaseLynxchanSite,
   private val replyChanDescriptor: ChanDescriptor,
   private val replyManager: ReplyManager,
   private val moshi: Moshi
 ) : HttpCall(site) {
-  private val lynxchanSite: LynxchanSite
-    get() = site as LynxchanSite
+  private val lynxchanSite: BaseLynxchanSite
+    get() = site as BaseLynxchanSite
 
   val replyResponse = ReplyResponse()
 

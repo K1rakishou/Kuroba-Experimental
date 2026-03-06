@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.core.site.sites.chan4
 
+import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteRequestModifier
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.http.HttpCall
@@ -16,12 +17,13 @@ import okhttp3.HttpUrl
 import okhttp3.Request
 
 class Chan4SiteRequestModifier(
-  site: Chan4,
+  site: Site,
   appConstants: AppConstants
-) : SiteRequestModifier<Chan4>(site, appConstants) {
+) : SiteRequestModifier(site, appConstants) {
 
   override fun modifyHttpCall(httpCall: HttpCall, requestBuilder: Request.Builder) {
     super.modifyHttpCall(httpCall, requestBuilder)
+    site as Chan4
 
     if (httpCall is Chan4ReplyCall && httpCall.replyMode == ReplyMode.ReplyModeUsePasscode) {
       if (site.actions.isLoggedIn()) {
@@ -37,6 +39,7 @@ class Chan4SiteRequestModifier(
 
   override fun modifyCookieBuilder(urlToOpen: HttpUrl, cookieBuilder: CookieBuilder) {
     super.modifyCookieBuilder(urlToOpen, cookieBuilder)
+    site as Chan4
 
     if (site.actions.isLoggedIn()) {
       cookieBuilder.addOrReplace("pass_enabled", "1")
@@ -67,7 +70,7 @@ class Chan4SiteRequestModifier(
   }
 
   override fun modifyGenericRequest(
-    site: Chan4,
+    site: Site,
     requestBuilder: Request.Builder
   ) {
     super.modifyGenericRequest(site, requestBuilder)
@@ -75,10 +78,11 @@ class Chan4SiteRequestModifier(
     addChan4CookieHeader(site, requestBuilder)
   }
 
-  override fun modifyPostReportRequest(site: Chan4, requestBuilder: Request.Builder) {
+  override fun modifyPostReportRequest(site: Site, requestBuilder: Request.Builder) {
     super.modifyPostReportRequest(site, requestBuilder)
 
     if (site.actions.isLoggedIn()) {
+      site as Chan4
       val passTokenSetting = site.passToken
       requestBuilder.addOrReplaceCookieHeader("pass_id=" + passTokenSetting.get())
     }
@@ -86,7 +90,7 @@ class Chan4SiteRequestModifier(
     addChan4CookieHeader(site, requestBuilder)
   }
 
-  private fun addChan4CookieHeader(site: Chan4, requestBuilder: Request.Builder) {
+  private fun addChan4CookieHeader(site: Site, requestBuilder: Request.Builder) {
     val url = requestBuilder.build().url
     val captchaCookie = get4chanPassCookie(site)
 
@@ -106,7 +110,7 @@ class Chan4SiteRequestModifier(
     requestBuilder.addOrReplaceCookieHeader("$CAPTCHA_COOKIE_KEY=${captchaCookie}")
   }
 
-  private fun get4chanPassCookie(site: Chan4): String? {
+  private fun get4chanPassCookie(site: Site): String? {
     val rememberCaptchaCookies = site
       .getSettingBySettingId<GsonJsonSetting<Chan4CaptchaSettings>>(SiteSetting.SiteSettingId.Chan4CaptchaSettings)
       ?.get()
@@ -118,6 +122,7 @@ class Chan4SiteRequestModifier(
       return null
     }
 
+    site as Chan4
     return site.chan4CaptchaCookie.get()
   }
 

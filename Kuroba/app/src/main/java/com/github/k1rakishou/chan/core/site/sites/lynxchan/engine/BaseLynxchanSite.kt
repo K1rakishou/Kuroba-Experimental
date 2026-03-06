@@ -2,9 +2,7 @@ package com.github.k1rakishou.chan.core.site.sites.lynxchan.engine
 
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteConfiguration
-import com.github.k1rakishou.chan.core.site.SiteRequestModifier
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.limitations.BoardDependantAttachablesCount
@@ -20,7 +18,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import javax.inject.Inject
 
-abstract class LynxchanSite : CommonSite() {
+abstract class BaseLynxchanSite : CommonSite() {
   @Inject
   lateinit var lynxchanGetBoardsUseCase: LynxchanGetBoardsUseCase
 
@@ -83,7 +81,7 @@ abstract class LynxchanSite : CommonSite() {
     LynxchanRequestModifier(
       site = this,
       appConstants = appConstants
-    ) as SiteRequestModifier<Site>
+    )
   }
 
 
