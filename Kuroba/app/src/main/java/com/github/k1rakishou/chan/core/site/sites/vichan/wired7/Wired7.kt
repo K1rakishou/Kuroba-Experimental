@@ -45,6 +45,7 @@ class Wired7 : BaseVichanSite(
     )
   }
   override val urlHandler: SiteUrlHandler by lazy { Wired7UrlHandler(this) }
+  override val api by lazy { Wired7Api(this) }
   override val endpoints by lazy { Wired7Endpoints(this) }
   override val staticBoards: List<ChanBoard> = boards
 

@@ -30,10 +30,12 @@ import java.io.InputStreamReader
 import kotlin.math.max
 
 class Wired7Api(
-  private val siteManager: SiteManager,
-  private val boardManager: BoardManager,
   commonSite: CommonSite
 ) : CommonApi(commonSite) {
+  private val siteManager: SiteManager
+    get() = site.dependencies.siteManager
+  private val boardManager: BoardManager
+    get() = site.dependencies.boardManager
 
   @Throws(Exception::class)
   override suspend fun loadThreadFresh(
