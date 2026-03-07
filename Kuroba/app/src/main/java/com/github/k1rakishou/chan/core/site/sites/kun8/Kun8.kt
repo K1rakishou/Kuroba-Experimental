@@ -31,7 +31,7 @@ class Kun8 : CommonSite() {
   override val name: String = SITE_NAME
   override val commentParserType = SiteConfiguration.CommentParserType.VichanParser
   override val globalSearchType = SiteConfiguration.GlobalSearchType.SearchNotSupported
-  override val siteIconUrl: HttpUrl = "https://media.128ducks.com/static/favicon.ico".toHttpUrl()
+  override val siteIconUrl: HttpUrl = "https://${MEDIA_URL}/static/favicon.ico".toHttpUrl()
   override val boardsType = SiteConfiguration.BoardsType.Dynamic
   override val catalogType = SiteConfiguration.CatalogType.Static
   override val chunkedDownloaderConfig by lazy {
@@ -96,14 +96,14 @@ class Kun8 : CommonSite() {
 
     override fun postAuthenticate(): SiteAuthentication {
       return SiteAuthentication.fromUrl(
-        "https://sys.8kun.top/dnsbls_bypass.php",
+        "https://${SYS_URL}/dnsbls_bypass.php",
         "You failed the CAPTCHA",
         "You may now go back and make your post"
       )
     }
   }
 
-  private class Kun8Endpoints(kun8: Kun8) : VichanEndpoints(kun8, "https://8kun.top", "https://sys.8kun.top") {
+  private class Kun8Endpoints(kun8: Kun8) : VichanEndpoints(kun8, "https://${ROOT_URL}", "https://${SYS_URL}") {
     override fun imageUrl(boardDescriptor: BoardDescriptor, arg: Map<String, String>?): HttpUrl {
       requireNotNull(arg)
 
@@ -112,9 +112,9 @@ class Kun8 : CommonSite() {
       val fpath = arg["fpath"]?.toIntOrNull() ?: 1
 
       val url = if (fpath == 1) {
-        "https://media.128ducks.com/file_store/$tim.$ext".toHttpUrlOrNull()
+        "https://${MEDIA_URL}/file_store/$tim.$ext".toHttpUrlOrNull()
       } else {
-        "https://media.128ducks.com/${boardDescriptor.boardCode}/src/$tim.$ext".toHttpUrlOrNull()
+        "https://${MEDIA_URL}/${boardDescriptor.boardCode}/src/$tim.$ext".toHttpUrlOrNull()
       }
 
       return requireNotNull(url) { "image url is null" }
@@ -129,7 +129,7 @@ class Kun8 : CommonSite() {
       requireNotNull(arg)
 
       if (spoiler) {
-        return "https://media.128ducks.com/static/assets/${boardDescriptor.boardCode}/spoiler.png".toHttpUrl()
+        return "https://${MEDIA_URL}/static/assets/${boardDescriptor.boardCode}/spoiler.png".toHttpUrl()
       }
 
       val tim = requireNotNull(arg["tim"]) { "\"tim\" parameter not found" }
@@ -141,12 +141,12 @@ class Kun8 : CommonSite() {
       }
 
       val url = if (fpath == 1) {
-        "https://media.128ducks.com/file_store/thumb/$tim.$extension".toHttpUrlOrNull()
+        "https://${MEDIA_URL}/file_store/thumb/$tim.$extension".toHttpUrlOrNull()
       } else {
         // Oldstyle images seems to always have "jpg" extension. But even if some of them don't
         // (I couldn't find any but there might be some) there is no way to figure out the true
         // extension because API only sends the original image extension.
-        "https://media.128ducks.com/${boardDescriptor.boardCode}/thumb/$tim.$extension".toHttpUrlOrNull()
+        "https://${MEDIA_URL}/${boardDescriptor.boardCode}/thumb/$tim.$extension".toHttpUrlOrNull()
       }
 
       return requireNotNull(url) { "thumbnail url is null" }
@@ -159,11 +159,10 @@ class Kun8 : CommonSite() {
 
   private class Kun8UrlHandler : CommonSiteUrlHandler() {
     override val mediaHosts = arrayOf(
-      "https://media.8kun.top/".toHttpUrl(),
-      "https://media.128ducks.com/".toHttpUrl()
+      "https://${MEDIA_URL}/".toHttpUrl()
     )
 
-    override val url: HttpUrl = "https://8kun.top/".toHttpUrl()
+    override val url: HttpUrl = "https://${ROOT_URL}/".toHttpUrl()
 
     override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?, postSubNo: Long?): String? {
       return when (chanDescriptor) {
@@ -186,6 +185,10 @@ class Kun8 : CommonSite() {
 
   companion object {
     const val SITE_NAME = "8kun"
+
+    private const val ROOT_URL = "8kun.top"
+    private const val SYS_URL = "sys.${ROOT_URL}"
+    private const val MEDIA_URL = "nerv.${ROOT_URL}"
   }
 
 }

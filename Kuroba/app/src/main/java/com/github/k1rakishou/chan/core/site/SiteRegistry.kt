@@ -46,16 +46,12 @@ object SiteRegistry {
     siteClasses.addSiteToSiteClassesMap(Dvach.SITE_NAME, Dvach::class.java)
     siteClasses.addSiteToSiteClassesMap(Wired7.SITE_NAME, Wired7::class.java)
     siteClasses.addSiteToSiteClassesMap(Kun8.SITE_NAME, Kun8::class.java)
-    siteClasses.addSiteToSiteClassesMap(Chan420.SITE_NAME, Chan420::class.java)
     siteClasses.addSiteToSiteClassesMap(Chan370.SITE_NAME, Chan370::class.java)
-    siteClasses.addSiteToSiteClassesMap(Vhschan.SITE_NAME, Vhschan::class.java)
     siteClasses.addSiteToSiteClassesMap(Endchan.SITE_NAME, Endchan::class.java)
     siteClasses.addSiteToSiteClassesMap(Kohlchan.SITE_NAME, Kohlchan::class.java)
     siteClasses.addSiteToSiteClassesMap(Krautchan.SITE_NAME, Krautchan::class.java)
     siteClasses.addSiteToSiteClassesMap(Chan8Moe.SITE_NAME, Chan8Moe::class.java)
-    siteClasses.addSiteToSiteClassesMap(YesHoney.SITE_NAME, YesHoney::class.java)
     siteClasses.addSiteToSiteClassesMap(Leftypol.SITE_NAME, Leftypol::class.java)
-    siteClasses.addSiteToSiteClassesMap(SoyjakParty.SITE_NAME, SoyjakParty::class.java)
 
     // By default, archives should be placed after the regular sites
     siteClasses.addSiteToSiteClassesMap(ArchivedMoe.SITE_NAME, ArchivedMoe::class.java)
@@ -73,6 +69,12 @@ object SiteRegistry {
     // A synthetic site which only purpose is to have an order in the global site order for composed
     // catalogs when showing them on the board selection screen.
     siteClasses.addSiteToSiteClassesMap(CompositeCatalogSite.SITE_NAME, CompositeCatalogSite::class.java)
+
+    // Disabled (dead) sites
+    siteClasses.addSiteToSiteClassesMap(YesHoney.SITE_NAME, YesHoney::class.java)
+    siteClasses.addSiteToSiteClassesMap(SoyjakParty.SITE_NAME, SoyjakParty::class.java)
+    siteClasses.addSiteToSiteClassesMap(Chan420.SITE_NAME, Chan420::class.java)
+    siteClasses.addSiteToSiteClassesMap(Vhschan.SITE_NAME, Vhschan::class.java)
 
     return@lazy siteClasses
   }

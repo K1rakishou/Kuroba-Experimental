@@ -18,17 +18,19 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 class Sushichan : CommonSite() {
   private val boards by lazy {
     buildList {
-      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "wildcard"), "artsy"))
-      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "lounge"), "sushi social"))
-      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "arcade"), "vidya gaems"))
-      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "kawaii"), "cute things"))
-      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "kitchen"), "tasty morsels & delights"))
-      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "tunes"), "enjoyable sounds"))
-      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "culture"), "arts & literature"))
-      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "silicon"), "technology"))
-      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "yakuza"), "site meta-discussion"))
-      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "hell"), "internet death cult"))
-      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "lewd"), "dat ecchi & hentai goodness"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "kaitensushi"), "Fresh Posts Bento"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "faq"), "FAQs Cocktail"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "chat"), "Chat Sake"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "lounge"), "Lounge Roll"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "yakuza"), "Yakuza Roll"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "arcade"), "Arcade Shimeji"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "kawaii"), "Kawaii Onigiri"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "kitchen"), "Kitchen Miso"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "tunes"), "Tunes Udon"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "culture"), "Culture Yakisoba"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "silicon"), "Silicon Sashimi"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "otaku"), "Otaku Mochi"))
+      add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "hell"), "Hell Dango [nsfw]"))
     }
   }
 

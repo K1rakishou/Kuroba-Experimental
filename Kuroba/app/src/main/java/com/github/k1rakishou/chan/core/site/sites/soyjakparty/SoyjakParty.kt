@@ -38,7 +38,7 @@ class SoyjakParty : CommonSite() {
     }
   }
 
-  override val enabled: Boolean = true
+  override val enabled: Boolean = false
   override val name: String = SITE_NAME
   override val siteIconUrl = "https://soyjak.party/favicon.ico".toHttpUrl()
   override val commentParserType = SiteConfiguration.CommentParserType.VichanParser
