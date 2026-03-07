@@ -52,10 +52,13 @@ class Chan4ReplyCall(
   site: Site,
   replyChanDescriptor: ChanDescriptor,
   val replyMode: ReplyMode,
-  private val replyManager: ReplyManager,
-  private val boardFlagInfoRepository: BoardFlagInfoRepository,
-  private val appConstants: AppConstants
 ) : CommonReplyHttpCall(site, replyChanDescriptor) {
+  private val replyManager: ReplyManager
+    get() = site.dependencies.replyManager
+  private val boardFlagInfoRepository: BoardFlagInfoRepository
+    get() = site.dependencies.boardFlagInfoRepository
+  private val appConstants: AppConstants
+    get() = site.dependencies.appConstants
 
   @get:Synchronized
   @set:Synchronized

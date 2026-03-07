@@ -123,7 +123,11 @@ class DvachCaptchaLayoutViewModel(
     }
   }
 
-  private suspend fun performEmojiClickRequest(dvach: Dvach, captchaInfo: CaptchaInfo.Emoji, keyIndex: Int): CaptchaInfo {
+  private suspend fun performEmojiClickRequest(
+    dvach: Dvach,
+    captchaInfo: CaptchaInfo.Emoji,
+    keyIndex: Int
+  ): CaptchaInfo {
     val clickEmojiRequest = ClickEmojiRequest(
       captchaTokenID = captchaInfo.id,
       emojiNumber = keyIndex
@@ -133,7 +137,7 @@ class DvachCaptchaLayoutViewModel(
       .toJson(clickEmojiRequest)
 
     val requestBuilder = Request.Builder()
-      .url("${dvach.domainString}/api/captcha/emoji/click")
+      .url("${dvach.currentDomainString}/api/captcha/emoji/click")
       .post(clickEmojiRequestJson.toRequestBody("application/json".toMediaType()))
 
     dvach.requestModifier.modifyGenericRequest(dvach, requestBuilder)
@@ -233,7 +237,7 @@ class DvachCaptchaLayoutViewModel(
     }
 
     val requestBuilder = Request.Builder()
-      .url("${dvach.domainString}/api/captcha/emoji/show?id=${captchaInfoData.id}")
+      .url("${dvach.currentDomainString}/api/captcha/emoji/show?id=${captchaInfoData.id}")
       .get()
 
     dvach.requestModifier.modifyGenericRequest(dvach, requestBuilder)
@@ -353,7 +357,7 @@ class DvachCaptchaLayoutViewModel(
         val dvach = siteManager.bySiteDescriptorAndActive(Dvach.SITE_DESCRIPTOR) as? Dvach
           ?: return null
 
-        return "${dvach.domainString}/api/captcha/2chcaptcha/show?id=$id".toHttpUrl()
+        return "${dvach.currentDomainString}/api/captcha/2chcaptcha/show?id=$id".toHttpUrl()
       }
 
     }

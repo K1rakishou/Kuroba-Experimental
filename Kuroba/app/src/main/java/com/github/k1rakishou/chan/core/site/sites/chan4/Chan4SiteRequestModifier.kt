@@ -1,11 +1,11 @@
 package com.github.k1rakishou.chan.core.site.sites.chan4
 
 import com.github.k1rakishou.chan.core.site.Site
+import com.github.k1rakishou.chan.core.site.SiteBase
 import com.github.k1rakishou.chan.core.site.SiteRequestModifier
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.http.HttpCall
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4.Companion.CAPTCHA_COOKIE_KEY
-import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.CookieBuilder
 import com.github.k1rakishou.common.StringUtils.formatToken
 import com.github.k1rakishou.common.addOrReplaceCookieHeader
@@ -17,9 +17,8 @@ import okhttp3.HttpUrl
 import okhttp3.Request
 
 class Chan4SiteRequestModifier(
-  site: Site,
-  appConstants: AppConstants
-) : SiteRequestModifier(site, appConstants) {
+  site: SiteBase,
+) : SiteRequestModifier(site) {
 
   override fun modifyHttpCall(httpCall: HttpCall, requestBuilder: Request.Builder) {
     super.modifyHttpCall(httpCall, requestBuilder)

@@ -19,10 +19,24 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 
-class Chan420 : CommonSite() {
+class Chan420 : CommonSite(
+  defaultDomain = "https://420chan.org"
+) {
+  private val apiDomain: HttpUrl
+    get() = "https://api.${currentDomain.host}.org/".toHttpUrl()
+  private val boardsDomain: HttpUrl
+    get() = "https://boards.${currentDomain.host}.org/".toHttpUrl()
+  private val cdnDomain: HttpUrl
+    get() = "https://cdn.${currentDomain.host}.org/".toHttpUrl()
+
   override val enabled: Boolean = false
   override val name: String = SITE_NAME
-  override val siteIconUrl: HttpUrl = "https://420chan.org/favicon.ico".toHttpUrl()
+  override val siteIconUrl: HttpUrl
+    get() {
+      return currentDomain.newBuilder()
+        .addPathSegment("favicon.ico")
+        .build()
+    }
   override val commentParserType = SiteConfiguration.CommentParserType.TaimabaParser
   override val globalSearchType = SiteConfiguration.GlobalSearchType.SearchNotSupported
   override val boardsType = SiteConfiguration.BoardsType.Dynamic
@@ -42,17 +56,17 @@ class Chan420 : CommonSite() {
       )
     )
   }
-  override val urlHandler by lazy { Chan420UrlHandler() }
+  override val urlHandler by lazy { Chan420UrlHandler(this) }
   override val endpoints by lazy {
     TaimabaEndpoints(
       commonSite = this,
-      rootUrl = "https://api.420chan.org",
-      sysUrl = "https://boards.420chan.org"
+      apiUrl = apiDomain,
+      boardsUrl = boardsDomain,
+      cdnUrl = cdnDomain,
     )
   }
   override val api by lazy { TaimabaApi(siteManager, boardManager, this) }
   override val actions by lazy { Chan420Actions(this) }
-
 
   override fun hasSiteFeature(siteFeature: SiteConfiguration.SiteFeature): Boolean {
     return super.hasSiteFeature(siteFeature)
@@ -93,21 +107,34 @@ class Chan420 : CommonSite() {
     }
   }
 
-  class Chan420UrlHandler: CommonSiteUrlHandler() {
-    override val mediaHosts = arrayOf("https://boards.420chan.org/".toHttpUrl())
+  class Chan420UrlHandler(
+    private val chan420: Chan420
+  ): CommonSiteUrlHandler(chan420) {
+    override val rootUrl: HttpUrl
+      get() = chan420.currentDomain
 
-    override val url: HttpUrl
-      get() = "https://420chan.org/".toHttpUrl()
+    override fun mediaHosts(): Set<HttpUrl> {
+      return super.mediaHosts() + chan420.boardsDomain
+    }
 
     override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?, postSubNo: Long?): String? {
       val boardCode = chanDescriptor.boardCode()
 
       when (chanDescriptor) {
         is ChanDescriptor.CatalogDescriptor -> {
-          return "https://boards.420chan.org/$boardCode/"
+          return chan420.boardsDomain.newBuilder()
+            .addPathSegment(boardCode)
+            .build()
+            .toString()
         }
         is ChanDescriptor.ThreadDescriptor -> {
-          var url = "https://boards.420chan.org/$boardCode/thread/" + chanDescriptor.threadNo
+          var url = chan420.boardsDomain.newBuilder()
+            .addPathSegment(boardCode)
+            .addPathSegment("thread")
+            .addPathSegment(chanDescriptor.threadNo.toString())
+            .build()
+            .toString()
+
           if (postNo != null && chanDescriptor.threadNo != postNo) {
             url += "#${postNo}"
           }

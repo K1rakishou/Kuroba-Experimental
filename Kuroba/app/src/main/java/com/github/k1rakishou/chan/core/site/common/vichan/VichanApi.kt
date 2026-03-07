@@ -31,10 +31,12 @@ import java.io.InputStreamReader
 import kotlin.math.max
 
 open class VichanApi(
-  private val siteManager: SiteManager,
-  private val boardManager: BoardManager,
   site: CommonSite
 ) : CommonApi(site) {
+  private val siteManager: SiteManager
+    get() = site.siteManager
+  private val boardManager: BoardManager
+    get() = site.boardManager
 
   @Throws(Exception::class)
   override suspend fun loadThreadFresh(

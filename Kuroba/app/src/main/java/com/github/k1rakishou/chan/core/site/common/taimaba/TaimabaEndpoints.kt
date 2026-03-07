@@ -15,30 +15,26 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 class TaimabaEndpoints(
   commonSite: CommonSite,
-  rootUrl: String,
-  sysUrl: String
+  apiUrl: HttpUrl,
+  boardsUrl: HttpUrl,
+  cdnUrl: HttpUrl
 ) : CommonEndpoints(commonSite) {
-  private val root = SimpleHttpUrl(rootUrl)
-  private val sys = SimpleHttpUrl(sysUrl)
-
-  private val report = HttpUrl.Builder()
-    .scheme("https")
-    .host("cdn.420chan.org")
-    .port(8443)
-    .build()
+  private val api = SimpleHttpUrl(apiUrl)
+  private val boards = SimpleHttpUrl(boardsUrl)
+  private val cdn = cdnUrl
 
   override fun catalog(
     boardDescriptor: BoardDescriptor,
     contentType: SiteEndpoints.ContentType
   ): HttpUrl? {
-    return root.builder()
+    return api.builder()
       .s(boardDescriptor.boardCode)
       .s("catalog.json")
       .url()
   }
 
   override fun boards(): HttpUrl {
-    return root.builder().s("boards.json").url()
+    return api.builder().s("boards.json").url()
   }
 
   override fun thread(
@@ -46,7 +42,7 @@ class TaimabaEndpoints(
     contentType: SiteEndpoints.ContentType,
     archive: Boolean
   ): HttpUrl? {
-    return root.builder()
+    return api.builder()
       .s(threadDescriptor.boardCode())
       .s("res")
       .s(threadDescriptor.threadNo.toString() + ".json")
@@ -64,7 +60,7 @@ class TaimabaEndpoints(
     return when (arg["ext"]) {
       "swf" -> (AppConstants.RESOURCES_ENDPOINT + "swf_thumb.png").toHttpUrlOrNull()
       "mp3", "m4a", "ogg", "flac" -> (AppConstants.RESOURCES_ENDPOINT + "audio_thumb.png").toHttpUrlOrNull()
-      else -> sys.builder()
+      else -> boards.builder()
         .s(boardDescriptor.boardCode)
         .s("thumb")
         .s(arg["tim"] + "s.jpg")
@@ -75,7 +71,7 @@ class TaimabaEndpoints(
   override fun imageUrl(boardDescriptor: BoardDescriptor, arg: Map<String, String>?): HttpUrl {
     requireNotNull(arg)
 
-    return sys.builder()
+    return boards.builder()
       .s(boardDescriptor.boardCode)
       .s("src")
       .s(arg.get("tim") + "." + arg.get("ext"))
@@ -84,7 +80,7 @@ class TaimabaEndpoints(
 
   override fun icon(icon: String, arg: Map<String, String>?): HttpUrl {
     requireNotNull(arg)
-    val stat = sys.builder().s("static")
+    val stat = boards.builder().s("static")
 
     if (icon == "country") {
       stat.s("flags").s(arg.get("country_code")!!.lowercase() + ".png")
@@ -94,15 +90,15 @@ class TaimabaEndpoints(
   }
 
   override fun pages(board: ChanBoard): HttpUrl {
-    return root.builder().s(board.boardCode()).s("threads.json").url()
+    return api.builder().s(board.boardCode()).s("threads.json").url()
   }
 
   override fun reply(chanDescriptor: ChanDescriptor): HttpUrl {
-    return sys.builder().s(chanDescriptor.boardCode()).s("taimaba.pl").url()
+    return boards.builder().s(chanDescriptor.boardCode()).s("taimaba.pl").url()
   }
 
   override fun report(post: ChanPost): HttpUrl {
-    return report.newBuilder()
+    return cdn.newBuilder()
       .addPathSegment("narcbot")
       .addPathSegment("ajaxReport.jsp")
       .addQueryParameter("postId", post.postNo().toString())

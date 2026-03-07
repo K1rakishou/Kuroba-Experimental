@@ -19,6 +19,7 @@ interface Site {
   val configuration: SiteConfiguration
   val postParser: PostParser?
   val settings: List<SiteSetting>
+  val dependencies: SiteDependencies
 
   suspend fun initialize()
 

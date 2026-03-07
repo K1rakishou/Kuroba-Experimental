@@ -25,7 +25,9 @@ import com.github.k1rakishou.prefs.OptionsSetting
 import com.github.k1rakishou.prefs.StringSetting
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
-class Chan4 : SiteBase() {
+class Chan4 : SiteBase(
+  defaultDomain = "https://4chan.org"
+) {
   lateinit var passUser: StringSetting
   lateinit var passPass: StringSetting
   lateinit var passToken: StringSetting
@@ -46,7 +48,7 @@ class Chan4 : SiteBase() {
       CaptchaType::class.java, CaptchaType.CHAN4_CAPTCHA)
     lastUsedFlagPerBoard = StringSetting(prefs, "preference_flag_chan4", "0")
     chan4CaptchaCookie = StringSetting(prefs, "preference_4chan_captcha_cookie", "")
-    chan4CaptchaSettings = GsonJsonSetting(gson, Chan4CaptchaSettings::class.java, prefs,
+    chan4CaptchaSettings = GsonJsonSetting(injectedSiteDependencies.get().gson, Chan4CaptchaSettings::class.java, prefs,
       "chan4_captcha_settings", Chan4CaptchaSettings())
     check4chanPostAcknowledged = BooleanSetting(prefs, "chan_4chan_post_acknowledged", false)
   }
@@ -56,7 +58,7 @@ class Chan4 : SiteBase() {
   override val descriptor: SiteDescriptor = SITE_DESCRIPTOR
   override val urlHandler: SiteUrlHandler by lazy { Chan4UrlHandler() }
   override val endpoints: SiteEndpoints by lazy { Chan4Endpoints() }
-  override val requestModifier by lazy { Chan4SiteRequestModifier(this, appConstants) }
+  override val requestModifier by lazy { Chan4SiteRequestModifier(this) }
   override val api: SiteApi by lazy {
     FutabaSiteApi(
       siteManager = siteManager,
@@ -96,7 +98,7 @@ class Chan4 : SiteBase() {
 
   override val configuration: SiteConfiguration by lazy {
     val siteIcon = SiteIcon.fromFavicon(
-      imageLoaderDeprecated = imageLoaderDeprecatedLazy,
+      imageLoaderDeprecated = injectedSiteDependencies.get().imageLoaderDeprecated,
       url = "https://s.4cdn.org/image/favicon.ico".toHttpUrl()
     )
 

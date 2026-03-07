@@ -1,23 +1,18 @@
-package com.github.k1rakishou.chan.core.site.sites.soyjakparty
+package com.github.k1rakishou.chan.core.site.sites.vichan.soyjakparty
 
-import com.github.k1rakishou.chan.core.site.SiteActions
-import com.github.k1rakishou.chan.core.site.SiteConfiguration
 import com.github.k1rakishou.chan.core.site.SiteEndpoints
-import com.github.k1rakishou.chan.core.site.common.CommonSite
-import com.github.k1rakishou.chan.core.site.common.DefaultPostParser
-import com.github.k1rakishou.chan.core.site.common.vichan.VichanActions
-import com.github.k1rakishou.chan.core.site.common.vichan.VichanApi
-import com.github.k1rakishou.chan.core.site.common.vichan.VichanCommentParser
 import com.github.k1rakishou.chan.core.site.common.vichan.VichanEndpoints
+import com.github.k1rakishou.chan.core.site.sites.vichan.BaseVichanSite
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import okhttp3.HttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrl
 
-class SoyjakParty : CommonSite() {
+class SoyjakParty : BaseVichanSite(
+  defaultDomain = "https://soyjak.party"
+) {
   private val boards by lazy {
     buildList {
       add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "q"), "the 'party"))
@@ -40,32 +35,13 @@ class SoyjakParty : CommonSite() {
 
   override val enabled: Boolean = false
   override val name: String = SITE_NAME
-  override val siteIconUrl = "https://soyjak.party/favicon.ico".toHttpUrl()
-  override val commentParserType = SiteConfiguration.CommentParserType.VichanParser
-  override val globalSearchType = SiteConfiguration.GlobalSearchType.SearchNotSupported
-  override val boardsType = SiteConfiguration.BoardsType.Static
-  override val catalogType = SiteConfiguration.CatalogType.Static
-  override val chunkedDownloaderConfig = SiteConfiguration.ChunkedDownloaderConfig(
-    enabled = true,
-    siteSendsCorrectFileSizeInBytes = true
-  )
-  override val urlHandler by lazy { SoyjakPartyUrlHandler() }
+  override val urlHandler by lazy { SoyjakPartyUrlHandler(this) }
   override val endpoints by lazy { SoyjakPartyEndpoints(this) }
-  override val api by lazy { VichanApi(siteManager, boardManager, this) }
-  override val actions: SiteActions by lazy {
-    VichanActions(
-      commonSite = this,
-      proxiedOkHttpClient = proxiedOkHttpClient,
-      siteManager = siteManager,
-      replyManager = replyManager
-    )
-  }
-  override val postParser by lazy { DefaultPostParser(VichanCommentParser(), archivesManager) }
   override val staticBoards = boards
 
   class SoyjakPartyEndpoints(
     soyjakParty: SoyjakParty
-  ) : VichanEndpoints(soyjakParty, "https://soyjak.party/", "https://soyjak.party/") {
+  ) : VichanEndpoints(soyjakParty) {
     override fun thumbnailUrl(
       boardDescriptor: BoardDescriptor,
       spoiler: Boolean,
@@ -99,21 +75,16 @@ class SoyjakParty : CommonSite() {
     }
   }
 
-  class SoyjakPartyUrlHandler : CommonSiteUrlHandler() {
-    private val ROOT = "https://soyjak.party/"
-
-    override val url = ROOT.toHttpUrl()
-    override val mediaHosts = arrayOf(url)
-
+  class SoyjakPartyUrlHandler(soyjakParty: SoyjakParty) : CommonSiteUrlHandler(soyjakParty) {
     override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?, postSubNo: Long?): String? {
       when (chanDescriptor) {
         is CatalogDescriptor -> {
-          return url.newBuilder()
+          return rootUrl.newBuilder()
             .addPathSegment(chanDescriptor.boardCode())
             .toString()
         }
         is ThreadDescriptor -> {
-          return url.newBuilder()
+          return rootUrl.newBuilder()
             .addPathSegment(chanDescriptor.boardCode())
             .addPathSegment("thread")
             .addPathSegment(chanDescriptor.threadNo.toString() + ".html")

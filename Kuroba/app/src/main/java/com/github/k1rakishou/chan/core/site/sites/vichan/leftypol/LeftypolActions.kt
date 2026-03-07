@@ -1,11 +1,11 @@
-package com.github.k1rakishou.chan.core.site.sites.leftypol
+package com.github.k1rakishou.chan.core.site.sites.vichan.leftypol
 
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.common.MultipartHttpCall
-import com.github.k1rakishou.chan.core.site.sites.lainchan.LainchanActions
+import com.github.k1rakishou.chan.core.site.sites.vichan.lainchan.LainchanActions
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards

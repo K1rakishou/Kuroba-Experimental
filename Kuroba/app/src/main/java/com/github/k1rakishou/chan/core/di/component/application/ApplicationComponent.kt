@@ -23,8 +23,8 @@ import com.github.k1rakishou.chan.core.receiver.ImageSaverBroadcastReceiver
 import com.github.k1rakishou.chan.core.receiver.PostingServiceBroadcastReceiver
 import com.github.k1rakishou.chan.core.receiver.ReplyNotificationDeleteIntentBroadcastReceiver
 import com.github.k1rakishou.chan.core.site.SiteBase
+import com.github.k1rakishou.chan.core.site.SiteDependencies
 import com.github.k1rakishou.chan.core.site.sites.CompositeCatalogSite
-import com.github.k1rakishou.chan.core.site.sites.lynxchan.engine.BaseLynxchanSite
 import com.github.k1rakishou.chan.core.watcher.BookmarkBackgroundWatcherWorker
 import com.github.k1rakishou.chan.core.watcher.FilterWatcherWorker
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2Service
@@ -58,7 +58,7 @@ import javax.inject.Singleton
     UseCaseModule::class
   ]
 )
-interface ApplicationComponent : ApplicationDependencies {
+interface ApplicationComponent : ApplicationDependencies, SiteDependencies {
   fun activityComponentBuilder(): ActivityComponent.Builder
   fun viewModelComponentBuilder(): ViewModelComponent.Builder
 
@@ -73,7 +73,6 @@ interface ApplicationComponent : ApplicationDependencies {
   fun inject(imageSaverBroadcastReceiver: ImageSaverBroadcastReceiver)
   fun inject(postingServiceBroadcastReceiver: PostingServiceBroadcastReceiver)
   fun inject(siteBase: SiteBase)
-  fun inject(lynxchanSite: BaseLynxchanSite)
 
   @Component.Builder
   interface Builder {

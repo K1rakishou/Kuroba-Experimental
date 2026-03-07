@@ -1,27 +1,22 @@
-package com.github.k1rakishou.chan.core.site.sites.lainchan
+package com.github.k1rakishou.chan.core.site.sites.vichan.lainchan
 
 import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.SiteConfiguration
-import com.github.k1rakishou.chan.core.site.SiteEndpoints
 import com.github.k1rakishou.chan.core.site.SiteUrlHandler
-import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.common.DefaultPostParser
 import com.github.k1rakishou.chan.core.site.common.vichan.LainchanCommentParser
-import com.github.k1rakishou.chan.core.site.common.vichan.VichanApi
-import com.github.k1rakishou.chan.core.site.common.vichan.VichanEndpoints
 import com.github.k1rakishou.chan.core.site.limitations.ConstantAttachablesCount
 import com.github.k1rakishou.chan.core.site.limitations.ConstantMaxTotalSizeInfo
 import com.github.k1rakishou.chan.core.site.limitations.PostingLimitationConfig
 import com.github.k1rakishou.chan.core.site.parser.PostParser
-import com.github.k1rakishou.chan.core.site.parser.SiteApi
+import com.github.k1rakishou.chan.core.site.sites.vichan.BaseVichanSite
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
-import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
-import okhttp3.HttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrl
 
-class Lainchan : CommonSite() {
+class Lainchan : BaseVichanSite(
+  defaultDomain = "https://lainchan.org"
+) {
   private val boards by lazy {
     buildList {
       val siteName = descriptor.siteName
@@ -49,52 +44,33 @@ class Lainchan : CommonSite() {
 
   override val enabled: Boolean = true
   override val name: String = SITE_NAME
-  override val siteIconUrl: HttpUrl = "https://lainchan.org/favicon.ico".toHttpUrl()
-  override val commentParserType = SiteConfiguration.CommentParserType.VichanParser
-  override val globalSearchType = SiteConfiguration.GlobalSearchType.SearchNotSupported
-  override val boardsType: SiteConfiguration.BoardsType = SiteConfiguration.BoardsType.Static
-  override val catalogType: SiteConfiguration.CatalogType = SiteConfiguration.CatalogType.Static
-  override val chunkedDownloaderConfig by lazy {
-    SiteConfiguration.ChunkedDownloaderConfig(
-      enabled = true,
-      siteSendsCorrectFileSizeInBytes = true
-    )
-  }
   override val postingLimitationConfig by lazy {
     PostingLimitationConfig(
       postMaxAttachables = ConstantAttachablesCount(3),
       postMaxAttachablesTotalSize = ConstantMaxTotalSizeInfo(75 * (1024 * 1024)) // 75 MB
     )
   }
-  override val urlHandler: SiteUrlHandler by lazy { LainchanUrlHandler() }
-  override val endpoints: SiteEndpoints by lazy { VichanEndpoints(this, "https://lainchan.org", "https://lainchan.org") }
-  override val api: SiteApi by lazy { VichanApi(siteManager, boardManager, this) }
+  override val urlHandler: SiteUrlHandler by lazy { LainchanUrlHandler(this) }
   override val actions: SiteActions by lazy { LainchanActions(this, proxiedOkHttpClient, siteManager, replyManager) }
   override val postParser: PostParser by lazy { DefaultPostParser(LainchanCommentParser(), archivesManager) }
   override val staticBoards: List<ChanBoard> = boards
-
 
   override fun hasSiteFeature(siteFeature: SiteConfiguration.SiteFeature): Boolean {
     return super.hasSiteFeature(siteFeature) ||
       siteFeature === SiteConfiguration.SiteFeature.Posting
   }
 
-  class LainchanUrlHandler : CommonSiteUrlHandler() {
-    private val ROOT = "https://lainchan.org/"
-
-    override val url: HttpUrl = ROOT.toHttpUrl()
-    override val mediaHosts: Array<HttpUrl> = arrayOf(url)
-
+  class LainchanUrlHandler(lainchan: Lainchan) : CommonSiteUrlHandler(lainchan) {
     override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?, postSubNo: Long?): String? {
       return when (chanDescriptor) {
         is ChanDescriptor.CatalogDescriptor -> {
-          url.newBuilder()
+          rootUrl.newBuilder()
             .addPathSegment(chanDescriptor.boardCode())
             .toString()
         }
 
         is ChanDescriptor.ThreadDescriptor -> {
-          url.newBuilder()
+          rootUrl.newBuilder()
             .addPathSegment(chanDescriptor.boardCode())
             .addPathSegment("res")
             .addPathSegment(chanDescriptor.threadNo.toString() + ".html")
@@ -108,6 +84,5 @@ class Lainchan : CommonSite() {
 
   companion object {
     const val SITE_NAME = "Lainchan"
-    val SITE_DESCRIPTOR = SiteDescriptor.create(SITE_NAME)
   }
 }

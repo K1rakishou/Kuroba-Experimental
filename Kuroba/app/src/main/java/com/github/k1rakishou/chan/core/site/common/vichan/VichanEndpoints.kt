@@ -13,11 +13,9 @@ import okhttp3.HttpUrl
 
 open class VichanEndpoints(
   site: CommonSite,
-  rootUrl: String,
-  sysUrl: String
 ) : CommonEndpoints(site) {
-  protected val root = SimpleHttpUrl(rootUrl)
-  protected val sys = SimpleHttpUrl(sysUrl)
+  protected open val root = SimpleHttpUrl(site.currentDomain)
+  protected open val sys = SimpleHttpUrl(site.currentDomain)
 
   override fun catalog(
     boardDescriptor: BoardDescriptor,

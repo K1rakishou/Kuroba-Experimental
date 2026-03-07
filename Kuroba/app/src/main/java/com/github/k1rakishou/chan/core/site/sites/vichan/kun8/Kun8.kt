@@ -1,18 +1,16 @@
-package com.github.k1rakishou.chan.core.site.sites.kun8
+package com.github.k1rakishou.chan.core.site.sites.vichan.kun8
 
 import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.core.site.SiteConfiguration
 import com.github.k1rakishou.chan.core.site.SiteEndpoints
 import com.github.k1rakishou.chan.core.site.SiteUrlHandler
-import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.common.DefaultPostParser
 import com.github.k1rakishou.chan.core.site.common.MultipartHttpCall
 import com.github.k1rakishou.chan.core.site.common.vichan.VichanActions
-import com.github.k1rakishou.chan.core.site.common.vichan.VichanApi
 import com.github.k1rakishou.chan.core.site.common.vichan.VichanEndpoints
 import com.github.k1rakishou.chan.core.site.parser.PostParser
-import com.github.k1rakishou.chan.core.site.parser.SiteApi
+import com.github.k1rakishou.chan.core.site.sites.vichan.BaseVichanSite
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -26,23 +24,31 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
 
-class Kun8 : CommonSite() {
+class Kun8 : BaseVichanSite(
+  defaultDomain = "https://8kun.top/"
+) {
+  private val mediaDomain: HttpUrl
+    get() = "https://nerv.${currentDomain.host}.top/".toHttpUrl()
+  private val sysDomain: HttpUrl
+    get() = "https://sys.${currentDomain.host}.top/".toHttpUrl()
+
   override val enabled: Boolean = true
   override val name: String = SITE_NAME
-  override val commentParserType = SiteConfiguration.CommentParserType.VichanParser
-  override val globalSearchType = SiteConfiguration.GlobalSearchType.SearchNotSupported
-  override val siteIconUrl: HttpUrl = "https://${MEDIA_URL}/static/favicon.ico".toHttpUrl()
-  override val boardsType = SiteConfiguration.BoardsType.Dynamic
-  override val catalogType = SiteConfiguration.CatalogType.Static
+  override val siteIconUrl: HttpUrl
+    get() {
+      return mediaDomain.newBuilder()
+        .addPathSegment("static")
+        .addPathSegment("favicon.ico")
+        .build()
+    }
   override val chunkedDownloaderConfig by lazy {
     SiteConfiguration.ChunkedDownloaderConfig(
       enabled = false,
       siteSendsCorrectFileSizeInBytes = false
     )
   }
-  override val urlHandler: SiteUrlHandler by lazy { Kun8UrlHandler() }
+  override val urlHandler: SiteUrlHandler by lazy { Kun8UrlHandler(this) }
   override val endpoints: SiteEndpoints by lazy { Kun8Endpoints(this) }
-  override val api: SiteApi by lazy { VichanApi(siteManager, boardManager, this) }
   override val actions: SiteActions by lazy { Kun8Actions(this) }
   override val postParser: PostParser by lazy { DefaultPostParser(Kun8CommentParser(), archivesManager) }
 
@@ -53,8 +59,8 @@ class Kun8 : CommonSite() {
   }
 
   private class Kun8Actions(
-    kun8: Kun8
-  ) : VichanActions(kun8, kun8.proxiedOkHttpClient, kun8.siteManager, kun8.replyManager) {
+    private val kun8: Kun8
+  ) : VichanActions(kun8) {
     override suspend fun boards(): Flow<SiteBoards> {
       val request = Request.Builder()
         .url(site.endpoints.boards().toString())
@@ -95,15 +101,28 @@ class Kun8 : CommonSite() {
     }
 
     override fun postAuthenticate(): SiteAuthentication {
+      val url = kun8.sysDomain.newBuilder()
+        .addPathSegment("dnsbls_bypass.php")
+
       return SiteAuthentication.fromUrl(
-        "https://${SYS_URL}/dnsbls_bypass.php",
-        "You failed the CAPTCHA",
-        "You may now go back and make your post"
+        url = url.toString(),
+        retryText = "You failed the CAPTCHA",
+        successText = "You may now go back and make your post"
       )
     }
   }
 
-  private class Kun8Endpoints(kun8: Kun8) : VichanEndpoints(kun8, "https://${ROOT_URL}", "https://${SYS_URL}") {
+  private class Kun8Endpoints(
+    private val kun8: Kun8
+  ) : VichanEndpoints(kun8) {
+    private val mediaDomainString: String
+      get() = kun8.mediaDomain.toString().removeSuffix("/")
+
+    override val root: SimpleHttpUrl
+      get() = SimpleHttpUrl(kun8.currentDomain)
+    override val sys: SimpleHttpUrl
+      get() = SimpleHttpUrl(kun8.sysDomain)
+
     override fun imageUrl(boardDescriptor: BoardDescriptor, arg: Map<String, String>?): HttpUrl {
       requireNotNull(arg)
 
@@ -112,9 +131,9 @@ class Kun8 : CommonSite() {
       val fpath = arg["fpath"]?.toIntOrNull() ?: 1
 
       val url = if (fpath == 1) {
-        "https://${MEDIA_URL}/file_store/$tim.$ext".toHttpUrlOrNull()
+        "${mediaDomainString}/file_store/$tim.$ext".toHttpUrlOrNull()
       } else {
-        "https://${MEDIA_URL}/${boardDescriptor.boardCode}/src/$tim.$ext".toHttpUrlOrNull()
+        "${mediaDomainString}/${boardDescriptor.boardCode}/src/$tim.$ext".toHttpUrlOrNull()
       }
 
       return requireNotNull(url) { "image url is null" }
@@ -129,7 +148,7 @@ class Kun8 : CommonSite() {
       requireNotNull(arg)
 
       if (spoiler) {
-        return "https://${MEDIA_URL}/static/assets/${boardDescriptor.boardCode}/spoiler.png".toHttpUrl()
+        return "${mediaDomainString}/static/assets/${boardDescriptor.boardCode}/spoiler.png".toHttpUrl()
       }
 
       val tim = requireNotNull(arg["tim"]) { "\"tim\" parameter not found" }
@@ -141,12 +160,12 @@ class Kun8 : CommonSite() {
       }
 
       val url = if (fpath == 1) {
-        "https://${MEDIA_URL}/file_store/thumb/$tim.$extension".toHttpUrlOrNull()
+        "${mediaDomainString}/file_store/thumb/$tim.$extension".toHttpUrlOrNull()
       } else {
         // Oldstyle images seems to always have "jpg" extension. But even if some of them don't
         // (I couldn't find any but there might be some) there is no way to figure out the true
         // extension because API only sends the original image extension.
-        "https://${MEDIA_URL}/${boardDescriptor.boardCode}/thumb/$tim.$extension".toHttpUrlOrNull()
+        "${mediaDomainString}/${boardDescriptor.boardCode}/thumb/$tim.$extension".toHttpUrlOrNull()
       }
 
       return requireNotNull(url) { "thumbnail url is null" }
@@ -157,22 +176,25 @@ class Kun8 : CommonSite() {
     }
   }
 
-  private class Kun8UrlHandler : CommonSiteUrlHandler() {
-    override val mediaHosts = arrayOf(
-      "https://${MEDIA_URL}/".toHttpUrl()
-    )
+  private class Kun8UrlHandler(
+    private val kun8: Kun8
+  ) : CommonSiteUrlHandler(kun8) {
+    override val rootUrl: HttpUrl
+      get() = kun8.currentDomain
 
-    override val url: HttpUrl = "https://${ROOT_URL}/".toHttpUrl()
+    override fun mediaHosts(): Set<HttpUrl> {
+      return super.mediaHosts() + kun8.mediaDomain
+    }
 
     override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?, postSubNo: Long?): String? {
       return when (chanDescriptor) {
         is CatalogDescriptor -> {
-          url.newBuilder()
+          rootUrl.newBuilder()
             .addPathSegment(chanDescriptor.boardCode())
             .toString()
         }
         is ThreadDescriptor -> {
-          url.newBuilder()
+          rootUrl.newBuilder()
             .addPathSegment(chanDescriptor.boardCode())
             .addPathSegment("res")
             .addPathSegment(chanDescriptor.threadNo.toString() + ".html")
@@ -185,10 +207,6 @@ class Kun8 : CommonSite() {
 
   companion object {
     const val SITE_NAME = "8kun"
-
-    private const val ROOT_URL = "8kun.top"
-    private const val SYS_URL = "sys.${ROOT_URL}"
-    private const val MEDIA_URL = "nerv.${ROOT_URL}"
   }
 
 }

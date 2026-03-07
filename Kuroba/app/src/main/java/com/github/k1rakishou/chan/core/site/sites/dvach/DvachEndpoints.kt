@@ -10,13 +10,9 @@ import okhttp3.HttpUrl
 
 class DvachEndpoints(
   private val dvach: Dvach
-) : VichanEndpoints(
-  site = dvach,
-  rootUrl = dvach.domainString,
-  sysUrl = dvach.domainString
-) {
+) : VichanEndpoints(dvach) {
   val siteHost: String
-    get() = dvach.domainUrl.value.host
+    get() = dvach.currentDomain.host
 
   override fun imageUrl(boardDescriptor: BoardDescriptor, arg: Map<String, String>?): HttpUrl {
     requireNotNull(arg)

@@ -7,17 +7,17 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
-class WakarimasenMoe: BaseFoolFuukaSite() {
+class WakarimasenMoe: BaseFoolFuukaSite(
+  defaultDomain = "https://archive.wakarimasen.moe/"
+) {
   override val enabled: Boolean = false
-  override val rootUrl: HttpUrl = "https://archive.wakarimasen.moe/".toHttpUrl()
-  override val siteIconUrl: HttpUrl = "https://archive.wakarimasen.moe/favicon.ico".toHttpUrl()
-  override val mediaHosts: Array<HttpUrl> by lazy { arrayOf(rootUrl) + MediaHosts }
+  override val mediaHosts by lazy { setOf(currentDomain) + MediaHosts }
   override val name: String = SITE_NAME
   override val endpoints: SiteEndpoints by lazy { WakarimasenEndpoints(this) }
 
   class WakarimasenEndpoints(
     site: BaseFoolFuukaSite,
-  ) : FoolFuukaEndpoints(site, site.rootUrl) {
+  ) : FoolFuukaEndpoints(site) {
     // https://archived.moe/_/api/chan/thread/?board=a&num=208364509
     override fun thread(
       threadDescriptor: ChanDescriptor.ThreadDescriptor,
@@ -35,6 +35,6 @@ class WakarimasenMoe: BaseFoolFuukaSite() {
   companion object {
     val SITE_NAME: String = ArchiveType.WakarimasenMoe.domain
 
-    private val MediaHosts: Array<HttpUrl> = arrayOf()
+    private val MediaHosts = setOf<HttpUrl>()
   }
 }

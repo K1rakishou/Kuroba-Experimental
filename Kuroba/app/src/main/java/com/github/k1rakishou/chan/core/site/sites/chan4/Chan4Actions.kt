@@ -79,10 +79,7 @@ class Chan4Actions(
     val replyCall = Chan4ReplyCall(
       site = chan4,
       replyChanDescriptor = replyChanDescriptor,
-      replyMode = replyMode,
-      replyManager = chan4.replyManager,
-      boardFlagInfoRepository = chan4.boardFlagInfoRepository,
-      appConstants = chan4.appConstants
+      replyMode = replyMode
     )
 
     return chan4.httpCallManager.makePostHttpCallWithProgress(replyCall, replyChanDescriptor)

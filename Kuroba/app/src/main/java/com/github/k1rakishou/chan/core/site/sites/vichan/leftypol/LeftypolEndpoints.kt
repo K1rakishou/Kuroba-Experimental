@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.core.site.sites.leftypol
+package com.github.k1rakishou.chan.core.site.sites.vichan.leftypol
 
 import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.common.vichan.VichanEndpoints
@@ -7,9 +7,7 @@ import okhttp3.HttpUrl
 
 class LeftypolEndpoints(
   commonSite: CommonSite,
-  rootUrl: String,
-  sysUrl: String
-) : VichanEndpoints(commonSite, rootUrl, sysUrl) {
+) : VichanEndpoints(commonSite) {
   override fun thumbnailUrl(
     boardDescriptor: BoardDescriptor,
     spoiler: Boolean,

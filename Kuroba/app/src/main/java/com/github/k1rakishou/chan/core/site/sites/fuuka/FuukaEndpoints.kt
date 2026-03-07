@@ -10,8 +10,9 @@ import okhttp3.HttpUrl
 
 class FuukaEndpoints(
   site: CommonSite,
-  private val rootUrl: HttpUrl
 ) : CommonSite.CommonEndpoints(site) {
+  private val rootUrl: HttpUrl
+    get() = site.currentDomain
 
   override fun catalog(
     boardDescriptor: BoardDescriptor,

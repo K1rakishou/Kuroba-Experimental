@@ -9,19 +9,15 @@ import com.github.k1rakishou.core_logger.Logger
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
-import dagger.Lazy
 
 class MapSetting(
-  private val moshiLazy: Lazy<Moshi>,
+  private val moshi: Moshi,
   private val mapperTo: (KeyValue) -> MapSettingEntry,
   private val mapperFrom: (MapSettingEntry) -> KeyValue,
   settingProvider: SettingProvider,
   key: String,
   def: Map<String, String> = emptyMap()
 ) : Setting<Map<String, String>>(settingProvider, key, def) {
-
-  private val moshi: Moshi
-    get() = moshiLazy.get()
 
   @Volatile
   @GuardedBy("this")

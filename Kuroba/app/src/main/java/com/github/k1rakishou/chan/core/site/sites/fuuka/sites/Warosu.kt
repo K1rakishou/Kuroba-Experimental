@@ -7,11 +7,18 @@ import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
-class Warosu : BaseFuukaSite() {
+class Warosu : BaseFuukaSite(
+  defaultDomain = "https://warosu.org/"
+) {
   override val enabled: Boolean = true
-  override val rootUrl: HttpUrl = "https://warosu.org/".toHttpUrl()
-  override val siteIconUrl: HttpUrl = "https://warosu.org/media/favicon.png".toHttpUrl()
-  override val mediaHosts: Array<HttpUrl> by lazy { arrayOf(rootUrl) + MediaHosts }
+  override val siteIconUrl: HttpUrl
+    get() {
+      return currentDomain.newBuilder()
+        .addPathSegment("media")
+        .addPathSegment("favicon.png")
+        .build()
+    }
+  override val mediaHosts by lazy { setOf(currentDomain) + MediaHosts }
   override val name: String = SITE_NAME
 
   override val staticBoards: List<ChanBoard> by lazy {
@@ -34,6 +41,8 @@ class Warosu : BaseFuukaSite() {
   companion object {
     val SITE_NAME: String = ArchiveType.Warosu.domain
 
-    private val MediaHosts = arrayOf("https://i.warosu.org/".toHttpUrl())
+    private val MediaHosts = setOf(
+      "https://i.warosu.org/".toHttpUrl()
+    )
   }
 }

@@ -1,7 +1,5 @@
-package com.github.k1rakishou.chan.core.site.sites.leftypol
+package com.github.k1rakishou.chan.core.site.sites.vichan.leftypol
 
-import com.github.k1rakishou.chan.core.manager.BoardManager
-import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteEndpoints
 import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.common.vichan.VichanApi
@@ -15,10 +13,8 @@ import com.google.gson.stream.JsonToken
 import org.jsoup.parser.Parser
 
 class LeftypolApi(
-  siteManager: SiteManager,
-  boardManager: BoardManager,
-  commonSite: CommonSite
-) : VichanApi(siteManager, boardManager, commonSite) {
+  site: CommonSite
+) : VichanApi(site) {
 
   override fun otherPostKey(
     name: String,

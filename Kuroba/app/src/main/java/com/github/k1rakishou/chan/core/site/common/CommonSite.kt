@@ -46,30 +46,22 @@ import okhttp3.Response
 import java.lang.Long.toHexString
 import java.util.regex.Pattern
 
-abstract class CommonSite : SiteBase() {
-  // TODO:
-  private val DefaultPostingLimitationConfig = PostingLimitationConfig(
-    postMaxAttachables = ConstantAttachablesCount(DEFAULT_ATTACHABLES_PER_POST_COUNT),
-    postMaxAttachablesTotalSize = ConstantMaxTotalSizeInfo(DEFAULT_MAX_ATTACHABLES_SIZE)
-  )
-
-  // TODO:
-  private val DefaultChunkedDownloaderConfig = SiteConfiguration.ChunkedDownloaderConfig(
-    enabled = true,
-    siteSendsCorrectFileSizeInBytes = true
-  )
-
-  // TODO:
-//  override val enabled: Boolean = true
-  abstract val globalSearchType: SiteConfiguration.GlobalSearchType /*= SiteConfiguration.GlobalSearchType.SearchNotSupported*/
-  abstract val siteIconUrl: HttpUrl
-  abstract val boardsType: SiteConfiguration.BoardsType /*= SiteConfiguration.BoardsType.Dynamic*/
-  abstract val catalogType: SiteConfiguration.CatalogType /*= SiteConfiguration.CatalogType.Dynamic*/
+abstract class CommonSite(defaultDomain: String) : SiteBase(defaultDomain) {
+  override val enabled: Boolean = true
+  open val globalSearchType: SiteConfiguration.GlobalSearchType = SiteConfiguration.GlobalSearchType.SearchNotSupported
+  open val siteIconUrl: HttpUrl
+    get() {
+      return currentDomain.newBuilder()
+        .addPathSegment("favicon.ico")
+        .build()
+    }
+  open val boardsType: SiteConfiguration.BoardsType = SiteConfiguration.BoardsType.Dynamic
+  open val catalogType: SiteConfiguration.CatalogType = SiteConfiguration.CatalogType.Dynamic
   abstract val commentParserType: SiteConfiguration.CommentParserType
-  abstract val chunkedDownloaderConfig: SiteConfiguration.ChunkedDownloaderConfig /*= DefaultChunkedDownloaderConfig*/
+  open val chunkedDownloaderConfig: SiteConfiguration.ChunkedDownloaderConfig = DefaultChunkedDownloaderConfig
 
   open val nsfwBoardDisplayType: NsfwBoardDisplayType = NsfwBoardDisplayType.NotSupported
-  open val postingLimitationConfig: PostingLimitationConfig? = null
+  open val postingLimitationConfig: PostingLimitationConfig? = DefaultPostingLimitationConfig
   open val redirectsToArchiveThread: Boolean = false
   open val staticBoards: List<ChanBoard> = emptyList()
 
@@ -85,7 +77,10 @@ abstract class CommonSite : SiteBase() {
     val boardsType = boardsType.takeIf { staticBoards.isEmpty() }
       ?: SiteConfiguration.BoardsType.Static
 
-    val siteIcon = SiteIcon.fromFavicon(imageLoaderDeprecatedLazy, siteIconUrl)
+    val siteIcon = SiteIcon.fromFavicon(
+      imageLoaderDeprecated = injectedSiteDependencies.get().imageLoaderDeprecated,
+      url = siteIconUrl
+    )
 
     return@lazy CommonSiteConfiguration(
       icon = siteIcon,
@@ -107,30 +102,39 @@ abstract class CommonSite : SiteBase() {
 
   open class DefaultRequestModifier(
     site: CommonSite
-  ) : SiteRequestModifier(site, site.appConstants) {
+  ) : SiteRequestModifier(site) {
     // Default implementation.
   }
 
-  abstract class CommonSiteUrlHandler : SiteUrlHandler {
-    abstract val url: HttpUrl
-    open val mediaHosts: Array<HttpUrl> = emptyArray()
+  abstract class CommonSiteUrlHandler(
+    private val site: CommonSite
+  ) : SiteUrlHandler {
+    open val rootUrl: HttpUrl
+      get() = site.currentDomain
+
+    @CallSuper
+    open fun mediaHosts(): Set<HttpUrl> {
+      return setOf(rootUrl)
+    }
 
     override fun matchesMediaHost(url: HttpUrl): Boolean {
-      return containsMediaHostUrl(url, mediaHosts)
+      return containsMediaHostUrl(url, mediaHosts())
     }
 
     override fun respondsTo(url: HttpUrl): Boolean {
-      return this.url.host == url.host
-        || "www.${this.url.host}" == url.host
+      val rootUrl = this.rootUrl
+
+      return rootUrl.host == url.host
+        || "www.${rootUrl.host}" == url.host
     }
     
     override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?, postSubNo: Long?): String? {
       return when (chanDescriptor) {
         is ChanDescriptor.CatalogDescriptor -> {
-          url.newBuilder().addPathSegment(chanDescriptor.boardCode()).toString()
+          rootUrl.newBuilder().addPathSegment(chanDescriptor.boardCode()).toString()
         }
         is ChanDescriptor.ThreadDescriptor -> {
-          url.newBuilder()
+          rootUrl.newBuilder()
             .addPathSegment(chanDescriptor.boardCode())
             .addPathSegment("res")
             .addPathSegment(chanDescriptor.threadNo.toString())
@@ -218,12 +222,16 @@ abstract class CommonSite : SiteBase() {
   abstract class CommonEndpoints(
     protected val site: CommonSite
   ) : SiteEndpoints
-  
+
   class SimpleHttpUrl {
     var url: HttpUrl.Builder
     
     constructor(from: String) {
       url = from.toHttpUrl().newBuilder()
+    }
+
+    constructor(from: HttpUrl) {
+      url = from.newBuilder()
     }
     
     constructor(from: HttpUrl.Builder) {
@@ -254,7 +262,7 @@ abstract class CommonSite : SiteBase() {
     ): Flow<SiteActions.PostResult> {
       val replyResponse = ReplyResponse()
 
-      site.replyManagerLazy.get().readReply(replyChanDescriptor) { reply ->
+      site.replyManager.readReply(replyChanDescriptor) { reply ->
         reply.password = toHexString(secureRandom.nextLong())
         replyResponse.password = reply.password
       }
@@ -306,7 +314,7 @@ abstract class CommonSite : SiteBase() {
     }
     
     private suspend fun makePostCall(call: HttpCall, replyResponse: ReplyResponse): SiteActions.PostResult {
-      return when (val result = site.httpCallManagerLazy.get().makeHttpCall(call)) {
+      return when (val result = site.httpCallManager.makeHttpCall(call)) {
         is HttpCall.HttpCallResult.Success -> {
           SiteActions.PostResult.PostComplete(replyResponse)
         }
@@ -347,7 +355,7 @@ abstract class CommonSite : SiteBase() {
       call.url(deleteUrl)
       setupDelete(deleteRequest, call)
       
-      return when (val result = site.httpCallManagerLazy.get().makeHttpCall(call)) {
+      return when (val result = site.httpCallManager.makeHttpCall(call)) {
         is HttpCall.HttpCallResult.Success -> {
           SiteActions.DeleteResult.DeleteComplete(deleteResponse)
         }
@@ -428,5 +436,15 @@ abstract class CommonSite : SiteBase() {
     private val BOARD_PATTERN = Pattern.compile("\\/(\\w+)\\/?")
     private val THREAD_PATTERN = Pattern.compile("/(\\w+)/(\\w+)/(\\d+).*")
     private val POST_NO_PATTERN = Pattern.compile("(\\d+)")
+
+    private val DefaultPostingLimitationConfig = PostingLimitationConfig(
+      postMaxAttachables = ConstantAttachablesCount(DEFAULT_ATTACHABLES_PER_POST_COUNT),
+      postMaxAttachablesTotalSize = ConstantMaxTotalSizeInfo(DEFAULT_MAX_ATTACHABLES_SIZE)
+    )
+
+    private val DefaultChunkedDownloaderConfig = SiteConfiguration.ChunkedDownloaderConfig(
+      enabled = true,
+      siteSendsCorrectFileSizeInBytes = true
+    )
   }
 }

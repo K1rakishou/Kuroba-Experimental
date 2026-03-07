@@ -5,13 +5,13 @@ import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.chan.core.manager.PostHideManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.core.site.sites.Sushichan
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
 import com.github.k1rakishou.chan.core.site.sites.chan420.Chan420
 import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
-import com.github.k1rakishou.chan.core.site.sites.kun8.Kun8
-import com.github.k1rakishou.chan.core.site.sites.lainchan.Lainchan
-import com.github.k1rakishou.chan.core.site.sites.wired7.Wired7
+import com.github.k1rakishou.chan.core.site.sites.vichan.Sushichan
+import com.github.k1rakishou.chan.core.site.sites.vichan.kun8.Kun8
+import com.github.k1rakishou.chan.core.site.sites.vichan.lainchan.Lainchan
+import com.github.k1rakishou.chan.core.site.sites.vichan.wired7.Wired7
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try

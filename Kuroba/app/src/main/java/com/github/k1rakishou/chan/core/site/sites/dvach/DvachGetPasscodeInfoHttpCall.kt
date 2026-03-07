@@ -11,9 +11,11 @@ import okhttp3.Request
 import okhttp3.Response
 
 class DvachGetPasscodeInfoHttpCall(
-  site: Site,
-  private val gson: Gson
+  site: Site
 ) : HttpCall(site) {
+  private val gson: Gson
+    get() = site.dependencies.gson
+
   var passcodePostingLimitationsInfoResult: ModularResult<PasscodePostingLimitationsInfo> =
     ModularResult.error(HttpCallNotCalledException())
 

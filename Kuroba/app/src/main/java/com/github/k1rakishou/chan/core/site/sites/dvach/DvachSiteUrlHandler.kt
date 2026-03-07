@@ -9,18 +9,15 @@ import okhttp3.HttpUrl
 import java.util.regex.Pattern
 
 class DvachSiteUrlHandler(
-  val domainLazy: Lazy<HttpUrl>
-) : CommonSiteUrlHandler() {
-  override val url: HttpUrl
-    get() = domainLazy.value
-
-  override val mediaHosts: Array<HttpUrl>
-    get() = arrayOf(url)
+  private val dvach: Dvach
+) : CommonSiteUrlHandler(dvach) {
+  override val rootUrl: HttpUrl
+    get() = dvach.currentDomain
 
   override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?, postSubNo: Long?): String? {
     when (chanDescriptor) {
       is ChanDescriptor.CatalogDescriptor -> {
-        val builtUrl = url.newBuilder()
+        val builtUrl = rootUrl.newBuilder()
           .addPathSegment(chanDescriptor.boardCode())
           .toString()
 
@@ -31,7 +28,7 @@ class DvachSiteUrlHandler(
         return "${builtUrl}/res/${postNo}.html"
       }
       is ChanDescriptor.ThreadDescriptor -> {
-        val builtUrl = url.newBuilder()
+        val builtUrl = rootUrl.newBuilder()
           .addPathSegment(chanDescriptor.boardCode())
           .addPathSegment("res")
           .addPathSegment(chanDescriptor.threadNo.toString() + ".html")

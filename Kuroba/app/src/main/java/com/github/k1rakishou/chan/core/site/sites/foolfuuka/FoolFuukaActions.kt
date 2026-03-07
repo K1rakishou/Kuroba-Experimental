@@ -118,9 +118,9 @@ class FoolFuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
     site.requestModifier.modifyGenericRequest(site, requestBuilder)
 
     return FoolFuukaSearchRequest(
-      searchParams,
-      requestBuilder.build(),
-      site.proxiedOkHttpClientLazy.get()
+      searchParams = searchParams,
+      request = requestBuilder.build(),
+      proxiedOkHttpClient = site.dependencies.proxiedOkHttpClient
     ).execute()
   }
 

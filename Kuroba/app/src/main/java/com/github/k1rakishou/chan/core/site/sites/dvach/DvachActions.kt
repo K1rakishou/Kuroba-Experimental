@@ -34,12 +34,7 @@ import okhttp3.Request
 
 class DvachActions(
   private val dvach: Dvach
-) : VichanActions(
-  commonSite = dvach,
-  proxiedOkHttpClient = dvach.proxiedOkHttpClient,
-  siteManager = dvach.siteManager,
-  replyManager = dvach.replyManager
-) {
+) : VichanActions(dvach) {
   override fun setupPost(
     replyChanDescriptor: ChanDescriptor,
     call: MultipartHttpCall
@@ -69,9 +64,7 @@ class DvachActions(
     val replyCall = DvachReplyCall(
       site = dvach,
       replyChanDescriptor = replyChanDescriptor,
-      replyMode = replyMode,
-      moshi = dvach.moshi,
-      replyManager = replyManager
+      replyMode = replyMode
     )
 
     return dvach.httpCallManager.makePostHttpCallWithProgress(replyCall, replyChanDescriptor)
@@ -177,10 +170,7 @@ class DvachActions(
       return SiteActions.GetPasscodeInfoResult.NotAllowedToRefreshFromNetwork
     }
 
-    val passcodeInfoCall = DvachGetPasscodeInfoHttpCall(
-      site = dvach,
-      gson = dvach.gson
-    )
+    val passcodeInfoCall = DvachGetPasscodeInfoHttpCall(dvach)
 
     val passcodeInfoCallResult = dvach.httpCallManager.makeHttpCall(passcodeInfoCall)
     if (passcodeInfoCallResult is HttpCall.HttpCallResult.Fail) {

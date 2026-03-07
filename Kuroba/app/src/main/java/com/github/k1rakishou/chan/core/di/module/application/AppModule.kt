@@ -8,6 +8,8 @@ import coil.request.CachePolicy
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.AppDependenciesInitializer
 import com.github.k1rakishou.chan.core.base.okhttp.CoilOkHttpClient
+import com.github.k1rakishou.chan.core.di.component.application.ApplicationComponent
+import com.github.k1rakishou.chan.core.di.component.application.ApplicationDependencies
 import com.github.k1rakishou.chan.core.helper.migration.ApplicationMigrationHelper
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
@@ -16,6 +18,7 @@ import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager
+import com.github.k1rakishou.chan.core.site.SiteDependencies
 import com.github.k1rakishou.chan.core.watcher.BookmarkWatcherCoordinator
 import com.github.k1rakishou.chan.core.watcher.FilterWatcherCoordinator
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2
@@ -72,7 +75,7 @@ class AppModule {
       return connectivityManager
     }
 
-    throw NullPointerException("What works in this ROM: You tell me ;)\nWhat doesn't work: Connectivity fucking manager")
+    error("What works in this ROM: You tell me ;)\nWhat doesn't work: Connectivity fucking manager")
   }
 
   @Provides
@@ -151,6 +154,20 @@ class AppModule {
   fun provideApplicationMigrationHelper(): ApplicationMigrationHelper {
     deps("ApplicationMigrationHelper")
     return ApplicationMigrationHelper()
+  }
+
+  @Provides
+  @Singleton
+  fun provideSiteDependencies(component: ApplicationComponent): SiteDependencies {
+    deps("SiteDependencies")
+    return component
+  }
+
+  @Provides
+  @Singleton
+  fun provideApplicationDependencies(component: ApplicationComponent): ApplicationDependencies {
+    deps("ApplicationDependencies")
+    return component
   }
 
 }

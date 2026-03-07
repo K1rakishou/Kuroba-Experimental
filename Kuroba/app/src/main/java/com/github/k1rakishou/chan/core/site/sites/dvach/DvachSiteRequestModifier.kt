@@ -1,19 +1,18 @@
 package com.github.k1rakishou.chan.core.site.sites.dvach
 
 import com.github.k1rakishou.chan.core.site.Site
+import com.github.k1rakishou.chan.core.site.SiteBase
 import com.github.k1rakishou.chan.core.site.SiteRequestModifier
 import com.github.k1rakishou.chan.core.site.http.HttpCall
 import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach.Companion.USER_CODE_COOKIE_KEY
-import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.addOrReplaceCookieHeader
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl
 import okhttp3.Request
 
 class DvachSiteRequestModifier(
-  site: Site,
-  appConstants: AppConstants
-) : SiteRequestModifier(site, appConstants) {
+  site: SiteBase
+) : SiteRequestModifier(site) {
 
   override fun modifyHttpCall(httpCall: HttpCall, requestBuilder: Request.Builder) {
     super.modifyHttpCall(httpCall, requestBuilder)
@@ -50,7 +49,7 @@ class DvachSiteRequestModifier(
 
     // For 2ch.hk we want to use our custom user-agent because when using the WebView's one the
     // videos do not load with 403 status.
-    requestProperties.put(UserAgentHeaderKey, appConstants.kurobaExCustomUserAgent)
+    requestProperties[UserAgentHeaderKey] = site.dependencies.appConstants.kurobaExCustomUserAgent
   }
 
   override fun modifyPostReportRequest(site: Site, requestBuilder: Request.Builder) {

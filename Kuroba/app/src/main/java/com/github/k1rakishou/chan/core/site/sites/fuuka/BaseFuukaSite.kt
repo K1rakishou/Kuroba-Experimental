@@ -9,14 +9,12 @@ import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.common.DefaultPostParser
 import com.github.k1rakishou.chan.core.site.limitations.PostingLimitationConfig
 import com.github.k1rakishou.chan.core.site.parser.SiteApi
-import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl
 
-abstract class BaseFuukaSite : CommonSite() {
-  abstract val rootUrl: HttpUrl
-  abstract val mediaHosts: Array<HttpUrl>
+abstract class BaseFuukaSite(defaultDomain: String) : CommonSite(defaultDomain) {
+  abstract val mediaHosts: Set<HttpUrl>
   override val globalSearchType = SiteConfiguration.GlobalSearchType.FuukaSearch
   override val commentParserType = SiteConfiguration.CommentParserType.FuukaParser
   override val boardsType: SiteConfiguration.BoardsType = SiteConfiguration.BoardsType.Static
@@ -28,26 +26,28 @@ abstract class BaseFuukaSite : CommonSite() {
     siteSendsCorrectFileSizeInBytes = false
   )
   override val staticBoards: List<ChanBoard> = emptyList()
-  override val urlHandler: SiteUrlHandler by lazy { BaseFuukaUrlHandler(rootUrl, mediaHosts) }
-  override val endpoints: SiteEndpoints by lazy { FuukaEndpoints(this, rootUrl) }
-  override val requestModifier: SiteRequestModifier by lazy { BaseFuukaRequestModifier(this, appConstants) }
+  override val urlHandler: SiteUrlHandler by lazy { BaseFuukaUrlHandler(this@BaseFuukaSite, mediaHosts) }
+  override val endpoints: SiteEndpoints by lazy { FuukaEndpoints(this) }
+  override val requestModifier: SiteRequestModifier by lazy { BaseFuukaRequestModifier(this) }
   override val api: SiteApi by lazy { FuukaApi(this) }
   override val actions: SiteActions by lazy { FuukaActions(this) }
   open val commentParser by lazy { FuukaCommentParser() }
 
   open class BaseFuukaRequestModifier(
-    site: BaseFuukaSite,
-    appConstants: AppConstants
-  ) : SiteRequestModifier(site, appConstants)
+    site: BaseFuukaSite
+  ) : SiteRequestModifier(site)
 
   open class BaseFuukaUrlHandler(
-    override val url: HttpUrl,
-    override val mediaHosts: Array<HttpUrl>,
-  ) : CommonSiteUrlHandler() {
+    site: BaseFuukaSite,
+    val mediaHosts: Set<HttpUrl>,
+  ) : CommonSiteUrlHandler(site) {
+    override fun mediaHosts(): Set<HttpUrl> {
+      return super.mediaHosts() + mediaHosts
+    }
 
     override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?, postSubNo: Long?): String? {
       // https://warosu.org/
-      val baseUrl = url.toString()
+      val baseUrl = rootUrl.toString()
 
       return when (chanDescriptor) {
         is ChanDescriptor.CompositeCatalogDescriptor -> null

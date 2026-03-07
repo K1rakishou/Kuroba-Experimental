@@ -23,11 +23,15 @@ import java.io.IOException
 import java.util.regex.Pattern
 
 open class VichanActions(
-  commonSite: CommonSite,
-  private val proxiedOkHttpClient: ProxiedOkHttpClient,
-  private val siteManager: SiteManager,
-  protected val replyManager: ReplyManager
+  commonSite: CommonSite
 ) : CommonActions(commonSite) {
+
+  private val proxiedOkHttpClient: ProxiedOkHttpClient
+    get() = site.injectedSiteDependencies.get().proxiedOkHttpClient
+  private val siteManager: SiteManager
+    get() = site.injectedSiteDependencies.get().siteManager
+  private val replyManager: ReplyManager
+    get() = site.injectedSiteDependencies.get().replyManager
 
   override fun setupPost(replyChanDescriptor: ChanDescriptor, call: MultipartHttpCall): ModularResult<Unit> {
     return ModularResult.Try {

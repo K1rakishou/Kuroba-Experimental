@@ -1,9 +1,9 @@
 package com.github.k1rakishou.chan.core.site.sites.lynxchan.engine
 
 import com.github.k1rakishou.chan.core.site.Site
+import com.github.k1rakishou.chan.core.site.SiteBase
 import com.github.k1rakishou.chan.core.site.SiteRequestModifier
 import com.github.k1rakishou.chan.core.site.http.HttpCall
-import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.CookieBuilder
 import com.github.k1rakishou.common.addOrReplaceCookieHeader
 import com.github.k1rakishou.common.isNotNullNorBlank
@@ -11,9 +11,8 @@ import okhttp3.HttpUrl
 import okhttp3.Request
 
 open class LynxchanRequestModifier(
-  site: Site,
-  appConstants: AppConstants
-) : SiteRequestModifier(site, appConstants) {
+  site: SiteBase
+) : SiteRequestModifier(site) {
 
   override fun modifyHttpCall(httpCall: HttpCall, requestBuilder: Request.Builder) {
     super.modifyHttpCall(httpCall, requestBuilder)

@@ -16,16 +16,14 @@ import com.github.k1rakishou.chan.core.site.limitations.PasscodeDependantMaxAtta
 import com.github.k1rakishou.chan.core.site.limitations.PostingLimitationConfig
 import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.core.site.parser.SiteApi
-import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.prefs.GsonJsonSetting
 import com.github.k1rakishou.prefs.OptionsSetting
 import com.github.k1rakishou.prefs.StringSetting
-import okhttp3.HttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
-class Dvach : CommonSite() {
+class Dvach : CommonSite(
+  defaultDomain = "https://2ch.life"
+) {
   lateinit var captchaType: OptionsSetting<CaptchaType>
   lateinit var passCodeInfo: GsonJsonSetting<DvachPasscodeInfo>
   lateinit var passCode: StringSetting
@@ -33,66 +31,46 @@ class Dvach : CommonSite() {
   lateinit var userCodeCookie: StringSetting
   lateinit var antiSpamCookie: StringSetting
 
-  val domainUrl: Lazy<HttpUrl> = lazy {
-    val siteDomain = siteDomainSetting?.get()
-    if (siteDomain != null) {
-      val siteDomainUrl = siteDomain.toHttpUrlOrNull()
-      if (siteDomainUrl != null) {
-        Logger.d(TAG, "Using domain: \'${siteDomainUrl}\'")
-        return@lazy siteDomainUrl
-      }
-    }
-
-    Logger.debug(TAG) {
-      "Using default domain: \'${DEFAULT_DOMAIN}\' since custom domain seems to be incorrect: \'$siteDomain\'"
-    }
-
-    return@lazy DEFAULT_DOMAIN
-  }
-
-  val domainString by lazy { domainUrl.value.toString().removeSuffix("/") }
-
   val captchaV2NoJs by lazy {
     SiteAuthentication.fromCaptcha2nojs(
       NORMAL_CAPTCHA_KEY,
-      "${domainString}/api/captcha/recaptcha/mobile"
+      "${currentDomainString}/api/captcha/recaptcha/mobile"
     )
   }
 
   val captchaV2Js by lazy {
     SiteAuthentication.fromCaptcha2(
       NORMAL_CAPTCHA_KEY,
-      "${domainString}/api/captcha/recaptcha/mobile"
+      "${currentDomainString}/api/captcha/recaptcha/mobile"
     )
   }
 
   val captchaV2Invisible by lazy {
     SiteAuthentication.fromCaptcha2Invisible(
       INVISIBLE_CAPTCHA_KEY,
-      "${domainString}/api/captcha/invisible_recaptcha/mobile"
+      "${currentDomainString}/api/captcha/invisible_recaptcha/mobile"
     )
   }
 
   val dvachCaptcha by lazy {
     SiteAuthentication.idBased(
-      "${domainString}/api/captcha/2chcaptcha/id"
+      "${currentDomainString}/api/captcha/2chcaptcha/id"
     )
   }
 
   val dvachCaptchaPuzzle by lazy {
     SiteAuthentication.idBased(
-      "${domainString}/api/captcha/puzzle"
+      "${currentDomainString}/api/captcha/puzzle"
     )
   }
 
   val dvachEmojiCaptcha by lazy {
     SiteAuthentication.emoji(
-      "${domainString}/api/captcha/emoji/id"
+      "${currentDomainString}/api/captcha/emoji/id"
     )
   }
 
   override val enabled: Boolean = true
-  override val siteIconUrl: HttpUrl by lazy { "${domainString}/favicon.ico".toHttpUrl() }
   override val commentParserType: SiteConfiguration.CommentParserType = SiteConfiguration.CommentParserType.DvachParser
   override val redirectsToArchiveThread: Boolean = true
   override val globalSearchType = SiteConfiguration.GlobalSearchType.SimpleQueryBoardSearch
@@ -118,14 +96,9 @@ class Dvach : CommonSite() {
     )
   }
   override val name: String = SITE_NAME
-  override val urlHandler: SiteUrlHandler by lazy { DvachSiteUrlHandler(domainUrl) }
+  override val urlHandler: SiteUrlHandler by lazy { DvachSiteUrlHandler(this) }
   override val endpoints: SiteEndpoints by lazy { DvachEndpoints(this) }
-  override val requestModifier by lazy {
-    DvachSiteRequestModifier(
-      site = this,
-      appConstants = appConstants
-    )
-  }
+  override val requestModifier by lazy { DvachSiteRequestModifier(this) }
   override val api: SiteApi by lazy { DvachApi(moshi, siteManager, boardManager, this) }
   override val actions: SiteActions by lazy { DvachActions(this) }
   override val settings: List<SiteSetting> by lazy {
@@ -146,10 +119,6 @@ class Dvach : CommonSite() {
     return@lazy settings
   }
 
-  override val siteDomainSetting: StringSetting? by lazy {
-    StringSetting(prefs, "site_domain", DEFAULT_DOMAIN.toString())
-  }
-
   override suspend fun initialize() {
     super.initialize()
 
@@ -166,7 +135,7 @@ class Dvach : CommonSite() {
     )
 
     passCodeInfo = GsonJsonSetting(
-      gson,
+      dependencies.gson,
       DvachPasscodeInfo::class.java,
       prefs,
       "preference_pass_code_info",
@@ -206,7 +175,6 @@ class Dvach : CommonSite() {
 
   companion object {
     private const val TAG = "Dvach"
-    private val DEFAULT_DOMAIN = "https://2ch.life".toHttpUrl()
 
     const val SITE_NAME = "2ch.hk"
     val SITE_DESCRIPTOR = SiteDescriptor.create(SITE_NAME)

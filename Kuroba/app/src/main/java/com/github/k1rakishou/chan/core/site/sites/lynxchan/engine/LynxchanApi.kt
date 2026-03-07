@@ -37,11 +37,15 @@ import java.io.InputStream
 import java.util.regex.Pattern
 
 open class LynxchanApi(
-  private val moshi: Moshi,
-  private val siteManager: SiteManager,
-  private val boardManager: BoardManager,
   site: BaseLynxchanSite
 ) : CommonSite.CommonApi(site) {
+  private val moshi: Moshi
+    get() = site.injectedSiteDependencies.get().moshi
+  private val siteManager: SiteManager
+    get() = site.injectedSiteDependencies.get().siteManager
+  private val boardManager: BoardManager
+    get() = site.injectedSiteDependencies.get().boardManager
+
   private val lynxchanCatalogList = Types.newParameterizedType(List::class.java, LynxchanCatalogThread::class.java)
 
   override suspend fun loadThreadFresh(

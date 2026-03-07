@@ -15,9 +15,10 @@ import okhttp3.HttpUrl
 import okhttp3.Request
 
 abstract class SiteRequestModifier(
-  protected val site: Site,
-  protected val appConstants: AppConstants
+  protected val site: SiteBase
 ) {
+  private val appConstants: AppConstants
+    get() = site.injectedSiteDependencies.get().appConstants
 
   @CallSuper
   open fun modifyHttpCall(httpCall: HttpCall, requestBuilder: Request.Builder) {

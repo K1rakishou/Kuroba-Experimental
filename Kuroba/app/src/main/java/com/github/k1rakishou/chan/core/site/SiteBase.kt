@@ -14,18 +14,17 @@ import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.core.repository.BoardFlagInfoRepository
 import com.github.k1rakishou.chan.core.site.http.HttpCallManager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.persist_state.ReplyMode
 import com.github.k1rakishou.prefs.BooleanSetting
 import com.github.k1rakishou.prefs.LongSetting
 import com.github.k1rakishou.prefs.MapSetting
 import com.github.k1rakishou.prefs.OptionsSetting
 import com.github.k1rakishou.prefs.StringSetting
-import com.google.gson.Gson
 import com.squareup.moshi.Moshi
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineName
@@ -33,74 +32,79 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.security.SecureRandom
 import java.util.Random
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 
-abstract class SiteBase : Site, CoroutineScope {
+abstract class SiteBase(
+  private val defaultDomain: String
+) : Site, CoroutineScope {
   private val job = SupervisorJob()
 
-  // TODO: move into an interface and inject that interface instead of this shitshow
   @Inject
-  lateinit var gson: Gson
-  @Inject
-  lateinit var appConstants: AppConstants
-  @Inject
-  lateinit var boardManagerLazy: Lazy<BoardManager>
-  @Inject
-  lateinit var siteManagerLazy: Lazy<SiteManager>
-  @Inject
-  lateinit var proxiedOkHttpClientLazy: Lazy<ProxiedOkHttpClient>
-  @Inject
-  lateinit var httpCallManagerLazy: Lazy<HttpCallManager>
-  @Inject
-  lateinit var moshiLazy: Lazy<Moshi>
-  @Inject
-  lateinit var imageLoaderDeprecatedLazy: Lazy<ImageLoaderDeprecated>
-  @Inject
-  lateinit var archivesManagerLazy: Lazy<ArchivesManager>
-  @Inject
-  lateinit var postFilterManagerLazy: Lazy<PostFilterManager>
-  @Inject
-  lateinit var replyManagerLazy: Lazy<ReplyManager>
-  @Inject
-  lateinit var boardFlagInfoRepositoryLazy: Lazy<BoardFlagInfoRepository>
-  @Inject
-  lateinit var chanThreadManagerLazy: Lazy<ChanThreadManager>
+  lateinit var injectedSiteDependencies: Lazy<SiteDependencies>
 
+  val appConstants: AppConstants
+    get() = injectedSiteDependencies.get().appConstants
   val boardManager: BoardManager
-    get() = boardManagerLazy.get()
+    get() = injectedSiteDependencies.get().boardManager
   val siteManager: SiteManager
-    get() = siteManagerLazy.get()
+    get() = injectedSiteDependencies.get().siteManager
   val proxiedOkHttpClient: ProxiedOkHttpClient
-    get() = proxiedOkHttpClientLazy.get()
+    get() = injectedSiteDependencies.get().proxiedOkHttpClient
   val httpCallManager: HttpCallManager
-    get() = httpCallManagerLazy.get()
+    get() = injectedSiteDependencies.get().httpCallManager
   val moshi: Moshi
-    get() = moshiLazy.get()
+    get() = injectedSiteDependencies.get().moshi
   val imageLoaderDeprecated: ImageLoaderDeprecated
-    get() = imageLoaderDeprecatedLazy.get()
+    get() = injectedSiteDependencies.get().imageLoaderDeprecated
   val archivesManager: ArchivesManager
-    get() = archivesManagerLazy.get()
+    get() = injectedSiteDependencies.get().archivesManager
   val postFilterManager: PostFilterManager
-    get() = postFilterManagerLazy.get()
+    get() = injectedSiteDependencies.get().postFilterManager
   val replyManager: ReplyManager
-    get() = replyManagerLazy.get()
-  val boardFlagInfoRepository: BoardFlagInfoRepository
-    get() = boardFlagInfoRepositoryLazy.get()
+    get() = injectedSiteDependencies.get().replyManager
   val chanThreadManager: ChanThreadManager
-    get() = chanThreadManagerLazy.get()
+    get() = injectedSiteDependencies.get().chanThreadManager
 
   override val coroutineContext: CoroutineContext
-    get() = job + Dispatchers.Main + CoroutineName("SiteBase")
+    get() = job + Dispatchers.Main + CoroutineName(this::class.java.simpleName)
+
+  override val dependencies: SiteDependencies
+    get() = injectedSiteDependencies.get()
 
   protected val prefs by lazy {
     val sharedPrefs = AppModuleAndroidUtils.getPreferencesForSite(descriptor)
     return@lazy SharedPreferencesSettingProvider(sharedPrefs)
   }
 
-  open val siteDomainSetting: StringSetting? = null
+  private val siteDomainSetting by lazy {
+    StringSetting(prefs, "site_domain", defaultDomain)
+  }
+
+  val currentDomain by lazy {
+    val siteDomain = siteDomainSetting.get()
+    if (siteDomain != null) {
+      val siteDomainUrl = siteDomain.toHttpUrlOrNull()
+      if (siteDomainUrl != null) {
+        Logger.d(TAG, "Using domain: \'${siteDomainUrl}\'")
+        return@lazy siteDomainUrl
+      }
+    }
+
+    val defaultDomainUrl = defaultDomain.toHttpUrl()
+
+    Logger.debug(TAG) {
+      "Using default domain: \'${defaultDomainUrl}\' since custom domain seems to be incorrect: \'$siteDomain\'"
+    }
+
+    return@lazy defaultDomainUrl
+  }
+
+  val currentDomainString by lazy { currentDomain.toString().removeSuffix("/") }
 
   lateinit var concurrentFileDownloadingChunks: OptionsSetting<ChanSettings.ConcurrentFileDownloadingChunks>
   lateinit var cloudFlareClearanceCookieMap: MapSetting
@@ -125,15 +129,11 @@ abstract class SiteBase : Site, CoroutineScope {
       cloudFlareClearanceCookieMap
     )
 
-    if (siteDomainSetting != null) {
-      val siteName = descriptor.siteName
-
-      settings += SiteSetting.SiteStringSetting(
-        getString(R.string.site_domain_setting, siteName),
-        getString(R.string.site_domain_setting_description),
-        siteDomainSetting!!
-      )
-    }
+    settings += SiteSetting.SiteStringSetting(
+      getString(R.string.site_domain_setting, descriptor.siteName),
+      getString(R.string.site_domain_setting_description),
+      siteDomainSetting
+    )
 
     settings += SiteSetting.SiteBooleanSetting(
       getString(R.string.site_ignore_reply_cooldowns),
@@ -157,7 +157,7 @@ abstract class SiteBase : Site, CoroutineScope {
     )
 
     cloudFlareClearanceCookieMap = MapSetting(
-      moshiLazy = moshiLazy,
+      moshi = moshi,
       mapperFrom = { mapSettingEntry ->
         return@MapSetting MapSetting.KeyValue(
           key = mapSettingEntry.key,
@@ -210,7 +210,7 @@ abstract class SiteBase : Site, CoroutineScope {
     val secureRandom: Random = SecureRandom()
 
     @JvmStatic
-    fun containsMediaHostUrl(desiredSiteUrl: HttpUrl, siteMediaUrls: Array<HttpUrl>): Boolean {
+    fun containsMediaHostUrl(desiredSiteUrl: HttpUrl, siteMediaUrls: Set<HttpUrl>): Boolean {
       val desiredHost = desiredSiteUrl.host
 
       for (siteMediaUrl in siteMediaUrls) {

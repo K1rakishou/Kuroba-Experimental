@@ -4,16 +4,17 @@ import com.github.k1rakishou.common.data.ArchiveType
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
-class TokyoChronos : BaseFoolFuukaSite() {
+class TokyoChronos : BaseFoolFuukaSite(
+  defaultDomain = "https://tokyochronos.net/"
+) {
   override val enabled: Boolean = false
-  override val rootUrl: HttpUrl = "https://tokyochronos.net/".toHttpUrl()
   override val siteIconUrl: HttpUrl = "https://tokyochronos.net/upload/htvr0u.png".toHttpUrl()
-  override val mediaHosts: Array<HttpUrl> by lazy { arrayOf(rootUrl) + MediaHosts }
+  override val mediaHosts by lazy { setOf(currentDomain) + MediaHosts }
   override val name: String = SITE_NAME
 
   companion object {
     val SITE_NAME: String = ArchiveType.TokyoChronos.domain
 
-    private val MediaHosts: Array<HttpUrl> = arrayOf()
+    private val MediaHosts = setOf<HttpUrl>()
   }
 }

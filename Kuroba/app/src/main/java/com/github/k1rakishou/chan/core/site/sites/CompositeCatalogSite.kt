@@ -1,14 +1,13 @@
 package com.github.k1rakishou.chan.core.site.sites
 
 import com.github.k1rakishou.Setting
-import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.image.ImageLoaderDeprecated
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.ResolvedChanDescriptor
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
+import com.github.k1rakishou.chan.core.site.SiteBase
 import com.github.k1rakishou.chan.core.site.SiteConfiguration
 import com.github.k1rakishou.chan.core.site.SiteEndpoints
 import com.github.k1rakishou.chan.core.site.SiteIcon
@@ -23,7 +22,6 @@ import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.core.site.parser.SiteApi
 import com.github.k1rakishou.chan.core.site.parser.processor.AbstractChanReaderProcessor
 import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
-import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.board.pages.BoardPages
@@ -36,22 +34,16 @@ import com.github.k1rakishou.model.data.filter.FilterWatchCatalogInfoObject
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.site.SiteBoards
 import com.github.k1rakishou.persist_state.ReplyMode
-import dagger.Lazy
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import okhttp3.HttpUrl
 import java.io.InputStream
-import javax.inject.Inject
 
-class CompositeCatalogSite : Site {
-
-  @Inject
-  lateinit var imageLoaderDeprecatedLazy: Lazy<ImageLoaderDeprecated>
-  @Inject
-  lateinit var appConstants: AppConstants
-
+class CompositeCatalogSite : SiteBase(
+  defaultDomain = "http://composite-catalogs.test"
+) {
   override val enabled: Boolean = true
   override val name: String = "Composite catalogs"
   override val descriptor: SiteDescriptor = SITE_DESCRIPTOR
@@ -64,7 +56,10 @@ class CompositeCatalogSite : Site {
 
   override val configuration: SiteConfiguration by lazy {
     CommonSiteConfiguration(
-      icon = SiteIcon.fromDrawable(imageLoaderDeprecatedLazy, R.drawable.composition_icon),
+      icon = SiteIcon.fromDrawable(
+        imageLoaderDeprecated = dependencies.imageLoaderDeprecated,
+        drawableId = R.drawable.composition_icon
+      ),
       boardsType = SiteConfiguration.BoardsType.Static,
       catalogType = SiteConfiguration.CatalogType.Dynamic,
       nsfwBoardDisplayType = SiteConfiguration.NsfwBoardDisplayType.NotSupported,
@@ -81,13 +76,7 @@ class CompositeCatalogSite : Site {
 
   override val settings: List<SiteSetting> = emptyList()
 
-  override suspend fun initialize() {
-    Chan.getComponent()
-      .inject(this)
-  }
-
   override fun <T : Setting<*>> getSettingBySettingId(settingId: SiteSetting.SiteSettingId): T? = null
-
 
   override fun hasSiteFeature(siteFeature: SiteConfiguration.SiteFeature): Boolean {
     return siteFeature == SiteConfiguration.SiteFeature.CatalogComposition
@@ -189,7 +178,7 @@ class CompositeCatalogSite : Site {
   }
 
   private val noOpSiteRequestModifier by lazy {
-    object : SiteRequestModifier(this@CompositeCatalogSite, appConstants) {
+    object : SiteRequestModifier(this@CompositeCatalogSite) {
 
     }
   }

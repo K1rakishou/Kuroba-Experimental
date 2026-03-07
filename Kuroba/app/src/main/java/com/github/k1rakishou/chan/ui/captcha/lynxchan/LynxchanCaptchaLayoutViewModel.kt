@@ -214,7 +214,7 @@ class LynxchanCaptchaLayoutViewModel(
               return@Try VerifyCaptchaResult.Failure
             }
 
-            val urlExample = "${lynxchanSite.domainString}/addon.js/hashcash?action=save" +
+            val urlExample = "${lynxchanSite.currentDomainString}/addon.js/hashcash?action=save" +
               "&b=XXXXXXXXXXXXXXXXXXXXXXXX&h=YYYYYYYYYYYYYYYYYYYYYYYY&e=ZZZ"
 
             _hashCashInfoToShow.value = when (lynxchanSite) {
@@ -222,7 +222,7 @@ class LynxchanCaptchaLayoutViewModel(
                 HashCashInfo.Krautchan(
                   descriptionText = appResources.string(stringId = R.string.krautchan_hashcash_description),
                   urlExample = urlExample,
-                  urlToOpen = "${lynxchanSite.domainString}/addon.js/hashcash/?action=get"
+                  urlToOpen = "${lynxchanSite.currentDomainString}/addon.js/hashcash/?action=get"
                 )
               }
               else -> {

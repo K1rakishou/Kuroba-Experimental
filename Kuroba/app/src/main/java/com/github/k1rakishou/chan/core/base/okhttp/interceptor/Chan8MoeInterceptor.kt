@@ -11,7 +11,6 @@ import com.github.k1rakishou.common.tryExtractMediaType
 import com.github.k1rakishou.core_logger.Logger
 import com.google.errorprone.annotations.concurrent.GuardedBy
 import kotlinx.coroutines.runBlocking
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -133,7 +132,7 @@ class Chan8MoeInterceptor(
     val initialResponse = run {
       // Initial request to check whether we need to bypass the POW block
       val initialRequest = Request.Builder()
-        .url("${chan8Moe.domainString}/".toHttpUrl())
+        .url(chan8Moe.currentDomain)
         .get()
 
       chan8Moe.requestModifier
@@ -202,8 +201,8 @@ class Chan8MoeInterceptor(
     // First solution submission request. This will return us POW_TOKEN and POW_ID cookies which we need to apply
     // for the second submission request. It will also return a 'X-PoWBlock-Status' with the solution status.
     val firstSubmitSolutionRequest = Request.Builder()
-      .url("${chan8Moe.domainString}/?pow=${solution}&t=${token}")
-      .header("Referer", chan8Moe.domainString)
+      .url("${chan8Moe.currentDomainString}/?pow=${solution}&t=${token}")
+      .header("Referer", chan8Moe.currentDomainString)
       .tag(RequestTag())
       .get()
 

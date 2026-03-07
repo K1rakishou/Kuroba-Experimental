@@ -9,9 +9,10 @@ import com.github.k1rakishou.model.data.post.ChanPost
 import okhttp3.HttpUrl
 
 open class FoolFuukaEndpoints(
-  site: CommonSite,
-  protected val rootUrl: HttpUrl
+  site: CommonSite
 ) : CommonSite.CommonEndpoints(site) {
+  private val currentDomain: HttpUrl
+    get() = site.currentDomain
 
   override fun catalog(
     boardDescriptor: BoardDescriptor,
@@ -21,7 +22,7 @@ open class FoolFuukaEndpoints(
   // https://archived.moe/a/
   // https://archived.moe/a/page/2/
   override fun catalogPage(boardDescriptor: BoardDescriptor, page: Int?): HttpUrl {
-    val builder = rootUrl.newBuilder()
+    val builder = currentDomain.newBuilder()
       .addPathSegment(boardDescriptor.boardCode)
 
     if (page != null && page >= 0) {
@@ -39,7 +40,7 @@ open class FoolFuukaEndpoints(
     contentType: SiteEndpoints.ContentType,
     archive: Boolean
   ): HttpUrl? {
-    return rootUrl.newBuilder()
+    return currentDomain.newBuilder()
       .addPathSegments("_/api/chan/thread")
       .addQueryParameter("board", threadDescriptor.boardCode())
       .addQueryParameter("num", threadDescriptor.threadNo.toString())
@@ -64,17 +65,17 @@ open class FoolFuukaEndpoints(
     val fileId = requireNotNull(arg[THUMBNAIL_FILE_ID]) { "THUMBNAIL_FILE_ID not provided" }
     val extension = requireNotNull(arg[THUMBNAIL_EXTENSION]) { "THUMBNAIL_EXTENSION not provided" }
 
-    return rootUrl.newBuilder()
+    return currentDomain.newBuilder()
       .addPathSegments("files/a/thumb/$param1/$param2/${fileId}s.${extension}")
       .build()
   }
 
   override fun boards(): HttpUrl {
-    return rootUrl
+    return currentDomain
   }
 
   override fun search(): HttpUrl {
-    return rootUrl
+    return currentDomain
   }
 
   override fun icon(icon: String, arg: Map<String, String>?): HttpUrl {

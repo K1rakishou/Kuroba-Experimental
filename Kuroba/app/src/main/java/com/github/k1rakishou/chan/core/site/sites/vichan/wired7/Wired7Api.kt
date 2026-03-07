@@ -1,11 +1,10 @@
-package com.github.k1rakishou.chan.core.site.sites.wired7
+package com.github.k1rakishou.chan.core.site.sites.vichan.wired7
 
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteEndpoints
 import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.common.CommonSite.CommonApi
-import com.github.k1rakishou.chan.core.site.parser.SiteApi
 import com.github.k1rakishou.chan.core.site.parser.processor.AbstractChanReaderProcessor
 import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
 import com.github.k1rakishou.common.ModularResult
@@ -282,7 +281,7 @@ class Wired7Api(
   ): ModularResult<ThreadBookmarkInfoObject> {
     return ModularResult.Try {
       val postObjects = ArrayList<ThreadBookmarkInfoPostObject>(
-        max(expectedCapacity, SiteApi.DEFAULT_POST_LIST_CAPACITY)
+        max(expectedCapacity, DEFAULT_POST_LIST_CAPACITY)
       )
 
       JsonReader(InputStreamReader(responseBodyStream)).use { jsonReader ->

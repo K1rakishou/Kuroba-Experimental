@@ -38,10 +38,12 @@ import java.util.concurrent.TimeUnit
 class DvachReplyCall internal constructor(
   site: Dvach,
   replyChanDescriptor: ChanDescriptor,
-  val replyMode: ReplyMode,
-  private val moshi: Moshi,
-  private val replyManager: ReplyManager
+  val replyMode: ReplyMode
 ) : CommonReplyHttpCall(site, replyChanDescriptor) {
+  private val moshi: Moshi
+    get() = site.dependencies.moshi
+  private val replyManager: ReplyManager
+    get() = site.dependencies.replyManager
 
   override fun addParameters(
     formBuilder: MultipartBody.Builder,

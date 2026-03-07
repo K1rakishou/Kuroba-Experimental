@@ -1,21 +1,15 @@
-package com.github.k1rakishou.chan.core.site.sites
+package com.github.k1rakishou.chan.core.site.sites.vichan
 
 import com.github.k1rakishou.chan.core.site.SiteConfiguration
-import com.github.k1rakishou.chan.core.site.common.CommonSite
-import com.github.k1rakishou.chan.core.site.common.DefaultPostParser
-import com.github.k1rakishou.chan.core.site.common.vichan.VichanActions
-import com.github.k1rakishou.chan.core.site.common.vichan.VichanApi
-import com.github.k1rakishou.chan.core.site.common.vichan.VichanCommentParser
-import com.github.k1rakishou.chan.core.site.common.vichan.VichanEndpoints
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
-import okhttp3.HttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrl
 
-class Sushichan : CommonSite() {
+class Sushichan : BaseVichanSite(
+  defaultDomain = "https://sushigirl.cafe/"
+) {
   private val boards by lazy {
     buildList {
       add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "kaitensushi"), "Fresh Posts Bento"))
@@ -36,33 +30,7 @@ class Sushichan : CommonSite() {
 
   override val enabled: Boolean = true
   override val name: String = SITE_NAME
-  override val siteIconUrl = "https://sushigirl.cafe/favicon.ico".toHttpUrl()
-  override val commentParserType = SiteConfiguration.CommentParserType.VichanParser
-  override val globalSearchType = SiteConfiguration.GlobalSearchType.SearchNotSupported
-  override val boardsType = SiteConfiguration.BoardsType.Static
-  override val catalogType = SiteConfiguration.CatalogType.Static
-  override val chunkedDownloaderConfig = SiteConfiguration.ChunkedDownloaderConfig(
-    enabled = true,
-    siteSendsCorrectFileSizeInBytes = true
-  )
-  override val urlHandler by lazy { SushichanUrlHandler() }
-  override val endpoints by lazy {
-    VichanEndpoints(
-      site = this,
-      rootUrl = "https://sushigirl.cafe/",
-      sysUrl = "https://sushigirl.cafe/"
-    )
-  }
-  override val api by lazy { VichanApi(siteManager, boardManager, this) }
-  override val actions by lazy {
-    VichanActions(
-      commonSite = this,
-      proxiedOkHttpClient = proxiedOkHttpClient,
-      siteManager = siteManager,
-      replyManager = replyManager
-    )
-  }
-  override val postParser by lazy { DefaultPostParser(VichanCommentParser(), archivesManager) }
+  override val urlHandler by lazy { SushichanUrlHandler(this) }
   override val staticBoards = boards
 
   override fun hasSiteFeature(siteFeature: SiteConfiguration.SiteFeature): Boolean {
@@ -70,21 +38,16 @@ class Sushichan : CommonSite() {
       || siteFeature === SiteConfiguration.SiteFeature.Posting
   }
 
-  class SushichanUrlHandler : CommonSiteUrlHandler() {
-    private val ROOT = "https://sushigirl.cafe/"
-
-    override val url = ROOT.toHttpUrl()
-    override val mediaHosts = arrayOf<HttpUrl>(url)
-
+  class SushichanUrlHandler(sushichan: Sushichan) : CommonSiteUrlHandler(sushichan) {
     override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?, postSubNo: Long?): String? {
       when (chanDescriptor) {
         is CatalogDescriptor -> {
-          return url.newBuilder()
+          return rootUrl.newBuilder()
             .addPathSegment(chanDescriptor.boardCode())
             .toString()
         }
         is ThreadDescriptor -> {
-          return url.newBuilder()
+          return rootUrl.newBuilder()
             .addPathSegment(chanDescriptor.boardCode())
             .addPathSegment("res")
             .addPathSegment(chanDescriptor.threadNo.toString() + ".html")

@@ -12,12 +12,11 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.core_logger.Logger
-import dagger.Lazy
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.HttpUrl
 
 class SiteIcon private constructor(
-  private val imageLoaderDeprecated: Lazy<ImageLoaderDeprecated>
+  private val imageLoaderDeprecated: ImageLoaderDeprecated
 ) {
   var url: HttpUrl? = null
   var drawable: BitmapDrawable? = null
@@ -63,7 +62,7 @@ class SiteIcon private constructor(
 
     cancel()
 
-    requestDisposable = imageLoaderDeprecated.get().loadFromNetwork(
+    requestDisposable = imageLoaderDeprecated.loadFromNetwork(
       context = context,
       requestUrl = url.toString(),
       cacheFileType = CacheFileType.SiteIcon,
@@ -132,13 +131,13 @@ class SiteIcon private constructor(
     const val FAVICON_SIZE = 64
 
     @JvmStatic
-    fun fromFavicon(imageLoaderDeprecated: Lazy<ImageLoaderDeprecated>, url: HttpUrl): SiteIcon {
+    fun fromFavicon(imageLoaderDeprecated: ImageLoaderDeprecated, url: HttpUrl): SiteIcon {
       val siteIcon = SiteIcon(imageLoaderDeprecated)
       siteIcon.url = url
       return siteIcon
     }
 
-    fun fromDrawable(imageLoaderDeprecated: Lazy<ImageLoaderDeprecated>, @DrawableRes drawableId: Int): SiteIcon {
+    fun fromDrawable(imageLoaderDeprecated: ImageLoaderDeprecated, @DrawableRes drawableId: Int): SiteIcon {
       val siteIcon = SiteIcon(imageLoaderDeprecated)
       val drawable = AppModuleAndroidUtils.getDrawable(drawableId)
 

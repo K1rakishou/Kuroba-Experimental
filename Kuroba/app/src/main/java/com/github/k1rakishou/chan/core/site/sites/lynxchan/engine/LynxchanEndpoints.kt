@@ -11,9 +11,9 @@ open class LynxchanEndpoints(site: BaseLynxchanSite) : CommonSite.CommonEndpoint
   private val lynxchan: BaseLynxchanSite
     get() = (site as BaseLynxchanSite)
   protected val lynxchanDomainUrl: HttpUrl
-    get() = lynxchan.domainUrl
+    get() = lynxchan.currentDomain
   protected val lynxchanDomain: String
-    get() = lynxchan.domainString
+    get() = lynxchan.currentDomainString
 
   override fun boards(): HttpUrl {
     return lynxchanDomainUrl.newBuilder()

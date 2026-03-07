@@ -4,17 +4,17 @@ import com.github.k1rakishou.common.data.ArchiveType
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
-class ForPlebs : BaseFoolFuukaSite() {
+class ForPlebs : BaseFoolFuukaSite(
+  defaultDomain = "https://archive.4plebs.org/"
+) {
   override val enabled: Boolean = true
-  override val rootUrl: HttpUrl = "https://archive.4plebs.org/".toHttpUrl()
-  override val siteIconUrl: HttpUrl = "https://archive.4plebs.org/favicon.ico".toHttpUrl()
-  override val mediaHosts: Array<HttpUrl> by lazy { arrayOf(rootUrl) + MediaHosts }
+  override val mediaHosts by lazy { setOf(currentDomain) + MediaHosts }
   override val name: String = SITE_NAME
 
   companion object {
     val SITE_NAME: String = ArchiveType.ForPlebs.domain
 
-    private val MediaHosts: Array<HttpUrl> = arrayOf(
+    private val MediaHosts = setOf<HttpUrl>(
       "https://i.4pcdn.org/".toHttpUrl()
     )
   }

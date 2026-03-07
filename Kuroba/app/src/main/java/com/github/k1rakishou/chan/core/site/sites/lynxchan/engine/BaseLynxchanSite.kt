@@ -9,29 +9,24 @@ import com.github.k1rakishou.chan.core.site.limitations.BoardDependantAttachable
 import com.github.k1rakishou.chan.core.site.limitations.BoardDependantPostAttachablesMaxTotalSize
 import com.github.k1rakishou.chan.core.site.limitations.PostingLimitationConfig
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
-import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.LynxchanBoardMeta
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.prefs.CookieSetting
 import okhttp3.HttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
-import javax.inject.Inject
 
-abstract class BaseLynxchanSite : CommonSite() {
-  @Inject
-  lateinit var lynxchanGetBoardsUseCase: LynxchanGetBoardsUseCase
-
+abstract class BaseLynxchanSite(defaultDomain: String) : CommonSite(defaultDomain) {
   open val initialPageIndex: Int = 1
-  open val mediaHosts: Array<HttpUrl> by lazy { arrayOf(domainUrl) }
+  open val mediaHosts: Set<HttpUrl> by lazy { setOf(currentDomain) }
   // When false, json payload will be used.
   // When true, form data parameters will be used.
   open val postingViaFormData: Boolean = false
 
-  abstract val defaultDomain: HttpUrl
-
   override val enabled: Boolean = true
-  override val siteIconUrl by lazy { "${domainString}/favicon.ico".toHttpUrl() }
+  override val siteIconUrl by lazy {
+    currentDomain.newBuilder()
+      .addPathSegment("favicon.ico")
+      .build()
+  }
   override val commentParserType = SiteConfiguration.CommentParserType.LynxchanParser
   override val globalSearchType = SiteConfiguration.GlobalSearchType.SearchNotSupported
   override val boardsType = SiteConfiguration.BoardsType.Dynamic
@@ -58,32 +53,11 @@ abstract class BaseLynxchanSite : CommonSite() {
       siteSendsCorrectFileSizeInBytes = true
     )
   }
-  override val urlHandler by lazy { BaseLynxchanUrlHandler(domainUrl, mediaHosts) }
+  override val urlHandler by lazy { BaseLynxchanUrlHandler(this, mediaHosts) }
   override val endpoints by lazy { LynxchanEndpoints(this) }
-  override val api by lazy {
-    LynxchanApi(
-      moshi = moshi,
-      siteManager = siteManager,
-      boardManager = boardManager,
-      site = this
-    )
-  }
-  override val actions by lazy {
-    LynxchanActions(
-      replyManager = replyManager,
-      moshi = moshi,
-      httpCallManager = httpCallManager,
-      lynxchanGetBoardsUseCase = lynxchanGetBoardsUseCase,
-      site = this
-    )
-  }
-  override val requestModifier by lazy {
-    LynxchanRequestModifier(
-      site = this,
-      appConstants = appConstants
-    )
-  }
-
+  override val api by lazy { LynxchanApi(this) }
+  override val actions by lazy { LynxchanActions(this) }
+  override val requestModifier by lazy { LynxchanRequestModifier(this) }
 
   override val settings: List<SiteSetting> by lazy {
     val settings = mutableListOf<SiteSetting>()
@@ -108,27 +82,9 @@ abstract class BaseLynxchanSite : CommonSite() {
     return@lazy settings
   }
 
-  val captchaIdCookie by lazy { CookieSetting(moshiLazy, prefs, "captcha_id") }
-  val bypassCookie by lazy { CookieSetting(moshiLazy, prefs, "bypass_cookie") }
-  val extraCookie by lazy { CookieSetting(moshiLazy, prefs, "extra_cookie") }
-
-  val domainUrl by lazy {
-    val siteDomain = siteDomainSetting?.get()
-    if (siteDomain != null) {
-      val siteDomainUrl = siteDomain.toHttpUrlOrNull()
-      if (siteDomainUrl != null) {
-        Logger.d(TAG, "Using domain: \'${siteDomainUrl}\'")
-        return@lazy siteDomainUrl
-      }
-    }
-
-    Logger.debug(TAG) {
-      "Using default domain: \'${defaultDomain}\' since custom domain seems to be incorrect: \'$siteDomain\'"
-    }
-    return@lazy defaultDomain
-  }
-
-  val domainString by lazy { domainUrl.toString().removeSuffix("/") }
+  val captchaIdCookie by lazy { CookieSetting(injectedSiteDependencies.get().moshi, prefs, "captcha_id") }
+  val bypassCookie by lazy { CookieSetting(injectedSiteDependencies.get().moshi, prefs, "bypass_cookie") }
+  val extraCookie by lazy { CookieSetting(injectedSiteDependencies.get().moshi, prefs, "extra_cookie") }
 
   override suspend fun initialize() {
     Chan.getComponent()
@@ -143,13 +99,17 @@ abstract class BaseLynxchanSite : CommonSite() {
   }
 
   open class BaseLynxchanUrlHandler(
-    override val url: HttpUrl,
-    override val mediaHosts: Array<HttpUrl>,
-  ) : CommonSiteUrlHandler() {
+    site: BaseLynxchanSite,
+    val mediaHosts: Set<HttpUrl>,
+  ) : CommonSiteUrlHandler(site) {
+
+    override fun mediaHosts(): Set<HttpUrl> {
+      return super.mediaHosts() + mediaHosts
+    }
 
     override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?, postSubNo: Long?): String? {
       // https://endchan.net
-      val baseUrl = url.toString().removeSuffix("/")
+      val baseUrl = rootUrl.toString().removeSuffix("/")
 
       return when (chanDescriptor) {
         is ChanDescriptor.CompositeCatalogDescriptor -> null

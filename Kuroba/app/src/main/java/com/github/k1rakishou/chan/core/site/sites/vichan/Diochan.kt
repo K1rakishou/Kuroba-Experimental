@@ -1,20 +1,13 @@
-package com.github.k1rakishou.chan.core.site.sites
+package com.github.k1rakishou.chan.core.site.sites.vichan
 
 import com.github.k1rakishou.chan.core.site.SiteConfiguration
-import com.github.k1rakishou.chan.core.site.common.CommonSite
-import com.github.k1rakishou.chan.core.site.common.DefaultPostParser
-import com.github.k1rakishou.chan.core.site.common.vichan.VichanActions
-import com.github.k1rakishou.chan.core.site.common.vichan.VichanApi
-import com.github.k1rakishou.chan.core.site.common.vichan.VichanCommentParser
-import com.github.k1rakishou.chan.core.site.common.vichan.VichanEndpoints
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
-import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
-import okhttp3.HttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrl
 
-class Diochan : CommonSite() {
+class Diochan : BaseVichanSite(
+  defaultDomain = "https://diochan.com/"
+) {
   private val boards by lazy {
     buildList {
       add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "b"), "Random"))
@@ -35,39 +28,7 @@ class Diochan : CommonSite() {
 
   override val enabled: Boolean = true
   override val name: String = SITE_NAME
-  override val siteIconUrl: HttpUrl = "https://diochan.com/favicon.ico".toHttpUrl()
-  override val commentParserType = SiteConfiguration.CommentParserType.VichanParser
-  override val globalSearchType = SiteConfiguration.GlobalSearchType.SearchNotSupported
-  override val boardsType = SiteConfiguration.BoardsType.Static
-  override val catalogType = SiteConfiguration.CatalogType.Static
-  override val chunkedDownloaderConfig = SiteConfiguration.ChunkedDownloaderConfig(
-    enabled = true,
-    siteSendsCorrectFileSizeInBytes = true
-  )
-  override val urlHandler by lazy { DiochanUrlHandler() }
-  override val endpoints by lazy {
-    VichanEndpoints(
-      site = this,
-      rootUrl = "https://diochan.com",
-      sysUrl = "https://diochan.com"
-    )
-  }
-  override val api by lazy {
-    VichanApi(
-      siteManager = siteManager,
-      boardManager = boardManager,
-      site = this
-    )
-  }
-  override val actions by lazy {
-    VichanActions(
-      commonSite = this,
-      proxiedOkHttpClient = proxiedOkHttpClient,
-      siteManager = siteManager,
-      replyManager = replyManager
-    )
-  }
-  override val postParser by lazy { DefaultPostParser(VichanCommentParser(), archivesManager) }
+  override val urlHandler by lazy { DiochanUrlHandler(this) }
   override val staticBoards: List<ChanBoard> = boards
 
   override fun hasSiteFeature(siteFeature: SiteConfiguration.SiteFeature): Boolean {
@@ -75,21 +36,16 @@ class Diochan : CommonSite() {
       || siteFeature === SiteConfiguration.SiteFeature.Posting
   }
 
-  class DiochanUrlHandler : CommonSiteUrlHandler() {
-    private val ROOT = "https://diochan.com/"
-
-    override val url = ROOT.toHttpUrl()
-    override val mediaHosts = arrayOf<HttpUrl>(url)
-
+  class DiochanUrlHandler(diochan: Diochan) : CommonSiteUrlHandler(diochan) {
     override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?, postSubNo: Long?): String? {
       when (chanDescriptor) {
         is ChanDescriptor.CatalogDescriptor -> {
-          return url.newBuilder()
+          return rootUrl.newBuilder()
             .addPathSegment(chanDescriptor.boardCode())
             .toString()
         }
         is ChanDescriptor.ThreadDescriptor -> {
-          return url.newBuilder()
+          return rootUrl.newBuilder()
             .addPathSegment(chanDescriptor.boardCode())
             .addPathSegment("res")
             .addPathSegment((chanDescriptor).threadNo.toString() + ".html")
@@ -104,6 +60,5 @@ class Diochan : CommonSite() {
 
   companion object {
     const val SITE_NAME: String = "Diochan"
-    val SITE_DESCRIPTOR: SiteDescriptor = SiteDescriptor.Companion.create(SITE_NAME)
   }
 }

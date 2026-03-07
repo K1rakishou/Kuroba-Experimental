@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.core.site.sites.lainchan;
+package com.github.k1rakishou.chan.core.site.sites.vichan.lainchan;
 
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
 import com.github.k1rakishou.common.ModularResult;

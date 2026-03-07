@@ -33,7 +33,7 @@ class DvachReportPostRequest(
 
     val result: ModularResult<PostReportResult> = ModularResult.Try {
       val siteHost = (site.endpoints as DvachEndpoints).siteHost
-      val requestModifier = (site.requestModifier as DvachSiteRequestModifier)
+      val requestModifier = site.requestModifier
       val reportReason = postReportData.message
 
       val reportPostEndpoint = HttpUrl.Builder()

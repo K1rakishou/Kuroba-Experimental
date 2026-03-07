@@ -1,25 +1,20 @@
-package com.github.k1rakishou.chan.core.site.sites
+package com.github.k1rakishou.chan.core.site.sites.vichan
 
 import android.text.TextUtils
 import android.webkit.MimeTypeMap
 import com.github.k1rakishou.chan.core.site.SiteConfiguration
 import com.github.k1rakishou.chan.core.site.common.CommonSite
-import com.github.k1rakishou.chan.core.site.common.DefaultPostParser
-import com.github.k1rakishou.chan.core.site.common.vichan.VichanActions
-import com.github.k1rakishou.chan.core.site.common.vichan.VichanApi
-import com.github.k1rakishou.chan.core.site.common.vichan.VichanCommentParser
 import com.github.k1rakishou.chan.core.site.common.vichan.VichanEndpoints
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
-import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
-import com.github.k1rakishou.model.data.descriptor.SiteDescriptor.Companion.create
 import okhttp3.HttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrl
 
-class Vhschan : CommonSite() {
+class Vhschan : BaseVichanSite(
+  defaultDomain = "https://vhschan.org"
+) {
   private val boards by lazy {
     buildList {
       add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "b"), "Betamax"))
@@ -41,33 +36,14 @@ class Vhschan : CommonSite() {
 
   override val enabled: Boolean = false
   override val name: String = SITE_NAME
-  override val siteIconUrl = "https://vhschan.org/stylesheets/favicon.ico".toHttpUrl()
-  override val commentParserType = SiteConfiguration.CommentParserType.VichanParser
-  override val globalSearchType = SiteConfiguration.GlobalSearchType.SearchNotSupported
-  override val boardsType = SiteConfiguration.BoardsType.Static
-  override val catalogType = SiteConfiguration.CatalogType.Static
-  override val chunkedDownloaderConfig = SiteConfiguration.ChunkedDownloaderConfig(
-    enabled = true,
-    siteSendsCorrectFileSizeInBytes = true
-  )
-  override val urlHandler by lazy { VhsChanUrlHandler() }
-  override val endpoints by lazy {
-    VhschanEndpoints(
-      commonSite = this,
-      rootUrl = "https://vhschan.org",
-      sysUrl = "https://vhschan.org"
-    )
+  override val siteIconUrl by lazy {
+    currentDomain.newBuilder()
+      .addPathSegment("stylesheets")
+      .addPathSegment("favicon.ico")
+      .build()
   }
-  override val api by lazy { VichanApi(siteManager, boardManager, this) }
-  override val actions by lazy {
-    VichanActions(
-      commonSite = this,
-      proxiedOkHttpClient = proxiedOkHttpClient,
-      siteManager = siteManager,
-      replyManager = replyManager
-    )
-  }
-  override val postParser by lazy { DefaultPostParser(VichanCommentParser(), archivesManager) }
+  override val urlHandler by lazy { VhsChanUrlHandler(this) }
+  override val endpoints by lazy { VhschanEndpoints(this) }
   override val staticBoards = boards
 
   override fun hasSiteFeature(siteFeature: SiteConfiguration.SiteFeature): Boolean {
@@ -77,9 +53,7 @@ class Vhschan : CommonSite() {
 
   class VhschanEndpoints(
     commonSite: CommonSite,
-    rootUrl: String,
-    sysUrl: String
-  ) : VichanEndpoints(commonSite, rootUrl, sysUrl) {
+  ) : VichanEndpoints(commonSite) {
     override fun thumbnailUrl(
       boardDescriptor: BoardDescriptor,
       spoiler: Boolean,
@@ -97,7 +71,7 @@ class Vhschan : CommonSite() {
       }
 
       if (!ext!!.startsWith(".")) {
-        ext = "." + ext
+        ext = ".$ext"
       }
 
       return root.builder()
@@ -108,26 +82,23 @@ class Vhschan : CommonSite() {
     }
   }
 
-  class VhsChanUrlHandler : CommonSiteUrlHandler() {
-    private val ROOT = "https://vhschan.org/"
-
-    override val url = ROOT.toHttpUrl()
-    override val mediaHosts = arrayOf(url)
-
+  class VhsChanUrlHandler(vhschan: Vhschan) : CommonSiteUrlHandler(vhschan) {
     override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?, postSubNo: Long?): String? {
-      when (chanDescriptor) {
+      return when (chanDescriptor) {
         is CatalogDescriptor -> {
-          return url.newBuilder().addPathSegment(chanDescriptor.boardCode()).toString()
+          rootUrl
+            .newBuilder()
+            .addPathSegment(chanDescriptor.boardCode()).toString()
         }
         is ThreadDescriptor -> {
-          return url.newBuilder()
+          rootUrl.newBuilder()
             .addPathSegment(chanDescriptor.boardCode())
             .addPathSegment("res")
             .addPathSegment(chanDescriptor.threadNo.toString() + ".html")
             .toString()
         }
         else -> {
-          return null
+          null
         }
       }
     }
@@ -135,6 +106,5 @@ class Vhschan : CommonSite() {
 
   companion object {
     const val SITE_NAME: String = "vhschan"
-    val SITE_DESCRIPTOR: SiteDescriptor = create(SITE_NAME)
   }
 }

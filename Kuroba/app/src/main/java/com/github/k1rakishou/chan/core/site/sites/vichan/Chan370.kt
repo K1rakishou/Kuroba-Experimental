@@ -1,19 +1,14 @@
-package com.github.k1rakishou.chan.core.site.sites
+package com.github.k1rakishou.chan.core.site.sites.vichan
 
-import com.github.k1rakishou.chan.core.site.SiteConfiguration
-import com.github.k1rakishou.chan.core.site.common.CommonSite
-import com.github.k1rakishou.chan.core.site.common.DefaultPostParser
-import com.github.k1rakishou.chan.core.site.common.vichan.VichanActions
-import com.github.k1rakishou.chan.core.site.common.vichan.VichanApi
-import com.github.k1rakishou.chan.core.site.common.vichan.VichanCommentParser
 import com.github.k1rakishou.chan.core.site.common.vichan.VichanEndpoints
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrl
 
-class Chan370 : CommonSite() {
+class Chan370 : BaseVichanSite(
+  defaultDomain = "https://370ch.lt/"
+) {
   private val boards by lazy {
     buildList {
       add(ChanBoard.create(BoardDescriptor.create(descriptor.siteName, "a"), "anime ir manga"))
@@ -29,38 +24,13 @@ class Chan370 : CommonSite() {
 
   override val enabled: Boolean = true
   override val name: String = SITE_NAME
-  override val siteIconUrl = "https://370ch.lt/favicon.ico".toHttpUrl()
-  override val commentParserType = SiteConfiguration.CommentParserType.VichanParser
-  override val globalSearchType = SiteConfiguration.GlobalSearchType.SearchNotSupported
-  override val boardsType = SiteConfiguration.BoardsType.Static
-  override val catalogType = SiteConfiguration.CatalogType.Static
-  override val chunkedDownloaderConfig = SiteConfiguration.ChunkedDownloaderConfig(
-    enabled = true,
-    siteSendsCorrectFileSizeInBytes = true
-  )
-  override val urlHandler by lazy { Chan370UrlHandler() }
+  override val urlHandler by lazy { Chan370UrlHandler(this) }
   override val endpoints by lazy { Chan370Endpoints(this) }
-  override val api by lazy {
-    VichanApi(
-      siteManager = siteManager,
-      boardManager = boardManager,
-      site = this
-    )
-  }
-  override val actions by lazy {
-    VichanActions(
-      commonSite = this,
-      proxiedOkHttpClient = proxiedOkHttpClient,
-      siteManager = siteManager,
-      replyManager = replyManager
-    )
-  }
-  override val postParser by lazy { DefaultPostParser(VichanCommentParser(), archivesManager) }
   override val staticBoards: List<ChanBoard> = boards
 
   class Chan370Endpoints(
     chan370: Chan370
-  ) : VichanEndpoints(chan370, "https://370ch.lt/", "https://370ch.lt/") {
+  ) : VichanEndpoints(chan370) {
     override fun thumbnailUrl(
       boardDescriptor: BoardDescriptor,
       spoiler: Boolean,
@@ -75,29 +45,26 @@ class Chan370 : CommonSite() {
         else -> ".png"
       }
 
-      return root.builder()
-        .s(boardDescriptor.boardCode)
-        .s("thumb")
-        .s(arg.get("tim") + extension)
-        .url()
+      return site.currentDomain.newBuilder()
+        .addPathSegment(boardDescriptor.boardCode)
+        .addPathSegment("thumb")
+        .addPathSegment(arg.get("tim") + extension)
+        .build()
     }
   }
 
-  class Chan370UrlHandler : CommonSiteUrlHandler() {
-    private val ROOT = "https://370ch.lt/"
-
-    override val url = ROOT.toHttpUrl()
-    override val mediaHosts: Array<HttpUrl> = arrayOf<HttpUrl>(url)
-
+  class Chan370UrlHandler(
+    chan370: Chan370
+  ) : CommonSiteUrlHandler(chan370) {
     override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?, postSubNo: Long?): String? {
       when (chanDescriptor) {
         is ChanDescriptor.CatalogDescriptor -> {
-          return url.newBuilder()
+          return rootUrl.newBuilder()
             .addPathSegment(chanDescriptor.boardCode())
             .toString()
         }
         is ChanDescriptor.ThreadDescriptor -> {
-          return url.newBuilder()
+          return rootUrl.newBuilder()
             .addPathSegment(chanDescriptor.boardCode())
             .addPathSegment("res")
             .addPathSegment(chanDescriptor.threadNo.toString() + ".html")

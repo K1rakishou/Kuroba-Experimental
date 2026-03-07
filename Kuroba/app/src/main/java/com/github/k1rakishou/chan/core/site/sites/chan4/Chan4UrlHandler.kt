@@ -19,7 +19,7 @@ class Chan4UrlHandler : SiteUrlHandler {
     "s.4cdn.org",
   )
 
-  private val mediaHosts = arrayOf(
+  private val mediaHosts = setOf(
     "https://i.4cdn.org/".toHttpUrl(),
     "https://is2.4chan.org/".toHttpUrl(),
   )

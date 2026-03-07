@@ -1,11 +1,11 @@
 package com.github.k1rakishou.chan.core.site.sites.lynxchan.chan8
 
 import com.github.k1rakishou.chan.core.site.Site
+import com.github.k1rakishou.chan.core.site.SiteBase
 import com.github.k1rakishou.chan.core.site.http.HttpCall
 import com.github.k1rakishou.chan.core.site.sites.lynxchan.chan8.Chan8Moe.Companion.POW_ID
 import com.github.k1rakishou.chan.core.site.sites.lynxchan.chan8.Chan8Moe.Companion.POW_TOKEN
 import com.github.k1rakishou.chan.core.site.sites.lynxchan.engine.LynxchanRequestModifier
-import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.CookieBuilder
 import com.github.k1rakishou.common.addOrReplaceCookieHeader
 import com.github.k1rakishou.common.isNotNullNorBlank
@@ -14,9 +14,8 @@ import okhttp3.HttpUrl
 import okhttp3.Request
 
 class Chan8MoeRequestModifier(
-  site: Site,
-  appConstants: AppConstants
-) : LynxchanRequestModifier(site, appConstants) {
+  site: SiteBase
+) : LynxchanRequestModifier(site) {
   override fun modifyHttpCall(
     httpCall: HttpCall,
     requestBuilder: Request.Builder
@@ -69,7 +68,7 @@ class Chan8MoeRequestModifier(
 
     site as Chan8Moe
     // Can be just the root url
-    requestProperties["Referer"] = site.domainString
+    requestProperties["Referer"] = site.currentDomainString
   }
 
   override fun modifyPostReportRequest(
@@ -88,7 +87,7 @@ class Chan8MoeRequestModifier(
 
     site as Chan8Moe
     // Can be just the root url
-    header("Referer", site.domainString)
+    header("Referer", site.currentDomainString)
   }
 
   private fun buildCookies(): String {

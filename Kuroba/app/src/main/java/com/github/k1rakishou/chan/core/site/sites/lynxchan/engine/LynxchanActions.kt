@@ -21,14 +21,18 @@ import kotlinx.coroutines.flow.map
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
 open class LynxchanActions(
-  private val replyManager: ReplyManager,
-  private val moshi: Moshi,
-  private val httpCallManager: HttpCallManager,
-  private val lynxchanGetBoardsUseCase: LynxchanGetBoardsUseCase,
   site: BaseLynxchanSite
 ) : CommonSite.CommonActions(site) {
   private val lynxchanSite: BaseLynxchanSite
     get() = site as BaseLynxchanSite
+  private val replyManager: ReplyManager
+    get() = site.injectedSiteDependencies.get().replyManager
+  private val moshi: Moshi
+    get() = site.injectedSiteDependencies.get().moshi
+  private val httpCallManager: HttpCallManager
+    get() = site.injectedSiteDependencies.get().httpCallManager
+  private val lynxchanGetBoardsUseCase: LynxchanGetBoardsUseCase
+    get() = site.injectedSiteDependencies.get().lynxchanGetBoardsUseCase
 
   override suspend fun boards(): Flow<SiteBoards> {
     val getBoardsEndpoint = site.endpoints.boards()
@@ -89,7 +93,7 @@ open class LynxchanActions(
   }
 
   override fun postAuthenticate(): SiteAuthentication {
-    val domain = lynxchanSite.domainString
+    val domain = lynxchanSite.currentDomainString
 
     val customCaptcha = SiteAuthentication.CustomCaptcha.LynxchanCaptcha(
       captchaEndpoint = "${domain}/captcha.js".toHttpUrl(),

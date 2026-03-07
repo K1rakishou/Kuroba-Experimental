@@ -5,17 +5,13 @@ import com.github.k1rakishou.SettingProvider
 import com.github.k1rakishou.common.KurobaCookie
 import com.github.k1rakishou.core_logger.Logger
 import com.squareup.moshi.Moshi
-import dagger.Lazy
 import java.util.concurrent.atomic.AtomicReference
 
 class CookieSetting(
-  private val moshiLazy: Lazy<Moshi>,
+  private val moshi: Moshi,
   settingProvider: SettingProvider,
   key: String
 ) : Setting<KurobaCookie?>(settingProvider, key, null) {
-  private val moshi: Moshi
-    get() = moshiLazy.get()
-
   private val _cached = AtomicReference<KurobaCookie?>(null)
 
   init {
