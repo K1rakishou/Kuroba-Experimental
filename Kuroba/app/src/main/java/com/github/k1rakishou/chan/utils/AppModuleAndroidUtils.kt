@@ -139,7 +139,7 @@ object AppModuleAndroidUtils {
       1 -> FlavorType.Beta
       2 -> FlavorType.Dev
       3 -> FlavorType.Fdroid
-      else -> throw RuntimeException("Unknown flavor type " + BuildConfig.FLAVOR_TYPE)
+      else -> error("Unknown flavor type " + BuildConfig.FLAVOR_TYPE)
     }
 
   /**

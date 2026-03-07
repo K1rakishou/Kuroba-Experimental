@@ -728,6 +728,10 @@ class ThreadPresenter @Inject constructor(
           is ThreadLoadResult.Loaded -> {
             Logger.d(TAG, "loadWholeCompositeCatalog() ${nextDescriptorToLoad} success")
           }
+          is ThreadLoadResult.RecoveredFromError -> {
+            Logger.d(TAG, "loadWholeCompositeCatalog() ${nextDescriptorToLoad} " +
+              "recovered from error ${lastThreadLoadResult.exception.errorMessage}")
+          }
           is ThreadLoadResult.Error -> {
             Logger.e(TAG, "loadWholeCompositeCatalog() ${nextDescriptorToLoad} error. " +
               "Reason: ${lastThreadLoadResult.exception.errorMessage}")
@@ -742,14 +746,20 @@ class ThreadPresenter @Inject constructor(
         is ThreadLoadResult.Error -> {
           onChanLoaderError(lastThreadLoadResult.chanDescriptor, lastThreadLoadResult.exception)
         }
-        is ThreadLoadResult.Loaded -> {
+        is ThreadLoadResult.Loaded,
+        is ThreadLoadResult.RecoveredFromError -> {
+          val chanDescriptor = when (lastThreadLoadResult) {
+            is ThreadLoadResult.Loaded -> lastThreadLoadResult.chanDescriptor
+            is ThreadLoadResult.RecoveredFromError -> lastThreadLoadResult.chanDescriptor
+          }
+
           val successfullyProcessedNewPosts = onChanLoaderData(
-            loadedChanDescriptor = lastThreadLoadResult.chanDescriptor,
+            loadedChanDescriptor = chanDescriptor,
             refreshPostPopupHelperPosts = false
           )
           if (!successfullyProcessedNewPosts) {
             val error = getPossibleChanLoadError(currentChanDescriptor)
-            onChanLoaderError(lastThreadLoadResult.chanDescriptor, error)
+            onChanLoaderError(chanDescriptor, error)
           } else {
             chanCatalogSnapshotCache.get(currentChanDescriptor)
               ?.onEndOfUnlimitedCatalogReached()
@@ -761,6 +771,7 @@ class ThreadPresenter @Inject constructor(
         }
       }
 
+      updateStatusCellFromThreadLoadResult(lastThreadLoadResult)
       Logger.d(TAG, "loadWholeCompositeCatalog() end")
     }
   }
@@ -850,17 +861,11 @@ class ThreadPresenter @Inject constructor(
         currentChanDescriptor
       }
 
-      val compositeCatalogDescriptor = if (currentChanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
-        currentChanDescriptor
-      } else {
-        null
-      }
-
       checkNotNull(nextDescriptorToLoad) { "nextDescriptorToLoad is null" }
 
       val threadLoadResult = chanThreadManager.loadThreadOrCatalog(
         page = catalogPageToLoad,
-        compositeCatalogDescriptor = compositeCatalogDescriptor,
+        compositeCatalogDescriptor = currentChanDescriptor as? ChanDescriptor.CompositeCatalogDescriptor,
         chanDescriptor = nextDescriptorToLoad,
         chanCacheUpdateOptions = chanCacheUpdateOptions,
         chanLoadOptions = chanLoadOptions,
@@ -874,32 +879,38 @@ class ThreadPresenter @Inject constructor(
         is ThreadLoadResult.Error -> {
           onChanLoaderError(threadLoadResult.chanDescriptor, threadLoadResult.exception)
         }
-        is ThreadLoadResult.Loaded -> {
+        is ThreadLoadResult.Loaded,
+        is ThreadLoadResult.RecoveredFromError -> {
+          val chanDescriptor = when (threadLoadResult) {
+            is ThreadLoadResult.Loaded -> threadLoadResult.chanDescriptor
+            is ThreadLoadResult.RecoveredFromError -> threadLoadResult.chanDescriptor
+          }
+
           val (successfullyProcessedNewPosts, time) = measureTimedValue {
             onChanLoaderData(
-              loadedChanDescriptor = threadLoadResult.chanDescriptor,
+              loadedChanDescriptor = chanDescriptor,
               refreshPostPopupHelperPosts = refreshPostPopupHelperPosts
             )
           }
 
-          Logger.d(TAG, "normalLoad() onChanLoaderData(${threadLoadResult.chanDescriptor}) end, took $time")
+          Logger.d(TAG, "normalLoad() onChanLoaderData(${chanDescriptor}) end, took $time")
 
           if (!successfullyProcessedNewPosts) {
             val error = getPossibleChanLoadError(currentChanDescriptor)
-            onChanLoaderError(threadLoadResult.chanDescriptor, error)
+            onChanLoaderError(chanDescriptor, error)
           } else if (currentChanDescriptor is ChanDescriptor.ICatalogDescriptor) {
             chanCatalogSnapshotCache.get(currentChanDescriptor)
               ?.onCatalogLoaded(catalogPageToLoad)
 
-            // Load the rest of composite catalog right away after the first page is loaded. We need to do this when loading
-            // a composite catalog with sorting order not set to BUMP.
+            // Load the rest of composite catalog right away after the first page is loaded.
+            // We need to do this when loading a composite catalog with sorting order not set to BUMP.
             if (
               currentChanDescriptor is ChanDescriptor.CompositeCatalogDescriptor &&
               !PostsFilter.CatalogSortingOrder.current().isBump
             ) {
               Logger.debug(TAG) {
-                "normalLoad() currentChanDescriptor is CompositeCatalogDescriptor and current catalog sorting order is not BUMP. " +
-                  "Loading the whole composite catalog."
+                "normalLoad() currentChanDescriptor is CompositeCatalogDescriptor and current " +
+                  "catalog sorting order is not BUMP. Loading the whole composite catalog."
               }
 
               currentNormalLoadThreadJob = null
@@ -912,7 +923,28 @@ class ThreadPresenter @Inject constructor(
         }
       }
 
+      updateStatusCellFromThreadLoadResult(threadLoadResult)
       Logger.d(TAG, "normalLoad() end")
+    }
+  }
+
+  private fun updateStatusCellFromThreadLoadResult(threadLoadResult: ThreadLoadResult?) {
+    when (threadLoadResult) {
+      is ThreadLoadResult.Loaded -> {
+        threadPresenterCallback?.updateThreadStatusCellWithError(null)
+      }
+      is ThreadLoadResult.Error,
+      is ThreadLoadResult.RecoveredFromError -> {
+        val exception = when (threadLoadResult) {
+          is ThreadLoadResult.Error -> threadLoadResult.exception
+          is ThreadLoadResult.RecoveredFromError -> threadLoadResult.exception
+        }
+
+        threadPresenterCallback?.updateThreadStatusCellWithError(exception)
+      }
+      null -> {
+        // no-op
+      }
     }
   }
 
@@ -3007,6 +3039,7 @@ class ThreadPresenter @Inject constructor(
     fun postClicked(postDescriptor: PostDescriptor)
     fun hideError(chanDescriptor: ChanDescriptor)
     fun showError(chanDescriptor: ChanDescriptor, error: ChanLoaderException)
+    fun updateThreadStatusCellWithError(error: ChanLoaderException?)
     fun showLoading()
     fun showLoading(animateTransition: Boolean)
     fun showEmpty()

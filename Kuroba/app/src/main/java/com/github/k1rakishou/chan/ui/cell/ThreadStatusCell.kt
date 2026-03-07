@@ -15,8 +15,9 @@ import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
+import com.github.k1rakishou.chan.ui.helper.AppResources
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
+import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.board.pages.BoardPage
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -38,6 +39,8 @@ class ThreadStatusCell(
 ) : LinearLayout(context, attrs), View.OnClickListener, ThemeEngine.ThemeChangesListener {
 
   @Inject
+  lateinit var appResources: AppResources
+  @Inject
   lateinit var themeEngine: ThemeEngine
   @Inject
   lateinit var boardManager: BoardManager
@@ -51,7 +54,7 @@ class ThreadStatusCell(
   private lateinit var statusCellText: TextView
 
   private var callback: Callback? = null
-  private var error: String? = null
+  private var errorMessage: String? = null
 
   private val job = SupervisorJob()
   private val scope = CoroutineScope(job + Dispatchers.Main)
@@ -122,7 +125,7 @@ class ThreadStatusCell(
     clickThrottler.post(
       timeout = 1_000L,
       func = {
-        error = null
+        errorMessage = null
 
         if (callback?.currentChanDescriptor != null) {
           callback?.onListStatusClicked()
@@ -138,7 +141,7 @@ class ThreadStatusCell(
   }
 
   fun setError(error: String?) {
-    this.error = error
+    this.errorMessage = error
 
     if (error == null) {
       schedule()
@@ -158,31 +161,44 @@ class ThreadStatusCell(
 
     if (chanDescriptor.isCatalogDescriptor()) {
       unschedule()
-      updateCatalogStatusCell(chanDescriptor, callback)
+      updateCatalogStatusCell()
     } else {
       updateThreadStatusCell(chanDescriptor, callback)
     }
   }
 
-  private suspend fun updateCatalogStatusCell(
-    chanDescriptor: ChanDescriptor,
-    callback: Callback?
-  ) {
-    statusCellText.text = getString(R.string.catalog_refresh_title)
+  private fun updateCatalogStatusCell() {
+    if (errorMessage != null) {
+      val actualMessage = errorMessage.takeIf { it.isNotNullNorBlank() }
+        ?: appResources.string(R.string.thread_status_cell_unknown_error)
+
+      statusCellText.text = buildString {
+        appendLine(appResources.string(R.string.catalog_refresh_error_text_title))
+        appendLine("\"${actualMessage}\"")
+        appendLine(appResources.string(R.string.catalog_click_to_refresh))
+      }
+
+      return
+    }
+
+    statusCellText.text = buildString {
+      appendLine(appResources.string(R.string.catalog_refresh_title))
+      appendLine(appResources.string(R.string.catalog_click_to_refresh))
+    }
   }
 
   private suspend fun updateThreadStatusCell(
     chanDescriptor: ChanDescriptor,
     callback: Callback?
   ) {
-    if (error != null) {
+    if (errorMessage != null) {
+      val actualMessage = errorMessage.takeIf { it.isNotNullNorBlank() }
+        ?: appResources.string(R.string.thread_status_cell_unknown_error)
+
       statusCellText.text = buildString {
-        appendLine(getString(R.string.thread_refresh_error_text_title))
-        append("\"")
-        append(error)
-        append("\"")
-        appendLine()
-        appendLine(getString(R.string.thread_refresh_bar_inactive))
+        appendLine(appResources.string(R.string.thread_refresh_error_text_title))
+        appendLine("\"${actualMessage}\"")
+        appendLine(appResources.string(R.string.thread_refresh_bar_inactive))
       }
 
       return
@@ -230,7 +246,7 @@ class ThreadStatusCell(
 
     if (archivesManager.isSiteArchive(chanDescriptor.siteDescriptor())) {
       builder
-        .append(getString(R.string.controller_bookmarks_bookmark_of_archived_thread))
+        .append(appResources.string(R.string.controller_bookmarks_bookmark_of_archived_thread))
     }
 
     appendThreadDownloaderStats(chanDescriptor, builder)
@@ -252,15 +268,15 @@ class ThreadStatusCell(
     when (threadDownloadManager.getStatus(threadDescriptor)) {
       ThreadDownload.Status.Running -> {
         builder
-          .append(getString(R.string.thread_status_downloading_running))
+          .append(appResources.string(R.string.thread_status_downloading_running))
       }
       ThreadDownload.Status.Stopped -> {
         builder
-          .append(getString(R.string.thread_status_downloading_stopped))
+          .append(appResources.string(R.string.thread_status_downloading_stopped))
       }
       ThreadDownload.Status.Completed -> {
         builder
-          .append(getString(R.string.thread_status_downloaded))
+          .append(appResources.string(R.string.thread_status_downloaded))
       }
       else -> {
         // no-op
@@ -281,13 +297,13 @@ class ThreadStatusCell(
 
     when {
       callback?.isWatching() == false -> {
-        builder.append(getString(R.string.thread_refresh_bar_inactive))
+        builder.append(appResources.string(R.string.thread_refresh_bar_inactive))
       }
       timeSeconds <= 0 -> {
-        builder.append(getString(R.string.loading))
+        builder.append(appResources.string(R.string.loading))
       }
       else -> {
-        builder.append(getString(R.string.thread_refresh_countdown, timeSeconds))
+        builder.append(appResources.string(R.string.thread_refresh_countdown, timeSeconds))
       }
     }
 
@@ -300,15 +316,15 @@ class ThreadStatusCell(
   ): Boolean {
     when {
       chanThread.isArchived() -> {
-        builder.append(getString(R.string.thread_archived))
+        builder.append(appResources.string(R.string.thread_archived))
         return true
       }
       chanThread.isClosed() -> {
-        builder.append(getString(R.string.thread_closed))
+        builder.append(appResources.string(R.string.thread_closed))
         return true
       }
       chanThread.isDeleted() -> {
-        builder.append(getString(R.string.thread_deleted))
+        builder.append(appResources.string(R.string.thread_deleted))
         return true
       }
     }

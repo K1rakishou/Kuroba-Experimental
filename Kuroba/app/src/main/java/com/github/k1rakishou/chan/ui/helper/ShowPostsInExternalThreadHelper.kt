@@ -101,23 +101,31 @@ class ShowPostsInExternalThreadHelper(
         postSubNo = 0L
       )
 
-      if (threadLoadResult is ThreadLoadResult.Error) {
-        if (threadLoadResult.exception.isNotFound) {
+      if (
+        threadLoadResult is ThreadLoadResult.Error ||
+        threadLoadResult is ThreadLoadResult.RecoveredFromError
+      ) {
+        val exception = when (threadLoadResult) {
+          is ThreadLoadResult.Error -> threadLoadResult.exception
+          is ThreadLoadResult.RecoveredFromError -> threadLoadResult.exception
+        }
+
+        if (exception.isNotFound) {
           showToastFunc("Failed to open ${postDescriptor} server returned 404")
           showAvailableArchivesListFunc(originalPostDescriptor, false)
           return@launch
         }
 
-        if (threadLoadResult.exception.isCoroutineCancellationError()) {
+        if (exception.isCoroutineCancellationError()) {
           showToastFunc("'${threadDescriptor}' thread loading canceled")
           return@launch
         }
 
         Logger.e(TAG, "showPostsInExternalThread() Failed to load external " +
-          "thread '$threadDescriptor'", threadLoadResult.exception)
+          "thread '$threadDescriptor'", exception)
 
         showToastFunc("Failed to load external thread '$threadDescriptor', " +
-          "error: ${threadLoadResult.exception.errorMessageOrClassName()}")
+          "error: ${exception.errorMessageOrClassName()}")
 
         return@launch
       }

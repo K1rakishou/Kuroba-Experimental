@@ -240,6 +240,10 @@ class Chan4CheckPostExistsRequest(
         Logger.error(TAG) { "refreshThreadAndCheckPostExists() error: ${threadLoadResult.exception}" }
         return false
       }
+      is ThreadLoadResult.RecoveredFromError -> {
+        Logger.error(TAG) { "refreshThreadAndCheckPostExists() recovered from error: ${threadLoadResult.exception}" }
+        return false
+      }
       is ThreadLoadResult.Loaded -> {
         Logger.error(TAG) { "refreshThreadAndCheckPostExists() fetched latest posts for '${chanDescriptor}'" }
       }

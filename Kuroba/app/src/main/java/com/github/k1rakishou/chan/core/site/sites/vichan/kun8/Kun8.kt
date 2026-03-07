@@ -28,9 +28,9 @@ class Kun8 : BaseVichanSite(
   defaultDomain = "https://8kun.top/"
 ) {
   private val mediaDomain: HttpUrl
-    get() = "https://nerv.${currentDomain.host}.top/".toHttpUrl()
+    get() = "https://nerv.${currentDomain.host}/".toHttpUrl()
   private val sysDomain: HttpUrl
-    get() = "https://sys.${currentDomain.host}.top/".toHttpUrl()
+    get() = "https://sys.${currentDomain.host}/".toHttpUrl()
 
   override val enabled: Boolean = true
   override val name: String = SITE_NAME

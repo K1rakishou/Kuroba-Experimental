@@ -569,12 +569,6 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   override fun showError(chanDescriptor: ChanDescriptor, error: ChanLoaderException) {
-    if (hasSupportedActiveArchives() && !error.isFirewallError()) {
-      openThreadInArchiveButton.setVisibilityFast(View.VISIBLE)
-    } else {
-      openThreadInArchiveButton.setVisibilityFast(View.GONE)
-    }
-
     val errorMessage = error.errorMessage
 
     if (threadLayoutState == State.CONTENT) {
@@ -588,9 +582,25 @@ class ThreadLayout @JvmOverloads constructor(
       } else {
         errorRetryButton.setVisibilityFast(View.GONE)
       }
+
+      if (hasSupportedActiveArchives() && !error.isFirewallError()) {
+        openThreadInArchiveButton.setVisibilityFast(View.VISIBLE)
+      } else {
+        openThreadInArchiveButton.setVisibilityFast(View.GONE)
+      }
     }
 
     callback.onShowError()
+  }
+
+  override fun updateThreadStatusCellWithError(error: ChanLoaderException?) {
+    if (threadLayoutState == ThreadLayout.State.CONTENT) {
+      if (error == null) {
+        threadListLayout.showError(null)
+      } else {
+        threadListLayout.showError(error.errorMessage)
+      }
+    }
   }
 
   private fun hasSupportedActiveArchives(): Boolean {

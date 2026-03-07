@@ -12,8 +12,20 @@ sealed class ThreadLoadResult {
     override fun toString(): String = "ThreadLoadResult.Error{exception=${exception.errorMessageOrClassName()}}"
   }
 
-  data class Loaded(val chanDescriptor: ChanDescriptor) : ThreadLoadResult() {
+  data class Loaded(
+    val chanDescriptor: ChanDescriptor
+  ) : ThreadLoadResult() {
     override fun toString(): String = "ThreadLoadResult.Loaded{chanDescriptor=${chanDescriptor}}"
+  }
+
+  data class RecoveredFromError(
+    val chanDescriptor: ChanDescriptor,
+    val exception: ChanLoaderException
+  ) : ThreadLoadResult() {
+    override fun toString(): String {
+      return "ThreadLoadResult.RecoveredFromError{chanDescriptor=${chanDescriptor}, " +
+        "exception=${exception.errorMessageOrClassName()}"
+    }
   }
 
   companion object {

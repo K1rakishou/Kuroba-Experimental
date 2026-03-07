@@ -191,7 +191,8 @@ class ChanThreadManager(
           )
         }
       }
-      is ThreadLoadResult.Error -> {
+      is ThreadLoadResult.Error,
+      is ThreadLoadResult.RecoveredFromError -> {
         // no-op
       }
     }
