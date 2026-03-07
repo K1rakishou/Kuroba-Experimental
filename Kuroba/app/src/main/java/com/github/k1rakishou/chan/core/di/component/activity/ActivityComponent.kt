@@ -165,7 +165,6 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableScrollView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableSlider
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableSwitchMaterial
-import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTabLayout
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableToolbarSearchLayoutEditText
@@ -178,17 +177,14 @@ import com.github.k1rakishou.chan.ui.view.FloatingMenu
 import com.github.k1rakishou.chan.ui.view.HidingFloatingActionButton
 import com.github.k1rakishou.chan.ui.view.OptionalSwipeViewPager
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
-import com.github.k1rakishou.chan.ui.view.attach.AttachNewFileButton
 import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanel
 import com.github.k1rakishou.chan.ui.view.floating_menu.epoxy.EpoxyCheckableFloatingListMenuRow
 import com.github.k1rakishou.chan.ui.view.floating_menu.epoxy.EpoxyFloatingListMenuRow
 import com.github.k1rakishou.chan.ui.view.floating_menu.epoxy.EpoxyGroupableFloatingListMenuRow
 import com.github.k1rakishou.chan.ui.view.floating_menu.epoxy.EpoxyHeaderListMenuRow
 import com.github.k1rakishou.chan.ui.view.insets.ColorizableInsetAwareEpoxyRecyclerView
-import com.github.k1rakishou.chan.ui.view.insets.ColorizableInsetAwareGridRecyclerView
 import com.github.k1rakishou.chan.ui.view.insets.InsetAwareEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.view.insets.InsetAwareLinearLayout
-import com.github.k1rakishou.chan.ui.view.insets.InsetAwareRecyclerView
 import com.github.k1rakishou.chan.ui.view.sorting.BookmarkSortingItemView
 import com.github.k1rakishou.chan.ui.view.widget.dialog.KurobaAlertController
 import dagger.BindsInstance
@@ -299,7 +295,6 @@ interface ActivityComponent : ActivityDependencies {
   fun inject(colorizableSwitchMaterial: ColorizableSwitchMaterial)
   fun inject(colorizableTextInputLayout: ColorizableTextInputLayout)
   fun inject(colorizableTextView: ColorizableTextView)
-  fun inject(colorizableTabLayout: ColorizableTabLayout)
   fun inject(colorizableToolbarSearchLayoutEditText: ColorizableToolbarSearchLayoutEditText)
   fun inject(colorizableFrameLayout: ColorizableFrameLayout)
   fun inject(colorizableLinearLayout: ColorizableLinearLayout)
@@ -333,10 +328,8 @@ interface ActivityComponent : ActivityDependencies {
   fun inject(epoxyDuplicateImageView: EpoxyDuplicateImageView)
   fun inject(epoxyReorderableItemView: EpoxyReorderableItemView)
 
-  fun inject(insetAwareRecyclerView: InsetAwareRecyclerView)
   fun inject(insetAwareEpoxyRecyclerView: InsetAwareEpoxyRecyclerView)
   fun inject(colorizableInsetAwareEpoxyRecyclerView: ColorizableInsetAwareEpoxyRecyclerView)
-  fun inject(colorizableInsetAwareGridRecyclerView: ColorizableInsetAwareGridRecyclerView)
   fun inject(insetAwareLinearLayout: InsetAwareLinearLayout)
 
   fun inject(captchaNoJsLayoutV2: CaptchaNoJsLayoutV2)
@@ -372,7 +365,6 @@ interface ActivityComponent : ActivityDependencies {
   fun inject(postStubCell: PostStubCell)
   fun inject(searchLayout: SearchLayout)
   fun inject(splitNavigationControllerLayout: SplitNavigationControllerLayout)
-  fun inject(attachNewFileButton: AttachNewFileButton)
   fun inject(optionalSwipeViewPager: OptionalSwipeViewPager)
   fun inject(scrollbarView: ScrollbarView)
   fun inject(postImageThumbnailViewWrapper: PostImageThumbnailViewWrapper)
