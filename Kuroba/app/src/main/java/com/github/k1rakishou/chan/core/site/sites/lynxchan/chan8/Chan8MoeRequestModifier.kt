@@ -53,7 +53,6 @@ class Chan8MoeRequestModifier(
     requestBuilder.add8chanHeaders()
   }
 
-  @Suppress("ForbiddenComment")
   override fun modifyVideoStreamRequest(
     site: Site,
     requestProperties: MutableMap<String, String>,

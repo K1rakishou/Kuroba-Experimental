@@ -14,10 +14,11 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class Chan8MoeProofOfWork(
   private val token: String,
-  private val difficulty: Int
+  private val difficulty: Int,
+  private val algorithm: Int,
 ) {
   suspend fun find(): Int? {
-    Logger.debug(TAG) { "token: ${token.asFormattedToken()}, difficulty: ${difficulty}" }
+    Logger.debug(TAG) { "token: ${token.asFormattedToken()}, difficulty: ${difficulty}, algorithm: ${algorithm}" }
 
     return coroutineScope {
       val found = AtomicBoolean(false)
@@ -28,7 +29,10 @@ class Chan8MoeProofOfWork(
       repeat(numCoroutines) { coroutineId ->
         launch(Dispatchers.Default) {
           var n = coroutineId
-          val digest = MessageDigest.getInstance("SHA-256")
+
+          val sha = if (algorithm == 512) "SHA-512" else "SHA-256"
+          val bytes = if (algorithm == 512) 64 else 32
+          val digest = MessageDigest.getInstance(sha)
 
           while (isActive && !found.get()) {
             val message = token + n
@@ -36,7 +40,7 @@ class Chan8MoeProofOfWork(
             val hash = digest.digest(message.toByteArray(Charsets.UTF_8))
 
             var bits = 0
-            outer@ for (i in 0 until 32) {
+            outer@ for (i in 0 until bytes) {
               if (bits >= difficulty) break
 
               for (bit in 7 downTo 0) {

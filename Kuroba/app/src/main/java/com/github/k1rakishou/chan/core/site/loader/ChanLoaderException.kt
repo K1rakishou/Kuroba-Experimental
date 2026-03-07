@@ -9,7 +9,6 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.google.gson.JsonParseException
 import com.squareup.moshi.JsonDataException
 import com.squareup.moshi.JsonEncodingException
-import okhttp3.HttpUrl
 import java.net.SocketException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
@@ -28,7 +27,7 @@ open class ChanLoaderException(
       return when (exception) {
         is SocketTimeoutException,
         is SocketException,
-        is UnknownHostException -> getString(R.string.thread_load_failed_network)
+        is UnknownHostException -> getString(R.string.thread_load_failed_network, exception::class.java.simpleName)
         is BadStatusResponseException -> {
           when {
             exception.isAuthError() -> getString(R.string.thread_load_failed_auth_error)
@@ -60,6 +59,11 @@ open class ChanLoaderException(
 
   fun isRecoverableError(error: Throwable = exception): Boolean {
     return when (error) {
+      is SiteError,
+      is JsonDataException,
+      is JsonEncodingException,
+      is JsonParseException,
+      is BadStatusResponseException,
       is SocketTimeoutException,
       is SocketException,
       is UnknownHostException,
@@ -71,20 +75,6 @@ open class ChanLoaderException(
   }
 
   fun isFirewallError(): Boolean = exception is FirewallDetectedException
-
-  fun getOriginalRequestHost(): String {
-    if (!isFirewallError()) {
-      throw IllegalStateException("Not a FirewallDetectedException error!")
-    }
-
-    val fullUrl = (exception as FirewallDetectedException).requestUrl
-
-    return HttpUrl.Builder()
-      .scheme("https")
-      .host(fullUrl.host)
-      .build()
-      .toString()
-  }
 
   fun isCoroutineCancellationError(): Boolean {
     return exception is kotlinx.coroutines.CancellationException

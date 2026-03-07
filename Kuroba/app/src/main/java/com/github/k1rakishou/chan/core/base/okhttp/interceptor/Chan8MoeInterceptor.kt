@@ -164,17 +164,20 @@ class Chan8MoeInterceptor(
       val htmlMaybe = initialResponse.body.string()
       val doc = Jsoup.parse(htmlMaybe)
 
-      val tokenElement = doc.select("pre#c").first()
-      val difficultyElement = doc.select("pre#d").first()
-
-      val token = tokenElement?.text()
+      val token = doc.select("pre#c").first()
+        ?.text()
         ?.takeIf { token -> token.isNotBlank() }
         ?: throw InterceptionException("Token not found")
-      val difficulty = difficultyElement
+      val difficulty = doc.select("pre#d").first()
         ?.text()
         ?.toIntOrNull()
         ?.takeIf { difficulty -> difficulty >= 0 }
         ?: throw InterceptionException("Difficulty not found")
+      val algorithm = doc.select("pre#h").first()
+        ?.text()
+        ?.toIntOrNull()
+        ?.takeIf { difficulty -> difficulty >= 0 }
+        ?: 256
 
       Logger.debug(TAG) { "[tid: ${threadId}] starting Chan8MoeProofOfWork..." }
 
@@ -182,7 +185,8 @@ class Chan8MoeInterceptor(
         runBlocking {
           Chan8MoeProofOfWork(
             token = token,
-            difficulty = difficulty
+            difficulty = difficulty,
+            algorithm = algorithm
           ).find()
         }
       }
