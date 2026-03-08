@@ -24,7 +24,7 @@ class DvachSiteRequestModifier(
     }
 
     addAntiSpamCookie(requestBuilder)
-    addUserCodeCookie(site, requestBuilder)
+    addUserCodeCookie(requestBuilder)
   }
 
   override fun modifyCatalogOrThreadGetRequest(
@@ -35,7 +35,7 @@ class DvachSiteRequestModifier(
     super.modifyCatalogOrThreadGetRequest(site, chanDescriptor, requestBuilder)
 
     addAntiSpamCookie(requestBuilder)
-    addUserCodeCookie(site, requestBuilder)
+    addUserCodeCookie(requestBuilder)
   }
 
   override fun modifyVideoStreamRequest(
@@ -57,11 +57,10 @@ class DvachSiteRequestModifier(
     super.modifyPostReportRequest(site, requestBuilder)
 
     addAntiSpamCookie(requestBuilder)
-    addUserCodeCookie(site, requestBuilder)
+    addUserCodeCookie(requestBuilder)
   }
 
   private fun addUserCodeCookie(
-    site: Site,
     requestBuilder: Request.Builder
   ) {
     val userCodeCookie = dvachSiteSettings.userCodeCookie.get()

@@ -48,6 +48,8 @@ abstract class AbstractWebViewTask(
     get() = _started.get()
 
   private val _performingAutoClick = AtomicBoolean(false)
+  val performingAutoClick: Boolean
+    get() = _performingAutoClick.get()
 
   // Cookies before loading the page. Once the page loads, there is no way to get the cookies from WebView, and it's
   // impossible to tell if cookies were updated in CookieManager. But in some cases we need to know when the cookies

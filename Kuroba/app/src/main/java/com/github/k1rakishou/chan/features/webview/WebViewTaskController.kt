@@ -192,6 +192,11 @@ class WebViewTaskController(
         update = { webView ->
           @SuppressLint("ClickableViewAccessibility")
           webView.setOnTouchListener { _, event ->
+            if (!webViewTask.performingAutoClick && currentlyInvisible.value) {
+              currentlyInvisible.value = false
+              return@setOnTouchListener false
+            }
+
             webViewTask.onWebViewTouchAction(event)
             return@setOnTouchListener false
           }
