@@ -18,9 +18,11 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridScope
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -64,6 +66,7 @@ import com.github.k1rakishou.chan.ui.compose.snackbar.SnackbarScope
 import com.github.k1rakishou.chan.ui.compose.window.KurobaWindowWidthSizeClass
 import com.github.k1rakishou.chan.ui.controller.base.BaseComposeController
 import com.github.k1rakishou.chan.ui.controller.base.DeprecatedNavigationFlags
+import com.github.k1rakishou.chan.ui.helper.awaitWhile
 import com.github.k1rakishou.chan.utils.ComposeAnnotatedStringHelper
 import com.github.k1rakishou.chan.utils.ComposeAnnotatedStringHelperImpl
 import com.github.k1rakishou.chan.utils.ViewModelScope
@@ -118,6 +121,28 @@ class BoardSelectionController(
     val currentSearchQuery by viewModel.currentSearchQuery
 
     val searchQueryState = rememberTextFieldState()
+    val lazyGridState = rememberLazyGridState()
+
+    DisposableEffect(key1 = Unit) {
+      onDispose {
+        viewModel.saveLastScrollPosition(
+          firstVisibleItemIndex = lazyGridState.firstVisibleItemIndex,
+          firstVisibleItemScrollOffset = lazyGridState.firstVisibleItemScrollOffset
+        )
+      }
+    }
+
+    LaunchedEffect(key1 = Unit) {
+      awaitWhile {
+        lazyGridState.layoutInfo.totalItemsCount > 0 &&
+          lazyGridState.layoutInfo.visibleItemsInfo.isNotEmpty()
+      }
+
+      lazyGridState.scrollToItem(
+        index = viewModel.lastScrollPosition.index,
+        scrollOffset = viewModel.lastScrollPosition.offset
+      )
+    }
 
     LaunchedEffect(key1 = Unit) {
       searchQueryState.forEachTextValue { text ->
@@ -152,6 +177,7 @@ class BoardSelectionController(
 
             LazyVerticalGridWithFastScroller(
               modifier = Modifier.fillMaxSize(),
+              state = lazyGridState,
               columns = GridCells.Fixed(count = spanCount),
               draggableScrollbar = false,
               contentPadding = lazyGridPaddings,

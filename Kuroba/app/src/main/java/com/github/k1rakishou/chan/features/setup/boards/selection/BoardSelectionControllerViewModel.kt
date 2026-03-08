@@ -53,6 +53,9 @@ class BoardSelectionControllerViewModel(
 
   private var _searchQueryUpdateExecutor = DebouncingCoroutineExecutor(viewModelScope)
 
+  val lastScrollPosition: LastScrollPosition
+    get() = _lastScrollPosition
+
   override fun injectDependencies(component: ViewModelComponent) {
     component.inject(this)
   }
@@ -291,6 +294,18 @@ class BoardSelectionControllerViewModel(
     return sortedBoards.take(maxBoardsToShow) + sortedBoards.last()
   }
 
+  fun saveLastScrollPosition(firstVisibleItemIndex: Int, firstVisibleItemScrollOffset: Int) {
+    _lastScrollPosition = LastScrollPosition(
+      index = firstVisibleItemIndex,
+      offset = firstVisibleItemScrollOffset
+    )
+  }
+
+  data class LastScrollPosition(
+    val index: Int = 0,
+    val offset: Int = 0
+  )
+
   sealed interface SelectableElement {
     data class SiteHeader(
       val siteDescriptor: SiteDescriptor,
@@ -338,5 +353,7 @@ class BoardSelectionControllerViewModel(
   companion object {
     const val MAX_CATALOGS_TO_SHOW_IN_SEARCH_MODE_PHONE = 5
     const val MAX_CATALOGS_TO_SHOW_IN_SEARCH_MODE_TABLET = 10
+
+    private var _lastScrollPosition = LastScrollPosition()
   }
 }
