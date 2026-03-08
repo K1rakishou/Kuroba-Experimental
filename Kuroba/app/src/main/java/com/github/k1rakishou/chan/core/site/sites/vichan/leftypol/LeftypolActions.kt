@@ -1,8 +1,5 @@
 package com.github.k1rakishou.chan.core.site.sites.vichan.leftypol
 
-import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
-import com.github.k1rakishou.chan.core.manager.ReplyManager
-import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.common.MultipartHttpCall
 import com.github.k1rakishou.chan.core.site.sites.vichan.lainchan.LainchanActions
@@ -15,10 +12,7 @@ import okhttp3.Request
 
 class LeftypolActions(
   commonSite: CommonSite,
-  proxiedOkHttpClient: ProxiedOkHttpClient,
-  siteManager: SiteManager,
-  replyManager: ReplyManager
-) : LainchanActions(commonSite, proxiedOkHttpClient, siteManager, replyManager) {
+) : LainchanActions(commonSite) {
 
   override suspend fun boards(): Flow<SiteBoards> {
     val requestBuilder = Request.Builder()
@@ -29,8 +23,8 @@ class LeftypolActions(
     val siteBoards = LeftypolBoardsRequest(
       siteDescriptor = site.descriptor,
       boardManager = site.boardManager,
-      request = requestBuilder.build(),
-      proxiedOkHttpClient = proxiedOkHttpClient
+      proxiedOkHttpClient = site.dependencies.proxiedOkHttpClient,
+      request = requestBuilder.build()
     )
       .execute()
       .mapErrorToValue { error -> SiteBoards.Result.Error(error) }

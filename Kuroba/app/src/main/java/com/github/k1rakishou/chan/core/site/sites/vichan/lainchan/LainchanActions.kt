@@ -23,11 +23,14 @@ import java.io.IOException
 import java.util.regex.Pattern
 
 open class LainchanActions(
-  commonSite: CommonSite,
-  protected val proxiedOkHttpClient: ProxiedOkHttpClient,
-  private val siteManager: SiteManager,
-  protected val replyManager: ReplyManager
-) : CommonActions(commonSite) {
+  site: CommonSite
+) : CommonActions(site) {
+  private val proxiedOkHttpClient: ProxiedOkHttpClient
+    get() = site.dependencies.proxiedOkHttpClient
+  private val siteManager: SiteManager
+    get() = site.dependencies.siteManager
+  private val replyManager: ReplyManager
+    get() = site.dependencies.replyManager
 
   override fun setupPost(replyChanDescriptor: ChanDescriptor, call: MultipartHttpCall): ModularResult<Unit> {
     return ModularResult.Try {
@@ -98,7 +101,7 @@ open class LainchanActions(
 
     val antispam = LainchanAntispam(proxiedOkHttpClient, desktopUrl)
 
-    val antiSpamFieldsResult = antispam.get()
+    val antiSpamFieldsResult = antispam.load()
     if (antiSpamFieldsResult is ModularResult.Error) {
       Logger.e(TAG, "Antispam failure", antiSpamFieldsResult.error)
       return ModularResult.error(antiSpamFieldsResult.error)

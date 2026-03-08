@@ -18,8 +18,8 @@ import java.io.IOException
 class LeftypolBoardsRequest(
   private val siteDescriptor: SiteDescriptor,
   private val boardManager: BoardManager,
-  request: Request,
-  proxiedOkHttpClient: ProxiedOkHttpClient
+  proxiedOkHttpClient: ProxiedOkHttpClient,
+  request: Request
 ) : AbstractRequest<SiteBoards>(request, proxiedOkHttpClient) {
 
   override suspend fun processBody(responseBody: ResponseBody): SiteBoards {
