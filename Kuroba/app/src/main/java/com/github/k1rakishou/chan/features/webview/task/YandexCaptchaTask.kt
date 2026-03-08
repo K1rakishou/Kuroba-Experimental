@@ -3,13 +3,13 @@ package com.github.k1rakishou.chan.features.webview.task
 import android.webkit.CookieManager
 import android.webkit.WebView
 import com.github.k1rakishou.chan.core.site.Site
-import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
 import com.github.k1rakishou.chan.features.webview.WebViewTaskResult
 import com.github.k1rakishou.chan.features.webview.client.AbstractCookieWebViewClient
 import com.github.k1rakishou.chan.features.webview.client.AbstractWebViewClient
 import com.github.k1rakishou.common.isNotNullNorBlank
-import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.prefs.StringSetting
+import com.github.k1rakishou.persist_state.ImageSearchInstanceType
+import com.github.k1rakishou.persist_state.PersistableChanState
+import com.github.k1rakishou.persist_state.RemoteImageSearchInstanceSettings
 import kotlinx.coroutines.CompletableDeferred
 
 class YandexCaptchaTask(
@@ -34,17 +34,18 @@ class YandexCaptchaTask(
     )
   }
 
-  override suspend fun addCookieToSiteSettings(site: Site, cookies: String, userData: Any?) {
-    val dvachAntiSpamCookieSetting = site.getSettingBySettingId<StringSetting>(
-      SiteSettingForUi.SiteSettingId.DvachAntiSpamCookie
+  override suspend fun persistCookies(site: Site, cookies: String, userData: Any?) {
+    PersistableChanState.remoteImageSearchSettings.get().update(
+      instanceType = ImageSearchInstanceType.Yandex,
+      updater = { settings -> settings.copy(cookies = cookies ) },
+      creator = {
+        RemoteImageSearchInstanceSettings(
+          instanceType = ImageSearchInstanceType.Yandex,
+          baseUrl = (loadable as Loadable.Url).url.toString(),
+          cookies = null
+        )
+      }
     )
-
-    if (dvachAntiSpamCookieSetting == null) {
-      Logger.e(tag, "Failed to find setting with key DvachAntiSpamCookie")
-      return
-    }
-
-    dvachAntiSpamCookieSetting.setSync(cookies)
   }
 
   private class YandexCaptchaTaskWebViewClient(

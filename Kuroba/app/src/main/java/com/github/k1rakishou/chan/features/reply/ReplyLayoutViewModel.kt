@@ -17,7 +17,7 @@ import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.repository.BoardFlagInfoRepository
 import com.github.k1rakishou.chan.core.site.loader.ClientException
-import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
+import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4SiteSettings
 import com.github.k1rakishou.chan.core.usecase.ClearPostingCookies
 import com.github.k1rakishou.chan.core.usecase.LoadBoardFlagsUseCase
 import com.github.k1rakishou.chan.features.posting.PostingService
@@ -56,8 +56,6 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.persist_state.PersistableChanState
 import com.github.k1rakishou.persist_state.ReplyMode
-import com.github.k1rakishou.prefs.OptionsSetting
-import com.github.k1rakishou.prefs.StringSetting
 import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -387,7 +385,8 @@ class ReplyLayoutViewModel(
 
           if (!isReplyLayoutEnabled()) {
             Logger.debug(TAG) {
-              "enqueueReply(${chanDescriptor}) Canceling posting attempt for ${chanDescriptor} because cancel button was clicked"
+              "enqueueReply(${chanDescriptor}) Canceling posting attempt for ${chanDescriptor} " +
+                "because cancel button was clicked"
             }
 
             postingServiceDelegate.cancel(chanDescriptor)
@@ -397,7 +396,8 @@ class ReplyLayoutViewModel(
           if (replyLayoutState.sendReplyState.value != SendReplyState.Finished) {
             val sendReplyState = replyLayoutState.sendReplyState.value
             Logger.debug(TAG) {
-              "enqueueReply(${chanDescriptor}) sendReplyState is not SendReplyState.Finished (sendReplyState: ${sendReplyState})"
+              "enqueueReply(${chanDescriptor}) sendReplyState is not SendReplyState.Finished " +
+                "(sendReplyState: ${sendReplyState})"
             }
 
             return@launch
@@ -410,7 +410,8 @@ class ReplyLayoutViewModel(
           var actualReplyMode = replyMode
           if (actualReplyMode == null) {
             actualReplyMode = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
-              ?.getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSettingForUi.SiteSettingId.LastUsedReplyMode)
+              ?.commonSettings
+              ?.lastUsedReplyMode
               ?.get()
               ?: ReplyMode.Unknown
           }
@@ -578,10 +579,15 @@ class ReplyLayoutViewModel(
     withReplyLayoutState { replyLayoutState ->
       flagSelectorClickExecutor.post(500) {
         val lastUsedCountryFlagPerBoardSetting = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
-          ?.getSettingBySettingId<StringSetting>(SiteSettingForUi.SiteSettingId.LastUsedCountryFlagPerBoard)
+          ?.siteSettingsOrNull(Chan4SiteSettings::class.java)
+          ?.lastUsedFlagPerBoard
+
+        if (lastUsedCountryFlagPerBoardSetting == null) {
+          return@post
+        }
 
         val selectedFlag = replyLayoutViewCallbacks?.promptUserToSelectFlag(chanDescriptor)
-        if (lastUsedCountryFlagPerBoardSetting == null || selectedFlag == null) {
+        if (selectedFlag == null) {
           return@post
         }
 

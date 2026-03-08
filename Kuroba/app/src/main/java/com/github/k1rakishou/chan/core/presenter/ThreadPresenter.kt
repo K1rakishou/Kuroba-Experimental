@@ -46,7 +46,6 @@ import com.github.k1rakishou.chan.core.site.http.report.PostReportResult
 import com.github.k1rakishou.chan.core.site.loader.ChanLoaderException
 import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
 import com.github.k1rakishou.chan.core.site.loader.UnknownClientException
-import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
 import com.github.k1rakishou.chan.features.drawer.data.NavigationHistoryEntry
 import com.github.k1rakishou.chan.features.view.media.helper.MediaViewerGoToPostHelper
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter.PostAdapterCallback
@@ -100,7 +99,6 @@ import com.github.k1rakishou.model.util.ChanPostUtils
 import com.github.k1rakishou.model.util.ChanPostUtils.getReadableFileSize
 import com.github.k1rakishou.persist_state.IndexAndTop
 import com.github.k1rakishou.persist_state.ReplyMode
-import com.github.k1rakishou.prefs.OptionsSetting
 import dagger.Lazy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -3014,7 +3012,8 @@ class ThreadPresenter @Inject constructor(
 
   fun replyModeForChanDescriptor(chanDescriptor: ChanDescriptor): ReplyMode? {
     return siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
-      ?.getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSettingForUi.SiteSettingId.LastUsedReplyMode)
+      ?.commonSettings
+      ?.lastUsedReplyMode
       ?.get()
   }
 

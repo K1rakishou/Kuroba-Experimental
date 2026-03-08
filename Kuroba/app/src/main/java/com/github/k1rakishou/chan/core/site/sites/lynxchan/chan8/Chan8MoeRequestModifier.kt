@@ -92,8 +92,8 @@ class Chan8MoeRequestModifier(
   private fun buildCookies(): String {
     site as Chan8Moe
 
-    val powToken = site.powToken.get()?.value
-    val powId = site.powId.get()?.value
+    val powToken = site.settings.powToken.get()?.value
+    val powId = site.settings.powId.get()?.value
 
     return with(CookieBuilder()) {
       if (powToken.isNotNullNorBlank() && powId.isNotNullNorBlank()) {

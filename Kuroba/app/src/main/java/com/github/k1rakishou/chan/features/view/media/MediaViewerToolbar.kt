@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.features.view.media
 import android.animation.ValueAnimator
 import android.content.Context
 import android.util.AttributeSet
+import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.widget.AppCompatImageButton
@@ -121,7 +122,7 @@ class MediaViewerToolbar @JvmOverloads constructor(
       top = topPadding
     )
 
-    updateLayoutParams<LayoutParams> {
+    updateLayoutParams<ViewGroup.LayoutParams> {
       height = AppModuleAndroidUtils.getDimen(R.dimen.toolbar_height) + topPadding
     }
   }

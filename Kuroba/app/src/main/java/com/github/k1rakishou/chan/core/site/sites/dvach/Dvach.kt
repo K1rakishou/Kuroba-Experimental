@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.core.site.sites.dvach
 
 import androidx.annotation.CallSuper
 import com.github.k1rakishou.OptionSettingItem
-import com.github.k1rakishou.Setting
 import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.core.site.SiteConfiguration
@@ -17,60 +16,12 @@ import com.github.k1rakishou.chan.core.site.parser.SiteApi
 import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
 import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi.SiteOptionsSetting
 import com.github.k1rakishou.chan.core.site.settings.SiteSettingsForUi
+import com.github.k1rakishou.chan.core.site.settings.SiteSpecificSettings
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
-import com.github.k1rakishou.prefs.GsonJsonSetting
-import com.github.k1rakishou.prefs.OptionsSetting
-import com.github.k1rakishou.prefs.StringSetting
 
 class Dvach : CommonSite(
   defaultDomain = "https://2ch.life"
 ) {
-  lateinit var captchaType: OptionsSetting<CaptchaType>
-  lateinit var passCodeInfo: GsonJsonSetting<DvachPasscodeInfo>
-  lateinit var passCode: StringSetting
-  lateinit var passCookie: StringSetting
-  lateinit var userCodeCookie: StringSetting
-  lateinit var antiSpamCookie: StringSetting
-
-  val captchaV2NoJs by lazy {
-    SiteAuthentication.fromCaptcha2nojs(
-      NORMAL_CAPTCHA_KEY,
-      "${currentDomainString}/api/captcha/recaptcha/mobile"
-    )
-  }
-
-  val captchaV2Js by lazy {
-    SiteAuthentication.fromCaptcha2(
-      NORMAL_CAPTCHA_KEY,
-      "${currentDomainString}/api/captcha/recaptcha/mobile"
-    )
-  }
-
-  val captchaV2Invisible by lazy {
-    SiteAuthentication.fromCaptcha2Invisible(
-      INVISIBLE_CAPTCHA_KEY,
-      "${currentDomainString}/api/captcha/invisible_recaptcha/mobile"
-    )
-  }
-
-  val dvachCaptcha by lazy {
-    SiteAuthentication.idBased(
-      "${currentDomainString}/api/captcha/2chcaptcha/id"
-    )
-  }
-
-  val dvachCaptchaPuzzle by lazy {
-    SiteAuthentication.idBased(
-      "${currentDomainString}/api/captcha/puzzle"
-    )
-  }
-
-  val dvachEmojiCaptcha by lazy {
-    SiteAuthentication.emoji(
-      "${currentDomainString}/api/captcha/emoji/id"
-    )
-  }
-
   override val enabled: Boolean = true
   override val commentParserType: SiteConfiguration.CommentParserType = SiteConfiguration.CommentParserType.DvachParser
   override val redirectsToArchiveThread: Boolean = true
@@ -109,57 +60,26 @@ class Dvach : CommonSite(
       settingName = "Captcha type",
       settingDescription = null,
       groupId = "captcha_type",
-      options = captchaType,
+      options = dvachSettings.captchaType,
       optionNames = mutableListOf("Javascript", "Noscript", "Invisible")
     )
 
     settings += SiteSettingForUi.SiteStringSetting(
       settingName = "User code cookie",
       settingDescription = null,
-      setting = userCodeCookie
+      setting = dvachSettings.userCodeCookie
     )
 
     settings += SiteSettingForUi.SiteStringSetting(
       settingName = "Anti-spam cookie",
       settingDescription = null,
-      setting = antiSpamCookie
+      setting = dvachSettings.antiSpamCookie
     )
 
     return@lazy settings
   }
 
-  override suspend fun initialize() {
-    super.initialize()
-
-    passCode = StringSetting(prefs, "preference_pass_code", "")
-    passCookie = StringSetting(prefs, "preference_pass_cookie", "")
-    userCodeCookie = StringSetting(prefs, "user_code_cookie", "")
-    antiSpamCookie = StringSetting(prefs, "dvach_anti_spam_cookie", "")
-
-    captchaType = OptionsSetting(
-      prefs,
-      "preference_captcha_type_dvach",
-      CaptchaType::class.java,
-      CaptchaType.DVACH_CAPTCHA_EMOJI
-    )
-
-    passCodeInfo = GsonJsonSetting(
-      dependencies.gson,
-      DvachPasscodeInfo::class.java,
-      prefs,
-      "preference_pass_code_info",
-      DvachPasscodeInfo()
-    )
-  }
-
-  override fun <T : Setting<*>> getSettingBySettingId(settingId: SiteSettingForUi.SiteSettingId): T? {
-    return when (settingId) {
-      // Used for hidden boards accessing
-      SiteSettingForUi.SiteSettingId.DvachUserCodeCookie -> userCodeCookie as T
-      SiteSettingForUi.SiteSettingId.DvachAntiSpamCookie -> antiSpamCookie as T
-      else -> super.getSettingBySettingId(settingId)
-    }
-  }
+  override val settings: SiteSpecificSettings by lazy { DvachSiteSettings(dependencies, prefs) }
 
   @CallSuper
   override fun hasSiteFeature(siteFeature: SiteConfiguration.SiteFeature): Boolean {
@@ -167,6 +87,48 @@ class Dvach : CommonSite(
       || siteFeature == SiteConfiguration.SiteFeature.Posting
       || siteFeature == SiteConfiguration.SiteFeature.Login
       || siteFeature == SiteConfiguration.SiteFeature.PostReporting
+  }
+
+  val dvachSettings: DvachSiteSettings
+    get() = requireSiteSettings(DvachSiteSettings::class.java)
+
+  val captchaV2NoJs by lazy {
+    SiteAuthentication.fromCaptcha2nojs(
+      NORMAL_CAPTCHA_KEY,
+      "${currentDomainString}/api/captcha/recaptcha/mobile"
+    )
+  }
+
+  val captchaV2Js by lazy {
+    SiteAuthentication.fromCaptcha2(
+      NORMAL_CAPTCHA_KEY,
+      "${currentDomainString}/api/captcha/recaptcha/mobile"
+    )
+  }
+
+  val captchaV2Invisible by lazy {
+    SiteAuthentication.fromCaptcha2Invisible(
+      INVISIBLE_CAPTCHA_KEY,
+      "${currentDomainString}/api/captcha/invisible_recaptcha/mobile"
+    )
+  }
+
+  val dvachCaptcha by lazy {
+    SiteAuthentication.idBased(
+      "${currentDomainString}/api/captcha/2chcaptcha/id"
+    )
+  }
+
+  val dvachCaptchaPuzzle by lazy {
+    SiteAuthentication.idBased(
+      "${currentDomainString}/api/captcha/puzzle"
+    )
+  }
+
+  val dvachEmojiCaptcha by lazy {
+    SiteAuthentication.emoji(
+      "${currentDomainString}/api/captcha/emoji/id"
+    )
   }
 
   enum class CaptchaType(val value: String) : OptionSettingItem {

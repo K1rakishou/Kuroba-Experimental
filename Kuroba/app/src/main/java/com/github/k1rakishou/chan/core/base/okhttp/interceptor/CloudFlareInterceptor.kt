@@ -2,14 +2,12 @@ package com.github.k1rakishou.chan.core.base.okhttp.interceptor
 
 import com.github.k1rakishou.chan.core.manager.FirewallBypassManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
-import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
 import com.github.k1rakishou.chan.utils.containsPattern
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.FirewallDetectedException
 import com.github.k1rakishou.common.FirewallType
 import com.github.k1rakishou.common.domainOrHost
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.prefs.MapSetting
 import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
@@ -166,16 +164,7 @@ class CloudFlareInterceptor(
       return null
     }
 
-    val cloudFlareClearanceCookieSetting = site.getSettingBySettingId<MapSetting>(
-      SiteSettingForUi.SiteSettingId.CloudFlareClearanceCookie
-    )
-
-    if (cloudFlareClearanceCookieSetting == null) {
-      Logger.warning(TAG) { "[$okHttpType] addCloudFlareCookie() CloudFlareClearanceCookie setting was not found" }
-      return null
-    }
-
-    val cookieValue = cloudFlareClearanceCookieSetting.get(prevRequest.url.domainOrHost())
+    val cookieValue = site.commonSettings.cloudFlareClearanceCookieMap.get(url.domainOrHost())
     if (cookieValue.isNullOrEmpty()) {
       Logger.warning(TAG) { "[$okHttpType] addCloudFlareCookie() cookieValue is null or empty" }
       return null

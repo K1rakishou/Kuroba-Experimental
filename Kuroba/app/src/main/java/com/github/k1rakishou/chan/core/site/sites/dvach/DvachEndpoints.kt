@@ -112,7 +112,7 @@ class DvachEndpoints(
       return null
     }
 
-    val passcode = dvach.passCode.get()
+    val passcode = dvach.dvachSettings.passCode.get()
     if (passcode.isEmpty()) {
       return null
     }

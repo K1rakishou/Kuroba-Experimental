@@ -7,7 +7,6 @@ import com.github.k1rakishou.chan.core.site.common.CommonReplyHttpCall
 import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody
 import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody.ProgressRequestListener
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
-import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
 import com.github.k1rakishou.chan.features.posting.LastReplyRepository
 import com.github.k1rakishou.chan.features.reply.data.Reply
 import com.github.k1rakishou.chan.features.reply.data.ReplyFile
@@ -20,8 +19,6 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import com.github.k1rakishou.persist_state.ReplyMode
-import com.github.k1rakishou.prefs.OptionsSetting
-import com.github.k1rakishou.prefs.StringSetting
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
@@ -151,10 +148,7 @@ class DvachReplyCall internal constructor(
   ) {
     formBuilder.addFormDataPart("captcha_type", "recaptcha")
 
-    val replyMode = site
-      .getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSettingForUi.SiteSettingId.LastUsedReplyMode)
-      ?.get()
-
+    val replyMode = site.commonSettings.lastUsedReplyMode.get()
     if (replyMode == ReplyMode.ReplyModeSendWithoutCaptcha) {
       formBuilder.addFormDataPart("captcha_key", Dvach.INVISIBLE_CAPTCHA_KEY)
     } else {
@@ -265,8 +259,8 @@ class DvachReplyCall internal constructor(
     if (postingResult.threadNo != null) {
       val threadNo = postingResult.threadNo
 
-      replyResponse.threadNo = threadNo.toLong()
-      replyResponse.postNo = threadNo.toLong()
+      replyResponse.threadNo = threadNo
+      replyResponse.postNo = threadNo
       replyResponse.posted = true
 
       storeUserCodeCookieIfNeeded(response.headers)
@@ -291,11 +285,8 @@ class DvachReplyCall internal constructor(
 
   // usercode_auth=1234567890abcdef
   private fun storeUserCodeCookieIfNeeded(headers: Headers) {
-    val userCodeSetting = site.getSettingBySettingId<StringSetting>(
-      SiteSettingForUi.SiteSettingId.DvachUserCodeCookie
-    )
-
-    if (userCodeSetting == null || userCodeSetting.get().isNotEmpty()) {
+    val userCodeSetting = site.requireSiteSettings(DvachSiteSettings::class.java).userCodeCookie
+    if (userCodeSetting.get().isNotEmpty()) {
       return
     }
 
@@ -322,9 +313,9 @@ class DvachReplyCall internal constructor(
   data class PostingResult(
     val result: Int,
     val error: DvachError?,
-    @Json(name = "thread")
+    @field:Json(name = "thread")
     val threadNo: Long?,
-    @Json(name = "num")
+    @field:Json(name = "num")
     val postNo: Long?
   )
 

@@ -364,7 +364,7 @@ internal open class ConcurrentChunkedFileDownloader @Inject constructor(
       return 1
     }
 
-    val chunksCount = site.settings.concurrentFileDownloadingChunks.get().chunksCount()
+    val chunksCount = site.commonSettings.concurrentFileDownloadingChunks.get().chunksCount()
 
     activeDownload.chunksCount(chunksCount)
     return chunksCount

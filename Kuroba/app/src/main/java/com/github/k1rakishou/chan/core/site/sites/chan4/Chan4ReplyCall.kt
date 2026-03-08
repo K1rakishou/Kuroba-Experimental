@@ -11,7 +11,6 @@ import com.github.k1rakishou.chan.core.site.common.CommonReplyHttpCall
 import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody
 import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody.ProgressRequestListener
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
-import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
 import com.github.k1rakishou.chan.features.posting.LastReplyRepository
 import com.github.k1rakishou.chan.features.reply.data.ReplyFile
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileMeta
@@ -30,7 +29,6 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import com.github.k1rakishou.persist_state.ReplyMode
-import com.github.k1rakishou.prefs.MapSetting
 import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.MediaType.Companion.toMediaType
@@ -47,7 +45,6 @@ import java.util.Objects
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
-
 class Chan4ReplyCall(
   site: Site,
   replyChanDescriptor: ChanDescriptor,
@@ -59,6 +56,8 @@ class Chan4ReplyCall(
     get() = site.dependencies.boardFlagInfoRepository
   private val appConstants: AppConstants
     get() = site.dependencies.appConstants
+  private val chan4SiteSettings: Chan4SiteSettings
+    get() = site.requireSiteSettings(Chan4SiteSettings::class.java)
 
   @get:Synchronized
   @set:Synchronized
@@ -312,9 +311,7 @@ class Chan4ReplyCall(
   }
 
   private fun setChan4CaptchaHeader(headers: Headers) {
-    val chan4 = site as Chan4
-    val chan4CaptchaSettings = chan4.chan4CaptchaSettings.get()
-
+    val chan4CaptchaSettings = chan4SiteSettings.captchaSettings.get()
     if (!chan4CaptchaSettings.rememberCaptchaCookies) {
       Logger.d(TAG, "setChan4CaptchaHeader() rememberCaptchaCookies is false")
       return
@@ -336,7 +333,7 @@ class Chan4ReplyCall(
               "wholeCookieHeader='${wholeCookieHeader}', " +
               "headersDebugString='${headersDebugString}'")
 
-    val oldCookie = chan4.chan4CaptchaCookie.get()
+    val oldCookie = chan4SiteSettings.captchaCookie.get()
     Logger.d(TAG, "oldCookie='${formatToken(oldCookie)}', newCookie='${formatToken(newCookie)}'")
 
     if (newCookie.isNullOrEmpty()) {
@@ -344,7 +341,7 @@ class Chan4ReplyCall(
       return
     }
 
-    chan4.chan4CaptchaCookie.set(newCookie)
+    chan4SiteSettings.captchaCookie.set(newCookie)
   }
 
   private fun createRateLimitInfo(rateLimitMatcher: Matcher): ReplyResponse.RateLimitInfo {
@@ -408,10 +405,7 @@ class Chan4ReplyCall(
 
   private fun readCookies(requestUrl: HttpUrl): String {
     val domainOrHost = requestUrl.domainOrHost()
-
-    val cloudflareCookie = site
-      .getSettingBySettingId<MapSetting>(SiteSettingForUi.SiteSettingId.CloudFlareClearanceCookie)
-      ?.get(domainOrHost)
+    val cloudflareCookie = site.commonSettings.cloudFlareClearanceCookieMap.get(domainOrHost)
 
     return buildString {
       if (cloudflareCookie.isNotNullNorEmpty()) {
@@ -419,11 +413,11 @@ class Chan4ReplyCall(
         append(cloudflareCookie)
       }
 
-      val chan4SiteSettings = (site as Chan4).chan4CaptchaSettings.get()
+      val chan4CaptchaSettings = chan4SiteSettings.captchaSettings.get()
+      val rememberCaptchaCookies = chan4CaptchaSettings.rememberCaptchaCookies
 
-      val rememberCaptchaCookies = chan4SiteSettings.rememberCaptchaCookies
       if (rememberCaptchaCookies) {
-        val captchaCookie = site.chan4CaptchaCookie.get()
+        val captchaCookie = chan4SiteSettings.captchaCookie.get()
         if (captchaCookie.isNotBlank()) {
           Logger.d(TAG, "readCookies() domainOrHost: ${domainOrHost}, captchaCookie: ${formatToken(captchaCookie)}")
 

@@ -1,13 +1,12 @@
 package com.github.k1rakishou.chan.core.site
 
-import com.github.k1rakishou.Setting
 import com.github.k1rakishou.chan.core.site.SiteConfiguration.CatalogFeature
 import com.github.k1rakishou.chan.core.site.SiteConfiguration.SiteFeature
 import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.core.site.parser.SiteApi
-import com.github.k1rakishou.chan.core.site.settings.SiteBaseSettings
-import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
+import com.github.k1rakishou.chan.core.site.settings.SiteCommonSettings
 import com.github.k1rakishou.chan.core.site.settings.SiteSettingsForUi
+import com.github.k1rakishou.chan.core.site.settings.SiteSpecificSettings
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 
 interface Site {
@@ -21,7 +20,8 @@ interface Site {
   val actions: SiteActions
   val configuration: SiteConfiguration
   val postParser: PostParser?
-  val settings: SiteBaseSettings
+  val settings: SiteSpecificSettings?
+  val commonSettings: SiteCommonSettings
   val settingsForUi: SiteSettingsForUi
   val dependencies: SiteDependencies
 
@@ -30,5 +30,15 @@ interface Site {
   fun hasSiteFeature(siteFeature: SiteFeature): Boolean
   fun hasCatalogFeature(catalogFeature: CatalogFeature): Boolean = false
 
-  fun <T : Setting<*>> getSettingBySettingId(settingId: SiteSettingForUi.SiteSettingId): T?
+  fun <T : SiteSpecificSettings> siteSettingsOrNull(clazz: Class<T>): T? {
+    return if (clazz.isInstance(settings)) clazz.cast(settings) else null
+  }
+
+  fun <T : SiteSpecificSettings> requireSiteSettings(clazz: Class<T>): T {
+    return if (clazz.isInstance(settings)) {
+      clazz.cast(settings)
+    } else {
+      error("Cannot cast settings to ${clazz::class.java.name}")
+    }
+  }
 }

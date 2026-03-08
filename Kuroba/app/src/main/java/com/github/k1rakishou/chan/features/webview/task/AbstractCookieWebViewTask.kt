@@ -59,7 +59,7 @@ abstract class AbstractCookieWebViewTask(
           return
         }
 
-        addCookieToSiteSettings(
+        persistCookies(
           site = site,
           cookies = rawCookies,
           userData = userData
@@ -76,5 +76,5 @@ abstract class AbstractCookieWebViewTask(
     }
   }
 
-  abstract suspend fun addCookieToSiteSettings(site: Site, cookies: String, userData: Any?)
+  abstract suspend fun persistCookies(site: Site, cookies: String, userData: Any?)
 }

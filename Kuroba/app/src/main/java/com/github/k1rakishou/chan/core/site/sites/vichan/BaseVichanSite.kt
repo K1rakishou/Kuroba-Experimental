@@ -13,13 +13,13 @@ import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.core.site.parser.SiteApi
 
 abstract class BaseVichanSite(defaultDomain: String) : CommonSite(defaultDomain) {
-  override val enabled: Boolean = true
-  override val endpoints: SiteEndpoints by lazy { VichanEndpoints(this) }
-
   final override val commentParserType = SiteConfiguration.CommentParserType.VichanParser
   final override val globalSearchType = SiteConfiguration.GlobalSearchType.SearchNotSupported
   final override val boardsType = SiteConfiguration.BoardsType.Dynamic
   final override val catalogType = SiteConfiguration.CatalogType.Static
+
+  override val enabled: Boolean = true
+  override val endpoints: SiteEndpoints by lazy { VichanEndpoints(this) }
   override val chunkedDownloaderConfig = SiteConfiguration.ChunkedDownloaderConfig(
     enabled = true,
     siteSendsCorrectFileSizeInBytes = true

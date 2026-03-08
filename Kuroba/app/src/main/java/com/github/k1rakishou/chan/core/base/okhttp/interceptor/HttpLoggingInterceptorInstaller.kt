@@ -1,17 +1,17 @@
 package com.github.k1rakishou.chan.core.base.okhttp.interceptor
 
-import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
 import okhttp3.OkHttpClient
 
 object HttpLoggingInterceptorInstaller {
+  private const val LoggingInterceptorEnabled = false
 
   @JvmStatic
   fun install(
     okHttpClientBuilder: OkHttpClient.Builder,
     httpLoggingInterceptorLazy: HttpLoggingInterceptorLazy
   ) {
-    if (!AppConstants.loggingInterceptorEnabled) {
+    if (!LoggingInterceptorEnabled) {
       return
     }
 

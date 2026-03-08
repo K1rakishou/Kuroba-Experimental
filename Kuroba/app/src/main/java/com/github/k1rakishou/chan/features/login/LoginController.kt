@@ -15,7 +15,6 @@ import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginResponse
 import com.github.k1rakishou.chan.core.site.http.login.Chan4LoginRequest
 import com.github.k1rakishou.chan.core.site.http.login.DvachLoginRequest
-import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
 import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
 import com.github.k1rakishou.chan.features.toolbar.BackArrowMenuItem
@@ -33,7 +32,6 @@ import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.persist_state.ReplyMode
-import com.github.k1rakishou.prefs.OptionsSetting
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -299,9 +297,7 @@ class LoginController(
   }
 
   private fun resetReplyLayoutMode() {
-    site
-      .getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSettingForUi.SiteSettingId.LastUsedReplyMode)
-      ?.set(ReplyMode.Unknown)
+    site.commonSettings.lastUsedReplyMode.set(ReplyMode.Unknown)
   }
 
   private fun showError(error: String) {

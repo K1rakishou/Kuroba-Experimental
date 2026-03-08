@@ -216,11 +216,7 @@ open class AppConstants(
   companion object {
     private const val TAG = "AppConstants"
 
-    const val loggingInterceptorEnabled = false
-
-    const val FIREWALL_SCREEN_AUTO_CLOSE_TIMEOUT_MILLIS = 120_000L
-    const val CLOUDFLARE_INTERCEPTOR_FIREWALL_BYPASS_MAX_WAIT_TIME_MILLIS =
-      FIREWALL_SCREEN_AUTO_CLOSE_TIMEOUT_MILLIS + 10_000L
+    const val CLOUDFLARE_INTERCEPTOR_FIREWALL_BYPASS_MAX_WAIT_TIME_MILLIS = 30_000L
 
     // 10 percents of the app's available memory (not device's)
     private const val RAM_PERCENT_FOR_POSTS_CACHE = 10

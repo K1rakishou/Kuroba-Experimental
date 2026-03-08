@@ -5,7 +5,6 @@ import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
 import com.github.k1rakishou.chan.core.site.settings.SiteSettingsForUi
 import com.github.k1rakishou.chan.core.site.sites.lynxchan.engine.BaseLynxchanSite
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
-import com.github.k1rakishou.prefs.CookieSetting
 import okhttp3.HttpUrl
 
 class Chan8Moe : BaseLynxchanSite(
@@ -18,24 +17,23 @@ class Chan8Moe : BaseLynxchanSite(
   override val urlHandler by lazy { Chan8MoeUrlHandler(this, mediaHosts) }
 
   override val settingsForUi: SiteSettingsForUi by lazy {
-    val settings = SiteSettingsForUi(super.settingsForUi)
+    val settingsForUi = SiteSettingsForUi(super.settingsForUi)
 
-    settings += SiteSettingForUi.SiteCookieSetting(
+    settingsForUi += SiteSettingForUi.SiteCookieSetting(
       settingName = "powToken",
       settingDescription = getString(R.string.chan8moe_pow_token),
-      setting = powToken
+      setting = settings.powToken
     )
-    settings += SiteSettingForUi.SiteCookieSetting(
+    settingsForUi += SiteSettingForUi.SiteCookieSetting(
       settingName = "powId",
       settingDescription = getString(R.string.chan8moe_pow_id),
-      setting = powId
+      setting = settings.powId
     )
 
-    return@lazy settings
+    return@lazy settingsForUi
   }
 
-  val powToken by lazy { CookieSetting(dependencies.moshi, prefs, "pow_token") }
-  val powId by lazy { CookieSetting(dependencies.moshi, prefs, "pow_id") }
+  override val settings by lazy { Chan8MoeSiteSettings(dependencies, prefs) }
 
   class Chan8MoeUrlHandler(
     site: BaseLynxchanSite,

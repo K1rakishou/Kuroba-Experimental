@@ -35,6 +35,8 @@ import okhttp3.Request
 class Chan4Actions(
   private val chan4: Chan4
 ) : SiteActions {
+  private val chan4Settings: Chan4SiteSettings
+    get() = chan4.settings
 
   override suspend fun boards(): Flow<SiteBoards> {
     val request = Request.Builder()
@@ -92,9 +94,9 @@ class Chan4Actions(
           }
           is HttpCall.HttpCallWithProgressResult.Progress -> {
             return@map SiteActions.PostResult.UploadingProgress(
-              replyCallResult.fileIndex,
-              replyCallResult.totalFiles,
-              replyCallResult.percent
+              fileIndex = replyCallResult.fileIndex,
+              totalFiles = replyCallResult.totalFiles,
+              percent = replyCallResult.percent
             )
           }
           is HttpCall.HttpCallWithProgressResult.Fail -> {
@@ -128,8 +130,8 @@ class Chan4Actions(
   override suspend fun <T : AbstractLoginRequest> login(loginRequest: T): SiteActions.LoginResult {
     val chan4LoginRequest = loginRequest as Chan4LoginRequest
 
-    chan4.passUser.set(chan4LoginRequest.user)
-    chan4.passPass.set(chan4LoginRequest.pass)
+    chan4Settings.passUser.set(chan4LoginRequest.user)
+    chan4Settings.passPass.set(chan4LoginRequest.pass)
 
     val loginResult = chan4.httpCallManager.makeHttpCall(
       Chan4PassHttpCall(chan4, chan4LoginRequest)
@@ -141,7 +143,7 @@ class Chan4Actions(
 
         return when (loginResponse) {
           is Chan4LoginResponse.Success -> {
-            chan4.passToken.set(loginResponse.authCookie)
+            chan4Settings.passToken.set(loginResponse.authCookie)
             SiteActions.LoginResult.LoginComplete(loginResponse)
           }
           is Chan4LoginResponse.Failure -> {
@@ -157,7 +159,7 @@ class Chan4Actions(
 
   @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
   override fun postAuthenticate(): SiteAuthentication {
-    return when (chan4.captchaType.get()) {
+    return when (chan4Settings.captchaType.get()) {
       CaptchaType.V2JS -> SiteAuthentication.fromCaptcha2(CAPTCHA_KEY, "https://boards.4chan.org")
       CaptchaType.V2NOJS -> SiteAuthentication.fromCaptcha2nojs(CAPTCHA_KEY, "https://boards.4chan.org")
       CaptchaType.CHAN4_CAPTCHA -> SiteAuthentication.endpointBased()
@@ -165,19 +167,19 @@ class Chan4Actions(
   }
 
   override fun logout() {
-    chan4.passToken.remove()
-    chan4.passUser.remove()
-    chan4.passPass.remove()
+    chan4Settings.passToken.remove()
+    chan4Settings.passUser.remove()
+    chan4Settings.passPass.remove()
   }
 
   override fun isLoggedIn(): Boolean {
-    return chan4.passToken.get().isNotEmpty()
+    return chan4Settings.passToken.get().isNotEmpty()
   }
 
   override fun loginDetails(): Chan4LoginRequest {
     return Chan4LoginRequest(
-      chan4.passUser.get(),
-      chan4.passPass.get()
+      user = chan4Settings.passUser.get(),
+      pass = chan4Settings.passPass.get()
     )
   }
 
@@ -249,9 +251,9 @@ class Chan4Actions(
   }
 
   override fun clearPostingCookies() {
-    chan4.chan4CaptchaCookie.setSync("")
-    chan4.settings.cloudFlareClearanceCookieMap.clear(sync = true)
-    chan4.chan4CaptchaSettings.update(sync = true) { chan4CaptchaSetting ->
+    chan4Settings.captchaCookie.setSync("")
+    chan4.commonSettings.cloudFlareClearanceCookieMap.clear(sync = true)
+    chan4Settings.captchaSettings.update(sync = true) { chan4CaptchaSetting ->
       chan4CaptchaSetting.copy(captchaTicket = null)
     }
   }

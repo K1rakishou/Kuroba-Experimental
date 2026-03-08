@@ -16,7 +16,7 @@ import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
 import com.github.k1rakishou.chan.core.site.loader.ClientException
 import com.github.k1rakishou.chan.core.site.loader.UnknownClientException
-import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
+import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4SiteSettings
 import com.github.k1rakishou.chan.features.posting.solvers.two_captcha.TwoCaptchaResult
 import com.github.k1rakishou.chan.features.posting.solvers.two_captcha.TwoCaptchaSolver
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder
@@ -37,8 +37,6 @@ import com.github.k1rakishou.model.data.post.ChanSavedReply
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.util.ChanPostUtils
 import com.github.k1rakishou.persist_state.ReplyMode
-import com.github.k1rakishou.prefs.BooleanSetting
-import com.github.k1rakishou.prefs.OptionsSetting
 import dagger.Lazy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -174,7 +172,8 @@ class PostingServiceDelegate(
       }
 
       val replyMode = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
-        ?.getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSettingForUi.SiteSettingId.LastUsedReplyMode)
+        ?.commonSettings
+        ?.lastUsedReplyMode
         ?.get()
         ?: ReplyMode.ReplyModeSolveCaptchaManually
 
@@ -837,7 +836,8 @@ class PostingServiceDelegate(
     responsePostDescriptor: PostDescriptor
   ): Boolean {
     val check4chanPostAcknowledged = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
-      ?.getSettingBySettingId<BooleanSetting>(SiteSettingForUi.SiteSettingId.Check4chanPostAcknowledged)
+      ?.siteSettingsOrNull(Chan4SiteSettings::class.java)
+      ?.checkPostAcknowledged
       ?.get()
 
     if (check4chanPostAcknowledged == null || !check4chanPostAcknowledged) {

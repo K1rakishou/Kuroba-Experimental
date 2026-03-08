@@ -3,12 +3,11 @@ package com.github.k1rakishou.chan.features.webview.task
 import android.webkit.CookieManager
 import android.webkit.WebView
 import com.github.k1rakishou.chan.core.site.Site
-import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
+import com.github.k1rakishou.chan.core.site.sites.dvach.DvachSiteSettings
 import com.github.k1rakishou.chan.features.webview.WebViewTaskResult
 import com.github.k1rakishou.chan.features.webview.client.AbstractCookieWebViewClient
 import com.github.k1rakishou.chan.features.webview.client.AbstractWebViewClient
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.prefs.StringSetting
 import kotlinx.coroutines.CompletableDeferred
 import java.util.regex.Pattern
 
@@ -33,10 +32,10 @@ class DvachAntispamTask(
     )
   }
 
-  override suspend fun addCookieToSiteSettings(site: Site, cookies: String, userData: Any?) {
-    val dvachAntiSpamCookieSetting = site.getSettingBySettingId<StringSetting>(
-      SiteSettingForUi.SiteSettingId.DvachAntiSpamCookie
-    )
+  override suspend fun persistCookies(site: Site, cookies: String, userData: Any?) {
+    val dvachAntiSpamCookieSetting = site
+      .siteSettingsOrNull(DvachSiteSettings::class.java)
+      ?.antiSpamCookie
 
     if (dvachAntiSpamCookieSetting == null) {
       Logger.e(tag, "Failed to find setting with key DvachAntiSpamCookie")

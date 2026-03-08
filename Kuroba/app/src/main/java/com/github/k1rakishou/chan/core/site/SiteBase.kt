@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.core.site
 
 import androidx.annotation.CallSuper
 import com.github.k1rakishou.ChanSettings
-import com.github.k1rakishou.Setting
 import com.github.k1rakishou.SharedPreferencesSettingProvider
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
@@ -15,7 +14,7 @@ import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.http.HttpCallManager
-import com.github.k1rakishou.chan.core.site.settings.SiteBaseSettings
+import com.github.k1rakishou.chan.core.site.settings.SiteCommonSettings
 import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
 import com.github.k1rakishou.chan.core.site.settings.SiteSettingsForUi
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -63,14 +62,6 @@ abstract class SiteBase(
   override val dependencies: SiteDependencies
     get() = injectedSiteDependencies.get()
 
-  private val commonSettings by lazy {
-    SiteBaseSettings(
-      defaultDomain = defaultDomain,
-      prefs = prefs,
-      dependencies = dependencies
-    )
-  }
-
   val currentDomain by lazy {
     val siteDomain = commonSettings.siteDomainSetting.get()
     if (siteDomain != null) {
@@ -97,8 +88,13 @@ abstract class SiteBase(
     return@lazy SharedPreferencesSettingProvider(sharedPrefs)
   }
 
-  override val settings: SiteBaseSettings
-    get() = commonSettings
+  override val commonSettings by lazy {
+    SiteCommonSettings(
+      defaultDomain = defaultDomain,
+      prefs = prefs,
+      dependencies = dependencies
+    )
+  }
 
   override val settingsForUi: SiteSettingsForUi by lazy {
     val settings = SiteSettingsForUi()
@@ -136,23 +132,6 @@ abstract class SiteBase(
   override suspend fun initialize() {
     Chan.getComponent()
       .inject(this)
-  }
-
-  override fun <T : Setting<*>> getSettingBySettingId(settingId: SiteSettingForUi.SiteSettingId): T? {
-    return when (settingId) {
-      SiteSettingForUi.SiteSettingId.CloudFlareClearanceCookie -> commonSettings.cloudFlareClearanceCookieMap as T
-      SiteSettingForUi.SiteSettingId.LastUsedReplyMode -> commonSettings.lastUsedReplyMode as T
-      SiteSettingForUi.SiteSettingId.IgnoreReplyCooldowns -> commonSettings.ignoreReplyCooldowns as T
-      // 4chan only
-      SiteSettingForUi.SiteSettingId.LastUsedCountryFlagPerBoard -> null
-      // 2ch.hk only
-      SiteSettingForUi.SiteSettingId.DvachUserCodeCookie -> null
-      // 2ch.hk only
-      SiteSettingForUi.SiteSettingId.DvachAntiSpamCookie -> null
-      // 4chan only
-      SiteSettingForUi.SiteSettingId.Chan4CaptchaSettings -> null
-      SiteSettingForUi.SiteSettingId.Check4chanPostAcknowledged -> null
-    }
   }
 
   companion object {

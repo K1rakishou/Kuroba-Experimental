@@ -43,15 +43,4 @@ sealed class SiteSettingForUi(
     val setting: CookieSetting
   ) : SiteSettingForUi(settingName, settingDescription)
 
-  enum class SiteSettingId {
-    CloudFlareClearanceCookie,
-    LastUsedCountryFlagPerBoard,
-    DvachUserCodeCookie,
-    DvachAntiSpamCookie,
-    LastUsedReplyMode,
-    Chan4CaptchaSettings,
-    IgnoreReplyCooldowns,
-    Check4chanPostAcknowledged
-  }
-
 }

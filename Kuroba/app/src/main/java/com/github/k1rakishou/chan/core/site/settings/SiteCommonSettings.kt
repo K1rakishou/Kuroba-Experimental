@@ -10,7 +10,7 @@ import com.github.k1rakishou.prefs.MapSetting
 import com.github.k1rakishou.prefs.OptionsSetting
 import com.github.k1rakishou.prefs.StringSetting
 
-class SiteBaseSettings(
+class SiteCommonSettings(
   defaultDomain: String,
   prefs: SharedPreferencesSettingProvider,
   dependencies: SiteDependencies

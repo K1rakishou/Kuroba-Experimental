@@ -3,9 +3,8 @@ package com.github.k1rakishou.chan.core.usecase
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.loader.ClientException
-import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
-import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4CaptchaSettings
+import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4SiteSettings
 import com.github.k1rakishou.chan.ui.captcha.chan4.Chan4CaptchaLayoutViewModel
 import com.github.k1rakishou.common.BadStatusResponseException
 import com.github.k1rakishou.common.EmptyBodyResponseException
@@ -19,7 +18,6 @@ import com.github.k1rakishou.common.substringSafe
 import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
-import com.github.k1rakishou.prefs.GsonJsonSetting
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
@@ -150,9 +148,9 @@ class LoadChan4CaptchaUseCase(
     chanDescriptor: ChanDescriptor,
     captchaResult: CaptchaResult
   ) {
-    val chan4CaptchaSettingsSetting: GsonJsonSetting<Chan4CaptchaSettings> =
-      siteManager.bySiteDescriptorAndActive(Chan4.SITE_DESCRIPTOR)
-      ?.getSettingBySettingId(SiteSettingForUi.SiteSettingId.Chan4CaptchaSettings)
+    val chan4CaptchaSettingsSetting = siteManager.bySiteDescriptorAndActive(Chan4.SITE_DESCRIPTOR)
+      ?.siteSettingsOrNull(Chan4SiteSettings::class.java)
+      ?.captchaSettings
       ?: return
 
     if (captchaResult.captchaInfoRaw.ticketNeedsToBeRemoved) {

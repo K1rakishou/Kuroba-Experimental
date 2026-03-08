@@ -1,7 +1,6 @@
 package com.github.k1rakishou.chan.core.site.sites.chan4
 
 import com.github.k1rakishou.OptionSettingItem
-import com.github.k1rakishou.Setting
 import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.SiteBase
 import com.github.k1rakishou.chan.core.site.SiteConfiguration
@@ -20,40 +19,11 @@ import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
 import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi.SiteOptionsSetting
 import com.github.k1rakishou.chan.core.site.settings.SiteSettingsForUi
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
-import com.github.k1rakishou.prefs.BooleanSetting
-import com.github.k1rakishou.prefs.GsonJsonSetting
-import com.github.k1rakishou.prefs.OptionsSetting
-import com.github.k1rakishou.prefs.StringSetting
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
 class Chan4 : SiteBase(
   defaultDomain = "https://4chan.org"
 ) {
-  lateinit var passUser: StringSetting
-  lateinit var passPass: StringSetting
-  lateinit var passToken: StringSetting
-  lateinit var captchaType: OptionsSetting<CaptchaType>
-  lateinit var lastUsedFlagPerBoard: StringSetting
-  lateinit var chan4CaptchaCookie: StringSetting
-  lateinit var chan4CaptchaSettings: GsonJsonSetting<Chan4CaptchaSettings>
-  lateinit var check4chanPostAcknowledged: BooleanSetting
-
-  override suspend fun initialize() {
-    super.initialize()
-
-    passUser = StringSetting(prefs, "preference_pass_token", "")
-    passPass = StringSetting(prefs, "preference_pass_pin", "")
-    passToken = StringSetting(prefs, "preference_pass_id", "")
-
-    captchaType = OptionsSetting(prefs, "preference_captcha_type_chan4",
-      CaptchaType::class.java, CaptchaType.CHAN4_CAPTCHA)
-    lastUsedFlagPerBoard = StringSetting(prefs, "preference_flag_chan4", "0")
-    chan4CaptchaCookie = StringSetting(prefs, "preference_4chan_captcha_cookie", "")
-    chan4CaptchaSettings = GsonJsonSetting(injectedSiteDependencies.get().gson, Chan4CaptchaSettings::class.java, prefs,
-      "chan4_captcha_settings", Chan4CaptchaSettings())
-    check4chanPostAcknowledged = BooleanSetting(prefs, "chan_4chan_post_acknowledged", false)
-  }
-
   override val enabled: Boolean = true
   override val name: String = SITE_NAME
   override val descriptor: SiteDescriptor = SITE_DESCRIPTOR
@@ -75,7 +45,9 @@ class Chan4 : SiteBase(
       archivesManager = archivesManager
     )
   }
+
   override val actions: SiteActions by lazy { Chan4Actions(this) }
+  override val settings by lazy { Chan4SiteSettings(dependencies, prefs) }
 
   override val settingsForUi by lazy {
     val settings = SiteSettingsForUi(super.settingsForUi)
@@ -84,14 +56,14 @@ class Chan4 : SiteBase(
       settingName = "Captcha type",
       settingDescription = null,
       groupId = "captcha_type",
-      options = captchaType,
+      options = chan4Settings.captchaType,
       optionNames = listOf("Javascript", "Noscript")
     )
 
     settings += SiteSettingForUi.SiteStringSetting(
       settingName = "4chan captcha cookie",
       settingDescription = null,
-      setting = chan4CaptchaCookie
+      setting = chan4Settings.captchaCookie
     )
 
     return@lazy settings
@@ -99,7 +71,7 @@ class Chan4 : SiteBase(
 
   override val configuration: SiteConfiguration by lazy {
     val siteIcon = SiteIcon.fromFavicon(
-      imageLoaderDeprecated = injectedSiteDependencies.get().imageLoaderDeprecated,
+      imageLoaderDeprecated = imageLoaderDeprecated,
       url = "https://s.4cdn.org/image/favicon.ico".toHttpUrl()
     )
 
@@ -128,14 +100,8 @@ class Chan4 : SiteBase(
     return siteFeature != SiteConfiguration.SiteFeature.CatalogComposition
   }
 
-  override fun <T : Setting<*>> getSettingBySettingId(settingId: SiteSettingForUi.SiteSettingId): T? {
-    return when (settingId) {
-      SiteSettingForUi.SiteSettingId.LastUsedCountryFlagPerBoard -> lastUsedFlagPerBoard as T
-      SiteSettingForUi.SiteSettingId.Chan4CaptchaSettings -> chan4CaptchaSettings as T
-      SiteSettingForUi.SiteSettingId.Check4chanPostAcknowledged -> check4chanPostAcknowledged as T
-      else -> super.getSettingBySettingId(settingId)
-    }
-  }
+  val chan4Settings: Chan4SiteSettings
+    get() = requireSiteSettings(Chan4SiteSettings::class.java)
 
   enum class CaptchaType(val value: String) : OptionSettingItem {
     V2JS("v2js"),
@@ -153,5 +119,4 @@ class Chan4 : SiteBase(
 
     val SITE_DESCRIPTOR = SiteDescriptor.create(SITE_NAME)
   }
-
 }

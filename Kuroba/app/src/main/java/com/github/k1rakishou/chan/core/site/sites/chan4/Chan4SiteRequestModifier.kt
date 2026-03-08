@@ -4,7 +4,6 @@ import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteBase
 import com.github.k1rakishou.chan.core.site.SiteRequestModifier
 import com.github.k1rakishou.chan.core.site.http.HttpCall
-import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4.Companion.CAPTCHA_COOKIE_KEY
 import com.github.k1rakishou.common.CookieBuilder
 import com.github.k1rakishou.common.StringUtils.formatToken
@@ -12,40 +11,39 @@ import com.github.k1rakishou.common.addOrReplaceCookieHeader
 import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.persist_state.ReplyMode
-import com.github.k1rakishou.prefs.GsonJsonSetting
 import okhttp3.HttpUrl
 import okhttp3.Request
 
 class Chan4SiteRequestModifier(
   site: SiteBase,
 ) : SiteRequestModifier(site) {
+  private val chan4SiteSettings: Chan4SiteSettings
+    get() = site.requireSiteSettings(Chan4SiteSettings::class.java)
 
   override fun modifyHttpCall(httpCall: HttpCall, requestBuilder: Request.Builder) {
     super.modifyHttpCall(httpCall, requestBuilder)
-    site as Chan4
 
     if (httpCall is Chan4ReplyCall && httpCall.replyMode == ReplyMode.ReplyModeUsePasscode) {
       if (site.actions.isLoggedIn()) {
-        val passTokenSetting = site.passToken
+        val passTokenSetting = chan4SiteSettings.passToken
         requestBuilder.addOrReplaceCookieHeader("pass_id=" + passTokenSetting.get())
       }
     }
 
     if (httpCall is Chan4ReplyCall) {
-      addChan4CookieHeader(site, requestBuilder)
+      addChan4CookieHeader(requestBuilder)
     }
   }
 
   override fun modifyCookieBuilder(urlToOpen: HttpUrl, cookieBuilder: CookieBuilder) {
     super.modifyCookieBuilder(urlToOpen, cookieBuilder)
-    site as Chan4
 
     if (site.actions.isLoggedIn()) {
       cookieBuilder.addOrReplace("pass_enabled", "1")
-      cookieBuilder.addOrReplace("pass_id", site.passToken.get())
+      cookieBuilder.addOrReplace("pass_id", chan4SiteSettings.passToken.get())
     }
 
-    val captchaCookie = get4chanPassCookie(site)
+    val captchaCookie = get4chanPassCookie()
     if (captchaCookie.isNotNullNorBlank()) {
       cookieBuilder.addOrReplace(CAPTCHA_COOKIE_KEY, captchaCookie)
     }
@@ -74,24 +72,23 @@ class Chan4SiteRequestModifier(
   ) {
     super.modifyGenericRequest(site, requestBuilder)
 
-    addChan4CookieHeader(site, requestBuilder)
+    addChan4CookieHeader(requestBuilder)
   }
 
   override fun modifyPostReportRequest(site: Site, requestBuilder: Request.Builder) {
     super.modifyPostReportRequest(site, requestBuilder)
 
     if (site.actions.isLoggedIn()) {
-      site as Chan4
-      val passTokenSetting = site.passToken
+      val passTokenSetting = chan4SiteSettings.passToken
       requestBuilder.addOrReplaceCookieHeader("pass_id=" + passTokenSetting.get())
     }
 
-    addChan4CookieHeader(site, requestBuilder)
+    addChan4CookieHeader(requestBuilder)
   }
 
-  private fun addChan4CookieHeader(site: Site, requestBuilder: Request.Builder) {
+  private fun addChan4CookieHeader(requestBuilder: Request.Builder) {
     val url = requestBuilder.build().url
-    val captchaCookie = get4chanPassCookie(site)
+    val captchaCookie = get4chanPassCookie()
 
     if (captchaCookie.isNullOrEmpty()) {
       Logger.error(TAG) {
@@ -109,20 +106,14 @@ class Chan4SiteRequestModifier(
     requestBuilder.addOrReplaceCookieHeader("$CAPTCHA_COOKIE_KEY=${captchaCookie}")
   }
 
-  private fun get4chanPassCookie(site: Site): String? {
-    val rememberCaptchaCookies = site
-      .getSettingBySettingId<GsonJsonSetting<Chan4CaptchaSettings>>(SiteSettingForUi.SiteSettingId.Chan4CaptchaSettings)
-      ?.get()
-      ?.rememberCaptchaCookies
-      ?: false
-
+  private fun get4chanPassCookie(): String? {
+    val rememberCaptchaCookies = chan4SiteSettings.captchaSettings.get().rememberCaptchaCookies
     if (!rememberCaptchaCookies) {
       Logger.d(TAG, "addChan4CookieHeader(), rememberCaptchaCookies is false")
       return null
     }
 
-    site as Chan4
-    return site.chan4CaptchaCookie.get()
+    return chan4SiteSettings.captchaCookie.get()
   }
 
   companion object {

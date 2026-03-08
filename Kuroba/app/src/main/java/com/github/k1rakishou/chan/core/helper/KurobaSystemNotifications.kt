@@ -35,17 +35,21 @@ class KurobaSystemNotifications(
   private val _channelsSetup = AtomicBoolean(false)
 
   suspend fun showNotification(notificationData: NotificationData) {
-    if (_channelsSetup.compareAndSet(false, true)) {
-      setupChannels()
-    }
+    try {
+      if (_channelsSetup.compareAndSet(false, true)) {
+        setupChannels()
+      }
 
-    if (AppModuleAndroidUtils.hasPostNotificationsPermission(appContext)) {
-      @SuppressLint("MissingPermission")
-      notificationManagerCompat.notify(
-        NotificationConstants.Generic.TAG,
-        NotificationConstants.Generic.notificationId(notificationData.id),
-        notificationData.build(appContext, themeEngine)
-      )
+      if (AppModuleAndroidUtils.hasPostNotificationsPermission(appContext)) {
+        @SuppressLint("MissingPermission")
+        notificationManagerCompat.notify(
+          NotificationConstants.Generic.TAG,
+          NotificationConstants.Generic.notificationId(notificationData.id),
+          notificationData.build(appContext, themeEngine)
+        )
+      }
+    } catch (error: Throwable) {
+      Logger.error(TAG, error) { "Failed to show notification" }
     }
   }
 

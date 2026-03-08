@@ -85,7 +85,7 @@ class SpurUsAntibotTask(
                       if (window.MCL) {
                           MCL.configure({ onBundle: proceed });
                       } else {
-                          setTimeout(function() { proceed(0); }, 5000);
+                          setTimeout(function() { proceed(0); }, 10000);
                       }
                   }
                   

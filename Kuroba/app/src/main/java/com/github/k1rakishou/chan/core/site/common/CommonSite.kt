@@ -26,6 +26,7 @@ import com.github.k1rakishou.chan.core.site.limitations.ConstantMaxTotalSizeInfo
 import com.github.k1rakishou.chan.core.site.limitations.PostingLimitationConfig
 import com.github.k1rakishou.chan.core.site.loader.ClientException
 import com.github.k1rakishou.chan.core.site.parser.SiteApi
+import com.github.k1rakishou.chan.core.site.settings.SiteSpecificSettings
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.groupOrNull
 import com.github.k1rakishou.core_logger.Logger
@@ -64,7 +65,7 @@ abstract class CommonSite(defaultDomain: String) : SiteBase(defaultDomain) {
   open val postingLimitationConfig: PostingLimitationConfig? = DefaultPostingLimitationConfig
   open val redirectsToArchiveThread: Boolean = false
   open val staticBoards: List<ChanBoard> = emptyList()
-
+  override val settings: SiteSpecificSettings? = null
   final override val descriptor: SiteDescriptor
     get() = SiteDescriptor.create(name)
 

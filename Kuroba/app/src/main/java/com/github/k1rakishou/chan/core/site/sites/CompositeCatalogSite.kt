@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.core.site.sites
 
-import com.github.k1rakishou.Setting
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.ResolvedChanDescriptor
@@ -21,8 +20,8 @@ import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.core.site.parser.SiteApi
 import com.github.k1rakishou.chan.core.site.parser.processor.AbstractChanReaderProcessor
 import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
-import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
 import com.github.k1rakishou.chan.core.site.settings.SiteSettingsForUi
+import com.github.k1rakishou.chan.core.site.settings.SiteSpecificSettings
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.board.pages.BoardPages
@@ -77,7 +76,7 @@ class CompositeCatalogSite : SiteBase(
 
   override val settingsForUi: SiteSettingsForUi = SiteSettingsForUi()
 
-  override fun <T : Setting<*>> getSettingBySettingId(settingId: SiteSettingForUi.SiteSettingId): T? = null
+  override val settings: SiteSpecificSettings? = null
 
   override fun hasSiteFeature(siteFeature: SiteConfiguration.SiteFeature): Boolean {
     return siteFeature == SiteConfiguration.SiteFeature.CatalogComposition

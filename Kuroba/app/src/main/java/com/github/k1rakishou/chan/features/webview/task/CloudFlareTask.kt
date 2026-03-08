@@ -4,14 +4,11 @@ import android.webkit.CookieManager
 import android.webkit.WebView
 import com.github.k1rakishou.chan.core.base.okhttp.interceptor.CloudFlareInterceptor
 import com.github.k1rakishou.chan.core.site.Site
-import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
 import com.github.k1rakishou.chan.features.webview.WebViewTaskResult
 import com.github.k1rakishou.chan.features.webview.client.AbstractCookieWebViewClient
 import com.github.k1rakishou.chan.features.webview.client.AbstractWebViewClient
 import com.github.k1rakishou.common.CookieBuilder
 import com.github.k1rakishou.common.domainOrHost
-import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.prefs.MapSetting
 import kotlinx.coroutines.CompletableDeferred
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
@@ -44,19 +41,13 @@ class CloudFlareTask(
     )
   }
 
-  override suspend fun addCookieToSiteSettings(site: Site, cookies: String, userData: Any?) {
-    val cloudFlareClearanceCookieSetting = site.getSettingBySettingId<MapSetting>(
-      SiteSettingForUi.SiteSettingId.CloudFlareClearanceCookie
-    )
-
-    if (cloudFlareClearanceCookieSetting == null) {
-      Logger.e(tag, "Failed to find setting with key CloudFlareClearanceKey")
-      return
-    }
-
+  override suspend fun persistCookies(site: Site, cookies: String, userData: Any?) {
+    val cloudFlareClearanceCookieSetting = site.commonSettings.cloudFlareClearanceCookieMap
     val urlToOpen = (loadable as Loadable.Url).url
+    val key = urlToOpen.domainOrHost()
+
     cloudFlareClearanceCookieSetting.put(
-      key = urlToOpen.domainOrHost(),
+      key = key,
       value = cookies,
       sync = true
     )

@@ -20,6 +20,7 @@ import com.github.k1rakishou.chan.core.site.sites.search.SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.unreachable
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.board.pages.BoardPages
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
@@ -35,6 +36,9 @@ import okhttp3.Request
 class DvachActions(
   private val dvach: Dvach
 ) : VichanActions(dvach) {
+  private val dvachSettings: DvachSiteSettings
+    get() = dvach.dvachSettings
+
   override fun setupPost(
     replyChanDescriptor: ChanDescriptor,
     call: MultipartHttpCall
@@ -77,9 +81,9 @@ class DvachActions(
           }
           is HttpCall.HttpCallWithProgressResult.Progress -> {
             return@map SiteActions.PostResult.UploadingProgress(
-              replyCallResult.fileIndex,
-              replyCallResult.totalFiles,
-              replyCallResult.percent
+              fileIndex = replyCallResult.fileIndex,
+              totalFiles = replyCallResult.totalFiles,
+              percent = replyCallResult.percent
             )
           }
           is HttpCall.HttpCallWithProgressResult.Fail -> {
@@ -109,7 +113,7 @@ class DvachActions(
 
   override suspend fun <T : AbstractLoginRequest> login(loginRequest: T): SiteActions.LoginResult {
     val dvachLoginRequest = loginRequest as DvachLoginRequest
-    dvach.passCode.set(dvachLoginRequest.passcode)
+    dvachSettings.passCode.set(dvachLoginRequest.passcode)
 
     val loginResult = dvach.httpCallManager.makeHttpCall(
       DvachGetPassCookieHttpCall(
@@ -125,7 +129,7 @@ class DvachActions(
 
         return when (loginResponse) {
           is DvachLoginResponse.Success -> {
-            dvach.passCookie.set(loginResponse.authCookie)
+            dvachSettings.passCookie.set(loginResponse.authCookie)
             SiteActions.LoginResult.LoginComplete(loginResponse)
           }
           is DvachLoginResponse.Failure -> {
@@ -145,11 +149,11 @@ class DvachActions(
     }
 
     if (resetCached) {
-      dvach.passCodeInfo.reset()
+      dvachSettings.passCodeInfo.reset()
     }
 
-    if (dvach.passCodeInfo.isNotDefault()) {
-      val dvachPasscodeInfo = dvach.passCodeInfo.get()
+    if (dvachSettings.passCodeInfo.isNotDefault()) {
+      val dvachPasscodeInfo = dvachSettings.passCodeInfo.get()
 
       val maxAttachedFilesPerPost = dvachPasscodeInfo.files
       val maxTotalAttachablesSize = dvachPasscodeInfo.filesSize
@@ -192,35 +196,35 @@ class DvachActions(
       filesSize = passcodePostingLimitationsInfo.maxTotalAttachablesSize
     )
 
-    dvach.passCodeInfo.set(dvachPasscodeInfo)
+    dvachSettings.passCodeInfo.set(dvachPasscodeInfo)
 
     return SiteActions.GetPasscodeInfoResult.Success(passcodePostingLimitationsInfo)
   }
 
   override fun postAuthenticate(): SiteAuthentication {
-    return when (dvach.captchaType.get()) {
+    return when (dvachSettings.captchaType.get()) {
       CaptchaType.V2JS -> dvach.captchaV2Js
       CaptchaType.V2NOJS -> dvach.captchaV2NoJs
       CaptchaType.V2_INVISIBLE -> dvach.captchaV2Invisible
       CaptchaType.DVACH_CAPTCHA -> dvach.dvachCaptcha
       CaptchaType.DVACH_CAPTCHA_PUZZLE -> dvach.dvachCaptchaPuzzle
       CaptchaType.DVACH_CAPTCHA_EMOJI -> dvach.dvachEmojiCaptcha
-      else -> throw IllegalArgumentException()
+      else -> unreachable(dvachSettings.captchaType.get().toString())
     }
   }
 
   override fun logout() {
-    dvach.passCode.remove()
-    dvach.passCookie.remove()
-    dvach.passCodeInfo.reset()
+    dvachSettings.passCode.remove()
+    dvachSettings.passCookie.remove()
+    dvachSettings.passCodeInfo.reset()
   }
 
   override fun isLoggedIn(): Boolean {
-    return dvach.passCookie.get().isNotEmpty()
+    return dvachSettings.passCookie.get().isNotEmpty()
   }
 
   override fun loginDetails(): DvachLoginRequest {
-    return DvachLoginRequest(dvach.passCode.get())
+    return DvachLoginRequest(dvachSettings.passCode.get())
   }
 
   override suspend fun pages(
