@@ -16,8 +16,8 @@ import com.github.k1rakishou.chan.features.mpv.EditMpvConfController
 import com.github.k1rakishou.chan.features.settings.PluginsScreen
 import com.github.k1rakishou.chan.features.settings.SettingClickAction
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
-import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
-import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
+import com.github.k1rakishou.chan.features.settings.setting.BooleanSetting
+import com.github.k1rakishou.chan.features.settings.setting.LinkSetting
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
@@ -70,7 +70,7 @@ class PluginSettingsScreen(
           groupIdentifier = identifier
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = PluginsScreen.MpvPluginGroup.UseMpv,
           topDescriptionIdFunc = { R.string.settings_plugins_use_mpv },
@@ -78,14 +78,14 @@ class PluginSettingsScreen(
           setting = ChanSettings.useMpvVideoPlayer
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = PluginsScreen.MpvPluginGroup.UseConfigFile,
           topDescriptionIdFunc = { R.string.settings_plugins_use_config_file },
           setting = ChanSettings.mpvUseConfigFile
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = PluginsScreen.MpvPluginGroup.EditConfigFile,
           topDescriptionIdFunc = { R.string.settings_plugins_edit_config_file },
@@ -96,7 +96,7 @@ class PluginSettingsScreen(
           }
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = PluginsScreen.MpvPluginGroup.CheckMpvLibsState,
           topDescriptionIdFunc = { R.string.settings_plugins_libs_status },

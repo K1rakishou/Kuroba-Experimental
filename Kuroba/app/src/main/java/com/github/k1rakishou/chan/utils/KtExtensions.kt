@@ -26,7 +26,7 @@ import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityDependencies
 import com.github.k1rakishou.chan.core.di.component.application.ApplicationDependencies
 import com.github.k1rakishou.chan.core.di.module.activity.IHasActivityComponent
-import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity
+import com.github.k1rakishou.chan.features.view.media.MediaViewerActivity
 import com.github.k1rakishou.chan.ui.activity.SharingActivity
 import com.github.k1rakishou.chan.ui.activity.StartActivity
 import com.github.k1rakishou.chan.ui.controller.base.Controller

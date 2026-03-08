@@ -3246,43 +3246,54 @@
     <ID>NoUnusedImports:MainSettingsControllerV2.kt$com.github.k1rakishou.chan.features.settings.MainSettingsControllerV2.kt</ID>
     <ID>NoUnusedImports:MapSettingV2.kt$com.github.k1rakishou.chan.features.settings.setting.MapSettingV2.kt</ID>
     <ID>PackageName:ActiveCaptchaRequest.kt$package com.github.k1rakishou.chan.features.posting.solvers.two_captcha</ID>
-    <ID>PackageName:AlbumThreadControllerHelpers.kt$package com.github.k1rakishou.chan.features.media_viewer.helper</ID>
-    <ID>PackageName:AudioMediaView.kt$package com.github.k1rakishou.chan.features.media_viewer.media_view</ID>
-    <ID>PackageName:AudioPlayerView.kt$package com.github.k1rakishou.chan.features.media_viewer.media_view</ID>
+    <ID>PackageName:AlbumThreadControllerHelpers.kt$package
+      com.github.k1rakishou.chan.features.view.helper</ID>
+    <ID>PackageName:AudioMediaView.kt$package
+      com.github.k1rakishou.chan.features.view.element</ID>
+    <ID>PackageName:AudioPlayerView.kt$package
+      com.github.k1rakishou.chan.features.view.element</ID>
     <ID>PackageName:BaseSolverApiResponse.kt$package com.github.k1rakishou.chan.features.posting.solvers.two_captcha</ID>
-    <ID>PackageName:BoardArchiveController.kt$package com.github.k1rakishou.chan.features.site_archive</ID>
-    <ID>PackageName:BoardArchiveViewModel.kt$package com.github.k1rakishou.chan.features.site_archive</ID>
+    <ID>PackageName:BoardArchiveController.kt$package com.github.k1rakishou.chan.features.archive</ID>
+    <ID>PackageName:BoardArchiveViewModel.kt$package com.github.k1rakishou.chan.features.archive</ID>
     <ID>PackageName:BottomMenuPanel.kt$package com.github.k1rakishou.chan.ui.view.bottom_menu_panel</ID>
     <ID>PackageName:BottomMenuPanelItem.kt$package com.github.k1rakishou.chan.ui.view.bottom_menu_panel</ID>
     <ID>PackageName:BottomMenuPanelItemId.kt$package com.github.k1rakishou.chan.ui.view.bottom_menu_panel</ID>
     <ID>PackageName:CancellableTask.kt$package com.github.k1rakishou.chan.ui.compose.compose_task</ID>
     <ID>PackageName:Chan4ReportPostController.kt$package com.github.k1rakishou.chan.features.report_posts</ID>
     <ID>PackageName:Chan4ReportPostControllerViewModel.kt$package com.github.k1rakishou.chan.features.report_posts</ID>
-    <ID>PackageName:ChanPostBackgroundColorStorage.kt$package com.github.k1rakishou.chan.features.media_viewer.helper</ID>
+    <ID>PackageName:ChanPostBackgroundColorStorage.kt$package
+      com.github.k1rakishou.chan.features.view.helper</ID>
     <ID>PackageName:CheckableFloatingListMenuItem.kt$package com.github.k1rakishou.chan.ui.view.floating_menu</ID>
-    <ID>PackageName:CloseMediaActionHelper.kt$package com.github.k1rakishou.chan.features.media_viewer.helper</ID>
+    <ID>PackageName:CloseMediaActionHelper.kt$package
+      com.github.k1rakishou.chan.features.view.helper</ID>
     <ID>PackageName:CommentPostLinkableSpan.kt$package com.github.k1rakishou.chan.core.loader.impl.post_comment</ID>
     <ID>PackageName:CommentSpanUpdater.kt$package com.github.k1rakishou.chan.core.loader.impl.post_comment</ID>
     <ID>PackageName:ComposeCoroutineTask.kt$package com.github.k1rakishou.chan.ui.compose.compose_task</ID>
-    <ID>PackageName:CreateSoundMediaController.kt$package com.github.k1rakishou.chan.features.create_sound_media</ID>
-    <ID>PackageName:CreateSoundMediaControllerViewModel.kt$package com.github.k1rakishou.chan.features.create_sound_media</ID>
+    <ID>PackageName:CreateSoundMediaController.kt$package
+        com.github.k1rakishou.chan.features.soundmedia</ID>
+    <ID>PackageName:CreateSoundMediaControllerViewModel.kt$package
+        com.github.k1rakishou.chan.features.soundmedia</ID>
     <ID>PackageName:EpoxyCheckableFloatingListMenuRow.kt$package com.github.k1rakishou.chan.ui.view.floating_menu.epoxy</ID>
     <ID>PackageName:EpoxyDuplicateImageView.kt$package com.github.k1rakishou.chan.features.image_saver.epoxy</ID>
     <ID>PackageName:EpoxyFloatingListMenuRow.kt$package com.github.k1rakishou.chan.ui.view.floating_menu.epoxy</ID>
     <ID>PackageName:EpoxyGroupableFloatingListMenuRow.kt$package com.github.k1rakishou.chan.ui.view.floating_menu.epoxy</ID>
     <ID>PackageName:EpoxyHeaderListMenuRow.kt$package com.github.k1rakishou.chan.ui.view.floating_menu.epoxy</ID>
-    <ID>PackageName:ExoPlayerCache.kt$package com.github.k1rakishou.chan.features.media_viewer.helper</ID>
-    <ID>PackageName:ExoPlayerVideoMediaView.kt$package com.github.k1rakishou.chan.features.media_viewer.media_view</ID>
-    <ID>PackageName:ExoPlayerWrapper.kt$package com.github.k1rakishou.chan.features.media_viewer.helper</ID>
+    <ID>PackageName:ExoPlayerCache.kt$package com.github.k1rakishou.chan.features.view.helper</ID>
+    <ID>PackageName:ExoPlayerVideoMediaView.kt$package
+      com.github.k1rakishou.chan.features.view.element</ID>
+    <ID>PackageName:ExoPlayerWrapper.kt$package com.github.k1rakishou.chan.features.view.helper</ID>
     <ID>PackageName:ExternalMediaServiceExtraInfoFetcher.kt$package com.github.k1rakishou.chan.core.loader.impl.external_media_service</ID>
     <ID>PackageName:ExtraLinkInfo.kt$package com.github.k1rakishou.chan.core.loader.impl.post_comment</ID>
     <ID>PackageName:FloatingListMenu.kt$package com.github.k1rakishou.chan.ui.view.floating_menu</ID>
     <ID>PackageName:FloatingListMenuItem.kt$package com.github.k1rakishou.chan.ui.view.floating_menu</ID>
-    <ID>PackageName:FullImageMediaView.kt$package com.github.k1rakishou.chan.features.media_viewer.media_view</ID>
-    <ID>PackageName:FullMediaAppearAnimationHelper.kt$package com.github.k1rakishou.chan.features.media_viewer.helper</ID>
-    <ID>PackageName:GifMediaView.kt$package com.github.k1rakishou.chan.features.media_viewer.media_view</ID>
+    <ID>PackageName:FullImageMediaView.kt$package
+      com.github.k1rakishou.chan.features.view.element</ID>
+    <ID>PackageName:FullMediaAppearAnimationHelper.kt$package
+      com.github.k1rakishou.chan.features.view.helper</ID>
+    <ID>PackageName:GifMediaView.kt$package com.github.k1rakishou.chan.features.view.element</ID>
     <ID>PackageName:HeaderFloatingListMenuItem.kt$package com.github.k1rakishou.chan.ui.view.floating_menu</ID>
-    <ID>PackageName:ImageNotFoundException.kt$package com.github.k1rakishou.chan.features.media_viewer.media_view</ID>
+    <ID>PackageName:ImageNotFoundException.kt$package
+      com.github.k1rakishou.chan.features.view.element</ID>
     <ID>PackageName:ImageSaverV2.kt$package com.github.k1rakishou.chan.features.image_saver</ID>
     <ID>PackageName:ImageSaverV2OptionsController.kt$package com.github.k1rakishou.chan.features.image_saver</ID>
     <ID>PackageName:ImageSaverV2Service.kt$package com.github.k1rakishou.chan.features.image_saver</ID>
@@ -3293,29 +3304,43 @@
     <ID>PackageName:ImageSearchResult.kt$package com.github.k1rakishou.chan.features.remote_image_search</ID>
     <ID>PackageName:KurobaComposeIconPanel.kt$package com.github.k1rakishou.chan.ui.compose.panel</ID>
     <ID>PackageName:LinkInfoRequest.kt$package com.github.k1rakishou.chan.core.loader.impl.post_comment</ID>
-    <ID>PackageName:LocalArchiveController.kt$package com.github.k1rakishou.chan.features.thread_downloading</ID>
-    <ID>PackageName:LocalArchiveViewModel.kt$package com.github.k1rakishou.chan.features.thread_downloading</ID>
-    <ID>PackageName:MediaLongClickMenuHelper.kt$package com.github.k1rakishou.chan.features.media_viewer.helper</ID>
-    <ID>PackageName:MediaView.kt$package com.github.k1rakishou.chan.features.media_viewer.media_view</ID>
-    <ID>PackageName:MediaViewContract.kt$package com.github.k1rakishou.chan.features.media_viewer.media_view</ID>
-    <ID>PackageName:MediaViewState.kt$package com.github.k1rakishou.chan.features.media_viewer.media_view</ID>
-    <ID>PackageName:MediaViewerActionStrip.kt$package com.github.k1rakishou.chan.features.media_viewer.strip</ID>
-    <ID>PackageName:MediaViewerActivity.kt$package com.github.k1rakishou.chan.features.media_viewer</ID>
-    <ID>PackageName:MediaViewerAdapter.kt$package com.github.k1rakishou.chan.features.media_viewer</ID>
-    <ID>PackageName:MediaViewerBottomActionStrip.kt$package com.github.k1rakishou.chan.features.media_viewer.strip</ID>
-    <ID>PackageName:MediaViewerBottomActionStripCallbacks.kt$package com.github.k1rakishou.chan.features.media_viewer.strip</ID>
-    <ID>PackageName:MediaViewerController.kt$package com.github.k1rakishou.chan.features.media_viewer</ID>
-    <ID>PackageName:MediaViewerControllerViewModel.kt$package com.github.k1rakishou.chan.features.media_viewer</ID>
-    <ID>PackageName:MediaViewerGesturesSettingsController.kt$package com.github.k1rakishou.chan.features.media_viewer</ID>
-    <ID>PackageName:MediaViewerGoToImagePostHelper.kt$package com.github.k1rakishou.chan.features.media_viewer.helper</ID>
-    <ID>PackageName:MediaViewerGoToPostHelper.kt$package com.github.k1rakishou.chan.features.media_viewer.helper</ID>
-    <ID>PackageName:MediaViewerLeftActionStrip.kt$package com.github.k1rakishou.chan.features.media_viewer.strip</ID>
-    <ID>PackageName:MediaViewerMenuHelper.kt$package com.github.k1rakishou.chan.features.media_viewer.helper</ID>
-    <ID>PackageName:MediaViewerOpenAlbumHelper.kt$package com.github.k1rakishou.chan.features.media_viewer.helper</ID>
-    <ID>PackageName:MediaViewerOpenThreadHelper.kt$package com.github.k1rakishou.chan.features.media_viewer.helper</ID>
-    <ID>PackageName:MediaViewerScrollerHelper.kt$package com.github.k1rakishou.chan.features.media_viewer.helper</ID>
-    <ID>PackageName:MediaViewerToolbar.kt$package com.github.k1rakishou.chan.features.media_viewer</ID>
-    <ID>PackageName:MpvVideoMediaView.kt$package com.github.k1rakishou.chan.features.media_viewer.media_view</ID>
+    <ID>PackageName:LocalArchiveController.kt$package com.github.k1rakishou.chan.features.download</ID>
+    <ID>PackageName:LocalArchiveViewModel.kt$package com.github.k1rakishou.chan.features.download</ID>
+    <ID>PackageName:MediaLongClickMenuHelper.kt$package
+      com.github.k1rakishou.chan.features.view.helper</ID>
+    <ID>PackageName:MediaView.kt$package com.github.k1rakishou.chan.features.view.element</ID>
+    <ID>PackageName:MediaViewContract.kt$package
+      com.github.k1rakishou.chan.features.view.element</ID>
+    <ID>PackageName:MediaViewState.kt$package
+      com.github.k1rakishou.chan.features.view.element</ID>
+    <ID>PackageName:MediaViewerActionStrip.kt$package com.github.k1rakishou.chan.features.view.strip</ID>
+    <ID>PackageName:MediaViewerActivity.kt$package com.github.k1rakishou.chan.features.view</ID>
+    <ID>PackageName:MediaViewerAdapter.kt$package com.github.k1rakishou.chan.features.view</ID>
+    <ID>PackageName:MediaViewerBottomActionStrip.kt$package
+      com.github.k1rakishou.chan.features.view.strip</ID>
+    <ID>PackageName:MediaViewerBottomActionStripCallbacks.kt$package
+      com.github.k1rakishou.chan.features.view.strip</ID>
+    <ID>PackageName:MediaViewerController.kt$package com.github.k1rakishou.chan.features.view</ID>
+    <ID>PackageName:MediaViewerControllerViewModel.kt$package
+      com.github.k1rakishou.chan.features.view</ID>
+    <ID>PackageName:MediaViewerGesturesSettingsController.kt$package
+      com.github.k1rakishou.chan.features.view</ID>
+    <ID>PackageName:MediaViewerGoToImagePostHelper.kt$package
+      com.github.k1rakishou.chan.features.view.helper</ID>
+    <ID>PackageName:MediaViewerGoToPostHelper.kt$package
+      com.github.k1rakishou.chan.features.view.helper</ID>
+    <ID>PackageName:MediaViewerLeftActionStrip.kt$package
+      com.github.k1rakishou.chan.features.view.strip</ID>
+    <ID>PackageName:MediaViewerMenuHelper.kt$package com.github.k1rakishou.chan.features.view.helper</ID>
+    <ID>PackageName:MediaViewerOpenAlbumHelper.kt$package
+      com.github.k1rakishou.chan.features.view.helper</ID>
+    <ID>PackageName:MediaViewerOpenThreadHelper.kt$package
+      com.github.k1rakishou.chan.features.view.helper</ID>
+    <ID>PackageName:MediaViewerScrollerHelper.kt$package
+      com.github.k1rakishou.chan.features.view.helper</ID>
+    <ID>PackageName:MediaViewerToolbar.kt$package com.github.k1rakishou.chan.features.view</ID>
+    <ID>PackageName:MpvVideoMediaView.kt$package
+      com.github.k1rakishou.chan.features.view.element</ID>
     <ID>PackageName:PostImageThumbnailView.kt$package com.github.k1rakishou.chan.ui.cell.post_thumbnail</ID>
     <ID>PackageName:PostImageThumbnailViewContract.kt$package com.github.k1rakishou.chan.ui.cell.post_thumbnail</ID>
     <ID>PackageName:PostImageThumbnailViewWrapper.kt$package com.github.k1rakishou.chan.ui.cell.post_thumbnail</ID>
@@ -3327,68 +3352,88 @@
     <ID>PackageName:ResolveDuplicateImagesState.kt$package com.github.k1rakishou.chan.features.image_saver.epoxy</ID>
     <ID>PackageName:ResolveDuplicateImagesView.kt$package com.github.k1rakishou.chan.features.image_saver</ID>
     <ID>PackageName:RootDirBackgroundAnimation.kt$package com.github.k1rakishou.chan.features.image_saver</ID>
-    <ID>PackageName:SavedPostsController.kt$package com.github.k1rakishou.chan.features.my_posts</ID>
-    <ID>PackageName:SavedPostsViewModel.kt$package com.github.k1rakishou.chan.features.my_posts</ID>
+    <ID>PackageName:SavedPostsController.kt$package com.github.k1rakishou.chan.features.posts</ID>
+    <ID>PackageName:SavedPostsViewModel.kt$package com.github.k1rakishou.chan.features.posts</ID>
     <ID>PackageName:SearxInstance.kt$package com.github.k1rakishou.chan.features.remote_image_search.instances</ID>
     <ID>PackageName:SingleInstanceTask.kt$package com.github.k1rakishou.chan.ui.compose.compose_task</ID>
     <ID>PackageName:SoundCloudMediaServiceExtraInfoFetcher.kt$package com.github.k1rakishou.chan.core.loader.impl.external_media_service</ID>
     <ID>PackageName:SpanUpdateBatch.kt$package com.github.k1rakishou.chan.core.loader.impl.post_comment</ID>
     <ID>PackageName:StreamableMediaServiceExtraInfoFetcher.kt$package com.github.k1rakishou.chan.core.loader.impl.external_media_service</ID>
-    <ID>PackageName:ThreadDownloadProgressNotifier.kt$package com.github.k1rakishou.chan.features.thread_downloading</ID>
-    <ID>PackageName:ThreadDownloaderSettingsController.kt$package com.github.k1rakishou.chan.features.thread_downloading</ID>
-    <ID>PackageName:ThreadDownloaderSettingsViewModel.kt$package com.github.k1rakishou.chan.features.thread_downloading</ID>
-    <ID>PackageName:ThreadDownloadingCoordinator.kt$package com.github.k1rakishou.chan.features.thread_downloading</ID>
-    <ID>PackageName:ThreadDownloadingDelegate.kt$package com.github.k1rakishou.chan.features.thread_downloading</ID>
-    <ID>PackageName:ThreadDownloadingWorker.kt$package com.github.k1rakishou.chan.features.thread_downloading</ID>
-    <ID>PackageName:ThumbnailMediaView.kt$package com.github.k1rakishou.chan.features.media_viewer.media_view</ID>
+    <ID>PackageName:ThreadDownloadProgressNotifier.kt$package
+      com.github.k1rakishou.chan.features.download</ID>
+    <ID>PackageName:ThreadDownloaderSettingsController.kt$package
+      com.github.k1rakishou.chan.features.download</ID>
+    <ID>PackageName:ThreadDownloaderSettingsViewModel.kt$package
+      com.github.k1rakishou.chan.features.download</ID>
+    <ID>PackageName:ThreadDownloadingCoordinator.kt$package
+      com.github.k1rakishou.chan.features.download</ID>
+    <ID>PackageName:ThreadDownloadingDelegate.kt$package
+      com.github.k1rakishou.chan.features.download</ID>
+    <ID>PackageName:ThreadDownloadingWorker.kt$package com.github.k1rakishou.chan.features.download</ID>
+    <ID>PackageName:ThumbnailMediaView.kt$package
+      com.github.k1rakishou.chan.features.view.element</ID>
     <ID>PackageName:TwoCaptchaBalanceResponse.kt$package com.github.k1rakishou.chan.features.posting.solvers.two_captcha</ID>
     <ID>PackageName:TwoCaptchaCheckSolutionResponse.kt$package com.github.k1rakishou.chan.features.posting.solvers.two_captcha</ID>
     <ID>PackageName:TwoCaptchaEnqueueSolveCaptchaResponse.kt$package com.github.k1rakishou.chan.features.posting.solvers.two_captcha</ID>
     <ID>PackageName:TwoCaptchaResult.kt$package com.github.k1rakishou.chan.features.posting.solvers.two_captcha</ID>
     <ID>PackageName:TwoCaptchaSolver.kt$package com.github.k1rakishou.chan.features.posting.solvers.two_captcha</ID>
-    <ID>PackageName:UnsupportedMediaView.kt$package com.github.k1rakishou.chan.features.media_viewer.media_view</ID>
-    <ID>PackageName:ViewPagerAutoSwiper.kt$package com.github.k1rakishou.chan.features.media_viewer.helper</ID>
-    <ID>PackageName:ViewableMediaParcelableHolder.kt$package com.github.k1rakishou.chan.features.media_viewer</ID>
+    <ID>PackageName:UnsupportedMediaView.kt$package
+      com.github.k1rakishou.chan.features.view.element</ID>
+    <ID>PackageName:ViewPagerAutoSwiper.kt$package com.github.k1rakishou.chan.features.view.helper</ID>
+    <ID>PackageName:ViewableMediaParcelableHolder.kt$package
+      com.github.k1rakishou.chan.features.view</ID>
     <ID>PackageName:YandexInstance.kt$package com.github.k1rakishou.chan.features.remote_image_search.instances</ID>
     <ID>PackageName:YoutubeMediaServiceExtraInfoFetcher.kt$package com.github.k1rakishou.chan.core.loader.impl.external_media_service</ID>
     <ID>PackageNaming:ActiveCaptchaRequest.kt$package com.github.k1rakishou.chan.features.posting.solvers.two_captcha</ID>
-    <ID>PackageNaming:AlbumThreadControllerHelpers.kt$package com.github.k1rakishou.chan.features.media_viewer.helper</ID>
-    <ID>PackageNaming:AudioMediaView.kt$package com.github.k1rakishou.chan.features.media_viewer.media_view</ID>
-    <ID>PackageNaming:AudioPlayerView.kt$package com.github.k1rakishou.chan.features.media_viewer.media_view</ID>
+    <ID>PackageNaming:AlbumThreadControllerHelpers.kt$package
+      com.github.k1rakishou.chan.features.view.helper</ID>
+    <ID>PackageNaming:AudioMediaView.kt$package
+      com.github.k1rakishou.chan.features.view.element</ID>
+    <ID>PackageNaming:AudioPlayerView.kt$package
+      com.github.k1rakishou.chan.features.view.element</ID>
     <ID>PackageNaming:BaseSolverApiResponse.kt$package com.github.k1rakishou.chan.features.posting.solvers.two_captcha</ID>
-    <ID>PackageNaming:BoardArchiveController.kt$package com.github.k1rakishou.chan.features.site_archive</ID>
-    <ID>PackageNaming:BoardArchiveViewModel.kt$package com.github.k1rakishou.chan.features.site_archive</ID>
+    <ID>PackageNaming:BoardArchiveController.kt$package com.github.k1rakishou.chan.features.archive</ID>
+    <ID>PackageNaming:BoardArchiveViewModel.kt$package com.github.k1rakishou.chan.features.archive</ID>
     <ID>PackageNaming:BottomMenuPanel.kt$package com.github.k1rakishou.chan.ui.view.bottom_menu_panel</ID>
     <ID>PackageNaming:BottomMenuPanelItem.kt$package com.github.k1rakishou.chan.ui.view.bottom_menu_panel</ID>
     <ID>PackageNaming:BottomMenuPanelItemId.kt$package com.github.k1rakishou.chan.ui.view.bottom_menu_panel</ID>
     <ID>PackageNaming:CancellableTask.kt$package com.github.k1rakishou.chan.ui.compose.compose_task</ID>
     <ID>PackageNaming:Chan4ReportPostController.kt$package com.github.k1rakishou.chan.features.report_posts</ID>
     <ID>PackageNaming:Chan4ReportPostControllerViewModel.kt$package com.github.k1rakishou.chan.features.report_posts</ID>
-    <ID>PackageNaming:ChanPostBackgroundColorStorage.kt$package com.github.k1rakishou.chan.features.media_viewer.helper</ID>
+    <ID>PackageNaming:ChanPostBackgroundColorStorage.kt$package
+      com.github.k1rakishou.chan.features.view.helper</ID>
     <ID>PackageNaming:CheckableFloatingListMenuItem.kt$package com.github.k1rakishou.chan.ui.view.floating_menu</ID>
-    <ID>PackageNaming:CloseMediaActionHelper.kt$package com.github.k1rakishou.chan.features.media_viewer.helper</ID>
+    <ID>PackageNaming:CloseMediaActionHelper.kt$package
+      com.github.k1rakishou.chan.features.view.helper</ID>
     <ID>PackageNaming:CommentPostLinkableSpan.kt$package com.github.k1rakishou.chan.core.loader.impl.post_comment</ID>
     <ID>PackageNaming:CommentSpanUpdater.kt$package com.github.k1rakishou.chan.core.loader.impl.post_comment</ID>
     <ID>PackageNaming:ComposeCoroutineTask.kt$package com.github.k1rakishou.chan.ui.compose.compose_task</ID>
-    <ID>PackageNaming:CreateSoundMediaController.kt$package com.github.k1rakishou.chan.features.create_sound_media</ID>
-    <ID>PackageNaming:CreateSoundMediaControllerViewModel.kt$package com.github.k1rakishou.chan.features.create_sound_media</ID>
+    <ID>PackageNaming:CreateSoundMediaController.kt$package
+        com.github.k1rakishou.chan.features.soundmedia</ID>
+    <ID>PackageNaming:CreateSoundMediaControllerViewModel.kt$package
+        com.github.k1rakishou.chan.features.soundmedia</ID>
     <ID>PackageNaming:EpoxyCheckableFloatingListMenuRow.kt$package com.github.k1rakishou.chan.ui.view.floating_menu.epoxy</ID>
     <ID>PackageNaming:EpoxyDuplicateImageView.kt$package com.github.k1rakishou.chan.features.image_saver.epoxy</ID>
     <ID>PackageNaming:EpoxyFloatingListMenuRow.kt$package com.github.k1rakishou.chan.ui.view.floating_menu.epoxy</ID>
     <ID>PackageNaming:EpoxyGroupableFloatingListMenuRow.kt$package com.github.k1rakishou.chan.ui.view.floating_menu.epoxy</ID>
     <ID>PackageNaming:EpoxyHeaderListMenuRow.kt$package com.github.k1rakishou.chan.ui.view.floating_menu.epoxy</ID>
-    <ID>PackageNaming:ExoPlayerCache.kt$package com.github.k1rakishou.chan.features.media_viewer.helper</ID>
-    <ID>PackageNaming:ExoPlayerVideoMediaView.kt$package com.github.k1rakishou.chan.features.media_viewer.media_view</ID>
-    <ID>PackageNaming:ExoPlayerWrapper.kt$package com.github.k1rakishou.chan.features.media_viewer.helper</ID>
+    <ID>PackageNaming:ExoPlayerCache.kt$package com.github.k1rakishou.chan.features.view.helper</ID>
+    <ID>PackageNaming:ExoPlayerVideoMediaView.kt$package
+      com.github.k1rakishou.chan.features.view.element</ID>
+    <ID>PackageNaming:ExoPlayerWrapper.kt$package com.github.k1rakishou.chan.features.view.helper</ID>
     <ID>PackageNaming:ExternalMediaServiceExtraInfoFetcher.kt$package com.github.k1rakishou.chan.core.loader.impl.external_media_service</ID>
     <ID>PackageNaming:ExtraLinkInfo.kt$package com.github.k1rakishou.chan.core.loader.impl.post_comment</ID>
     <ID>PackageNaming:FloatingListMenu.kt$package com.github.k1rakishou.chan.ui.view.floating_menu</ID>
     <ID>PackageNaming:FloatingListMenuItem.kt$package com.github.k1rakishou.chan.ui.view.floating_menu</ID>
-    <ID>PackageNaming:FullImageMediaView.kt$package com.github.k1rakishou.chan.features.media_viewer.media_view</ID>
-    <ID>PackageNaming:FullMediaAppearAnimationHelper.kt$package com.github.k1rakishou.chan.features.media_viewer.helper</ID>
-    <ID>PackageNaming:GifMediaView.kt$package com.github.k1rakishou.chan.features.media_viewer.media_view</ID>
+    <ID>PackageNaming:FullImageMediaView.kt$package
+      com.github.k1rakishou.chan.features.view.element</ID>
+    <ID>PackageNaming:FullMediaAppearAnimationHelper.kt$package
+      com.github.k1rakishou.chan.features.view.helper</ID>
+    <ID>PackageNaming:GifMediaView.kt$package
+      com.github.k1rakishou.chan.features.view.element</ID>
     <ID>PackageNaming:HeaderFloatingListMenuItem.kt$package com.github.k1rakishou.chan.ui.view.floating_menu</ID>
-    <ID>PackageNaming:ImageNotFoundException.kt$package com.github.k1rakishou.chan.features.media_viewer.media_view</ID>
+    <ID>PackageNaming:ImageNotFoundException.kt$package
+      com.github.k1rakishou.chan.features.view.element</ID>
     <ID>PackageNaming:ImageSaverV2.kt$package com.github.k1rakishou.chan.features.image_saver</ID>
     <ID>PackageNaming:ImageSaverV2OptionsController.kt$package com.github.k1rakishou.chan.features.image_saver</ID>
     <ID>PackageNaming:ImageSaverV2Service.kt$package com.github.k1rakishou.chan.features.image_saver</ID>
@@ -3399,29 +3444,45 @@
     <ID>PackageNaming:ImageSearchResult.kt$package com.github.k1rakishou.chan.features.remote_image_search</ID>
     <ID>PackageNaming:KurobaComposeIconPanel.kt$package com.github.k1rakishou.chan.ui.compose.panel</ID>
     <ID>PackageNaming:LinkInfoRequest.kt$package com.github.k1rakishou.chan.core.loader.impl.post_comment</ID>
-    <ID>PackageNaming:LocalArchiveController.kt$package com.github.k1rakishou.chan.features.thread_downloading</ID>
-    <ID>PackageNaming:LocalArchiveViewModel.kt$package com.github.k1rakishou.chan.features.thread_downloading</ID>
-    <ID>PackageNaming:MediaLongClickMenuHelper.kt$package com.github.k1rakishou.chan.features.media_viewer.helper</ID>
-    <ID>PackageNaming:MediaView.kt$package com.github.k1rakishou.chan.features.media_viewer.media_view</ID>
-    <ID>PackageNaming:MediaViewContract.kt$package com.github.k1rakishou.chan.features.media_viewer.media_view</ID>
-    <ID>PackageNaming:MediaViewState.kt$package com.github.k1rakishou.chan.features.media_viewer.media_view</ID>
-    <ID>PackageNaming:MediaViewerActionStrip.kt$package com.github.k1rakishou.chan.features.media_viewer.strip</ID>
-    <ID>PackageNaming:MediaViewerActivity.kt$package com.github.k1rakishou.chan.features.media_viewer</ID>
-    <ID>PackageNaming:MediaViewerAdapter.kt$package com.github.k1rakishou.chan.features.media_viewer</ID>
-    <ID>PackageNaming:MediaViewerBottomActionStrip.kt$package com.github.k1rakishou.chan.features.media_viewer.strip</ID>
-    <ID>PackageNaming:MediaViewerBottomActionStripCallbacks.kt$package com.github.k1rakishou.chan.features.media_viewer.strip</ID>
-    <ID>PackageNaming:MediaViewerController.kt$package com.github.k1rakishou.chan.features.media_viewer</ID>
-    <ID>PackageNaming:MediaViewerControllerViewModel.kt$package com.github.k1rakishou.chan.features.media_viewer</ID>
-    <ID>PackageNaming:MediaViewerGesturesSettingsController.kt$package com.github.k1rakishou.chan.features.media_viewer</ID>
-    <ID>PackageNaming:MediaViewerGoToImagePostHelper.kt$package com.github.k1rakishou.chan.features.media_viewer.helper</ID>
-    <ID>PackageNaming:MediaViewerGoToPostHelper.kt$package com.github.k1rakishou.chan.features.media_viewer.helper</ID>
-    <ID>PackageNaming:MediaViewerLeftActionStrip.kt$package com.github.k1rakishou.chan.features.media_viewer.strip</ID>
-    <ID>PackageNaming:MediaViewerMenuHelper.kt$package com.github.k1rakishou.chan.features.media_viewer.helper</ID>
-    <ID>PackageNaming:MediaViewerOpenAlbumHelper.kt$package com.github.k1rakishou.chan.features.media_viewer.helper</ID>
-    <ID>PackageNaming:MediaViewerOpenThreadHelper.kt$package com.github.k1rakishou.chan.features.media_viewer.helper</ID>
-    <ID>PackageNaming:MediaViewerScrollerHelper.kt$package com.github.k1rakishou.chan.features.media_viewer.helper</ID>
-    <ID>PackageNaming:MediaViewerToolbar.kt$package com.github.k1rakishou.chan.features.media_viewer</ID>
-    <ID>PackageNaming:MpvVideoMediaView.kt$package com.github.k1rakishou.chan.features.media_viewer.media_view</ID>
+    <ID>PackageNaming:LocalArchiveController.kt$package com.github.k1rakishou.chan.features.download</ID>
+    <ID>PackageNaming:LocalArchiveViewModel.kt$package com.github.k1rakishou.chan.features.download</ID>
+    <ID>PackageNaming:MediaLongClickMenuHelper.kt$package
+      com.github.k1rakishou.chan.features.view.helper</ID>
+    <ID>PackageNaming:MediaView.kt$package com.github.k1rakishou.chan.features.view.element</ID>
+    <ID>PackageNaming:MediaViewContract.kt$package
+      com.github.k1rakishou.chan.features.view.element</ID>
+    <ID>PackageNaming:MediaViewState.kt$package
+      com.github.k1rakishou.chan.features.view.element</ID>
+    <ID>PackageNaming:MediaViewerActionStrip.kt$package
+      com.github.k1rakishou.chan.features.view.strip</ID>
+    <ID>PackageNaming:MediaViewerActivity.kt$package com.github.k1rakishou.chan.features.view</ID>
+    <ID>PackageNaming:MediaViewerAdapter.kt$package com.github.k1rakishou.chan.features.view</ID>
+    <ID>PackageNaming:MediaViewerBottomActionStrip.kt$package
+      com.github.k1rakishou.chan.features.view.strip</ID>
+    <ID>PackageNaming:MediaViewerBottomActionStripCallbacks.kt$package
+      com.github.k1rakishou.chan.features.view.strip</ID>
+    <ID>PackageNaming:MediaViewerController.kt$package com.github.k1rakishou.chan.features.view</ID>
+    <ID>PackageNaming:MediaViewerControllerViewModel.kt$package
+      com.github.k1rakishou.chan.features.view</ID>
+    <ID>PackageNaming:MediaViewerGesturesSettingsController.kt$package
+      com.github.k1rakishou.chan.features.view</ID>
+    <ID>PackageNaming:MediaViewerGoToImagePostHelper.kt$package
+      com.github.k1rakishou.chan.features.view.helper</ID>
+    <ID>PackageNaming:MediaViewerGoToPostHelper.kt$package
+      com.github.k1rakishou.chan.features.view.helper</ID>
+    <ID>PackageNaming:MediaViewerLeftActionStrip.kt$package
+      com.github.k1rakishou.chan.features.view.strip</ID>
+    <ID>PackageNaming:MediaViewerMenuHelper.kt$package
+      com.github.k1rakishou.chan.features.view.helper</ID>
+    <ID>PackageNaming:MediaViewerOpenAlbumHelper.kt$package
+      com.github.k1rakishou.chan.features.view.helper</ID>
+    <ID>PackageNaming:MediaViewerOpenThreadHelper.kt$package
+      com.github.k1rakishou.chan.features.view.helper</ID>
+    <ID>PackageNaming:MediaViewerScrollerHelper.kt$package
+      com.github.k1rakishou.chan.features.view.helper</ID>
+    <ID>PackageNaming:MediaViewerToolbar.kt$package com.github.k1rakishou.chan.features.view</ID>
+    <ID>PackageNaming:MpvVideoMediaView.kt$package
+      com.github.k1rakishou.chan.features.view.element</ID>
     <ID>PackageNaming:PostImageThumbnailView.kt$package com.github.k1rakishou.chan.ui.cell.post_thumbnail</ID>
     <ID>PackageNaming:PostImageThumbnailViewContract.kt$package com.github.k1rakishou.chan.ui.cell.post_thumbnail</ID>
     <ID>PackageNaming:PostImageThumbnailViewWrapper.kt$package com.github.k1rakishou.chan.ui.cell.post_thumbnail</ID>
@@ -3433,28 +3494,37 @@
     <ID>PackageNaming:ResolveDuplicateImagesState.kt$package com.github.k1rakishou.chan.features.image_saver.epoxy</ID>
     <ID>PackageNaming:ResolveDuplicateImagesView.kt$package com.github.k1rakishou.chan.features.image_saver</ID>
     <ID>PackageNaming:RootDirBackgroundAnimation.kt$package com.github.k1rakishou.chan.features.image_saver</ID>
-    <ID>PackageNaming:SavedPostsController.kt$package com.github.k1rakishou.chan.features.my_posts</ID>
-    <ID>PackageNaming:SavedPostsViewModel.kt$package com.github.k1rakishou.chan.features.my_posts</ID>
+    <ID>PackageNaming:SavedPostsController.kt$package com.github.k1rakishou.chan.features.posts</ID>
+    <ID>PackageNaming:SavedPostsViewModel.kt$package com.github.k1rakishou.chan.features.posts</ID>
     <ID>PackageNaming:SearxInstance.kt$package com.github.k1rakishou.chan.features.remote_image_search.instances</ID>
     <ID>PackageNaming:SingleInstanceTask.kt$package com.github.k1rakishou.chan.ui.compose.compose_task</ID>
     <ID>PackageNaming:SoundCloudMediaServiceExtraInfoFetcher.kt$package com.github.k1rakishou.chan.core.loader.impl.external_media_service</ID>
     <ID>PackageNaming:SpanUpdateBatch.kt$package com.github.k1rakishou.chan.core.loader.impl.post_comment</ID>
     <ID>PackageNaming:StreamableMediaServiceExtraInfoFetcher.kt$package com.github.k1rakishou.chan.core.loader.impl.external_media_service</ID>
-    <ID>PackageNaming:ThreadDownloadProgressNotifier.kt$package com.github.k1rakishou.chan.features.thread_downloading</ID>
-    <ID>PackageNaming:ThreadDownloaderSettingsController.kt$package com.github.k1rakishou.chan.features.thread_downloading</ID>
-    <ID>PackageNaming:ThreadDownloaderSettingsViewModel.kt$package com.github.k1rakishou.chan.features.thread_downloading</ID>
-    <ID>PackageNaming:ThreadDownloadingCoordinator.kt$package com.github.k1rakishou.chan.features.thread_downloading</ID>
-    <ID>PackageNaming:ThreadDownloadingDelegate.kt$package com.github.k1rakishou.chan.features.thread_downloading</ID>
-    <ID>PackageNaming:ThreadDownloadingWorker.kt$package com.github.k1rakishou.chan.features.thread_downloading</ID>
-    <ID>PackageNaming:ThumbnailMediaView.kt$package com.github.k1rakishou.chan.features.media_viewer.media_view</ID>
+    <ID>PackageNaming:ThreadDownloadProgressNotifier.kt$package
+      com.github.k1rakishou.chan.features.download</ID>
+    <ID>PackageNaming:ThreadDownloaderSettingsController.kt$package
+      com.github.k1rakishou.chan.features.download</ID>
+    <ID>PackageNaming:ThreadDownloaderSettingsViewModel.kt$package
+      com.github.k1rakishou.chan.features.download</ID>
+    <ID>PackageNaming:ThreadDownloadingCoordinator.kt$package
+      com.github.k1rakishou.chan.features.download</ID>
+    <ID>PackageNaming:ThreadDownloadingDelegate.kt$package
+      com.github.k1rakishou.chan.features.download</ID>
+    <ID>PackageNaming:ThreadDownloadingWorker.kt$package
+      com.github.k1rakishou.chan.features.download</ID>
+    <ID>PackageNaming:ThumbnailMediaView.kt$package
+      com.github.k1rakishou.chan.features.view.element</ID>
     <ID>PackageNaming:TwoCaptchaBalanceResponse.kt$package com.github.k1rakishou.chan.features.posting.solvers.two_captcha</ID>
     <ID>PackageNaming:TwoCaptchaCheckSolutionResponse.kt$package com.github.k1rakishou.chan.features.posting.solvers.two_captcha</ID>
     <ID>PackageNaming:TwoCaptchaEnqueueSolveCaptchaResponse.kt$package com.github.k1rakishou.chan.features.posting.solvers.two_captcha</ID>
     <ID>PackageNaming:TwoCaptchaResult.kt$package com.github.k1rakishou.chan.features.posting.solvers.two_captcha</ID>
     <ID>PackageNaming:TwoCaptchaSolver.kt$package com.github.k1rakishou.chan.features.posting.solvers.two_captcha</ID>
-    <ID>PackageNaming:UnsupportedMediaView.kt$package com.github.k1rakishou.chan.features.media_viewer.media_view</ID>
-    <ID>PackageNaming:ViewPagerAutoSwiper.kt$package com.github.k1rakishou.chan.features.media_viewer.helper</ID>
-    <ID>PackageNaming:ViewableMediaParcelableHolder.kt$package com.github.k1rakishou.chan.features.media_viewer</ID>
+    <ID>PackageNaming:UnsupportedMediaView.kt$package
+      com.github.k1rakishou.chan.features.view.element</ID>
+    <ID>PackageNaming:ViewPagerAutoSwiper.kt$package com.github.k1rakishou.chan.features.view.helper</ID>
+    <ID>PackageNaming:ViewableMediaParcelableHolder.kt$package
+      com.github.k1rakishou.chan.features.view</ID>
     <ID>PackageNaming:YandexInstance.kt$package com.github.k1rakishou.chan.features.remote_image_search.instances</ID>
     <ID>PackageNaming:YoutubeMediaServiceExtraInfoFetcher.kt$package com.github.k1rakishou.chan.core.loader.impl.external_media_service</ID>
     <ID>ParameterListWrapping:AbstractFilePicker.kt$AbstractFilePicker.FilePickerError.FailedToDownloadFile$(url: String, reason: Throwable)</ID>

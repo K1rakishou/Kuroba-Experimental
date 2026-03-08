@@ -1,19 +1,19 @@
 package com.github.k1rakishou.chan.features.settings
 
-import com.github.k1rakishou.chan.features.settings.setting.SettingV2
-import com.github.k1rakishou.chan.features.settings.setting.SettingV2Builder
+import com.github.k1rakishou.chan.features.settings.setting.SettingBuilder
+import com.github.k1rakishou.chan.features.settings.setting.SettingUiElement
 
 class SettingsGroup(
   val groupIdentifier: IGroupIdentifier,
   val groupTitle: String? = null,
-  private val settingsMap: MutableMap<SettingsIdentifier, SettingV2> = mutableMapOf()
+  private val settingsMap: MutableMap<SettingsIdentifier, SettingUiElement> = mutableMapOf()
 ) {
-  private val settingsBuilderMap = mutableMapOf<SettingsIdentifier, suspend (Int) -> SettingV2>()
+  private val settingsBuilderMap = mutableMapOf<SettingsIdentifier, suspend (Int) -> SettingUiElement>()
 
   @Suppress("UNCHECKED_CAST")
-  operator fun plusAssign(linkSettingV2Builder: SettingV2Builder) {
-    val settingIdentifier = linkSettingV2Builder.settingsIdentifier
-    val settingBuildFunction = linkSettingV2Builder.buildFunction
+  operator fun plusAssign(linkSettingBuilder: SettingBuilder) {
+    val settingIdentifier = linkSettingBuilder.settingsIdentifier
+    val settingBuildFunction = linkSettingBuilder.buildFunction
 
     if (settingsMap.containsKey(settingIdentifier)) {
       throw IllegalArgumentException("Settings group already contains setting with " +
@@ -28,11 +28,11 @@ class SettingsGroup(
     settingsBuilderMap[settingIdentifier] = settingBuildFunction
   }
 
-  fun iterateSettings(iterator: (SettingV2) -> Unit) {
+  fun iterateSettings(iterator: (SettingUiElement) -> Unit) {
     settingsMap.values.forEach { settingV2 -> iterator(settingV2) }
   }
 
-  fun iterateSettingsFilteredByQuery(query: String, iterator: (SettingV2) -> Unit) {
+  fun iterateSettingsFilteredByQuery(query: String, iterator: (SettingUiElement) -> Unit) {
     settingsMap.values.forEach { settingV2 ->
       if (settingV2.topDescription.contains(other = query, ignoreCase = true)) {
         iterator(settingV2)

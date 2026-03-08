@@ -27,9 +27,9 @@ import com.github.k1rakishou.chan.core.site.SiteDependencies
 import com.github.k1rakishou.chan.core.site.sites.CompositeCatalogSite
 import com.github.k1rakishou.chan.core.watcher.BookmarkBackgroundWatcherWorker
 import com.github.k1rakishou.chan.core.watcher.FilterWatcherWorker
-import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2Service
+import com.github.k1rakishou.chan.features.download.media.ImageSaverV2Service
+import com.github.k1rakishou.chan.features.download.thread.ThreadDownloadingWorker
 import com.github.k1rakishou.chan.features.posting.PostingService
-import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadingWorker
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.dns.DnsOverHttpsSelectorFactory
 import com.github.k1rakishou.common.dns.NormalDnsSelectorFactory

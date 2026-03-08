@@ -5,9 +5,9 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.features.settings.MediaScreen
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
-import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
-import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
-import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
+import com.github.k1rakishou.chan.features.settings.setting.BooleanSetting
+import com.github.k1rakishou.chan.features.settings.setting.LinkSetting
+import com.github.k1rakishou.chan.features.settings.setting.ListSetting
 
 class MediaSettingsScreen(
   context: Context
@@ -36,7 +36,7 @@ class MediaSettingsScreen(
           groupIdentifier = identifier
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = MediaScreen.MiscGroup.AlwaysRandomizeFileNameWhenPickingFiles,
           topDescriptionIdFunc = { R.string.setting_always_randomize_picked_files_names },
@@ -60,7 +60,7 @@ class MediaSettingsScreen(
           groupIdentifier = identifier
         )
 
-        group += ListSettingV2.createBuilder<ChanSettings.NetworkContentAutoLoadMode>(
+        group += ListSetting.createBuilder<ChanSettings.NetworkContentAutoLoadMode>(
           context = context,
           identifier = MediaScreen.LoadingGroup.ImageAutoLoadNetwork,
           setting = ChanSettings.imageAutoLoadNetwork,
@@ -83,7 +83,7 @@ class MediaSettingsScreen(
           }
         )
 
-        group += ListSettingV2.createBuilder<ChanSettings.NetworkContentAutoLoadMode>(
+        group += ListSetting.createBuilder<ChanSettings.NetworkContentAutoLoadMode>(
           context = context,
           identifier = MediaScreen.LoadingGroup.VideoAutoLoadNetwork,
           setting = ChanSettings.videoAutoLoadNetwork,
@@ -122,7 +122,7 @@ class MediaSettingsScreen(
           groupIdentifier = identifier
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier =  MediaScreen.MediaSavingGroup.SaveLocation,
           topDescriptionIdFunc = { R.string.setting_save_location },

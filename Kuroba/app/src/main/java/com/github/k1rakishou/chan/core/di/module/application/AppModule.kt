@@ -21,9 +21,9 @@ import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager
 import com.github.k1rakishou.chan.core.site.SiteDependencies
 import com.github.k1rakishou.chan.core.watcher.BookmarkWatcherCoordinator
 import com.github.k1rakishou.chan.core.watcher.FilterWatcherCoordinator
-import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2
-import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2ServiceDelegate
-import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadingCoordinator
+import com.github.k1rakishou.chan.features.download.media.ImageSaverV2
+import com.github.k1rakishou.chan.features.download.media.ImageSaverV2ServiceDelegate
+import com.github.k1rakishou.chan.features.download.thread.ThreadDownloadingCoordinator
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder
 import com.github.k1rakishou.core_logger.Logger.deps
 import com.github.k1rakishou.fsaf.FileManager

@@ -2,8 +2,8 @@ package com.github.k1rakishou.chan.core.manager
 
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.features.album.AlbumItemData
-import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
-import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
+import com.github.k1rakishou.chan.features.view.media.MediaLocation
+import com.github.k1rakishou.chan.features.view.media.ViewableMedia
 import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor

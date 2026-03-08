@@ -16,8 +16,8 @@ import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.repository.BoardFlagInfoRepository
-import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.loader.ClientException
+import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
 import com.github.k1rakishou.chan.core.usecase.ClearPostingCookies
 import com.github.k1rakishou.chan.core.usecase.LoadBoardFlagsUseCase
 import com.github.k1rakishou.chan.features.posting.PostingService
@@ -410,7 +410,7 @@ class ReplyLayoutViewModel(
           var actualReplyMode = replyMode
           if (actualReplyMode == null) {
             actualReplyMode = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
-              ?.getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
+              ?.getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSettingForUi.SiteSettingId.LastUsedReplyMode)
               ?.get()
               ?: ReplyMode.Unknown
           }
@@ -578,7 +578,7 @@ class ReplyLayoutViewModel(
     withReplyLayoutState { replyLayoutState ->
       flagSelectorClickExecutor.post(500) {
         val lastUsedCountryFlagPerBoardSetting = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
-          ?.getSettingBySettingId<StringSetting>(SiteSetting.SiteSettingId.LastUsedCountryFlagPerBoard)
+          ?.getSettingBySettingId<StringSetting>(SiteSettingForUi.SiteSettingId.LastUsedCountryFlagPerBoard)
 
         val selectedFlag = replyLayoutViewCallbacks?.promptUserToSelectFlag(chanDescriptor)
         if (lastUsedCountryFlagPerBoardSetting == null || selectedFlag == null) {

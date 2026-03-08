@@ -23,6 +23,7 @@ import com.github.k1rakishou.chan.core.repository.ImportExportRepository
 import com.github.k1rakishou.chan.core.usecase.InstallMpvNativeLibrariesFromGithubUseCase
 import com.github.k1rakishou.chan.core.usecase.InstallMpvNativeLibrariesFromLocalDirectoryUseCase
 import com.github.k1rakishou.chan.core.usecase.TwoCaptchaCheckBalanceUseCase
+import com.github.k1rakishou.chan.features.download.thread.ThreadDownloadingDelegate
 import com.github.k1rakishou.chan.features.settings.screens.AppearanceSettingsScreen
 import com.github.k1rakishou.chan.features.settings.screens.BehaviourSettingsScreen
 import com.github.k1rakishou.chan.features.settings.screens.CachingSettingsScreen
@@ -36,7 +37,6 @@ import com.github.k1rakishou.chan.features.settings.screens.MediaSettingsScreen
 import com.github.k1rakishou.chan.features.settings.screens.PluginSettingsScreen
 import com.github.k1rakishou.chan.features.settings.screens.SecuritySettingsScreen
 import com.github.k1rakishou.chan.features.settings.screens.WatcherSettingsScreen
-import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadingDelegate
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.helper.AppSettingsUpdateAppRefreshHelper
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils

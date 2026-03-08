@@ -3,8 +3,8 @@ package com.github.k1rakishou.chan.features.album
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2
-import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2OptionsController
+import com.github.k1rakishou.chan.features.download.media.ImageSaverV2
+import com.github.k1rakishou.chan.features.download.media.ImageSaverV2OptionsController
 import com.github.k1rakishou.chan.ui.compose.snackbar.SnackbarManager
 import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.core_logger.Logger

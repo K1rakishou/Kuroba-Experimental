@@ -1,7 +1,7 @@
 package com.github.k1rakishou.chan.features.album
 
 import androidx.compose.runtime.Immutable
-import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2ServiceDelegate
+import com.github.k1rakishou.chan.features.download.media.ImageSaverV2ServiceDelegate
 import okhttp3.HttpUrl
 
 @Immutable

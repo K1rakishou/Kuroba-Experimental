@@ -75,13 +75,13 @@ import com.github.k1rakishou.chan.core.watcher.BookmarkWatcherCoordinator
 import com.github.k1rakishou.chan.core.watcher.BookmarkWatcherDelegate
 import com.github.k1rakishou.chan.core.watcher.FilterWatcherCoordinator
 import com.github.k1rakishou.chan.core.watcher.FilterWatcherDelegate
-import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2ServiceDelegate
+import com.github.k1rakishou.chan.features.download.media.ImageSaverV2ServiceDelegate
+import com.github.k1rakishou.chan.features.download.thread.ThreadDownloadProgressNotifier
+import com.github.k1rakishou.chan.features.download.thread.ThreadDownloadingCoordinator
+import com.github.k1rakishou.chan.features.download.thread.ThreadDownloadingDelegate
 import com.github.k1rakishou.chan.features.posting.LastReplyRepository
 import com.github.k1rakishou.chan.features.posting.PostingServiceDelegate
 import com.github.k1rakishou.chan.features.posting.solvers.two_captcha.TwoCaptchaSolver
-import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadProgressNotifier
-import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadingCoordinator
-import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadingDelegate
 import com.github.k1rakishou.chan.features.toolbar.KurobaToolbarStateManager
 import com.github.k1rakishou.chan.features.webview.HeadlessWebViewTaskExecutor
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder

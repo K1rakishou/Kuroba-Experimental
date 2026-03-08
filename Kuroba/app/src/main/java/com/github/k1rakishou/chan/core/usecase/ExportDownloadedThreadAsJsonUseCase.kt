@@ -2,7 +2,7 @@ package com.github.k1rakishou.chan.core.usecase
 
 import android.content.Context
 import android.net.Uri
-import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadingDelegate
+import com.github.k1rakishou.chan.features.download.thread.ThreadDownloadingDelegate
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.core_logger.Logger

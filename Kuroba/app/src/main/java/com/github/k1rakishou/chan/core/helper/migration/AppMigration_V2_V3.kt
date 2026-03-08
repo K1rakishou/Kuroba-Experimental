@@ -3,7 +3,7 @@ package com.github.k1rakishou.chan.core.helper.migration
 import android.content.Context
 import com.github.k1rakishou.chan.core.site.SiteConfiguration
 import com.github.k1rakishou.chan.core.site.SiteRegistry
-import com.github.k1rakishou.chan.core.site.SiteSetting
+import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
 import com.github.k1rakishou.chan.utils.appDependencies
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.prefs.MapSetting
@@ -34,7 +34,7 @@ class AppMigration_V2_V3 : ApplicationMigration {
       }
 
       val cloudFlareClearanceCookieSetting = site.getSettingBySettingId<MapSetting>(
-        SiteSetting.SiteSettingId.CloudFlareClearanceCookie
+        SiteSettingForUi.SiteSettingId.CloudFlareClearanceCookie
       )
       if (cloudFlareClearanceCookieSetting == null) {
         Logger.debug(TAG) { "Site ${siteDescriptor} has no CloudFlare cookie, skipping." }

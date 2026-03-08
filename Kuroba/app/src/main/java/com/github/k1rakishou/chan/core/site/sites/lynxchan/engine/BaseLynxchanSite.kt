@@ -3,11 +3,12 @@ package com.github.k1rakishou.chan.core.site.sites.lynxchan.engine
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.site.SiteConfiguration
-import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.limitations.BoardDependantAttachablesCount
 import com.github.k1rakishou.chan.core.site.limitations.BoardDependantPostAttachablesMaxTotalSize
 import com.github.k1rakishou.chan.core.site.limitations.PostingLimitationConfig
+import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
+import com.github.k1rakishou.chan.core.site.settings.SiteSettingsForUi
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.model.data.board.LynxchanBoardMeta
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -59,21 +60,20 @@ abstract class BaseLynxchanSite(defaultDomain: String) : CommonSite(defaultDomai
   override val actions by lazy { LynxchanActions(this) }
   override val requestModifier by lazy { LynxchanRequestModifier(this) }
 
-  override val settings: List<SiteSetting> by lazy {
-    val settings = mutableListOf<SiteSetting>()
-    settings.addAll(super.settings)
+  override val settingsForUi: SiteSettingsForUi by lazy {
+    val settings = SiteSettingsForUi(super.settingsForUi)
 
-    settings += SiteSetting.SiteCookieSetting(
+    settings += SiteSettingForUi.SiteCookieSetting(
       settingName = "captchaIdCookie",
       settingDescription = getString(R.string.site_captcha_id_cookie_description),
       setting = captchaIdCookie
     )
-    settings += SiteSetting.SiteCookieSetting(
+    settings += SiteSettingForUi.SiteCookieSetting(
       settingName = "bypassCookie",
       settingDescription = getString(R.string.site_block_bypass_cookie_description),
       setting = bypassCookie
     )
-    settings += SiteSetting.SiteCookieSetting(
+    settings += SiteSettingForUi.SiteCookieSetting(
       settingName = "extraCookie",
       settingDescription = getString(R.string.site_proof_of_work_cookie_description),
       setting = extraCookie

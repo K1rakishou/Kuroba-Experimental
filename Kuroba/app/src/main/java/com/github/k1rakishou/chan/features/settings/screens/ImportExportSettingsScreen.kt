@@ -5,11 +5,11 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.helper.AppRestarter
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.repository.ImportExportRepository
+import com.github.k1rakishou.chan.features.download.thread.ThreadDownloadingDelegate
 import com.github.k1rakishou.chan.features.settings.ImportExportScreen
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
 import com.github.k1rakishou.chan.features.settings.screens.delegate.ImportExportSettingsDelegate
-import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
-import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadingDelegate
+import com.github.k1rakishou.chan.features.settings.setting.LinkSetting
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.FileManager
@@ -62,7 +62,7 @@ class ImportExportSettingsScreen(
           groupIdentifier = identifier
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier =  ImportExportScreen.ImportFromKurobaSettingsGroup.ImportSettingsFromKuroba,
           topDescriptionIdFunc = { R.string.import_from_kuroba },
@@ -86,7 +86,7 @@ class ImportExportSettingsScreen(
           groupIdentifier = identifier
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier =  ImportExportScreen.MainSettingsGroup.ExportSetting,
           topDescriptionIdFunc = { R.string.export_settings },
@@ -94,7 +94,7 @@ class ImportExportSettingsScreen(
           callback = { importExportSettingsDelegate.onExportClicked() }
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier =  ImportExportScreen.MainSettingsGroup.ImportSetting,
           topDescriptionIdFunc = { R.string.import_settings },

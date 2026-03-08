@@ -8,7 +8,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.helper.AppRestarter
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.repository.ImportExportRepository
-import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadingDelegate
+import com.github.k1rakishou.chan.features.download.thread.ThreadDownloadingDelegate
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString

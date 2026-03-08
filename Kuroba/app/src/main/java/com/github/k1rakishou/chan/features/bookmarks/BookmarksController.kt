@@ -39,7 +39,7 @@ import com.github.k1rakishou.chan.features.bookmarks.epoxy.EpoxyListThreadBookma
 import com.github.k1rakishou.chan.features.bookmarks.epoxy.UnifiedBookmarkInfoAccessor
 import com.github.k1rakishou.chan.features.bookmarks.epoxy.epoxyGridThreadBookmarkViewHolder
 import com.github.k1rakishou.chan.features.bookmarks.epoxy.epoxyListThreadBookmarkViewHolder
-import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloaderSettingsController
+import com.github.k1rakishou.chan.features.download.thread.ThreadDownloaderSettingsController
 import com.github.k1rakishou.chan.features.toolbar.BackArrowMenuItem
 import com.github.k1rakishou.chan.features.toolbar.CloseMenuItem
 import com.github.k1rakishou.chan.features.toolbar.ToolbarMenuOverflowItem

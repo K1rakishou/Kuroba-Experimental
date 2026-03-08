@@ -16,13 +16,11 @@ import com.github.k1rakishou.chan.core.manager.WebViewTaskManager
 import com.github.k1rakishou.chan.core.presenter.BrowsePresenter
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter
 import com.github.k1rakishou.chan.core.site.SiteResolver
+import com.github.k1rakishou.chan.features.archive.BoardArchiveController
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
-import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
-import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity
 import com.github.k1rakishou.chan.features.setup.boards.selection.BoardSelectionController
 import com.github.k1rakishou.chan.features.setup.site.settings.SiteSettingsController
 import com.github.k1rakishou.chan.features.setup.site.setup.SitesSetupController
-import com.github.k1rakishou.chan.features.site_archive.BoardArchiveController
 import com.github.k1rakishou.chan.features.toolbar.HamburgMenuItem
 import com.github.k1rakishou.chan.features.toolbar.KurobaToolbarState
 import com.github.k1rakishou.chan.features.toolbar.ToolbarMenuCheckableOverflowItem
@@ -33,6 +31,8 @@ import com.github.k1rakishou.chan.features.toolbar.ToolbarText
 import com.github.k1rakishou.chan.features.toolbar.state.ToolbarContentState
 import com.github.k1rakishou.chan.features.toolbar.state.ToolbarInlineContent
 import com.github.k1rakishou.chan.features.toolbar.state.ToolbarStateKind
+import com.github.k1rakishou.chan.features.view.media.MediaLocation
+import com.github.k1rakishou.chan.features.view.media.MediaViewerActivity
 import com.github.k1rakishou.chan.features.webview.WebViewTaskController
 import com.github.k1rakishou.chan.features.webview.WebViewTaskResult
 import com.github.k1rakishou.chan.features.webview.task.AbstractWebViewTask

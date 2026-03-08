@@ -17,11 +17,11 @@ import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
-import com.github.k1rakishou.chan.core.site.SiteSetting
+import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
 import com.github.k1rakishou.chan.core.usecase.LoadBoardFlagsUseCase
-import com.github.k1rakishou.chan.features.remote_image_search.ImageSearchController
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileAttachable
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
+import com.github.k1rakishou.chan.features.search.remotemedia.ImageSearchController
 import com.github.k1rakishou.chan.ui.compose.providers.ComposeEntrypoint
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.OpenUrlInWebViewController
@@ -380,7 +380,7 @@ class ReplyLayoutView @JvmOverloads constructor(
       ?: return
 
     val prevReplyMode = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
-      ?.getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
+      ?.getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSettingForUi.SiteSettingId.LastUsedReplyMode)
       ?.get()
       ?: ReplyMode.Unknown
 
@@ -610,11 +610,11 @@ class ReplyLayoutView @JvmOverloads constructor(
     val availableReplyModes = buildReplyModeOptions(chanDescriptor, prevReplyMode)
 
     val ignoreReplyCooldowns = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
-      ?.getSettingBySettingId<BooleanSetting>(SiteSetting.SiteSettingId.IgnoreReplyCooldowns)
+      ?.getSettingBySettingId<BooleanSetting>(SiteSettingForUi.SiteSettingId.IgnoreReplyCooldowns)
     val lastUsedReplyMode = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
-      ?.getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
+      ?.getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSettingForUi.SiteSettingId.LastUsedReplyMode)
     val check4chanPostAcknowledgedSetting = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
-      ?.getSettingBySettingId<BooleanSetting>(SiteSetting.SiteSettingId.Check4chanPostAcknowledged)
+      ?.getSettingBySettingId<BooleanSetting>(SiteSettingForUi.SiteSettingId.Check4chanPostAcknowledged)
 
     menuItems += FloatingListMenuItem(
       key = ACTION_REPLY_MODES,

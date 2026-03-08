@@ -7,7 +7,7 @@ import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.UpdateManager
 import com.github.k1rakishou.chan.features.filters.FiltersController
-import com.github.k1rakishou.chan.features.report_bugs.ReportIssueController
+import com.github.k1rakishou.chan.features.report.bugs.ReportIssueController
 import com.github.k1rakishou.chan.features.settings.AppearanceScreen
 import com.github.k1rakishou.chan.features.settings.BehaviorScreen
 import com.github.k1rakishou.chan.features.settings.CachingScreen
@@ -22,7 +22,7 @@ import com.github.k1rakishou.chan.features.settings.SecurityScreen
 import com.github.k1rakishou.chan.features.settings.SettingClickAction
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
 import com.github.k1rakishou.chan.features.settings.WatcherScreen
-import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
+import com.github.k1rakishou.chan.features.settings.setting.LinkSetting
 import com.github.k1rakishou.chan.features.setup.site.setup.SitesSetupController
 import com.github.k1rakishou.chan.ui.controller.LicensesController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
@@ -35,6 +35,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.verifiedBuildType
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType
 import com.github.k1rakishou.persist_state.PersistableChanState
+import java.util.Locale
 
 class MainSettingsScreen(
   context: Context,
@@ -66,7 +67,7 @@ class MainSettingsScreen(
           groupIdentifier = identifier
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = MainScreen.AboutAppGroup.AppVersion,
           topDescriptionStringFunc = { createAppVersionString() },
@@ -79,8 +80,12 @@ class MainSettingsScreen(
           },
           callbackWithClickAction = {
             when {
-              AppModuleAndroidUtils.isDevBuild -> SettingClickAction.ShowToast(R.string.updater_is_disabled_for_dev_builds)
-              AppModuleAndroidUtils.isFdroidBuild -> SettingClickAction.ShowToast(R.string.updater_is_disabled_for_fdroid_builds)
+              AppModuleAndroidUtils.isDevBuild -> {
+                SettingClickAction.ShowToast(R.string.updater_is_disabled_for_dev_builds)
+              }
+              AppModuleAndroidUtils.isFdroidBuild -> {
+                SettingClickAction.ShowToast(R.string.updater_is_disabled_for_fdroid_builds)
+              }
               else -> {
                 updateManager.manualUpdateCheck()
                 SettingClickAction.NoAction
@@ -90,7 +95,7 @@ class MainSettingsScreen(
           notificationType = SettingNotificationType.ApkUpdate
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = MainScreen.AboutAppGroup.Changelog,
           topDescriptionIdFunc = { R.string.see_changelog_for_this_version },
@@ -100,7 +105,7 @@ class MainSettingsScreen(
           }
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = MainScreen.AboutAppGroup.Reports,
           isEnabledFunc = { false },
@@ -112,7 +117,7 @@ class MainSettingsScreen(
           }
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = MainScreen.AboutAppGroup.FindAppOnGithub,
           topDescriptionStringFunc = { getString(R.string.settings_find_app_on_github, AndroidUtils.applicationLabel) },
@@ -120,7 +125,7 @@ class MainSettingsScreen(
           callback = { openLink(BuildConfig.GITHUB_ENDPOINT) }
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = MainScreen.AboutAppGroup.ReportTrackerLink,
           topDescriptionIdFunc = { R.string.settings_report_tracker_link },
@@ -128,7 +133,7 @@ class MainSettingsScreen(
           callback = { openLink(BuildConfig.GITHUB_REPORTS_ENDPOINT) }
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = MainScreen.AboutAppGroup.AppLicense,
           topDescriptionIdFunc = { R.string.settings_about_license },
@@ -143,7 +148,7 @@ class MainSettingsScreen(
           }
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = MainScreen.AboutAppGroup.DeveloperSettings,
           topDescriptionIdFunc = { R.string.settings_developer },
@@ -166,7 +171,7 @@ class MainSettingsScreen(
           groupIdentifier = identifier
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = MainScreen.MainGroup.ThreadAndFilterWatcher,
           topDescriptionIdFunc = { R.string.settings_watch },
@@ -174,7 +179,7 @@ class MainSettingsScreen(
           callbackWithClickAction = { SettingClickAction.OpenScreen(WatcherScreen) }
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = MainScreen.MainGroup.SitesSetup,
           topDescriptionIdFunc = { R.string.settings_sites },
@@ -185,7 +190,7 @@ class MainSettingsScreen(
           callback = { navigationController.pushController(SitesSetupController(context)) }
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = MainScreen.MainGroup.Appearance,
           topDescriptionIdFunc = { R.string.settings_appearance },
@@ -193,7 +198,7 @@ class MainSettingsScreen(
           callbackWithClickAction = { SettingClickAction.OpenScreen(AppearanceScreen) }
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = MainScreen.MainGroup.Behavior,
           topDescriptionIdFunc = { R.string.settings_behavior },
@@ -201,7 +206,7 @@ class MainSettingsScreen(
           callbackWithClickAction = { SettingClickAction.OpenScreen(BehaviorScreen) }
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = MainScreen.MainGroup.Media,
           topDescriptionIdFunc = { R.string.settings_media },
@@ -209,7 +214,7 @@ class MainSettingsScreen(
           callbackWithClickAction = { SettingClickAction.OpenScreen(MediaScreen) }
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = MainScreen.MainGroup.ImportExport,
           topDescriptionIdFunc = { R.string.settings_import_export },
@@ -219,7 +224,7 @@ class MainSettingsScreen(
           }
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = MainScreen.MainGroup.Filters,
           topDescriptionIdFunc = { R.string.settings_filters },
@@ -237,7 +242,7 @@ class MainSettingsScreen(
           }
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = MainScreen.MainGroup.Security,
           topDescriptionIdFunc = { R.string.settings_security },
@@ -245,7 +250,7 @@ class MainSettingsScreen(
           callbackWithClickAction = { SettingClickAction.OpenScreen(SecurityScreen) }
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = MainScreen.MainGroup.Caching,
           topDescriptionIdFunc = { R.string.settings_caching },
@@ -253,7 +258,7 @@ class MainSettingsScreen(
           callbackWithClickAction = { SettingClickAction.OpenScreen(CachingScreen) }
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = MainScreen.MainGroup.Plugins,
           topDescriptionIdFunc = { R.string.settings_plugins },
@@ -261,7 +266,7 @@ class MainSettingsScreen(
           callbackWithClickAction = { SettingClickAction.OpenScreen(PluginsScreen) }
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = MainScreen.MainGroup.CaptchaSolvers,
           topDescriptionIdFunc = { R.string.settings_captcha_solvers },
@@ -269,7 +274,7 @@ class MainSettingsScreen(
           callbackWithClickAction = { SettingClickAction.OpenScreen(CaptchaSolversScreen) }
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = MainScreen.MainGroup.Experimental,
           topDescriptionIdFunc = { R.string.settings_experimental_settings },
@@ -286,6 +291,7 @@ class MainSettingsScreen(
     val buildNumber = PersistableChanState.previousBuildNumber.get().coerceAtLeast(0)
 
     return String.format(
+      Locale.ENGLISH,
       "%s %s.%d %s (commit %s)",
       AndroidUtils.applicationLabel.toString(),
       BuildConfig.VERSION_NAME,

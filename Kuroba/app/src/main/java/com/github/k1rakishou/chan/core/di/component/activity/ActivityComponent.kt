@@ -6,6 +6,7 @@ import com.github.k1rakishou.chan.core.di.module.activity.ActivityModule
 import com.github.k1rakishou.chan.core.di.module.activity.ActivityScopedViewModelFactoryModule
 import com.github.k1rakishou.chan.core.di.module.activity.ActivityScopedViewModelModule
 import com.github.k1rakishou.chan.core.di.scope.PerActivity
+import com.github.k1rakishou.chan.features.archive.BoardArchiveController
 import com.github.k1rakishou.chan.features.bookmarks.BookmarkGroupPatternSettingsController
 import com.github.k1rakishou.chan.features.bookmarks.BookmarkGroupSettingsController
 import com.github.k1rakishou.chan.features.bookmarks.BookmarksController
@@ -14,31 +15,19 @@ import com.github.k1rakishou.chan.features.bookmarks.BookmarksSortingController
 import com.github.k1rakishou.chan.features.bookmarks.epoxy.BaseThreadBookmarkViewHolder
 import com.github.k1rakishou.chan.features.bookmarks.epoxy.EpoxyGridThreadBookmarkViewHolder
 import com.github.k1rakishou.chan.features.bookmarks.epoxy.EpoxyListThreadBookmarkViewHolder
-import com.github.k1rakishou.chan.features.create_sound_media.CreateSoundMediaController
+import com.github.k1rakishou.chan.features.download.media.ImageSaverV2OptionsController
+import com.github.k1rakishou.chan.features.download.media.ResolveDuplicateImagesController
+import com.github.k1rakishou.chan.features.download.media.epoxy.EpoxyDuplicateImageView
+import com.github.k1rakishou.chan.features.download.thread.LocalArchiveController
+import com.github.k1rakishou.chan.features.download.thread.ThreadDownloaderSettingsController
 import com.github.k1rakishou.chan.features.drawer.MainController
 import com.github.k1rakishou.chan.features.filters.CreateOrUpdateFilterController
 import com.github.k1rakishou.chan.features.filters.FilterBoardSelectorController
 import com.github.k1rakishou.chan.features.filters.FilterTypeSelectionController
 import com.github.k1rakishou.chan.features.filters.FiltersController
-import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2OptionsController
-import com.github.k1rakishou.chan.features.image_saver.ResolveDuplicateImagesController
-import com.github.k1rakishou.chan.features.image_saver.epoxy.EpoxyDuplicateImageView
 import com.github.k1rakishou.chan.features.login.LoginController
-import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity
-import com.github.k1rakishou.chan.features.media_viewer.MediaViewerController
-import com.github.k1rakishou.chan.features.media_viewer.MediaViewerGesturesSettingsController
-import com.github.k1rakishou.chan.features.media_viewer.MediaViewerToolbar
-import com.github.k1rakishou.chan.features.media_viewer.media_view.AudioMediaView
-import com.github.k1rakishou.chan.features.media_viewer.media_view.ExoPlayerVideoMediaView
-import com.github.k1rakishou.chan.features.media_viewer.media_view.FullImageMediaView
-import com.github.k1rakishou.chan.features.media_viewer.media_view.GifMediaView
-import com.github.k1rakishou.chan.features.media_viewer.media_view.MpvVideoMediaView
-import com.github.k1rakishou.chan.features.media_viewer.media_view.ThumbnailMediaView
-import com.github.k1rakishou.chan.features.media_viewer.media_view.UnsupportedMediaView
-import com.github.k1rakishou.chan.features.media_viewer.strip.MediaViewerBottomActionStrip
-import com.github.k1rakishou.chan.features.media_viewer.strip.MediaViewerLeftActionStrip
 import com.github.k1rakishou.chan.features.mpv.EditMpvConfController
-import com.github.k1rakishou.chan.features.my_posts.SavedPostsController
+import com.github.k1rakishou.chan.features.posts.SavedPostsController
 import com.github.k1rakishou.chan.features.proxies.ProxyEditorController
 import com.github.k1rakishou.chan.features.proxies.ProxySetupController
 import com.github.k1rakishou.chan.features.proxies.epoxy.EpoxyProxyView
@@ -46,25 +35,25 @@ import com.github.k1rakishou.chan.features.reencoding.ImageOptionsController
 import com.github.k1rakishou.chan.features.reencoding.ImageOptionsHelper
 import com.github.k1rakishou.chan.features.reencoding.ImageReencodeOptionsController
 import com.github.k1rakishou.chan.features.reencoding.ImageReencodingPresenter
-import com.github.k1rakishou.chan.features.remote_image_search.ImageSearchController
 import com.github.k1rakishou.chan.features.reordering.EpoxyReorderableItemView
 import com.github.k1rakishou.chan.features.reordering.SimpleListItemsReorderingController
 import com.github.k1rakishou.chan.features.reply.ReplyLayoutView
-import com.github.k1rakishou.chan.features.report_bugs.ReportIssueController
-import com.github.k1rakishou.chan.features.report_posts.Chan4ReportPostController
-import com.github.k1rakishou.chan.features.search.GlobalSearchController
-import com.github.k1rakishou.chan.features.search.SearchResultsController
-import com.github.k1rakishou.chan.features.search.SelectBoardForSearchController
-import com.github.k1rakishou.chan.features.search.SelectSiteForSearchController
-import com.github.k1rakishou.chan.features.search.epoxy.EpoxyBoardSelectionButtonView
-import com.github.k1rakishou.chan.features.search.epoxy.EpoxySearchEndOfResultsView
-import com.github.k1rakishou.chan.features.search.epoxy.EpoxySearchErrorView
-import com.github.k1rakishou.chan.features.search.epoxy.EpoxySearchPostDividerView
-import com.github.k1rakishou.chan.features.search.epoxy.EpoxySearchPostGapView
-import com.github.k1rakishou.chan.features.search.epoxy.EpoxySearchPostView
-import com.github.k1rakishou.chan.features.search.epoxy.EpoxySearchSiteView
+import com.github.k1rakishou.chan.features.report.bugs.ReportIssueController
+import com.github.k1rakishou.chan.features.report.posts.Chan4ReportPostController
+import com.github.k1rakishou.chan.features.search.posts.GlobalSearchController
+import com.github.k1rakishou.chan.features.search.posts.SearchResultsController
+import com.github.k1rakishou.chan.features.search.posts.SelectBoardForSearchController
+import com.github.k1rakishou.chan.features.search.posts.SelectSiteForSearchController
+import com.github.k1rakishou.chan.features.search.posts.epoxy.EpoxyBoardSelectionButtonView
+import com.github.k1rakishou.chan.features.search.posts.epoxy.EpoxySearchEndOfResultsView
+import com.github.k1rakishou.chan.features.search.posts.epoxy.EpoxySearchErrorView
+import com.github.k1rakishou.chan.features.search.posts.epoxy.EpoxySearchPostDividerView
+import com.github.k1rakishou.chan.features.search.posts.epoxy.EpoxySearchPostGapView
+import com.github.k1rakishou.chan.features.search.posts.epoxy.EpoxySearchPostView
+import com.github.k1rakishou.chan.features.search.posts.epoxy.EpoxySearchSiteView
+import com.github.k1rakishou.chan.features.search.remotemedia.ImageSearchController
 import com.github.k1rakishou.chan.features.settings.CookieCaptchaInputController
-import com.github.k1rakishou.chan.features.settings.MainSettingsControllerV2
+import com.github.k1rakishou.chan.features.settings.MainSettingsController
 import com.github.k1rakishou.chan.features.settings.SettingsCoordinator
 import com.github.k1rakishou.chan.features.settings.epoxy.EpoxyBooleanSetting
 import com.github.k1rakishou.chan.features.settings.epoxy.EpoxyLinkSetting
@@ -77,14 +66,25 @@ import com.github.k1rakishou.chan.features.setup.boards.composing.CompositeCatal
 import com.github.k1rakishou.chan.features.setup.epoxy.site.EpoxySiteView
 import com.github.k1rakishou.chan.features.setup.site.settings.SiteSettingsController
 import com.github.k1rakishou.chan.features.setup.site.setup.SitesSetupController
-import com.github.k1rakishou.chan.features.site_archive.BoardArchiveController
+import com.github.k1rakishou.chan.features.soundmedia.create.CreateSoundMediaController
 import com.github.k1rakishou.chan.features.themes.ThemeGalleryController
 import com.github.k1rakishou.chan.features.themes.ThemeSettingsController
 import com.github.k1rakishou.chan.features.thirdeye.AddOrEditBooruController
 import com.github.k1rakishou.chan.features.thirdeye.ThirdEyeSettingsController
-import com.github.k1rakishou.chan.features.thread_downloading.LocalArchiveController
-import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloaderSettingsController
 import com.github.k1rakishou.chan.features.toolbar.KurobaToolbarView
+import com.github.k1rakishou.chan.features.view.media.MediaViewerActivity
+import com.github.k1rakishou.chan.features.view.media.MediaViewerController
+import com.github.k1rakishou.chan.features.view.media.MediaViewerGesturesSettingsController
+import com.github.k1rakishou.chan.features.view.media.MediaViewerToolbar
+import com.github.k1rakishou.chan.features.view.media.element.AudioMediaView
+import com.github.k1rakishou.chan.features.view.media.element.ExoPlayerVideoMediaView
+import com.github.k1rakishou.chan.features.view.media.element.FullImageMediaView
+import com.github.k1rakishou.chan.features.view.media.element.GifMediaView
+import com.github.k1rakishou.chan.features.view.media.element.MpvVideoMediaView
+import com.github.k1rakishou.chan.features.view.media.element.ThumbnailMediaView
+import com.github.k1rakishou.chan.features.view.media.element.UnsupportedMediaView
+import com.github.k1rakishou.chan.features.view.media.strip.MediaViewerBottomActionStrip
+import com.github.k1rakishou.chan.features.view.media.strip.MediaViewerLeftActionStrip
 import com.github.k1rakishou.chan.features.webview.WebViewTaskController
 import com.github.k1rakishou.chan.ui.activity.CrashReportActivity
 import com.github.k1rakishou.chan.ui.activity.SharingActivity
@@ -235,7 +235,7 @@ interface ActivityComponent : ActivityDependencies {
   fun inject(proxySetupController: ProxySetupController)
   fun inject(globalSearchController: GlobalSearchController)
   fun inject(searchResultsController: SearchResultsController)
-  fun inject(mainSettingsControllerV2: MainSettingsControllerV2)
+  fun inject(mainSettingsController: MainSettingsController)
   fun inject(siteSettingsController: SiteSettingsController)
   fun inject(reportIssueController: ReportIssueController)
   fun inject(floatingListMenuController: FloatingListMenuController)

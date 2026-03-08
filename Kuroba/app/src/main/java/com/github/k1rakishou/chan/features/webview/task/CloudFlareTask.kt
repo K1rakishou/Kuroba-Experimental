@@ -4,7 +4,7 @@ import android.webkit.CookieManager
 import android.webkit.WebView
 import com.github.k1rakishou.chan.core.base.okhttp.interceptor.CloudFlareInterceptor
 import com.github.k1rakishou.chan.core.site.Site
-import com.github.k1rakishou.chan.core.site.SiteSetting
+import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
 import com.github.k1rakishou.chan.features.webview.WebViewTaskResult
 import com.github.k1rakishou.chan.features.webview.client.AbstractCookieWebViewClient
 import com.github.k1rakishou.chan.features.webview.client.AbstractWebViewClient
@@ -46,7 +46,7 @@ class CloudFlareTask(
 
   override suspend fun addCookieToSiteSettings(site: Site, cookies: String, userData: Any?) {
     val cloudFlareClearanceCookieSetting = site.getSettingBySettingId<MapSetting>(
-      SiteSetting.SiteSettingId.CloudFlareClearanceCookie
+      SiteSettingForUi.SiteSettingId.CloudFlareClearanceCookie
     )
 
     if (cloudFlareClearanceCookieSetting == null) {

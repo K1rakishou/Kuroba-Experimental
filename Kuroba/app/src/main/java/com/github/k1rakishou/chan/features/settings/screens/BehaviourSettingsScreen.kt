@@ -9,10 +9,10 @@ import com.github.k1rakishou.chan.core.manager.PostHideManager
 import com.github.k1rakishou.chan.features.settings.BehaviorScreen
 import com.github.k1rakishou.chan.features.settings.MediaScreen
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
-import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
-import com.github.k1rakishou.chan.features.settings.setting.InputSettingV2
-import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
-import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
+import com.github.k1rakishou.chan.features.settings.setting.BooleanSetting
+import com.github.k1rakishou.chan.features.settings.setting.InputSetting
+import com.github.k1rakishou.chan.features.settings.setting.LinkSetting
+import com.github.k1rakishou.chan.features.settings.setting.ListSetting
 import com.github.k1rakishou.chan.features.setup.site.setup.SitesSetupController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.controller.settings.captcha.JsCaptchaCookiesEditorController
@@ -50,7 +50,7 @@ class BehaviourSettingsScreen(
           groupIdentifier = identifier
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = BehaviorScreen.OtherSettingsGroup.FullUserRotationEnable,
           topDescriptionIdFunc = { R.string.setting_full_screen_rotation },
@@ -58,7 +58,7 @@ class BehaviourSettingsScreen(
           requiresRestart = true
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = BehaviorScreen.OtherSettingsGroup.ShowCopyApkUpdateDialog,
           topDescriptionIdFunc = { R.string.settings_show_copy_apk_dialog_title },
@@ -66,7 +66,7 @@ class BehaviourSettingsScreen(
           setting = ChanSettings.showCopyApkUpdateDialog
         )
 
-        group += ListSettingV2.createBuilder<ChanSettings.CatalogOrThreadSearchMode>(
+        group += ListSetting.createBuilder<ChanSettings.CatalogOrThreadSearchMode>(
           context = context,
           identifier = MediaScreen.MiscGroup.CatalogSearchMode,
           setting = ChanSettings.catalogSearchMode,
@@ -82,7 +82,7 @@ class BehaviourSettingsScreen(
           }
         )
 
-        group += ListSettingV2.createBuilder<ChanSettings.CatalogOrThreadSearchMode>(
+        group += ListSetting.createBuilder<ChanSettings.CatalogOrThreadSearchMode>(
           context = context,
           identifier = MediaScreen.MiscGroup.ThreadSearchMode,
           setting = ChanSettings.threadSearchMode,
@@ -114,14 +114,14 @@ class BehaviourSettingsScreen(
           groupIdentifier = identifier
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = BehaviorScreen.PostGroup.VolumeKeysScrolling,
           topDescriptionIdFunc = { R.string.setting_volume_key_scrolling },
           setting = ChanSettings.volumeKeysScrolling
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = BehaviorScreen.PostGroup.TapNoReply,
           topDescriptionIdFunc = { R.string.setting_tappable_post_title },
@@ -130,7 +130,7 @@ class BehaviourSettingsScreen(
           requiresUiRefresh = true
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = BehaviorScreen.PostGroup.PostLinksTakeWholeHorizSpace,
           topDescriptionIdFunc = { R.string.setting_post_links_take_whole_horiz_space },
@@ -139,7 +139,7 @@ class BehaviourSettingsScreen(
           requiresUiRefresh = true
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = BehaviorScreen.PostGroup.MarkUnseenPosts,
           topDescriptionIdFunc = { R.string.setting_mark_unseen_posts_title },
@@ -148,7 +148,7 @@ class BehaviourSettingsScreen(
           requiresUiRefresh = true
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = BehaviorScreen.PostGroup.MarkSeenThreads,
           topDescriptionIdFunc = { R.string.setting_mark_seen_threads_title },
@@ -173,14 +173,14 @@ class BehaviourSettingsScreen(
           groupIdentifier = identifier
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = BehaviorScreen.RepliesGroup.PostPinThread,
           topDescriptionIdFunc = { R.string.setting_post_pin },
           setting = ChanSettings.postPinThread
         )
 
-        group += InputSettingV2.createBuilder<String>(
+        group += InputSetting.createBuilder<String>(
           context = context,
           identifier = BehaviorScreen.RepliesGroup.PostDefaultName,
           topDescriptionIdFunc = { R.string.setting_post_default_name },
@@ -205,14 +205,14 @@ class BehaviourSettingsScreen(
           groupIdentifier = identifier
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = BehaviorScreen.GeneralGroup.AutoRefreshThread,
           topDescriptionIdFunc = { R.string.setting_auto_refresh_thread },
           setting = ChanSettings.autoRefreshThread
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = BehaviorScreen.GeneralGroup.ControllerSwipeable,
           topDescriptionIdFunc = { R.string.setting_controller_swipeable },
@@ -221,7 +221,7 @@ class BehaviourSettingsScreen(
           requiresRestart = true
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = BehaviorScreen.GeneralGroup.ViewThreadControllerSwipeable,
           topDescriptionIdFunc = { R.string.setting_view_thread_controller_swipeable },
@@ -230,14 +230,14 @@ class BehaviourSettingsScreen(
           requiresRestart = true
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = BehaviorScreen.GeneralGroup.OpenLinkConfirmation,
           topDescriptionIdFunc = { R.string.setting_open_link_confirmation },
           setting = ChanSettings.openLinkConfirmation
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = BehaviorScreen.GeneralGroup.CaptchaSetup,
           topDescriptionIdFunc = { R.string.setting_captcha_setup },
@@ -245,7 +245,7 @@ class BehaviourSettingsScreen(
           callback = { navigationController.pushController(SitesSetupController(context)) }
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = BehaviorScreen.GeneralGroup.JsCaptchaCookiesEditor,
           topDescriptionIdFunc = { R.string.setting_js_captcha_cookies_title },
@@ -253,7 +253,7 @@ class BehaviourSettingsScreen(
           callback = { navigationController.pushController(JsCaptchaCookiesEditorController(context)) }
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = BehaviorScreen.GeneralGroup.ClearPostHides,
           topDescriptionIdFunc = { R.string.setting_clear_post_hides },

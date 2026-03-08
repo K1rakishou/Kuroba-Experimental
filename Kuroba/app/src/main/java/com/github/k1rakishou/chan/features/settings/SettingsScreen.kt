@@ -12,11 +12,11 @@ class SettingsScreen(
     val groupBuildFunction = groupBuilder.buildFunction
 
     if (groupsMap.containsKey(groupIdentifier)) {
-      throw IllegalArgumentException("Settings screen already contains group with identifier: $groupIdentifier")
+      error("Settings screen already contains group with identifier: $groupIdentifier")
     }
 
     if (groupsBuilderMap.containsKey(groupIdentifier)) {
-      throw IllegalArgumentException("Settings screen already contains group builder with identifier: $groupIdentifier")
+      error("Settings screen already contains group builder with identifier: $groupIdentifier")
     }
 
     groupsBuilderMap[groupIdentifier] = groupBuildFunction

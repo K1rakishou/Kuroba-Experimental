@@ -21,9 +21,9 @@ import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManag
 import com.github.k1rakishou.chan.core.manager.HapticFeedbackManager
 import com.github.k1rakishou.chan.core.manager.RevealedSpoilerImagesManager
 import com.github.k1rakishou.chan.core.usecase.FilterOutHiddenImagesUseCase
-import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2
-import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2OptionsController
-import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2ServiceDelegate
+import com.github.k1rakishou.chan.features.download.media.ImageSaverV2
+import com.github.k1rakishou.chan.features.download.media.ImageSaverV2OptionsController
+import com.github.k1rakishou.chan.features.download.media.ImageSaverV2ServiceDelegate
 import com.github.k1rakishou.chan.ui.compose.image.PostImageThumbnailKey
 import com.github.k1rakishou.chan.ui.compose.snackbar.SnackbarScope
 import com.github.k1rakishou.chan.ui.compose.snackbar.manager.SnackbarManagerFactory

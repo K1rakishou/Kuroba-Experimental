@@ -3,7 +3,7 @@ package com.github.k1rakishou.chan.core.manager
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.core.helper.OneShotRunnable
 import com.github.k1rakishou.chan.core.helper.ThreadDownloaderFileManagerWrapper
-import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadingDelegate
+import com.github.k1rakishou.chan.features.download.thread.ThreadDownloadingDelegate
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.extractFileName
@@ -33,18 +33,18 @@ import kotlin.time.measureTime
 class ThreadDownloadManager(
   private val appCostants: AppConstants,
   private val appScope: CoroutineScope,
-  private val _threadDownloaderFileManagerWrapper: Lazy<ThreadDownloaderFileManagerWrapper>,
-  private val _threadDownloadRepository: Lazy<ThreadDownloadRepository>,
-  private val _chanPostRepository: Lazy<ChanPostRepository>
+  private val threadDownloaderFileManagerWrapperLazy: Lazy<ThreadDownloaderFileManagerWrapper>,
+  private val threadDownloadRepositoryLazy: Lazy<ThreadDownloadRepository>,
+  private val chanPostRepositoryLazy: Lazy<ChanPostRepository>
 ) {
   private val mutex = Mutex()
 
   private val threadDownloaderFileManagerWrapper: ThreadDownloaderFileManagerWrapper
-    get() = _threadDownloaderFileManagerWrapper.get()
+    get() = threadDownloaderFileManagerWrapperLazy.get()
   private val threadDownloadRepository: ThreadDownloadRepository
-    get() = _threadDownloadRepository.get()
+    get() = threadDownloadRepositoryLazy.get()
   private val chanPostRepository: ChanPostRepository
-    get() = _chanPostRepository.get()
+    get() = chanPostRepositoryLazy.get()
   private val fileManager: FileManager
     get() = threadDownloaderFileManagerWrapper.fileManager
 

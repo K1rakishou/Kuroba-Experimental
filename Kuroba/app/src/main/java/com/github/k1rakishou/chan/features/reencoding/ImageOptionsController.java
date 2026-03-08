@@ -16,8 +16,8 @@ import androidx.core.util.Pair;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
-import com.github.k1rakishou.chan.features.create_sound_media.CreateSoundMediaController;
-import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity;
+import com.github.k1rakishou.chan.features.soundmedia.create.CreateSoundMediaController;
+import com.github.k1rakishou.chan.features.view.media.MediaViewerActivity;
 import com.github.k1rakishou.chan.ui.controller.base.BaseFloatingController;
 import com.github.k1rakishou.chan.ui.helper.AppResources;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton;

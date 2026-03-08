@@ -3,8 +3,8 @@ package com.github.k1rakishou.chan.core.site.sites.chan4
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteBase
 import com.github.k1rakishou.chan.core.site.SiteRequestModifier
-import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.http.HttpCall
+import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4.Companion.CAPTCHA_COOKIE_KEY
 import com.github.k1rakishou.common.CookieBuilder
 import com.github.k1rakishou.common.StringUtils.formatToken
@@ -111,7 +111,7 @@ class Chan4SiteRequestModifier(
 
   private fun get4chanPassCookie(site: Site): String? {
     val rememberCaptchaCookies = site
-      .getSettingBySettingId<GsonJsonSetting<Chan4CaptchaSettings>>(SiteSetting.SiteSettingId.Chan4CaptchaSettings)
+      .getSettingBySettingId<GsonJsonSetting<Chan4CaptchaSettings>>(SiteSettingForUi.SiteSettingId.Chan4CaptchaSettings)
       ?.get()
       ?.rememberCaptchaCookies
       ?: false

@@ -32,14 +32,14 @@ import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.features.bookmarks.BookmarksController
+import com.github.k1rakishou.chan.features.download.media.ImageSaverV2
+import com.github.k1rakishou.chan.features.download.media.ImageSaverV2OptionsController
+import com.github.k1rakishou.chan.features.download.media.ResolveDuplicateImagesController
+import com.github.k1rakishou.chan.features.download.thread.LocalArchiveController
 import com.github.k1rakishou.chan.features.drawer.data.NavigationHistoryEntry
-import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2
-import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2OptionsController
-import com.github.k1rakishou.chan.features.image_saver.ResolveDuplicateImagesController
-import com.github.k1rakishou.chan.features.my_posts.SavedPostsController
-import com.github.k1rakishou.chan.features.search.GlobalSearchController
-import com.github.k1rakishou.chan.features.settings.MainSettingsControllerV2
-import com.github.k1rakishou.chan.features.thread_downloading.LocalArchiveController
+import com.github.k1rakishou.chan.features.posts.SavedPostsController
+import com.github.k1rakishou.chan.features.search.posts.GlobalSearchController
+import com.github.k1rakishou.chan.features.settings.MainSettingsController
 import com.github.k1rakishou.chan.features.toolbar.state.ToolbarStateKind
 import com.github.k1rakishou.chan.ui.compose.panel.KurobaIconPanel
 import com.github.k1rakishou.chan.ui.compose.panel.KurobaIconPanelState
@@ -460,8 +460,8 @@ class MainController(
   }
 
   fun openSettingsController() {
-    val mainSettingsControllerV2 = MainSettingsControllerV2(context)
-    mainToolbarNavigationController?.pushController(mainSettingsControllerV2)
+    val mainSettingsController = MainSettingsController(context)
+    mainToolbarNavigationController?.pushController(mainSettingsController)
   }
 
   fun getViewThreadController(): ViewThreadController? {

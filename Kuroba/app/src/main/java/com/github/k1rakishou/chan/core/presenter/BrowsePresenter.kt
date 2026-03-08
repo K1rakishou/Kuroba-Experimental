@@ -1,19 +1,3 @@
-/*
- * KurobaEx - *chan browser https://github.com/K1rakishou/Kuroba-Experimental/
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 package com.github.k1rakishou.chan.core.presenter
 
 import com.github.k1rakishou.chan.core.image.ImageLoaderDeprecated
@@ -23,7 +7,7 @@ import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.CompositeCatalogManager
 import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerOpenThreadHelper
+import com.github.k1rakishou.chan.features.view.media.helper.MediaViewerOpenThreadHelper
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -40,13 +24,13 @@ import javax.inject.Inject
 
 class BrowsePresenter @Inject constructor(
   private val appScope: CoroutineScope,
-  private val _bookmarksManager: Lazy<BookmarksManager>,
-  private val _siteManager: Lazy<SiteManager>,
-  private val _boardManager: Lazy<BoardManager>,
-  private val _compositeCatalogManager: Lazy<CompositeCatalogManager>,
-  private val _chanThreadManager: Lazy<ChanThreadManager>,
-  private val _chanPostRepository: Lazy<ChanPostRepository>,
-  private val _imageLoaderDeprecated: Lazy<ImageLoaderDeprecated>,
+  private val bookmarksManagerLazy: Lazy<BookmarksManager>,
+  private val siteManagerLazy: Lazy<SiteManager>,
+  private val boardManagerLazy: Lazy<BoardManager>,
+  private val compositeCatalogManagerLazy: Lazy<CompositeCatalogManager>,
+  private val chanThreadManagerLazy: Lazy<ChanThreadManager>,
+  private val chanPostRepositoryLazy: Lazy<ChanPostRepository>,
+  private val imageLoaderDeprecatedLazy: Lazy<ImageLoaderDeprecated>,
   private val currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager,
   private val mediaViewerOpenThreadHelper: MediaViewerOpenThreadHelper
 ) {
@@ -54,19 +38,19 @@ class BrowsePresenter @Inject constructor(
   private var currentOpenedCatalog: ChanDescriptor.ICatalogDescriptor? = null
 
   private val bookmarksManager: BookmarksManager
-    get() = _bookmarksManager.get()
+    get() = bookmarksManagerLazy.get()
   private val siteManager: SiteManager
-    get() = _siteManager.get()
+    get() = siteManagerLazy.get()
   private val boardManager: BoardManager
-    get() = _boardManager.get()
+    get() = boardManagerLazy.get()
   private val chanThreadManager: ChanThreadManager
-    get() = _chanThreadManager.get()
+    get() = chanThreadManagerLazy.get()
   private val chanPostRepository: ChanPostRepository
-    get() = _chanPostRepository.get()
+    get() = chanPostRepositoryLazy.get()
   private val imageLoaderDeprecated: ImageLoaderDeprecated
-    get() = _imageLoaderDeprecated.get()
+    get() = imageLoaderDeprecatedLazy.get()
   private val compositeCatalogManager: CompositeCatalogManager
-    get() = _compositeCatalogManager.get()
+    get() = compositeCatalogManagerLazy.get()
 
   fun create(controllerScope: CoroutineScope, callback: Callback?) {
     this.callback = callback

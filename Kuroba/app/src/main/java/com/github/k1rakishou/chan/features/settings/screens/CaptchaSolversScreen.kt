@@ -7,9 +7,9 @@ import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.usecase.TwoCaptchaCheckBalanceUseCase
 import com.github.k1rakishou.chan.features.settings.CaptchaSolversScreen
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
-import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
-import com.github.k1rakishou.chan.features.settings.setting.InputSettingV2
-import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
+import com.github.k1rakishou.chan.features.settings.setting.BooleanSetting
+import com.github.k1rakishou.chan.features.settings.setting.InputSetting
+import com.github.k1rakishou.chan.features.settings.setting.LinkSetting
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
@@ -43,14 +43,14 @@ class CaptchaSolversScreen(
           groupIdentifier = identifier
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = CaptchaSolversScreen.TwoCaptchaSettingsGroup.TwoCaptchaSolverEnabled,
           topDescriptionIdFunc = { R.string.two_captcha_solver_group },
           setting = ChanSettings.twoCaptchaSolverEnabled
         )
 
-        group += InputSettingV2.createBuilder<String>(
+        group += InputSetting.createBuilder<String>(
           context = context,
           identifier = CaptchaSolversScreen.TwoCaptchaSettingsGroup.TwoCaptchaSolverUrl,
           topDescriptionIdFunc = { R.string.two_captcha_solver_url },
@@ -62,7 +62,7 @@ class CaptchaSolversScreen(
           inputType = DialogFactory.DialogInputType.String
         )
 
-        group += InputSettingV2.createBuilder<String>(
+        group += InputSetting.createBuilder<String>(
           context = context,
           identifier = CaptchaSolversScreen.TwoCaptchaSettingsGroup.TwoCaptchaSolverApiKey,
           topDescriptionIdFunc = { R.string.two_captcha_solver_api_key },
@@ -76,7 +76,7 @@ class CaptchaSolversScreen(
           inputType = DialogFactory.DialogInputType.String
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = CaptchaSolversScreen.TwoCaptchaSettingsGroup.TwoCaptchaSolverValidate,
           topDescriptionIdFunc = { R.string.two_captcha_solver_validate },

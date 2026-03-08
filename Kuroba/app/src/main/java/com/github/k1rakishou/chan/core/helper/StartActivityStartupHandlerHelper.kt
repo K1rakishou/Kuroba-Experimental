@@ -19,8 +19,8 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteConfiguration
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.core.site.sites.CompositeCatalogSite
+import com.github.k1rakishou.chan.features.download.media.ImageSaverV2Service
 import com.github.k1rakishou.chan.features.drawer.MainController
-import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2Service
 import com.github.k1rakishou.chan.ui.activity.ChanState
 import com.github.k1rakishou.chan.ui.activity.StartActivity
 import com.github.k1rakishou.chan.ui.controller.BrowseController

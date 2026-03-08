@@ -1,5 +1,3 @@
-@file:Suppress("RemoveRedundantQualifierName")
-
 package com.github.k1rakishou.chan.features.settings
 
 import java.util.Locale

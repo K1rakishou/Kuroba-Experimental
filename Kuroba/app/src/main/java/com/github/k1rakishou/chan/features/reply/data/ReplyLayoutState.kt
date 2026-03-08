@@ -26,8 +26,8 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.repository.BoardFlagInfoRepository
 import com.github.k1rakishou.chan.core.site.PostFormatterButton
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
-import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
+import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
 import com.github.k1rakishou.chan.core.usecase.ClearPostingCookies
 import com.github.k1rakishou.chan.core.usecase.LoadBoardFlagsUseCase
 import com.github.k1rakishou.chan.features.posting.PostResult
@@ -263,7 +263,7 @@ class ReplyLayoutState(
 
     compositeJob += coroutineScope.launch {
       val replyModeSetting = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
-        ?.getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
+        ?.getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSettingForUi.SiteSettingId.LastUsedReplyMode)
 
       if (replyModeSetting == null) {
         return@launch
@@ -1036,7 +1036,7 @@ class ReplyLayoutState(
       ?: return
 
     val replyMode = site
-      .getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)?.get()
+      .getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSettingForUi.SiteSettingId.LastUsedReplyMode)?.get()
       ?: return
 
     val siteDoesNotRequireAuthentication = site.actions.postAuthenticate().type == SiteAuthentication.Type.NONE

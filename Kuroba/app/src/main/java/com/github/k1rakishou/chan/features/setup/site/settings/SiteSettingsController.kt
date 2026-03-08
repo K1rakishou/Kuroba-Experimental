@@ -12,13 +12,13 @@ import com.github.k1rakishou.chan.features.settings.SettingsGroup
 import com.github.k1rakishou.chan.features.settings.epoxy.epoxyBooleanSetting
 import com.github.k1rakishou.chan.features.settings.epoxy.epoxyLinkSetting
 import com.github.k1rakishou.chan.features.settings.epoxy.epoxySettingsGroupTitle
-import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
-import com.github.k1rakishou.chan.features.settings.setting.CookieSettingV2
-import com.github.k1rakishou.chan.features.settings.setting.InputSettingV2
-import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
-import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
-import com.github.k1rakishou.chan.features.settings.setting.MapSettingV2
-import com.github.k1rakishou.chan.features.settings.setting.SettingV2
+import com.github.k1rakishou.chan.features.settings.setting.BooleanSetting
+import com.github.k1rakishou.chan.features.settings.setting.CookieSetting
+import com.github.k1rakishou.chan.features.settings.setting.InputSetting
+import com.github.k1rakishou.chan.features.settings.setting.LinkSetting
+import com.github.k1rakishou.chan.features.settings.setting.ListSetting
+import com.github.k1rakishou.chan.features.settings.setting.MapSetting
+import com.github.k1rakishou.chan.features.settings.setting.SettingUiElement
 import com.github.k1rakishou.chan.features.toolbar.BackArrowMenuItem
 import com.github.k1rakishou.chan.features.toolbar.ToolbarMiddleContent
 import com.github.k1rakishou.chan.features.toolbar.ToolbarText
@@ -131,37 +131,37 @@ class SiteSettingsController(
   }
 
   private fun EpoxyController.renderSettingInternal(
-    settingV2: SettingV2,
+    setting: SettingUiElement,
     settingsGroup: SettingsGroup,
     groupSettingIndex: Int,
     globalSettingIndex: Int
   ) {
-    when (settingV2) {
-      is LinkSettingV2 -> {
+    when (setting) {
+      is LinkSetting -> {
         epoxyLinkSetting {
-          id("epoxy_link_setting_${settingV2.settingsIdentifier.getIdentifier()}")
-          topDescription(settingV2.topDescription)
-          bottomDescription(settingV2.bottomDescription)
+          id("epoxy_link_setting_${setting.settingsIdentifier.getIdentifier()}")
+          topDescription(setting.topDescription)
+          bottomDescription(setting.bottomDescription)
           settingEnabled(true)
           bindNotificationIcon(SettingNotificationType.Default)
 
           clickListener {
-            controllerScope.launch { settingV2.callback.invoke() }
+            controllerScope.launch { setting.callback.invoke() }
           }
         }
       }
-      is ListSettingV2<*> -> {
+      is ListSetting<*> -> {
         epoxyLinkSetting {
-          id("epoxy_list_setting_${settingV2.settingsIdentifier.getIdentifier()}")
-          topDescription(settingV2.topDescription)
-          bottomDescription(settingV2.bottomDescription)
+          id("epoxy_list_setting_${setting.settingsIdentifier.getIdentifier()}")
+          topDescription(setting.topDescription)
+          bottomDescription(setting.bottomDescription)
           bindNotificationIcon(SettingNotificationType.Default)
           settingEnabled(true)
 
           clickListener {
-            val prev = settingV2.getValue()
+            val prev = setting.getValue()
 
-            showListDialog(settingV2) { curr ->
+            showListDialog(setting) { curr ->
               if (prev == curr) {
                 return@showListDialog
               }
@@ -171,19 +171,19 @@ class SiteSettingsController(
           }
         }
       }
-      is MapSettingV2 -> {
+      is MapSetting -> {
         epoxyLinkSetting {
-          id("epoxy_map_entry_setting_${settingV2.settingsIdentifier.getIdentifier()}")
-          topDescription(settingV2.topDescription)
-          bottomDescription(settingV2.bottomDescription)
+          id("epoxy_map_entry_setting_${setting.settingsIdentifier.getIdentifier()}")
+          topDescription(setting.topDescription)
+          bottomDescription(setting.bottomDescription)
           bindNotificationIcon(SettingNotificationType.Default)
           settingEnabled(true)
 
           clickListener { view ->
-            val prev = settingV2.getCurrent()
+            val prev = setting.getCurrent()
 
             showInputDialog(
-              mapSettingV2 = settingV2,
+              mapSetting = setting,
               rebuildScreenFunc = { curr ->
                 if (prev == curr) {
                   return@showInputDialog
@@ -196,18 +196,18 @@ class SiteSettingsController(
           }
         }
       }
-      is InputSettingV2<*> -> {
+      is InputSetting<*> -> {
         epoxyLinkSetting {
-          id("epoxy_string_setting_${settingV2.settingsIdentifier.getIdentifier()}")
-          topDescription(settingV2.topDescription)
-          bottomDescription(settingV2.bottomDescription)
+          id("epoxy_string_setting_${setting.settingsIdentifier.getIdentifier()}")
+          topDescription(setting.topDescription)
+          bottomDescription(setting.bottomDescription)
           bindNotificationIcon(SettingNotificationType.Default)
           settingEnabled(true)
 
           clickListener { view ->
-            val prev = settingV2.getCurrent()
+            val prev = setting.getCurrent()
 
-            showInputDialog(settingV2) { curr ->
+            showInputDialog(setting) { curr ->
               if (prev == curr) {
                 return@showInputDialog
               }
@@ -217,18 +217,18 @@ class SiteSettingsController(
           }
         }
       }
-      is BooleanSettingV2 -> {
+      is BooleanSetting -> {
         epoxyBooleanSetting {
-          id("epoxy_boolean_setting_${settingV2.settingsIdentifier.getIdentifier()}")
-          topDescription(settingV2.topDescription)
-          bottomDescription(settingV2.bottomDescription)
-          checked(settingV2.isChecked)
+          id("epoxy_boolean_setting_${setting.settingsIdentifier.getIdentifier()}")
+          topDescription(setting.topDescription)
+          bottomDescription(setting.bottomDescription)
+          checked(setting.isChecked)
           bindNotificationIcon(SettingNotificationType.Default)
           settingEnabled(true)
 
           clickListener {
-            val prev = settingV2.isChecked
-            val curr = settingV2.callback?.invoke()
+            val prev = setting.isChecked
+            val curr = setting.callback?.invoke()
 
             if (prev != curr) {
               rebuildSettings()
@@ -236,20 +236,20 @@ class SiteSettingsController(
           }
         }
       }
-      is CookieSettingV2 -> {
+      is CookieSetting -> {
         epoxyLinkSetting {
-          id("epoxy_cookie_setting_${settingV2.settingsIdentifier.getIdentifier()}")
-          topDescription(settingV2.topDescription)
-          bottomDescription(settingV2.bottomDescription)
+          id("epoxy_cookie_setting_${setting.settingsIdentifier.getIdentifier()}")
+          topDescription(setting.topDescription)
+          bottomDescription(setting.bottomDescription)
           bindNotificationIcon(SettingNotificationType.Default)
 
-          if (settingV2.isEnabled()) {
+          if (setting.isEnabled()) {
             settingEnabled(true)
 
             clickListener {
-              val prev = settingV2.getCurrent()?.value
+              val prev = setting.getCurrent()?.value
 
-              showInputDialog(settingV2) { curr ->
+              showInputDialog(setting) { curr ->
                 if (prev == curr) {
                   return@showInputDialog
                 }

@@ -2,8 +2,8 @@ package com.github.k1rakishou.chan.core.usecase
 
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.loader.ClientException
+import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4CaptchaSettings
 import com.github.k1rakishou.chan.ui.captcha.chan4.Chan4CaptchaLayoutViewModel
@@ -150,8 +150,9 @@ class LoadChan4CaptchaUseCase(
     chanDescriptor: ChanDescriptor,
     captchaResult: CaptchaResult
   ) {
-    val chan4CaptchaSettingsSetting = siteManager.bySiteDescriptorAndActive(Chan4.SITE_DESCRIPTOR)
-      ?.getSettingBySettingId<GsonJsonSetting<Chan4CaptchaSettings>>(SiteSetting.SiteSettingId.Chan4CaptchaSettings)
+    val chan4CaptchaSettingsSetting: GsonJsonSetting<Chan4CaptchaSettings> =
+      siteManager.bySiteDescriptorAndActive(Chan4.SITE_DESCRIPTOR)
+      ?.getSettingBySettingId(SiteSettingForUi.SiteSettingId.Chan4CaptchaSettings)
       ?: return
 
     if (captchaResult.captchaInfoRaw.ticketNeedsToBeRemoved) {

@@ -7,8 +7,8 @@ import com.github.k1rakishou.chan.core.helper.ProxyStorage
 import com.github.k1rakishou.chan.features.proxies.ProxySetupController
 import com.github.k1rakishou.chan.features.settings.SecurityScreen
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
-import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
-import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
+import com.github.k1rakishou.chan.features.settings.setting.BooleanSetting
+import com.github.k1rakishou.chan.features.settings.setting.LinkSetting
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 
@@ -37,7 +37,7 @@ class SecuritySettingsScreen(
           groupIdentifier = identifier
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = SecurityScreen.MainSettingsGroup.Proxy,
           topDescriptionIdFunc = { R.string.settings_screen_security_proxy },
@@ -48,7 +48,7 @@ class SecuritySettingsScreen(
           callback = { navigationController.pushController(ProxySetupController(context)) }
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = SecurityScreen.MainSettingsGroup.ForceHttpsScheme,
           topDescriptionIdFunc = { R.string.settings_screen_security_force_https_urls },

@@ -14,8 +14,8 @@ import com.github.k1rakishou.chan.core.usecase.ExportBackupFileUseCase
 import com.github.k1rakishou.chan.core.usecase.ImportBackupFileUseCase
 import com.github.k1rakishou.chan.core.usecase.KurobaSettingsImportUseCase
 import com.github.k1rakishou.chan.core.usecase.LoadBoardFlagsUseCase
-import com.github.k1rakishou.chan.features.media_viewer.helper.ChanPostBackgroundColorStorage
 import com.github.k1rakishou.chan.features.posting.LastReplyRepository
+import com.github.k1rakishou.chan.features.view.media.helper.ChanPostBackgroundColorStorage
 import com.github.k1rakishou.core_logger.Logger.deps
 import com.github.k1rakishou.fsaf.FileManager
 import com.google.gson.Gson

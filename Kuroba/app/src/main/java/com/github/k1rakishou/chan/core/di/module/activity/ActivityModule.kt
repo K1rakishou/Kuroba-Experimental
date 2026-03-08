@@ -23,7 +23,7 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.ThreadFollowHistoryManager
 import com.github.k1rakishou.chan.core.manager.UpdateManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
-import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2
+import com.github.k1rakishou.chan.features.download.media.ImageSaverV2
 import com.github.k1rakishou.chan.features.reply.data.PostFormattingButtonsFactory
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper
 import com.github.k1rakishou.core_logger.Logger

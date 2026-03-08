@@ -16,8 +16,8 @@ import com.github.k1rakishou.chan.core.manager.CurrentFocusedController
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter
+import com.github.k1rakishou.chan.features.download.thread.ThreadDownloaderSettingsController
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
-import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloaderSettingsController
 import com.github.k1rakishou.chan.features.toolbar.BackArrowMenuItem
 import com.github.k1rakishou.chan.features.toolbar.KurobaToolbarState
 import com.github.k1rakishou.chan.features.toolbar.ToolbarMenuItem

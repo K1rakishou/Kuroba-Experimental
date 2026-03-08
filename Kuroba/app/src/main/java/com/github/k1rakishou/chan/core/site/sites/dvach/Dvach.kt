@@ -7,8 +7,6 @@ import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.core.site.SiteConfiguration
 import com.github.k1rakishou.chan.core.site.SiteEndpoints
-import com.github.k1rakishou.chan.core.site.SiteSetting
-import com.github.k1rakishou.chan.core.site.SiteSetting.SiteOptionsSetting
 import com.github.k1rakishou.chan.core.site.SiteUrlHandler
 import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.limitations.PasscodeDependantAttachablesCount
@@ -16,6 +14,9 @@ import com.github.k1rakishou.chan.core.site.limitations.PasscodeDependantMaxAtta
 import com.github.k1rakishou.chan.core.site.limitations.PostingLimitationConfig
 import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.core.site.parser.SiteApi
+import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
+import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi.SiteOptionsSetting
+import com.github.k1rakishou.chan.core.site.settings.SiteSettingsForUi
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.prefs.GsonJsonSetting
 import com.github.k1rakishou.prefs.OptionsSetting
@@ -101,20 +102,28 @@ class Dvach : CommonSite(
   override val requestModifier by lazy { DvachSiteRequestModifier(this) }
   override val api: SiteApi by lazy { DvachApi(moshi, siteManager, boardManager, this) }
   override val actions: SiteActions by lazy { DvachActions(this) }
-  override val settings: List<SiteSetting> by lazy {
-    val settings = ArrayList<SiteSetting>()
+  override val settingsForUi by lazy {
+    val settings = SiteSettingsForUi(super.settingsForUi)
 
-    settings.addAll(super.settings)
-
-    settings.add(SiteOptionsSetting(
+    settings += SiteOptionsSetting(
       settingName = "Captcha type",
       settingDescription = null,
       groupId = "captcha_type",
       options = captchaType,
       optionNames = mutableListOf("Javascript", "Noscript", "Invisible")
-    ))
-    settings.add(SiteSetting.SiteStringSetting("User code cookie", null, userCodeCookie))
-    settings.add(SiteSetting.SiteStringSetting("Anti-spam cookie", null, antiSpamCookie))
+    )
+
+    settings += SiteSettingForUi.SiteStringSetting(
+      settingName = "User code cookie",
+      settingDescription = null,
+      setting = userCodeCookie
+    )
+
+    settings += SiteSettingForUi.SiteStringSetting(
+      settingName = "Anti-spam cookie",
+      settingDescription = null,
+      setting = antiSpamCookie
+    )
 
     return@lazy settings
   }
@@ -143,11 +152,11 @@ class Dvach : CommonSite(
     )
   }
 
-  override fun <T : Setting<*>> getSettingBySettingId(settingId: SiteSetting.SiteSettingId): T? {
+  override fun <T : Setting<*>> getSettingBySettingId(settingId: SiteSettingForUi.SiteSettingId): T? {
     return when (settingId) {
       // Used for hidden boards accessing
-      SiteSetting.SiteSettingId.DvachUserCodeCookie -> userCodeCookie as T
-      SiteSetting.SiteSettingId.DvachAntiSpamCookie -> antiSpamCookie as T
+      SiteSettingForUi.SiteSettingId.DvachUserCodeCookie -> userCodeCookie as T
+      SiteSettingForUi.SiteSettingId.DvachAntiSpamCookie -> antiSpamCookie as T
       else -> super.getSettingBySettingId(settingId)
     }
   }

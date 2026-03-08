@@ -13,10 +13,10 @@ import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteActions
-import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
 import com.github.k1rakishou.chan.core.site.loader.ClientException
 import com.github.k1rakishou.chan.core.site.loader.UnknownClientException
+import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
 import com.github.k1rakishou.chan.features.posting.solvers.two_captcha.TwoCaptchaResult
 import com.github.k1rakishou.chan.features.posting.solvers.two_captcha.TwoCaptchaSolver
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder
@@ -174,18 +174,15 @@ class PostingServiceDelegate(
       }
 
       val replyMode = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
-        ?.getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
+        ?.getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSettingForUi.SiteSettingId.LastUsedReplyMode)
         ?.get()
         ?: ReplyMode.ReplyModeSolveCaptchaManually
 
-      activeReplyDescriptors.put(
-        chanDescriptor,
-        ReplyInfo(
-          chanDescriptor = chanDescriptor,
-          initialStatus = PostingStatus.Attached(chanDescriptor),
-          initialReplyMode = replyMode,
-          retrying = false
-        )
+      activeReplyDescriptors[chanDescriptor] = ReplyInfo(
+        chanDescriptor = chanDescriptor,
+        initialStatus = PostingStatus.Attached(chanDescriptor),
+        initialReplyMode = replyMode,
+        retrying = false
       )
 
       return@withReentrantLock activeReplyDescriptors[chanDescriptor]!!.statusUpdates
@@ -840,7 +837,7 @@ class PostingServiceDelegate(
     responsePostDescriptor: PostDescriptor
   ): Boolean {
     val check4chanPostAcknowledged = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
-      ?.getSettingBySettingId<BooleanSetting>(SiteSetting.SiteSettingId.Check4chanPostAcknowledged)
+      ?.getSettingBySettingId<BooleanSetting>(SiteSettingForUi.SiteSettingId.Check4chanPostAcknowledged)
       ?.get()
 
     if (check4chanPostAcknowledged == null || !check4chanPostAcknowledged) {

@@ -35,7 +35,7 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
-import com.github.k1rakishou.chan.features.media_viewer.MediaViewerControllerViewModel
+import com.github.k1rakishou.chan.features.view.media.MediaViewerControllerViewModel
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.data.ChanDescriptorUi
 import com.github.k1rakishou.chan.ui.compose.image.ImageLoaderRequest

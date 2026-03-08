@@ -11,11 +11,11 @@ import com.github.k1rakishou.chan.core.manager.PostingLimitationsInfoManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteActions
-import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginResponse
 import com.github.k1rakishou.chan.core.site.http.login.Chan4LoginRequest
 import com.github.k1rakishou.chan.core.site.http.login.DvachLoginRequest
+import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
 import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
 import com.github.k1rakishou.chan.features.toolbar.BackArrowMenuItem
@@ -300,7 +300,7 @@ class LoginController(
 
   private fun resetReplyLayoutMode() {
     site
-      .getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
+      .getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSettingForUi.SiteSettingId.LastUsedReplyMode)
       ?.set(ReplyMode.Unknown)
   }
 

@@ -5,6 +5,9 @@ import com.github.k1rakishou.chan.core.site.SiteConfiguration.CatalogFeature
 import com.github.k1rakishou.chan.core.site.SiteConfiguration.SiteFeature
 import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.core.site.parser.SiteApi
+import com.github.k1rakishou.chan.core.site.settings.SiteBaseSettings
+import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
+import com.github.k1rakishou.chan.core.site.settings.SiteSettingsForUi
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 
 interface Site {
@@ -18,7 +21,8 @@ interface Site {
   val actions: SiteActions
   val configuration: SiteConfiguration
   val postParser: PostParser?
-  val settings: List<SiteSetting>
+  val settings: SiteBaseSettings
+  val settingsForUi: SiteSettingsForUi
   val dependencies: SiteDependencies
 
   suspend fun initialize()
@@ -26,5 +30,5 @@ interface Site {
   fun hasSiteFeature(siteFeature: SiteFeature): Boolean
   fun hasCatalogFeature(catalogFeature: CatalogFeature): Boolean = false
 
-  fun <T : Setting<*>> getSettingBySettingId(settingId: SiteSetting.SiteSettingId): T?
+  fun <T : Setting<*>> getSettingBySettingId(settingId: SiteSettingForUi.SiteSettingId): T?
 }

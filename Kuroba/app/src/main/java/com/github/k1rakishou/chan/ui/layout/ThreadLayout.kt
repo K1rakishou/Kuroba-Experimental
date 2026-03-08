@@ -30,9 +30,9 @@ import com.github.k1rakishou.chan.core.presenter.ThreadPresenter
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter.ThreadPresenterCallback
 import com.github.k1rakishou.chan.core.site.SiteConfiguration
 import com.github.k1rakishou.chan.core.site.loader.ChanLoaderException
-import com.github.k1rakishou.chan.features.create_sound_media.CreateSoundMediaController
 import com.github.k1rakishou.chan.features.reencoding.ImageOptionsHelper
 import com.github.k1rakishou.chan.features.reencoding.ImageOptionsHelper.ImageReencodingHelperCallback
+import com.github.k1rakishou.chan.features.soundmedia.create.CreateSoundMediaController
 import com.github.k1rakishou.chan.features.toolbar.KurobaToolbarState
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.cell.PostCellData

@@ -11,8 +11,8 @@ import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
 import com.github.k1rakishou.chan.core.watcher.BookmarkForegroundWatcher
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
 import com.github.k1rakishou.chan.features.settings.WatcherScreen
-import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
-import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
+import com.github.k1rakishou.chan.features.settings.setting.BooleanSetting
+import com.github.k1rakishou.chan.features.settings.setting.ListSetting
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.PhoneWithBackgroundLimitationsHelper
@@ -51,7 +51,7 @@ class WatcherSettingsScreen(
           groupIdentifier = identifier
         )
 
-        group += ListSettingV2.createBuilder<Int>(
+        group += ListSetting.createBuilder<Int>(
           context = context,
           identifier = WatcherScreen.ThreadDownloaderGroup.ThreadDownloaderUpdateInterval,
           topDescriptionIdFunc = { R.string.setting_thread_downloader_update_interval },
@@ -85,7 +85,7 @@ class WatcherSettingsScreen(
           setting = ChanSettings.threadDownloaderUpdateInterval
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = WatcherScreen.ThreadDownloaderGroup.ThreadDownloaderDownloadMediaOnMeteredNetwork,
           topDescriptionIdFunc = { R.string.setting_thread_downloader_media_metered_network },
@@ -109,7 +109,7 @@ class WatcherSettingsScreen(
           groupIdentifier = identifier
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = WatcherScreen.FilterWatcherGroup.EnableFilterWatcher,
           topDescriptionIdFunc = { R.string.setting_watch_enable_filter_watcher },
@@ -117,7 +117,7 @@ class WatcherSettingsScreen(
           setting = ChanSettings.filterWatchEnabled
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = WatcherScreen.FilterWatcherGroup.FilterWatcherUseFilterPatternForGroup,
           topDescriptionIdFunc = { R.string.setting_watch_filter_watcher_use_filter_pattern_for_group },
@@ -126,7 +126,7 @@ class WatcherSettingsScreen(
           dependsOnSetting = ChanSettings.filterWatchEnabled
         )
 
-        group += ListSettingV2.createBuilder<Int>(
+        group += ListSetting.createBuilder<Int>(
           context = context,
           identifier = WatcherScreen.FilterWatcherGroup.FilterWatcherUpdateInterval,
           topDescriptionIdFunc = { R.string.setting_filter_watcher_update_interval },
@@ -177,7 +177,7 @@ class WatcherSettingsScreen(
           groupIdentifier = identifier
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = WatcherScreen.ThreadWatcherGroup.EnableThreadWatcher,
           topDescriptionIdFunc = { R.string.setting_watch_enable_thread_watcher },
@@ -185,7 +185,7 @@ class WatcherSettingsScreen(
           setting = ChanSettings.watchEnabled
         )
 
-        group += ListSettingV2.createBuilder<Int>(
+        group += ListSetting.createBuilder<Int>(
           context = context,
           identifier = WatcherScreen.ThreadWatcherGroup.ThreadWatcherForegroundUpdateInterval,
           topDescriptionIdFunc = { R.string.setting_watch_foreground_timeout },
@@ -204,7 +204,7 @@ class WatcherSettingsScreen(
           dependsOnSetting = ChanSettings.watchEnabled
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = WatcherScreen.ThreadWatcherGroup.AdaptiveForegroundWatcherInterval,
           topDescriptionIdFunc = { R.string.setting_watch_foreground_adaptive_timer },
@@ -221,7 +221,7 @@ class WatcherSettingsScreen(
           dependsOnSetting = ChanSettings.watchEnabled
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = WatcherScreen.ThreadWatcherGroup.EnableBackgroundThreadWatcher,
           topDescriptionIdFunc = { R.string.setting_watch_enable_background },
@@ -235,7 +235,7 @@ class WatcherSettingsScreen(
           dependsOnSetting = ChanSettings.watchEnabled
         )
 
-        group += ListSettingV2.createBuilder<Int>(
+        group += ListSetting.createBuilder<Int>(
           context = context,
           identifier = WatcherScreen.ThreadWatcherGroup.ThreadWatcherBackgroundUpdateInterval,
           topDescriptionIdFunc = { R.string.setting_watch_background_timeout },
@@ -289,7 +289,7 @@ class WatcherSettingsScreen(
           dependsOnSetting = ChanSettings.watchBackground
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = WatcherScreen.ThreadWatcherGroup.ReplyNotifications,
           topDescriptionIdFunc = { R.string.setting_reply_notifications },
@@ -298,7 +298,7 @@ class WatcherSettingsScreen(
           dependsOnSetting = ChanSettings.watchEnabled
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = WatcherScreen.ThreadWatcherGroup.UseSoundForReplyNotifications,
           topDescriptionIdFunc = { R.string.setting_reply_notifications_use_sound },
@@ -306,7 +306,7 @@ class WatcherSettingsScreen(
           dependsOnSetting = ChanSettings.replyNotifications
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = WatcherScreen.ThreadWatcherGroup.WatchLastPageNotify,
           topDescriptionIdFunc = { R.string.setting_thread_page_limit_notify },
@@ -315,7 +315,7 @@ class WatcherSettingsScreen(
           dependsOnSetting = ChanSettings.watchBackground
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = WatcherScreen.ThreadWatcherGroup.UseSoundForLastPageNotifications,
           topDescriptionIdFunc = { R.string.setting_thread_page_limit_notify_use_sound },

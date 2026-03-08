@@ -7,11 +7,11 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.repository.BoardFlagInfoRepository
 import com.github.k1rakishou.chan.core.site.Site
-import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.common.CommonReplyHttpCall
 import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody
 import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody.ProgressRequestListener
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
+import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
 import com.github.k1rakishou.chan.features.posting.LastReplyRepository
 import com.github.k1rakishou.chan.features.reply.data.ReplyFile
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileMeta
@@ -410,7 +410,7 @@ class Chan4ReplyCall(
     val domainOrHost = requestUrl.domainOrHost()
 
     val cloudflareCookie = site
-      .getSettingBySettingId<MapSetting>(SiteSetting.SiteSettingId.CloudFlareClearanceCookie)
+      .getSettingBySettingId<MapSetting>(SiteSettingForUi.SiteSettingId.CloudFlareClearanceCookie)
       ?.get(domainOrHost)
 
     return buildString {

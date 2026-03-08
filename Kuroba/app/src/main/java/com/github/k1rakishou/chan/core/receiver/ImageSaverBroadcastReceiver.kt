@@ -6,9 +6,9 @@ import android.content.Intent
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.concurrency.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.concurrency.SerializedCoroutineExecutor
-import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2
-import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2Service
-import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2ServiceDelegate
+import com.github.k1rakishou.chan.features.download.media.ImageSaverV2
+import com.github.k1rakishou.chan.features.download.media.ImageSaverV2Service
+import com.github.k1rakishou.chan.features.download.media.ImageSaverV2ServiceDelegate
 import com.github.k1rakishou.core_logger.Logger
 import dagger.Lazy
 import javax.inject.Inject

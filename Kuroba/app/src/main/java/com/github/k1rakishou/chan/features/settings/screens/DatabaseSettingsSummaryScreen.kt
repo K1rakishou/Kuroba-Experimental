@@ -4,13 +4,13 @@ import android.content.Context
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.features.settings.DatabaseSummaryScreen
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
-import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
+import com.github.k1rakishou.chan.features.settings.setting.LinkSetting
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.repository.MediaServiceLinkExtraContentRepository
 import com.github.k1rakishou.model.repository.SeenPostRepository
-import java.util.*
+import java.util.Locale
 
 class DatabaseSettingsSummaryScreen(
   context: Context,
@@ -40,7 +40,7 @@ class DatabaseSettingsSummaryScreen(
           groupIdentifier = identifier
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = DatabaseSummaryScreen.MainGroup.ClearLinkExtraInfoTable,
           topDescriptionIdFunc = { R.string.settings_clear_link_info_table },
@@ -55,7 +55,7 @@ class DatabaseSettingsSummaryScreen(
           }
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = DatabaseSummaryScreen.MainGroup.ClearSeenPostsTable,
           topDescriptionIdFunc = { R.string.settings_clear_seen_posts_table },
@@ -70,7 +70,7 @@ class DatabaseSettingsSummaryScreen(
           }
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = DatabaseSummaryScreen.MainGroup.ThreadsTable,
           topDescriptionIdFunc = { R.string.settings_trigger_thread_cleanup },
@@ -91,7 +91,7 @@ class DatabaseSettingsSummaryScreen(
           }
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = DatabaseSummaryScreen.MainGroup.PostsTable,
           topDescriptionIdFunc = { R.string.settings_trigger_post_cleanup },

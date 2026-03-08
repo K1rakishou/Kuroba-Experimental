@@ -7,10 +7,10 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.features.reordering.SimpleListItemsReorderingController
 import com.github.k1rakishou.chan.features.settings.AppearanceScreen
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
-import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
-import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
-import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
-import com.github.k1rakishou.chan.features.settings.setting.RangeSettingV2
+import com.github.k1rakishou.chan.features.settings.setting.BooleanSetting
+import com.github.k1rakishou.chan.features.settings.setting.LinkSetting
+import com.github.k1rakishou.chan.features.settings.setting.ListSetting
+import com.github.k1rakishou.chan.features.settings.setting.RangeSetting
 import com.github.k1rakishou.chan.features.themes.ThemeSettingsController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
@@ -50,7 +50,7 @@ class AppearanceSettingsScreen(
           groupIdentifier = identifier
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = AppearanceScreen.ImagesGroup.HideImages,
           topDescriptionIdFunc = { R.string.setting_hide_images },
@@ -59,7 +59,7 @@ class AppearanceSettingsScreen(
           requiresUiRefresh = true
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = AppearanceScreen.ImagesGroup.RemoveImageSpoilers,
           topDescriptionIdFunc = { R.string.settings_remove_image_spoilers },
@@ -84,7 +84,7 @@ class AppearanceSettingsScreen(
           groupIdentifier = identifier
         )
 
-        group += ListSettingV2.createBuilder<String>(
+        group += ListSetting.createBuilder<String>(
           context = context,
           identifier = AppearanceScreen.PostGroup.FontSize,
           topDescriptionIdFunc = { R.string.setting_font_size },
@@ -101,7 +101,7 @@ class AppearanceSettingsScreen(
           requiresUiRefresh = true
         )
 
-        group += RangeSettingV2.createBuilder(
+        group += RangeSetting.createBuilder(
           context = context,
           identifier = AppearanceScreen.PostGroup.PostCellThumbnailSizePercent,
           topDescriptionIdFunc = { R.string.setting_post_cell_thumbnail_size },
@@ -110,7 +110,7 @@ class AppearanceSettingsScreen(
           setting = ChanSettings.postCellThumbnailSizePercents
         )
 
-        group += ListSettingV2.createBuilder<ChanSettings.PostThumbnailScaling>(
+        group += ListSetting.createBuilder<ChanSettings.PostThumbnailScaling>(
           context = context,
           identifier = AppearanceScreen.PostGroup.PostThumbnailScaling,
           topDescriptionIdFunc = { R.string.setting_post_thumbnail_scaling },
@@ -119,15 +119,19 @@ class AppearanceSettingsScreen(
           groupId = "post_thumbnail_scaling",
           itemNameMapper = { postThumbnailScaling ->
             when (postThumbnailScaling) {
-              ChanSettings.PostThumbnailScaling.FitCenter -> getString(R.string.setting_post_thumbnail_scaling_fit_center)
-              ChanSettings.PostThumbnailScaling.CenterCrop -> getString(R.string.setting_post_thumbnail_scaling_center_crop)
+              ChanSettings.PostThumbnailScaling.FitCenter -> {
+                getString(R.string.setting_post_thumbnail_scaling_fit_center)
+              }
+              ChanSettings.PostThumbnailScaling.CenterCrop -> {
+                getString(R.string.setting_post_thumbnail_scaling_center_crop)
+              }
             }
           },
           requiresUiRefresh = true,
           setting = ChanSettings.postThumbnailScaling
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = AppearanceScreen.PostGroup.DrawPostThumbnailBackground,
           topDescriptionIdFunc = { R.string.setting_post_draw_post_thumbnail_background },
@@ -135,7 +139,7 @@ class AppearanceSettingsScreen(
           requiresUiRefresh = true
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = AppearanceScreen.PostGroup.PostFullDate,
           topDescriptionIdFunc = { R.string.setting_post_full_date },
@@ -143,7 +147,7 @@ class AppearanceSettingsScreen(
           requiresUiRefresh = true
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = AppearanceScreen.PostGroup.PostFullDateUseLocalLocale,
           topDescriptionIdFunc = { R.string.setting_post_full_date_local_locale },
@@ -152,7 +156,7 @@ class AppearanceSettingsScreen(
           requiresUiRefresh = true
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = AppearanceScreen.PostGroup.PostFileInfo,
           topDescriptionIdFunc = { R.string.setting_post_file_info },
@@ -160,7 +164,7 @@ class AppearanceSettingsScreen(
           requiresUiRefresh = true
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = AppearanceScreen.PostGroup.ShiftPostComment,
           topDescriptionIdFunc = { R.string.setting_post_shift_post_comment },
@@ -169,7 +173,7 @@ class AppearanceSettingsScreen(
           requiresUiRefresh = true
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = AppearanceScreen.PostGroup.ForceShiftPostComment,
           topDescriptionIdFunc = { R.string.setting_force_post_shift_post_comment },
@@ -179,7 +183,7 @@ class AppearanceSettingsScreen(
           requiresUiRefresh = true
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = AppearanceScreen.PostGroup.PostMultipleImagesCompactMode,
           topDescriptionIdFunc = { R.string.setting_post_multiple_images_compact_mode },
@@ -188,7 +192,7 @@ class AppearanceSettingsScreen(
           requiresUiRefresh = true
         )
 
-        group += ListSettingV2.createBuilder<ChanSettings.PostAlignmentMode>(
+        group += ListSetting.createBuilder<ChanSettings.PostAlignmentMode>(
           context = context,
           identifier = AppearanceScreen.LayoutGroup.CatalogPostAlignmentMode,
           topDescriptionIdFunc = { R.string.setting_catalog_post_alignment_mode },
@@ -205,7 +209,7 @@ class AppearanceSettingsScreen(
           setting = ChanSettings.catalogPostAlignmentMode
         )
 
-        group += ListSettingV2.createBuilder<ChanSettings.PostAlignmentMode>(
+        group += ListSetting.createBuilder<ChanSettings.PostAlignmentMode>(
           context = context,
           identifier = AppearanceScreen.LayoutGroup.ThreadPostAlignmentMode,
           topDescriptionIdFunc = { R.string.setting_thread_post_alignment_mode },
@@ -222,7 +226,7 @@ class AppearanceSettingsScreen(
           setting = ChanSettings.threadPostAlignmentMode
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = AppearanceScreen.PostGroup.TextOnly,
           topDescriptionIdFunc = { R.string.setting_text_only },
@@ -231,7 +235,7 @@ class AppearanceSettingsScreen(
           requiresUiRefresh = true
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = AppearanceScreen.PostGroup.RevealTextSpoilers,
           topDescriptionIdFunc = { R.string.settings_reveal_text_spoilers },
@@ -240,7 +244,7 @@ class AppearanceSettingsScreen(
           requiresUiRefresh = true
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = AppearanceScreen.PostGroup.Anonymize,
           topDescriptionIdFunc = { R.string.setting_anonymize },
@@ -249,7 +253,7 @@ class AppearanceSettingsScreen(
           requiresUiRefresh = true
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = AppearanceScreen.PostGroup.ShowAnonymousName,
           topDescriptionIdFunc = { R.string.setting_show_anonymous_name },
@@ -258,7 +262,7 @@ class AppearanceSettingsScreen(
           requiresUiRefresh = true
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = AppearanceScreen.PostGroup.AnonymizeIds,
           topDescriptionIdFunc = { R.string.setting_anonymize_ids },
@@ -282,7 +286,7 @@ class AppearanceSettingsScreen(
           groupIdentifier = identifier
         )
 
-        group += ListSettingV2.createBuilder<ChanSettings.NetworkContentAutoLoadMode>(
+        group += ListSetting.createBuilder<ChanSettings.NetworkContentAutoLoadMode>(
           context = context,
           identifier = AppearanceScreen.PostLinksGroup.ParseYoutubeTitlesAndDuration,
           topDescriptionIdFunc = { R.string.setting_youtube_title_and_durations },
@@ -299,7 +303,7 @@ class AppearanceSettingsScreen(
           requiresUiRefresh = true
         )
 
-        group += ListSettingV2.createBuilder<ChanSettings.NetworkContentAutoLoadMode>(
+        group += ListSetting.createBuilder<ChanSettings.NetworkContentAutoLoadMode>(
           context = context,
           identifier = AppearanceScreen.PostLinksGroup.ParseSoundCloudTitlesAndDuration,
           topDescriptionIdFunc = { R.string.setting_soundcloud_title_and_durations },
@@ -316,7 +320,7 @@ class AppearanceSettingsScreen(
           requiresUiRefresh = true
         )
 
-        group += ListSettingV2.createBuilder<ChanSettings.NetworkContentAutoLoadMode>(
+        group += ListSetting.createBuilder<ChanSettings.NetworkContentAutoLoadMode>(
           context = context,
           identifier = AppearanceScreen.PostLinksGroup.ParseStreamableTitlesAndDuration,
           topDescriptionIdFunc = { R.string.setting_streamable_title_and_durations },
@@ -333,7 +337,7 @@ class AppearanceSettingsScreen(
           requiresUiRefresh = true
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = AppearanceScreen.PostLinksGroup.ShowLinkAlongWithTitleAndDuration,
           topDescriptionIdFunc = { R.string.setting_show_link_along_with_title_and_duration_title },
@@ -358,7 +362,7 @@ class AppearanceSettingsScreen(
           groupIdentifier = identifier
         )
 
-        group += ListSettingV2.createBuilder<ChanSettings.LayoutMode>(
+        group += ListSetting.createBuilder<ChanSettings.LayoutMode>(
           context = context,
           identifier = AppearanceScreen.LayoutGroup.LayoutMode,
           topDescriptionIdFunc = { R.string.setting_layout_mode },
@@ -377,7 +381,7 @@ class AppearanceSettingsScreen(
           setting = ChanSettings.layoutMode
         )
 
-        group += ListSettingV2.createBuilder<Int>(
+        group += ListSetting.createBuilder<Int>(
           context = context,
           identifier = AppearanceScreen.LayoutGroup.CatalogColumnsCount,
           topDescriptionIdFunc = { R.string.setting_board_grid_span_count },
@@ -397,14 +401,14 @@ class AppearanceSettingsScreen(
           setting = ChanSettings.catalogSpanCount
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = AppearanceScreen.LayoutGroup.NeverHideToolbar,
           topDescriptionIdFunc = { R.string.setting_never_hide_toolbar },
           setting = ChanSettings.neverHideToolbar
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = AppearanceScreen.LayoutGroup.EnableReplyFAB,
           topDescriptionIdFunc = { R.string.setting_enable_reply_fab },
@@ -413,7 +417,7 @@ class AppearanceSettingsScreen(
           requiresRestart = true
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = AppearanceScreen.LayoutGroup.BottomJsCaptcha,
           topDescriptionIdFunc = { R.string.setting_bottom_js_captcha },
@@ -422,7 +426,7 @@ class AppearanceSettingsScreen(
           requiresUiRefresh = true
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = AppearanceScreen.LayoutGroup.NeverShowPages,
           topDescriptionIdFunc = { R.string.setting_never_show_pages },
@@ -430,7 +434,7 @@ class AppearanceSettingsScreen(
           setting = ChanSettings.neverShowPages
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = AppearanceScreen.LayoutGroup.ReorderableBottomNavViewButtonsSetting,
           topDescriptionIdFunc = { R.string.setting_reorder_bottom_nav_view_buttons },
@@ -471,7 +475,7 @@ class AppearanceSettingsScreen(
           groupIdentifier = identifier
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = AppearanceScreen.MainGroup.ThemeCustomization,
           topDescriptionIdFunc = { R.string.setting_theme },

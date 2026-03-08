@@ -10,7 +10,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <com.github.k1rakishou.chan.features.media_viewer.media_view.ThumbnailMediaView
+        <com.github.k1rakishou.chan.features.view.media.element.ThumbnailMediaView
             android:id="@+id/thumbnail_media_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -32,7 +32,7 @@
         android:visibility="gone"
         tools:visibility="visible" />
 
-    <com.github.k1rakishou.chan.features.media_viewer.strip.MediaViewerLeftActionStrip
+    <com.github.k1rakishou.chan.features.view.media.strip.MediaViewerLeftActionStrip
         android:id="@+id/left_action_strip"
         android:layout_width="wrap_content"
         android:layout_height="match_parent" />
@@ -43,7 +43,7 @@
         android:layout_gravity="bottom"
         android:orientation="vertical">
 
-        <com.github.k1rakishou.chan.features.media_viewer.strip.MediaViewerBottomActionStrip
+        <com.github.k1rakishou.chan.features.view.media.strip.MediaViewerBottomActionStrip
             android:id="@+id/bottom_action_strip"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
@@ -52,7 +52,7 @@
             android:layout_width="match_parent"
             android:layout_height="8dp"/>
 
-        <com.github.k1rakishou.chan.features.media_viewer.media_view.AudioPlayerView
+        <com.github.k1rakishou.chan.features.view.media.element.AudioPlayerView
             android:id="@+id/audio_player_view"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />

@@ -1,7 +1,7 @@
 package com.github.k1rakishou.chan.core.usecase
 
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
-import com.github.k1rakishou.chan.features.remote_image_search.ImageSearchResult
+import com.github.k1rakishou.chan.features.search.remotemedia.ImageSearchResult
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.fixUrlOrNull
 import com.github.k1rakishou.common.isNotNullNorEmpty

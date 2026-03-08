@@ -6,8 +6,8 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.features.settings.ExperimentalScreen
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
-import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
-import com.github.k1rakishou.chan.features.settings.setting.InputSettingV2
+import com.github.k1rakishou.chan.features.settings.setting.BooleanSetting
+import com.github.k1rakishou.chan.features.settings.setting.InputSetting
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.common.AppConstants
 
@@ -36,7 +36,7 @@ class ExperimentalSettingsScreen(
           groupIdentifier = identifier
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = ExperimentalScreen.MainSettingsGroup.OkHttpAllowIpv6,
           topDescriptionIdFunc = { R.string.setting_allow_okhttp_ipv6 },
@@ -45,7 +45,7 @@ class ExperimentalSettingsScreen(
           requiresRestart = true
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = ExperimentalScreen.MainSettingsGroup.OkHttpUseDnsOverHttps,
           topDescriptionIdFunc = { R.string.setting_allow_okhttp_use_dns_over_https },
@@ -53,7 +53,7 @@ class ExperimentalSettingsScreen(
           requiresRestart = true
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = ExperimentalScreen.MainSettingsGroup.CloudflareForcePreload,
           topDescriptionIdFunc = { R.string.setting_cloudflare_preloading_dialog_title },
@@ -61,7 +61,7 @@ class ExperimentalSettingsScreen(
           setting = ChanSettings.cloudflareForcePreload
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = ExperimentalScreen.MainSettingsGroup.AutoLoadThreadImages,
           topDescriptionIdFunc = { R.string.setting_auto_load_thread_images },
@@ -70,7 +70,7 @@ class ExperimentalSettingsScreen(
           requiresRestart = true
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = ExperimentalScreen.MainSettingsGroup.ShowPrefetchLoadingIndicator,
           topDescriptionIdFunc = { R.string.setting_show_prefetch_loading_indicator_title },
@@ -78,7 +78,7 @@ class ExperimentalSettingsScreen(
           dependsOnSetting = ChanSettings.prefetchMedia
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = ExperimentalScreen.MainSettingsGroup.HighResCells,
           topDescriptionIdFunc = { R.string.setting_images_high_res },
@@ -87,7 +87,7 @@ class ExperimentalSettingsScreen(
           requiresUiRefresh = true
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = ExperimentalScreen.MainSettingsGroup.ColorizeTextSelectionCursors,
           topDescriptionIdFunc = { R.string.setting_update_colors_for_text_selection_cursor },
@@ -96,7 +96,7 @@ class ExperimentalSettingsScreen(
           requiresRestart = true
         )
 
-        group += InputSettingV2.createBuilder<String>(
+        group += InputSetting.createBuilder<String>(
           context = context,
           identifier = ExperimentalScreen.MainSettingsGroup.CustomUserAgent,
           inputType = DialogFactory.DialogInputType.String,

@@ -22,7 +22,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
-import com.github.k1rakishou.chan.features.settings.setting.CookieSettingV2
+import com.github.k1rakishou.chan.features.settings.setting.CookieSetting
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeCard
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextBarButton
@@ -35,7 +35,7 @@ import com.github.k1rakishou.common.KurobaCookie
 
 class CookieCaptchaInputController(
   context: Context,
-  private val cookieSettingV2: CookieSettingV2,
+  private val cookieSetting: CookieSetting,
   private val onOkClicked: (KurobaCookie?) -> Unit
 ) : BaseFloatingComposeController(context) {
 
@@ -46,7 +46,7 @@ class CookieCaptchaInputController(
   @Composable
   override fun BoxScope.BuildContent() {
     val chanTheme = LocalChanTheme.current
-    val kurobaCookie = remember { cookieSettingV2.setting.get() }
+    val kurobaCookie = remember { cookieSetting.setting.get() }
 
     val initialValue = remember(key1 = kurobaCookie) { kurobaCookie?.value ?: "" }
     val initialLifetimeMinutes = remember(key1 = kurobaCookie) {
@@ -81,7 +81,7 @@ class CookieCaptchaInputController(
           )
       ) {
         KurobaComposeText(
-          text = cookieSettingV2.topDescription,
+          text = cookieSetting.topDescription,
           fontSize = 20.ktu
         )
 

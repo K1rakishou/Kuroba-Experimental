@@ -2,7 +2,7 @@ package com.github.k1rakishou.chan.core.repository
 
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.core.site.SiteSetting
+import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
 import com.github.k1rakishou.chan.core.usecase.LoadBoardFlagsUseCase
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
@@ -78,7 +78,7 @@ class BoardFlagInfoRepository(
 
   fun getLastUsedFlagKey(boardDescriptor: BoardDescriptor): String? {
     val lastUsedCountryFlagPerBoardSetting = siteManager.bySiteDescriptorAndActive(boardDescriptor.siteDescriptor)
-      ?.getSettingBySettingId<StringSetting>(SiteSetting.SiteSettingId.LastUsedCountryFlagPerBoard)
+      ?.getSettingBySettingId<StringSetting>(SiteSettingForUi.SiteSettingId.LastUsedCountryFlagPerBoard)
       ?: return null
 
     return extractFlagCodeOrDefault(
@@ -89,7 +89,7 @@ class BoardFlagInfoRepository(
 
   fun getLastUsedFlagInfo(boardDescriptor: BoardDescriptor): LoadBoardFlagsUseCase.FlagInfo? {
     val lastUsedCountryFlagPerBoardSetting = siteManager.bySiteDescriptorAndActive(boardDescriptor.siteDescriptor)
-      ?.getSettingBySettingId<StringSetting>(SiteSetting.SiteSettingId.LastUsedCountryFlagPerBoard)
+      ?.getSettingBySettingId<StringSetting>(SiteSettingForUi.SiteSettingId.LastUsedCountryFlagPerBoard)
       ?: return null
 
     val lastUsedCountryFlagPerBoard = lastUsedCountryFlagPerBoardSetting.get()

@@ -7,8 +7,6 @@ import com.github.k1rakishou.chan.core.site.SiteBase
 import com.github.k1rakishou.chan.core.site.SiteConfiguration
 import com.github.k1rakishou.chan.core.site.SiteEndpoints
 import com.github.k1rakishou.chan.core.site.SiteIcon
-import com.github.k1rakishou.chan.core.site.SiteSetting
-import com.github.k1rakishou.chan.core.site.SiteSetting.SiteOptionsSetting
 import com.github.k1rakishou.chan.core.site.SiteUrlHandler
 import com.github.k1rakishou.chan.core.site.common.CommonSiteConfiguration
 import com.github.k1rakishou.chan.core.site.common.DefaultPostParser
@@ -18,6 +16,9 @@ import com.github.k1rakishou.chan.core.site.limitations.PasscodeDependantMaxAtta
 import com.github.k1rakishou.chan.core.site.limitations.PostingLimitationConfig
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.core.site.parser.SiteApi
+import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
+import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi.SiteOptionsSetting
+import com.github.k1rakishou.chan.core.site.settings.SiteSettingsForUi
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.prefs.BooleanSetting
 import com.github.k1rakishou.prefs.GsonJsonSetting
@@ -76,22 +77,22 @@ class Chan4 : SiteBase(
   }
   override val actions: SiteActions by lazy { Chan4Actions(this) }
 
-  override val settings: List<SiteSetting> by lazy {
-    val settings = ArrayList<SiteSetting>()
+  override val settingsForUi by lazy {
+    val settings = SiteSettingsForUi(super.settingsForUi)
 
-    settings.addAll(super.settings)
-    settings.add(SiteOptionsSetting(
+    settings += SiteOptionsSetting(
       settingName = "Captcha type",
       settingDescription = null,
       groupId = "captcha_type",
       options = captchaType,
       optionNames = listOf("Javascript", "Noscript")
-    ))
-    settings.add(SiteSetting.SiteStringSetting(
+    )
+
+    settings += SiteSettingForUi.SiteStringSetting(
       settingName = "4chan captcha cookie",
       settingDescription = null,
       setting = chan4CaptchaCookie
-    ))
+    )
 
     return@lazy settings
   }
@@ -127,11 +128,11 @@ class Chan4 : SiteBase(
     return siteFeature != SiteConfiguration.SiteFeature.CatalogComposition
   }
 
-  override fun <T : Setting<*>> getSettingBySettingId(settingId: SiteSetting.SiteSettingId): T? {
+  override fun <T : Setting<*>> getSettingBySettingId(settingId: SiteSettingForUi.SiteSettingId): T? {
     return when (settingId) {
-      SiteSetting.SiteSettingId.LastUsedCountryFlagPerBoard -> lastUsedFlagPerBoard as T
-      SiteSetting.SiteSettingId.Chan4CaptchaSettings -> chan4CaptchaSettings as T
-      SiteSetting.SiteSettingId.Check4chanPostAcknowledged -> check4chanPostAcknowledged as T
+      SiteSettingForUi.SiteSettingId.LastUsedCountryFlagPerBoard -> lastUsedFlagPerBoard as T
+      SiteSettingForUi.SiteSettingId.Chan4CaptchaSettings -> chan4CaptchaSettings as T
+      SiteSettingForUi.SiteSettingId.Check4chanPostAcknowledged -> check4chanPostAcknowledged as T
       else -> super.getSettingBySettingId(settingId)
     }
   }

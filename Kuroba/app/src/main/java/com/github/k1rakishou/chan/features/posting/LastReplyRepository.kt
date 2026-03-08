@@ -19,7 +19,7 @@ package com.github.k1rakishou.chan.features.posting
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.core.site.SiteSetting
+import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
 import com.github.k1rakishou.common.putIfNotContainsLazy
 import com.github.k1rakishou.common.withLockNonCancellable
 import com.github.k1rakishou.core_logger.Logger
@@ -138,7 +138,7 @@ class LastReplyRepository(
     Logger.d(TAG, "getTimeUntilNextThreadCreationOrReply($chanDescriptor, $replyMode)")
 
     val ignoreReplyCooldowns = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
-      ?.getSettingBySettingId<BooleanSetting>(SiteSetting.SiteSettingId.IgnoreReplyCooldowns)
+      ?.getSettingBySettingId<BooleanSetting>(SiteSettingForUi.SiteSettingId.IgnoreReplyCooldowns)
       ?.get()
 
     if (ignoreReplyCooldowns == true) {

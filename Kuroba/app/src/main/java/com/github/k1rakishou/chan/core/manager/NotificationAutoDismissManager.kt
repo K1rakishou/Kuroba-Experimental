@@ -1,7 +1,7 @@
 package com.github.k1rakishou.chan.core.manager
 
 import androidx.core.app.NotificationManagerCompat
-import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2Service
+import com.github.k1rakishou.chan.features.download.media.ImageSaverV2Service
 import com.github.k1rakishou.chan.features.posting.PostingService
 import com.github.k1rakishou.core_logger.Logger
 import kotlinx.coroutines.CoroutineScope

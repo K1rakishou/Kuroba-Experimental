@@ -10,7 +10,7 @@ import com.github.k1rakishou.chan.features.settings.SettingsScreen
 abstract class BaseSettingsScreen(
   protected val context: Context,
   protected val identifier: IScreenIdentifier,
-  @StringRes
+  @field:StringRes
   private val screenTitle: Int
 ) {
   private var initialized = false

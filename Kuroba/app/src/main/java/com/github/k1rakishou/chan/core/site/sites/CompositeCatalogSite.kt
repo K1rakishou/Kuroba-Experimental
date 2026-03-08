@@ -12,7 +12,6 @@ import com.github.k1rakishou.chan.core.site.SiteConfiguration
 import com.github.k1rakishou.chan.core.site.SiteEndpoints
 import com.github.k1rakishou.chan.core.site.SiteIcon
 import com.github.k1rakishou.chan.core.site.SiteRequestModifier
-import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.SiteUrlHandler
 import com.github.k1rakishou.chan.core.site.common.CommonSiteConfiguration
 import com.github.k1rakishou.chan.core.site.http.DeleteRequest
@@ -22,6 +21,8 @@ import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.core.site.parser.SiteApi
 import com.github.k1rakishou.chan.core.site.parser.processor.AbstractChanReaderProcessor
 import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
+import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
+import com.github.k1rakishou.chan.core.site.settings.SiteSettingsForUi
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.board.pages.BoardPages
@@ -74,9 +75,9 @@ class CompositeCatalogSite : SiteBase(
     )
   }
 
-  override val settings: List<SiteSetting> = emptyList()
+  override val settingsForUi: SiteSettingsForUi = SiteSettingsForUi()
 
-  override fun <T : Setting<*>> getSettingBySettingId(settingId: SiteSetting.SiteSettingId): T? = null
+  override fun <T : Setting<*>> getSettingBySettingId(settingId: SiteSettingForUi.SiteSettingId): T? = null
 
   override fun hasSiteFeature(siteFeature: SiteConfiguration.SiteFeature): Boolean {
     return siteFeature == SiteConfiguration.SiteFeature.CatalogComposition

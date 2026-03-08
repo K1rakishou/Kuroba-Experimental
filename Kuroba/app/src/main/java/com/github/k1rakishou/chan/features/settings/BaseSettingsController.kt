@@ -3,11 +3,11 @@ package com.github.k1rakishou.chan.features.settings
 import android.content.Context
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
-import com.github.k1rakishou.chan.features.settings.setting.CookieSettingV2
-import com.github.k1rakishou.chan.features.settings.setting.InputSettingV2
-import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
-import com.github.k1rakishou.chan.features.settings.setting.MapSettingV2
-import com.github.k1rakishou.chan.features.settings.setting.RangeSettingV2
+import com.github.k1rakishou.chan.features.settings.setting.CookieSetting
+import com.github.k1rakishou.chan.features.settings.setting.InputSetting
+import com.github.k1rakishou.chan.features.settings.setting.ListSetting
+import com.github.k1rakishou.chan.features.settings.setting.MapSetting
+import com.github.k1rakishou.chan.features.settings.setting.RangeSetting
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.base.Controller
 import com.github.k1rakishou.chan.ui.controller.settings.RangeSettingUpdaterController
@@ -23,7 +23,7 @@ abstract class BaseSettingsController(
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
-  protected fun showListDialog(settingV2: ListSettingV2<*>, onItemClicked: (Any?) -> Unit) {
+  protected fun showListDialog(settingV2: ListSetting<*>, onItemClicked: (Any?) -> Unit) {
     val items = settingV2.items.mapIndexed { index, item ->
       return@mapIndexed CheckableFloatingListMenuItem(
         key = index,
@@ -50,22 +50,22 @@ abstract class BaseSettingsController(
   }
 
   protected fun showUpdateRangeSettingDialog(
-    rangeSettingV2: RangeSettingV2,
+    rangeSetting: RangeSetting,
     rebuildScreenFunc: (Any?) -> Unit
   ) {
     val rangeSettingUpdaterController = RangeSettingUpdaterController(
       context = context,
       constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
-      title = rangeSettingV2.topDescription,
-      minValue = rangeSettingV2.min,
-      maxValue = rangeSettingV2.max,
-      currentValue = rangeSettingV2.current,
+      title = rangeSetting.topDescription,
+      minValue = rangeSetting.min,
+      maxValue = rangeSetting.max,
+      currentValue = rangeSetting.current,
       resetClickedFunc = {
-        rangeSettingV2.updateSetting(rangeSettingV2.default)
-        rebuildScreenFunc(rangeSettingV2.default)
+        rangeSetting.updateSetting(rangeSetting.default)
+        rebuildScreenFunc(rangeSetting.default)
       },
       applyClickedFunc = { newValue ->
-        rangeSettingV2.updateSetting(newValue)
+        rangeSetting.updateSetting(newValue)
         rebuildScreenFunc(newValue)
       }
     )
@@ -74,10 +74,10 @@ abstract class BaseSettingsController(
   }
 
   protected fun showInputDialog(
-    inputSettingV2: InputSettingV2<*>,
+    inputSetting: InputSetting<*>,
     rebuildScreenFunc: (Any?) -> Unit
   ) {
-    val inputType = inputSettingV2.inputType
+    val inputType = inputSetting.inputType
     if (inputType == null) {
       Logger.e(TAG, "Bad input type: ${inputType}")
       return
@@ -85,22 +85,22 @@ abstract class BaseSettingsController(
 
     dialogFactory.createSimpleDialogWithInputAndResetButton(
       context = context,
-      currentValue = inputSettingV2.getCurrent()?.toString(),
-      defaultValue = inputSettingV2.getDefault()?.toString(),
+      currentValue = inputSetting.getCurrent()?.toString(),
+      defaultValue = inputSetting.getDefault()?.toString(),
       inputType = inputType,
-      titleText = inputSettingV2.topDescription,
+      titleText = inputSetting.topDescription,
       onValueEntered = { input ->
-        onInputValueEntered(inputSettingV2, input, rebuildScreenFunc)
+        onInputValueEntered(inputSetting, input, rebuildScreenFunc)
       }
     )
   }
 
   protected fun showInputDialog(
-    mapSettingV2: MapSettingV2,
+    mapSetting: MapSetting,
     rebuildScreenFunc: (Any?) -> Unit,
     forceRebuildScreen: () -> Unit,
   ) {
-    val inputType = mapSettingV2.inputType
+    val inputType = mapSetting.inputType
     if (inputType == null) {
       Logger.e(TAG, "Bad input type: ${inputType}")
       return
@@ -109,28 +109,28 @@ abstract class BaseSettingsController(
     dialogFactory.createSimpleDialogWithInputAndRemoveButton(
       context = context,
       onRemoveClicked = {
-        mapSettingV2.removeSetting()
+        mapSetting.removeSetting()
         forceRebuildScreen()
       },
-      currentValue = mapSettingV2.getCurrent(),
+      currentValue = mapSetting.getCurrent(),
       inputType = inputType,
-      titleText = mapSettingV2.topDescription,
+      titleText = mapSetting.topDescription,
       onValueEntered = { input ->
-        onInputValueEntered(mapSettingV2, input, rebuildScreenFunc)
+        onInputValueEntered(mapSetting, input, rebuildScreenFunc)
       }
     )
   }
 
   protected fun showInputDialog(
-    cookieSettingV2: CookieSettingV2,
+    cookieSetting: CookieSetting,
     rebuildScreenFunc: (Any?) -> Unit
   ) {
     val controller = CookieCaptchaInputController(
       context = context,
-      cookieSettingV2 = cookieSettingV2,
+      cookieSetting = cookieSetting,
       onOkClicked = { kurobaCookie ->
-        cookieSettingV2.updateSetting(kurobaCookie)
-        rebuildScreenFunc(cookieSettingV2.getCurrent())
+        cookieSetting.updateSetting(kurobaCookie)
+        rebuildScreenFunc(cookieSetting.getCurrent())
       }
     )
 
@@ -138,21 +138,21 @@ abstract class BaseSettingsController(
   }
 
   protected fun onInputValueEntered(
-    mapSettingV2: MapSettingV2,
+    mapSetting: MapSetting,
     input: String,
     rebuildScreenFunc: (Any?) -> Unit
   ) {
-    when (mapSettingV2.inputType) {
+    when (mapSetting.inputType) {
       DialogFactory.DialogInputType.String -> {
         val text = input.ifEmpty {
-          mapSettingV2.getDefault()?.toString()
+          mapSetting.getDefault()?.toString()
         }
 
         if (text == null) {
           return
         }
 
-        mapSettingV2.updateSetting(text)
+        mapSetting.updateSetting(text)
       }
       DialogFactory.DialogInputType.Integer -> {
         val integer = if (input.isNotEmpty()) {
@@ -165,44 +165,44 @@ abstract class BaseSettingsController(
           return
         }
 
-        mapSettingV2.updateSetting(integer.toString())
+        mapSetting.updateSetting(integer.toString())
       }
       null -> error("InputType is null")
     }.exhaustive
 
-    rebuildScreenFunc(mapSettingV2.getCurrent())
+    rebuildScreenFunc(mapSetting.getCurrent())
   }
 
   protected fun onInputValueEntered(
-    inputSettingV2: InputSettingV2<*>,
+    inputSetting: InputSetting<*>,
     input: String,
     rebuildScreenFunc: (Any?) -> Unit
   ) {
-    when (inputSettingV2.inputType) {
+    when (inputSetting.inputType) {
       DialogFactory.DialogInputType.String -> {
         val text = input.ifEmpty {
-          inputSettingV2.getDefault()?.toString()
+          inputSetting.getDefault()?.toString()
         } ?: ""
 
-        inputSettingV2.updateSetting(text)
+        inputSetting.updateSetting(text)
       }
       DialogFactory.DialogInputType.Integer -> {
         val integer = if (input.isNotEmpty()) {
           input.toIntOrNull()
         } else {
-          inputSettingV2.getDefault() as? Int
+          inputSetting.getDefault() as? Int
         }
 
         if (integer == null) {
           return
         }
 
-        inputSettingV2.updateSetting(integer)
+        inputSetting.updateSetting(integer)
       }
       null -> error("InputType is null")
     }.exhaustive
 
-    rebuildScreenFunc(inputSettingV2.getCurrent())
+    rebuildScreenFunc(inputSetting.getCurrent())
   }
 
   companion object {

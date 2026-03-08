@@ -27,7 +27,7 @@ import com.github.k1rakishou.chan.core.manager.PrefetchState.PrefetchStarted
 import com.github.k1rakishou.chan.core.manager.PrefetchStateManager
 import com.github.k1rakishou.chan.core.manager.RevealedSpoilerImagesManager
 import com.github.k1rakishou.chan.core.manager.ThirdEyeManager
-import com.github.k1rakishou.chan.features.media_viewer.MediaViewerControllerViewModel.Companion.canAutoLoad
+import com.github.k1rakishou.chan.features.view.media.MediaViewerControllerViewModel.Companion.canAutoLoad
 import com.github.k1rakishou.chan.ui.cell.PostCellData
 import com.github.k1rakishou.chan.ui.view.SegmentedCircleDrawable
 import com.github.k1rakishou.chan.ui.view.ThumbnailView

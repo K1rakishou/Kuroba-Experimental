@@ -3,11 +3,11 @@ package com.github.k1rakishou.chan.core.site.sites.dvach
 import android.text.TextUtils
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
-import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.common.CommonReplyHttpCall
 import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody
 import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody.ProgressRequestListener
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
+import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
 import com.github.k1rakishou.chan.features.posting.LastReplyRepository
 import com.github.k1rakishou.chan.features.reply.data.Reply
 import com.github.k1rakishou.chan.features.reply.data.ReplyFile
@@ -152,7 +152,7 @@ class DvachReplyCall internal constructor(
     formBuilder.addFormDataPart("captcha_type", "recaptcha")
 
     val replyMode = site
-      .getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
+      .getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSettingForUi.SiteSettingId.LastUsedReplyMode)
       ?.get()
 
     if (replyMode == ReplyMode.ReplyModeSendWithoutCaptcha) {
@@ -292,7 +292,7 @@ class DvachReplyCall internal constructor(
   // usercode_auth=1234567890abcdef
   private fun storeUserCodeCookieIfNeeded(headers: Headers) {
     val userCodeSetting = site.getSettingBySettingId<StringSetting>(
-      SiteSetting.SiteSettingId.DvachUserCodeCookie
+      SiteSettingForUi.SiteSettingId.DvachUserCodeCookie
     )
 
     if (userCodeSetting == null || userCodeSetting.get().isNotEmpty()) {

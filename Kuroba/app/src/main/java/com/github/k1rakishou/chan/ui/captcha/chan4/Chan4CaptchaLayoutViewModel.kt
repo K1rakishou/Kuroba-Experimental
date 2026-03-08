@@ -18,7 +18,7 @@ import com.github.k1rakishou.chan.core.manager.FirewallBypassManager
 import com.github.k1rakishou.chan.core.manager.HapticFeedbackManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.WebViewTaskManager
-import com.github.k1rakishou.chan.core.site.SiteSetting
+import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4CaptchaSettings
 import com.github.k1rakishou.chan.core.usecase.LoadChan4CaptchaUseCase
@@ -60,9 +60,9 @@ class Chan4CaptchaLayoutViewModel(
   private var activeJob: Job? = null
   private var captchaTtlUpdateJob: Job? = null
 
-  val chan4CaptchaSettingsJson by lazy {
+  val chan4CaptchaSettingsJson: GsonJsonSetting<Chan4CaptchaSettings> by lazy {
     siteManager.bySiteDescriptorAndActive(Chan4.SITE_DESCRIPTOR)!!
-      .getSettingBySettingId<GsonJsonSetting<Chan4CaptchaSettings>>(SiteSetting.SiteSettingId.Chan4CaptchaSettings)!!
+      .getSettingBySettingId(SiteSettingForUi.SiteSettingId.Chan4CaptchaSettings)!!
   }
 
   private val captchaInfoCache = mutableMapOf<ChanDescriptor, CaptchaInfo>()

@@ -3,15 +3,13 @@ package com.github.k1rakishou.chan.core.usecase
 import android.content.Context
 import android.net.Uri
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadingDelegate
+import com.github.k1rakishou.chan.features.download.thread.ThreadDownloadingDelegate
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.extractFileName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.AbstractFile
-import com.github.k1rakishou.fsaf.file.FileSegment
-import com.github.k1rakishou.fsaf.file.Segment
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
@@ -25,7 +23,7 @@ import org.joda.time.DateTimeZone
 import org.joda.time.format.DateTimeFormatterBuilder
 import org.joda.time.format.ISODateTimeFormat
 import java.io.File
-import java.util.*
+import java.util.TimeZone
 import java.util.regex.Pattern
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream

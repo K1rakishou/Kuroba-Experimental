@@ -33,7 +33,7 @@ import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.Chan.Companion.getComponent
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
-import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity
+import com.github.k1rakishou.chan.features.view.media.MediaViewerActivity
 import com.github.k1rakishou.chan.ui.activity.SharingActivity
 import com.github.k1rakishou.chan.ui.activity.StartActivity
 import com.github.k1rakishou.chan.ui.compose.snackbar.SnackbarManager

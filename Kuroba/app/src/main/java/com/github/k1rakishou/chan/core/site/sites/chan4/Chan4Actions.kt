@@ -250,7 +250,7 @@ class Chan4Actions(
 
   override fun clearPostingCookies() {
     chan4.chan4CaptchaCookie.setSync("")
-    chan4.cloudFlareClearanceCookieMap.clear(sync = true)
+    chan4.settings.cloudFlareClearanceCookieMap.clear(sync = true)
     chan4.chan4CaptchaSettings.update(sync = true) { chan4CaptchaSetting ->
       chan4CaptchaSetting.copy(captchaTicket = null)
     }

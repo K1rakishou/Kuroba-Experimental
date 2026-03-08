@@ -9,8 +9,8 @@ import com.github.k1rakishou.chan.core.cache.downloader.ChunkedMediaDownloader
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.features.settings.CachingScreen
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
-import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
-import com.github.k1rakishou.chan.features.settings.setting.RangeSettingV2
+import com.github.k1rakishou.chan.features.settings.setting.LinkSetting
+import com.github.k1rakishou.chan.features.settings.setting.RangeSetting
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.IOUtils
 import com.github.k1rakishou.common.AppConstants
@@ -52,7 +52,7 @@ class CachingSettingsScreen(
         )
 
         for (cacheFileType in CacheFileType.values()) {
-          group += LinkSettingV2.createBuilder(
+          group += LinkSetting.createBuilder(
             context = context,
             identifier = CachingScreen.CacheGroup.ClearFileCache(cacheFileType.name),
             topDescriptionStringFunc = { context.getString(R.string.settings_clear_file_cache, cacheFileType.name) },
@@ -74,7 +74,7 @@ class CachingSettingsScreen(
           )
         }
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = CachingScreen.CacheGroup.ClearExoPlayerCache,
           topDescriptionStringFunc = { context.getString(R.string.settings_clear_exo_player_file_cache) },
@@ -94,7 +94,7 @@ class CachingSettingsScreen(
           }
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = CachingScreen.CacheGroup.ThreadDownloadCacheSize,
           topDescriptionStringFunc = { context.getString(R.string.settings_clear_thread_downloader_disk_cache) },
@@ -143,7 +143,7 @@ class CachingSettingsScreen(
           groupIdentifier = identifier
         )
 
-        group += RangeSettingV2.createBuilder(
+        group += RangeSetting.createBuilder(
           context = context,
           identifier = CachingScreen.MediaCacheSizeGroup.NormalCacheSize,
           topDescriptionIdFunc = { R.string.normal_cache_size_title },
@@ -153,7 +153,7 @@ class CachingSettingsScreen(
           setting = ChanSettings.diskCacheSizeMegabytes
         )
 
-        group += RangeSettingV2.createBuilder(
+        group += RangeSetting.createBuilder(
           context = context,
           identifier = CachingScreen.MediaCacheSizeGroup.PrefetchCacheSize,
           topDescriptionIdFunc = { R.string.prefetch_cache_size_title },
@@ -163,7 +163,7 @@ class CachingSettingsScreen(
           setting = ChanSettings.prefetchDiskCacheSizeMegabytes
         )
 
-        group += RangeSettingV2.createBuilder(
+        group += RangeSetting.createBuilder(
           context = context,
           identifier = CachingScreen.MediaCacheSizeGroup.MediaCacheCleanupRemoveFilesPercent,
           topDescriptionIdFunc = { R.string.media_cache_cleanup_remove_percent },

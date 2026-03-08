@@ -11,7 +11,7 @@ import com.github.k1rakishou.chan.core.manager.CompositeCatalogManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteConfiguration
-import com.github.k1rakishou.chan.core.site.SiteSetting
+import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
 import com.github.k1rakishou.chan.features.login.LoginController
 import com.github.k1rakishou.chan.features.settings.BuildOptions
 import com.github.k1rakishou.chan.features.settings.GroupIdentifier
@@ -23,12 +23,12 @@ import com.github.k1rakishou.chan.features.settings.ScreenIdentifier
 import com.github.k1rakishou.chan.features.settings.SettingIdentifier
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
 import com.github.k1rakishou.chan.features.settings.SettingsIdentifier
-import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
-import com.github.k1rakishou.chan.features.settings.setting.CookieSettingV2
-import com.github.k1rakishou.chan.features.settings.setting.InputSettingV2
-import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
-import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
-import com.github.k1rakishou.chan.features.settings.setting.MapSettingV2
+import com.github.k1rakishou.chan.features.settings.setting.BooleanSetting
+import com.github.k1rakishou.chan.features.settings.setting.CookieSetting
+import com.github.k1rakishou.chan.features.settings.setting.InputSetting
+import com.github.k1rakishou.chan.features.settings.setting.LinkSetting
+import com.github.k1rakishou.chan.features.settings.setting.ListSetting
+import com.github.k1rakishou.chan.features.settings.setting.MapSetting
 import com.github.k1rakishou.chan.features.setup.boards.composing.CompositeCatalogsSetupController
 import com.github.k1rakishou.chan.features.setup.boards.reorder.BoardsReorderController
 import com.github.k1rakishou.common.KurobaCookie
@@ -87,7 +87,7 @@ class SiteSettingsPresenter(
       groups += buildAuthenticationGroup(context, site)
     }
 
-    if (site.settings.isNotEmpty()) {
+    if (site.settingsForUi.isNotEmpty()) {
       groups += buildSiteSpecificSettingsGroup(context, site)
     }
 
@@ -108,17 +108,17 @@ class SiteSettingsPresenter(
 
         val groupId = SiteSettingsScreen.AdditionalSettingsGroup.getGroupIdentifier().id
 
-        site.settings.forEach { siteSetting ->
+        site.settingsForUi.forEach { siteSetting ->
           val settingId = groupId + "_" + siteSetting.settingTitle
           val identifier = SiteSettingsScreen.AdditionalSettingsGroup(settingId)
 
           when (siteSetting) {
-            is SiteSetting.SiteMapSetting -> {
+            is SiteSettingForUi.SiteMapSetting -> {
               siteSetting.setting.get().forEach { mapEntry ->
                 val mapSettingId = groupId + "_" + siteSetting.settingTitle + mapEntry.key
                 val mapSettingIdentifier = SiteSettingsScreen.AdditionalSettingsGroup(mapSettingId)
 
-                group += MapSettingV2.createBuilder(
+                group += MapSetting.createBuilder(
                   context = context,
                   identifier = mapSettingIdentifier,
                   mapKey = mapEntry.key,
@@ -140,8 +140,8 @@ class SiteSettingsPresenter(
                 )
               }
             }
-            is SiteSetting.SiteOptionsSetting -> {
-              group += ListSettingV2.createBuilder(
+            is SiteSettingForUi.SiteOptionsSetting -> {
+              group += ListSetting.createBuilder(
                 context = context,
                 identifier = identifier,
                 setting = siteSetting.options as Setting<OptionSettingItem>,
@@ -160,8 +160,8 @@ class SiteSettingsPresenter(
                 }
               )
             }
-            is SiteSetting.SiteStringSetting -> {
-              group += InputSettingV2.createBuilder(
+            is SiteSettingForUi.SiteStringSetting -> {
+              group += InputSetting.createBuilder(
                 context = context,
                 identifier = identifier,
                 setting = siteSetting.setting,
@@ -181,14 +181,14 @@ class SiteSettingsPresenter(
                 }
               )
             }
-            is SiteSetting.SiteBooleanSetting -> {
+            is SiteSettingForUi.SiteBooleanSetting -> {
               val bottomDescriptionStringFunc: (suspend () -> String)? = if (siteSetting.settingDescription != null) {
                 { siteSetting.settingDescription }
               } else {
                 null
               }
 
-              group += BooleanSettingV2.createBuilder(
+              group += BooleanSetting.createBuilder(
                 context = context,
                 identifier = identifier,
                 setting = siteSetting.setting,
@@ -197,8 +197,8 @@ class SiteSettingsPresenter(
                 bottomDescriptionStringFunc = bottomDescriptionStringFunc
               )
             }
-            is SiteSetting.SiteCookieSetting -> {
-              group += CookieSettingV2.createBuilder(
+            is SiteSettingForUi.SiteCookieSetting -> {
+              group += CookieSetting.createBuilder(
                 context = context,
                 identifier = identifier,
                 setting = siteSetting.setting,
@@ -261,7 +261,7 @@ class SiteSettingsPresenter(
           groupIdentifier = SiteSettingsScreen.AuthenticationGroup
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = SiteSettingsScreen.AuthenticationGroup.Login,
           topDescriptionStringFunc = { "Login" },
@@ -296,7 +296,7 @@ class SiteSettingsPresenter(
           groupIdentifier = SiteSettingsScreen.GeneralGroup
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = SiteSettingsScreen.GeneralGroup.SetUpBoards,
           topDescriptionStringFunc = { "Set up boards" },

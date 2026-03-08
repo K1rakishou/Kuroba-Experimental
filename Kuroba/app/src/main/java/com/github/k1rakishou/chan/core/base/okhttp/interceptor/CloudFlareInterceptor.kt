@@ -2,7 +2,7 @@ package com.github.k1rakishou.chan.core.base.okhttp.interceptor
 
 import com.github.k1rakishou.chan.core.manager.FirewallBypassManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
-import com.github.k1rakishou.chan.core.site.SiteSetting
+import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
 import com.github.k1rakishou.chan.utils.containsPattern
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.FirewallDetectedException
@@ -167,7 +167,7 @@ class CloudFlareInterceptor(
     }
 
     val cloudFlareClearanceCookieSetting = site.getSettingBySettingId<MapSetting>(
-      SiteSetting.SiteSettingId.CloudFlareClearanceCookie
+      SiteSettingForUi.SiteSettingId.CloudFlareClearanceCookie
     )
 
     if (cloudFlareClearanceCookieSetting == null) {

@@ -165,7 +165,7 @@
         </activity>
 
         <activity
-            android:name=".features.media_viewer.MediaViewerActivity"
+            android:name=".features.view.media.MediaViewerActivity"
             android:launchMode="singleTask"
             android:theme="@style/Chan.TranslucentActivityTheme"
             android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation"
@@ -187,7 +187,7 @@
             android:taskAffinity="" />
 
         <service
-            android:name=".features.image_saver.ImageSaverV2Service"
+            android:name=".features.download.media.ImageSaverV2Service"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
         <service

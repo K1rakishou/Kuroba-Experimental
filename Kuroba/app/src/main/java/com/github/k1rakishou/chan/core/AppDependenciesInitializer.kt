@@ -9,7 +9,7 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager
 import com.github.k1rakishou.chan.core.watcher.BookmarkWatcherCoordinator
 import com.github.k1rakishou.chan.core.watcher.FilterWatcherCoordinator
-import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadingCoordinator
+import com.github.k1rakishou.chan.features.download.thread.ThreadDownloadingCoordinator
 import com.github.k1rakishou.model.data.site.ChanSiteData
 import kotlinx.coroutines.CompletableDeferred
 

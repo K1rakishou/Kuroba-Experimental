@@ -40,15 +40,15 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.SiteConfiguration
-import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.http.DeleteRequest
 import com.github.k1rakishou.chan.core.site.http.report.PostReportData
 import com.github.k1rakishou.chan.core.site.http.report.PostReportResult
 import com.github.k1rakishou.chan.core.site.loader.ChanLoaderException
 import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
 import com.github.k1rakishou.chan.core.site.loader.UnknownClientException
+import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
 import com.github.k1rakishou.chan.features.drawer.data.NavigationHistoryEntry
-import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerGoToPostHelper
+import com.github.k1rakishou.chan.features.view.media.helper.MediaViewerGoToPostHelper
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter.PostAdapterCallback
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.cell.GenericPostCell
@@ -3014,7 +3014,7 @@ class ThreadPresenter @Inject constructor(
 
   fun replyModeForChanDescriptor(chanDescriptor: ChanDescriptor): ReplyMode? {
     return siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
-      ?.getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
+      ?.getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSettingForUi.SiteSettingId.LastUsedReplyMode)
       ?.get()
   }
 

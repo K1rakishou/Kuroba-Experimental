@@ -3,7 +3,7 @@ package com.github.k1rakishou.chan.features.webview.task
 import android.webkit.CookieManager
 import android.webkit.WebView
 import com.github.k1rakishou.chan.core.site.Site
-import com.github.k1rakishou.chan.core.site.SiteSetting
+import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
 import com.github.k1rakishou.chan.features.webview.WebViewTaskResult
 import com.github.k1rakishou.chan.features.webview.client.AbstractCookieWebViewClient
 import com.github.k1rakishou.chan.features.webview.client.AbstractWebViewClient
@@ -36,7 +36,7 @@ class YandexCaptchaTask(
 
   override suspend fun addCookieToSiteSettings(site: Site, cookies: String, userData: Any?) {
     val dvachAntiSpamCookieSetting = site.getSettingBySettingId<StringSetting>(
-      SiteSetting.SiteSettingId.DvachAntiSpamCookie
+      SiteSettingForUi.SiteSettingId.DvachAntiSpamCookie
     )
 
     if (dvachAntiSpamCookieSetting == null) {

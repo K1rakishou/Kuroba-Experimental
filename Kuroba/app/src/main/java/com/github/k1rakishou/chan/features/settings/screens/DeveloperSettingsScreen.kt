@@ -9,8 +9,8 @@ import com.github.k1rakishou.chan.features.settings.DatabaseSummaryScreen
 import com.github.k1rakishou.chan.features.settings.DeveloperScreen
 import com.github.k1rakishou.chan.features.settings.SettingClickAction
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
-import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
-import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
+import com.github.k1rakishou.chan.features.settings.setting.BooleanSetting
+import com.github.k1rakishou.chan.features.settings.setting.LinkSetting
 import com.github.k1rakishou.chan.ui.controller.LogsController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
@@ -45,7 +45,7 @@ class DeveloperSettingsScreen(
           groupIdentifier = identifier
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = DeveloperScreen.MainGroup.ForceLowRamDevice,
           topDescriptionIdFunc = { R.string.settings_force_low_ram_device },
@@ -54,7 +54,7 @@ class DeveloperSettingsScreen(
           requiresRestart = true
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = DeveloperScreen.MainGroup.CheckUpateApkVersionCode,
           topDescriptionIdFunc = { R.string.settings_check_update_apk_version_code },
@@ -62,7 +62,7 @@ class DeveloperSettingsScreen(
           setting = ChanSettings.checkUpdateApkVersionCode,
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = DeveloperScreen.MainGroup.ViewLogs,
           topDescriptionIdFunc = { R.string.settings_open_logs },
@@ -71,7 +71,7 @@ class DeveloperSettingsScreen(
           }
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = DeveloperScreen.MainGroup.EnableDisableVerboseLogs,
           topDescriptionIdFunc = {
@@ -87,7 +87,7 @@ class DeveloperSettingsScreen(
           }
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = DeveloperScreen.MainGroup.CrashApp,
           topDescriptionIdFunc = { R.string.settings_crash_app },
@@ -96,7 +96,7 @@ class DeveloperSettingsScreen(
           }
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = DeveloperScreen.MainGroup.ShowDatabaseSummary,
           topDescriptionIdFunc = { R.string.settings_database_summary },
@@ -105,7 +105,7 @@ class DeveloperSettingsScreen(
           }
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = DeveloperScreen.MainGroup.ResetThreadOpenCounter,
           topDescriptionIdFunc = { R.string.settings_reset_thread_open_counter },
@@ -115,7 +115,7 @@ class DeveloperSettingsScreen(
           }
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = DeveloperScreen.MainGroup.CrashOnSafeThrow,
           topDescriptionIdFunc = {
@@ -130,7 +130,7 @@ class DeveloperSettingsScreen(
           }
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = DeveloperScreen.MainGroup.SimulateAppUpdated,
           topDescriptionIdFunc = {
@@ -147,7 +147,7 @@ class DeveloperSettingsScreen(
           }
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = DeveloperScreen.MainGroup.SimulateAppNotUpdated,
           topDescriptionIdFunc = { R.string.settings_simulate_app_not_updated },
@@ -162,7 +162,7 @@ class DeveloperSettingsScreen(
           }
         )
 
-        group += LinkSettingV2.createBuilder(
+        group += LinkSetting.createBuilder(
           context = context,
           identifier = DeveloperScreen.MainGroup.AutoThemeSwitcher,
           topDescriptionIdFunc = { R.string.settings_auto_theme_switcher },
@@ -186,7 +186,7 @@ class DeveloperSettingsScreen(
           }
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = DeveloperScreen.MainGroup.FunThingsAreFun,
           topDescriptionIdFunc = { R.string.settings_fun_things_are_fun },
@@ -194,7 +194,7 @@ class DeveloperSettingsScreen(
           requiresRestart = true
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = DeveloperScreen.MainGroup.Force4chanBirthday,
           topDescriptionIdFunc = { R.string.settings_force_4chan_birthday },
@@ -203,7 +203,7 @@ class DeveloperSettingsScreen(
           requiresRestart = true
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = DeveloperScreen.MainGroup.ForceHalloween,
           topDescriptionIdFunc = { R.string.settings_force_halloween },
@@ -212,7 +212,7 @@ class DeveloperSettingsScreen(
           requiresRestart = true
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = DeveloperScreen.MainGroup.ForceChristmas,
           topDescriptionIdFunc = { R.string.settings_force_christmas },
@@ -221,7 +221,7 @@ class DeveloperSettingsScreen(
           requiresRestart = true
         )
 
-        group += BooleanSettingV2.createBuilder(
+        group += BooleanSetting.createBuilder(
           context = context,
           identifier = DeveloperScreen.MainGroup.ForceNewYear,
           topDescriptionIdFunc = { R.string.settings_force_new_year },

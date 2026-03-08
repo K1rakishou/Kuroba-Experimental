@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.core.site
 
 import androidx.annotation.CallSuper
 import com.github.k1rakishou.chan.core.site.http.HttpCall
+import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.COOKIE_HEADER_NAME
 import com.github.k1rakishou.common.CookieBuilder
@@ -71,7 +72,7 @@ abstract class SiteRequestModifier(
     val domainOrHost = url.domainOrHost()
 
     return site
-      .getSettingBySettingId<MapSetting>(SiteSetting.SiteSettingId.CloudFlareClearanceCookie)
+      .getSettingBySettingId<MapSetting>(SiteSettingForUi.SiteSettingId.CloudFlareClearanceCookie)
       ?.get(domainOrHost)
   }
 
