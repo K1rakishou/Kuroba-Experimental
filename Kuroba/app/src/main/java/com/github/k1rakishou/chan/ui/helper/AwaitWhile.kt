@@ -1,6 +1,8 @@
 package com.github.k1rakishou.chan.ui.helper
 
 import android.os.SystemClock
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.android.awaitFrame
 import kotlinx.coroutines.isActive
@@ -23,4 +25,14 @@ suspend fun CoroutineScope.awaitWhile(
   }
 
   return true
+}
+
+fun LazyGridState.readyForScrollEvents(): Boolean {
+  return layoutInfo.totalItemsCount > 0 &&
+    layoutInfo.visibleItemsInfo.isNotEmpty()
+}
+
+fun LazyListState.readyForScrollEvents(): Boolean {
+  return layoutInfo.totalItemsCount > 0 &&
+    layoutInfo.visibleItemsInfo.isNotEmpty()
 }

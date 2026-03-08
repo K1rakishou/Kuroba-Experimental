@@ -67,6 +67,7 @@ import com.github.k1rakishou.chan.ui.compose.window.KurobaWindowWidthSizeClass
 import com.github.k1rakishou.chan.ui.controller.base.BaseComposeController
 import com.github.k1rakishou.chan.ui.controller.base.DeprecatedNavigationFlags
 import com.github.k1rakishou.chan.ui.helper.awaitWhile
+import com.github.k1rakishou.chan.ui.helper.readyForScrollEvents
 import com.github.k1rakishou.chan.utils.ComposeAnnotatedStringHelper
 import com.github.k1rakishou.chan.utils.ComposeAnnotatedStringHelperImpl
 import com.github.k1rakishou.chan.utils.ViewModelScope
@@ -133,10 +134,7 @@ class BoardSelectionController(
     }
 
     LaunchedEffect(key1 = Unit) {
-      awaitWhile {
-        lazyGridState.layoutInfo.totalItemsCount > 0 &&
-          lazyGridState.layoutInfo.visibleItemsInfo.isNotEmpty()
-      }
+      awaitWhile { lazyGridState.readyForScrollEvents() }
 
       lazyGridState.scrollToItem(
         index = viewModel.lastScrollPosition.index,
