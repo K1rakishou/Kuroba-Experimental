@@ -442,8 +442,8 @@ class MpvVideoMediaView(
         actualVideoPlayerViewContainer.addView(
           actualVideoPlayerView,
           ViewGroup.LayoutParams(
-            LayoutParams.MATCH_PARENT,
-            LayoutParams.MATCH_PARENT
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT
           )
         )
 

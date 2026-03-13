@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.features.view.media
 
-import android.R
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
@@ -87,7 +86,7 @@ class MediaViewerActivity :
       .viewModelComponentBuilder()
       .build()
 
-    initView(findViewById(R.id.content))
+    initView(findViewById(android.R.id.content))
 
     AndroidUtils.getWindow(this)
       ?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)

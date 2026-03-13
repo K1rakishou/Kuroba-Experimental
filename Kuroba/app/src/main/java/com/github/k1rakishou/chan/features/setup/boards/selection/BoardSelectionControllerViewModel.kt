@@ -11,6 +11,7 @@ import com.github.k1rakishou.chan.core.base.viewmodel.KurobaViewModel
 import com.github.k1rakishou.chan.core.concurrency.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.shared.ViewModelAssistedFactory
+import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.CompositeCatalogManager
 import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManager
@@ -37,6 +38,7 @@ class BoardSelectionControllerViewModel(
   private val savedStateHandle: SavedStateHandle,
   private val siteManager: SiteManager,
   private val boardManager: BoardManager,
+  private val archivesManager: ArchivesManager,
   private val compositeCatalogManager: CompositeCatalogManager,
   private val currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager
 ) : KurobaViewModel() {
@@ -119,6 +121,11 @@ class BoardSelectionControllerViewModel(
           collectBoardsFromCompositeCatalogs(query, activeSiteCount)
         } else {
           collectBoardsFromBoardManager(query, siteHeader.siteDescriptor, activeSiteCount)
+        }
+
+        if (archivesManager.isSiteArchive(site.descriptor) && boards.isEmpty()) {
+          // Skip archives with 0 added boards
+          return@forEach
         }
 
         elements.add(siteHeader)
@@ -336,6 +343,7 @@ class BoardSelectionControllerViewModel(
   class ViewModelFactory @Inject constructor(
     private val siteManager: SiteManager,
     private val boardManager: BoardManager,
+    private val archivesManager: ArchivesManager,
     private val compositeCatalogManager: CompositeCatalogManager,
     private val currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager
   ) : ViewModelAssistedFactory<BoardSelectionControllerViewModel> {
@@ -344,6 +352,7 @@ class BoardSelectionControllerViewModel(
         savedStateHandle = handle,
         siteManager = siteManager,
         boardManager = boardManager,
+        archivesManager = archivesManager,
         compositeCatalogManager = compositeCatalogManager,
         currentOpenedDescriptorStateManager = currentOpenedDescriptorStateManager,
       )
