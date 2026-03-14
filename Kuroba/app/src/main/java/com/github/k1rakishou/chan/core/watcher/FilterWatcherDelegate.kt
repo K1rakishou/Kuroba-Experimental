@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.core.watcher
 
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.helper.FilterWatcherNotificationHelper
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
@@ -14,14 +13,15 @@ import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isExceptionImportant
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.repository.ChanPostRepository
+import com.github.k1rakishou.v2.KurobaSettings
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
 
 class FilterWatcherDelegate(
   private val isDevFlavor: Boolean,
+  private val kurobaSettings: KurobaSettings,
   private val appScope: CoroutineScope,
   private val boardManager: BoardManager,
   private val bookmarksManager: BookmarksManager,
@@ -45,7 +45,7 @@ class FilterWatcherDelegate(
     Logger.d(TAG, "FilterWatcherDelegate.doWork() called")
 
     if (isDevFlavor) {
-      check(ChanSettings.filterWatchEnabled.get()) { "Filter watcher is disabled" }
+      check(kurobaSettings.application.filterWatchEnabled.read()) { "Filter watcher is disabled" }
     }
 
     awaitUntilAllDependenciesAreReady()

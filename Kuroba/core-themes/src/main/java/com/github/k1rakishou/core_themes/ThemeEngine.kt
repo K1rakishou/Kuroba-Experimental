@@ -15,12 +15,12 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.drawable.DrawableCompat
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.colors.HSL
 import com.github.k1rakishou.core_themes.themes.Kuroneko
 import com.github.k1rakishou.core_themes.themes.Shironeko
 import com.github.k1rakishou.fsaf.file.ExternalFile
+import com.github.k1rakishou.v2.KurobaSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.Color as ComposeColor
 
 open class ThemeEngine(
   private val appScope: CoroutineScope,
+  private val kurobaSettings: KurobaSettings,
   val themeParser: ThemeParser
 ) {
   private val listeners = hashMapOf<Long, ThemeChangesListener>()
@@ -65,7 +66,7 @@ open class ThemeEngine(
   lateinit var chanTheme: ChanTheme
     private set
 
-  fun initialize(context: Context, isHalloweenToday: Boolean) {
+  suspend fun initialize(context: Context, isHalloweenToday: Boolean) {
     this.isHalloweenToday = isHalloweenToday
     this.density = context.resources.displayMetrics.density
 
@@ -76,8 +77,11 @@ open class ThemeEngine(
     actualLightTheme = themeParser.readThemeFromDisk(defaultLightTheme)
 
     val nightModeFlag = context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK
-    if (nightModeFlag == Configuration.UI_MODE_NIGHT_UNDEFINED || ChanSettings.ignoreDarkNightMode.get()) {
-      chanTheme = if (ChanSettings.isCurrentThemeDark.get()) {
+    if (
+      nightModeFlag == Configuration.UI_MODE_NIGHT_UNDEFINED ||
+      kurobaSettings.application.ignoreDarkNightMode.read()
+    ) {
+      chanTheme = if (kurobaSettings.application.isCurrentThemeDark.read()) {
         darkTheme()
       } else {
         lightTheme()
@@ -88,11 +92,11 @@ open class ThemeEngine(
 
     chanTheme = when (nightModeFlag) {
       Configuration.UI_MODE_NIGHT_NO -> {
-        ChanSettings.isCurrentThemeDark.set(false)
+        kurobaSettings.application.isCurrentThemeDark.write(false)
         lightTheme()
       }
       Configuration.UI_MODE_NIGHT_YES -> {
-        ChanSettings.isCurrentThemeDark.set(true)
+        kurobaSettings.application.isCurrentThemeDark.write(true)
         darkTheme()
       }
       else -> defaultDarkTheme
@@ -149,9 +153,8 @@ open class ThemeEngine(
     listeners.remove(listener.hashCode().toLong())
   }
 
-  fun toggleTheme() {
-    val isNextThemeDark = !ChanSettings.isCurrentThemeDark.get()
-    ChanSettings.isCurrentThemeDark.setSync(isNextThemeDark)
+  suspend fun toggleTheme() {
+    val isNextThemeDark = kurobaSettings.application.isCurrentThemeDark.toggle()
 
     chanTheme = getThemeInternal(isNextThemeDark)
     refreshViews()
@@ -162,7 +165,7 @@ open class ThemeEngine(
       return
     }
 
-    ChanSettings.isCurrentThemeDark.set(switchToDarkTheme)
+    kurobaSettings.application.isCurrentThemeDark.writeAsync(switchToDarkTheme)
 
     chanTheme = getThemeInternal(switchToDarkTheme)
     refreshViews()
@@ -296,7 +299,7 @@ open class ThemeEngine(
       actualLightTheme = chanTheme
     }
 
-    ChanSettings.isCurrentThemeDark.set(chanTheme.isDarkTheme)
+    kurobaSettings.application.isCurrentThemeDark.writeAsync(chanTheme.isDarkTheme)
     this.chanTheme = chanTheme
     themeParser.storeThemeOnDisk(chanTheme)
 

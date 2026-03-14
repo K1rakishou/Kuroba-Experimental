@@ -12,7 +12,6 @@ import android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.concurrency.KeyBasedSerializedCoroutineExecutor
@@ -29,7 +28,8 @@ import com.github.k1rakishou.common.appendIfNotEmpty
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.download.ImageDownloadRequest
 import com.github.k1rakishou.model.repository.ImageDownloadRequestRepository
-import com.github.k1rakishou.persist_state.ImageSaverV2Options
+import com.github.k1rakishou.v2.KurobaSettings
+import com.github.k1rakishou.v2.parameters.ImageSaverV2Options
 import com.google.gson.Gson
 import dagger.Lazy
 import kotlinx.coroutines.Job
@@ -38,6 +38,8 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class ImageSaverV2Service : Service() {
+  @Inject
+  lateinit var kurobaSettings: KurobaSettings
   @Inject
   lateinit var imageDownloadRequestRepository: ImageDownloadRequestRepository
   @Inject
@@ -50,7 +52,7 @@ class ImageSaverV2Service : Service() {
   lateinit var notificationManagerCompat: NotificationManagerCompat
 
   private val kurobaScope = KurobaCoroutineScope()
-  private val verboseLogs = ChanSettings.verboseLogs.get()
+  private val verboseLogs by lazy { kurobaSettings.application.verboseLogs.readBlocking() }
   private val notificationUpdateExecutor = KeyBasedSerializedCoroutineExecutor<String>(kurobaScope)
 
   private var stopServiceJob: Job? = null

@@ -34,6 +34,7 @@ abstract class AbstractWebViewTask(
   val webViewClient by lazy { createWebClient() }
   val appScope by lazy { appDependencies().appScope }
   val siteResolver by lazy { appDependencies().siteResolver }
+  val kurobaSettings by lazy { appDependencies().kurobaSettings }
   val webViewLastTouchPositionHolder by lazy { appDependencies().webViewLastTouchPositionHolder }
 
   val webViewClientResultWaiter = CompletableDeferred<WebViewTaskResult>()

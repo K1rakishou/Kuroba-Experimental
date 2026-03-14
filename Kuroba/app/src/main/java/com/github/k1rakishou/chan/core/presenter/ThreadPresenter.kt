@@ -4,7 +4,6 @@ import android.content.Context
 import android.text.TextUtils
 import android.widget.Toast
 import androidx.annotation.StringRes
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.concurrency.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.concurrency.SerializedCoroutineExecutor
@@ -78,6 +77,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.core_themes.ThemeParser
+import com.github.k1rakishou.deprecated.persist_state.IndexAndTopDeprecated
 import com.github.k1rakishou.model.data.board.pages.BoardPage
 import com.github.k1rakishou.model.data.board.pages.BoardPages
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
@@ -97,8 +97,8 @@ import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.source.cache.ChanCatalogSnapshotCache
 import com.github.k1rakishou.model.util.ChanPostUtils
 import com.github.k1rakishou.model.util.ChanPostUtils.getReadableFileSize
-import com.github.k1rakishou.persist_state.IndexAndTop
-import com.github.k1rakishou.persist_state.ReplyMode
+import com.github.k1rakishou.v2.KurobaSettings
+import com.github.k1rakishou.v2.parameters.ReplyMode
 import dagger.Lazy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -123,6 +123,7 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.time.measureTimedValue
 
 class ThreadPresenter @Inject constructor(
+  private val kurobaSettings: KurobaSettings,
   private val bookmarksManagerLazy: Lazy<BookmarksManager>,
   private val pageRequestManagerLazy: Lazy<PageRequestManager>,
   private val siteManagerLazy: Lazy<SiteManager>,
@@ -304,7 +305,7 @@ class ThreadPresenter @Inject constructor(
   var chanThreadLoadingState = ChanThreadLoadingState.Uninitialized
     private set
 
-  private val verboseLogs by lazy { ChanSettings.verboseLogs.get() }
+  private val verboseLogs by lazy { kurobaSettings.application.verboseLogs.readBlocking() }
   private val postLinkableClickHelper by lazy {
     PostLinkableClickHelper(
       siteManager = siteManager,
@@ -432,7 +433,7 @@ class ThreadPresenter @Inject constructor(
       unbindChanDescriptor(false)
     }
 
-    if (chanDescriptor is ChanDescriptor.CatalogDescriptor && !ChanSettings.neverShowPages.get()) {
+    if (chanDescriptor is ChanDescriptor.CatalogDescriptor && kurobaSettings.application.showThreadPage.read()) {
       pageRequestManager.getBoardPages(
         boardDescriptor = chanDescriptor.boardDescriptor(),
         requestPagesIfNotCached = true
@@ -904,7 +905,7 @@ class ThreadPresenter @Inject constructor(
             // We need to do this when loading a composite catalog with sorting order not set to BUMP.
             if (
               currentChanDescriptor is ChanDescriptor.CompositeCatalogDescriptor &&
-              !PostsFilter.CatalogSortingOrder.current().isBump
+              !PostsFilter.CatalogSortingOrder.current(kurobaSettings).isBump
             ) {
               Logger.debug(TAG) {
                 "normalLoad() currentChanDescriptor is CompositeCatalogDescriptor and current " +
@@ -1359,7 +1360,7 @@ class ThreadPresenter @Inject constructor(
         CurrentFocusedControllers.FocusState.Catalog -> localChanDescriptor is ChanDescriptor.ICatalogDescriptor
         CurrentFocusedControllers.FocusState.Thread -> localChanDescriptor is ChanDescriptor.ThreadDescriptor
         CurrentFocusedControllers.FocusState.None,
-        CurrentFocusedControllers.FocusState.Both -> ChanSettings.isSplitLayoutMode()
+        CurrentFocusedControllers.FocusState.Both -> kurobaSettings.application.isSplitLayoutMode()
       }
 
       if (canMoveToTop) {
@@ -1729,7 +1730,10 @@ class ThreadPresenter @Inject constructor(
 
       val initialImageUrl = postImage.imageUrl?.toString()
         ?: return@launch
-      val transitionThumbnailUrl = postImage.getThumbnailUrl(isSpoilerRevealed = isSpoilerRevealed)?.toString()
+      val transitionThumbnailUrl = postImage.getThumbnailUrl(
+        kurobaSettings = kurobaSettings,
+        isSpoilerRevealed = isSpoilerRevealed
+      )?.toString()
         ?: return@launch
 
       threadPresenterCallback?.showImages(
@@ -2518,18 +2522,18 @@ class ThreadPresenter @Inject constructor(
     val thread = chanThreadManager.getChanThread(threadDescriptor)
       ?: return false
 
-    return ChanSettings.autoRefreshThread.get()
-      && BackgroundUtils.isInForeground()
+    return BackgroundUtils.isInForeground()
       && isBound
       && !thread.isClosed()
       && !thread.isArchived()
+      && kurobaSettings.application.autoRefreshThread.readBlocking()
   }
 
-  override fun getPage(originalPostDescriptor: PostDescriptor): BoardPage? {
+  override suspend fun getPage(originalPostDescriptor: PostDescriptor): BoardPage? {
     return pageRequestManager.getPage(originalPostDescriptor)
   }
 
-  override fun getBoardPages(boardDescriptor: BoardDescriptor): BoardPages? {
+  override suspend fun getBoardPages(boardDescriptor: BoardDescriptor): BoardPages? {
     return pageRequestManager.getBoardPages(boardDescriptor)
   }
 
@@ -2684,7 +2688,7 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  private fun showPostInfo(post: ChanPost) {
+  private suspend fun showPostInfo(post: ChanPost) {
     val text = StringBuilder(128)
     val descriptor = post.postDescriptor.descriptor
 
@@ -2750,7 +2754,7 @@ class ThreadPresenter @Inject constructor(
         .append("Size: ")
         .append(getReadableFileSize(image.size))
 
-      if (image.imageSpoilered && image.isInlined) {
+      if (image.imageSpoilered(kurobaSettings) && image.isInlined) {
         // all linked files are spoilered, don't say that
         text.append("\nSpoilered")
       }
@@ -2762,7 +2766,7 @@ class ThreadPresenter @Inject constructor(
 
     text
       .append("Posted: ")
-      .append(ChanPostUtils.getLocalDate(post, ChanSettings.postFullDateUseLocalLocale.get()))
+      .append(ChanPostUtils.getLocalDate(post, kurobaSettings.application.postFullDateUseLocalLocale.read()))
 
     if (!TextUtils.isEmpty(post.posterId) && isBound) {
       val threadDescriptor = currentChanDescriptor as? ChanDescriptor.ThreadDescriptor
@@ -2842,7 +2846,7 @@ class ThreadPresenter @Inject constructor(
       return
     }
 
-    val catalogSortingOrder = PostsFilter.CatalogSortingOrder.current()
+    val catalogSortingOrder = PostsFilter.CatalogSortingOrder.current(kurobaSettings)
 
     // When processing filters which create new post hides we need to reparse those posts so that
     // their replies have the correct postlinkable types (QUOTE_TO_HIDDEN_OR_REMOVED_POST)
@@ -2990,7 +2994,6 @@ class ThreadPresenter @Inject constructor(
             chanDescriptor = post.postDescriptor.descriptor,
             replyMode = ReplyMode.ReplyModeSendWithoutCaptcha,
             autoReply = false,
-            afterPostingAttempt = true,
             onFinished = { success ->
               if (success && !retrying) {
                 processDvachPostReport(
@@ -3014,7 +3017,7 @@ class ThreadPresenter @Inject constructor(
     return siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
       ?.commonSettings
       ?.lastUsedReplyMode
-      ?.get()
+      ?.readBlocking()
   }
 
   enum class ChanThreadLoadingState {
@@ -3027,7 +3030,7 @@ class ThreadPresenter @Inject constructor(
     val chanDescriptor: ChanDescriptor?
     val displayingPostDescriptors: List<PostDescriptor>
     val displayingPostDescriptorsInThread: List<PostDescriptor>
-    val currentPosition: IndexAndTop?
+    val currentPosition: IndexAndTopDeprecated?
 
     suspend fun showPostsForChanDescriptor(
       descriptor: ChanDescriptor?,
@@ -3125,7 +3128,6 @@ class ThreadPresenter @Inject constructor(
       chanDescriptor: ChanDescriptor,
       replyMode: ReplyMode,
       autoReply: Boolean,
-      afterPostingAttempt: Boolean,
       onFinished: ((Boolean) -> Unit)? = null
     )
 

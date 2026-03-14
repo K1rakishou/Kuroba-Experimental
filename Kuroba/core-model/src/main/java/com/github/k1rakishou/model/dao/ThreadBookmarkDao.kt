@@ -7,7 +7,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.RewriteQueriesToDropUnusedColumns
 import androidx.room.Update
-import com.github.k1rakishou.model.KurobaDatabase
+import com.github.k1rakishou.model.KurobaMainDatabase
 import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkEntity
 import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkFull
 import com.github.k1rakishou.model.entity.chan.board.ChanBoardIdEntity
@@ -88,7 +88,7 @@ abstract class ThreadBookmarkDao {
     }
 
     toInsert
-      .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+      .chunked(KurobaMainDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
       .forEach { chunk ->
         val insertedIds = insertManyOrAbort(chunk)
 
@@ -98,7 +98,7 @@ abstract class ThreadBookmarkDao {
       }
 
     toUpdate
-      .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+      .chunked(KurobaMainDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
       .forEach { chunk ->
         chunk.forEach { threadBookmarkEntity ->
           val threadBookmarkId = alreadyInsertedIdsMap[threadBookmarkEntity.ownerThreadId] ?: -1L
@@ -126,7 +126,7 @@ abstract class ThreadBookmarkDao {
 
   private suspend fun selectManyIds(ownerThreadIds: Collection<Long>): Map<Long, Long> {
     val pairs = ownerThreadIds
-      .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+      .chunked(KurobaMainDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
       .flatMap { batch -> selectManyThreadBookmarkIdPairs(batch) }
 
     if (pairs.isEmpty()) {

@@ -33,14 +33,14 @@ import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.PostIndexed
 import com.github.k1rakishou.model.util.ChanPostUtils
-import com.github.k1rakishou.persist_state.IndexAndTop
+import com.github.k1rakishou.v2.parameters.RecyclerIndexAndTopInfo
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.*
+import java.util.Locale
 
 class PostSearchPopupController(
   context: Context,
@@ -178,12 +178,13 @@ class PostSearchPopupController(
       postViewMode = data.postViewMode,
       postCellCallback = postCellCallback,
       chanDescriptor = chanDescriptor,
-      _chanThreadViewableInfoManager = chanThreadViewableInfoManager,
-      _chanThreadManager = chanThreadManager,
-      _postFilterManager = postFilterManager,
-      _savedReplyManager = savedReplyManager,
-      _postFilterHighlightManager = postFilterHighlightManager,
-      _postHideManager = postHideManager,
+      kurobaSettings = kurobaSettings,
+      chanThreadViewableInfoManagerLazy = chanThreadViewableInfoManager,
+      chanThreadManagerLazy = chanThreadManager,
+      postFilterManagerLazy = postFilterManager,
+      savedReplyManagerLazy = savedReplyManager,
+      postFilterHighlightManagerLazy = postFilterHighlightManager,
+      postHideManagerLazy = postHideManager,
       initialTheme = themeEngine.chanTheme
     )
 
@@ -367,7 +368,7 @@ class PostSearchPopupController(
   companion object {
     private const val TAG = "PostSearchPopupController"
 
-    val scrollPositionCache = LruCache<ChanDescriptor, IndexAndTop>(128)
+    val scrollPositionCache = LruCache<ChanDescriptor, RecyclerIndexAndTopInfo.IndexAndTop>(128)
 
     private val lastQueryCache = LruCache<ChanDescriptor, String>(128)
   }

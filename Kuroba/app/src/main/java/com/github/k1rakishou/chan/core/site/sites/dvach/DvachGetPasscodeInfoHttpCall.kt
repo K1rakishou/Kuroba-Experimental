@@ -19,7 +19,7 @@ class DvachGetPasscodeInfoHttpCall(
   var passcodePostingLimitationsInfoResult: ModularResult<PasscodePostingLimitationsInfo> =
     ModularResult.error(HttpCallNotCalledException())
 
-  override fun setup(
+  override suspend fun setup(
     requestBuilder: Request.Builder,
     progressListener: ProgressRequestBody.ProgressRequestListener?
   ) {
@@ -33,7 +33,7 @@ class DvachGetPasscodeInfoHttpCall(
     site.requestModifier.modifyHttpCall(this, requestBuilder)
   }
 
-  override fun process(response: Response, result: String) {
+  override suspend fun process(response: Response, result: String) {
     if (!response.isSuccessful) {
       passcodePostingLimitationsInfoResult = ModularResult.error(BadResponseCodeException(response.code))
       return

@@ -1,12 +1,12 @@
 package com.github.k1rakishou.model.source.local
 
-import com.github.k1rakishou.model.KurobaDatabase
+import com.github.k1rakishou.model.KurobaMainDatabase
 import com.github.k1rakishou.model.data.catalog.CompositeCatalog
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.entity.chan.catalog.CompositeCatalogEntity
 
 class CompositeCatalogLocalSource(
-  database: KurobaDatabase
+  database: KurobaMainDatabase
 ) : AbstractLocalSource(database) {
   private val compositeCatalogDao = database.compositeCatalogDao()
 

@@ -13,8 +13,12 @@ class ThemeEditorPostLinkable(
   key: CharSequence,
   linkableValue: Value,
   type: Type
-) : PostLinkable(key, linkableValue, type) {
-
+) : PostLinkable(
+  key = key,
+  linkableValue = linkableValue,
+  type = type,
+  revealTextSpoilers = false
+) {
   init {
     super.themeEngineOverride = themeEngine
   }

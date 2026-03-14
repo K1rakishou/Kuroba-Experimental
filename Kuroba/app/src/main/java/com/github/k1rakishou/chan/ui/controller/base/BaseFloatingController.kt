@@ -71,6 +71,11 @@ abstract class BaseFloatingController(
     return super.onBack()
   }
 
+  protected fun popWithResult(result: Any?) {
+    setControllerResult(result)
+    pop()
+  }
+
   protected open fun pop(): Boolean {
     if (!presenting) {
       return false

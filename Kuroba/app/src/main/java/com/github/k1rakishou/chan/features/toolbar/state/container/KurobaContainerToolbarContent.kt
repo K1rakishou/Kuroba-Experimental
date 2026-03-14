@@ -75,7 +75,7 @@ fun KurobaContainerToolbarContent(
           transitionToolbarContent = toolbarContentMovable
         )
       }
-      is KurobaToolbarTransition.Instant -> {
+      is KurobaToolbarTransition.Animated -> {
         KurobaToolbarTransitionInstant(
           toolbarHeight = toolbarHeight,
           transitionToolbarState = transitionToolbar,

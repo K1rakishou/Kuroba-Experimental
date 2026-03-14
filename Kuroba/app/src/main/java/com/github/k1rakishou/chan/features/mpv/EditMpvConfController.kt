@@ -22,11 +22,11 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
-import com.github.k1rakishou.chan.core.mpv.MPVView
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeCard
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextBarButton
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextField
 import com.github.k1rakishou.chan.ui.controller.base.BaseFloatingComposeController
+import com.github.k1rakishou.common.AppConstants
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -36,12 +36,12 @@ class EditMpvConfController(
 ) : BaseFloatingComposeController(context) {
 
   private val mpvConfFile by lazy {
-    val mpvconfDir = File(context.filesDir, MPVView.MPV_CONF_DIR)
+    val mpvconfDir = File(context.filesDir, AppConstants.MPV_CONF_DIR)
     if (!mpvconfDir.exists()) {
       mpvconfDir.mkdir()
     }
 
-    return@lazy File(mpvconfDir, MPVView.MPV_CONF_FILE)
+    return@lazy File(mpvconfDir, AppConstants.MPV_CONF_FILE)
   }
 
   override fun injectActivityDependencies(component: ActivityComponent) {

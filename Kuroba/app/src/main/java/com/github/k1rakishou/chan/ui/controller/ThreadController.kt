@@ -7,7 +7,6 @@ import android.widget.Toast
 import androidx.compose.ui.unit.Dp
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout.OnRefreshListener
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.concurrency.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.helper.DialogFactory
@@ -65,7 +64,8 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable
 import com.github.k1rakishou.model.data.filter.FilterType
 import com.github.k1rakishou.model.data.post.ChanPost
-import com.github.k1rakishou.persist_state.ReplyMode
+import com.github.k1rakishou.v2.parameters.CatalogOrThreadSearchMode
+import com.github.k1rakishou.v2.parameters.ReplyMode
 import dagger.Lazy
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collect
@@ -171,8 +171,8 @@ abstract class ThreadController(
   override val snackbarScope: SnackbarScope
     get() {
       return when (threadControllerType) {
-        ThreadControllerType.Catalog -> SnackbarScope.PostList(layoutAnchor = SnackbarScope.LayoutAnchor.Catalog)
-        ThreadControllerType.Thread -> SnackbarScope.PostList(layoutAnchor = SnackbarScope.LayoutAnchor.Thread)
+        ThreadControllerType.Catalog -> SnackbarScope.PostList(layoutAnchor = SnackbarScope.LayoutAnchor.Left)
+        ThreadControllerType.Thread -> SnackbarScope.PostList(layoutAnchor = SnackbarScope.LayoutAnchor.Right)
       }
     }
 
@@ -381,8 +381,7 @@ abstract class ThreadController(
           threadLayout.showCaptchaController(
             chanDescriptor = threadDescriptor,
             replyMode = ReplyMode.ReplyModeSendWithoutCaptcha,
-            autoReply = false,
-            afterPostingAttempt = true
+            autoReply = false
           )
         },
         onOpenInWebView = {
@@ -619,13 +618,13 @@ abstract class ThreadController(
     presentController(floatingListMenuController)
   }
 
-  private fun onReplyLayoutVisibilityEvent(replyLayoutVisibilityEvents: ReplyLayoutVisibilityStates) {
+  private suspend fun onReplyLayoutVisibilityEvent(replyLayoutVisibilityEvents: ReplyLayoutVisibilityStates) {
     val currentDescriptor = chanDescriptor
       ?: return
 
     val isInReplyLayoutMode = kurobaToolbarState.isInReplyMode()
 
-    val currentReplyLayoutIsOpened = if (ChanSettings.isSplitLayoutMode()) {
+    val currentReplyLayoutIsOpened = if (kurobaSettings.application.isSplitLayoutMode()) {
       replyLayoutVisibilityEvents.isOpenedOrExpandedForDescriptor(currentDescriptor)
     } else {
       if (currentOpenedDescriptorStateManager.isDescriptorNotFocused(currentDescriptor)) {
@@ -754,10 +753,10 @@ abstract class ThreadController(
 
     val filterOutPostsNotMatchingSearchQueryEnabled = when (chanDescriptor) {
       is ChanDescriptor.ICatalogDescriptor -> {
-        ChanSettings.catalogSearchMode.get() == ChanSettings.CatalogOrThreadSearchMode.Filter
+        kurobaSettings.application.catalogSearchMode.read() == CatalogOrThreadSearchMode.Filter
       }
       is ChanDescriptor.ThreadDescriptor -> {
-        ChanSettings.threadSearchMode.get() == ChanSettings.CatalogOrThreadSearchMode.Filter
+        kurobaSettings.application.threadSearchMode.read() == CatalogOrThreadSearchMode.Filter
       }
     }
 
@@ -794,49 +793,49 @@ abstract class ThreadController(
       id = ACTION_USE_SCROLLING_TEXT_FOR_THREAD_TITLE,
       stringId = R.string.action_use_scrolling_text_for_thread_title,
       visible = true,
-      checked = ChanSettings.scrollingTextForThreadTitles.get(),
+      checked = kurobaSettings.application.scrollingTextForThreadTitles.readBlocking(),
       onClick = { item -> onThreadViewOptionClicked(item) }
     )
     withCheckableOverflowMenuItem(
       id = ACTION_MARK_YOUR_POSTS_ON_SCROLLBAR,
       stringId = R.string.action_mark_your_posts_on_scrollbar,
       visible = true,
-      checked = ChanSettings.markYourPostsOnScrollbar.get(),
+      checked = kurobaSettings.application.markYourPostsOnScrollbar.readBlocking(),
       onClick = { item -> onScrollbarLabelingOptionClicked(item) }
     )
     withCheckableOverflowMenuItem(
       id = ACTION_MARK_REPLIES_TO_YOU_ON_SCROLLBAR,
       stringId = R.string.action_mark_replies_to_your_posts_on_scrollbar,
       visible = true,
-      checked = ChanSettings.markRepliesToYourPostOnScrollbar.get(),
+      checked = kurobaSettings.application.markRepliesToYourPostOnScrollbar.readBlocking(),
       onClick = { item -> onScrollbarLabelingOptionClicked(item) }
     )
     withCheckableOverflowMenuItem(
       id = ACTION_MARK_CROSS_THREAD_REPLIES_ON_SCROLLBAR,
       stringId = R.string.action_mark_cross_thread_quotes_on_scrollbar,
       visible = true,
-      checked = ChanSettings.markCrossThreadQuotesOnScrollbar.get(),
+      checked = kurobaSettings.application.markCrossThreadQuotesOnScrollbar.readBlocking(),
       onClick = { item -> onScrollbarLabelingOptionClicked(item) }
     )
     withCheckableOverflowMenuItem(
       id = ACTION_MARK_DELETED_POSTS_ON_SCROLLBAR,
       stringId = R.string.action_mark_deleted_posts_on_scrollbar,
       visible = true,
-      checked = ChanSettings.markDeletedPostsOnScrollbar.get(),
+      checked = kurobaSettings.application.markDeletedPostsOnScrollbar.readBlocking(),
       onClick = { item -> onScrollbarLabelingOptionClicked(item) }
     )
     withCheckableOverflowMenuItem(
       id = ACTION_MARK_HOT_POSTS_ON_SCROLLBAR,
       stringId = R.string.action_mark_hot_posts_on_scrollbar,
       visible = true,
-      checked = ChanSettings.markHotPostsOnScrollbar.get(),
+      checked = kurobaSettings.application.markHotPostsOnScrollbar.readBlocking(),
       onClick = { item -> onScrollbarLabelingOptionClicked(item) }
     )
     withCheckableOverflowMenuItem(
       id = ACTION_GLOBAL_NSFW_MODE,
       stringId = R.string.action_catalog_thread_nsfw_mode,
       visible = true,
-      checked = ChanSettings.globalNsfwMode.get(),
+      checked = kurobaSettings.application.globalNsfwMode.readBlocking(),
       onClick = { item -> onScrollbarLabelingOptionClicked(item) }
     )
     withOverflowMenuItem(
@@ -851,7 +850,7 @@ abstract class ThreadController(
     val clickedItemId = item.id
     if (clickedItemId == ACTION_USE_SCROLLING_TEXT_FOR_THREAD_TITLE) {
       toolbarState.findCheckableOverflowItem(ACTION_USE_SCROLLING_TEXT_FOR_THREAD_TITLE)
-        ?.updateChecked(ChanSettings.scrollingTextForThreadTitles.toggle())
+        ?.updateChecked(kurobaSettings.application.scrollingTextForThreadTitles.toggleBlocking())
 
       showToast(R.string.restart_the_app)
     }
@@ -861,27 +860,27 @@ abstract class ThreadController(
     when (item.id) {
       ACTION_MARK_REPLIES_TO_YOU_ON_SCROLLBAR -> {
         toolbarState.findCheckableOverflowItem(ACTION_MARK_REPLIES_TO_YOU_ON_SCROLLBAR)
-          ?.updateChecked(ChanSettings.markRepliesToYourPostOnScrollbar.toggle())
+          ?.updateChecked(kurobaSettings.application.markRepliesToYourPostOnScrollbar.toggleBlocking())
       }
       ACTION_MARK_CROSS_THREAD_REPLIES_ON_SCROLLBAR -> {
         toolbarState.findCheckableOverflowItem(ACTION_MARK_CROSS_THREAD_REPLIES_ON_SCROLLBAR)
-          ?.updateChecked(ChanSettings.markCrossThreadQuotesOnScrollbar.toggle())
+          ?.updateChecked(kurobaSettings.application.markCrossThreadQuotesOnScrollbar.toggleBlocking())
       }
       ACTION_MARK_YOUR_POSTS_ON_SCROLLBAR -> {
         toolbarState.findCheckableOverflowItem(ACTION_MARK_YOUR_POSTS_ON_SCROLLBAR)
-          ?.updateChecked(ChanSettings.markYourPostsOnScrollbar.toggle())
+          ?.updateChecked(kurobaSettings.application.markYourPostsOnScrollbar.toggleBlocking())
       }
       ACTION_MARK_DELETED_POSTS_ON_SCROLLBAR -> {
         toolbarState.findCheckableOverflowItem(ACTION_MARK_DELETED_POSTS_ON_SCROLLBAR)
-          ?.updateChecked(ChanSettings.markDeletedPostsOnScrollbar.toggle())
+          ?.updateChecked(kurobaSettings.application.markDeletedPostsOnScrollbar.toggleBlocking())
       }
       ACTION_MARK_HOT_POSTS_ON_SCROLLBAR -> {
         toolbarState.findCheckableOverflowItem(ACTION_MARK_HOT_POSTS_ON_SCROLLBAR)
-          ?.updateChecked(ChanSettings.markHotPostsOnScrollbar.toggle())
+          ?.updateChecked(kurobaSettings.application.markHotPostsOnScrollbar.toggleBlocking())
       }
       ACTION_GLOBAL_NSFW_MODE -> {
         toolbarState.findCheckableOverflowItem(ACTION_GLOBAL_NSFW_MODE)
-          ?.updateChecked(ChanSettings.globalNsfwMode.toggle())
+          ?.updateChecked(kurobaSettings.application.globalNsfwMode.toggleBlocking())
       }
     }
 

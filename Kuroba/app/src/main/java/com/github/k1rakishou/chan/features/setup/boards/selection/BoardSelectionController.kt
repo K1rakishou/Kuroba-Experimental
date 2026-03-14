@@ -66,7 +66,7 @@ import com.github.k1rakishou.chan.ui.compose.snackbar.SnackbarScope
 import com.github.k1rakishou.chan.ui.compose.window.KurobaWindowWidthSizeClass
 import com.github.k1rakishou.chan.ui.controller.base.BaseComposeController
 import com.github.k1rakishou.chan.ui.controller.base.DeprecatedNavigationFlags
-import com.github.k1rakishou.chan.ui.helper.awaitWhile
+import com.github.k1rakishou.chan.ui.helper.awaitUntil
 import com.github.k1rakishou.chan.ui.helper.readyForScrollEvents
 import com.github.k1rakishou.chan.utils.ComposeAnnotatedStringHelper
 import com.github.k1rakishou.chan.utils.ComposeAnnotatedStringHelperImpl
@@ -81,7 +81,11 @@ import kotlin.math.roundToInt
 class BoardSelectionController(
   context: Context,
   private val callback: UserSelectionListener
-) : BaseComposeController<BoardSelectionControllerViewModel, BoardSelectionControllerParams>(
+) : BaseComposeController<
+  BoardSelectionControllerViewModel,
+  BoardSelectionControllerParams,
+  Nothing
+>(
   context = context,
   viewModelClass = BoardSelectionControllerViewModel::class.java,
   viewModelParams = BoardSelectionControllerParams()
@@ -90,7 +94,7 @@ class BoardSelectionController(
     get() = ViewModelScope.ControllerScope(this)
 
   override val layoutAnchor: SnackbarScope.LayoutAnchor
-    get() = SnackbarScope.LayoutAnchor.Catalog
+    get() = SnackbarScope.LayoutAnchor.Left
 
   override fun injectControllerDependencies(component: ControllerComponent) {
     component.inject(this)
@@ -134,7 +138,7 @@ class BoardSelectionController(
     }
 
     LaunchedEffect(key1 = Unit) {
-      awaitWhile { lazyGridState.readyForScrollEvents() }
+      awaitUntil { lazyGridState.readyForScrollEvents() }
 
       lazyGridState.scrollToItem(
         index = viewModel.lastScrollPosition.index,

@@ -2,7 +2,7 @@ package com.github.k1rakishou.model.entity.view
 
 import androidx.room.ColumnInfo
 import androidx.room.DatabaseView
-import com.github.k1rakishou.model.KurobaDatabase
+import com.github.k1rakishou.model.KurobaMainDatabase
 import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkEntity
 import com.github.k1rakishou.model.entity.chan.post.ChanPostEntity
 import com.github.k1rakishou.model.entity.chan.post.ChanPostIdEntity
@@ -28,7 +28,7 @@ import com.github.k1rakishou.model.entity.download.ThreadDownloadEntity
     LEFT JOIN ${ChanThreadEntity.TABLE_NAME} threads 
         ON postIds.${ChanPostIdEntity.OWNER_THREAD_ID_COLUMN_NAME} = threads.${ChanThreadsWithPosts.THREAD_ID_COLUMN_NAME}
     WHERE 
-        posts.${ChanPostEntity.IS_OP_COLUMN_NAME} = ${KurobaDatabase.SQLITE_FALSE}
+        posts.${ChanPostEntity.IS_OP_COLUMN_NAME} = ${KurobaMainDatabase.SQLITE_FALSE}
     GROUP BY threads.${ChanThreadsWithPosts.THREAD_ID_COLUMN_NAME}
     HAVING ${ChanThreadsWithPosts.POSTS_COUNT_COLUMN_NAME} >= 0
     ORDER BY threads.${ChanThreadsWithPosts.LAST_MODIFIED_COLUMN_NAME} ASC

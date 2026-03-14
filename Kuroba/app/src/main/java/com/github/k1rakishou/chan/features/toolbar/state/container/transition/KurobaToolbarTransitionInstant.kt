@@ -24,7 +24,7 @@ internal fun KurobaToolbarTransitionInstant(
   childToolbar: @Composable (KurobaToolbarSubState?) -> Unit,
   onAnimationFinished: () -> Unit
 ) {
-  transitionToolbarState as KurobaToolbarTransition.Instant
+  transitionToolbarState as KurobaToolbarTransition.Animated
 
   val toolbarHeightPx = with(LocalDensity.current) { toolbarHeight.toPx() }
   val progressAnimatable = remember { Animatable(initialValue = -1f) }

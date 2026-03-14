@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.ui.viewstate
 
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.CurrentFocusedControllers
 import com.github.k1rakishou.chan.features.toolbar.state.ToolbarStateKind
 import com.github.k1rakishou.chan.ui.controller.BrowseController
@@ -8,6 +7,7 @@ import com.github.k1rakishou.chan.ui.controller.ThreadControllerType
 import com.github.k1rakishou.chan.ui.controller.ViewThreadController
 import com.github.k1rakishou.chan.ui.controller.base.ControllerKey
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout
+import com.github.k1rakishou.v2.KurobaSettings
 import kotlinx.collections.immutable.ImmutableMap
 
 data class FabVisibilityState(
@@ -29,12 +29,16 @@ data class FabVisibilityState(
   val fabAlpha: Float
     get() = scrollProgress
 
-  fun isFabForceVisible(threadControllerType: ThreadControllerType, controllerKey: ControllerKey): Boolean {
+  suspend fun isFabForceVisible(
+    kurobaSettings: KurobaSettings,
+    threadControllerType: ThreadControllerType,
+    controllerKey: ControllerKey
+  ): Boolean {
     if (!fabEnabled) {
       return false
     }
 
-    if (ChanSettings.isSplitLayoutMode()) {
+    if (kurobaSettings.application.isSplitLayoutMode()) {
       if (isCurrentReplyLayoutOpened(threadControllerType)) {
         return false
       }
@@ -61,15 +65,19 @@ data class FabVisibilityState(
       return false
     }
 
-    return !ChanSettings.canCollapseToolbar()
+    return !kurobaSettings.application.canCollapseToolbar()
   }
 
-  fun isFabForceHidden(threadControllerType: ThreadControllerType, controllerKey: ControllerKey): Boolean {
+  suspend fun isFabForceHidden(
+    kurobaSettings: KurobaSettings,
+    threadControllerType: ThreadControllerType,
+    controllerKey: ControllerKey
+  ): Boolean {
     if (!fabEnabled) {
       return true
     }
 
-    if (ChanSettings.isSplitLayoutMode()) {
+    if (kurobaSettings.application.isSplitLayoutMode()) {
       if (isCurrentReplyLayoutOpened(threadControllerType)) {
         return true
       }

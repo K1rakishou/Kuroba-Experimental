@@ -26,7 +26,7 @@ import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable
-import com.github.k1rakishou.persist_state.ReplyMode
+import com.github.k1rakishou.v2.parameters.ReplyMode
 import dagger.Lazy
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -397,7 +397,7 @@ class PostingService : Service() {
       )
 
       startServiceIntent.putExtra(REPLY_CHAN_DESCRIPTOR, DescriptorParcelable.fromDescriptor(chanDescriptor))
-      startServiceIntent.putExtra(REPLY_MODE, replyMode.modeRaw)
+      startServiceIntent.putExtra(REPLY_MODE, replyMode.name)
       startServiceIntent.putExtra(RETRYING, retrying)
 
       context.startService(startServiceIntent)

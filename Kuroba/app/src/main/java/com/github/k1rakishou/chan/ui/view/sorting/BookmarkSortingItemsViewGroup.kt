@@ -4,9 +4,10 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingLinearLayout
+import com.github.k1rakishou.chan.utils.appDependencies
 import com.github.k1rakishou.common.findChildren
+import com.github.k1rakishou.v2.parameters.BookmarksSortOrder
 
 class BookmarkSortingItemsViewGroup @JvmOverloads constructor(
   context: Context,
@@ -17,11 +18,12 @@ class BookmarkSortingItemsViewGroup @JvmOverloads constructor(
 
   init {
     orientation = LinearLayout.VERTICAL
+    val kurobaSettings = appDependencies().kurobaSettings
 
     require(childCount == 0) { "Bad child count: ${childCount}" }
-    val bookmarksSortOrder = ChanSettings.bookmarksSortOrder.get()
+    val bookmarksSortOrder = kurobaSettings.application.bookmarksSortOrder.readBlocking()
 
-    val sortSettingsCount = ChanSettings.BookmarksSortOrder.entries.size / 2
+    val sortSettingsCount = BookmarksSortOrder.entries.size / 2
     repeat(sortSettingsCount) { index ->
       val sortingItemView = BookmarkSortingItemView(context)
       sortingItemView.init(index, bookmarksSortOrder)
@@ -54,10 +56,10 @@ class BookmarkSortingItemsViewGroup @JvmOverloads constructor(
     }
   }
 
-  fun getCurrentSortingOrder(): ChanSettings.BookmarksSortOrder {
+  fun getCurrentSortingOrder(): BookmarksSortOrder {
     val sortingItemViews = findChildren<BookmarkSortingItemView> { child -> child is BookmarkSortingItemView }
     if (sortingItemViews.isEmpty()) {
-      return ChanSettings.BookmarksSortOrder.defaultOrder()
+      return BookmarksSortOrder.defaultOrder()
     }
 
     val sortDirectionDescList = sortingItemViews.map { sortingItemView -> sortingItemView.sortDirectionDesc }
@@ -80,37 +82,37 @@ class BookmarkSortingItemsViewGroup @JvmOverloads constructor(
     return when (sortingItemView.tag) {
       BookmarkSortingItemView.BOOKMARK_CREATION_TIME_SORT_ITEM_VIEW_TAG -> {
         if (sortDirectionDesc) {
-          ChanSettings.BookmarksSortOrder.CreatedOnDescending
+          BookmarksSortOrder.CreatedOnDescending
         } else {
-          ChanSettings.BookmarksSortOrder.CreatedOnAscending
+          BookmarksSortOrder.CreatedOnAscending
         }
       }
       BookmarkSortingItemView.THREAD_ID_SORT_ITEM_VIEW_TAG -> {
         if (sortDirectionDesc) {
-          ChanSettings.BookmarksSortOrder.ThreadIdDescending
+          BookmarksSortOrder.ThreadIdDescending
         } else {
-          ChanSettings.BookmarksSortOrder.ThreadIdAscending
+          BookmarksSortOrder.ThreadIdAscending
         }
       }
       BookmarkSortingItemView.UNREAD_REPLIES_SORT_ITEM_VIEW_TAG -> {
         if (sortDirectionDesc) {
-          ChanSettings.BookmarksSortOrder.UnreadRepliesDescending
+          BookmarksSortOrder.UnreadRepliesDescending
         } else {
-          ChanSettings.BookmarksSortOrder.UnreadRepliesAscending
+          BookmarksSortOrder.UnreadRepliesAscending
         }
       }
       BookmarkSortingItemView.UNREAD_POSTS_SORT_ITEM_VIEW_TAG -> {
         if (sortDirectionDesc) {
-          ChanSettings.BookmarksSortOrder.UnreadPostsDescending
+          BookmarksSortOrder.UnreadPostsDescending
         } else {
-          ChanSettings.BookmarksSortOrder.UnreadPostsAscending
+          BookmarksSortOrder.UnreadPostsAscending
         }
       }
       BookmarkSortingItemView.CUSTOM_SORT_ITEM_VIEW_TAG -> {
         if (sortDirectionDesc) {
-          ChanSettings.BookmarksSortOrder.CustomDescending
+          BookmarksSortOrder.CustomDescending
         } else {
-          ChanSettings.BookmarksSortOrder.CustomAscending
+          BookmarksSortOrder.CustomAscending
         }
       }
       else -> throw IllegalStateException("Unknown tag: ${sortingItemView.tag}")

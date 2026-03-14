@@ -1,7 +1,6 @@
 package com.github.k1rakishou.chan.features.posting.solvers.two_captcha
 
 import androidx.annotation.GuardedBy
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
@@ -11,6 +10,7 @@ import com.github.k1rakishou.common.suspendConvertIntoJsonObject
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
+import com.github.k1rakishou.v2.KurobaSettings
 import com.google.gson.Gson
 import dagger.Lazy
 import kotlinx.coroutines.sync.Mutex
@@ -20,8 +20,9 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
 import java.util.concurrent.TimeUnit
 
+@Deprecated("remove me")
 class TwoCaptchaSolver(
-  private val isDevBuild: Boolean,
+  private val kurobaSettings: KurobaSettings,
   private val gson: Gson,
   private val siteManager: SiteManager,
   private val proxiedOkHttpClient: Lazy<ProxiedOkHttpClient>
@@ -35,12 +36,9 @@ class TwoCaptchaSolver(
 
   val name: String
     get() = "2captcha"
-  val enabled: Boolean
-    get() = ChanSettings.twoCaptchaSolverEnabled.get()
-  val url: String
-    get() = ChanSettings.twoCaptchaSolverUrl.get()
-  val apiKey: String
-    get() = ChanSettings.twoCaptchaSolverApiKey.get()
+  val enabled: Boolean = false
+  val url: String = ""
+  val apiKey: String = ""
   val isLoggedIn: Boolean
     get() = enabled && url.isNotBlank() && apiKey.isNotBlank()
 
@@ -63,14 +61,10 @@ class TwoCaptchaSolver(
 
     return when (site.actions.postAuthenticate().type) {
       SiteAuthentication.Type.NONE,
-      SiteAuthentication.Type.GENERIC_WEBVIEW,
       SiteAuthentication.Type.ID_BASED_CAPTCHA,
       SiteAuthentication.Type.ENDPOINT_BASED_CAPTCHA,
       SiteAuthentication.Type.CUSTOM_CAPTCHA,
       SiteAuthentication.Type.EMOJI_CAPTCHA -> false
-      SiteAuthentication.Type.CAPTCHA2,
-      SiteAuthentication.Type.CAPTCHA2_NOJS,
-      SiteAuthentication.Type.CAPTCHA2_INVISIBLE -> true
     }
   }
 
@@ -108,12 +102,11 @@ class TwoCaptchaSolver(
       val captchaType = postAuthenticate.type
       Logger.d(TAG, "solve() captchaType=$captchaType")
 
-      val siteAuthentication = when (captchaType) {
+      when (captchaType) {
         SiteAuthentication.Type.NONE -> {
           Logger.d(TAG, "solve() authentication not needed")
           return@Try TwoCaptchaResult.CaptchaNotNeeded(solverName = name, siteDescriptor = siteDescriptor)
         }
-        SiteAuthentication.Type.GENERIC_WEBVIEW,
         SiteAuthentication.Type.ID_BASED_CAPTCHA,
         SiteAuthentication.Type.ENDPOINT_BASED_CAPTCHA,
         SiteAuthentication.Type.CUSTOM_CAPTCHA,
@@ -121,19 +114,15 @@ class TwoCaptchaSolver(
           Logger.d(TAG, "solve() selected authentication type is not supported: ${postAuthenticate.type}")
           return@Try TwoCaptchaResult.NotSupported(solverName = name, siteDescriptor = siteDescriptor)
         }
-        SiteAuthentication.Type.CAPTCHA2,
-        SiteAuthentication.Type.CAPTCHA2_NOJS,
-        SiteAuthentication.Type.CAPTCHA2_INVISIBLE -> {
-          postAuthenticate
-        }
       }
 
-      val activeRequest = mutex.withLock { activeRequests[chanDescriptor] }
-      if (activeRequest != null) {
-        return@Try checkSolution(activeRequest, chanDescriptor)
-      } else {
-        return@Try enqueueSolution(captchaType, siteAuthentication, chanDescriptor)
-      }
+      // TODO: currently no site supports this
+//      val activeRequest = mutex.withLock { activeRequests[chanDescriptor] }
+//      if (activeRequest != null) {
+//        return@Try checkSolution(activeRequest, chanDescriptor)
+//      } else {
+//        return@Try enqueueSolution(captchaType, siteAuthentication, chanDescriptor)
+//      }
     }
   }
 
@@ -372,52 +361,54 @@ class TwoCaptchaSolver(
     siteUrl: String,
     captchaType: SiteAuthentication.Type
   ): TwoCaptchaEnqueueSolveCaptchaResponse? {
-    val baseUrl = actualUrlOrNull
-    if (baseUrl == null) {
-      Logger.d(TAG, "sendSolveCaptchaRequest() baseUrl is bad, url=\'$url\'")
-      return null
-    }
+//    val baseUrl = actualUrlOrNull
+//    if (baseUrl == null) {
+//      Logger.d(TAG, "sendSolveCaptchaRequest() baseUrl is bad, url=\'$url\'")
+//      return null
+//    }
+//
+//    val invisibleCaptchaParam = if (captchaType == SiteAuthentication.Type.CAPTCHA2_INVISIBLE) {
+//      "1"
+//    } else {
+//      "0"
+//    }
+//
+//    val fullUrl = baseUrl.newBuilder()
+//      .addEncodedPathSegment("in.php")
+//      .addEncodedQueryParameter("key", apiKey)
+//      .addEncodedQueryParameter("method", "userrecaptcha")
+//      .addEncodedQueryParameter("googlekey", siteCaptchaKey)
+//      .addEncodedQueryParameter("pageurl", siteUrl)
+//      .addEncodedQueryParameter("invisible", invisibleCaptchaParam)
+//      .addEncodedQueryParameter("json", "1")
+//      .build()
+//
+//    val request = Request.Builder()
+//      .url(fullUrl)
+//      .build()
+//
+//    val result = proxiedOkHttpClient.get().okHttpClient()
+//      .suspendConvertIntoJsonObject<BaseSolverApiResponse>(request, gson)
+//
+//    val solveCaptchaResponse = when (result) {
+//      is JsonConversionResult.HttpError -> {
+//        Logger.e(TAG, "sendSolveCaptchaRequest() Bad server response status: ${result.status}")
+//        return null
+//      }
+//      is JsonConversionResult.UnknownError -> {
+//        Logger.e(TAG, "sendSolveCaptchaRequest() Error", result.error)
+//        return null
+//      }
+//      is JsonConversionResult.Success -> TwoCaptchaEnqueueSolveCaptchaResponse.wrap(result.obj)
+//    }
+//
+//    if (!solveCaptchaResponse.isOk()) {
+//      Logger.e(TAG, "sendSolveCaptchaRequest() server error: ${solveCaptchaResponse}")
+//    }
+//
+//    return solveCaptchaResponse
 
-    val invisibleCaptchaParam = if (captchaType == SiteAuthentication.Type.CAPTCHA2_INVISIBLE) {
-      "1"
-    } else {
-      "0"
-    }
-
-    val fullUrl = baseUrl.newBuilder()
-      .addEncodedPathSegment("in.php")
-      .addEncodedQueryParameter("key", apiKey)
-      .addEncodedQueryParameter("method", "userrecaptcha")
-      .addEncodedQueryParameter("googlekey", siteCaptchaKey)
-      .addEncodedQueryParameter("pageurl", siteUrl)
-      .addEncodedQueryParameter("invisible", invisibleCaptchaParam)
-      .addEncodedQueryParameter("json", "1")
-      .build()
-
-    val request = Request.Builder()
-      .url(fullUrl)
-      .build()
-
-    val result = proxiedOkHttpClient.get().okHttpClient()
-      .suspendConvertIntoJsonObject<BaseSolverApiResponse>(request, gson)
-
-    val solveCaptchaResponse = when (result) {
-      is JsonConversionResult.HttpError -> {
-        Logger.e(TAG, "sendSolveCaptchaRequest() Bad server response status: ${result.status}")
-        return null
-      }
-      is JsonConversionResult.UnknownError -> {
-        Logger.e(TAG, "sendSolveCaptchaRequest() Error", result.error)
-        return null
-      }
-      is JsonConversionResult.Success -> TwoCaptchaEnqueueSolveCaptchaResponse.wrap(result.obj)
-    }
-
-    if (!solveCaptchaResponse.isOk()) {
-      Logger.e(TAG, "sendSolveCaptchaRequest() server error: ${solveCaptchaResponse}")
-    }
-
-    return solveCaptchaResponse
+    return null
   }
 
   private suspend fun getAccountBalanceFromServer(): TwoCaptchaBalanceResponse? {

@@ -2,7 +2,7 @@ package com.github.k1rakishou.model.repository
 
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.model.KurobaDatabase
+import com.github.k1rakishou.model.KurobaMainDatabase
 import com.github.k1rakishou.model.data.navigation.NavHistoryElement
 import com.github.k1rakishou.model.source.local.NavHistoryLocalSource
 import com.github.k1rakishou.model.util.ensureBackgroundThread
@@ -11,7 +11,7 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
 
 class HistoryNavigationRepository(
-  database: KurobaDatabase,
+  database: KurobaMainDatabase,
   applicationScope: CoroutineScope,
   private val localSource: NavHistoryLocalSource
 ) : AbstractRepository(database, applicationScope) {

@@ -1,7 +1,6 @@
 package com.github.k1rakishou.chan.core.watcher
 
 import android.content.Context
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibility
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
@@ -11,6 +10,7 @@ import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.v2.KurobaSettings
 import dagger.Lazy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -29,7 +29,7 @@ import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicReference
 
 class BookmarkForegroundWatcher(
-  private val verboseLogsEnabled: Boolean,
+  private val kurobaSettings: KurobaSettings,
   private val appScope: CoroutineScope,
   private val appContext: Context,
   private val appConstants: AppConstants,
@@ -129,7 +129,7 @@ class BookmarkForegroundWatcher(
   private suspend fun updateBookmarkForOpenedThread(
     threadDescriptor: ChanDescriptor.ThreadDescriptor
   ) {
-    if (!ChanSettings.watchEnabled.get()) {
+    if (!kurobaSettings.application.watchEnabled.read()) {
       Logger.d(TAG, "updateBookmarkForOpenedThread() ChanSettings.watchEnabled() is false")
       return
     }
@@ -171,7 +171,7 @@ class BookmarkForegroundWatcher(
     Logger.d(TAG, "updateBookmarkForOpenedThread($threadDescriptor) called")
 
     try {
-      BookmarkWatcherCoordinator.restartBackgroundWork(appConstants, appContext)
+      BookmarkWatcherCoordinator.restartBackgroundWork(kurobaSettings, appConstants, appContext)
       startWatchingIfNotWatchingYet()
 
       bookmarkWatcherDelegate.get().doWork(
@@ -203,7 +203,7 @@ class BookmarkForegroundWatcher(
         return
       }
 
-      if (!ChanSettings.watchEnabled.get()) {
+      if (!kurobaSettings.application.watchEnabled.read()) {
         Logger.d(TAG, "updateBookmarksWorkerLoop() ChanSettings.watchEnabled() is false. Exiting.")
         return
       }
@@ -215,7 +215,7 @@ class BookmarkForegroundWatcher(
       }
 
       try {
-        BookmarkWatcherCoordinator.restartBackgroundWork(appConstants, appContext)
+        BookmarkWatcherCoordinator.restartBackgroundWork(kurobaSettings, appConstants, appContext)
 
         bookmarkWatcherDelegate.get().doWork(
           isCalledFromForeground = true,
@@ -244,16 +244,16 @@ class BookmarkForegroundWatcher(
     }
   }
 
-  private fun calculateAndLogAdditionalInterval(): Long {
-    val foregroundWatchAdditionalIntervalMs = foregroundWatchAdditionalIntervalMs()
+  private suspend fun calculateAndLogAdditionalInterval(): Long {
     val activeBookmarksCount = bookmarksManager.activeBookmarksCount()
 
     // Increment the interval for every 10 bookmarks by ADDITIONAL_INTERVAL_INCREMENT_MS. This way
     // if we have 100 active bookmarks we will be waiting 30secs + (10 * 5)secs = 80secs. This is
     // needed to not kill the battery with constant network request spam.
-    val additionalInterval = (activeBookmarksCount / 10) * foregroundWatchAdditionalIntervalMs()
+    val additionalInterval = (activeBookmarksCount / 10) * ADDITIONAL_INTERVAL_INCREMENT_MS
 
-    if (verboseLogsEnabled) {
+    if (kurobaSettings.application.verboseLogs.read()) {
+      val foregroundWatchAdditionalIntervalMs = ADDITIONAL_INTERVAL_INCREMENT_MS
       val foregroundInterval = foregroundWatchIntervalMs()
 
       Logger.d(TAG, "updateBookmarksWorkerLoop() doWork() completed, waiting for " +
@@ -264,21 +264,13 @@ class BookmarkForegroundWatcher(
     return additionalInterval
   }
 
-  private fun foregroundWatchIntervalMs(): Int {
-    return ChanSettings.watchForegroundInterval.get()
-  }
-
-  private fun foregroundWatchAdditionalIntervalMs(): Long {
-    if (!ChanSettings.watchForegroundAdaptiveInterval.get()) {
-      return 0
-    }
-
-    return ADDITIONAL_INTERVAL_INCREMENT_MS
+  private suspend fun foregroundWatchIntervalMs(): Long {
+    return kurobaSettings.application.watchForegroundInterval.read()
   }
 
   companion object {
     private const val TAG = "BookmarkForegroundWatcher"
 
-    const val ADDITIONAL_INTERVAL_INCREMENT_MS = 5L * 1000L
+    private const val ADDITIONAL_INTERVAL_INCREMENT_MS = 5L * 1000L
   }
 }

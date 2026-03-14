@@ -144,7 +144,7 @@ class LoadChan4CaptchaUseCase(
     }
   }
 
-  private fun updateCaptchaTicket(
+  private suspend fun updateCaptchaTicket(
     chanDescriptor: ChanDescriptor,
     captchaResult: CaptchaResult
   ) {
@@ -161,7 +161,7 @@ class LoadChan4CaptchaUseCase(
 
       var previousTicket: String? = null
 
-      chan4CaptchaSettingsSetting.update(sync = true) { chan4CaptchaSettings ->
+      chan4CaptchaSettingsSetting.update { chan4CaptchaSettings ->
         previousTicket = chan4CaptchaSettings.captchaTicket
 
         chan4CaptchaSettings.copy(
@@ -185,14 +185,14 @@ class LoadChan4CaptchaUseCase(
       return
     }
 
-    val oldTicket = chan4CaptchaSettingsSetting.get().captchaTicket
+    val oldTicket = chan4CaptchaSettingsSetting.read().captchaTicket
 
     Logger.debug(TAG) {
       "updateCaptchaTicket($chanDescriptor) " +
         "updating currentTicket with '${StringUtils.formatToken(newTicket)}'"
     }
 
-    chan4CaptchaSettingsSetting.update(sync = true) { chan4CaptchaSettings ->
+    chan4CaptchaSettingsSetting.update { chan4CaptchaSettings ->
       chan4CaptchaSettings.copy(
         captchaTicket = newTicket,
         lastRefreshTime = System.currentTimeMillis()

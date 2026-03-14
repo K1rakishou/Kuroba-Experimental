@@ -143,6 +143,7 @@ class ThemeGalleryController(
 
     fun onBind(position: Int, chanTheme: ChanTheme, postCellDataWidthNoPaddings: Int) {
       val kurobaToolbarState = KurobaToolbarState(
+        controllerHash = this@ThemeGalleryController.hashCode(),
         controllerKey = ControllerKey("${controllerKey.key}_${chanTheme.name}"),
         globalUiStateHolder = globalUiStateHolder
       )
@@ -163,6 +164,7 @@ class ThemeGalleryController(
         themeControllerHelper.createSimpleThreadView(
           context = context,
           position = position,
+          kurobaSettings = kurobaSettings,
           theme = chanTheme,
           kurobaToolbarState = kurobaToolbarState,
           navigationController = requireToolbarNavController(),

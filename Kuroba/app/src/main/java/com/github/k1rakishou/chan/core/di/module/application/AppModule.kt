@@ -5,12 +5,12 @@ import android.net.ConnectivityManager
 import coil.ImageLoader
 import coil.memory.MemoryCache
 import coil.request.CachePolicy
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.AppDependenciesInitializer
 import com.github.k1rakishou.chan.core.base.okhttp.CoilOkHttpClient
 import com.github.k1rakishou.chan.core.di.component.application.ApplicationComponent
 import com.github.k1rakishou.chan.core.di.component.application.ApplicationDependencies
-import com.github.k1rakishou.chan.core.helper.migration.ApplicationMigrationHelper
+import com.github.k1rakishou.chan.core.helper.migration.app.ApplicationMigrationHelper
+import com.github.k1rakishou.chan.core.helper.migration.settings.KurobaSettingsMigrationHelper
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
@@ -28,7 +28,9 @@ import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder
 import com.github.k1rakishou.core_logger.Logger.deps
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.model.repository.ImageDownloadRequestRepository
+import com.github.k1rakishou.v2.KurobaSettings
 import com.google.gson.Gson
+import com.squareup.moshi.Moshi
 import dagger.Module
 import dagger.Provides
 import kotlinx.coroutines.CoroutineScope
@@ -82,13 +84,15 @@ class AppModule {
   @Singleton
   fun provideCoilImageLoader(
     applicationContext: Context,
+    kurobaSettings: KurobaSettings,
     coilOkHttpClient: CoilOkHttpClient
   ): ImageLoader {
-    val isLowRamDevice = ChanSettings.isLowRamDevice()
+    val isLowRamDevice = kurobaSettings.application.isLowRamDeviceBlocking()
     val allowHardware = !isLowRamDevice
+
     val availableMemoryPercentage = run {
       var defaultMemoryPercentage = 0.2
-      if (ChanSettings.isLowRamDevice()) {
+      if (isLowRamDevice) {
         defaultMemoryPercentage /= 2.0
       }
 
@@ -123,6 +127,7 @@ class AppModule {
   @Singleton
   fun provideImageSaverV2(
     appContext: Context,
+    kurobaSettings: KurobaSettings,
     appScope: CoroutineScope,
     gson: Gson,
     fileManager: FileManager,
@@ -132,9 +137,9 @@ class AppModule {
     deps("ImageSaverV2")
 
     return ImageSaverV2(
-      ChanSettings.verboseLogs.get(),
       appContext,
       appScope,
+      kurobaSettings,
       gson,
       fileManager,
       imageDownloadRequestRepository,
@@ -151,9 +156,27 @@ class AppModule {
 
   @Provides
   @Singleton
-  fun provideApplicationMigrationHelper(): ApplicationMigrationHelper {
+  fun provideApplicationMigrationHelper(kurobaSettings: KurobaSettings): ApplicationMigrationHelper {
     deps("ApplicationMigrationHelper")
-    return ApplicationMigrationHelper()
+    return ApplicationMigrationHelper(kurobaSettings)
+  }
+
+  @Provides
+  @Singleton
+  fun provideKurobaSettingsMigrationHelper(
+    context: Context,
+    kurobaSettings: KurobaSettings,
+    moshi: Moshi,
+    gson: Gson,
+    siteManager: SiteManager
+  ): KurobaSettingsMigrationHelper {
+    return KurobaSettingsMigrationHelper(
+      context,
+      kurobaSettings,
+      moshi,
+      gson,
+      siteManager
+    )
   }
 
   @Provides

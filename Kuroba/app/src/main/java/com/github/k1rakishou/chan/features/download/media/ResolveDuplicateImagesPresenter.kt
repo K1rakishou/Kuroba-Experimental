@@ -21,7 +21,7 @@ import com.github.k1rakishou.model.data.download.ImageDownloadRequest
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.ChanPostImageType
 import com.github.k1rakishou.model.repository.ImageDownloadRequestRepository
-import com.github.k1rakishou.persist_state.ImageSaverV2Options
+import com.github.k1rakishou.v2.parameters.ImageSaverV2Options
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay

@@ -7,7 +7,6 @@ import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.view.View
 import androidx.viewpager.widget.ViewPager
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
@@ -67,7 +66,6 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
-import com.github.k1rakishou.persist_state.PersistableChanState.imageSaverV2PersistedOptions
 import com.google.android.exoplayer2.upstream.ContentDataSource
 import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
@@ -188,7 +186,7 @@ class MediaViewerController(
     override fun onPostUnbind(postCellData: PostCellData, isActuallyRecycling: Boolean) {}
     override fun onPostClicked(postDescriptor: PostDescriptor) {}
     override fun onGoToPostButtonLongClicked(post: ChanPost, postViewMode: PostCellData.PostViewMode) {}
-    override fun getBoardPages(boardDescriptor: BoardDescriptor): BoardPages? = null
+    override suspend fun getBoardPages(boardDescriptor: BoardDescriptor): BoardPages? = null
     override fun onThumbnailOmittedFilesClicked(postCellData: PostCellData, postImage: ChanPostImage) {}
     override fun onPreviewThreadPostsClicked(post: ChanPost) {}
     override fun onPostOptionClicked(post: ChanPost, item: FloatingListMenuItem, inPopup: Boolean) {}
@@ -291,6 +289,7 @@ class MediaViewerController(
 
   private val mediaViewerMenuHelper by lazy(LazyThreadSafetyMode.NONE) {
     MediaViewerMenuHelper(
+      kurobaSettings = kurobaSettings,
       globalWindowInsetsManager = globalWindowInsetsManager,
       snackbarManager = snackbarManager,
       presentControllerFunc = { controller -> presentController(controller, true) }
@@ -300,6 +299,7 @@ class MediaViewerController(
   private val mediaLongClickMenuHelper by lazy(LazyThreadSafetyMode.NONE) {
     MediaLongClickMenuHelper(
       scope = controllerScope,
+      kurobaSettings = kurobaSettings,
       globalWindowInsetsManager = globalWindowInsetsManager,
       imageSaverV2 = imageSaverV2,
       snackbarManager = snackbarManager,
@@ -338,7 +338,7 @@ class MediaViewerController(
     pager = view.findViewById(R.id.pager)
     pager.addOnPageChangeListener(this)
 
-    val offscreenPageLimit = MediaViewerControllerViewModel.offscreenPageLimit()
+    val offscreenPageLimit = kurobaSettings.application.mediaViewerOffscreenPagesCount()
     Logger.d(TAG, "offscreenPageLimit=$offscreenPageLimit")
     pager.offscreenPageLimit = offscreenPageLimit
 
@@ -405,7 +405,7 @@ class MediaViewerController(
   }
 
   override fun onInsetsChanged() {
-    if (ChanSettings.mediaViewerDrawBehindNotch.get()) {
+    if (kurobaSettings.application.mediaViewerDrawBehindNotch.readBlocking()) {
       mediaViewerRootLayout.updatePaddings(top = 0, left = 0, right = 0, bottom = 0)
     } else {
       mediaViewerRootLayout.updatePaddings(
@@ -469,7 +469,7 @@ class MediaViewerController(
       startMediaDownloadInternal(longClick, simpleImageInfo)
     }
 
-    if (downloading && ChanSettings.mediaViewerAutoSwipeAfterDownload.get()) {
+    if (downloading && kurobaSettings.application.mediaViewerAutoSwipeAfterDownload.read()) {
       tryEnqueueAutoSwipe()
     }
 
@@ -557,7 +557,7 @@ class MediaViewerController(
     longClick: Boolean,
     simpleImageInfo: ImageSaverV2.SimpleSaveableMediaInfo
   ): Boolean {
-    val imageSaverV2Options = imageSaverV2PersistedOptions.get()
+    val imageSaverV2Options = kurobaSettings.internal.imageSaverV2PersistedOptions.read()
 
     if (!longClick && !imageSaverV2Options.shouldShowImageSaverOptionsController()) {
       imageSaverV2.save(imageSaverV2Options, simpleImageInfo, null)
@@ -803,6 +803,7 @@ class MediaViewerController(
     val adapter = MediaViewerAdapter(
       context = context,
       appConstants = appConstants,
+      kurobaSettings = kurobaSettings,
       viewModel = viewModel,
       mediaViewerToolbar = mediaViewerToolbar,
       mediaViewContract = this@MediaViewerController,

@@ -4,7 +4,7 @@ import androidx.annotation.GuardedBy
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.model.KurobaDatabase
+import com.github.k1rakishou.model.KurobaMainDatabase
 import com.github.k1rakishou.model.data.catalog.ChanCatalogSnapshot
 import com.github.k1rakishou.model.data.catalog.IChanCatalogSnapshot
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -15,7 +15,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlin.time.measureTimedValue
 
 class ChanCatalogSnapshotRepository(
-  database: KurobaDatabase,
+  database: KurobaMainDatabase,
   applicationScope: CoroutineScope,
   private val verboseLogsEnabled: Boolean,
   private val localSource: ChanCatalogSnapshotLocalSource

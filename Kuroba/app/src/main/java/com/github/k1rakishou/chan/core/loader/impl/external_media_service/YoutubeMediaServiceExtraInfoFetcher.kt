@@ -1,7 +1,6 @@
 package com.github.k1rakishou.chan.core.loader.impl.external_media_service
 
 import android.graphics.BitmapFactory
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.loader.impl.post_comment.ExtraLinkInfo
 import com.github.k1rakishou.chan.core.loader.impl.post_comment.LinkInfoRequest
@@ -13,9 +12,11 @@ import com.github.k1rakishou.common.groupOrNull
 import com.github.k1rakishou.model.data.media.GenericVideoId
 import com.github.k1rakishou.model.data.video_service.MediaServiceType
 import com.github.k1rakishou.model.repository.MediaServiceLinkExtraContentRepository
+import com.github.k1rakishou.v2.KurobaSettings
 import java.util.regex.Pattern
 
-internal class YoutubeMediaServiceExtraInfoFetcher(
+class YoutubeMediaServiceExtraInfoFetcher(
+  private val kurobaSettings: KurobaSettings,
   private val mediaServiceLinkExtraContentRepository: MediaServiceLinkExtraContentRepository
 ) : ExternalMediaServiceExtraInfoFetcher() {
 
@@ -24,7 +25,7 @@ internal class YoutubeMediaServiceExtraInfoFetcher(
 
   override fun isEnabled(): Boolean {
     return AppModuleAndroidUtils.shouldLoadForNetworkType(
-      ChanSettings.parseYoutubeTitlesAndDuration.get()
+      kurobaSettings.application.parseYoutubeTitlesAndDuration.readBlocking()
     )
   }
 

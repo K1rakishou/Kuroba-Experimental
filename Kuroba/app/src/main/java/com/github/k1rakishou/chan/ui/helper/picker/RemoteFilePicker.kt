@@ -12,8 +12,8 @@ import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.downloadIntoFile
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.v2.KurobaSettings
 import dagger.Lazy
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
@@ -23,13 +23,18 @@ import java.io.File
 import java.io.IOException
 
 class RemoteFilePicker(
+  kurobaSettings: KurobaSettings,
   appConstants: AppConstants,
   fileManager: FileManager,
   replyManager: ReplyManager,
-  private val appScope: CoroutineScope,
   private val proxiedOkHttpClientLazy: Lazy<ProxiedOkHttpClient>,
   private val cacheHandlerLazy: Lazy<CacheHandler>
-) : AbstractFilePicker<RemoteFilePicker.RemoteFilePickerInput>(appConstants, replyManager, fileManager) {
+) : AbstractFilePicker<RemoteFilePicker.RemoteFilePickerInput>(
+  kurobaSettings = kurobaSettings,
+  appConstants = appConstants,
+  replyManager = replyManager,
+  fileManager = fileManager
+) {
   private val proxiedOkHttpClient: ProxiedOkHttpClient
     get() = proxiedOkHttpClientLazy.get()
   private val cacheHandler: CacheHandler

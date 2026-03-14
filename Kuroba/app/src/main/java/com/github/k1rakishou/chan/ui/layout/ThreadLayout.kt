@@ -12,8 +12,6 @@ import android.widget.CheckBox
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.coordinatorlayout.widget.CoordinatorLayout
-import com.github.k1rakishou.ChanSettings
-import com.github.k1rakishou.ChanSettings.BoardPostViewMode
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.concurrency.Debouncer
 import com.github.k1rakishou.chan.core.concurrency.SerializedCoroutineExecutor
@@ -74,6 +72,7 @@ import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.deprecated.persist_state.IndexAndTopDeprecated
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable
@@ -82,8 +81,9 @@ import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostHide
 import com.github.k1rakishou.model.data.post.ChanPostImage
-import com.github.k1rakishou.persist_state.IndexAndTop
-import com.github.k1rakishou.persist_state.ReplyMode
+import com.github.k1rakishou.v2.KurobaSettings
+import com.github.k1rakishou.v2.parameters.BoardPostViewMode
+import com.github.k1rakishou.v2.parameters.ReplyMode
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -125,6 +125,8 @@ class ThreadLayout @JvmOverloads constructor(
 
   @Inject
   lateinit var presenter: ThreadPresenter
+  @Inject
+  lateinit var kurobaSettings: KurobaSettings
   @Inject
   lateinit var themeEngineLazy: Lazy<ThemeEngine>
   @Inject
@@ -221,7 +223,7 @@ class ThreadLayout @JvmOverloads constructor(
   override val displayingPostDescriptorsInThread: List<PostDescriptor>
     get() = threadListLayout.displayingPostDescriptors
 
-  override val currentPosition: IndexAndTop?
+  override val currentPosition: IndexAndTopDeprecated?
     get() = threadListLayout.indexAndTop
 
   val popupHelper: PostPopupHelper
@@ -255,12 +257,12 @@ class ThreadLayout @JvmOverloads constructor(
     this.snackbarManager = when (threadControllerType) {
       ThreadControllerType.Catalog -> {
         snackbarManagerFactory.snackbarManager(
-          SnackbarScope.PostList(layoutAnchor = SnackbarScope.LayoutAnchor.Catalog)
+          SnackbarScope.PostList(layoutAnchor = SnackbarScope.LayoutAnchor.Left)
         )
       }
       ThreadControllerType.Thread -> {
         snackbarManagerFactory.snackbarManager(
-          SnackbarScope.PostList(layoutAnchor = SnackbarScope.LayoutAnchor.Thread)
+          SnackbarScope.PostList(layoutAnchor = SnackbarScope.LayoutAnchor.Right)
         )
       }
     }
@@ -281,12 +283,12 @@ class ThreadLayout @JvmOverloads constructor(
     when (threadControllerType) {
       ThreadControllerType.Catalog -> {
         snackbarContainerView.init(
-          SnackbarScope.PostList(layoutAnchor = SnackbarScope.LayoutAnchor.Catalog)
+          SnackbarScope.PostList(layoutAnchor = SnackbarScope.LayoutAnchor.Left)
         )
       }
       ThreadControllerType.Thread -> {
         snackbarContainerView.init(
-          SnackbarScope.PostList(layoutAnchor = SnackbarScope.LayoutAnchor.Thread)
+          SnackbarScope.PostList(layoutAnchor = SnackbarScope.LayoutAnchor.Right)
         )
       }
     }
@@ -678,7 +680,7 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   private fun openRegularLinkInternal(link: String) {
-    if (!ChanSettings.openLinkConfirmation.get()) {
+    if (!kurobaSettings.application.openLinkConfirmation.readBlocking()) {
       AppModuleAndroidUtils.openLink(link)
       return
     }
@@ -692,7 +694,7 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   private fun openMediaLinkInternal(link: String) {
-    if (!ChanSettings.openLinkConfirmation.get()) {
+    if (!kurobaSettings.application.openLinkConfirmation.readBlocking()) {
       callback.openMediaLinkInMediaViewer(link)
       return
     }
@@ -1248,10 +1250,9 @@ class ThreadLayout @JvmOverloads constructor(
     chanDescriptor: ChanDescriptor,
     replyMode: ReplyMode,
     autoReply: Boolean,
-    afterPostingAttempt: Boolean,
     onFinished: ((Boolean) -> Unit)?
   ) {
-    threadListLayout.showCaptcha(chanDescriptor, replyMode, autoReply, afterPostingAttempt, onFinished)
+    threadListLayout.showCaptcha(chanDescriptor, replyMode, autoReply, onFinished)
   }
 
   override suspend fun CoroutineScope.awaitUntilThreadLayoutState(

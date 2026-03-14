@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.core.site.sites.chan4
 
-import com.github.k1rakishou.OptionSettingItem
 import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.SiteBase
 import com.github.k1rakishou.chan.core.site.SiteConfiguration
@@ -15,8 +14,8 @@ import com.github.k1rakishou.chan.core.site.limitations.PasscodeDependantMaxAtta
 import com.github.k1rakishou.chan.core.site.limitations.PostingLimitationConfig
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.core.site.parser.SiteApi
-import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
-import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi.SiteOptionsSetting
+import com.github.k1rakishou.chan.core.site.settings.SiteSetting
+import com.github.k1rakishou.chan.core.site.settings.SiteSetting.SiteOptionsSetting
 import com.github.k1rakishou.chan.core.site.settings.SiteSettingsForUi
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -37,17 +36,18 @@ class Chan4 : SiteBase(
     )
   }
   override val postParser by lazy {
-    val commentParser = CommentParser()
+    val commentParser = CommentParser(kurobaSettings)
       .addDefaultRules()
 
     return@lazy DefaultPostParser(
+      kurobaSettings = kurobaSettings,
       commentParser = commentParser,
       archivesManager = archivesManager
     )
   }
 
   override val actions: SiteActions by lazy { Chan4Actions(this) }
-  override val settings by lazy { Chan4SiteSettings(dependencies, prefs) }
+  override val settings by lazy { Chan4SiteSettings(descriptor, dependencies) }
 
   override val settingsForUi by lazy {
     val settings = SiteSettingsForUi(super.settingsForUi)
@@ -56,11 +56,10 @@ class Chan4 : SiteBase(
       settingName = "Captcha type",
       settingDescription = null,
       groupId = "captcha_type",
-      options = chan4Settings.captchaType,
-      optionNames = listOf("Javascript", "Noscript")
+      setting = chan4Settings.captchaType
     )
 
-    settings += SiteSettingForUi.SiteStringSetting(
+    settings += SiteSetting.SiteStringSetting(
       settingName = "4chan captcha cookie",
       settingDescription = null,
       setting = chan4Settings.captchaCookie
@@ -103,14 +102,8 @@ class Chan4 : SiteBase(
   val chan4Settings: Chan4SiteSettings
     get() = requireSiteSettings(Chan4SiteSettings::class.java)
 
-  enum class CaptchaType(val value: String) : OptionSettingItem {
-    V2JS("v2js"),
-    V2NOJS("v2nojs"),
-    CHAN4_CAPTCHA("4chan_captcha");
-
-    override fun getKey(): String {
-      return value
-    }
+  enum class CaptchaType {
+    CHAN4_CAPTCHA;
   }
 
   companion object {

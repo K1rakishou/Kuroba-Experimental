@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.core.site.sites.fuuka
 
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
@@ -18,7 +17,7 @@ import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.board.pages.BoardPages
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
-import com.github.k1rakishou.persist_state.ReplyMode
+import com.github.k1rakishou.v2.parameters.ReplyMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import okhttp3.HttpUrl
@@ -101,7 +100,7 @@ class FuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
     site.requestModifier.modifyGenericRequest(site, requestBuilder)
 
     return FuukaSearchRequest(
-      verboseLogs = ChanSettings.verboseLogs.get(),
+      verboseLogs = site.dependencies.kurobaSettings.application.verboseLogs.read(),
       searchParams = searchParams,
       request = requestBuilder.build(),
       proxiedOkHttpClient = site.dependencies.proxiedOkHttpClient

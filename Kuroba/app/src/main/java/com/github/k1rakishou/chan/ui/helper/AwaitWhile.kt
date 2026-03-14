@@ -27,6 +27,13 @@ suspend fun CoroutineScope.awaitWhile(
   return true
 }
 
+suspend fun CoroutineScope.awaitUntil(
+  maxWaitTimeMs: Long = 1000L,
+  waitUntil: () -> Boolean
+): Boolean {
+  return awaitWhile(maxWaitTimeMs) { !waitUntil() }
+}
+
 fun LazyGridState.readyForScrollEvents(): Boolean {
   return layoutInfo.totalItemsCount > 0 &&
     layoutInfo.visibleItemsInfo.isNotEmpty()

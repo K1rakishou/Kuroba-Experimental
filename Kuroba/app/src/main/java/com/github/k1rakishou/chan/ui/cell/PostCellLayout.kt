@@ -4,7 +4,6 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.View
 import android.widget.TextView
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailViewsContainer
 import com.github.k1rakishou.chan.ui.helper.KurobaViewGroup
@@ -17,6 +16,7 @@ import com.github.k1rakishou.common.TextBounds
 import com.github.k1rakishou.common.countLines
 import com.github.k1rakishou.common.getTextBounds
 import com.github.k1rakishou.common.updatePaddings
+import com.github.k1rakishou.v2.parameters.PostAlignmentMode
 
 /**
  * God forbid you to ever have to change this class because this shit is complex as fuck.
@@ -52,11 +52,6 @@ open class PostCellLayout @JvmOverloads constructor(
   private val layoutResult = LayoutResult()
   private val postTopPartLayoutResult = PostTopPartLayoutResult()
 
-  private val postAlignmentMode: ChanSettings.PostAlignmentMode
-    get() {
-      return _postCellData?.postAlignmentMode
-        ?: ChanSettings.PostAlignmentMode.AlignLeft
-    }
   private val imagesCount: Int
     get() = _postCellData?.postImages?.size ?: 0
   private val singleImageMode: Boolean
@@ -113,7 +108,7 @@ open class PostCellLayout @JvmOverloads constructor(
 
     if (singleImageMode) {
       when (postCellData.postAlignmentMode) {
-        ChanSettings.PostAlignmentMode.AlignLeft -> {
+        PostAlignmentMode.AlignLeft -> {
           postImageThumbnailViewsContainer.updatePaddings(
             top = 0,
             left = thumbnailsContainerHorizPadding,
@@ -121,7 +116,7 @@ open class PostCellLayout @JvmOverloads constructor(
             bottom = thumbnailsContainerBottomPadding
           )
         }
-        ChanSettings.PostAlignmentMode.AlignRight -> {
+        PostAlignmentMode.AlignRight -> {
           postImageThumbnailViewsContainer.updatePaddings(
             top = 0,
             left = 0,
@@ -465,8 +460,10 @@ open class PostCellLayout @JvmOverloads constructor(
         )
       }
     } else {
+      val postAlignmentMode = _postCellData?.postAlignmentMode ?: PostAlignmentMode.AlignLeft
+
       when (postAlignmentMode) {
-        ChanSettings.PostAlignmentMode.AlignLeft -> {
+        PostAlignmentMode.AlignLeft -> {
           val rememberedTop = layoutResult.top
           val rememberedLeft = layoutResult.left
           var titleAndIconsHeight = 0
@@ -513,7 +510,7 @@ open class PostCellLayout @JvmOverloads constructor(
           topPartLayoutResult.commentLeftOffset = 0
           layoutResult.left = rememberedLeft
         }
-        ChanSettings.PostAlignmentMode.AlignRight -> {
+        PostAlignmentMode.AlignRight -> {
           val rememberedTop = layoutResult.top
           val rememberedLeft = layoutResult.left
           var titleAndIconsHeight = 0
@@ -564,7 +561,6 @@ open class PostCellLayout @JvmOverloads constructor(
     }
   }
 
-  @Suppress("UnnecessaryVariable")
   private fun canShiftPostComment(
     postCellData: PostCellData,
     parentWidth: Int
@@ -627,8 +623,8 @@ open class PostCellLayout @JvmOverloads constructor(
     val commentHeight = commentTextBounds.textHeight
 
     val multiplier = when (postCellData.postAlignmentMode) {
-      ChanSettings.PostAlignmentMode.AlignLeft -> 1.6f
-      ChanSettings.PostAlignmentMode.AlignRight -> {
+      PostAlignmentMode.AlignLeft -> 1.6f
+      PostAlignmentMode.AlignRight -> {
         if (commentTextBounds.lineBounds.size <= 1) {
           1f
         } else {
@@ -656,7 +652,7 @@ open class PostCellLayout @JvmOverloads constructor(
     val availableHeight =
       postImageThumbnailViewsContainer.measuredHeight - (resultTitleTextBounds.textHeight + iconsHeight)
     val specialModeCanBeUsed = availableHeight > 0
-      && postCellData.postAlignmentMode == ChanSettings.PostAlignmentMode.AlignLeft
+      && postCellData.postAlignmentMode == PostAlignmentMode.AlignLeft
 
     if (specialModeCanBeUsed) {
       // Special case for when thumbnails are on the right side of a post and the post comment's

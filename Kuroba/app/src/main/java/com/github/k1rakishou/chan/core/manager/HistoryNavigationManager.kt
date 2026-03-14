@@ -1,7 +1,6 @@
 package com.github.k1rakishou.chan.core.manager
 
 import androidx.annotation.GuardedBy
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.concurrency.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.helper.OneShotRunnable
 import com.github.k1rakishou.common.ModularResult
@@ -11,6 +10,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.navigation.NavHistoryElement
 import com.github.k1rakishou.model.data.navigation.NavHistoryElementInfo
 import com.github.k1rakishou.model.repository.HistoryNavigationRepository
+import com.github.k1rakishou.v2.KurobaSettings
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -25,10 +25,11 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
 class HistoryNavigationManager(
+  private val kurobaSettings: KurobaSettings,
   private val appScope: CoroutineScope,
-  private val _historyNavigationRepository: Lazy<HistoryNavigationRepository>,
-  private val _applicationVisibilityManager: Lazy<ApplicationVisibilityManager>,
-  private val _currentOpenedDescriptorStateManager: Lazy<CurrentOpenedDescriptorStateManager>
+  private val historyNavigationRepositoryLazy: Lazy<HistoryNavigationRepository>,
+  private val applicationVisibilityManagerLazy: Lazy<ApplicationVisibilityManager>,
+  private val currentOpenedDescriptorStateManagerLazy: Lazy<CurrentOpenedDescriptorStateManager>
 ) {
   private val _navigationStackUpdatesFlow = MutableSharedFlow<UpdateEvent>(extraBufferCapacity = 64)
   val navigationStackUpdatesFlow: SharedFlow<UpdateEvent>
@@ -43,11 +44,11 @@ class HistoryNavigationManager(
   private val initializationRunnable = OneShotRunnable()
 
   private val historyNavigationRepository: HistoryNavigationRepository
-    get() = _historyNavigationRepository.get()
+    get() = historyNavigationRepositoryLazy.get()
   private val applicationVisibilityManager: ApplicationVisibilityManager
-    get() = _applicationVisibilityManager.get()
+    get() = applicationVisibilityManagerLazy.get()
   private val currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager
-    get() = _currentOpenedDescriptorStateManager.get()
+    get() = currentOpenedDescriptorStateManagerLazy.get()
 
   val isInitialized: Boolean
     get() = initializationRunnable.alreadyRun
@@ -130,20 +131,23 @@ class HistoryNavigationManager(
     chanDescriptor: ChanDescriptor
   ): Boolean {
     if (chanDescriptor is ChanDescriptor.ICatalogDescriptor) {
-      return ChanSettings.drawerShowNavigationHistory.get()
+      return kurobaSettings.application.drawerShowNavigationHistory.readBlocking()
     }
 
     val threadDescriptor = chanDescriptor as ChanDescriptor.ThreadDescriptor
 
-    if (!ChanSettings.drawerShowBookmarkedThreads.get() && !ChanSettings.drawerShowNavigationHistory.get()) {
+    if (
+      !kurobaSettings.application.drawerShowBookmarkedThreads.readBlocking() &&
+      !kurobaSettings.application.drawerShowNavigationHistory.readBlocking()
+    ) {
       return false
     }
 
-    if (!ChanSettings.drawerShowBookmarkedThreads.get()) {
+    if (!kurobaSettings.application.drawerShowBookmarkedThreads.readBlocking()) {
       return !bookmarksManager.contains(threadDescriptor)
     }
 
-    if (!ChanSettings.drawerShowNavigationHistory.get()) {
+    if (!kurobaSettings.application.drawerShowNavigationHistory.readBlocking()) {
       return bookmarksManager.contains(threadDescriptor)
     }
 
@@ -155,8 +159,8 @@ class HistoryNavigationManager(
       return
     }
 
-    val canDelete = ChanSettings.drawerDeleteNavHistoryWhenBookmarkDeleted.get()
-      || !ChanSettings.drawerShowNavigationHistory.get()
+    val canDelete = kurobaSettings.application.drawerDeleteNavHistoryWhenBookmarkDeleted.read()
+      || !kurobaSettings.application.drawerShowNavigationHistory.read()
 
     if (canDelete) {
       deleteNavElements(threadDescriptors)
@@ -286,7 +290,7 @@ class HistoryNavigationManager(
   }
 
   suspend fun moveNavElementToTop(descriptor: ChanDescriptor, canMoveAtTheBeginning: Boolean = true) {
-    if (!ChanSettings.drawerMoveLastAccessedThreadToTop.get()) {
+    if (!kurobaSettings.application.drawerMoveLastAccessedThreadToTop.read()) {
       return
     }
 
@@ -442,12 +446,6 @@ class HistoryNavigationManager(
 
     persistNavigationStack()
     return pinResult
-  }
-
-  suspend fun deleteNavElement(descriptor: ChanDescriptor) {
-    ensureInitialized()
-
-    deleteNavElements(listOf(descriptor))
   }
 
   suspend fun deleteNavElements(descriptors: Collection<ChanDescriptor>) {

@@ -54,7 +54,7 @@ import com.github.k1rakishou.chan.core.helper.AppRestarter
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.ReportManager
 import com.github.k1rakishou.chan.core.repository.ImportExportRepository
-import com.github.k1rakishou.chan.features.settings.screens.delegate.ExportBackupOptions
+import com.github.k1rakishou.chan.features.settings.delegate.ExportBackupOptions
 import com.github.k1rakishou.chan.ui.compose.InsetsAwareBox
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeCheckbox
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeCollapsableContent

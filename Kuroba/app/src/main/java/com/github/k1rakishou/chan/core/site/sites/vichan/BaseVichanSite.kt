@@ -26,5 +26,11 @@ abstract class BaseVichanSite(defaultDomain: String) : CommonSite(defaultDomain)
   )
   override val api: SiteApi by lazy { VichanApi(this) }
   override val actions: SiteActions by lazy { VichanActions(this) }
-  override val postParser: PostParser? by lazy { DefaultPostParser(VichanCommentParser(), archivesManager) }
+  override val postParser: PostParser? by lazy {
+    DefaultPostParser(
+      kurobaSettings = kurobaSettings,
+      archivesManager = archivesManager,
+      commentParser = VichanCommentParser(kurobaSettings)
+    )
+  }
 }

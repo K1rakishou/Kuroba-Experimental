@@ -7,7 +7,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.updateLayoutParams
 import androidx.core.widget.doAfterTextChanged
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
+import com.github.k1rakishou.chan.core.di.component.controller.ControllerComponent
 import com.github.k1rakishou.chan.ui.controller.base.BaseFloatingController
 import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBias
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
@@ -15,6 +15,7 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableSlider
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
+import com.github.k1rakishou.chan.utils.ViewModelScope
 
 class RangeSettingUpdaterController(
   context: Context,
@@ -22,6 +23,7 @@ class RangeSettingUpdaterController(
   private val title: String,
   private val minValue: Int,
   private val maxValue: Int,
+  private val defaultValue: Int,
   private val currentValue: Int,
   private var resetClickedFunc: (() -> Unit)? = null,
   private var applyClickedFunc: ((Int) -> Unit)? = null
@@ -39,7 +41,10 @@ class RangeSettingUpdaterController(
 
   override fun getLayoutId(): Int = R.layout.controller_range_setting_updater
 
-  override fun injectActivityDependencies(component: ActivityComponent) {
+  override val viewModelScope: ViewModelScope
+    get() = ViewModelScope.ControllerScope(this)
+
+  override fun injectControllerDependencies(component: ControllerComponent) {
     component.inject(this)
   }
 
@@ -101,12 +106,12 @@ class RangeSettingUpdaterController(
 
     reset.setOnClickListener {
       resetClickedFunc?.invoke()
-      pop()
+      popWithResult(defaultValue)
     }
 
     apply.setOnClickListener {
       applyClickedFunc?.invoke(slider.value.toInt())
-      pop()
+      popWithResult(slider.value.toInt())
     }
   }
 

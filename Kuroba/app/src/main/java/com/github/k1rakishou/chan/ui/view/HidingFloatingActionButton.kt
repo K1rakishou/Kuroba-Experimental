@@ -16,7 +16,6 @@ import androidx.core.graphics.withSave
 import androidx.core.graphics.withScale
 import androidx.core.graphics.withTranslation
 import androidx.core.view.updatePadding
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.concurrency.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManager
@@ -35,12 +34,12 @@ import com.github.k1rakishou.chan.utils.combineMany
 import com.github.k1rakishou.chan.utils.setAlphaFast
 import com.github.k1rakishou.common.updateMargins
 import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.v2.KurobaSettings
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.reactive.asFlow
 import javax.inject.Inject
 
 class HidingFloatingActionButton
@@ -59,6 +58,8 @@ class HidingFloatingActionButton
   private val isChristmasToday = TimeUtils.isChristmasToday()
   private val is4chanBirthdayToday = TimeUtils.is4chanBirthdayToday()
 
+  @Inject
+  lateinit var kurobaSettings: KurobaSettings
   @Inject
   lateinit var globalUiStateHolder: GlobalUiStateHolder
   @Inject
@@ -214,9 +215,7 @@ class HidingFloatingActionButton
       val controllerKey = _controllerKey ?: return@launch
 
       combineMany(
-        ChanSettings.layoutMode.listenForChangesDeprecated().asFlow(),
-        ChanSettings.neverHideToolbar.listenForChangesDeprecated().asFlow(),
-        ChanSettings.enableReplyFab.listenForChangesDeprecated().asFlow(),
+        kurobaSettings.application.layoutMode.listen(),
         globalUiStateHolder.replyLayout.replyLayoutVisibilityEventsFlow,
         snapshotFlow { globalUiStateHolder.threadLayout.threadLayoutState(threadControllerType).value },
         snapshotFlow { globalUiStateHolder.threadLayout.focusedControllerState.value },
@@ -225,10 +224,10 @@ class HidingFloatingActionButton
         snapshotFlow { globalUiStateHolder.snackbar.snackbarVisibilityState(snackbarScope).value },
         globalUiStateHolder.toolbar.currentToolbarStates,
         currentOpenedDescriptorStateManager.currentFocusedControllers
-      ) { _, _, enableFab, replyLayoutState, threadLayout, focusedController, draggingFastScroller, scroll,
+      ) { _, replyLayoutState, threadLayout, focusedController, draggingFastScroller, scroll,
           snackbarVisible, currentToolbarStates, currentFocusedControllers ->
         return@combineMany FabVisibilityState(
-          fabEnabled = enableFab,
+          fabEnabled = true,
           replyLayoutVisibilityStates = replyLayoutState,
           threadLayoutState = threadLayout,
           focusedController = focusedController,
@@ -240,12 +239,12 @@ class HidingFloatingActionButton
         )
       }
         .onEach { fabVisibilityState ->
-          if (fabVisibilityState.isFabForceVisible(threadControllerType, controllerKey)) {
+          if (fabVisibilityState.isFabForceVisible(kurobaSettings, threadControllerType, controllerKey)) {
             setAlphaFast(1f)
             return@onEach
           }
 
-          if (fabVisibilityState.isFabForceHidden(threadControllerType, controllerKey)) {
+          if (fabVisibilityState.isFabForceHidden(kurobaSettings, threadControllerType, controllerKey)) {
             setAlphaFast(0f)
             return@onEach
           }

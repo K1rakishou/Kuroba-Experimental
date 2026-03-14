@@ -22,7 +22,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.PostIndexed
-import com.github.k1rakishou.persist_state.IndexAndTop
+import com.github.k1rakishou.v2.parameters.RecyclerIndexAndTopInfo
 import kotlinx.coroutines.launch
 
 class PostRepliesPopupController(
@@ -128,12 +128,13 @@ class PostRepliesPopupController(
       postViewMode = data.postViewMode,
       postCellCallback = postCellCallback,
       chanDescriptor = chanDescriptor,
-      _chanThreadViewableInfoManager = chanThreadViewableInfoManager,
-      _chanThreadManager = chanThreadManager,
-      _postFilterManager = postFilterManager,
-      _savedReplyManager = savedReplyManager,
-      _postFilterHighlightManager = postFilterHighlightManager,
-      _postHideManager = postHideManager,
+      kurobaSettings = kurobaSettings,
+      chanThreadViewableInfoManagerLazy = chanThreadViewableInfoManager,
+      chanThreadManagerLazy = chanThreadManager,
+      postFilterManagerLazy = postFilterManager,
+      savedReplyManagerLazy = savedReplyManager,
+      postFilterHighlightManagerLazy = postFilterHighlightManager,
+      postHideManagerLazy = postHideManager,
       initialTheme = themeEngine.chanTheme
     )
 
@@ -219,7 +220,7 @@ class PostRepliesPopupController(
 
   companion object {
     private const val TAG = "PostRepliesPopupController"
-    val scrollPositionCache = LruCache<PostDescriptor, IndexAndTop>(128)
+    val scrollPositionCache = LruCache<PostDescriptor, RecyclerIndexAndTopInfo.IndexAndTop>(128)
   }
 
 }

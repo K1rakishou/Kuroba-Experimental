@@ -3,18 +3,19 @@ package com.github.k1rakishou.chan.ui.cell
 import android.content.Context
 import android.view.View
 import android.widget.FrameLayout
-import com.github.k1rakishou.ChanSettings
-import com.github.k1rakishou.ChanSettings.BoardPostViewMode
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
+import com.github.k1rakishou.v2.parameters.BoardPostViewMode
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
-class GenericPostCell(context: Context) : FrameLayout(context), PostCellInterface {
+class GenericPostCell(
+  context: Context,
+) : FrameLayout(context), PostCellInterface {
   private var layoutId: Int? = null
 
   private val gridModeMargins = context.resources.getDimension(R.dimen.grid_card_margin).toInt()
@@ -85,20 +86,22 @@ class GenericPostCell(context: Context) : FrameLayout(context), PostCellInterfac
       return R.layout.cell_post_stub
     }
 
+    val kurobaSettings = postCellData.kurobaSettings
+
     val postAlignmentMode = when (postCellData.chanDescriptor) {
       is ChanDescriptor.CompositeCatalogDescriptor,
-      is ChanDescriptor.CatalogDescriptor -> ChanSettings.catalogPostAlignmentMode.get()
-      is ChanDescriptor.ThreadDescriptor -> ChanSettings.threadPostAlignmentMode.get()
+      is ChanDescriptor.CatalogDescriptor -> kurobaSettings.application.catalogPostAlignmentMode.readBlocking()
+      is ChanDescriptor.ThreadDescriptor -> kurobaSettings.application.threadPostAlignmentMode.readBlocking()
     }
 
     checkNotNull(postAlignmentMode) { "postAlignmentMode is null" }
 
     when (postCellData.boardPostViewMode) {
-      BoardPostViewMode.LIST -> {
+      BoardPostViewMode.List -> {
         return R.layout.cell_post_generic
       }
-      BoardPostViewMode.GRID,
-      BoardPostViewMode.STAGGER -> {
+      BoardPostViewMode.Grid,
+      BoardPostViewMode.Stagger -> {
         return R.layout.cell_post_card
       }
     }

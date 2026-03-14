@@ -6,15 +6,17 @@ import com.github.k1rakishou.model.data.catalog.IChanCatalogSnapshot
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import kotlin.concurrent.read
 
+typealias CatalogSnapshot = IChanCatalogSnapshot<ChanDescriptor.ICatalogDescriptor>
+
 class ChanCatalogSnapshotCache : GenericCacheSource<
   ChanDescriptor.ICatalogDescriptor,
-  IChanCatalogSnapshot<ChanDescriptor.ICatalogDescriptor>
-  >(
+  CatalogSnapshot
+>(
   capacity = 4,
   maxSize = 6,
   cacheEntriesToRemovePerTrim = 3
 ) {
-  override fun get(key: ChanDescriptor.ICatalogDescriptor): IChanCatalogSnapshot<ChanDescriptor.ICatalogDescriptor>? {
+  override fun get(key: ChanDescriptor.ICatalogDescriptor): CatalogSnapshot? {
     val fromCache = super.get(key)
     if (fromCache != null) {
       return fromCache
@@ -27,7 +29,7 @@ class ChanCatalogSnapshotCache : GenericCacheSource<
             val snapshot = actualCache[cacheKey] as ChanCompositeCatalogSnapshot?
               ?: return@read null
 
-            return@read snapshot.get(key) as IChanCatalogSnapshot<ChanDescriptor.ICatalogDescriptor>?
+            return@read snapshot.get(key) as CatalogSnapshot?
           }
         }
       }
@@ -36,47 +38,52 @@ class ChanCatalogSnapshotCache : GenericCacheSource<
     }
   }
 
-  override fun getOrPut(
+  override fun getMany(
+    keys: List<ChanDescriptor.ICatalogDescriptor>
+  ): Map<ChanDescriptor.ICatalogDescriptor, CatalogSnapshot> {
+    error("Not implemented because not used by ChanCatalogSnapshotCache")
+  }
+
+  override fun getAll(
+  ): Map<ChanDescriptor.ICatalogDescriptor, CatalogSnapshot> {
+    error("Not implemented because not used by ChanCatalogSnapshotCache")
+  }
+
+  override fun filterValues(
+    filterFunc: (CatalogSnapshot) -> Boolean
+  ): List<CatalogSnapshot> {
+    error("Not implemented because not used by ChanCatalogSnapshotCache")
+  }
+
+  override fun store(
     key: ChanDescriptor.ICatalogDescriptor,
-    valueFunc: () -> IChanCatalogSnapshot<ChanDescriptor.ICatalogDescriptor>
-  ): IChanCatalogSnapshot<ChanDescriptor.ICatalogDescriptor> {
-    return super.getOrPut(key, valueFunc)
-  }
-
-  override fun delete(key: ChanDescriptor.ICatalogDescriptor) {
-    // This method should be separated for CatalogDescriptor/CompositeCatalogDescriptor
-    super.delete(key)
-  }
-
-  override fun getMany(keys: List<ChanDescriptor.ICatalogDescriptor>): Map<ChanDescriptor.ICatalogDescriptor, IChanCatalogSnapshot<ChanDescriptor.ICatalogDescriptor>> {
+    value: CatalogSnapshot
+  ) {
     error("Not implemented because not used by ChanCatalogSnapshotCache")
   }
 
-  override fun getAll(): Map<ChanDescriptor.ICatalogDescriptor, IChanCatalogSnapshot<ChanDescriptor.ICatalogDescriptor>> {
+  override fun storeMany(
+    entries: Map<ChanDescriptor.ICatalogDescriptor, CatalogSnapshot>
+  ) {
     error("Not implemented because not used by ChanCatalogSnapshotCache")
   }
 
-  override fun filterValues(filterFunc: (IChanCatalogSnapshot<ChanDescriptor.ICatalogDescriptor>) -> Boolean): List<IChanCatalogSnapshot<ChanDescriptor.ICatalogDescriptor>> {
+  override fun firstOrNull(
+    predicate: (CatalogSnapshot) -> Boolean
+  ): CatalogSnapshot? {
     error("Not implemented because not used by ChanCatalogSnapshotCache")
   }
 
-  override fun store(key: ChanDescriptor.ICatalogDescriptor, value: IChanCatalogSnapshot<ChanDescriptor.ICatalogDescriptor>) {
+  override fun iterateWhile(
+    iteratorFunc: (CatalogSnapshot) -> Boolean
+  ): ModularResult<Unit> {
     error("Not implemented because not used by ChanCatalogSnapshotCache")
   }
 
-  override fun storeMany(entries: Map<ChanDescriptor.ICatalogDescriptor, IChanCatalogSnapshot<ChanDescriptor.ICatalogDescriptor>>) {
-    error("Not implemented because not used by ChanCatalogSnapshotCache")
-  }
-
-  override fun firstOrNull(predicate: (IChanCatalogSnapshot<ChanDescriptor.ICatalogDescriptor>) -> Boolean): IChanCatalogSnapshot<ChanDescriptor.ICatalogDescriptor>? {
-    error("Not implemented because not used by ChanCatalogSnapshotCache")
-  }
-
-  override fun iterateWhile(iteratorFunc: (IChanCatalogSnapshot<ChanDescriptor.ICatalogDescriptor>) -> Boolean): ModularResult<Unit> {
-    error("Not implemented because not used by ChanCatalogSnapshotCache")
-  }
-
-  override fun updateMany(keys: List<ChanDescriptor.ICatalogDescriptor>, updateFunc: (IChanCatalogSnapshot<ChanDescriptor.ICatalogDescriptor>) -> Unit) {
+  override fun updateMany(
+    keys: List<ChanDescriptor.ICatalogDescriptor>,
+    updateFunc: (CatalogSnapshot) -> Unit
+  ) {
     error("Not implemented because not used by ChanCatalogSnapshotCache")
   }
 

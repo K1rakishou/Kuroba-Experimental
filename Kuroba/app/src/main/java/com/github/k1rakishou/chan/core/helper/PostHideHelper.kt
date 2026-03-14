@@ -1,7 +1,6 @@
 package com.github.k1rakishou.chan.core.helper
 
 import androidx.annotation.VisibleForTesting
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.IPostFilterManager
 import com.github.k1rakishou.chan.core.manager.IPostHideManager
 import com.github.k1rakishou.chan.core.manager.IThreadPostSearchManager
@@ -20,10 +19,13 @@ import com.github.k1rakishou.model.data.post.ChanPostHideFilterInfo
 import com.github.k1rakishou.model.data.post.ChanPostWithFilterResult
 import com.github.k1rakishou.model.data.post.PostFilter
 import com.github.k1rakishou.model.data.post.PostFilterResult
+import com.github.k1rakishou.v2.KurobaSettings
+import com.github.k1rakishou.v2.parameters.CatalogOrThreadSearchMode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class PostHideHelper(
+  private val kurobaSettings: KurobaSettings,
   private val postHideManager: IPostHideManager,
   private val postFilterManager: IPostFilterManager,
   private val threadPostSearchManager: IThreadPostSearchManager,
@@ -51,10 +53,10 @@ class PostHideHelper(
 
     val filterOutPostsNotMatchingSearchQueryEnabled = when (chanDescriptor) {
       is ChanDescriptor.ICatalogDescriptor -> {
-        ChanSettings.catalogSearchMode.get() == ChanSettings.CatalogOrThreadSearchMode.Filter
+        kurobaSettings.application.catalogSearchMode.read() == CatalogOrThreadSearchMode.Filter
       }
       is ChanDescriptor.ThreadDescriptor -> {
-        ChanSettings.threadSearchMode.get() == ChanSettings.CatalogOrThreadSearchMode.Filter
+        kurobaSettings.application.threadSearchMode.read() == CatalogOrThreadSearchMode.Filter
       }
     }
 

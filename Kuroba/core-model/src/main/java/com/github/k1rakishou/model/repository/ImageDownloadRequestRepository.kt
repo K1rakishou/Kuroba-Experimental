@@ -1,14 +1,14 @@
 package com.github.k1rakishou.model.repository
 
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.model.KurobaDatabase
+import com.github.k1rakishou.model.KurobaMainDatabase
 import com.github.k1rakishou.model.data.download.ImageDownloadRequest
 import com.github.k1rakishou.model.source.local.ImageDownloadRequestLocalSource
 import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.atomic.AtomicBoolean
 
 class ImageDownloadRequestRepository(
-  database: KurobaDatabase,
+  database: KurobaMainDatabase,
   applicationScope: CoroutineScope,
   private val imageDownloadRequestLocalSource: ImageDownloadRequestLocalSource
 ) : AbstractRepository(database, applicationScope) {

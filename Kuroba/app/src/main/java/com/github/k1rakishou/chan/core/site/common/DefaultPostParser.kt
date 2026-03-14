@@ -4,7 +4,6 @@ import android.text.Spannable
 import android.text.SpannableString
 import android.text.SpannableStringBuilder
 import android.text.TextUtils
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.site.common.PostParserHelper.detectAndMarkThemeJsonSpan
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
@@ -20,11 +19,13 @@ import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.core_spannable.PostLinkable.Value.ArchiveThreadLink
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
+import com.github.k1rakishou.v2.KurobaSettings
 import org.jsoup.parser.Parser
 
 open class DefaultPostParser(
-  private val commentParser: CommentParser,
-  private val archivesManager: ArchivesManager
+  protected val kurobaSettings: KurobaSettings,
+  private val archivesManager: ArchivesManager,
+  private val commentParser: CommentParser
 ) : PostParser {
   private val htmlParserThreadLocal = ThreadLocal<HtmlParser?>()
 
@@ -64,8 +65,8 @@ open class DefaultPostParser(
       builder.subject = Parser.unescapeEntities(builder.subject!!.toString(), false)
     }
 
-    val anonymize = ChanSettings.anonymize.get()
-    val anonymizeIds = ChanSettings.anonymizeIds.get()
+    val anonymize = kurobaSettings.application.anonymize.readBlocking()
+    val anonymizeIds = kurobaSettings.application.anonymizeIds.readBlocking()
 
     if (anonymize) {
       builder.name("")
@@ -76,7 +77,7 @@ open class DefaultPostParser(
       builder.posterId("")
     }
 
-    if (builder.name == defaultName() && !ChanSettings.showAnonymousName.get()) {
+    if (builder.name == defaultName() && !kurobaSettings.application.showAnonymousName.readBlocking()) {
       builder.name("")
     }
   }
@@ -133,12 +134,13 @@ open class DefaultPostParser(
     when (node) {
       is HtmlNode.Text -> {
         val text = postProcessText(node, node.text)
-        val forceHttpsScheme = ChanSettings.forceHttpsUrlScheme.get()
+        val revealTextSpoilers = kurobaSettings.application.revealTextSpoilers.readBlocking()
 
         return detectLinks(
           post = post,
           text = text,
-          forceHttpsScheme = forceHttpsScheme,
+          forceHttpsScheme = true,
+          revealTextSpoilers = revealTextSpoilers,
           linkHandler = { link -> this.handleLink(link) }
         )
       }
@@ -237,7 +239,8 @@ open class DefaultPostParser(
     return PostLinkable(
       key = archiveThreadLink.urlText(),
       linkableValue = archiveThreadLink,
-      type = PostLinkable.Type.ARCHIVE
+      type = PostLinkable.Type.ARCHIVE,
+      revealTextSpoilers = kurobaSettings.application.revealTextSpoilers.readBlocking()
     )
   }
 

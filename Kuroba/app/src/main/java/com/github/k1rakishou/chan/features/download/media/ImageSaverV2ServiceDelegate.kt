@@ -37,7 +37,8 @@ import com.github.k1rakishou.model.data.download.ImageDownloadRequest
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.repository.ChanPostImageRepository
 import com.github.k1rakishou.model.repository.ImageDownloadRequestRepository
-import com.github.k1rakishou.persist_state.ImageSaverV2Options
+import com.github.k1rakishou.v2.KurobaSettings
+import com.github.k1rakishou.v2.parameters.ImageSaverV2Options
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -66,7 +67,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.measureTimedValue
 
 class ImageSaverV2ServiceDelegate(
-  private val verboseLogs: Boolean,
+  private val kurobaSettings: KurobaSettings,
   private val appScope: CoroutineScope,
   private val appConstants: AppConstants,
   private val cacheHandler: CacheHandler,
@@ -328,7 +329,7 @@ class ImageSaverV2ServiceDelegate(
                   )
                 }
 
-                if (verboseLogs) {
+                if (kurobaSettings.application.verboseLogs.read()) {
                   Logger.d(TAG, "downloadSingleImage(${imageDownloadRequest.imageFullUrl}) took $duration")
                 }
 
@@ -465,7 +466,7 @@ class ImageSaverV2ServiceDelegate(
   ): ImageDownloadRequest {
     BackgroundUtils.ensureBackgroundThread()
 
-    if (verboseLogs) {
+    if (kurobaSettings.application.verboseLogs.read()) {
       Logger.d(TAG, "downloadSingleImage() start uniqueId='${imageDownloadInputData.uniqueId}', " +
           "imageUrl='${imageDownloadRequest.imageFullUrl}'")
     }
@@ -559,7 +560,7 @@ class ImageSaverV2ServiceDelegate(
       }
     }
 
-    if (verboseLogs) {
+    if (kurobaSettings.application.verboseLogs.read()) {
       Logger.d(TAG, "downloadSingleImage() end uniqueId='${imageDownloadInputData.uniqueId}', " +
         "imageUrl='${imageDownloadRequest.imageFullUrl}', result=$downloadImageResult")
     }

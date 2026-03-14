@@ -50,9 +50,10 @@ sealed interface SnackbarScope {
     override val tag: String = "SnackbarScope_ControllerSpecific_${clazz.name}_${layoutAnchor?.name}"
   }
 
+  // Where to position the snackbars in case of double pane navigation left side of the screen or right side
   enum class LayoutAnchor {
-    Catalog,
-    Thread
+    Left,
+    Right
   }
 
 }

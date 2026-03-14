@@ -15,10 +15,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.util.lerp
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.ui.compose.KurobaTextUnit
 import com.github.k1rakishou.chan.ui.compose.collectTextFontSize
 import com.github.k1rakishou.chan.ui.compose.ktu
+import com.github.k1rakishou.chan.utils.appDependencies
+import com.github.k1rakishou.v2.KurobaSettings
 
 @Composable
 internal fun ComposeText(
@@ -34,6 +35,7 @@ internal fun ComposeText(
   onTextLayout: (TextLayoutResult) -> Unit = {},
   style: TextStyle = LocalTextStyle.current
 ) {
+  val kurobaSettings = appDependencies().kurobaSettings
   val actualFontSize = collectTextFontSize(defaultFontSize = fontSize)
 
   Text(
@@ -47,7 +49,7 @@ internal fun ComposeText(
     textAlign = textAlign,
     fontWeight = fontWeight,
     onTextLayout = onTextLayout,
-    style = remember(actualFontSize, style) { kurobaTextStyle(actualFontSize, style) }
+    style = remember(actualFontSize, style) { kurobaTextStyle(kurobaSettings, actualFontSize, style) }
   )
 }
 
@@ -66,6 +68,7 @@ internal fun ComposeText(
   onTextLayout: (TextLayoutResult) -> Unit = {},
   style: TextStyle = LocalTextStyle.current
 ) {
+  val kurobaSettings = appDependencies().kurobaSettings
   val actualFontSize = collectTextFontSize(defaultFontSize = fontSize)
 
   Text(
@@ -80,12 +83,16 @@ internal fun ComposeText(
     fontWeight = fontWeight,
     inlineContent = inlineContent,
     onTextLayout = onTextLayout,
-    style = remember(actualFontSize, style) { kurobaTextStyle(actualFontSize, style) }
+    style = remember(actualFontSize, style) { kurobaTextStyle(kurobaSettings, actualFontSize, style) }
   )
 }
 
-private fun kurobaTextStyle(actualFontSize: TextUnit, style: TextStyle): TextStyle {
-  val supportedFontSizes = ChanSettings.supportedFontSizes()
+private fun kurobaTextStyle(
+  kurobaSettings: KurobaSettings,
+  actualFontSize: TextUnit,
+  style: TextStyle
+): TextStyle {
+  val supportedFontSizes = kurobaSettings.application.supportedFontSizes()
 
   val currentFontSize = actualFontSize.value
   val minFont = supportedFontSizes.first

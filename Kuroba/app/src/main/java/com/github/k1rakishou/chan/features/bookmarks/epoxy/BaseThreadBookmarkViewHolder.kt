@@ -15,7 +15,6 @@ import coil.transform.CircleCropTransformation
 import coil.transform.RoundedCornersTransformation
 import coil.transform.Transformation
 import com.airbnb.epoxy.EpoxyHolder
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.image.GrayscaleTransformation
@@ -32,12 +31,15 @@ import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.core_themes.ThemeEngine.Companion.isDarkColor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.v2.KurobaSettings
 import okhttp3.HttpUrl
 import javax.inject.Inject
 
 @Suppress("LeakingThis")
 open class BaseThreadBookmarkViewHolder : EpoxyHolder() {
 
+  @Inject
+  lateinit var kurobaSettings: KurobaSettings
   @Inject
   lateinit var imageLoaderDeprecated: ImageLoaderDeprecated
   @Inject
@@ -443,12 +445,18 @@ open class BaseThreadBookmarkViewHolder : EpoxyHolder() {
       return
     }
 
-    if (ChanSettings.moveNotActiveBookmarksToBottom.get() && threadBookmarkStats.isDeadOrNotWatching()) {
+    if (
+      threadBookmarkStats.isDeadOrNotWatching() &&
+      kurobaSettings.application.moveNotActiveBookmarksToBottom.readBlocking()
+    ) {
       dragIndicator?.setVisibilityFast(View.GONE)
       return
     }
 
-    if (ChanSettings.moveBookmarksWithUnreadRepliesToTop.get() && threadBookmarkStats.newQuotes > 0) {
+    if (
+      threadBookmarkStats.newQuotes > 0 &&
+      kurobaSettings.application.moveBookmarksWithUnreadRepliesToTop.readBlocking()
+    ) {
       dragIndicator?.setVisibilityFast(View.GONE)
       return
     }

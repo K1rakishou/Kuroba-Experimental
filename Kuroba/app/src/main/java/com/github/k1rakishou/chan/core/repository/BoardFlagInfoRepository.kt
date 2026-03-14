@@ -6,7 +6,7 @@ import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4SiteSettings
 import com.github.k1rakishou.chan.core.usecase.LoadBoardFlagsUseCase
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
-import com.github.k1rakishou.prefs.StringSetting
+import com.github.k1rakishou.v2.settings.KurobaStringSetting
 import java.util.concurrent.ConcurrentHashMap
 
 class BoardFlagInfoRepository(
@@ -24,26 +24,26 @@ class BoardFlagInfoRepository(
 
       val supportsFlags = boardManager.byBoardDescriptor(boardDescriptor)?.countryFlags ?: false
       if (!supportsFlags) {
-        alreadyCheckedBoards.put(boardDescriptor, Unit)
+        alreadyCheckedBoards[boardDescriptor] = Unit
         return emptyList()
       }
 
       loadFlags(boardDescriptor)
-      alreadyCheckedBoards.put(boardDescriptor, Unit)
+      alreadyCheckedBoards[boardDescriptor] = Unit
     }
 
     return cachedFlagInfoMap[boardDescriptor]?.toList() ?: emptyList()
   }
 
   fun storeLastUsedFlag(
-    lastUsedCountryFlagPerBoardSetting: StringSetting,
+    lastUsedCountryFlagPerBoardSetting: KurobaStringSetting,
     selectedFlagInfo: LoadBoardFlagsUseCase.FlagInfo,
     currentBoardCode: String
   ) {
     // board_code:flag_code;board_code:flag_code;board_code:flag_code;etc...
 
     val flagMap = mutableMapOf<String, String>()
-    val boardCodeFlagCodePairs = lastUsedCountryFlagPerBoardSetting.get().split(';')
+    val boardCodeFlagCodePairs = lastUsedCountryFlagPerBoardSetting.readBlocking().split(';')
 
     for (boardCodeFlagCodePair in boardCodeFlagCodePairs) {
       val splitPair = boardCodeFlagCodePair.split(':')
@@ -73,7 +73,7 @@ class BoardFlagInfoRepository(
       }
     }
 
-    lastUsedCountryFlagPerBoardSetting.set(resultFlags)
+    lastUsedCountryFlagPerBoardSetting.writeAsync(resultFlags)
   }
 
   fun getLastUsedFlagKey(boardDescriptor: BoardDescriptor): String? {
@@ -83,7 +83,7 @@ class BoardFlagInfoRepository(
       ?: return null
 
     return extractFlagCodeOrDefault(
-      lastUsedCountryFlagPerBoardString = lastUsedCountryFlagPerBoardSetting.get(),
+      lastUsedCountryFlagPerBoardString = lastUsedCountryFlagPerBoardSetting.readBlocking(),
       currentBoardCode = boardDescriptor.boardCode
     )
   }
@@ -94,7 +94,7 @@ class BoardFlagInfoRepository(
       ?.lastUsedFlagPerBoard
       ?: return null
 
-    val lastUsedCountryFlagPerBoard = lastUsedCountryFlagPerBoardSetting.get()
+    val lastUsedCountryFlagPerBoard = lastUsedCountryFlagPerBoardSetting.readBlocking()
 
     var lastUsedFlagInfo = getFlagInfoByFlagKeyOrNull(
       lastUsedCountryFlagPerBoard = lastUsedCountryFlagPerBoard,

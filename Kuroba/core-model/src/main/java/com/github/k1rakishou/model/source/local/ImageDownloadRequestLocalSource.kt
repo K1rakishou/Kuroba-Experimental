@@ -1,15 +1,15 @@
 package com.github.k1rakishou.model.source.local
 
-import com.github.k1rakishou.model.KurobaDatabase
+import com.github.k1rakishou.model.KurobaMainDatabase
 import com.github.k1rakishou.model.data.download.ImageDownloadRequest
 import com.github.k1rakishou.model.entity.download.ImageDownloadRequestEntity
-import com.github.k1rakishou.persist_state.ImageSaverV2Options
+import com.github.k1rakishou.v2.parameters.ImageSaverV2Options
 import okhttp3.HttpUrl
 import org.joda.time.DateTime
 import org.joda.time.Period
 
 class ImageDownloadRequestLocalSource(
-  database: KurobaDatabase,
+  database: KurobaMainDatabase,
 ) : AbstractLocalSource(database) {
   private val imageDownloadRequestDao = database.imageDownloadRequestDao()
   private val dayAgo by lazy { DateTime.now().minus(Period.days(1)) }
@@ -25,7 +25,7 @@ class ImageDownloadRequestLocalSource(
       .map { imageDownloadRequest -> imageDownloadRequest.imageFullUrl }
 
     val activeRequests = imageUrls
-      .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+      .chunked(KurobaMainDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
       .flatMap { chunk -> imageDownloadRequestDao.selectMany(chunk) }
       .filter { imageDownloadRequestEntity -> imageDownloadRequestEntity.isQueued() }
 
@@ -150,7 +150,7 @@ class ImageDownloadRequestLocalSource(
     imageDownloadRequestDao.updateMany(toUpdate)
 
     toDelete
-      .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+      .chunked(KurobaMainDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
       .forEach { chunk -> imageDownloadRequestDao.deleteManyByUrl(chunk) }
   }
 
@@ -170,7 +170,7 @@ class ImageDownloadRequestLocalSource(
           createdOn = imageDownloadRequest.createdOn,
         )
       }
-      .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+      .chunked(KurobaMainDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
       .forEach { chunk -> imageDownloadRequestDao.updateMany(chunk) }
   }
 

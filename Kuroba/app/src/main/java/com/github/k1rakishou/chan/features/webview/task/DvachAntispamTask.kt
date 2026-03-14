@@ -42,7 +42,7 @@ class DvachAntispamTask(
       return
     }
 
-    dvachAntiSpamCookieSetting.setSync(cookies)
+    dvachAntiSpamCookieSetting.write(cookies)
   }
 
   private class DvachAntispamTaskWebViewClient(

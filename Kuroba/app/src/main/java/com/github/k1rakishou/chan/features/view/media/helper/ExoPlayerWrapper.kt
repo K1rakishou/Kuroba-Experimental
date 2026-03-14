@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.features.view.media.helper
 
 import android.content.Context
 import android.net.Uri
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.concurrency.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.features.view.media.MediaLocation
@@ -11,6 +10,7 @@ import com.github.k1rakishou.chan.features.view.media.element.MediaViewContract
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.file.ExternalFile
 import com.github.k1rakishou.fsaf.file.RawFile
+import com.github.k1rakishou.v2.KurobaSettings
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.PlaybackException
 import com.google.android.exoplayer2.Player
@@ -38,6 +38,7 @@ import kotlin.coroutines.resumeWithException
 
 class ExoPlayerWrapper(
   private val context: Context,
+  private val kurobaSettings: KurobaSettings,
   private val threadDownloadManager: ThreadDownloadManager,
   private val cachedHttpDataSourceFactory: DataSource.Factory,
   private val fileDataSourceFactory: DataSource.Factory,
@@ -196,7 +197,7 @@ class ExoPlayerWrapper(
   }
 
   fun start() {
-    actualExoPlayer.repeatMode = if (ChanSettings.videoAutoLoop.get()) {
+    actualExoPlayer.repeatMode = if (kurobaSettings.application.videoAutoLoop.readBlocking()) {
       Player.REPEAT_MODE_ALL
     } else {
       Player.REPEAT_MODE_OFF

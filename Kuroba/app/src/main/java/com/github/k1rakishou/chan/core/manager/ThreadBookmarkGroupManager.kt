@@ -23,6 +23,7 @@ import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkGroupToCreate
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.repository.ThreadBookmarkGroupRepository
+import com.github.k1rakishou.v2.KurobaSettings
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -34,11 +35,11 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
 class ThreadBookmarkGroupManager(
+  private val kurobaSettings: KurobaSettings,
   private val appScope: CoroutineScope,
-  private val verboseLogs: Boolean,
-  private val _threadBookmarkGroupRepository: Lazy<ThreadBookmarkGroupRepository>,
-  private val _bookmarksManager: Lazy<BookmarksManager>,
-  private val _getThreadBookmarkGroupIdsUseCase: Lazy<GetThreadBookmarkGroupIdsUseCase>
+  private val threadBookmarkGroupRepositoryLazy: Lazy<ThreadBookmarkGroupRepository>,
+  private val bookmarksManagerLazy: Lazy<BookmarksManager>,
+  private val getThreadBookmarkGroupIdsUseCaseLazy: Lazy<GetThreadBookmarkGroupIdsUseCase>
 ) {
   private val mutex = Mutex()
 
@@ -47,11 +48,11 @@ class ThreadBookmarkGroupManager(
   private val groupsByGroupIdMap = mutableMapOf<String, ThreadBookmarkGroup>()
 
   private val threadBookmarkGroupRepository: ThreadBookmarkGroupRepository
-    get() = _threadBookmarkGroupRepository.get()
+    get() = threadBookmarkGroupRepositoryLazy.get()
   private val bookmarksManager: BookmarksManager
-    get() = _bookmarksManager.get()
+    get() = bookmarksManagerLazy.get()
   private val getThreadBookmarkGroupIdsUseCase: GetThreadBookmarkGroupIdsUseCase
-    get() = _getThreadBookmarkGroupIdsUseCase.get()
+    get() = getThreadBookmarkGroupIdsUseCaseLazy.get()
 
   private val initializationRunnable = OneShotRunnable()
 
@@ -877,7 +878,7 @@ class ThreadBookmarkGroupManager(
       is BookmarksManager.BookmarkChange.BookmarksCreated -> {
         val threadDescriptors = bookmarkChange.threadDescriptors.toList()
 
-        if (verboseLogs) {
+        if (kurobaSettings.application.verboseLogs.read()) {
           Logger.d(TAG, "New BookmarksCreated event, threadDescriptors count: ${threadDescriptors.size}")
         }
 
@@ -886,7 +887,7 @@ class ThreadBookmarkGroupManager(
       is BookmarksManager.BookmarkChange.BookmarksDeleted -> {
         val threadDescriptors = bookmarkChange.threadDescriptors.toList()
 
-        if (verboseLogs) {
+        if (kurobaSettings.application.verboseLogs.read()) {
           Logger.d(TAG, "New BookmarksDeleted event, threadDescriptors count: ${threadDescriptors.size}")
         }
 

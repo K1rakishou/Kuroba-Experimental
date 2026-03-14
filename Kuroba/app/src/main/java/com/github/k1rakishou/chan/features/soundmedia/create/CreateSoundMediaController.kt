@@ -49,7 +49,11 @@ import javax.inject.Inject
 
 class CreateSoundMediaController(
   context: Context
-) : BaseComposeController<CreateSoundMediaControllerViewModel, Nothing>(
+) : BaseComposeController<
+  CreateSoundMediaControllerViewModel,
+  Nothing,
+  Nothing
+>(
   context = context,
   viewModelClass = CreateSoundMediaControllerViewModel::class.java,
   viewModelParams = null

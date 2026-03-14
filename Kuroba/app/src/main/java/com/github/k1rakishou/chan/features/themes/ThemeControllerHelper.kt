@@ -18,7 +18,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.text.getSpans
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
@@ -56,6 +55,8 @@ import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.ChanPostImageBuilder
 import com.github.k1rakishou.model.data.post.PostIndexed
+import com.github.k1rakishou.v2.KurobaSettings
+import com.github.k1rakishou.v2.parameters.BoardPostViewMode
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import java.util.concurrent.TimeUnit
@@ -99,7 +100,7 @@ class ThemeControllerHelper(
     override val currentChanDescriptor: ChanDescriptor?
       get() = dummyThreadDescriptor
 
-    override fun getBoardPages(boardDescriptor: BoardDescriptor): BoardPages? {
+    override suspend fun getBoardPages(boardDescriptor: BoardDescriptor): BoardPages? {
       return null
     }
   }
@@ -126,15 +127,16 @@ class ThemeControllerHelper(
     context: Context,
     position: Int,
     theme: ChanTheme,
+    kurobaSettings: KurobaSettings,
     kurobaToolbarState: KurobaToolbarState,
     navigationController: ToolbarNavigationController,
     options: Options,
     postCellDataWidthNoPaddings: Int
   ): CoordinatorLayout {
-    val parser = CommentParser()
+    val parser = CommentParser(kurobaSettings)
       .addDefaultRules()
 
-    val postParser = DefaultPostParser(parser, archivesManager)
+    val postParser = DefaultPostParser(kurobaSettings, archivesManager, parser)
     val builder1 = ChanPostBuilder()
       .boardDescriptor(dummyBoardDescriptor)
       .id(123456789)
@@ -251,7 +253,7 @@ class ThemeControllerHelper(
         override val currentChanDescriptor: ChanDescriptor?
           get() = null
 
-        override fun getPage(originalPostDescriptor: PostDescriptor): BoardPage? {
+        override suspend fun getPage(originalPostDescriptor: PostDescriptor): BoardPage? {
           return null
         }
 
@@ -264,7 +266,7 @@ class ThemeControllerHelper(
     )
 
     adapter.setThread(dummyThreadDescriptor, theme, indexPosts(posts), postCellDataWidthNoPaddings)
-    adapter.setBoardPostViewMode(ChanSettings.BoardPostViewMode.LIST)
+    adapter.setBoardPostViewMode(BoardPostViewMode.List)
     postsView.adapter = adapter
 
     val toolbar = KurobaToolbarView(context)

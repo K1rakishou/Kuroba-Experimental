@@ -8,7 +8,6 @@ import android.text.style.UnderlineSpan
 import androidx.core.text.BidiFormatter
 import androidx.core.text.TextDirectionHeuristicsCompat
 import androidx.core.text.buildSpannedString
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.concurrency.RecalculatableLazy
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
@@ -45,11 +44,15 @@ import com.github.k1rakishou.model.data.post.ChanPostHide
 import com.github.k1rakishou.model.data.post.ChanPostHttpIcon
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.util.ChanPostUtils
+import com.github.k1rakishou.v2.KurobaSettings
+import com.github.k1rakishou.v2.parameters.BoardPostViewMode
+import com.github.k1rakishou.v2.parameters.PostAlignmentMode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.Locale
 
 data class PostCellData(
+  val kurobaSettings: KurobaSettings,
   val chanDescriptor: ChanDescriptor,
   val post: ChanPost,
   val postImages: List<ChanPostImage>,
@@ -59,10 +62,10 @@ data class PostCellData(
   val detailsSizeSp: Int,
   private val markedPostDescriptor: PostDescriptor?,
   var showDivider: Boolean,
-  var boardPostViewMode: ChanSettings.BoardPostViewMode,
+  var boardPostViewMode: BoardPostViewMode,
   val boardPostsSortOrder: PostsFilter.CatalogSortingOrder,
   val boardPage: BoardPage?,
-  val neverShowPages: Boolean,
+  val showThreadPage: Boolean,
   val tapNoReply: Boolean,
   val postFullDate: Boolean,
   val postFullDateLocalLocale: Boolean,
@@ -79,7 +82,7 @@ data class PostCellData(
   val postViewMode: PostViewMode,
   val searchQuery: SearchQuery,
   val keywordsToHighlight: Set<HighlightFilterKeyword>,
-  val postAlignmentMode: ChanSettings.PostAlignmentMode,
+  val postAlignmentMode: PostAlignmentMode,
   val postCellThumbnailSizePercents: Int,
   val isSavedReply: Boolean,
   val isReplyToSavedReply: Boolean,
@@ -174,8 +177,8 @@ data class PostCellData(
       return postHide.onlyHide
     }
 
-  private val _detailsSizePx = RecalculatableLazy { sp(ChanSettings.detailsSizeSp()) }
-  private val _fontSizePx = RecalculatableLazy { sp(ChanSettings.fontSize.get().toInt()) }
+  private val _detailsSizePx = RecalculatableLazy { sp(kurobaSettings.application.detailsSizeSp()) }
+  private val _fontSizePx = RecalculatableLazy { sp(kurobaSettings.application.fontSize.readBlocking().toInt()) }
   private val _postTitleStub = RecalculatableLazy { postTitleStubPrecalculated ?: forceLtr(calculatePostTitleStub()) }
   private val _postTitle = RecalculatableLazy { postTitlePrecalculated ?: forceLtr(calculatePostTitle()) }
   private val _postFileInfoMap = RecalculatableLazy { postFileInfoPrecalculated ?: calculatePostFileInfo() }
@@ -279,6 +282,7 @@ data class PostCellData(
 
   fun fullCopy(): PostCellData {
     return PostCellData(
+      kurobaSettings = kurobaSettings,
       chanDescriptor = chanDescriptor,
       post = post,
       postImages = postImages.toList(),
@@ -291,7 +295,7 @@ data class PostCellData(
       boardPostViewMode = boardPostViewMode,
       boardPostsSortOrder = boardPostsSortOrder,
       boardPage = boardPage,
-      neverShowPages = neverShowPages,
+      showThreadPage = showThreadPage,
       tapNoReply = tapNoReply,
       postFullDate = postFullDate,
       postFullDateLocalLocale = postFullDateLocalLocale,
@@ -407,12 +411,12 @@ data class PostCellData(
 
       fullTitle.append(postSubject)
 
-      if (boardPostViewMode == ChanSettings.BoardPostViewMode.LIST) {
+      if (boardPostViewMode == BoardPostViewMode.List) {
         fullTitle.append("\n")
       }
     }
 
-    if (boardPostViewMode != ChanSettings.BoardPostViewMode.LIST) {
+    if (boardPostViewMode != BoardPostViewMode.List) {
       return fullTitle
     }
 
@@ -764,7 +768,7 @@ data class PostCellData(
   }
 
   private fun calculateCommentTextInternal(): CharSequence {
-    if (boardPostViewMode == ChanSettings.BoardPostViewMode.LIST) {
+    if (boardPostViewMode == BoardPostViewMode.List) {
       if (isViewingThread || post.postComment.comment().length <= COMMENT_MAX_LENGTH_LIST) {
         return post.postComment.comment()
       }
@@ -775,7 +779,7 @@ data class PostCellData(
     val commentText = post.postComment.comment()
     var commentMaxLength = COMMENT_MAX_LENGTH_GRID
 
-    if (boardPostViewMode == ChanSettings.BoardPostViewMode.STAGGER) {
+    if (boardPostViewMode == BoardPostViewMode.Stagger) {
       val spanCount = postCellCallback!!.currentSpanCount()
 
       // The higher the spanCount the lower the commentMaxLength
@@ -816,7 +820,7 @@ data class PostCellData(
     }
 
     if (!isViewingThread
-      && !neverShowPages
+      && showThreadPage
       && boardPostsSortOrder != PostsFilter.CatalogSortingOrder.BUMP
       && boardPage != null
     ) {
@@ -923,7 +927,7 @@ data class PostCellData(
       }
 
       if (isViewingCatalog
-        && !neverShowPages
+        && showThreadPage
         && boardPostsSortOrder != PostsFilter.CatalogSortingOrder.BUMP
         && boardPage != null
       ) {

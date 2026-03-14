@@ -24,6 +24,7 @@ import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ParsePostsV1UseCase
 import com.github.k1rakishou.chan.features.download.thread.ThreadDownloadProgressNotifier
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutHelper
+import com.github.k1rakishou.chan.features.settings.AppSettingsRestartTracker
 import com.github.k1rakishou.chan.features.view.media.helper.AlbumThreadControllerHelpers
 import com.github.k1rakishou.chan.features.view.media.helper.ExoPlayerCache
 import com.github.k1rakishou.chan.features.view.media.helper.MediaViewerGoToImagePostHelper
@@ -44,13 +45,13 @@ import com.github.k1rakishou.chan.ui.helper.picker.RemoteFilePicker
 import com.github.k1rakishou.chan.ui.helper.picker.ShareFilePicker
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.core_logger.Logger.deps
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.source.cache.ChanCatalogSnapshotCache
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
+import com.github.k1rakishou.v2.KurobaSettings
 import com.squareup.moshi.Moshi
 import dagger.Lazy
 import dagger.Module
@@ -64,6 +65,7 @@ class HelperModule {
   @Provides
   @Singleton
   fun provideChanThreadLoaderCoordinator(
+    kurobaSettings: KurobaSettings,
     proxiedOkHttpClient: ProxiedOkHttpClient,
     chanPostRepository: ChanPostRepository,
     chanCatalogSnapshotRepository: ChanCatalogSnapshotRepository,
@@ -78,6 +80,7 @@ class HelperModule {
   ): ChanThreadLoaderCoordinator {
     Logger.deps("ChanThreadLoaderCoordinator")
     return ChanThreadLoaderCoordinator(
+      kurobaSettings,
       proxiedOkHttpClient,
       chanPostRepository,
       chanCatalogSnapshotRepository,
@@ -95,13 +98,15 @@ class HelperModule {
   @Provides
   @Singleton
   fun provideShareFilePicker(
+    kurobaSettings: KurobaSettings,
     appConstants: AppConstants,
     appContext: Context,
     fileManager: FileManager,
     replyManager: ReplyManager
   ): ShareFilePicker {
-    Logger.deps("ShareFilePicker");
+    Logger.deps("ShareFilePicker")
     return ShareFilePicker(
+      kurobaSettings,
       appConstants,
       fileManager,
       replyManager,
@@ -112,13 +117,15 @@ class HelperModule {
   @Provides
   @Singleton
   fun provideLocalFilePicker(
+    kurobaSettings: KurobaSettings,
     appConstants: AppConstants,
     fileManager: FileManager,
     replyManager: ReplyManager,
     applicationScope: CoroutineScope
   ): LocalFilePicker {
-    Logger.deps("LocalFilePicker");
+    Logger.deps("LocalFilePicker")
     return LocalFilePicker(
+      kurobaSettings,
       appConstants,
       fileManager,
       replyManager,
@@ -129,19 +136,19 @@ class HelperModule {
   @Provides
   @Singleton
   fun provideRemoteFilePicker(
-    applicationScope: CoroutineScope,
+    kurobaSettings: KurobaSettings,
     appConstants: AppConstants,
     proxiedOkHttpClient: Lazy<ProxiedOkHttpClient>,
     fileManager: FileManager,
     replyManager: ReplyManager,
     cacheHandler: Lazy<CacheHandler>
   ): RemoteFilePicker {
-    Logger.deps("RemoteFilePicker");
+    Logger.deps("RemoteFilePicker")
     return RemoteFilePicker(
+      kurobaSettings,
       appConstants,
       fileManager,
       replyManager,
-      applicationScope,
       proxiedOkHttpClient,
       cacheHandler
     )
@@ -151,6 +158,7 @@ class HelperModule {
   @Singleton
   fun provideImagePickHelper(
     appContext: Context,
+    kurobaSettings: KurobaSettings,
     replyManagerLazy: Lazy<ReplyManager>,
     imageLoaderDeprecatedLazy: Lazy<ImageLoaderDeprecated>,
     shareFilePickerLazy: Lazy<ShareFilePicker>,
@@ -159,10 +167,11 @@ class HelperModule {
     currentOpenedDescriptorStateManagerLazy: Lazy<CurrentOpenedDescriptorStateManager>,
     replyLayoutHelperLazy: Lazy<ReplyLayoutHelper>
   ): ImagePickHelper {
-    Logger.deps("ImagePickHelper");
+    Logger.deps("ImagePickHelper")
 
     return ImagePickHelper(
       appContext,
+      kurobaSettings,
       replyManagerLazy,
       imageLoaderDeprecatedLazy,
       shareFilePickerLazy,
@@ -176,21 +185,21 @@ class HelperModule {
   @Provides
   @Singleton
   fun provideMediaViewerScrollerHelper(chanThreadManager: ChanThreadManager): MediaViewerScrollerHelper {
-    Logger.deps("MediaViewerScrollerHelper");
+    Logger.deps("MediaViewerScrollerHelper")
     return MediaViewerScrollerHelper(chanThreadManager)
   }
 
   @Provides
   @Singleton
   fun provideMediaViewerGoToImagePostHelper(chanThreadManager: ChanThreadManager): MediaViewerGoToImagePostHelper {
-    Logger.deps("MediaViewerGoToImagePostHelper");
+    Logger.deps("MediaViewerGoToImagePostHelper")
     return MediaViewerGoToImagePostHelper(chanThreadManager)
   }
 
   @Provides
   @Singleton
   fun provideMediaViewerGoToPostHelper(chanThreadManager: ChanThreadManager): MediaViewerGoToPostHelper {
-    Logger.deps("MediaViewerGoToPostHelper");
+    Logger.deps("MediaViewerGoToPostHelper")
     return MediaViewerGoToPostHelper(chanThreadManager)
   }
 
@@ -204,69 +213,70 @@ class HelperModule {
   @Provides
   @Singleton
   fun provideMediaViewerOpenAlbumHelper(chanThreadManager: ChanThreadManager): MediaViewerOpenAlbumHelper {
-    Logger.deps("MediaViewerOpenAlbumHelper");
+    Logger.deps("MediaViewerOpenAlbumHelper")
     return MediaViewerOpenAlbumHelper(chanThreadManager)
   }
 
   @Provides
   @Singleton
   fun provideExoPlayerDiskCache(context: Context, appConstants: AppConstants): ExoPlayerCache {
-    Logger.deps("ExoPlayerCache");
+    Logger.deps("ExoPlayerCache")
     return ExoPlayerCache(context, appConstants)
   }
 
   @Provides
   @Singleton
   fun provideAppSettingsUpdateAppRefreshHelper(): AppSettingsUpdateAppRefreshHelper {
-    Logger.deps("AppSettingsUpdateAppRefreshHelper");
+    Logger.deps("AppSettingsUpdateAppRefreshHelper")
     return AppSettingsUpdateAppRefreshHelper()
   }
 
   @Provides
   @Singleton
   fun provideChanLoadProgressNotifier(): ChanLoadProgressNotifier {
-    Logger.deps("ChanLoadProgressNotifier");
+    Logger.deps("ChanLoadProgressNotifier")
     return ChanLoadProgressNotifier()
   }
 
   @Provides
   @Singleton
   fun provideThreadDownloadProgressNotifier(): ThreadDownloadProgressNotifier {
-    Logger.deps("ThreadDownloadProgressNotifier");
+    Logger.deps("ThreadDownloadProgressNotifier")
     return ThreadDownloadProgressNotifier()
   }
 
   @Provides
   @Singleton
   fun provideAppRestarter(): AppRestarter {
-    Logger.deps("AppRestarter");
+    Logger.deps("AppRestarter")
     return AppRestarter()
   }
 
   @Provides
   @Singleton
   fun provideChan4CaptchaSolverHelper(moshi: Lazy<Moshi>): Chan4CaptchaSolverHelper {
-    Logger.deps("Chan4CaptchaSolverHelper");
+    Logger.deps("Chan4CaptchaSolverHelper")
     return Chan4CaptchaSolverHelper(moshi)
   }
 
   @Provides
   @Singleton
   fun provideFileHelper(appContext: Context): FileHelper {
-    Logger.deps("FileHelper");
+    Logger.deps("FileHelper")
     return FileHelper(appContext)
   }
 
   @Provides
   @Singleton
   fun provideAppResources(appContext: Context): AppResources {
+    Logger.deps("AppResources")
     return AppResources(appContext)
   }
 
   @Provides
   @Singleton
   fun provideGlobalUiStateHolder(appResources: AppResources): GlobalUiStateHolder {
-    Logger.deps("GlobalUiStateHolder");
+    Logger.deps("GlobalUiStateHolder")
     return GlobalUiStateHolder(appResources)
   }
 
@@ -316,13 +326,15 @@ class HelperModule {
   @Singleton
   @Provides
   fun providePostHideHelper(
+    kurobaSettings: KurobaSettings,
     postHideManager: PostHideManager,
     postFilterManager: PostFilterManager,
     threadPostSearchManager: ThreadPostSearchManager,
     chanLoadProgressNotifier: ChanLoadProgressNotifier
   ): PostHideHelper {
-    deps("PostHideHelper")
+    Logger.deps("PostHideHelper")
     return PostHideHelper(
+      kurobaSettings = kurobaSettings,
       postHideManager = postHideManager,
       postFilterManager = postFilterManager,
       threadPostSearchManager = threadPostSearchManager,
@@ -335,12 +347,14 @@ class HelperModule {
   fun provideHeadlessWebViewTaskExecutor(
     appContext: Context,
     appScope: CoroutineScope,
+    kurobaSettings: KurobaSettings,
     globalUiStateHolder: GlobalUiStateHolder
   ): HeadlessWebViewTaskExecutor {
-    deps("HeadlessWebViewTaskExecutor")
+    Logger.deps("HeadlessWebViewTaskExecutor")
     return HeadlessWebViewTaskExecutor(
       appContext = appContext,
       appScope = appScope,
+      kurobaSettings = kurobaSettings,
       globalUiStateHolder = globalUiStateHolder
     )
   }
@@ -351,11 +365,18 @@ class HelperModule {
     appContext: Context,
     moshi: Moshi
   ): WebViewLastTouchPositionHolder {
-    deps("WebViewLastTouchPositionHolder")
+    Logger.deps("WebViewLastTouchPositionHolder")
     return WebViewLastTouchPositionHolder(
       appContext = appContext,
       moshi = moshi
     )
+  }
+
+  @Singleton
+  @Provides
+  fun provideAppSettingsRestartTracker(): AppSettingsRestartTracker {
+    Logger.deps("AppSettingsRestartTracker")
+    return AppSettingsRestartTracker()
   }
 
 }

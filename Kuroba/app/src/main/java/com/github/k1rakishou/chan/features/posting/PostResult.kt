@@ -2,7 +2,7 @@ package com.github.k1rakishou.chan.features.posting
 
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
 import com.github.k1rakishou.common.errorMessageOrClassName
-import com.github.k1rakishou.persist_state.ReplyMode
+import com.github.k1rakishou.v2.parameters.ReplyMode
 
 sealed class PostResult {
   data object Canceled : PostResult()

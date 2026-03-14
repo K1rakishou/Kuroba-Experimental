@@ -44,9 +44,9 @@ open class LynxchanRequestModifier(
 
   private fun buildCookies(): String {
     site as BaseLynxchanSite
-    val captchaIdCookie = site.settings.captchaIdCookie.get()?.value
-    val bypassCookie = site.settings.bypassCookie.get()?.value
-    val extraCookie = site.settings.extraCookie.get()?.value
+    val captchaIdCookie = site.settings.captchaIdCookie.readBlocking()?.value
+    val bypassCookie = site.settings.bypassCookie.readBlocking()?.value
+    val extraCookie = site.settings.extraCookie.readBlocking()?.value
 
     return with(CookieBuilder()) {
       if (captchaIdCookie.isNotNullNorBlank()) {

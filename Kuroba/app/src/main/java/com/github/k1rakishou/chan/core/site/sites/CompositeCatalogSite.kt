@@ -33,7 +33,7 @@ import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.filter.FilterWatchCatalogInfoObject
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.site.SiteBoards
-import com.github.k1rakishou.persist_state.ReplyMode
+import com.github.k1rakishou.v2.parameters.ReplyMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flow

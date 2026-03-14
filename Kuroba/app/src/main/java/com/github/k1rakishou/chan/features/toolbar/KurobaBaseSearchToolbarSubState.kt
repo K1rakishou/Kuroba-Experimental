@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 
 abstract class KurobaBaseSearchToolbarSubState(
@@ -67,14 +68,14 @@ abstract class KurobaBaseSearchToolbarSubState(
     super.onDestroyed()
 
     _searchQueryState.edit { clearText() }
-    _currentSearchItemIndex.value = -1
-    _totalFoundItems.value = -1
+    _currentSearchItemIndex.intValue = -1
+    _totalFoundItems.intValue = -1
     _searchBarCreatedState.value = false
   }
 
   fun updateActiveSearchInfo(currentIndex: Int, totalFound: Int) {
-    _currentSearchItemIndex.value = currentIndex
-    _totalFoundItems.value = totalFound
+    _currentSearchItemIndex.intValue = currentIndex
+    _totalFoundItems.intValue = totalFound
   }
 
   fun listenForSearchQueryUpdates(): Flow<String?> {
@@ -97,6 +98,23 @@ abstract class KurobaBaseSearchToolbarSubState(
     return snapshotFlow { _searchVisibleState.value }
   }
 
+  fun listenForSearchState(): Flow<SearchToolbarState> {
+    return combine(
+      flow = listenForSearchCreationUpdates(),
+      flow2 = listenForSearchVisibilityUpdates(),
+      flow3 = listenForSearchQueryUpdates(),
+      transform = { created, visible, query ->
+        val inSearchMode = created && visible
+        val actualQuery = if (inSearchMode) query else null
+
+        return@combine SearchToolbarState(
+          inSearchMode = inSearchMode,
+          query = actualQuery
+        )
+      }
+    )
+  }
+
   fun isInSearchMode(): Boolean {
     return _searchVisibleState.value
   }
@@ -104,5 +122,10 @@ abstract class KurobaBaseSearchToolbarSubState(
   fun onShowFoundItemsAsPopupClicked() {
     _showFoundItemsAsPopupClicked.tryEmit(Unit)
   }
+
+  data class SearchToolbarState(
+    val inSearchMode: Boolean,
+    val query: String?
+  )
 
 }

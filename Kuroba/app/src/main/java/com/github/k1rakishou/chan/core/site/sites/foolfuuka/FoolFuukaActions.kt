@@ -17,7 +17,7 @@ import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.board.pages.BoardPages
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
-import com.github.k1rakishou.persist_state.ReplyMode
+import com.github.k1rakishou.v2.parameters.ReplyMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -118,6 +118,7 @@ class FoolFuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
     site.requestModifier.modifyGenericRequest(site, requestBuilder)
 
     return FoolFuukaSearchRequest(
+      kurobaSettings = site.dependencies.kurobaSettings,
       searchParams = searchParams,
       request = requestBuilder.build(),
       proxiedOkHttpClient = site.dependencies.proxiedOkHttpClient

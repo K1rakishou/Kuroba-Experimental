@@ -12,12 +12,15 @@ import com.github.k1rakishou.chan.core.repository.BoardFlagInfoRepository
 import com.github.k1rakishou.chan.core.site.http.HttpCallManager
 import com.github.k1rakishou.chan.core.site.sites.lynxchan.engine.LynxchanGetBoardsUseCase
 import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.v2.KurobaSettings
+import com.github.k1rakishou.v2.database.KurobaSettingsDatabase
 import com.google.gson.Gson
 import com.squareup.moshi.Moshi
 
 interface SiteDependencies {
   val gson: Gson
   val appConstants: AppConstants
+  val kurobaSettings: KurobaSettings
   val boardManager: BoardManager
   val siteManager: SiteManager
   val proxiedOkHttpClient: ProxiedOkHttpClient
@@ -30,4 +33,5 @@ interface SiteDependencies {
   val boardFlagInfoRepository: BoardFlagInfoRepository
   val chanThreadManager: ChanThreadManager
   val lynxchanGetBoardsUseCase: LynxchanGetBoardsUseCase
+  val settingsDatabase: KurobaSettingsDatabase
 }

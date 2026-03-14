@@ -34,6 +34,7 @@ object ChanThreadMapper {
     chanThreadEntity: ChanThreadEntity,
     chanPostFull: ChanPostFull,
     chanTextSpanEntityList: List<ChanTextSpanEntity>?,
+    revealTextSpoilers: Boolean,
     postAdditionalData: ChanPostLocalSource.PostAdditionalData
   ): ChanOriginalPost {
     val postDescriptor = PostDescriptor.create(
@@ -83,7 +84,10 @@ object ChanThreadMapper {
       deleted = chanPostFull.chanPostEntity.deleted,
       timestamp = chanPostFull.chanPostEntity.timestamp,
       name = chanPostFull.chanPostEntity.name,
-      postComment = ChanPostEntityMapper.mapPostComment(chanTextSpanEntityList),
+      postComment = ChanPostEntityMapper.mapPostComment(
+        chanTextSpanEntityList = chanTextSpanEntityList,
+        revealTextSpoilers = revealTextSpoilers
+      ),
       subject = ChanPostEntityMapper.mapSubject(chanTextSpanEntityList),
       tripcode = ChanPostEntityMapper.mapTripcode(chanTextSpanEntityList),
       posterId = chanPostFull.chanPostEntity.posterId,

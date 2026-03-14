@@ -1,14 +1,14 @@
 package com.github.k1rakishou.model.repository
 
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.model.KurobaDatabase
+import com.github.k1rakishou.model.KurobaMainDatabase
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.thread.ChanThreadViewableInfo
 import com.github.k1rakishou.model.source.local.ChanThreadViewableInfoLocalSource
 import kotlinx.coroutines.CoroutineScope
 
 class ChanThreadViewableInfoRepository(
-  database: KurobaDatabase,
+  database: KurobaMainDatabase,
   applicationScope: CoroutineScope,
   private val localSource: ChanThreadViewableInfoLocalSource
 ) : AbstractRepository(database, applicationScope) {

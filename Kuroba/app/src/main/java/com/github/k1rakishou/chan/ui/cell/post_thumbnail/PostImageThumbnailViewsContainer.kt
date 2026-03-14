@@ -5,18 +5,19 @@ import android.util.AttributeSet
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.updateLayoutParams
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.cell.PostCellData
 import com.github.k1rakishou.chan.ui.helper.KurobaViewGroup
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
+import com.github.k1rakishou.chan.utils.appDependencies
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.MurmurHashUtils
 import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.model.data.post.ChanPostImage
-import java.util.*
+import com.github.k1rakishou.v2.parameters.BoardPostViewMode
+import com.github.k1rakishou.v2.parameters.PostAlignmentMode
 
 class PostImageThumbnailViewsContainer @JvmOverloads constructor(
   context: Context,
@@ -71,7 +72,9 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       return
     }
 
-    if (postCellData.postImages.isEmpty() || ChanSettings.textOnly.get()) {
+    val kurobaSettings = postCellData.kurobaSettings
+
+    if (postCellData.postImages.isEmpty() || kurobaSettings.application.textOnly.readBlocking()) {
       cachedThumbnailViewContainerInfoArray[BIND].updateFrom(postCellData)
       unbindPostImages()
       return
@@ -113,6 +116,8 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     }
 
     val postCellCallback = postCellData.postCellCallback
+    val kurobaSettings = postCellData.kurobaSettings
+
     val resultThumbnailViews = mutableListOf<PostImageThumbnailViewContract>()
     val cellPostThumbnailSize = calculatePostCellSingleThumbnailSize()
 
@@ -132,7 +137,12 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       thumbnailView.setViewId(View.generateViewId())
       thumbnailView.bindActualThumbnailSizes(cellPostThumbnailSize, cellPostThumbnailSize)
 
-      thumbnailView.bindPostImage(postImage, true, ThumbnailView.ThumbnailViewOptions(drawRipple = false))
+      val thumbnailViewOptions = ThumbnailView.ThumbnailViewOptions(
+        postThumbnailScaling = kurobaSettings.application.postThumbnailScaling.readBlocking(),
+        drawThumbnailBackground = kurobaSettings.application.drawPostThumbnailBackground.readBlocking(),
+        drawRipple = false
+      )
+      thumbnailView.bindPostImage(postImage, true, thumbnailViewOptions)
       thumbnailView.bindPostInfo(postCellData, postImage)
 
       if (postCellData.isSelectionMode) {
@@ -210,6 +220,8 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       ?: return
 
     val postCellCallback = postCellData.postCellCallback
+    val kurobaSettings = postCellData.kurobaSettings
+
     val cellPostThumbnailSize = calculatePostCellSingleThumbnailSize()
     val resultThumbnailViews = mutableListOf<PostImageThumbnailViewContract>()
 
@@ -221,7 +233,12 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 
     thumbnailView.bindActualThumbnailSizes(cellPostThumbnailSize, cellPostThumbnailSize)
     thumbnailView.setViewId(View.generateViewId())
-    thumbnailView.bindPostImage(postImage, true, ThumbnailView.ThumbnailViewOptions())
+
+    val thumbnailViewOptions = ThumbnailView.ThumbnailViewOptions(
+      postThumbnailScaling = kurobaSettings.application.postThumbnailScaling.readBlocking(),
+      drawThumbnailBackground = kurobaSettings.application.drawPostThumbnailBackground.readBlocking()
+    )
+    thumbnailView.bindPostImage(postImage, true, thumbnailViewOptions)
     thumbnailView.bindPostInfo(postCellData, postImage)
 
     if (postCellData.isSelectionMode) {
@@ -467,9 +484,9 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 
   data class CachedThumbnailViewContainerInfo(
     var prevChanPostImages: MutableList<ChanPostImage>? = null,
-    var prevBoardPostViewMode: ChanSettings.BoardPostViewMode? = null,
+    var prevBoardPostViewMode: BoardPostViewMode? = null,
     var postFileInfosHash: MurmurHashUtils.Murmur3Hash? = null,
-    var postAlignmentMode: ChanSettings.PostAlignmentMode? = null,
+    var postAlignmentMode: PostAlignmentMode? = null,
     var postCellDataWidthNoPaddings: Int = 0,
     var postCellThumbnailSizePercents: Int = 0,
     var canShowGoToPostButton: Boolean = false,
@@ -534,9 +551,9 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 
     fun calculatePostCellSingleThumbnailSize(): Int {
       val postCellThumbnailSizePercent = CELL_POST_THUMBNAIL_SIZE_MAX / 100f
-      val newSize = ChanSettings.postCellThumbnailSizePercents.get() * postCellThumbnailSizePercent
+      val percent = appDependencies().kurobaSettings.application.postCellThumbnailSizePercents.readBlocking().toFloat()
 
-      return newSize.toInt()
+      return (percent * postCellThumbnailSizePercent).toInt()
     }
   }
 

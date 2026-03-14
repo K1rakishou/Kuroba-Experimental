@@ -7,7 +7,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.platform.ComposeView
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.concurrency.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
@@ -24,6 +23,7 @@ import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.ui.viewstate.ToolbarVisibilityState
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.combineMany
+import com.github.k1rakishou.v2.KurobaSettings
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
@@ -32,7 +32,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.reactive.asFlow
 import javax.inject.Inject
 
 class KurobaToolbarView @JvmOverloads constructor(
@@ -41,6 +40,8 @@ class KurobaToolbarView @JvmOverloads constructor(
   defAttrStyle: Int = 0
 ) : FrameLayout(context, attrSet, defAttrStyle), ContainerToolbarStateUpdatedListener {
 
+  @Inject
+  lateinit var kurobaSettings: KurobaSettings
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
   @Inject
@@ -93,15 +94,15 @@ class KurobaToolbarView @JvmOverloads constructor(
 
     coroutineScope.launch {
       combineMany(
-        ChanSettings.layoutMode.listenForChangesDeprecated().asFlow(),
-        ChanSettings.neverHideToolbar.listenForChangesDeprecated().asFlow(),
+        kurobaSettings.application.layoutMode.listen(),
         globalUiStateHolder.replyLayout.replyLayoutVisibilityEventsFlow,
         snapshotFlow { globalUiStateHolder.fastScroller.isDraggingFastScrollerState.value },
         snapshotFlow { globalUiStateHolder.scroll.scrollTransitionProgress.floatValue },
         globalUiStateHolder.toolbar.currentToolbarStates,
         currentOpenedDescriptorStateManager.currentFocusedControllers,
         controller.topControllerState.flatMapLatest { controller -> mapTopControllerIntoKeys(controller) }
-      ) { _, _, replyLayoutVisibilityStates, isDraggingFastScroller, scrollProgress, currentToolbarStates, currentFocusedControllers, topControllerKeys ->
+      ) { _, replyLayoutVisibilityStates, isDraggingFastScroller, scrollProgress, currentToolbarStates,
+          currentFocusedControllers, topControllerKeys ->
         return@combineMany ToolbarVisibilityState(
           replyLayoutVisibilityStates = replyLayoutVisibilityStates,
           isDraggingFastScroller = isDraggingFastScroller,
@@ -112,7 +113,7 @@ class KurobaToolbarView @JvmOverloads constructor(
         )
       }
         .onEach { toolbarVisibilityState ->
-          if (toolbarVisibilityState.isToolbarForceVisible()) {
+          if (toolbarVisibilityState.isToolbarForceVisible(kurobaSettings)) {
             currentToolbarState?.updateToolbarAlpha(1f)
             globalUiStateHolder.updateScrollState { resetScrollState() }
             return@onEach

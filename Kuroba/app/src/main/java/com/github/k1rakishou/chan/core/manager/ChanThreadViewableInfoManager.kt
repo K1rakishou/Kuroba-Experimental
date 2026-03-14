@@ -4,12 +4,13 @@ import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.core.concurrency.DebouncingCoroutineExecutor
 import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.deprecated.persist_state.IndexAndTopDeprecated
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.thread.ChanThreadViewableInfo
 import com.github.k1rakishou.model.data.thread.ChanThreadViewableInfoView
 import com.github.k1rakishou.model.repository.ChanThreadViewableInfoRepository
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
-import com.github.k1rakishou.persist_state.IndexAndTop
+import com.github.k1rakishou.v2.KurobaSettings
 import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -18,7 +19,7 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
 class ChanThreadViewableInfoManager(
-  private val verboseLogsEnabled: Boolean,
+  private val kurobaSettings: KurobaSettings,
   private val appScope: CoroutineScope,
   private val chanThreadViewableInfoRepository: ChanThreadViewableInfoRepository,
   private val chanThreadsCache: ChanThreadsCache
@@ -31,7 +32,7 @@ class ChanThreadViewableInfoManager(
 
   init {
     chanThreadsCache.addChanThreadDeleteEventListener { threadDeleteEvent ->
-      if (verboseLogsEnabled) {
+      if (kurobaSettings.application.verboseLogs.readBlocking()) {
         Logger.d(TAG, "chanThreadsCache.chanThreadDeleteEventFlow() " +
           "threadDeleteEvent=${threadDeleteEvent.javaClass.simpleName}")
       }
@@ -47,13 +48,13 @@ class ChanThreadViewableInfoManager(
       return
     }
 
-    if (verboseLogsEnabled) {
+    if (kurobaSettings.application.verboseLogs.readBlocking()) {
       Logger.d(TAG, "preloadForThread($threadDescriptor) begin")
     }
 
     val time = measureTime { preloadForThreadInternal(threadDescriptor) }
 
-    if (verboseLogsEnabled) {
+    if (kurobaSettings.application.verboseLogs.readBlocking()) {
       Logger.d(TAG, "preloadForThread($threadDescriptor) end, took $time")
     }
   }
@@ -73,7 +74,7 @@ class ChanThreadViewableInfoManager(
     }
   }
 
-  fun getIndexAndTop(threadDescriptor: ChanDescriptor.ThreadDescriptor): IndexAndTop? {
+  fun getIndexAndTop(threadDescriptor: ChanDescriptor.ThreadDescriptor): IndexAndTopDeprecated? {
     return lock.read {
       val chanThreadViewableInfo = chanThreadViewableMap[threadDescriptor]
         ?: return@read null
@@ -81,7 +82,7 @@ class ChanThreadViewableInfoManager(
       val listViewIndex = chanThreadViewableInfo.listViewIndex
       val listViewTop = chanThreadViewableInfo.listViewTop
 
-      return@read IndexAndTop(listViewIndex, listViewTop)
+      return@read IndexAndTopDeprecated(listViewIndex, listViewTop)
     }
   }
 

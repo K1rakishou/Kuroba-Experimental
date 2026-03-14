@@ -4,7 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.github.k1rakishou.model.KurobaDatabase
+import com.github.k1rakishou.model.KurobaMainDatabase
 import com.github.k1rakishou.model.entity.chan.post.ChanPostEntity
 import com.github.k1rakishou.model.entity.chan.post.ChanPostIdEntity
 import com.github.k1rakishou.model.entity.chan.thread.ChanThreadEntity
@@ -239,7 +239,7 @@ abstract class ChanThreadDao {
         WHERE
             cpid.${ChanPostIdEntity.OWNER_THREAD_ID_COLUMN_NAME} = :threadId
         AND
-            cpe.${ChanPostEntity.IS_OP_COLUMN_NAME} = ${KurobaDatabase.SQLITE_FALSE}
+            cpe.${ChanPostEntity.IS_OP_COLUMN_NAME} = ${KurobaMainDatabase.SQLITE_FALSE}
     )
   """)
   abstract suspend fun deleteAllPostsInThreadExceptOriginalPost(threadId: Long)

@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.core.di.module.application
 
 import android.content.Context
 import androidx.core.app.NotificationManagerCompat
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.okhttp.DownloaderOkHttpClient
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.cache.CacheHandler
@@ -113,6 +112,7 @@ import com.github.k1rakishou.model.repository.ThreadBookmarkGroupRepository
 import com.github.k1rakishou.model.repository.ThreadDownloadRepository
 import com.github.k1rakishou.model.source.cache.ChanCatalogSnapshotCache
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
+import com.github.k1rakishou.v2.KurobaSettings
 import com.google.gson.Gson
 import com.squareup.moshi.Moshi
 import dagger.Lazy
@@ -134,13 +134,14 @@ class ManagerModule {
   @Singleton
   fun provideSiteManager(
     appScope: CoroutineScope,
+    kurobaSettings: KurobaSettings,
     siteRepository: Lazy<SiteRepository>
   ): SiteManager {
     deps("SiteManager")
     return SiteManager(
       appScope,
       AppModuleAndroidUtils.isDevBuild,
-      ChanSettings.verboseLogs.get(),
+      kurobaSettings.application.verboseLogs.readBlocking(),
       siteRepository,
       SiteRegistry
     )
@@ -174,6 +175,7 @@ class ManagerModule {
   @Provides
   @Singleton
   fun provideReplyManager(
+    kurobaSettings: KurobaSettings,
     applicationVisibilityManager: ApplicationVisibilityManager,
     appConstants: AppConstants,
     moshi: Moshi,
@@ -181,6 +183,7 @@ class ManagerModule {
   ): ReplyManager {
     deps("ReplyManager")
     return ReplyManager(
+      kurobaSettings,
       applicationVisibilityManager,
       appConstants,
       moshi,
@@ -191,11 +194,13 @@ class ManagerModule {
   @Provides
   @Singleton
   fun providePageRequestManager(
+    kurobaSettings: KurobaSettings,
     siteManager: SiteManager,
     boardManager: BoardManager
   ): PageRequestManager {
     deps("PageRequestManager")
     return PageRequestManager(
+      kurobaSettings,
       siteManager,
       boardManager
     )
@@ -205,6 +210,7 @@ class ManagerModule {
   @Singleton
   fun provideArchivesManager(
     appContext: Context,
+    kurobaSettings: KurobaSettings,
     gson: Lazy<Gson>,
     appConstants: AppConstants,
     appScope: CoroutineScope
@@ -215,13 +221,14 @@ class ManagerModule {
       appContext,
       appScope,
       appConstants,
-      ChanSettings.verboseLogs.get()
+      kurobaSettings.application.verboseLogs.readBlocking()
     )
   }
 
   @Provides
   @Singleton
   fun provideReportManager(
+    kurobaSettings: KurobaSettings,
     appScope: CoroutineScope,
     appContext: Context,
     appConstants: AppConstants,
@@ -230,6 +237,7 @@ class ManagerModule {
   ): ReportManager {
     deps("ReportManager")
     return ReportManager(
+      kurobaSettings,
       appScope,
       appContext,
       okHttpClient,
@@ -289,6 +297,7 @@ class ManagerModule {
   @Singleton
   fun provideSeenPostsManager(
     appScope: CoroutineScope,
+    kurobaSettings: KurobaSettings,
     chanThreadsCache: ChanThreadsCache,
     chanCatalogSnapshotCache: ChanCatalogSnapshotCache,
     seenPostRepository: SeenPostRepository
@@ -296,7 +305,7 @@ class ManagerModule {
     deps("SeenPostsManager")
     return SeenPostsManager(
       appScope,
-      ChanSettings.verboseLogs.get(),
+      kurobaSettings,
       chanThreadsCache,
       chanCatalogSnapshotCache,
       seenPostRepository
@@ -320,6 +329,7 @@ class ManagerModule {
   @Provides
   @Singleton
   fun provideHistoryNavigationManager(
+    kurobaSettings: KurobaSettings,
     appScope: CoroutineScope,
     historyNavigationRepository: Lazy<HistoryNavigationRepository>,
     applicationVisibilityManager: Lazy<ApplicationVisibilityManager>,
@@ -327,6 +337,7 @@ class ManagerModule {
   ): HistoryNavigationManager {
     deps("HistoryNavigationManager")
     return HistoryNavigationManager(
+      kurobaSettings,
       appScope,
       historyNavigationRepository,
       applicationVisibilityManager,
@@ -338,11 +349,12 @@ class ManagerModule {
   @Singleton
   fun providePostFilterManager(
     appScope: CoroutineScope,
+    kurobaSettings: KurobaSettings,
     chanThreadsCache: ChanThreadsCache
   ): PostFilterManager {
     deps("PostFilterManager")
     return PostFilterManager(
-      ChanSettings.verboseLogs.get(),
+      kurobaSettings.application.verboseLogs.readBlocking(),
       appScope,
       chanThreadsCache
     )
@@ -352,6 +364,7 @@ class ManagerModule {
   @Singleton
   fun provideBookmarksManager(
     appScope: CoroutineScope,
+    kurobaSettings: KurobaSettings,
     applicationVisibilityManager: Lazy<ApplicationVisibilityManager>,
     archivesManager: Lazy<ArchivesManager>,
     bookmarksRepository: Lazy<BookmarksRepository>,
@@ -360,7 +373,7 @@ class ManagerModule {
     deps("BookmarksManager")
     return BookmarksManager(
       AppModuleAndroidUtils.isDevBuild,
-      ChanSettings.verboseLogs.get(),
+      kurobaSettings.application.verboseLogs.readBlocking(),
       appScope,
       applicationVisibilityManager,
       archivesManager,
@@ -385,6 +398,7 @@ class ManagerModule {
   @Provides
   @Singleton
   fun provideFetchThreadBookmarkInfoUseCase(
+    kurobaSettings: KurobaSettings,
     bookmarksManager: BookmarksManager,
     archivesManager: ArchivesManager,
     siteManager: SiteManager,
@@ -398,7 +412,7 @@ class ManagerModule {
     deps("BookmarkWatcherDelegate")
     return BookmarkWatcherDelegate(
       AppModuleAndroidUtils.isDevBuild,
-      ChanSettings.verboseLogs.get(),
+      kurobaSettings,
       bookmarksManager,
       archivesManager,
       siteManager,
@@ -416,6 +430,7 @@ class ManagerModule {
   fun provideBookmarkForegroundWatcher(
     appScope: CoroutineScope,
     appContext: Context,
+    kurobaSettings: KurobaSettings,
     appConstants: AppConstants,
     bookmarksManager: BookmarksManager,
     archivesManager: ArchivesManager,
@@ -425,7 +440,7 @@ class ManagerModule {
   ): BookmarkForegroundWatcher {
     deps("BookmarkForegroundWatcher")
     return BookmarkForegroundWatcher(
-      ChanSettings.verboseLogs.get(),
+      kurobaSettings,
       appScope,
       appContext,
       appConstants,
@@ -442,13 +457,14 @@ class ManagerModule {
   fun provideBookmarkWatcherController(
     appContext: Context,
     appScope: CoroutineScope,
+    kurobaSettings: KurobaSettings,
     appConstants: AppConstants,
     bookmarksManager: Lazy<BookmarksManager>,
     bookmarkForegroundWatcher: Lazy<BookmarkForegroundWatcher>
   ): BookmarkWatcherCoordinator {
     deps("BookmarkWatcherCoordinator")
     return BookmarkWatcherCoordinator(
-      ChanSettings.verboseLogs.get(),
+      kurobaSettings,
       appContext,
       appScope,
       appConstants,
@@ -467,6 +483,7 @@ class ManagerModule {
   @Provides
   @Singleton
   fun provideReplyNotificationsHelper(
+    kurobaSettings: KurobaSettings,
     appContext: Context,
     appScope: CoroutineScope,
     notificationManagerCompat: NotificationManagerCompat,
@@ -479,7 +496,7 @@ class ManagerModule {
     deps("ReplyNotificationsHelper")
     return ReplyNotificationsHelper(
       AppModuleAndroidUtils.isDevBuild,
-      ChanSettings.verboseLogs.get(),
+      kurobaSettings,
       appContext,
       appScope,
       notificationManagerCompat,
@@ -510,6 +527,7 @@ class ManagerModule {
   @Provides
   @Singleton
   fun provideLastPageNotificationsHelper(
+    kurobaSettings: KurobaSettings,
     appContext: Context,
     notificationManagerCompat: NotificationManagerCompat,
     pageRequestManager: Lazy<PageRequestManager>,
@@ -520,6 +538,7 @@ class ManagerModule {
     deps("LastPageNotificationsHelper")
     return LastPageNotificationsHelper(
       AppModuleAndroidUtils.isDevBuild,
+      kurobaSettings,
       appContext,
       notificationManagerCompat,
       pageRequestManager,
@@ -532,13 +551,14 @@ class ManagerModule {
   @Provides
   @Singleton
   fun provideChanThreadViewableInfoManager(
+    kurobaSettings: KurobaSettings,
     chanThreadViewableInfoRepository: ChanThreadViewableInfoRepository,
     appScope: CoroutineScope,
     chanThreadsCache: ChanThreadsCache
   ): ChanThreadViewableInfoManager {
     deps("ChanThreadViewableInfoManager")
     return ChanThreadViewableInfoManager(
-      ChanSettings.verboseLogs.get(),
+      kurobaSettings,
       appScope,
       chanThreadViewableInfoRepository,
       chanThreadsCache
@@ -548,12 +568,13 @@ class ManagerModule {
   @Provides
   @Singleton
   fun provideSavedReplyManager(
+    kurobaSettings: KurobaSettings,
     chanThreadsCache: ChanThreadsCache,
     chanSavedReplyRepository: ChanSavedReplyRepository
   ): SavedReplyManager {
     deps("SavedReplyManager")
     return SavedReplyManager(
-      ChanSettings.verboseLogs.get(),
+      kurobaSettings,
       chanThreadsCache,
       chanSavedReplyRepository
     )
@@ -562,13 +583,14 @@ class ManagerModule {
   @Provides
   @Singleton
   fun providePostHideManager(
+    kurobaSettings: KurobaSettings,
     chanPostHideRepository: ChanPostHideRepository,
     appScope: CoroutineScope,
     chanThreadsCache: ChanThreadsCache
   ): PostHideManager {
     deps("PostHideManager")
     return PostHideManager(
-      ChanSettings.verboseLogs.get(),
+      kurobaSettings,
       appScope,
       chanPostHideRepository,
       chanThreadsCache
@@ -600,6 +622,7 @@ class ManagerModule {
   @Singleton
   @Provides
   fun provideThreadBookmarkGroupEntryManager(
+    kurobaSettings: KurobaSettings,
     appScope: CoroutineScope,
     threadBookmarkGroupEntryRepository: Lazy<ThreadBookmarkGroupRepository>,
     bookmarksManager: Lazy<BookmarksManager>,
@@ -607,8 +630,8 @@ class ManagerModule {
   ): ThreadBookmarkGroupManager {
     deps("ThreadBookmarkGroupManager")
     return ThreadBookmarkGroupManager(
+      kurobaSettings,
       appScope,
-      ChanSettings.verboseLogs.get(),
       threadBookmarkGroupEntryRepository,
       bookmarksManager,
       getThreadBookmarkGroupIdsUseCase
@@ -619,6 +642,7 @@ class ManagerModule {
   @Provides
   fun provideChan4CloudFlareImagePreloaderManager(
     appScope: CoroutineScope,
+    kurobaSettings: KurobaSettings,
     proxiedOkHttpClient: ProxiedOkHttpClient,
     chanThreadsCache: ChanThreadsCache,
     prefetchStateManager: PrefetchStateManager
@@ -626,7 +650,7 @@ class ManagerModule {
     deps("Chan4CloudFlareImagePreloaderManager")
     return Chan4CloudFlareImagePreloaderManager(
       appScope,
-      ChanSettings.verboseLogs.get(),
+      kurobaSettings,
       proxiedOkHttpClient,
       chanThreadsCache,
       prefetchStateManager
@@ -648,7 +672,6 @@ class ManagerModule {
   ): ChanThreadManager {
     deps("ChanThreadManager")
     return ChanThreadManager(
-      ChanSettings.verboseLogs.get(),
       siteManager,
       bookmarksManager,
       postFilterManager,
@@ -675,12 +698,13 @@ class ManagerModule {
   fun provideFilterWatcherCoordinator(
     appContext: Context,
     appScope: CoroutineScope,
+    kurobaSettings: KurobaSettings,
     appConstants: AppConstants,
     chanFilterManager: Lazy<ChanFilterManager>
   ): FilterWatcherCoordinator {
     deps("FilterWatcherCoordinator")
     return FilterWatcherCoordinator(
-      ChanSettings.verboseLogs.get(),
+      kurobaSettings,
       appContext,
       appScope,
       appConstants,
@@ -691,6 +715,7 @@ class ManagerModule {
   @Singleton
   @Provides
   fun provideFilterWatcherDelegate(
+    kurobaSettings: KurobaSettings,
     appScope: CoroutineScope,
     boardManager: BoardManager,
     bookmarksManager: BookmarksManager,
@@ -703,6 +728,7 @@ class ManagerModule {
     deps("FilterWatcherDelegate")
     return FilterWatcherDelegate(
       AppModuleAndroidUtils.isDevBuild,
+      kurobaSettings,
       appScope,
       boardManager,
       bookmarksManager,
@@ -719,6 +745,7 @@ class ManagerModule {
   fun provideImageSaverV2Delegate(
     appScope: CoroutineScope,
     appConstants: AppConstants,
+    kurobaSettings: KurobaSettings,
     cacheHandler: CacheHandler,
     downloaderOkHttpClient: DownloaderOkHttpClient,
     notificationManagerCompat: NotificationManagerCompat,
@@ -733,7 +760,7 @@ class ManagerModule {
   ): ImageSaverV2ServiceDelegate {
     deps("ImageSaverV2ServiceDelegate")
     return ImageSaverV2ServiceDelegate(
-      ChanSettings.verboseLogs.get(),
+      kurobaSettings,
       appScope,
       appConstants,
       cacheHandler,
@@ -753,13 +780,14 @@ class ManagerModule {
   @Singleton
   @Provides
   fun provideTwoCaptchaSolver(
+    kurobaSettings: KurobaSettings,
     gson: Gson,
     siteManager: SiteManager,
     proxiedOkHttpClient: Lazy<ProxiedOkHttpClient>
   ): TwoCaptchaSolver {
     deps("TwoCaptchaSolver")
     return TwoCaptchaSolver(
-      AppModuleAndroidUtils.isDevBuild,
+      kurobaSettings,
       gson,
       siteManager,
       proxiedOkHttpClient
@@ -769,6 +797,7 @@ class ManagerModule {
   @Singleton
   @Provides
   fun providePostingServiceDelegate(
+    kurobaSettings: KurobaSettings,
     appScope: CoroutineScope,
     appConstants: AppConstants,
     replyManager: Lazy<ReplyManager>,
@@ -784,6 +813,7 @@ class ManagerModule {
   ): PostingServiceDelegate {
     deps("PostingServiceDelegate")
     return PostingServiceDelegate(
+      kurobaSettings,
       appScope,
       appConstants,
       replyManager,
@@ -821,6 +851,7 @@ class ManagerModule {
   @Singleton
   @Provides
   fun provideThreadDownloadingCoordinator(
+    kurobaSettings: KurobaSettings,
     appContext: Context,
     appScope: CoroutineScope,
     appConstants: AppConstants,
@@ -828,6 +859,7 @@ class ManagerModule {
   ): ThreadDownloadingCoordinator {
     deps("ThreadDownloadingCoordinator")
     return ThreadDownloadingCoordinator(
+      kurobaSettings,
       appContext,
       appScope,
       appConstants,
@@ -838,6 +870,7 @@ class ManagerModule {
   @Singleton
   @Provides
   fun provideThreadDownloadingDelegate(
+    kurobaSettings: KurobaSettings,
     appConstants: AppConstants,
     downloaderOkHttpClient: Lazy<DownloaderOkHttpClient>,
     siteManager: SiteManager,
@@ -851,6 +884,7 @@ class ManagerModule {
   ): ThreadDownloadingDelegate {
     deps("ThreadDownloadingDelegate")
     return ThreadDownloadingDelegate(
+      kurobaSettings,
       appConstants,
       downloaderOkHttpClient,
       siteManager,
@@ -866,9 +900,13 @@ class ManagerModule {
 
   @Singleton
   @Provides
-  fun provideCurrentOpenedDescriptorStateManager(): CurrentOpenedDescriptorStateManager {
+  fun provideCurrentOpenedDescriptorStateManager(
+    kurobaSettings: KurobaSettings,
+  ): CurrentOpenedDescriptorStateManager {
     deps("CurrentOpenedDescriptorStateManager")
-    return CurrentOpenedDescriptorStateManager()
+    return CurrentOpenedDescriptorStateManager(
+      kurobaSettings
+    )
   }
 
   @Singleton
@@ -895,6 +933,7 @@ class ManagerModule {
   @Provides
   fun provideThirdEyeManager(
     appContext: Context,
+    kurobaSettings: KurobaSettings,
     chanThreadsCache: ChanThreadsCache,
     appConstants: AppConstants,
     moshi: Moshi,
@@ -902,8 +941,8 @@ class ManagerModule {
   ): ThirdEyeManager {
     deps("ThirdEyeManager")
     return ThirdEyeManager(
+      kurobaSettings,
       appContext,
-      ChanSettings.verboseLogs.get(),
       appConstants,
       moshi,
       chanThreadsCache,

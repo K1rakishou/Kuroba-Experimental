@@ -36,36 +36,35 @@ import okhttp3.HttpUrl
 import kotlin.time.measureTime
 
 class ChanThreadManager(
-  private val verboseLogs: Boolean,
-  private val _siteManager: Lazy<SiteManager>,
-  private val _bookmarksManager: Lazy<BookmarksManager>,
-  private val _postFilterManager: Lazy<PostFilterManager>,
-  private val _savedReplyManager: Lazy<SavedReplyManager>,
-  private val _chanThreadsCache: Lazy<ChanThreadsCache>,
-  private val _chanPostRepository: Lazy<ChanPostRepository>,
-  private val _chanThreadLoaderCoordinator: Lazy<ChanThreadLoaderCoordinator>,
-  private val _threadDataPreloader: Lazy<ThreadDataPreloader>,
-  private val _catalogDataPreloader: Lazy<CatalogDataPreloader>
+  private val siteManagerLazy: Lazy<SiteManager>,
+  private val bookmarksManagerLazy: Lazy<BookmarksManager>,
+  private val postFilterManagerLazy: Lazy<PostFilterManager>,
+  private val savedReplyManagerLazy: Lazy<SavedReplyManager>,
+  private val chanThreadsCacheLazy: Lazy<ChanThreadsCache>,
+  private val chanPostRepositoryLazy: Lazy<ChanPostRepository>,
+  private val chanThreadLoaderCoordinatorLazy: Lazy<ChanThreadLoaderCoordinator>,
+  private val threadDataPreloaderLazy: Lazy<ThreadDataPreloader>,
+  private val catalogDataPreloaderLazy: Lazy<CatalogDataPreloader>
 ) {
 
   private val siteManager: SiteManager
-    get() = _siteManager.get()
+    get() = siteManagerLazy.get()
   private val bookmarksManager: BookmarksManager
-    get() = _bookmarksManager.get()
+    get() = bookmarksManagerLazy.get()
   private val postFilterManager: PostFilterManager
-    get() = _postFilterManager.get()
+    get() = postFilterManagerLazy.get()
   private val savedReplyManager: SavedReplyManager
-    get() = _savedReplyManager.get()
+    get() = savedReplyManagerLazy.get()
   private val chanThreadsCache: ChanThreadsCache
-    get() = _chanThreadsCache.get()
+    get() = chanThreadsCacheLazy.get()
   private val chanPostRepository: ChanPostRepository
-    get() = _chanPostRepository.get()
+    get() = chanPostRepositoryLazy.get()
   private val chanThreadLoaderCoordinator: ChanThreadLoaderCoordinator
-    get() = _chanThreadLoaderCoordinator.get()
+    get() = chanThreadLoaderCoordinatorLazy.get()
   private val threadDataPreloader: ThreadDataPreloader
-    get() = _threadDataPreloader.get()
+    get() = threadDataPreloaderLazy.get()
   private val catalogDataPreloader: CatalogDataPreloader
-    get() = _catalogDataPreloader.get()
+    get() = catalogDataPreloaderLazy.get()
 
   private val _chanDescriptorLoadFinishedEventsFlow = MutableSharedFlow<LoadedChanDescriptor>(
     extraBufferCapacity = Channel.UNLIMITED

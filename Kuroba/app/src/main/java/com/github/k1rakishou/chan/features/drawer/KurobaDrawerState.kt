@@ -6,7 +6,6 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
@@ -26,17 +25,20 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.navigation.NavHistoryElement
 import com.github.k1rakishou.model.util.ChanPostUtils
+import com.github.k1rakishou.v2.KurobaSettings
 import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 
 @Stable
 class KurobaDrawerState(
+  private val kurobaSettings: KurobaSettings,
   private val siteManagerLazy: Lazy<SiteManager>,
   private val historyNavigationManagerLazy: Lazy<HistoryNavigationManager>,
   private val bookmarksManagerLazy: Lazy<BookmarksManager>,
@@ -61,7 +63,8 @@ class KurobaDrawerState(
   val historyControllerState: State<HistoryControllerState>
     get() = _historyControllerState
 
-  private var _showDeleteButtonShortcut = mutableStateOf(ChanSettings.drawerShowDeleteButtonShortcut.get())
+  private var _showDeleteButtonShortcut =
+    mutableStateOf(kurobaSettings.application.drawerShowDeleteButtonShortcut.readBlocking())
   val showDeleteButtonShortcut: State<Boolean>
     get() = _showDeleteButtonShortcut
 
@@ -73,13 +76,17 @@ class KurobaDrawerState(
   val selectedHistoryEntries: Map<ChanDescriptor, Unit>
     get() = _selectedHistoryEntries
 
-  private val _resetScrollPositionEvents = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val _resetScrollPositionEvents = MutableSharedFlow<Unit>(
+    extraBufferCapacity = 1,
+    onBufferOverflow = BufferOverflow.DROP_OLDEST
+  )
   val resetScrollPositionEvent: SharedFlow<Unit>
     get() = _resetScrollPositionEvents.asSharedFlow()
 
   val searchTextFieldState = TextFieldState(initialText = "")
 
-  val drawerGridMode = mutableStateOf(ChanSettings.drawerGridMode.get())
+  val drawerGridMode = mutableStateOf(kurobaSettings.application.drawerGridMode.readBlocking())
+  val isLowRamDevice = mutableStateOf(kurobaSettings.application.drawerGridMode.readBlocking())
 
   private val _drawerOpenedState = mutableStateOf(false)
   val drawerOpenedState: State<Boolean>
@@ -284,7 +291,7 @@ class KurobaDrawerState(
     }
   }
 
-  private fun navHistoryElementToNavigationHistoryEntryOrNull(
+  private suspend fun navHistoryElementToNavigationHistoryEntryOrNull(
     navigationElement: NavHistoryElement,
   ): NavigationHistoryEntry? {
     val descriptor = when (navigationElement) {
@@ -312,10 +319,12 @@ class KurobaDrawerState(
       val threadDescriptor = descriptor as ChanDescriptor.ThreadDescriptor
 
       bookmarksManager.mapBookmark(threadDescriptor) { threadBookmarkView ->
-        val boardPage = pageRequestManager.getPage(
-          threadDescriptor = threadBookmarkView.threadDescriptor,
-          requestPagesIfNotCached = false
-        )
+        val boardPage = runBlocking {
+          pageRequestManager.getPage(
+            threadDescriptor = threadBookmarkView.threadDescriptor,
+            requestPagesIfNotCached = false
+          )
+        }
 
         return@mapBookmark NavHistoryBookmarkAdditionalInfo(
           watching = threadBookmarkView.isWatching(),
@@ -349,10 +358,14 @@ class KurobaDrawerState(
     )
   }
 
-  private fun canShowBookmarkInfo(
+  private suspend fun canShowBookmarkInfo(
     descriptor: ChanDescriptor,
     isSiteArchive: Boolean
-  ) = ChanSettings.watchEnabled.get() && descriptor is ChanDescriptor.ThreadDescriptor && !isSiteArchive
+  ): Boolean {
+    return kurobaSettings.application.watchEnabled.read()
+      && descriptor is ChanDescriptor.ThreadDescriptor
+      && !isSiteArchive
+  }
 
   suspend fun onNavigationStackUpdated(updateEvent: HistoryNavigationManager.UpdateEvent) {
     BackgroundUtils.ensureMainThread()

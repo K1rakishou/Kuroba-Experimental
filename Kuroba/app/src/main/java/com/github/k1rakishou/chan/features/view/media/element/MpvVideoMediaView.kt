@@ -15,8 +15,6 @@ import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.view.contains
-import com.github.k1rakishou.ChanSettings
-import com.github.k1rakishou.MpvSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.mpv.MPVLib
@@ -42,6 +40,7 @@ import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.file.ExternalFile
 import com.github.k1rakishou.fsaf.file.RawFile
+import com.github.k1rakishou.v2.KurobaSettings
 import com.google.android.exoplayer2.ui.DefaultTimeBar
 import com.google.android.exoplayer2.ui.TimeBar
 import com.google.android.exoplayer2.upstream.DataSource
@@ -54,6 +53,7 @@ class MpvVideoMediaView(
   context: Context,
   initialMediaViewState: VideoMediaViewState,
   mediaViewContract: MediaViewContract,
+  kurobaSettings: KurobaSettings,
   private val viewModel: MediaViewerControllerViewModel,
   private val onThumbnailFullyLoadedFunc: () -> Unit,
   private val isSystemUiHidden: () -> Boolean,
@@ -67,6 +67,7 @@ class MpvVideoMediaView(
   context = context,
   attributeSet = null,
   mediaViewContract = mediaViewContract,
+  kurobaSettings = kurobaSettings,
   mediaViewState = initialMediaViewState,
   cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
   fileDataSourceFactory = fileDataSourceFactory,
@@ -139,7 +140,7 @@ class MpvVideoMediaView(
       actionStrip = findViewById<MediaViewerBottomActionStrip?>(R.id.bottom_action_strip)
     }
 
-    mpvSettings.setOnClickListener { showMpvSettings() }
+    mpvSettings.setOnClickListener { scope.launch { showMpvSettings() } }
 
     mpvMuteUnmute.setOnClickListener {
       mediaViewContract.toggleSoundMuteState()
@@ -152,15 +153,18 @@ class MpvVideoMediaView(
     }
 
     mpvHwSw.setOnClickListener {
-      if (actualVideoPlayerView.hwdecActive) {
-        snackbarManager.toast(messageId = R.string.mpv_switching_to_sw_decoding)
-        MpvSettings.hardwareDecoding.set(false)
-      } else {
-        snackbarManager.toast(messageId = R.string.mpv_switching_to_hw_decoding)
-        MpvSettings.hardwareDecoding.set(true)
-      }
+      scope.launch {
+        // TODO: HW+
+        if (actualVideoPlayerView.hwdecActive) {
+          snackbarManager.toast(messageId = R.string.mpv_switching_to_sw_decoding)
+          viewModel.updateHardwareDecoding(false)
+        } else {
+          snackbarManager.toast(messageId = R.string.mpv_switching_to_hw_decoding)
+          viewModel.updateHardwareDecoding(true)
+        }
 
-      actualVideoPlayerView.cycleHwdec()
+        actualVideoPlayerView.cycleHwdec()
+      }
     }
     mpvPlayPause.setOnClickListener {
       if (playJob == null && !playing) {
@@ -183,7 +187,7 @@ class MpvVideoMediaView(
 
         if (!canceled) {
           updatePlaybackPos(_position = position, _demuxerCacheDuration = null)
-          actualVideoPlayerView.timePos = position.toInt()
+          actualVideoPlayerView.timePos = position.toDouble()
         }
       }
     })
@@ -372,6 +376,14 @@ class MpvVideoMediaView(
     BackgroundUtils.runOnMainThread { eventPropertyUi(property, value) }
   }
 
+  override fun eventProperty(property: String, value: Double) {
+    if (!shown) {
+      return
+    }
+
+    BackgroundUtils.runOnMainThread { eventPropertyUi(property, value) }
+  }
+
   override fun event(eventId: Int) {
     if (!shown) {
       return
@@ -394,7 +406,11 @@ class MpvVideoMediaView(
       mediaViewState.prevPaused = actualVideoPlayerView.paused
     }
 
-    val needDestroy = playing && ((isPausing && pauseInBg) || isDestroying || isBecomingInactive)
+    fun pauseInBg(): Boolean {
+      return kurobaSettings.application.mediaViewerPausePlayersWhenInBackground.readBlocking()
+    }
+
+    val needDestroy = playing && ((isPausing && pauseInBg()) || isDestroying || isBecomingInactive)
     if (!needDestroy) {
       return
     }
@@ -418,7 +434,11 @@ class MpvVideoMediaView(
 
     playJob = scope.launch {
       if (MPVLib.librariesAreLoaded()) {
-        if (playing && isLifecycleChange && !pauseInBg) {
+        fun pauseInBg(): Boolean {
+          return kurobaSettings.application.mediaViewerPausePlayersWhenInBackground.readBlocking()
+        }
+
+        if (playing && isLifecycleChange && !pauseInBg()) {
           playJob = null
           return@launch
         }
@@ -447,10 +467,17 @@ class MpvVideoMediaView(
           )
         )
 
-        actualVideoPlayerView.create(context.applicationContext, appConstants)
+        actualVideoPlayerView.create(
+          applicationContext = context.applicationContext,
+          appConstants = appConstants,
+          hardwareDecoding = viewModel.hardwareDecoding(),
+          videoFastCode = viewModel.videoFastCode(),
+          gpuNext = viewModel.gpuNextVO(),
+          mpvUseConfigFile = viewModel.mpvUseConfigFile()
+        )
         actualVideoPlayerView.addObserver(this@MpvVideoMediaView)
 
-        if (!isLifecycleChange && ChanSettings.videoAlwaysResetToStart.get()) {
+        if (!isLifecycleChange && viewModel.videoAlwaysResetToStart()) {
           mediaViewState.resetPosition()
         }
 
@@ -598,6 +625,7 @@ class MpvVideoMediaView(
       return
     }
 
+    // no-op
   }
 
   private fun eventPropertyUi(property: String, value: Long) {
@@ -611,9 +639,6 @@ class MpvVideoMediaView(
       }
       "demuxer-cache-duration" -> {
         updatePlaybackPos(_position = null, _demuxerCacheDuration = value)
-      }
-      "duration" -> {
-        updatePlaybackDuration(value)
       }
     }
   }
@@ -638,13 +663,27 @@ class MpvVideoMediaView(
     }
   }
 
+  private fun eventPropertyUi(property: String, value: Double) {
+    if (!shown) {
+      return
+    }
+
+    when (property) {
+      "duration/full" -> updatePlaybackDuration(value)
+    }
+  }
+
   private suspend fun setFileToPlay(context: Context): Boolean {
     val filePath = getFilePath(context)
     if (filePath == null) {
       return false
     }
 
-    actualVideoPlayerView.playFile(filePath)
+    actualVideoPlayerView.playFile(
+      filePath = filePath,
+      videoAutoLoop = viewModel.videoAutoLoop()
+    )
+
     return true
   }
 
@@ -709,11 +748,11 @@ class MpvVideoMediaView(
     updateDecoderButton()
   }
 
-  private fun updatePlaybackDuration(duration: Long) {
+  private fun updatePlaybackDuration(duration: Double) {
     mpvVideoDuration.text = MpvUtils.prettyTime(duration.toInt())
 
     if (!userIsOperatingSeekbar) {
-      mpvVideoProgress.setDuration(duration)
+      mpvVideoProgress.setDuration(duration.toLong())
     }
   }
 
@@ -729,13 +768,19 @@ class MpvVideoMediaView(
     }
   }
 
-  private fun showMpvSettings() {
+  private suspend fun showMpvSettings() {
     val menuItems = mutableListOf<FloatingListMenuItem>()
 
     menuItems += CheckableFloatingListMenuItem(
       key = ACTION_VIDEO_FAST_DECODE,
       name = getString(R.string.mpv_fast_video_decoding),
-      checked = MpvSettings.videoFastCode.get()
+      checked = viewModel.videoFastCode()
+    )
+
+    menuItems += CheckableFloatingListMenuItem(
+      key = ACTION_USE_GPU_NEXT_VO,
+      name = getString(R.string.mpv_use_gpu_next_vo),
+      checked = viewModel.gpuNextVO()
     )
 
     val controller = FloatingListMenuController(
@@ -743,10 +788,16 @@ class MpvVideoMediaView(
       constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
       items = menuItems,
       itemClickListener = { clickedItem ->
-        when (clickedItem.key as Int) {
-          ACTION_VIDEO_FAST_DECODE -> {
-            MpvSettings.videoFastCode.toggle()
-            actualVideoPlayerView.reloadFastVideoDecodeOption()
+        scope.launch {
+          when (clickedItem.key as Int) {
+            ACTION_VIDEO_FAST_DECODE -> {
+              viewModel.toggleVideoFastCode()
+              actualVideoPlayerView.reloadFastVideoDecodeOption(viewModel.videoFastCode())
+            }
+            ACTION_USE_GPU_NEXT_VO -> {
+              viewModel.toggleGpuNextVO()
+              actualVideoPlayerView.reloadUseGpuNext(viewModel.gpuNextVO())
+            }
           }
         }
       }
@@ -862,7 +913,7 @@ class MpvVideoMediaView(
   }
 
   class VideoMediaViewState(
-    var prevPosition: Int? = null,
+    var prevPosition: Double? = null,
     var prevPaused: Boolean? = null
   ) : MediaViewState() {
 
@@ -897,6 +948,7 @@ class MpvVideoMediaView(
     private const val TAG = "MpvVideoMediaView"
 
     private const val ACTION_VIDEO_FAST_DECODE = 0
+    private const val ACTION_USE_GPU_NEXT_VO = 1
   }
 
 }

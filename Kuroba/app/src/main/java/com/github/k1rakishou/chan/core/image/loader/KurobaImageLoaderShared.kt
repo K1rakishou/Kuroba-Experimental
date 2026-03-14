@@ -17,7 +17,6 @@ import coil.size.Dimension
 import coil.size.Scale
 import coil.size.Size
 import coil.transform.Transformation
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.cache.downloader.ChunkedMediaDownloader
@@ -94,7 +93,9 @@ internal suspend fun applyTransformationsToDrawable(
   memoryCacheKey: MemoryCache.Key?,
   cacheFileType: CacheFileType,
   imageSize: KurobaImageSize,
-  transformations: List<Transformation>
+  transformations: List<Transformation>,
+  highResCells: Boolean,
+  isLowRamDevice: Boolean,
 ): ModularResult<BitmapDrawable> {
   return ModularResult.Try {
     val fileLocation = when (imageFile) {
@@ -107,8 +108,8 @@ internal suspend fun applyTransformationsToDrawable(
     // When using any transformations at all we won't be able to use HARDWARE bitmaps. We only really
     // need the RESIZE_TRANSFORMATION when highResCells setting is turned on because we load original
     // images which we then want to resize down to ThumbnailView dimensions.
-    val combinedTransformations = if (ChanSettings.highResCells.get()) {
-      transformations + ResizeTransformation()
+    val combinedTransformations = if (highResCells) {
+      transformations + ResizeTransformation(isLowRamDevice)
     } else {
       transformations
     }
@@ -148,7 +149,9 @@ internal suspend fun applyTransformationsToDrawable(
 
 class KurobaImageLoaderException(message: String) : Exception(message)
 
-private class ResizeTransformation : Transformation {
+private class ResizeTransformation(
+  private val isLowRamDevice: Boolean
+) : Transformation {
   override val cacheKey: String = "${TAG}_ResizeTransformation"
 
   override suspend fun transform(input: Bitmap, size: Size): Bitmap {
@@ -172,7 +175,7 @@ private class ResizeTransformation : Transformation {
   }
 
   private fun config(): Bitmap.Config {
-    if (ChanSettings.isLowRamDevice()) {
+    if (isLowRamDevice) {
       return Bitmap.Config.RGB_565
     }
 

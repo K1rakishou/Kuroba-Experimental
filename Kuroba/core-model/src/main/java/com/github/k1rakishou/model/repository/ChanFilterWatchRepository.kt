@@ -1,13 +1,13 @@
 package com.github.k1rakishou.model.repository
 
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.model.KurobaDatabase
+import com.github.k1rakishou.model.KurobaMainDatabase
 import com.github.k1rakishou.model.data.filter.ChanFilterWatchGroup
 import com.github.k1rakishou.model.source.local.ChanFilterWatchLocalSource
 import kotlinx.coroutines.CoroutineScope
 
 class ChanFilterWatchRepository(
-  database: KurobaDatabase,
+  database: KurobaMainDatabase,
   applicationScope: CoroutineScope,
   private val localSource: ChanFilterWatchLocalSource
 ) : AbstractRepository(database, applicationScope) {

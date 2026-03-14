@@ -25,6 +25,7 @@ import com.github.k1rakishou.model.repository.ThreadBookmarkGroupRepository
 import com.github.k1rakishou.model.repository.ThreadDownloadRepository
 import com.github.k1rakishou.model.source.cache.ChanCatalogSnapshotCache
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
+import com.github.k1rakishou.v2.KurobaSettings
 import com.google.gson.Gson
 import dagger.BindsInstance
 import dagger.Component
@@ -78,7 +79,8 @@ interface ModelComponent {
     val okHttpUseDnsOverHttps: Boolean,
     val normalDnsSelectorFactory: NormalDnsSelectorFactory,
     val dnsOverHttpsSelectorFactory: DnsOverHttpsSelectorFactory,
-    val appConstants: AppConstants
+    val appConstants: AppConstants,
+    val kurobaSettings: KurobaSettings
   )
 
 }

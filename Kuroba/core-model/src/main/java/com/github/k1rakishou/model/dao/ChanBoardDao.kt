@@ -1,10 +1,14 @@
 package com.github.k1rakishou.model.dao
 
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.RewriteQueriesToDropUnusedColumns
 import com.github.k1rakishou.common.chunkedMap
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.common.mutableMapWithCap
-import com.github.k1rakishou.model.KurobaDatabase
+import com.github.k1rakishou.model.KurobaMainDatabase
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.id.BoardDBId
 import com.github.k1rakishou.model.entity.chan.board.ChanBoardEntity
@@ -116,7 +120,7 @@ abstract class ChanBoardDao {
   ): Map<BoardDescriptor, BoardDBId> {
     val alreadyExistingBoardIdEntities = boardCodes
       .chunkedMap(
-        chunkSize = KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE,
+        chunkSize = KurobaMainDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE,
         mapper = { chunk -> selectManyBoardIdEntities(ownerSiteName, chunk) }
       )
 

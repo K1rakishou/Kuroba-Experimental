@@ -1,7 +1,7 @@
 package com.github.k1rakishou.model.repository
 
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.model.KurobaDatabase
+import com.github.k1rakishou.model.KurobaMainDatabase
 import com.github.k1rakishou.model.data.media.GenericVideoId
 import com.github.k1rakishou.model.data.video_service.MediaServiceLinkExtraContent
 import com.github.k1rakishou.model.data.video_service.MediaServiceType
@@ -14,7 +14,7 @@ import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.atomic.AtomicBoolean
 
 class MediaServiceLinkExtraContentRepository(
-  database: KurobaDatabase,
+  database: KurobaMainDatabase,
   applicationScope: CoroutineScope,
   private val cache: GenericSuspendableCacheSource<MediaServiceKey, MediaServiceLinkExtraContent>,
   private val mediaServiceLinkExtraContentLocalSource: MediaServiceLinkExtraContentLocalSource,

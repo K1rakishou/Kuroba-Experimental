@@ -154,6 +154,11 @@ abstract class BaseFloatingComposeController(
     }
   }
 
+  protected fun popWithResult(result: Any?) {
+    setControllerResult(result)
+    pop()
+  }
+
   protected open fun pop(): Boolean {
     if (!presenting) {
       return false

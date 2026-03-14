@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.core.site.sites.foolfuuka
 
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.site.sites.search.FoolFuukaSearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.PageCursor
@@ -19,6 +18,7 @@ import com.github.k1rakishou.core_parser.html.KurobaHtmlParserCommandBufferBuild
 import com.github.k1rakishou.core_parser.html.KurobaHtmlParserCommandExecutor
 import com.github.k1rakishou.core_parser.html.KurobaMatcher
 import com.github.k1rakishou.core_parser.html.KurobaParserCommandBuilder
+import com.github.k1rakishou.v2.KurobaSettings
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import org.joda.time.DateTime
@@ -26,6 +26,7 @@ import org.jsoup.nodes.Document
 import java.util.regex.Pattern
 
 class FoolFuukaSearchRequest(
+  private val kurobaSettings: KurobaSettings,
   private val searchParams: FoolFuukaSearchParams,
   private val request: Request,
   private val proxiedOkHttpClient: ProxiedOkHttpClient
@@ -368,7 +369,7 @@ class FoolFuukaSearchRequest(
   }
 
   private suspend fun readHtml(url: String, document: Document): SearchResult {
-    val collector = FoolFuukaSearchPageCollector(ChanSettings.verboseLogs.get())
+    val collector = FoolFuukaSearchPageCollector(kurobaSettings.application.verboseLogs.read())
     val parserCommandExecutor = KurobaHtmlParserCommandExecutor<FoolFuukaSearchPageCollector>()
 
     try {

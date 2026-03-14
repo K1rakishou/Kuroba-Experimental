@@ -4,9 +4,10 @@ import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.core.site.parser.ICommentParser
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRule.Companion.tagRule
 import com.github.k1rakishou.core_themes.ChanThemeColorId
+import com.github.k1rakishou.v2.KurobaSettings
 import java.util.regex.Pattern
 
-open class VichanCommentParser : CommentParser(), ICommentParser {
+open class VichanCommentParser(kurobaSettings: KurobaSettings) : CommentParser(kurobaSettings), ICommentParser {
   init {
     addDefaultRules()
 

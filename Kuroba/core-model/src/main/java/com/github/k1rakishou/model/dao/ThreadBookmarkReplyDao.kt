@@ -1,7 +1,11 @@
 package com.github.k1rakishou.model.dao
 
-import androidx.room.*
-import com.github.k1rakishou.model.KurobaDatabase
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.Update
+import com.github.k1rakishou.model.KurobaMainDatabase
 import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkReplyEntity
 
 @Dao
@@ -48,11 +52,11 @@ abstract class ThreadBookmarkReplyDao {
     }
 
     toInsert
-      .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+      .chunked(KurobaMainDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
       .forEach { chunk -> insertManyOrAbort(chunk) }
 
     toUpdate
-      .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+      .chunked(KurobaMainDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
       .forEach { chunk ->
         chunk.forEach { threadBookmarkReplyEntity ->
           val threadBookmarkReplyId = findThreadBookmarkReplyId(alreadyInsertedEntitiesMap, threadBookmarkReplyEntity)

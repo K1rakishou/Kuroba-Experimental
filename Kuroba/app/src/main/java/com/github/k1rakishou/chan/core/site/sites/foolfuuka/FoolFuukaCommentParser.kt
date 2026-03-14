@@ -17,11 +17,13 @@ import com.github.k1rakishou.core_themes.ChanThemeColorId
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
+import com.github.k1rakishou.v2.KurobaSettings
 import java.util.regex.Pattern
 
 class FoolFuukaCommentParser(
+  kurobaSettings: KurobaSettings,
   private val archivesManager: ArchivesManager
-) : CommentParser(), ICommentParser {
+) : CommentParser(kurobaSettings), ICommentParser {
 
   init {
     addDefaultRules()

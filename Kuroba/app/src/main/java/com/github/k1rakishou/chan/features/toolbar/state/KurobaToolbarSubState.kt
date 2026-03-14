@@ -220,7 +220,7 @@ enum class ToolbarStateKind {
     }
   }
 
-  fun isSearchToolbar(): Boolean {
+  fun needKeyboard(): Boolean {
     return when (this) {
       Search,
       ThreadSearch,

@@ -3,6 +3,7 @@ package com.github.k1rakishou.core_themes.di
 import android.app.Application
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.fsaf.FileManager
+import com.github.k1rakishou.v2.KurobaSettings
 import dagger.BindsInstance
 import dagger.Component
 import kotlinx.coroutines.CoroutineScope
@@ -23,7 +24,8 @@ interface ThemesComponent {
   class Dependencies(
     val application: Application,
     val appScope: CoroutineScope,
-    val fileManager: FileManager
+    val fileManager: FileManager,
+    val kurobaSettings: KurobaSettings
   )
 
 }

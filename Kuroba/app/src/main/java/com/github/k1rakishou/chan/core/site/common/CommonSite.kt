@@ -35,7 +35,7 @@ import com.github.k1rakishou.model.data.board.pages.BoardPages
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
-import com.github.k1rakishou.persist_state.ReplyMode
+import com.github.k1rakishou.v2.parameters.ReplyMode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -272,7 +272,7 @@ abstract class CommonSite(defaultDomain: String) : SiteBase(defaultDomain) {
       replyResponse.boardCode = replyChanDescriptor.boardCode()
       
       val call: MultipartHttpCall = object : MultipartHttpCall(site) {
-        override fun process(response: Response, result: String) {
+        override suspend fun process(response: Response, result: String) {
           handlePost(replyResponse, response, result)
         }
       }
@@ -348,7 +348,7 @@ abstract class CommonSite(defaultDomain: String) : SiteBase(defaultDomain) {
       val deleteResponse = DeleteResponse()
       
       val call = object : MultipartHttpCall(site) {
-        override fun process(response: Response, result: String) {
+        override suspend fun process(response: Response, result: String) {
           handleDelete(deleteResponse, response, result)
         }
       }

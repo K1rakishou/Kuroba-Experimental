@@ -9,7 +9,7 @@ import com.github.k1rakishou.common.SuspendableInitializer
 import com.github.k1rakishou.common.linkedMapWithCap
 import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.model.KurobaDatabase
+import com.github.k1rakishou.model.KurobaMainDatabase
 import com.github.k1rakishou.model.data.PostsFromServerData
 import com.github.k1rakishou.model.data.catalog.ChanCatalogSnapshot
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -33,7 +33,7 @@ import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
 
 class ChanPostRepository(
-  database: KurobaDatabase,
+  database: KurobaMainDatabase,
   applicationScope: CoroutineScope,
   private val isDevFlavor: Boolean,
   private val appConstants: AppConstants,

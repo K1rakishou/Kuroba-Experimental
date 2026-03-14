@@ -7,6 +7,7 @@ import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.v2.KurobaSettings
 import javax.inject.Inject
 
 class ThreadDownloadingWorker(
@@ -14,6 +15,8 @@ class ThreadDownloadingWorker(
   params: WorkerParameters
 ) : CoroutineWorker(context, params) {
 
+  @Inject
+  lateinit var kurobaSettings: KurobaSettings
   @Inject
   lateinit var appConstants: AppConstants
   @Inject
@@ -35,6 +38,7 @@ class ThreadDownloadingWorker(
 
     if (hasActiveThreads) {
       ThreadDownloadingCoordinator.startOrRestartThreadDownloading(
+        kurobaSettings = kurobaSettings,
         appContext = applicationContext,
         appConstants = appConstants,
         eager = false

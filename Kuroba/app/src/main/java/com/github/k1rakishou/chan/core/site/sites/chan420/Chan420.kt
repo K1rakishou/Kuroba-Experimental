@@ -41,7 +41,13 @@ class Chan420 : CommonSite(
   override val globalSearchType = SiteConfiguration.GlobalSearchType.SearchNotSupported
   override val boardsType = SiteConfiguration.BoardsType.Dynamic
   override val catalogType = SiteConfiguration.CatalogType.Static
-  override val postParser by lazy { DefaultPostParser(TaimabaCommentParser(), archivesManager) }
+  override val postParser by lazy {
+    DefaultPostParser(
+      kurobaSettings = kurobaSettings,
+      commentParser = TaimabaCommentParser(kurobaSettings),
+      archivesManager = archivesManager
+    )
+  }
   override val chunkedDownloaderConfig by lazy {
     SiteConfiguration.ChunkedDownloaderConfig(
       enabled = true,

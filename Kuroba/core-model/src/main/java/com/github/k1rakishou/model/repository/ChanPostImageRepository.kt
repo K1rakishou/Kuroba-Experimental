@@ -1,14 +1,14 @@
 package com.github.k1rakishou.model.repository
 
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.model.KurobaDatabase
+import com.github.k1rakishou.model.KurobaMainDatabase
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.source.local.ChanPostImageLocalSource
 import kotlinx.coroutines.CoroutineScope
 import okhttp3.HttpUrl
 
 class ChanPostImageRepository(
-  database: KurobaDatabase,
+  database: KurobaMainDatabase,
   applicationScope: CoroutineScope,
   private val isDevFlavor: Boolean,
   private val chanPostImageLocalSource: ChanPostImageLocalSource

@@ -1,13 +1,13 @@
 package com.github.k1rakishou.model.source.local
 
-import com.github.k1rakishou.model.KurobaDatabase
+import com.github.k1rakishou.model.KurobaMainDatabase
 import com.github.k1rakishou.model.data.filter.ChanFilterWatchGroup
 import com.github.k1rakishou.model.data.id.ThreadBookmarkDBId
 import com.github.k1rakishou.model.entity.chan.filter.ChanFilterWatchGroupEntity
 import com.github.k1rakishou.model.source.cache.ChanDescriptorCache
 
 class ChanFilterWatchLocalSource(
-  database: KurobaDatabase,
+  database: KurobaMainDatabase,
   private val chanDescriptorCache: ChanDescriptorCache
 ) : AbstractLocalSource(database) {
   private val TAG = "ChanFilterWatchLocalSource"

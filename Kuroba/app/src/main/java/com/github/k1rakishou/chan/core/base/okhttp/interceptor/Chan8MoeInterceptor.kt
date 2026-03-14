@@ -157,8 +157,8 @@ class Chan8MoeInterceptor(
       return@run response
     }
 
-    chan8Moe.settings.powToken.set(null)
-    chan8Moe.settings.powId.set(null)
+    chan8Moe.settings.powToken.writeBlocking(null)
+    chan8Moe.settings.powId.writeBlocking(null)
 
     val (solution, token) = run {
       val htmlMaybe = initialResponse.body.string()
@@ -247,8 +247,8 @@ class Chan8MoeInterceptor(
         "(cookies: ${cookies.joinToString(separator = "; ")})")
     }
 
-    chan8Moe.settings.powToken.setSync(powTokenCookie)
-    chan8Moe.settings.powId.setSync(powIdCookie)
+    chan8Moe.settings.powToken.writeBlocking(powTokenCookie)
+    chan8Moe.settings.powId.writeBlocking(powIdCookie)
 
     return true
   }

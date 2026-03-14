@@ -1,17 +1,19 @@
 package com.github.k1rakishou.chan.core.usecase
 
 import android.content.Context
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.core_logger.LOGGER_DATABASE_NAME
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeParser
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.ExternalFile
-import com.github.k1rakishou.model.KurobaDatabase
+import com.github.k1rakishou.model.KurobaMainDatabase
+import com.github.k1rakishou.v2.KurobaSettingKey
+import com.github.k1rakishou.v2.database.KurobaSettingsDatabase
 import okhttp3.internal.closeQuietly
 import java.io.File
 import java.io.IOException
@@ -30,7 +32,8 @@ class ImportBackupFileUseCase(
     return ModularResult.Try { importInternal(parameter) }
   }
 
-  private fun importInternal(backupFile: ExternalFile) {
+  @Suppress("BlockingMethodInNonBlockingContext")
+  private suspend fun importInternal(backupFile: ExternalFile) {
     Logger.d(TAG, "Import start")
 
     val inputStream = fileManager.getInputStream(backupFile)
@@ -39,30 +42,48 @@ class ImportBackupFileUseCase(
     val zipInputStream = ZipInputStream(inputStream)
     var zipEntry: ZipEntry? = null
     var zipMalformed = true
+    var backupVersion = 0
+    var importedSharedPrefs = false
 
     try {
       while (true) {
         zipEntry = zipInputStream.nextEntry
           ?: break
 
-        val fileName = zipEntry.name
-        Logger.d(TAG, "zipEntry.name = ${fileName}")
+        val entryName = zipEntry.name
+        Logger.d(TAG, "zipEntry.name: '${entryName}'")
 
-        if (fileName.contains(KurobaDatabase.DATABASE_NAME, ignoreCase = true)) {
-          handleDatabaseFile(fileName, zipInputStream)
-        } else if (fileName.endsWith(".xml")) {
-          handleSharedPrefsFile(fileName, zipInputStream)
-        } else if (
-          fileName.contains(ThemeParser.LIGHT_THEME_FILE_NAME) ||
-          fileName.contains(ThemeParser.DARK_THEME_FILE_NAME)
-        ) {
-          handleThemeFile(fileName, zipInputStream)
-        } else if (fileName.startsWith("${ExportBackupFileUseCase.THREAD_DOWNLOADS_CACHE_DIR}/")) {
-          handleThreadDownloadFile(zipEntry, zipInputStream)
-        } else {
-          Logger.e(TAG, "Unknown file: $fileName")
-          zipInputStream.closeEntry()
-          continue
+        when {
+          entryName == ExportBackupFileUseCase.BACKUP_VERSION_ENTRY_NAME -> {
+            backupVersion = zipInputStream.read()
+            Logger.debug(TAG) { "Backup version: ${backupVersion}" }
+          }
+          entryName.contains(KurobaMainDatabase.DATABASE_NAME, ignoreCase = true) ||
+          entryName.contains(LOGGER_DATABASE_NAME, ignoreCase = true) ||
+          entryName.contains(KurobaSettingsDatabase.DATABASE_NAME, ignoreCase = true) ->
+          {
+            handleDatabaseFile(entryName, zipInputStream)
+          }
+          entryName.endsWith(".xml") -> {
+            handleSharedPrefsFile(entryName, zipInputStream)
+            importedSharedPrefs = true
+          }
+          entryName.contains(ThemeParser.LIGHT_THEME_FILE_NAME) ||
+          entryName.contains(ThemeParser.DARK_THEME_FILE_NAME) ->
+          {
+            handleThemeFile(entryName, zipInputStream)
+          }
+          entryName.startsWith("${ExportBackupFileUseCase.THREAD_DOWNLOADS_CACHE_DIR}/") -> {
+            handleThreadDownloadFile(zipEntry, zipInputStream)
+          }
+          entryName.equals(AppConstants.MPV_CONF_FILE) -> {
+            handleMpvConfFile(zipInputStream)
+          }
+          else -> {
+            Logger.e(TAG, "Unknown file: $entryName")
+            zipInputStream.closeEntry()
+            continue
+          }
         }
 
         zipInputStream.closeEntry()
@@ -77,7 +98,38 @@ class ImportBackupFileUseCase(
       throw IOException("Failed to open file '${backupFile.getFullPath()}'. Make sure the file is not malformed.")
     }
 
+    val kurobaSettingsDatabase = KurobaSettingsDatabase.buildDatabase(appContext)
+    kurobaSettingsDatabase.settingDao.deleteNonBackupable()
+
+    if (importedSharedPrefs || backupVersion == 0) {
+      kurobaSettingsDatabase.settingDao.deleteByKey(KurobaSettingKey.NonBackupable.SettingMigrationPerformed.raw)
+    }
+
     Logger.d(TAG, "Import success!")
+  }
+
+  private fun handleMpvConfFile(
+    zipInputStream: ZipInputStream
+  ) {
+    val mpvConfDir = File(AndroidUtils.filesDir, AppConstants.MPV_CONF_DIR)
+    if (!mpvConfDir.exists()) {
+      if (!mpvConfDir.mkdir()) {
+        Logger.warning(TAG) { "Failed to create ${mpvConfDir.absolutePath}" }
+        return
+      }
+    }
+
+    val mpvConfFile = File(mpvConfDir, AppConstants.MPV_CONF_FILE)
+    if (!mpvConfFile.exists()) {
+      if (!mpvConfFile.createNewFile()) {
+        Logger.warning(TAG) { "Failed to create ${mpvConfFile.absolutePath}" }
+        return
+      }
+    }
+
+    mpvConfFile.outputStream().use { outputStream ->
+      zipInputStream.copyTo(outputStream, ExportBackupFileUseCase.BUFFER_SIZE)
+    }
   }
 
   private fun handleThreadDownloadFile(zipEntry: ZipEntry, zipInputStream: ZipInputStream) {
@@ -118,13 +170,14 @@ class ImportBackupFileUseCase(
   }
 
   private fun handleSharedPrefsFile(fileName: String, zipInputStream: ZipInputStream) {
-    val outputFileStream = if (fileName == ExportBackupFileUseCase.MAIN_PREFS_FILE_NAME) {
-      val mainSharedPrefsFile = ChanSettings.getMainSharedPrefsFileForThisFlavor()
+    val outputFileStream = if (fileName == MAIN_PREFS_FILE_NAME) {
+      val mainSharedPrefsPath = "shared_prefs/${BuildConfig.APPLICATION_ID}_preferences.xml"
+      val mainSharedPrefsFile = File(AndroidUtils.appDir, mainSharedPrefsPath)
       Logger.d(TAG, "Creating ${mainSharedPrefsFile.absolutePath} for flavor ${BuildConfig.FLAVOR}")
 
       mainSharedPrefsFile.outputStream()
     } else {
-      val sharedPrefsDir = File(AndroidUtils.appDir, ChanSettings.SHARED_PREFS_DIR_NAME)
+      val sharedPrefsDir = File(AndroidUtils.appDir, "shared_prefs")
       if (!sharedPrefsDir.exists()) {
         check(sharedPrefsDir.mkdirs()) { "Failed to create ${sharedPrefsDir.absolutePath}" }
       }
@@ -140,8 +193,8 @@ class ImportBackupFileUseCase(
     }
   }
 
-  private fun handleDatabaseFile(fileName: String?, zipInputStream: ZipInputStream) {
-    val outputFileStream = appContext.getDatabasePath(fileName).outputStream()
+  private fun handleDatabaseFile(databaseName: String, zipInputStream: ZipInputStream) {
+    val outputFileStream = appContext.getDatabasePath(databaseName).outputStream()
 
     try {
       zipInputStream.copyTo(outputFileStream, ExportBackupFileUseCase.BUFFER_SIZE)
@@ -152,5 +205,7 @@ class ImportBackupFileUseCase(
 
   companion object {
     private const val TAG = "ImportBackupFileUseCase"
+
+    private const val MAIN_PREFS_FILE_NAME = "main_prefs.xml"
   }
 }

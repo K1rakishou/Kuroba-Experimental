@@ -14,7 +14,6 @@ import android.widget.TextView
 import androidx.core.animation.addListener
 import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.withTranslation
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
@@ -44,6 +43,8 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.ChanPostImageType
+import com.github.k1rakishou.v2.KurobaSettings
+import com.github.k1rakishou.v2.parameters.BoardPostViewMode
 import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
@@ -54,7 +55,6 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import javax.inject.Inject
@@ -65,6 +65,8 @@ class PostImageThumbnailView @JvmOverloads constructor(
   defStyle: Int = 0
 ) : FrameLayout(context, attrs, defStyle), PostImageThumbnailViewContract {
 
+  @Inject
+  lateinit var kurobaSettings: KurobaSettings
   @Inject
   lateinit var prefetchStateManagerLazy: Lazy<PrefetchStateManager>
   @Inject
@@ -135,8 +137,8 @@ class PostImageThumbnailView @JvmOverloads constructor(
       unbindPostImage()
     }
 
-    this.nsfwMode = ChanSettings.globalNsfwMode.get()
-    this.prefetchingEnabled = ChanSettings.prefetchMedia.get()
+    this.nsfwMode = kurobaSettings.application.globalNsfwMode.readBlocking()
+    this.prefetchingEnabled = kurobaSettings.application.prefetchMedia.readBlocking()
 
     listenForNsfwSettingUpdates()
     listenForThirdEyeUpdates(postImage)
@@ -220,12 +222,13 @@ class PostImageThumbnailView @JvmOverloads constructor(
 
   private fun listenForNsfwSettingUpdates() {
     scope.launch {
-      ChanSettings.globalNsfwMode.listenForChangesDeprecated().asFlow().collect { isNsfwModeEnabled ->
-        if (nsfwMode != isNsfwModeEnabled) {
-          nsfwMode = isNsfwModeEnabled
-          invalidate()
+      kurobaSettings.application.globalNsfwMode.listen()
+        .collect { isNsfwModeEnabled ->
+          if (nsfwMode != isNsfwModeEnabled) {
+            nsfwMode = isNsfwModeEnabled
+            invalidate()
+          }
         }
-      }
     }
   }
 
@@ -385,8 +388,7 @@ class PostImageThumbnailView @JvmOverloads constructor(
       return
     }
 
-    showPrefetchLoadingIndicator = ChanSettings.prefetchMedia.get()
-      && ChanSettings.showPrefetchLoadingIndicator.get()
+    showPrefetchLoadingIndicator = kurobaSettings.application.prefetchMedia.readBlocking()
 
     if (showPrefetchLoadingIndicator) {
       segmentedCircleDrawable = SegmentedCircleDrawable().apply {
@@ -421,8 +423,8 @@ class PostImageThumbnailView @JvmOverloads constructor(
   }
 
   fun bindOmittedFilesInfo(postCellData: PostCellData) {
-    val postCellThumbnailSizePercents = ChanSettings.postCellThumbnailSizePercents
-    val multiplier = postCellThumbnailSizePercents.get().toFloat() / postCellThumbnailSizePercents.max.toFloat()
+    val postCellThumbnailSizePercents = kurobaSettings.application.postCellThumbnailSizePercents
+    val multiplier = postCellThumbnailSizePercents.readBlocking().toFloat() / postCellThumbnailSizePercents.max.toFloat()
     val totalPadding = ((OMITTED_FILES_INDICATOR_PADDING / 2f) + (OMITTED_FILES_INDICATOR_PADDING * multiplier)).toInt()
 
     thumbnailOmittedFilesCount.updatePaddings(
@@ -433,7 +435,7 @@ class PostImageThumbnailView @JvmOverloads constructor(
     )
 
     val showOmittedFilesCountContainer = postCellData.postImages.size > 1
-      && (postCellData.postMultipleImagesCompactMode || postCellData.boardPostViewMode != ChanSettings.BoardPostViewMode.LIST)
+      && (postCellData.postMultipleImagesCompactMode || postCellData.boardPostViewMode != BoardPostViewMode.List)
 
     if (showOmittedFilesCountContainer) {
       val imagesCount = postCellData.postImages.size - 1
@@ -444,7 +446,7 @@ class PostImageThumbnailView @JvmOverloads constructor(
     }
   }
 
-  private fun onPrefetchStateChanged(prefetchState: PrefetchState) {
+  private suspend fun onPrefetchStateChanged(prefetchState: PrefetchState) {
     if (!prefetchingEnabled) {
       return
     }
@@ -481,7 +483,8 @@ class PostImageThumbnailView @JvmOverloads constructor(
 
       if (postImage != null && canUseHighResCells) {
         val thumbnailViewOptions = thumbnail.thumbnailViewOptions
-        val canSwapThumbnailToFullImage = postImage?.imageSpoilered == false || ChanSettings.postThumbnailRemoveImageSpoilers.get()
+        val canSwapThumbnailToFullImage = postImage?.imageSpoilered(kurobaSettings) == false
+          || kurobaSettings.application.postThumbnailRemoveImageSpoilers.read()
 
         if (canSwapThumbnailToFullImage && thumbnailViewOptions != null) {
           bindPostImage(
@@ -500,7 +503,10 @@ class PostImageThumbnailView @JvmOverloads constructor(
     canUseHighResCells: Boolean,
     thumbnailViewOptions: ThumbnailViewOptions
   ): Pair<String?, CacheFileType?> {
-    val thumbnailUrl = postImage.getThumbnailUrl(isSpoilerRevealed = thumbnailViewOptions.revealSpoilerImage)
+    val thumbnailUrl = postImage.getThumbnailUrl(
+      kurobaSettings = kurobaSettings,
+      isSpoilerRevealed = thumbnailViewOptions.revealSpoilerImage
+    )
     if (thumbnailUrl == null) {
       Logger.e(TAG, "getUrl() postImage: $postImage, has no thumbnail url")
       return null to null
@@ -510,16 +516,19 @@ class PostImageThumbnailView @JvmOverloads constructor(
     var cacheFileType = CacheFileType.PostMediaThumbnail
 
     val hasImageUrl = postImage.imageUrl != null
-    val prefetchingDisabledOrAlreadyPrefetched = !ChanSettings.prefetchMedia.get()
-      || prefetchStateManager.isPrefetched(postImage)
+
+    fun prefetchingDisabledOrAlreadyPrefetched(): Boolean {
+      return !kurobaSettings.application.prefetchMedia.readBlocking()
+        || prefetchStateManager.isPrefetched(postImage)
+    }
 
     val highRes = hasImageUrl
-      && ChanSettings.highResCells.get()
-      && postImage.canBeUsedAsHighResolutionThumbnail()
       && canUseHighResCells
-      && prefetchingDisabledOrAlreadyPrefetched
       && postImage.type == ChanPostImageType.STATIC
-      && canAutoLoad(cacheHandler, postImage)
+      && prefetchingDisabledOrAlreadyPrefetched()
+      && kurobaSettings.application.highResCells.readBlocking()
+      && postImage.canBeUsedAsHighResolutionThumbnail(kurobaSettings)
+      && canAutoLoad(kurobaSettings, cacheHandler, postImage)
 
     if (highRes) {
       url = postImage.imageUrl?.toString()

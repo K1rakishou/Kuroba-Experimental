@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import coil.size.Scale
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderDeprecated
 import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManager
@@ -16,6 +15,7 @@ import com.github.k1rakishou.chan.features.reply.data.SyntheticReplyAttachableSt
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.v2.KurobaSettings
 import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -23,10 +23,11 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.withContext
-import java.util.*
+import java.util.UUID
 
 class ImagePickHelper(
   private val appContext: Context,
+  private val kurobaSettings: KurobaSettings,
   private val replyManagerLazy: Lazy<ReplyManager>,
   private val imageLoaderDeprecatedLazy: Lazy<ImageLoaderDeprecated>,
   private val shareFilePickerLazy: Lazy<ShareFilePicker>,
@@ -117,7 +118,7 @@ class ImagePickHelper(
             }
           }
 
-          val maxAllowedFilesPerPost = if (ChanSettings.isSplitLayoutMode()) {
+          val maxAllowedFilesPerPost = if (kurobaSettings.application.isSplitLayoutMode()) {
             currentOpenedDescriptorStateManager.currentFocusedDescriptors.getAllNonNull()
               .mapNotNull { chanDescriptor -> replyLayoutHelper.getMaxAllowedFilesPerPost(chanDescriptor) }
               .min()

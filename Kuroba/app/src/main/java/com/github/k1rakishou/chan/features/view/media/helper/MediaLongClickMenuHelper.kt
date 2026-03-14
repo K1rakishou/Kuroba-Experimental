@@ -22,12 +22,13 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.persist_state.PersistableChanState
+import com.github.k1rakishou.v2.KurobaSettings
 import kotlinx.coroutines.CoroutineScope
 import okhttp3.HttpUrl
 
 class MediaLongClickMenuHelper(
   private val scope: CoroutineScope,
+  private val kurobaSettings: KurobaSettings,
   private val globalWindowInsetsManager: GlobalWindowInsetsManager,
   private val imageSaverV2: ImageSaverV2,
   private val snackbarManager: SnackbarManager,
@@ -176,7 +177,7 @@ class MediaLongClickMenuHelper(
       return
     }
 
-    val imageSaverV2Options = PersistableChanState.imageSaverV2PersistedOptions.get()
+    val imageSaverV2Options = kurobaSettings.internal.imageSaverV2PersistedOptions.readBlocking()
 
     if (!showOptions && !imageSaverV2Options.shouldShowImageSaverOptionsController()) {
       imageSaverV2.save(imageSaverV2Options, simpleSaveableMediaInfo, null)

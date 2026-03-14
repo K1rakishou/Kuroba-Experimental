@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.ui.adapter
 
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.helper.ChanLoadProgressEvent
 import com.github.k1rakishou.chan.core.helper.ChanLoadProgressNotifier
 import com.github.k1rakishou.chan.core.helper.PostHideHelper
@@ -11,7 +10,8 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.PostIndexed
-import java.util.*
+import com.github.k1rakishou.v2.KurobaSettings
+import java.util.Collections
 
 class PostsFilter(
   private val chanLoadProgressNotifier: ChanLoadProgressNotifier,
@@ -65,8 +65,8 @@ class PostsFilter(
       get() = this == BUMP
 
     companion object {
-      fun current(): CatalogSortingOrder {
-        val borderOrderName = ChanSettings.boardOrder.get()
+      fun current(kurobaSettings: KurobaSettings): CatalogSortingOrder {
+        val borderOrderName = kurobaSettings.application.boardOrder.readBlocking()
 
         return entries.firstOrNull { it.orderName == borderOrderName }
           ?: BUMP

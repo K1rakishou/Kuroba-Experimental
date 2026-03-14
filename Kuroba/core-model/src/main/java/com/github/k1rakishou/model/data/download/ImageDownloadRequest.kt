@@ -1,7 +1,7 @@
 package com.github.k1rakishou.model.data.download
 
 import android.net.Uri
-import com.github.k1rakishou.persist_state.ImageSaverV2Options
+import com.github.k1rakishou.v2.parameters.ImageSaverV2Options
 import okhttp3.HttpUrl
 import org.joda.time.DateTime
 
@@ -12,7 +12,8 @@ data class ImageDownloadRequest(
   val newFileName: String? = null,
   val status: Status = Status.Queued,
   val duplicateFileUri: Uri? = null,
-  val duplicatesResolution: ImageSaverV2Options.DuplicatesResolution = ImageSaverV2Options.DuplicatesResolution.AskWhatToDo,
+  val duplicatesResolution: ImageSaverV2Options.DuplicatesResolution =
+    ImageSaverV2Options.DuplicatesResolution.AskWhatToDo,
   val createdOn: DateTime = DateTime.now()
 ) {
 

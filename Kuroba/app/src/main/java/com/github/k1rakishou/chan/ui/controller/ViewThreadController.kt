@@ -1,7 +1,6 @@
 package com.github.k1rakishou.chan.ui.controller
 
 import android.content.Context
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.R.string.action_reload
 import com.github.k1rakishou.chan.core.concurrency.RendezvousCoroutineExecutor
@@ -43,7 +42,7 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.options.ChanLoadOptions
 import com.github.k1rakishou.model.data.thread.ThreadDownload
 import com.github.k1rakishou.model.util.ChanPostUtils
-import com.github.k1rakishou.persist_state.PersistableChanState
+import com.github.k1rakishou.v2.parameters.BoardPostViewMode
 import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -95,7 +94,7 @@ open class ViewThreadController(
     get() = ViewThreadController.threadControllerKey
 
   val threadControllerToolbarState: KurobaToolbarState
-    get() = kurobaToolbarStateManager.getOrCreate(ViewThreadController.threadControllerKey)
+    get() = kurobaToolbarStateManager.getOrCreate(this, ViewThreadController.threadControllerKey)
 
   override fun injectActivityDependencies(component: ActivityComponent) {
     component.inject(this)
@@ -104,7 +103,7 @@ open class ViewThreadController(
   override fun onCreate() {
     super.onCreate()
 
-    threadLayout.setBoardPostViewMode(ChanSettings.BoardPostViewMode.LIST)
+    threadLayout.setBoardPostViewMode(BoardPostViewMode.List)
     view.setBackgroundColor(themeEngine.chanTheme.backColor)
 
     updateNavigationFlags(
@@ -598,7 +597,7 @@ open class ViewThreadController(
           )
         }
       ),
-      scrollableTitle = ChanSettings.scrollingTextForThreadTitles.get(),
+      scrollableTitle = kurobaSettings.application.scrollingTextForThreadTitles.readBlocking(),
       menuBuilder = {
         withMenuItem(
           id = ACTION_SEARCH,
@@ -618,13 +617,11 @@ open class ViewThreadController(
         )
 
         withOverflowMenu {
-          if (!ChanSettings.enableReplyFab.get()) {
-            withOverflowMenuItem(
-              id = ACTION_REPLY,
-              stringId = R.string.action_reply,
-              onClick = { item -> replyClicked(item) }
-            )
-          }
+          withOverflowMenuItem(
+            id = ACTION_REPLY,
+            stringId = R.string.action_reply,
+            onClick = { item -> replyClicked(item) }
+          )
 
           withOverflowMenuItem(
             id = ACTION_RELOAD,
@@ -744,10 +741,10 @@ open class ViewThreadController(
   }
 
   private fun downloadOrStopDownloadThread(item: ToolbarMenuOverflowItem) {
-    val warningShown = PersistableChanState.threadDownloaderArchiveWarningShown.get()
+    val warningShown = kurobaSettings.internal.threadDownloaderArchiveWarningShown.readBlocking()
 
     if (!warningShown && archivesManager.isSiteArchive(threadDescriptor.siteDescriptor())) {
-      PersistableChanState.threadDownloaderArchiveWarningShown.set(true)
+      kurobaSettings.internal.threadDownloaderArchiveWarningShown.writeAsync(true)
 
       dialogFactory.createSimpleInformationDialog(
         context = context,

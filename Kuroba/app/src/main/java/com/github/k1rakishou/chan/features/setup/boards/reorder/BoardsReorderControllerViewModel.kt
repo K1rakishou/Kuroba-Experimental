@@ -92,7 +92,7 @@ class BoardsReorderControllerViewModel(
       val needAutoRefresh = run {
         val currentTime = DateTime.now()
         val refreshPeriod = Duration.standardDays(SiteBase.BoardRefreshIntervalDays.toLong())
-        val lastRefreshTime = DateTime(site.commonSettings.lastSiteBoardsRefreshTime.get())
+        val lastRefreshTime = DateTime(site.commonSettings.lastSiteBoardsRefreshTime.read())
         return@run lastRefreshTime.plus(refreshPeriod) < currentTime
       }
 
@@ -159,7 +159,7 @@ class BoardsReorderControllerViewModel(
             _error.value = Exception(siteBoardsResult.error)
           }
           is SiteBoards.Result.Success -> {
-            site.commonSettings.lastSiteBoardsRefreshTime.set(System.currentTimeMillis())
+            site.commonSettings.lastSiteBoardsRefreshTime.write(System.currentTimeMillis())
 
             val loadedBoardsCount = siteBoardsResult.boards.size
             val message = appResources.string(

@@ -13,8 +13,8 @@ import java.util.concurrent.TimeUnit
 class TestDatabaseModuleComponent(
   private val application: Application = RuntimeEnvironment.application
 ) {
-  private var inMemoryDatabase: KurobaDatabase? = null
-  private var onDiskDatabase: KurobaDatabase? = null
+  private var inMemoryDatabase: KurobaMainDatabase? = null
+  private var onDiskDatabase: KurobaMainDatabase? = null
   private var okHttpClient: OkHttpClient? = null
   private var gson: Gson? = null
 
@@ -47,28 +47,28 @@ class TestDatabaseModuleComponent(
     return okHttpClient!!
   }
 
-  fun provideInMemoryKurobaDatabase(): KurobaDatabase {
+  fun provideInMemoryKurobaDatabase(): KurobaMainDatabase {
     if (inMemoryDatabase != null) {
       return inMemoryDatabase!!
     }
 
     inMemoryDatabase = Room.inMemoryDatabaseBuilder(
       application.applicationContext,
-      KurobaDatabase::class.java
+      KurobaMainDatabase::class.java
     )
       .build()
 
     return inMemoryDatabase!!
   }
 
-  fun provideOnDiskKurobaDatabase(): KurobaDatabase {
+  fun provideOnDiskKurobaDatabase(): KurobaMainDatabase {
     if (onDiskDatabase != null) {
       return onDiskDatabase!!
     }
 
     onDiskDatabase = Room.databaseBuilder(
       application.applicationContext,
-      KurobaDatabase::class.java,
+      KurobaMainDatabase::class.java,
       "kuroba-test.db"
     )
       .build()

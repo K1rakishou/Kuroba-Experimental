@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.ui.cell
 
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.concurrency.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
@@ -21,6 +20,8 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.PostIndexed
+import com.github.k1rakishou.v2.KurobaSettings
+import com.github.k1rakishou.v2.parameters.BoardPostViewMode
 import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -31,29 +32,30 @@ import kotlinx.coroutines.withContext
 import kotlin.time.measureTime
 
 class ThreadCellData(
-  private val _chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>,
-  private val _chanThreadManager: Lazy<ChanThreadManager>,
-  private val _postFilterManager: Lazy<PostFilterManager>,
-  private val _postFilterHighlightManager: Lazy<PostFilterHighlightManager>,
-  private val _savedReplyManager: Lazy<SavedReplyManager>,
-  private val _postHideManager: Lazy<PostHideManager>,
+  val kurobaSettings: KurobaSettings,
+  private val chanThreadViewableInfoManagerLazy: Lazy<ChanThreadViewableInfoManager>,
+  private val chanThreadManagerLazy: Lazy<ChanThreadManager>,
+  private val postFilterManagerLazy: Lazy<PostFilterManager>,
+  private val postFilterHighlightManagerLazy: Lazy<PostFilterHighlightManager>,
+  private val savedReplyManagerLazy: Lazy<SavedReplyManager>,
+  private val postHideManagerLazy: Lazy<PostHideManager>,
   initialTheme: ChanTheme
 ): Iterable<ThreadCellData.PostCellDataLazy> {
   private val postCellDataLazyList: MutableList<PostCellDataLazy> = mutableListWithCap(64)
   private val coroutineScope = KurobaCoroutineScope()
 
   private val chanThreadViewableInfoManager: ChanThreadViewableInfoManager
-    get() = _chanThreadViewableInfoManager.get()
+    get() = chanThreadViewableInfoManagerLazy.get()
   private val chanThreadManager: ChanThreadManager
-    get() = _chanThreadManager.get()
+    get() = chanThreadManagerLazy.get()
   private val postFilterManager: PostFilterManager
-    get() = _postFilterManager.get()
+    get() = postFilterManagerLazy.get()
   private val postFilterHighlightManager: PostFilterHighlightManager
-    get() = _postFilterHighlightManager.get()
+    get() = postFilterHighlightManagerLazy.get()
   private val savedReplyManager: SavedReplyManager
-    get() = _savedReplyManager.get()
+    get() = savedReplyManagerLazy.get()
   private val postHideManager: PostHideManager
-    get() = _postHideManager.get()
+    get() = postHideManagerLazy.get()
 
   @Volatile private var _chanDescriptor: ChanDescriptor? = null
   @Volatile private var postCellCallback: PostCellInterface.PostCellCallback? = null
@@ -62,7 +64,7 @@ class ThreadCellData(
 
   var postViewMode: PostCellData.PostViewMode = PostCellData.PostViewMode.Normal
   var defaultIsCompact: Boolean = false
-  var defaultBoardPostViewMode: ChanSettings.BoardPostViewMode = ChanSettings.boardPostViewMode.get()
+  var defaultBoardPostViewMode: BoardPostViewMode = kurobaSettings.application.boardPostViewMode.readBlocking()
   var defaultMarkedPostDescriptor: PostDescriptor? = null
   var defaultSearchQuery = PostCellData.SearchQuery()
   var defaultShowDividerFunc = { postIndex: Int, totalPostsCount: Int -> true }
@@ -252,24 +254,25 @@ class ThreadCellData(
     val totalPostsCount = postIndexedList.size
     val resultList = mutableListWithCap<PostCellDataLazy>(totalPostsCount)
 
-    val textSizeSp = ChanSettings.fontSize.get().toInt()
-    val detailsSizeSp = ChanSettings.detailsSizeSp()
-    val boardPostsSortOrder = PostsFilter.CatalogSortingOrder.current()
-    val neverShowPages = ChanSettings.neverShowPages.get()
-    val tapNoReply = ChanSettings.tapNoReply.get()
-    val postFullDate = ChanSettings.postFullDate.get()
-    val postFullDateLocalLocale = ChanSettings.postFullDateUseLocalLocale.get()
-    val shiftPostComment = ChanSettings.shiftPostComment.get()
-    val forceShiftPostComment = ChanSettings.forceShiftPostComment.get()
-    val textOnly = ChanSettings.textOnly.get()
-    val showPostFileInfo = ChanSettings.postFileInfo.get()
-    val markUnseenPosts = ChanSettings.markUnseenPosts.get() && chanDescriptor.isThreadDescriptor()
-    val markSeenThreads = ChanSettings.markSeenThreads.get() && chanDescriptor.isCatalogDescriptor()
+    val textSizeSp = kurobaSettings.application.fontSize.read().toInt()
+    val detailsSizeSp = kurobaSettings.application.detailsSizeSp()
+    val boardPostsSortOrder = PostsFilter.CatalogSortingOrder.current(kurobaSettings)
+    val showThreadPage = kurobaSettings.application.showThreadPage.read()
+    val tapNoReply = kurobaSettings.application.tapNoReply.read()
+    val postFullDate = kurobaSettings.application.postFullDate.read()
+    val postFullDateLocalLocale = kurobaSettings.application.postFullDateUseLocalLocale.read()
+    val shiftPostComment = kurobaSettings.application.shiftPostComment.read()
+    val forceShiftPostComment = kurobaSettings.application.forceShiftPostComment.read()
+    val textOnly = kurobaSettings.application.textOnly.read()
+    val showPostFileInfo = kurobaSettings.application.postFileInfo.read()
+    val markUnseenPosts = kurobaSettings.application.markUnseenPosts.read() && chanDescriptor.isThreadDescriptor()
+    val markSeenThreads = kurobaSettings.application.markSeenThreads.read() && chanDescriptor.isCatalogDescriptor()
     val chanTheme = theme.copyTheme()
-    val postCellThumbnailSizePercents = ChanSettings.postCellThumbnailSizePercents.get()
-    val boardPages = getBoardPages(chanDescriptor, neverShowPages, postCellCallback)
+    val postCellThumbnailSizePercents = kurobaSettings.application.postCellThumbnailSizePercents.read()
+    val boardPages = getBoardPages(chanDescriptor, showThreadPage, postCellCallback)
     val isTablet = AppModuleAndroidUtils.isTablet
-    val isSplitLayout = ChanSettings.isSplitLayoutMode()
+    val isSplitLayout = kurobaSettings.application.isSplitLayoutMode()
+    val postMultipleImagesCompactMode = kurobaSettings.application.postMultipleImagesCompactMode.read()
 
     val postHideMap = when (chanDescriptor) {
       is ChanDescriptor.ICatalogDescriptor -> {
@@ -286,8 +289,8 @@ class ThreadCellData(
 
     val postAlignmentMode = when (chanDescriptor) {
       is ChanDescriptor.CatalogDescriptor,
-      is ChanDescriptor.CompositeCatalogDescriptor -> ChanSettings.catalogPostAlignmentMode.get()
-      is ChanDescriptor.ThreadDescriptor -> ChanSettings.threadPostAlignmentMode.get()
+      is ChanDescriptor.CompositeCatalogDescriptor -> kurobaSettings.application.catalogPostAlignmentMode.read()
+      is ChanDescriptor.ThreadDescriptor -> kurobaSettings.application.threadPostAlignmentMode.read()
     }
 
     val threadPostReplyMap = mutableMapWithCap<PostDescriptor, Boolean>(postIndexedList.size)
@@ -307,7 +310,7 @@ class ThreadCellData(
         val chanPost = postIndexed.chanPost
         val postDescriptor = chanPost.postDescriptor
 
-        val postMultipleImagesCompactMode = ChanSettings.postMultipleImagesCompactMode.get()
+        val postMultipleImagesCompactMode = postMultipleImagesCompactMode
           && postViewMode != PostCellData.PostViewMode.Search
           && chanPost.postImages.size > 1
 
@@ -315,6 +318,7 @@ class ThreadCellData(
           ?.firstOrNull { boardPage -> boardPage.threads[postDescriptor.threadDescriptor()] != null }
 
         val postCellData = PostCellData(
+          kurobaSettings = kurobaSettings,
           chanDescriptor = chanDescriptor,
           post = chanPost,
           postImages = chanPost.postImages,
@@ -330,7 +334,7 @@ class ThreadCellData(
           boardPostViewMode = defaultBoardPostViewMode,
           boardPostsSortOrder = boardPostsSortOrder,
           boardPage = boardPage,
-          neverShowPages = neverShowPages,
+          showThreadPage = showThreadPage,
           tapNoReply = tapNoReply,
           postFullDate = postFullDate,
           postFullDateLocalLocale = postFullDateLocalLocale,
@@ -370,12 +374,12 @@ class ThreadCellData(
     return resultList
   }
 
-  private fun getBoardPages(
+  private suspend fun getBoardPages(
     chanDescriptor: ChanDescriptor,
-    neverShowPages: Boolean,
+    showThreadPage: Boolean,
     postCellCallback: PostCellInterface.PostCellCallback
   ): BoardPages? {
-    if (neverShowPages) {
+    if (!showThreadPage) {
       return null
     }
 
@@ -427,8 +431,8 @@ class ThreadCellData(
     }
   }
 
-  fun setBoardPostViewMode(boardPostViewMode: ChanSettings.BoardPostViewMode) {
-    val compact = boardPostViewMode != ChanSettings.BoardPostViewMode.LIST
+  fun setBoardPostViewMode(boardPostViewMode: BoardPostViewMode) {
+    val compact = boardPostViewMode != BoardPostViewMode.List
     defaultBoardPostViewMode = boardPostViewMode
     defaultIsCompact = compact
 

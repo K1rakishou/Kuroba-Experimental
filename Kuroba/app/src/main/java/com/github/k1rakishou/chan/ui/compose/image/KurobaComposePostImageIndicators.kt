@@ -27,7 +27,6 @@ import androidx.compose.ui.graphics.drawscope.inset
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.PrefetchState
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeIcon
@@ -40,12 +39,10 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
-import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
@@ -62,6 +59,8 @@ fun KurobaComposePostImageIndicators(
   displayPrefetchMediaIndicator: Boolean = true,
   displayThirdEyeIndicator: Boolean = true
 ) {
+  val kurobaSettings = appDependencies().kurobaSettings
+
   var iconsState by remember(key1 = Unit) { mutableStateOf(IconsState()) }
   val prefetchProgress = remember { mutableFloatStateOf(1f) }
 
@@ -184,10 +183,7 @@ fun KurobaComposePostImageIndicators(
         }
       }
 
-      combine(
-        ChanSettings.prefetchMedia.listenForChangesDeprecated().asFlow(),
-        ChanSettings.showPrefetchLoadingIndicator.listenForChangesDeprecated().asFlow()
-      ) { prefetchMedia, showPrefetchLoadingIndicator -> prefetchMedia && showPrefetchLoadingIndicator }
+      kurobaSettings.application.prefetchMedia.listen()
         .onEach { showIndicator ->
           prefetchingEnabled.value = showIndicator
           alreadyPrefetched.value = prefetchStateManager.isPrefetched(chanPostImage) == true

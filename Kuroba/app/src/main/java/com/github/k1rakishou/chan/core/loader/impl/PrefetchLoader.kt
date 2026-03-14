@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.core.loader.impl
 
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.cache.downloader.ChunkedMediaDownloader
@@ -22,11 +21,13 @@ import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.ChanPostImageType
 import com.github.k1rakishou.model.data.post.LoaderType
 import com.github.k1rakishou.model.data.thread.ThreadDownload
+import com.github.k1rakishou.v2.KurobaSettings
 import dagger.Lazy
 import java.io.File
 import kotlin.math.abs
 
 class PrefetchLoader(
+  private val kurobaSettings: KurobaSettings,
   private val chunkedMediaDownloaderLazy: Lazy<ChunkedMediaDownloader>,
   private val cacheHandlerLazy: Lazy<CacheHandler>,
   private val chanThreadManagerLazy: Lazy<ChanThreadManager>,
@@ -171,12 +172,12 @@ class PrefetchLoader(
       return emptyList()
     }
 
-    if (!ChanSettings.prefetchMedia.get()) {
+    if (!kurobaSettings.application.prefetchMedia.read()) {
       return emptyList()
     }
 
     // Disable prefetching if highResCells are enabled. They do not work really well together.
-    if (ChanSettings.highResCells.get()) {
+    if (kurobaSettings.application.highResCells.read()) {
       return emptyList()
     }
 
@@ -212,7 +213,7 @@ class PrefetchLoader(
     prefetchStateManager.onPrefetchCompleted(postImage, success)
   }
 
-  private fun ChanPostImage.canBeUsedForPrefetch(): Boolean {
+  private suspend fun ChanPostImage.canBeUsedForPrefetch(): Boolean {
     if (isInlined) {
       return false
     }
@@ -228,11 +229,11 @@ class PrefetchLoader(
 
     return when (type) {
       ChanPostImageType.STATIC,
-      ChanPostImageType.GIF -> shouldLoadForNetworkType(ChanSettings.imageAutoLoadNetwork.get())
-      ChanPostImageType.MOVIE -> shouldLoadForNetworkType(ChanSettings.videoAutoLoadNetwork.get())
+      ChanPostImageType.GIF -> shouldLoadForNetworkType(kurobaSettings.application.imageAutoLoadNetwork.read())
+      ChanPostImageType.MOVIE -> shouldLoadForNetworkType(kurobaSettings.application.videoAutoLoadNetwork.read())
       ChanPostImageType.PDF,
       ChanPostImageType.SWF -> false
-      else -> throw IllegalStateException("Unexpected value: $type")
+      else -> error("Unexpected value: $type")
     }
   }
 

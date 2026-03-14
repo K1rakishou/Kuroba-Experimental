@@ -23,7 +23,7 @@ import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
-import com.github.k1rakishou.persist_state.PersistableChanState
+import com.github.k1rakishou.v2.KurobaSettings
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -35,11 +35,17 @@ import java.util.concurrent.atomic.AtomicInteger
 
 
 class LocalFilePicker(
+  kurobaSettings: KurobaSettings,
   appConstants: AppConstants,
   fileManager: FileManager,
   replyManager: ReplyManager,
   private val appScope: CoroutineScope
-) : AbstractFilePicker<LocalFilePicker.LocalFilePickerInput>(appConstants, replyManager, fileManager) {
+) : AbstractFilePicker<LocalFilePicker.LocalFilePickerInput>(
+  kurobaSettings = kurobaSettings,
+  appConstants = appConstants,
+  replyManager = replyManager,
+  fileManager = fileManager
+) {
   private val activeRequests = ConcurrentHashMap<Int, EnqueuedRequest>()
   private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
   private val requestCodeCounter = AtomicInteger(0)
@@ -196,7 +202,7 @@ class LocalFilePicker(
     return emptyList()
   }
 
-  private fun collectIntents(): List<Intent> {
+  private suspend fun collectIntents(): List<Intent> {
     val pm = AndroidUtils.appContext.packageManager
     val intent = Intent(Intent.ACTION_GET_CONTENT)
     intent.addCategory(Intent.CATEGORY_OPENABLE)
@@ -205,7 +211,7 @@ class LocalFilePicker(
     val resolveInfos = pm.queryIntentActivities(intent, 0)
     val intents: MutableList<Intent> = ArrayList(resolveInfos.size)
 
-    val lastRememberedFilePicker = PersistableChanState.lastRememberedFilePicker.get()
+    val lastRememberedFilePicker = kurobaSettings.internal.lastRememberedFilePicker.read()
     if (lastRememberedFilePicker.isNotEmpty()) {
       val lastRememberedFilePickerInfo = resolveInfos.firstOrNull { resolveInfo ->
         resolveInfo.activityInfo.packageName == lastRememberedFilePicker

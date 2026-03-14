@@ -7,7 +7,6 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.concurrency.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.concurrency.ThrottleFirstCoroutineExecutor
@@ -25,6 +24,7 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.thread.ChanThread
 import com.github.k1rakishou.model.data.thread.ThreadDownload
 import com.github.k1rakishou.model.util.ChanPostUtils
+import com.github.k1rakishou.v2.KurobaSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -38,6 +38,8 @@ class ThreadStatusCell(
   attrs: AttributeSet
 ) : LinearLayout(context, attrs), View.OnClickListener, ThemeEngine.ThemeChangesListener {
 
+  @Inject
+  lateinit var kurobaSettings: KurobaSettings
   @Inject
   lateinit var appResources: AppResources
   @Inject
@@ -217,7 +219,7 @@ class ThreadStatusCell(
     val chanThread = chanThreadManager.getChanThread(chanDescriptor)
       ?: return
 
-    val canUpdate = ChanSettings.autoRefreshThread.get() && chanThread.canUpdateThread()
+    val canUpdate = kurobaSettings.application.autoRefreshThread.read() && chanThread.canUpdateThread()
     val builder = SpannableStringBuilder()
       .apply { appendLine() }
 
@@ -337,7 +339,7 @@ class ThreadStatusCell(
 
     suspend fun timeUntilLoadMoreMs(): Long
     fun isWatching(): Boolean
-    fun getPage(originalPostDescriptor: PostDescriptor): BoardPage?
+    suspend fun getPage(originalPostDescriptor: PostDescriptor): BoardPage?
     fun onListStatusClicked()
   }
 

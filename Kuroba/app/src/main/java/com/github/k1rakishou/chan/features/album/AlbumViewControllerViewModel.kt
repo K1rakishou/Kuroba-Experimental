@@ -10,7 +10,6 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.viewmodel.KurobaViewModel
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
@@ -42,7 +41,7 @@ import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.source.cache.ChanCatalogSnapshotCache
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
 import com.github.k1rakishou.model.util.ChanPostUtils
-import com.github.k1rakishou.persist_state.PersistableChanState
+import com.github.k1rakishou.v2.KurobaSettings
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toPersistentSet
 import kotlinx.coroutines.Dispatchers
@@ -66,7 +65,6 @@ import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import java.util.Locale
@@ -76,6 +74,7 @@ import javax.inject.Inject
 @Suppress("LargeClass")
 class AlbumViewControllerViewModel(
   private val savedStateHandle: SavedStateHandle,
+  private val kurobaSettings: KurobaSettings,
   private val appResources: AppResources,
   private val currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager,
   private val chanThreadManager: ChanThreadManager,
@@ -129,26 +128,22 @@ class AlbumViewControllerViewModel(
   val toolbarData: StateFlow<ToolbarData>
     get() = _toolbarData
 
-  val albumSpanCount = ChanSettings.albumSpanCount.listenForChangesDeprecated()
-    .asFlow()
+  val albumSpanCount = kurobaSettings.application.albumSpanCount.listen()
     .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
-  val albumLayoutGridMode = PersistableChanState.albumLayoutGridMode.listenForChangesDeprecated()
-    .asFlow()
+  val albumLayoutGridMode = kurobaSettings.internal.albumLayoutGridMode.listen()
     .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
-  val showAlbumViewsImageDetails = PersistableChanState.showAlbumViewsImageDetails.listenForChangesDeprecated()
-    .asFlow()
+  val showAlbumViewsImageDetails = kurobaSettings.internal.showAlbumViewsImageDetails.listen()
     .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
-  val globalNsfwMode = ChanSettings.globalNsfwMode.listenForChangesDeprecated()
-    .asFlow()
+  val globalNsfwMode = kurobaSettings.application.globalNsfwMode.listen()
     .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
   private val snackbarManager by lazy {
     val snackbarScope = when (currentListenMode) {
-      AlbumViewController.ListenMode.Catalog -> SnackbarScope.Album(SnackbarScope.LayoutAnchor.Catalog)
-      AlbumViewController.ListenMode.Thread -> SnackbarScope.Album(SnackbarScope.LayoutAnchor.Thread)
+      AlbumViewController.ListenMode.Catalog -> SnackbarScope.Album(SnackbarScope.LayoutAnchor.Left)
+      AlbumViewController.ListenMode.Thread -> SnackbarScope.Album(SnackbarScope.LayoutAnchor.Right)
     }
 
     snackbarManagerFactory.snackbarManager(snackbarScope)
@@ -157,6 +152,7 @@ class AlbumViewControllerViewModel(
   private val downloadImagesHelper by lazy {
     DownloadImagesHelper(
       viewModelScope = viewModelScope,
+      kurobaSettings = kurobaSettings,
       snackbarManager = snackbarManager,
       imageSaverV2 = imageSaverV2
     )
@@ -860,6 +856,7 @@ class AlbumViewControllerViewModel(
   }
 
   class ViewModelFactory @Inject constructor(
+    private val kurobaSettings: KurobaSettings,
     private val appResources: AppResources,
     private val currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager,
     private val chanThreadManager: ChanThreadManager,
@@ -876,6 +873,7 @@ class AlbumViewControllerViewModel(
     override fun create(handle: SavedStateHandle): AlbumViewControllerViewModel {
       return AlbumViewControllerViewModel(
         savedStateHandle = handle,
+        kurobaSettings = kurobaSettings,
         appResources = appResources,
         currentOpenedDescriptorStateManager = currentOpenedDescriptorStateManager,
         chanThreadManager = chanThreadManager,

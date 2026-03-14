@@ -2,12 +2,14 @@ package com.github.k1rakishou.chan.features.search.remotemedia.instances
 
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.features.search.remotemedia.ImageSearchInstance
-import com.github.k1rakishou.persist_state.ImageSearchInstanceType
+import com.github.k1rakishou.v2.KurobaSettings
+import com.github.k1rakishou.v2.parameters.RemoteImageSearchSettings
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
-class SearxInstance : ImageSearchInstance(
-    type = ImageSearchInstanceType.Searx,
+class SearxInstance(kurobaSettings: KurobaSettings) : ImageSearchInstance(
+    kurobaSettings = kurobaSettings,
+    type = RemoteImageSearchSettings.InstanceType.Searx,
     icon = R.drawable.searx_favicon
 ) {
 
@@ -17,7 +19,7 @@ class SearxInstance : ImageSearchInstance(
         return "https://searx.prvcy.eu".toHttpUrl()
     }
 
-    override fun updateCookies(newCookies: String) {
+    override suspend fun updateCookies(newCookies: String) {
         // no-op
     }
 

@@ -3645,7 +3645,7 @@
     <ID>SpacingBetweenDeclarationsWithAnnotations:ApplicationComponent.kt$ApplicationComponent.Builder$@BindsInstance fun normalDnsSelectorFactory(normalDnsSelectorFactory: NormalDnsSelectorFactory): Builder</ID>
     <ID>SpacingBetweenDeclarationsWithAnnotations:ApplicationComponent.kt$ApplicationComponent.Builder$@BindsInstance fun parserModule(parserModule: ParserModule): Builder</ID>
     <ID>SpacingBetweenDeclarationsWithAnnotations:ApplicationComponent.kt$ApplicationComponent.Builder$@BindsInstance fun repositoryModule(repositoryModule: RepositoryModule): Builder</ID>
-    <ID>SpacingBetweenDeclarationsWithAnnotations:ApplicationComponent.kt$ApplicationComponent.Builder$@BindsInstance fun roomDatabaseModule(roomDatabaseModule: RoomDatabaseModule): Builder</ID>
+    <ID>SpacingBetweenDeclarationsWithAnnotations:ApplicationComponent.kt$ApplicationComponent.Builder$@BindsInstance fun crossModuleBridge(crossModuleBridge: RoomDatabaseModule): Builder</ID>
     <ID>SpacingBetweenDeclarationsWithAnnotations:ApplicationComponent.kt$ApplicationComponent.Builder$@BindsInstance fun siteModule(siteModule: SiteModule): Builder</ID>
     <ID>SpacingBetweenDeclarationsWithAnnotations:ApplicationComponent.kt$ApplicationComponent.Builder$@BindsInstance fun themeEngine(themeEngine: ThemeEngine): Builder</ID>
     <ID>SpacingBetweenDeclarationsWithAnnotations:ApplicationComponent.kt$ApplicationComponent.Builder$@BindsInstance fun threadDownloaderFileManagerWrapper(threadDownloaderFileManagerWrapper: ThreadDownloaderFileManagerWrapper): Builder</ID>

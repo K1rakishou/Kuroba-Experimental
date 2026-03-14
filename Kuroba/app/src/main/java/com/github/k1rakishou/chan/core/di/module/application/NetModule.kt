@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.core.di.module.application
 
 import android.content.Context
 import android.net.ConnectivityManager
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.okhttp.CoilOkHttpClient
 import com.github.k1rakishou.chan.core.base.okhttp.DownloaderOkHttpClient
 import com.github.k1rakishou.chan.core.base.okhttp.DownloaderOkHttpClientImpl
@@ -26,6 +25,7 @@ import com.github.k1rakishou.common.dns.DnsOverHttpsSelectorFactory
 import com.github.k1rakishou.common.dns.NormalDnsSelectorFactory
 import com.github.k1rakishou.core_logger.Logger.deps
 import com.github.k1rakishou.fsaf.FileManager
+import com.github.k1rakishou.v2.KurobaSettings
 import com.google.gson.Gson
 import dagger.Lazy
 import dagger.Module
@@ -47,6 +47,7 @@ class NetModule {
   fun provideProxyStorage(
     appScope: CoroutineScope,
     appContext: Context,
+    kurobaSettings: KurobaSettings,
     appConstants: AppConstants,
     siteResolver: SiteResolver,
     gson: Gson
@@ -56,7 +57,7 @@ class NetModule {
       appScope,
       appContext,
       appConstants,
-      ChanSettings.verboseLogs.get(),
+      kurobaSettings.application.verboseLogs.readBlocking(),
       siteResolver,
       gson
     )
@@ -64,12 +65,15 @@ class NetModule {
 
   @Provides
   @Singleton
-  fun provideCacheHandler(appConstants: AppConstants): CacheHandler {
+  fun provideCacheHandler(
+    appConstants: AppConstants,
+    kurobaSettings: KurobaSettings,
+  ): CacheHandler {
     deps("CacheHandler")
 
     return CacheHandler(
-      ChanSettings.prefetchMedia.get(),
-      appConstants
+      appConstants,
+      kurobaSettings
     )
   }
 
@@ -137,6 +141,7 @@ class NetModule {
   @Provides
   @Singleton
   fun provideProxiedOkHttpClient(
+    kurobaSettings: KurobaSettings,
     normalDnsSelectorFactory: NormalDnsSelectorFactory,
     dnsOverHttpsSelectorFactory: DnsOverHttpsSelectorFactory,
     proxyStorage: ProxyStorage,
@@ -146,6 +151,7 @@ class NetModule {
     deps("ProxiedOkHttpClient")
 
     return ProxiedOkHttpClientImpl(
+      kurobaSettings = kurobaSettings,
       normalDnsSelectorFactory = normalDnsSelectorFactory,
       dnsOverHttpsSelectorFactory = dnsOverHttpsSelectorFactory,
       proxyStorage = proxyStorage,
@@ -160,6 +166,7 @@ class NetModule {
   @Provides
   @Singleton
   fun provideCoilOkHttpClient(
+    kurobaSettings: KurobaSettings,
     normalDnsSelectorFactory: NormalDnsSelectorFactory,
     dnsOverHttpsSelectorFactory: DnsOverHttpsSelectorFactory,
     proxyStorage: ProxyStorage,
@@ -169,6 +176,7 @@ class NetModule {
     deps("CoilOkHttpClient")
 
     return CoilOkHttpClient(
+      kurobaSettings = kurobaSettings,
       normalDnsSelectorFactory = normalDnsSelectorFactory,
       dnsOverHttpsSelectorFactory = dnsOverHttpsSelectorFactory,
       proxyStorage = proxyStorage,
@@ -183,6 +191,7 @@ class NetModule {
   @Provides
   @Singleton
   fun provideDownloaderOkHttpClient(
+    kurobaSettings: KurobaSettings,
     normalDnsSelectorFactory: NormalDnsSelectorFactory,
     dnsOverHttpsSelectorFactory: DnsOverHttpsSelectorFactory,
     proxyStorage: ProxyStorage,
@@ -192,6 +201,7 @@ class NetModule {
     deps("DownloaderOkHttpClient")
 
     return DownloaderOkHttpClientImpl(
+      kurobaSettings = kurobaSettings,
       normalDnsSelectorFactory = normalDnsSelectorFactory,
       dnsOverHttpsSelectorFactory = dnsOverHttpsSelectorFactory,
       proxyStorage = proxyStorage,
@@ -206,6 +216,7 @@ class NetModule {
   @Provides
   @Singleton
   fun provideOkHttpClientForInterceptors(
+    kurobaSettings: KurobaSettings,
     normalDnsSelectorFactory: NormalDnsSelectorFactory,
     dnsOverHttpsSelectorFactory: DnsOverHttpsSelectorFactory,
     proxyStorage: ProxyStorage,
@@ -213,6 +224,7 @@ class NetModule {
   ): OkHttpClientForInterceptors {
     deps("OkHttpClientForInterceptorsImpl")
     return OkHttpClientForInterceptorsImpl(
+      kurobaSettings = kurobaSettings,
       normalDnsSelectorFactory = normalDnsSelectorFactory,
       dnsOverHttpsSelectorFactory = dnsOverHttpsSelectorFactory,
       proxyStorage = proxyStorage,

@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.ui.controller.navigation
 
 import android.content.Context
 import android.view.ViewGroup
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.features.drawer.MainController
@@ -95,7 +94,7 @@ class StyledToolbarNavigationController(context: Context) : ToolbarNavigationCon
     if (topController == null || threadSlideController != null) {
       val viewThreadController = threadSlideController?.rightController()
       if (viewThreadController != null) {
-        if (ChanSettings.viewThreadControllerSwipeable.get()) {
+        if (kurobaSettings.application.viewThreadControllerSwipeable.readBlocking()) {
           nav.initThreadControllerTracking(this)
         } else {
           nav.initThreadDrawerOpenGestureControllerTracker(this)
@@ -107,7 +106,7 @@ class StyledToolbarNavigationController(context: Context) : ToolbarNavigationCon
       // fallthrough
     }
 
-    if (ChanSettings.controllerSwipeable.get()) {
+    if (kurobaSettings.application.controllerSwipeable.readBlocking()) {
       nav.initThreadControllerTracking(this)
     } else {
       nav.initThreadDrawerOpenGestureControllerTracker(this)

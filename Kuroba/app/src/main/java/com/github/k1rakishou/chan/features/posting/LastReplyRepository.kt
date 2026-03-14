@@ -24,7 +24,7 @@ import com.github.k1rakishou.common.withLockNonCancellable
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
-import com.github.k1rakishou.persist_state.ReplyMode
+import com.github.k1rakishou.v2.parameters.ReplyMode
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.TimeUnit
@@ -138,7 +138,7 @@ class LastReplyRepository(
     val ignoreReplyCooldowns = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
       ?.commonSettings
       ?.ignoreReplyCooldowns
-      ?.get()
+      ?.read()
 
     if (ignoreReplyCooldowns == true) {
       Logger.d(TAG, "getTimeUntilNextThreadCreationOrReply($chanDescriptor, $replyMode) " +

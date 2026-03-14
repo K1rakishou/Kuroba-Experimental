@@ -68,7 +68,7 @@ abstract class SiteRequestModifier(
 
   fun getCloudFlareCookies(url: HttpUrl): String? {
     val domainOrHost = url.domainOrHost()
-    return site.commonSettings.cloudFlareClearanceCookieMap.get(domainOrHost)
+    return site.commonSettings.cloudFlareClearanceCookieMap.readBlocking().get(domainOrHost)
   }
 
   private fun addCloudFlareCookie(

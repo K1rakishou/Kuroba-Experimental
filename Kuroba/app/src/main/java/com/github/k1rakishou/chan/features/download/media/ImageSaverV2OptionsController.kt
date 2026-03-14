@@ -36,8 +36,7 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.callback.directory.PermanentDirectoryChooserCallback
-import com.github.k1rakishou.persist_state.ImageSaverV2Options
-import com.github.k1rakishou.persist_state.PersistableChanState
+import com.github.k1rakishou.v2.parameters.ImageSaverV2Options
 import javax.inject.Inject
 
 class ImageSaverV2OptionsController(
@@ -76,9 +75,7 @@ class ImageSaverV2OptionsController(
   private var needCallCancelFunc = true
   private var overriddenFileName: String? = null
 
-  private val currentSetting by lazy {
-    PersistableChanState.imageSaverV2PersistedOptions.get().copy()
-  }
+  private lateinit var currentSetting: ImageSaverV2Options
 
   private val rootDirButtonBackgroundAnimation by lazy(LazyThreadSafetyMode.NONE) {
     RootDirBackgroundAnimationFactory.createRootDirBackgroundAnimation(
@@ -97,6 +94,8 @@ class ImageSaverV2OptionsController(
 
   override fun onCreate() {
     super.onCreate()
+
+    currentSetting = kurobaSettings.internal.imageSaverV2PersistedOptions.readBlocking()
 
     imageNameOptionsGroup = view.findViewById(R.id.image_name_options_group)
     duplicatesResolutionOptionsGroup = view.findViewById(R.id.duplicate_resolution_options_group)
@@ -172,10 +171,10 @@ class ImageSaverV2OptionsController(
 
       when (itemId) {
         R.id.image_name_options_use_server_name -> {
-          currentSetting.imageNameOptions = ImageSaverV2Options.ImageNameOptions.UseServerFileName.rawValue
+          currentSetting = currentSetting.copy(imageNameOptions = ImageSaverV2Options.ImageNameOptions.UseServerFileName.rawValue)
         }
         R.id.image_name_options_use_original_name -> {
-          currentSetting.imageNameOptions = ImageSaverV2Options.ImageNameOptions.UseOriginalFileName.rawValue
+          currentSetting = currentSetting.copy(imageNameOptions =  ImageSaverV2Options.ImageNameOptions.UseOriginalFileName.rawValue)
         }
       }
 
@@ -184,16 +183,20 @@ class ImageSaverV2OptionsController(
     duplicatesResolutionOptionsGroup.setOnCheckedChangeListener { _, itemId ->
       when (itemId) {
         R.id.duplicate_resolution_options_ask -> {
-          currentSetting.duplicatesResolution = ImageSaverV2Options.DuplicatesResolution.AskWhatToDo.rawValue
+          currentSetting = currentSetting
+            .copy(duplicatesResolution = ImageSaverV2Options.DuplicatesResolution.AskWhatToDo.rawValue)
         }
         R.id.duplicate_resolution_options_overwrite -> {
-          currentSetting.duplicatesResolution = ImageSaverV2Options.DuplicatesResolution.Overwrite.rawValue
+          currentSetting = currentSetting
+            .copy(duplicatesResolution = ImageSaverV2Options.DuplicatesResolution.Overwrite.rawValue)
         }
         R.id.duplicate_resolution_options_save_as_duplicate -> {
-          currentSetting.duplicatesResolution = ImageSaverV2Options.DuplicatesResolution.SaveAsDuplicate.rawValue
+          currentSetting = currentSetting
+            .copy(duplicatesResolution = ImageSaverV2Options.DuplicatesResolution.SaveAsDuplicate.rawValue)
         }
         R.id.duplicate_resolution_options_skip -> {
-          currentSetting.duplicatesResolution = ImageSaverV2Options.DuplicatesResolution.Skip.rawValue
+          currentSetting = currentSetting
+            .copy(duplicatesResolution = ImageSaverV2Options.DuplicatesResolution.Skip.rawValue)
         }
       }
 
@@ -201,7 +204,7 @@ class ImageSaverV2OptionsController(
     }
 
     rootDir.setOnClickListener {
-      if (AppModuleAndroidUtils.checkDontKeepActivitiesSettingEnabledForWarningDialog(context)) {
+      if (AppModuleAndroidUtils.checkDontKeepActivitiesSettingEnabledForWarningDialog(context, kurobaSettings)) {
         dialogFactory.createSimpleInformationDialog(
           context = context,
           titleText = getString(R.string.dont_keep_activities_setting_enabled),
@@ -231,7 +234,7 @@ class ImageSaverV2OptionsController(
             fileChooser.forgetSAFTree(Uri.parse(dirUriString))
           }
 
-          currentSetting.rootDirectoryUri = newDirUriString
+          currentSetting = currentSetting.copy(rootDirectoryUri = newDirUriString)
           applyOptionsToView()
 
           startOrStopRootDirBackgroundAnimation(stopAndLockAnimation = true)
@@ -247,29 +250,29 @@ class ImageSaverV2OptionsController(
     additionalDirsTextWatcher = additionalDirs.doAfterTextChanged { editable ->
       val input = editable?.toString()
       if (input.isNullOrEmpty()) {
-        currentSetting.subDirs = null
+        currentSetting = currentSetting.copy(subDirs = null)
         applyOptionsToView()
         return@doAfterTextChanged
       }
 
-      currentSetting.subDirs = editable.toString()
+      currentSetting = currentSetting.copy(subDirs = editable.toString())
       applyOptionsToView()
     }
 
     appendSiteName.setOnCheckedChangeListener { _, isChecked ->
-      currentSetting.appendSiteName = isChecked
+      currentSetting = currentSetting.copy(appendSiteName = isChecked)
       applyOptionsToView()
     }
     appendBoardCode.setOnCheckedChangeListener { _, isChecked ->
-      currentSetting.appendBoardCode = isChecked
+      currentSetting = currentSetting.copy(appendBoardCode = isChecked)
       applyOptionsToView()
     }
     appendThreadId.setOnCheckedChangeListener { _, isChecked ->
-      currentSetting.appendThreadId = isChecked
+      currentSetting = currentSetting.copy(appendThreadId = isChecked)
       applyOptionsToView()
     }
     appendThreadSubject.setOnCheckedChangeListener { _, isChecked ->
-      currentSetting.appendThreadSubject = isChecked
+      currentSetting = currentSetting.copy(appendThreadSubject = isChecked)
       applyOptionsToView()
     }
 
@@ -286,7 +289,7 @@ class ImageSaverV2OptionsController(
         null
       }
 
-      PersistableChanState.imageSaverV2PersistedOptions.set(currentSetting)
+      kurobaSettings.internal.imageSaverV2PersistedOptions.writeAsync(currentSetting)
       needCallCancelFunc = false
 
       when (options) {

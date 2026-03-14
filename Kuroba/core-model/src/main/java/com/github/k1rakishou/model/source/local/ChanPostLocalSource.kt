@@ -5,7 +5,7 @@ import com.github.k1rakishou.common.flatMapIndexed
 import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_spannable.parcelable_spannable_string.ParcelableSpannableStringMapper
-import com.github.k1rakishou.model.KurobaDatabase
+import com.github.k1rakishou.model.KurobaMainDatabase
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
@@ -25,10 +25,12 @@ import com.github.k1rakishou.model.mapper.ChanPostHttpIconMapper
 import com.github.k1rakishou.model.mapper.ChanPostImageMapper
 import com.github.k1rakishou.model.mapper.ChanThreadMapper
 import com.github.k1rakishou.model.mapper.TextSpanMapper
+import com.github.k1rakishou.v2.KurobaSettings
 import java.util.concurrent.TimeUnit
 
 class ChanPostLocalSource(
-  database: KurobaDatabase
+  database: KurobaMainDatabase,
+  private val kurobaSettings: KurobaSettings
 ) : AbstractLocalSource(database) {
   private val TAG = "ChanPostLocalSource"
   private val chanBoardDao = database.chanBoardDao()
@@ -392,7 +394,7 @@ class ChanPostLocalSource(
     // Load threads' original posts
     val chanPostFullMap = chanThreadEntityList
       .map { chanThreadEntity -> chanThreadEntity.threadId }
-      .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+      .chunked(KurobaMainDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
       .flatMap { chunk -> chanPostDao.selectManyOriginalPostsByThreadIdList(chunk) }
       .associateBy { chanPostEntity -> chanPostEntity.chanPostIdEntity.ownerThreadId }
 
@@ -406,7 +408,7 @@ class ChanPostLocalSource(
 
     // Load posts' comments/subjects/tripcodes and other Spannables
     val textSpansGroupedByPostId = postIdList
-      .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+      .chunked(KurobaMainDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
       .flatMap { chunk -> chanTextSpanDao.selectManyByOwnerPostIdList(chunk) }
       .groupBy { chanTextSpanEntity -> chanTextSpanEntity.ownerPostId }
 
@@ -428,6 +430,7 @@ class ChanPostLocalSource(
         chanThreadEntity = chanThreadEntity,
         chanPostFull = chanPostEntity,
         chanTextSpanEntityList = postTextSnapEntityList,
+        revealTextSpoilers = kurobaSettings.application.revealTextSpoilers.read(),
         postAdditionalData = postAdditionalData
       )
     }
@@ -462,7 +465,7 @@ class ChanPostLocalSource(
       chanPostDao.selectAllByThreadIdExceptOp(chanThreadEntity.threadId)
     } else {
       postDatabaseIds
-        .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+        .chunked(KurobaMainDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
         .flatMap { chunk -> chanPostDao.selectManyByThreadIdExceptOp(chanThreadEntity.threadId, chunk) }
     }
 
@@ -482,7 +485,7 @@ class ChanPostLocalSource(
 
     // Load posts' comments/subjects/tripcodes and other Spannables
     val textSpansGroupedByPostId = postIdList
-      .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+      .chunked(KurobaMainDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
       .flatMap { chunk -> chanTextSpanDao.selectManyByOwnerPostIdList(chunk) }
       .groupBy { chanTextSpanEntity -> chanTextSpanEntity.ownerPostId }
 
@@ -494,12 +497,13 @@ class ChanPostLocalSource(
           textSpansGroupedByPostId[chanPostFull.chanPostIdEntity.postId]
 
         return@mapNotNull ChanPostEntityMapper.fromEntity(
-          descriptor,
-          chanThreadEntity,
-          chanPostFull.chanPostIdEntity,
-          chanPostFull.chanPostEntity,
-          postTextSnapEntityList,
-          postAdditionalData
+          chanDescriptor = descriptor,
+          chanThreadEntity = chanThreadEntity,
+          chanPostIdEntity = chanPostFull.chanPostIdEntity,
+          chanPostEntity = chanPostFull.chanPostEntity,
+          chanTextSpanEntityList = postTextSnapEntityList,
+          revealTextSpoilers = kurobaSettings.application.revealTextSpoilers.read(),
+          postAdditionalData = postAdditionalData
         )
       }
   }
@@ -509,19 +513,19 @@ class ChanPostLocalSource(
 
     // Load posts' images
     val postImageByPostIdMap = postIdList
-      .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+      .chunked(KurobaMainDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
       .flatMap { chunk -> chanPostImageDao.selectByOwnerPostIdList(chunk) }
       .groupBy { chanPostImageEntity -> chanPostImageEntity.ownerPostId }
 
     // Load posts' icons
     val postIconsByPostIdMap = postIdList
-      .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+      .chunked(KurobaMainDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
       .flatMap { chunk -> chanPostHttpIconDao.selectByOwnerPostIdList(chunk) }
       .groupBy { chanPostHttpIconEntity -> chanPostHttpIconEntity.ownerPostId }
 
     // Load posts' replies to other posts
     val postReplyToByPostIdMap = postIdList
-      .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+      .chunked(KurobaMainDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
       .flatMap { chunk ->
         return@flatMap chanPostReplyDao.selectByOwnerPostIdList(
           chunk,
@@ -535,20 +539,6 @@ class ChanPostLocalSource(
       postIconsByPostIdMap = postIconsByPostIdMap,
       postReplyToByPostIdMap = postReplyToByPostIdMap
     )
-  }
-
-  suspend fun getThreadIdByPostDescriptor(postDescriptor: PostDescriptor): Long? {
-    ensureInTransaction()
-
-    val chanBoardEntity = chanBoardDao.selectBoardId(
-      postDescriptor.descriptor.siteName(),
-      postDescriptor.descriptor.boardCode()
-    ) ?: return null
-
-    return chanThreadDao.select(
-      chanBoardEntity.boardId,
-      postDescriptor.getThreadNo()
-    )?.threadId
   }
 
   private suspend fun getThreadByThreadDescriptor(
@@ -567,7 +557,7 @@ class ChanPostLocalSource(
   suspend fun getThreadOriginalPostsByDatabaseId(threadDatabaseIds: Collection<Long>): List<ChanOriginalPost> {
     ensureInTransaction()
 
-    val chanThreadMap = threadDatabaseIds.chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+    val chanThreadMap = threadDatabaseIds.chunked(KurobaMainDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
       .flatMap { chunk -> chanThreadDao.selectManyByThreadIdList(chunk) }
       .associateBy { chanThreadEntity -> chanThreadEntity.threadId }
 
@@ -578,14 +568,14 @@ class ChanPostLocalSource(
       .associateBy { chanBoardIdEntity -> chanBoardIdEntity.boardId }
 
     val chanPostFullList = threadDatabaseIds
-      .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+      .chunked(KurobaMainDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
       .flatMap { chunk -> chanPostDao.selectOriginalPosts(chunk) }
 
     val postIdList = chanPostFullList.map { it.chanPostIdEntity.postId }
 
     // Load posts' comments/subjects/tripcodes and other Spannables
     val textSpansGroupedByPostId = postIdList
-      .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+      .chunked(KurobaMainDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
       .flatMap { chunk -> chanTextSpanDao.selectManyByOwnerPostIdList(chunk) }
       .groupBy { chanTextSpanEntity -> chanTextSpanEntity.ownerPostId }
 
@@ -608,12 +598,13 @@ class ChanPostLocalSource(
         require(chanPostFull.chanPostEntity.isOp) { "Must be original post" }
 
         return@mapNotNull ChanPostEntityMapper.fromEntity(
-          threadDescriptor,
-          chanThreadEntity,
-          chanPostFull.chanPostIdEntity,
-          chanPostFull.chanPostEntity,
-          postTextSnapEntityList,
-          postAdditionalData
+          chanDescriptor = threadDescriptor,
+          chanThreadEntity = chanThreadEntity,
+          chanPostIdEntity = chanPostFull.chanPostIdEntity,
+          chanPostEntity = chanPostFull.chanPostEntity,
+          chanTextSpanEntityList = postTextSnapEntityList,
+          revealTextSpoilers = kurobaSettings.application.revealTextSpoilers.read(),
+          postAdditionalData = postAdditionalData
         ) as ChanOriginalPost
       }
   }
@@ -800,7 +791,7 @@ class ChanPostLocalSource(
         Logger.d(TAG, "deleteOldPosts() threadIdSet: ${threadIdSet}")
 
         threadIdSet
-          .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+          .chunked(KurobaMainDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
           .forEach { threadIdsChunk ->
           try {
             chanPostDao.deletePostsByThreadIds(threadIdsChunk)
@@ -877,7 +868,7 @@ class ChanPostLocalSource(
         Logger.d(TAG, "deleteOldThreads() deleting a batch of ${threadIdSet.size} threads with $totalPosts posts")
 
         threadIdSet
-          .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+          .chunked(KurobaMainDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
           .forEach { threadIdsChunk ->
             deletedTotal += try {
               chanThreadDao.deleteThreads(threadIdsChunk)
@@ -906,7 +897,7 @@ class ChanPostLocalSource(
   data class DeleteResult(val deletedTotal: Int = 0, val skippedTotal: Int = 0)
 
   companion object {
-    private const val ENTITIES_IN_BATCH = KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE
+    private const val ENTITIES_IN_BATCH = KurobaMainDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE
 
     private val TEN_SECONDS = TimeUnit.SECONDS.toMillis(10)
   }

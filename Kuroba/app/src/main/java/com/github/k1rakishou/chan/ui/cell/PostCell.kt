@@ -66,6 +66,7 @@ import com.github.k1rakishou.core_themes.ChanThemeColorId
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
+import com.github.k1rakishou.v2.KurobaSettings
 import dagger.Lazy
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
@@ -87,6 +88,8 @@ class PostCell @JvmOverloads constructor(
   ThemeEngine.ThemeChangesListener,
   PostImageThumbnailViewsContainer.PostCellThumbnailCallbacks {
 
+  @Inject
+  lateinit var kurobaSettings: KurobaSettings
   @Inject
   lateinit var imageLoaderDeprecatedLazy: Lazy<ImageLoaderDeprecated>
   @Inject
@@ -245,6 +248,7 @@ class PostCell @JvmOverloads constructor(
     spoilerClickSpan = BackgroundColorSpan(themeEngine.chanTheme.postSpoilerColor)
 
     commentMovementMethod = PostViewMovementMethod(
+      kurobaSettings = kurobaSettings,
       linkClickSpan = linkClickSpan,
       quoteClickSpan = quoteClickSpan,
       spoilerClickSpan = spoilerClickSpan,

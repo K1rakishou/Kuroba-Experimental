@@ -18,7 +18,7 @@ class Chan4DeleteHttpCall(
 ) : HttpCall(site) {
   val deleteResponse: DeleteResponse = DeleteResponse()
 
-  override fun setup(
+  override suspend fun setup(
     requestBuilder: Request.Builder,
     progressListener: ProgressRequestListener?
   ) {
@@ -37,7 +37,7 @@ class Chan4DeleteHttpCall(
     site.requestModifier.modifyHttpCall(this, requestBuilder)
   }
 
-  override fun process(response: Response, result: String) {
+  override suspend fun process(response: Response, result: String) {
     val errorMessageMatcher: Matcher = ERROR_MESSAGE.matcher(result)
 
     if (errorMessageMatcher.find()) {

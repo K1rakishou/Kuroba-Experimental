@@ -1,7 +1,6 @@
 package com.github.k1rakishou.chan.core.di.module.application
 
 import android.content.Context
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.helper.ChanLoadProgressNotifier
 import com.github.k1rakishou.chan.core.helper.FilterEngine
@@ -40,7 +39,6 @@ import com.github.k1rakishou.chan.core.usecase.ImportBackupFileUseCase
 import com.github.k1rakishou.chan.core.usecase.ImportFiltersUseCase
 import com.github.k1rakishou.chan.core.usecase.InstallMpvNativeLibrariesFromGithubUseCase
 import com.github.k1rakishou.chan.core.usecase.InstallMpvNativeLibrariesFromLocalDirectoryUseCase
-import com.github.k1rakishou.chan.core.usecase.KurobaSettingsImportUseCase
 import com.github.k1rakishou.chan.core.usecase.LoadBoardFlagsUseCase
 import com.github.k1rakishou.chan.core.usecase.LoadChan4CaptchaUseCase
 import com.github.k1rakishou.chan.core.usecase.ParsePostRepliesUseCase
@@ -61,6 +59,7 @@ import com.github.k1rakishou.model.repository.ChanFilterWatchRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.repository.ChanSavedReplyRepository
 import com.github.k1rakishou.model.repository.DatabaseMetaRepository
+import com.github.k1rakishou.v2.KurobaSettings
 import com.google.gson.Gson
 import com.squareup.moshi.Moshi
 import dagger.Lazy
@@ -74,6 +73,7 @@ class UseCaseModule {
   @Provides
   @Singleton
   fun provideExtractReplyPostsPositionsFromPostsListUseCase(
+    kurobaSettings: KurobaSettings,
     savedReplyManager: SavedReplyManager,
     siteManager: SiteManager,
     chanThreadManager: ChanThreadManager,
@@ -83,6 +83,7 @@ class UseCaseModule {
   ): ExtractPostMapInfoHolderUseCase {
     deps("ExtractPostMapInfoHolderUseCase")
     return ExtractPostMapInfoHolderUseCase(
+      kurobaSettings,
       savedReplyManager,
       siteManager,
       chanThreadManager,
@@ -129,31 +130,6 @@ class UseCaseModule {
 
   @Provides
   @Singleton
-  fun provideKurobaSettingsImportUseCase(
-    gson: Gson,
-    fileManager: FileManager,
-    siteManager: SiteManager,
-    boardManager: BoardManager,
-    chanFilterManager: ChanFilterManager,
-    postHideManager: PostHideManager,
-    bookmarksManager: BookmarksManager,
-    chanPostRepository: ChanPostRepository
-  ): KurobaSettingsImportUseCase {
-    deps("KurobaSettingsImportUseCase")
-    return KurobaSettingsImportUseCase(
-      gson,
-      fileManager,
-      siteManager,
-      boardManager,
-      chanFilterManager,
-      postHideManager,
-      bookmarksManager,
-      chanPostRepository
-    )
-  }
-
-  @Provides
-  @Singleton
   fun provideGlobalSearchUseCase(
     siteManager: SiteManager,
     themeEngine: ThemeEngine,
@@ -185,6 +161,7 @@ class UseCaseModule {
   fun provideBookmarkFilterWatchableThreadsUseCase(
     appConstants: AppConstants,
     appScope: CoroutineScope,
+    kurobaSettings: KurobaSettings,
     boardManager: BoardManager,
     bookmarksManager: BookmarksManager,
     threadBookmarkGroupManager: ThreadBookmarkGroupManager,
@@ -198,7 +175,7 @@ class UseCaseModule {
   ): BookmarkFilterWatchableThreadsUseCase {
     deps("BookmarkFilterWatchableThreadsUseCase")
     return BookmarkFilterWatchableThreadsUseCase(
-      ChanSettings.verboseLogs.get(),
+      kurobaSettings,
       appConstants,
       boardManager,
       bookmarksManager,
@@ -328,6 +305,7 @@ class UseCaseModule {
   @Provides
   @Singleton
   fun provideParsePostsV1UseCase(
+    kurobaSettings: KurobaSettings,
     chanPostRepository: ChanPostRepository,
     filterEngine: FilterEngine,
     postFilterManager: PostFilterManager,
@@ -338,7 +316,7 @@ class UseCaseModule {
   ): ParsePostsV1UseCase {
     deps("ParsePostsV1UseCase")
     return ParsePostsV1UseCase(
-      ChanSettings.verboseLogs.get(),
+      kurobaSettings.application.verboseLogs.readBlocking(),
       chanPostRepository,
       filterEngine,
       postFilterManager,

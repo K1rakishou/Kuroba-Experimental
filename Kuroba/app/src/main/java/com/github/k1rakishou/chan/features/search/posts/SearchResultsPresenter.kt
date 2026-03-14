@@ -31,7 +31,7 @@ import com.github.k1rakishou.core_spannable.ForegroundColorIdSpan
 import com.github.k1rakishou.core_themes.ChanThemeColorId
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
-import com.github.k1rakishou.persist_state.IndexAndTop
+import com.github.k1rakishou.v2.parameters.RecyclerIndexAndTopInfo
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.BehaviorProcessor
@@ -117,11 +117,11 @@ internal class SearchResultsPresenter(
     searchResultsStateStorage.resetLastRecyclerViewScrollState()
   }
 
-  fun updateLastRecyclerViewScrollState(indexAndTop: IndexAndTop) {
+  fun updateLastRecyclerViewScrollState(indexAndTop: RecyclerIndexAndTopInfo.IndexAndTop) {
     searchResultsStateStorage.updateLastRecyclerViewScrollState(indexAndTop)
   }
 
-  fun lastRecyclerViewScrollStateOrNull(): IndexAndTop? {
+  fun lastRecyclerViewScrollStateOrNull(): RecyclerIndexAndTopInfo.IndexAndTop? {
     return searchResultsStateStorage.lastRecyclerViewScrollState
   }
 

@@ -1,13 +1,13 @@
 package com.github.k1rakishou.model.repository
 
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.model.KurobaDatabase
+import com.github.k1rakishou.model.KurobaMainDatabase
 import com.github.k1rakishou.model.data.catalog.CompositeCatalog
 import com.github.k1rakishou.model.source.local.CompositeCatalogLocalSource
 import kotlinx.coroutines.CoroutineScope
 
 class CompositeCatalogRepository(
-  database: KurobaDatabase,
+  database: KurobaMainDatabase,
   applicationScope: CoroutineScope,
   private val localSource: CompositeCatalogLocalSource
 ) : AbstractRepository(database, applicationScope) {

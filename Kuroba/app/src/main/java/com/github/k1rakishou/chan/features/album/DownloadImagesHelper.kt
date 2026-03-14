@@ -9,8 +9,7 @@ import com.github.k1rakishou.chan.ui.compose.snackbar.SnackbarManager
 import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.post.ChanPostImage
-import com.github.k1rakishou.persist_state.ImageSaverV2Options
-import com.github.k1rakishou.persist_state.PersistableChanState
+import com.github.k1rakishou.v2.KurobaSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -18,6 +17,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 
 class DownloadImagesHelper(
   private val viewModelScope: CoroutineScope,
+  private val kurobaSettings: KurobaSettings,
   private val snackbarManager: SnackbarManager,
   private val imageSaverV2: ImageSaverV2
 ) {
@@ -37,7 +37,7 @@ class DownloadImagesHelper(
     _enqueueAlbumItemDownloadJob = viewModelScope.launch {
       Logger.debug(TAG) { "downloadImage() fullImageUrl: ${chanPostImage.imageUrl}, showOptions: ${showOptions}" }
 
-      if (chanPostImage.isInlined || chanPostImage.hidden) {
+      if (chanPostImage.isInlined || kurobaSettings.application.hideImages.read()) {
         // Do not download inlined files via the Album downloads (because they often
         // fail with SSL exceptions) and we can't really trust those files.
         // Also don't download filter hidden items
@@ -52,11 +52,11 @@ class DownloadImagesHelper(
         return@launch
       }
 
-      var imageSaverV2Options = PersistableChanState.imageSaverV2PersistedOptions.get()
+      var imageSaverV2Options = kurobaSettings.internal.imageSaverV2PersistedOptions.read()
       var newFilename: String? = null
 
       if (showOptions || imageSaverV2Options.shouldShowImageSaverOptionsController()) {
-        val result = suspendCancellableCoroutine<Pair<ImageSaverV2Options, String?>?> { continuation ->
+        val result = suspendCancellableCoroutine { continuation ->
           val options = ImageSaverV2OptionsController.Options.SingleImage(
             simpleSaveableMediaInfo = simpleSaveableMediaInfo,
             onSaveClicked = { updatedImageSaverV2Options, newFilename ->
@@ -138,7 +138,7 @@ class DownloadImagesHelper(
           continue
         }
 
-        if (chanPostImage.isInlined || chanPostImage.hidden) {
+        if (chanPostImage.isInlined || kurobaSettings.application.hideImages.read()) {
           // Do not download inlined files via the Album downloads (because they often
           // fail with SSL exceptions) and we can't really trust those files.
           // Also don't download filter hidden items
@@ -159,7 +159,7 @@ class DownloadImagesHelper(
 
       Logger.debug(TAG) { "downloadSelectedItems() simpleSaveableMediaInfoList: ${simpleSaveableMediaInfoList.size}" }
 
-      val updatedImageSaverV2Options = suspendCancellableCoroutine<ImageSaverV2Options?> { continuation ->
+      val updatedImageSaverV2Options = suspendCancellableCoroutine { continuation ->
         val options = ImageSaverV2OptionsController.Options.MultipleImages(
           onSaveClicked = { updatedImageSaverV2Options ->
             continuation.resumeValueSafe(updatedImageSaverV2Options)

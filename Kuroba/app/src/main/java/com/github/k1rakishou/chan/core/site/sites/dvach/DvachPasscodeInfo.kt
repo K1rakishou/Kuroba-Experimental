@@ -1,10 +1,12 @@
 package com.github.k1rakishou.chan.core.site.sites.dvach
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
+@JsonClass(generateAdapter = true)
 data class DvachPasscodeInfo(
-  @SerializedName("files")
+  @field:Json("files")
   val files: Int? = null,
-  @SerializedName("files_size")
+  @field:Json("files_size")
   val filesSize: Long? = null,
 )

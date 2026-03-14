@@ -1,16 +1,16 @@
 package com.github.k1rakishou.chan.core.site.sites.lynxchan.engine
 
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRule.Companion.tagRule
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp
 import com.github.k1rakishou.core_themes.ChanThemeColorId
+import com.github.k1rakishou.v2.KurobaSettings
 import java.util.regex.Pattern
 
-class LynxchanCommentParser : CommentParser() {
+class LynxchanCommentParser(kurobaSettings: KurobaSettings) : CommentParser(kurobaSettings) {
 
   init {
-    val redTextFontSize = sp(ChanSettings.redTextFontSizePx())
+    val redTextFontSize = sp(kurobaSettings.application.redTextFontSizePx())
 
     addDefaultRules()
 

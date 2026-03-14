@@ -10,7 +10,8 @@ interface ParcelableStringMapper {
   ): ParcelableSpannableString?
 
   fun fromParcelableSpannableString(
-    parcelableSpannableString: ParcelableSpannableString?
+    parcelableSpannableString: ParcelableSpannableString?,
+    revealTextSpoilers: Boolean
   ): CharSequence
 
 }

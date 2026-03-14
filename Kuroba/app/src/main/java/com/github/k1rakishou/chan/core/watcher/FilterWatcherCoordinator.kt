@@ -7,20 +7,19 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.await
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.concurrency.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.v2.KurobaSettings
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.reactive.asFlow
 import java.util.concurrent.TimeUnit
 
 class FilterWatcherCoordinator(
-  private val verboseLogs: Boolean,
+  private val kurobaSettings: KurobaSettings,
   private val appContext: Context,
   private val appScope: CoroutineScope,
   private val appConstants: AppConstants,
@@ -43,8 +42,7 @@ class FilterWatcherCoordinator(
     }
 
     appScope.launch {
-      ChanSettings.filterWatchEnabled.listenForChangesDeprecated()
-        .asFlow()
+      kurobaSettings.application.filterWatchEnabled.listen()
         .collect { enabled ->
           Logger.d(TAG, "filterWatchEnabled.listenForChanges() new event")
 
@@ -57,8 +55,7 @@ class FilterWatcherCoordinator(
     }
 
     appScope.launch {
-      ChanSettings.filterWatchInterval.listenForChangesDeprecated()
-        .asFlow()
+      kurobaSettings.application.filterWatchInterval.listen()
         .collect {
           Logger.d(TAG, "filterWatchInterval.listenForChanges() new event")
           restartFilterWatcherWithTinyDelay()
@@ -67,7 +64,7 @@ class FilterWatcherCoordinator(
   }
 
   private suspend fun stopFilterWatcherWork() {
-    if (verboseLogs) {
+    if (kurobaSettings.application.verboseLogs.read()) {
       Logger.d(TAG, "stopFilterWatcherWork()")
     }
 
@@ -102,7 +99,12 @@ class FilterWatcherCoordinator(
       // watches screen he will see nothing until the next filter watch update cycle. Since the regular
       // update cycle is pretty big (4 hours minimum) we need to use another one that will update
       // filter watches right away.
-      startFilterWatchingRightAway(appConstants, appContext, isCalledBySwipeToRefresh)
+      startFilterWatchingRightAway(
+        kurobaSettings = kurobaSettings,
+        appConstants = appConstants,
+        appContext = appContext,
+        isCalledBySwipeToRefresh = isCalledBySwipeToRefresh
+      )
     }
   }
 
@@ -110,8 +112,8 @@ class FilterWatcherCoordinator(
     chanFilterManager.awaitUntilInitialized()
   }
 
-  private fun printDebugInfo() {
-    if (!verboseLogs) {
+  private suspend fun printDebugInfo() {
+    if (!kurobaSettings.application.verboseLogs.read()) {
       return
     }
 
@@ -130,6 +132,7 @@ class FilterWatcherCoordinator(
     private const val TAG = "FilterWatcherCoordinator"
 
     suspend fun startFilterWatchingRightAway(
+      kurobaSettings: KurobaSettings,
       appConstants: AppConstants,
       appContext: Context,
       isCalledBySwipeToRefresh: Boolean
@@ -141,7 +144,7 @@ class FilterWatcherCoordinator(
       val tag = appConstants.filterWatchWorkUniqueTag
       Logger.d(TAG, "startFilterWatchingRightAway() called tag=$tag")
 
-      if (!ChanSettings.filterWatchEnabled.get()) {
+      if (!kurobaSettings.application.filterWatchEnabled.read()) {
         Logger.d(TAG, "startFilterWatchingRightAway() cannot restart filter watcher because the " +
           "setting is disabled")
 
@@ -174,6 +177,7 @@ class FilterWatcherCoordinator(
     }
 
     suspend fun startFilterWatching(
+      kurobaSettings: KurobaSettings,
       appConstants: AppConstants,
       appContext: Context
     ) {
@@ -184,7 +188,7 @@ class FilterWatcherCoordinator(
       val tag = appConstants.filterWatchWorkUniqueTag
       Logger.d(TAG, "startFilterWatching() called tag=$tag")
 
-      if (!ChanSettings.filterWatchEnabled.get()) {
+      if (!kurobaSettings.application.filterWatchEnabled.read()) {
         Logger.d(TAG, "startFilterWatching() cannot restart filter watcher because the " +
             "setting is disabled")
 
@@ -192,7 +196,7 @@ class FilterWatcherCoordinator(
         return
       }
 
-      val filterWatchInterval = ChanSettings.filterWatchInterval.get().toLong()
+      val filterWatchInterval = kurobaSettings.application.filterWatchInterval.read().toLong()
 
       val constraints = Constraints.Builder()
         .setRequiredNetworkType(NetworkType.CONNECTED)

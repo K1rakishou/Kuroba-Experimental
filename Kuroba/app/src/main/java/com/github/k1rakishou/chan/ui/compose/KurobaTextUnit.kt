@@ -6,17 +6,16 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.isUnspecified
 import androidx.compose.ui.unit.sp
-import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.chan.utils.appDependencies
+import com.github.k1rakishou.v2.KurobaSettings
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.reactive.asFlow
+import kotlinx.coroutines.runBlocking
 
 data class KurobaTextUnit(
   val value: TextUnit,
@@ -82,27 +81,26 @@ fun collectTextFontSize(defaultFontSize: KurobaTextUnit): TextUnit {
 
 @Composable
 fun collectGlobalFontSizeMultiplierAsState(): Float {
-  val coroutineScope = rememberCoroutineScope()
-  var globalFontSizeMultiplier by remember { mutableFloatStateOf(calculateFontSizeMultiplier()) }
+  val kurobaSettings = appDependencies().kurobaSettings
+  var globalFontSizeMultiplier by remember {
+    runBlocking { mutableFloatStateOf(calculateFontSizeMultiplier(kurobaSettings)) }
+  }
 
   LaunchedEffect(
     key1 = Unit,
     block = {
-      coroutineScope.launch {
-        ChanSettings.fontSize.listenForChangesDeprecated()
-          .asFlow()
-          .collectLatest { globalFontSizeMultiplier = calculateFontSizeMultiplier() }
-      }
+      kurobaSettings.application.fontSize.listen()
+        .collectLatest { globalFontSizeMultiplier = calculateFontSizeMultiplier(kurobaSettings) }
     }
   )
 
   return globalFontSizeMultiplier
 }
 
-private fun calculateFontSizeMultiplier(): Float {
-  val defaultFontSizeFromSettings = ChanSettings.defaultFontSize().toFloat()
-  val fontSize = ChanSettings.fontSize.get().toIntOrNull()?.toFloat()
-    ?: ChanSettings.defaultFontSize().toFloat()
+private suspend fun calculateFontSizeMultiplier(kurobaSettings: KurobaSettings): Float {
+  val fontSize = kurobaSettings.application.fontSize.read().toIntOrNull()?.toFloat()
+    ?: return 1f
 
+  val defaultFontSizeFromSettings = kurobaSettings.application.defaultFontSize().toFloat()
   return fontSize / defaultFontSizeFromSettings
 }

@@ -19,10 +19,12 @@ import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.model.data.media.GenericVideoId
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.LoaderType
+import com.github.k1rakishou.v2.KurobaSettings
 import kotlinx.coroutines.withTimeout
 import java.util.concurrent.TimeUnit
 
 class PostExtraContentLoader(
+  private val kurobaSettings: KurobaSettings,
   private val chanThreadManager: ChanThreadManager,
   private val linkExtraInfoFetchers: List<ExternalMediaServiceExtraInfoFetcher>
 ) : OnDemandContentLoader(LoaderType.PostExtraContentLoader) {
@@ -120,7 +122,9 @@ class PostExtraContentLoader(
       CommentSpanUpdater.updateSpansForPostComment(
         chanThreadManager = chanThreadManager,
         postDescriptor = post.postDescriptor,
-        spanUpdateBatchList = spanUpdateBatchList
+        spanUpdateBatchList = spanUpdateBatchList,
+        fontSize = kurobaSettings.application.fontSize.read().toInt(),
+        showLinkAlongWithTitleAndDuration = kurobaSettings.application.showLinkAlongWithTitleAndDuration.read()
       )
     } catch (error: Throwable) {
       Logger.e(TAG, "Unknown error while trying to update spans for post comment", error)

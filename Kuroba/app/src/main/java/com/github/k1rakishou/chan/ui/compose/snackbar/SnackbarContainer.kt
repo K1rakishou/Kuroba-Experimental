@@ -139,7 +139,9 @@ fun SnackbarContainer(
   val localContentPaddings = LocalContentPaddings.current
 
   val snackbarManagerFactory = appDependencies().snackbarManagerFactory
-  val snackbarState = remember { SnackbarState(snackbarManagerFactory.snackbarManager(snackbarScope)) }
+  val snackbarState = remember(key1 = snackbarScope) {
+    SnackbarState(snackbarManagerFactory.snackbarManager(snackbarScope))
+  }
 
   BoxWithConstraints(
     modifier = modifier,
@@ -186,7 +188,7 @@ fun SnackbarContainer(
     LaunchedEffect(
       key1 = Unit,
       block = {
-        while (true) {
+        while (isActive) {
           delay(500)
           snackbarState.removeOldSnackbars()
 
@@ -452,7 +454,6 @@ private fun KurobaSnackbarItem(
     }
   )
 
-  val animationInProgress = layoutAnimationIsInProgress || fadeInOrOutAnimationJob != null
   val hasClickableItems = remember(key1 = snackbarInfo) { snackbarInfo.hasClickableItems }
 
   val canBeDismissedOnClick = when (snackbarInfo.snackbarType) {
@@ -465,16 +466,6 @@ private fun KurobaSnackbarItem(
     SnackbarType.Default -> hasClickableItems && snackbarInfo.aliveUntil != null
     SnackbarType.ErrorToast,
     SnackbarType.Toast -> true
-  }
-
-  val clickableModifier = if (animationInProgress) {
-    Modifier
-  } else {
-    Modifier.kurobaClickable(
-      bounded = true,
-      enabled = canBeDismissedOnClick,
-      onClick = { dismissSnackbar(snackbarInfo.snackbarId) }
-    )
   }
 
   val anchors = remember(key1 = containerWidth) {
@@ -514,7 +505,12 @@ private fun KurobaSnackbarItem(
       .graphicsLayer { alpha = animatedAlpha }
       .onGloballyPositioned { layoutCoordinates ->
         onSnackbarSizeChanged(snackbarInfo.snackbarId, layoutCoordinates.size)
-      },
+      }
+      .kurobaClickable(
+        bounded = true,
+        enabled = canBeDismissedOnClick,
+        onClick = { dismissSnackbar(snackbarInfo.snackbarId) }
+      ),
     contentAlignment = Alignment.Center
   ) {
     KurobaComposeCard(
@@ -523,8 +519,7 @@ private fun KurobaSnackbarItem(
           horizontal = containerHorizPadding,
           vertical = containerVertPadding
         )
-        .wrapContentWidth()
-        .then(clickableModifier),
+        .wrapContentWidth(),
       backgroundColor = backgroundColor,
       elevation = 4.dp
     ) {

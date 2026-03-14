@@ -65,16 +65,19 @@ object AndroidUtils {
   val isNotMainProcess: Boolean
     get() = false
 
+  @Deprecated("remove me")
   @JvmStatic
   val appMainPreferences: SharedPreferences
     get() = PreferenceManager.getDefaultSharedPreferences(application)
 
+  @Deprecated("remove me")
   val appState: SharedPreferences
     get() = appContext.getSharedPreferences(
       CHAN_STATE_PREFS_NAME,
       Context.MODE_PRIVATE
     )
 
+  @Deprecated("remove me")
   val mpvState: SharedPreferences
     get() = appContext.getSharedPreferences(
       MPV_PREFS_NAME,

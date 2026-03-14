@@ -43,7 +43,8 @@ object ParcelableSpannableStringMapper {
 
   @JvmStatic
   fun fromParcelableSpannableString(
-    parcelableSpannableString: ParcelableSpannableString?
+    parcelableSpannableString: ParcelableSpannableString?,
+    revealTextSpoilers: Boolean
   ): CharSequence {
     if (parcelableSpannableString == null) {
       return ""
@@ -67,7 +68,10 @@ object ParcelableSpannableStringMapper {
     }
 
     try {
-      return mapper.fromParcelableSpannableString(parcelableSpannableString)
+      return mapper.fromParcelableSpannableString(
+        parcelableSpannableString = parcelableSpannableString,
+        revealTextSpoilers = revealTextSpoilers
+      )
     } catch (error: Throwable) {
       Log.e(TAG, "KurobaEx fromParcelableSpannableString() error", error)
       return parcelableSpannableString.text

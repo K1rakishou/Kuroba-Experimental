@@ -32,7 +32,7 @@ import com.github.k1rakishou.common.isCancellationException
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
-import com.github.k1rakishou.prefs.GsonJsonSetting
+import com.github.k1rakishou.v2.settings.KurobaMoshiSetting
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -60,7 +60,7 @@ class Chan4CaptchaLayoutViewModel(
   private var activeJob: Job? = null
   private var captchaTtlUpdateJob: Job? = null
 
-  val chan4CaptchaSettingsJson: GsonJsonSetting<Chan4CaptchaSettings> by lazy {
+  val chan4CaptchaSettingsJson: KurobaMoshiSetting<Chan4CaptchaSettings> by lazy {
     siteManager.bySiteDescriptorAndActive(Chan4.SITE_DESCRIPTOR)!!
       .requireSiteSettings(Chan4SiteSettings::class.java)
       .captchaSettings
@@ -171,7 +171,7 @@ class Chan4CaptchaLayoutViewModel(
 
         requestCaptchaInternal(
           chanDescriptor = chanDescriptor,
-          ticket = chan4CaptchaSettingsJson.get().captchaTicket,
+          ticket = chan4CaptchaSettingsJson.read().captchaTicket,
           mcl = mcl
         )
       }

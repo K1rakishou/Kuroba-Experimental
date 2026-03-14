@@ -52,19 +52,12 @@ import com.github.k1rakishou.chan.features.search.posts.epoxy.EpoxySearchPostGap
 import com.github.k1rakishou.chan.features.search.posts.epoxy.EpoxySearchPostView
 import com.github.k1rakishou.chan.features.search.posts.epoxy.EpoxySearchSiteView
 import com.github.k1rakishou.chan.features.search.remotemedia.ImageSearchController
-import com.github.k1rakishou.chan.features.settings.CookieCaptchaInputController
-import com.github.k1rakishou.chan.features.settings.MainSettingsController
-import com.github.k1rakishou.chan.features.settings.SettingsCoordinator
-import com.github.k1rakishou.chan.features.settings.epoxy.EpoxyBooleanSetting
-import com.github.k1rakishou.chan.features.settings.epoxy.EpoxyLinkSetting
-import com.github.k1rakishou.chan.features.settings.epoxy.EpoxyNoSettingsFoundView
-import com.github.k1rakishou.chan.features.settings.epoxy.EpoxySettingsGroupTitle
-import com.github.k1rakishou.chan.features.settings.screens.delegate.ExportBackupOptionsController
+import com.github.k1rakishou.chan.features.settings.AppSettingsController
+import com.github.k1rakishou.chan.features.settings.delegate.ExportBackupOptionsController
 import com.github.k1rakishou.chan.features.setup.boards.composing.ComposeBoardsController
 import com.github.k1rakishou.chan.features.setup.boards.composing.ComposeBoardsSelectorController
 import com.github.k1rakishou.chan.features.setup.boards.composing.CompositeCatalogsSetupController
 import com.github.k1rakishou.chan.features.setup.epoxy.site.EpoxySiteView
-import com.github.k1rakishou.chan.features.setup.site.settings.SiteSettingsController
 import com.github.k1rakishou.chan.features.setup.site.setup.SitesSetupController
 import com.github.k1rakishou.chan.features.soundmedia.create.CreateSoundMediaController
 import com.github.k1rakishou.chan.features.themes.ThemeGalleryController
@@ -90,13 +83,9 @@ import com.github.k1rakishou.chan.ui.activity.CrashReportActivity
 import com.github.k1rakishou.chan.ui.activity.SharingActivity
 import com.github.k1rakishou.chan.ui.activity.StartActivity
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter
-import com.github.k1rakishou.chan.ui.captcha.CaptchaLayout
-import com.github.k1rakishou.chan.ui.captcha.GenericWebViewAuthenticationLayout
 import com.github.k1rakishou.chan.ui.captcha.chan4.Chan4CaptchaLayout
 import com.github.k1rakishou.chan.ui.captcha.dvach.DvachCaptchaLayout
 import com.github.k1rakishou.chan.ui.captcha.lynxchan.LynxchanCaptchaLayout
-import com.github.k1rakishou.chan.ui.captcha.v1.CaptchaNojsLayoutV1
-import com.github.k1rakishou.chan.ui.captcha.v2.CaptchaNoJsLayoutV2
 import com.github.k1rakishou.chan.ui.cell.CardPostCell
 import com.github.k1rakishou.chan.ui.cell.PostCell
 import com.github.k1rakishou.chan.ui.cell.PostStubCell
@@ -118,17 +107,12 @@ import com.github.k1rakishou.chan.ui.controller.RemovedPostsController
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
 import com.github.k1rakishou.chan.ui.controller.ViewThreadController
 import com.github.k1rakishou.chan.ui.controller.WebViewReportController
-import com.github.k1rakishou.chan.ui.controller.base.Controller
 import com.github.k1rakishou.chan.ui.controller.base.ui.NavigationControllerContainerLayout
 import com.github.k1rakishou.chan.ui.controller.dialog.KurobaAlertDialogHostController
-import com.github.k1rakishou.chan.ui.controller.dialog.KurobaComposeDialogController
 import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigationController
 import com.github.k1rakishou.chan.ui.controller.popup.PostRepliesPopupController
 import com.github.k1rakishou.chan.ui.controller.popup.PostSearchPopupController
-import com.github.k1rakishou.chan.ui.controller.settings.RangeSettingUpdaterController
-import com.github.k1rakishou.chan.ui.controller.settings.captcha.JsCaptchaCookiesEditorController
-import com.github.k1rakishou.chan.ui.controller.settings.captcha.JsCaptchaCookiesEditorLayout
 import com.github.k1rakishou.chan.ui.epoxy.EpoxyDividerView
 import com.github.k1rakishou.chan.ui.epoxy.EpoxyErrorView
 import com.github.k1rakishou.chan.ui.epoxy.EpoxyExpandableGroupView
@@ -206,7 +190,6 @@ interface ActivityComponent : ActivityDependencies {
   fun inject(mediaViewerActivity: MediaViewerActivity)
   fun inject(crashReportActivity: CrashReportActivity)
 
-  fun inject(controller: Controller)
   fun inject(addOrEditBooruController: AddOrEditBooruController)
   fun inject(boardArchiveController: BoardArchiveController)
   fun inject(browseController: BrowseController)
@@ -229,17 +212,14 @@ interface ActivityComponent : ActivityDependencies {
   fun inject(threadSlideController: ThreadSlideController)
   fun inject(viewThreadController: ViewThreadController)
   fun inject(bookmarksController: BookmarksController)
-  fun inject(rangeSettingUpdaterController: RangeSettingUpdaterController)
   fun inject(bookmarksSortingController: BookmarksSortingController)
   fun inject(proxyEditorController: ProxyEditorController)
   fun inject(proxySetupController: ProxySetupController)
   fun inject(globalSearchController: GlobalSearchController)
   fun inject(searchResultsController: SearchResultsController)
-  fun inject(mainSettingsController: MainSettingsController)
-  fun inject(siteSettingsController: SiteSettingsController)
+  fun inject(appSettingsController: AppSettingsController)
   fun inject(reportIssueController: ReportIssueController)
   fun inject(floatingListMenuController: FloatingListMenuController)
-  fun inject(jsCaptchaCookiesEditorController: JsCaptchaCookiesEditorController)
   fun inject(loadingViewController: LoadingViewController)
   fun inject(postLinksController: PostLinksController)
   fun inject(selectSiteForSearchController: SelectSiteForSearchController)
@@ -271,9 +251,7 @@ interface ActivityComponent : ActivityDependencies {
   fun inject(editMpvConfController: EditMpvConfController)
   fun inject(openUrlInWebViewController: OpenUrlInWebViewController)
   fun inject(createSoundMediaController: CreateSoundMediaController)
-  fun inject(kurobaComposeDialogController: KurobaComposeDialogController)
   fun inject(kurobaAlertController: KurobaAlertController)
-  fun inject(cookieCaptchaInputController: CookieCaptchaInputController)
 
   fun inject(colorizableBarButton: ColorizableBarButton)
   fun inject(colorizableButton: ColorizableButton)
@@ -308,10 +286,6 @@ interface ActivityComponent : ActivityDependencies {
   fun inject(epoxySearchPostGapView: EpoxySearchPostGapView)
   fun inject(epoxySearchPostView: EpoxySearchPostView)
   fun inject(epoxySearchSiteView: EpoxySearchSiteView)
-  fun inject(epoxyBooleanSetting: EpoxyBooleanSetting)
-  fun inject(epoxyLinkSetting: EpoxyLinkSetting)
-  fun inject(epoxyNoSettingsFoundView: EpoxyNoSettingsFoundView)
-  fun inject(epoxySettingsGroupTitle: EpoxySettingsGroupTitle)
   fun inject(epoxySiteView: EpoxySiteView)
   fun inject(epoxyDividerView: EpoxyDividerView)
   fun inject(epoxyErrorView: EpoxyErrorView)
@@ -332,22 +306,17 @@ interface ActivityComponent : ActivityDependencies {
   fun inject(colorizableInsetAwareEpoxyRecyclerView: ColorizableInsetAwareEpoxyRecyclerView)
   fun inject(insetAwareLinearLayout: InsetAwareLinearLayout)
 
-  fun inject(captchaNoJsLayoutV2: CaptchaNoJsLayoutV2)
-  fun inject(captchaNojsLayoutV1: CaptchaNojsLayoutV1)
   fun inject(thumbnailView: ThumbnailView)
   fun inject(thumbnailView: PostImageThumbnailView)
   fun inject(threadLayout: ThreadLayout)
   fun inject(threadListLayout: ThreadListLayout)
   fun inject(cardPostCell: CardPostCell)
-  fun inject(captchaLayout: CaptchaLayout)
   fun inject(floatingMenu: FloatingMenu)
   fun inject(threadStatusCell: ThreadStatusCell)
   fun inject(postCell: PostCell)
   fun inject(navigationControllerContainerLayout: NavigationControllerContainerLayout)
   fun inject(bookmarksPresenter: BookmarksPresenter)
   fun inject(baseThreadBookmarkViewHolder: BaseThreadBookmarkViewHolder)
-  fun inject(settingsCoordinator: SettingsCoordinator)
-  fun inject(jsCaptchaCookiesEditorLayout: JsCaptchaCookiesEditorLayout)
   fun inject(hidingFloatingActionButton: HidingFloatingActionButton)
   fun inject(touchBlockingConstraintLayout: TouchBlockingConstraintLayout)
   fun inject(touchBlockingCoordinatorLayout: TouchBlockingCoordinatorLayout)
@@ -355,7 +324,6 @@ interface ActivityComponent : ActivityDependencies {
   fun inject(touchBlockingLinearLayout: TouchBlockingLinearLayout)
   fun inject(bottomMenuPanel: BottomMenuPanel)
   fun inject(bookmarkSortingItemView: BookmarkSortingItemView)
-  fun inject(genericWebViewAuthenticationLayout: GenericWebViewAuthenticationLayout)
   fun inject(postAdapter: PostAdapter)
   fun inject(removedPostsHelper: RemovedPostsHelper)
   fun inject(imageOptionsHelper: ImageOptionsHelper)

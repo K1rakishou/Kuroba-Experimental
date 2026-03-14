@@ -7,33 +7,25 @@ import android.content.Context
 import android.os.Bundle
 import android.os.StrictMode
 import android.os.SystemClock
-import com.github.k1rakishou.BookmarkGridViewInfo
-import com.github.k1rakishou.ChanSettings
-import com.github.k1rakishou.ChanSettingsInfo
-import com.github.k1rakishou.MpvSettings
-import com.github.k1rakishou.PersistableChanStateInfo
 import com.github.k1rakishou.chan.core.AppDependenciesInitializer
 import com.github.k1rakishou.chan.core.cache.downloader.MediaDownloadException
 import com.github.k1rakishou.chan.core.di.component.application.ApplicationComponent
 import com.github.k1rakishou.chan.core.di.component.application.DaggerApplicationComponent
 import com.github.k1rakishou.chan.core.di.module.application.AppModule
+import com.github.k1rakishou.chan.core.di.module.application.CrossModuleBridge
 import com.github.k1rakishou.chan.core.di.module.application.JsonParserModule
 import com.github.k1rakishou.chan.core.di.module.application.LoaderModule
 import com.github.k1rakishou.chan.core.di.module.application.ManagerModule
 import com.github.k1rakishou.chan.core.di.module.application.NetModule
 import com.github.k1rakishou.chan.core.di.module.application.ParserModule
 import com.github.k1rakishou.chan.core.di.module.application.RepositoryModule
-import com.github.k1rakishou.chan.core.di.module.application.RoomDatabaseModule
 import com.github.k1rakishou.chan.core.di.module.application.SiteModule
 import com.github.k1rakishou.chan.core.di.module.application.UseCaseModule
 import com.github.k1rakishou.chan.core.helper.ImageLoaderFileManagerWrapper
 import com.github.k1rakishou.chan.core.helper.ImageSaverFileManagerWrapper
 import com.github.k1rakishou.chan.core.helper.ThreadDownloaderFileManagerWrapper
-import com.github.k1rakishou.chan.core.helper.migration.ApplicationMigrationHelper
-import com.github.k1rakishou.chan.core.manager.ApplicationCrashNotifier
+import com.github.k1rakishou.chan.core.helper.migration.app.ApplicationMigrationHelper
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
-import com.github.k1rakishou.chan.core.manager.ReportManager
-import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager
 import com.github.k1rakishou.chan.ui.activity.CrashReportActivity
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -52,8 +44,13 @@ import com.github.k1rakishou.core_themes.ThemesModuleInjector
 import com.github.k1rakishou.fsaf.BadPathSymbolResolutionStrategy
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.manager.base_directory.DirectoryManager
-import com.github.k1rakishou.model.ModelModuleInjector
-import com.github.k1rakishou.persist_state.PersistableChanState
+import com.github.k1rakishou.model.di.ModelComponentInjector
+import com.github.k1rakishou.v2.ApplicationSettingsParameters
+import com.github.k1rakishou.v2.InternalSettingsParameters
+import com.github.k1rakishou.v2.KurobaSettings
+import com.github.k1rakishou.v2.NonBackupableSettingsParameters
+import com.github.k1rakishou.v2.database.KurobaSettingsDatabase
+import com.github.k1rakishou.v2.di.KurobaSettingsComponentInjector
 import dagger.Lazy
 import io.reactivex.exceptions.UndeliverableException
 import io.reactivex.plugins.RxJavaPlugins
@@ -66,6 +63,7 @@ import kotlinx.coroutines.DEBUG_PROPERTY_VALUE_ON
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.dnsoverhttps.DnsOverHttps
@@ -84,6 +82,35 @@ class Chan : Application(), ActivityLifecycleCallbacks {
   private val job by lazy { SupervisorJob(null) }
   private lateinit var applicationScope: CoroutineScope
 
+  private val kurobaSettingsDatabase by lazy {
+    KurobaSettingsDatabase.buildDatabase(this@Chan)
+  }
+
+  private val kurobaSettings by lazy {
+    KurobaSettings.create(
+      kurobaSettingsDatabase = kurobaSettingsDatabase,
+      applicationSettingsInfo = ApplicationSettingsParameters(
+        applicationId = BuildConfig.APPLICATION_ID,
+        isTablet = AppModuleAndroidUtils.isTablet,
+        defaultFilterOrderName = PostsFilter.CatalogSortingOrder.BUMP.orderName,
+        isDevBuild = AppModuleAndroidUtils.isDevBuild,
+        isBetaBuild = AppModuleAndroidUtils.isBetaBuild,
+        bookmarkGridViewInfo = ApplicationSettingsParameters.BookmarkGridViewInfo(
+          getDimen(R.dimen.thread_grid_bookmark_view_default_width),
+          getDimen(R.dimen.thread_grid_bookmark_view_min_width),
+          getDimen(R.dimen.thread_grid_bookmark_view_max_width)
+        )
+      ),
+      internalSettingsInfo = InternalSettingsParameters(
+        versionCode = BuildConfig.VERSION_CODE,
+        commitHash = BuildConfig.COMMIT_HASH
+      ),
+      nonBackupableSettingsParameters = NonBackupableSettingsParameters(
+        applicationMigrationVersion = ApplicationMigrationHelper.LATEST_VERSION
+      )
+    )
+  }
+
   private val coroutineExceptionHandler = CoroutineExceptionHandler { _, exception ->
     Logger.e(TAG, "Coroutine unhandled exception exception", exception)
     onUnhandledException(exception)
@@ -94,23 +121,19 @@ class Chan : Application(), ActivityLifecycleCallbacks {
   @Inject
   lateinit var appDependenciesInitializer: AppDependenciesInitializer
   @Inject
-  lateinit var settingsNotificationManager: Lazy<SettingsNotificationManager>
-  @Inject
   lateinit var applicationVisibilityManager: Lazy<ApplicationVisibilityManager>
-  @Inject
-  lateinit var reportManager: ReportManager
   @Inject
   lateinit var appConstants: Lazy<AppConstants>
   @Inject
-  lateinit var applicationCrashNotifier: ApplicationCrashNotifier
-  @Inject
   lateinit var applicationMigrationHelper: ApplicationMigrationHelper
 
-  class NormalDnsSelectorFactoryImpl : NormalDnsSelectorFactory {
+  class NormalDnsSelectorFactoryImpl(
+    private val kurobaSettings: KurobaSettings
+  ) : NormalDnsSelectorFactory {
     override fun createDnsSelector(okHttpClient: OkHttpClient): NormalDnsSelector {
       Logger.deps("NormalDnsSelectorFactory")
 
-      if (ChanSettings.okHttpAllowIpv6.get()) {
+      if (kurobaSettings.application.okHttpAllowIpv6.readBlocking()) {
         Logger.d(Logger.DI_TAG, "Using DnsSelector.Mode.SYSTEM")
         return NormalDnsSelector(NormalDnsSelector.Mode.SYSTEM)
       }
@@ -120,12 +143,14 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     }
   }
 
-  class DnsOverHttpsSelectorFactoryImpl : DnsOverHttpsSelectorFactory {
+  class DnsOverHttpsSelectorFactoryImpl(
+    private val kurobaSettings: KurobaSettings
+  ) : DnsOverHttpsSelectorFactory {
     override fun createDnsSelector(okHttpClient: OkHttpClient): DnsOverHttpsSelector {
       Logger.deps("DnsOverHttpsSelectorFactory")
 
       val selector = DnsOverHttps.Builder()
-        .includeIPv6(ChanSettings.okHttpAllowIpv6.get())
+        .includeIPv6(kurobaSettings.application.okHttpAllowIpv6.readBlocking())
         .client(okHttpClient)
         .url("https://cloudflare-dns.com/dns-query".toHttpUrl())
         .bootstrapDnsHosts(
@@ -169,10 +194,13 @@ class Chan : Application(), ActivityLifecycleCallbacks {
 
     AndroidUtils.init(this)
     AppModuleAndroidUtils.init(this)
-    ChanSettings.init(createChanSettingsInfo())
-    Logger.init(tagPrefix, AppModuleAndroidUtils.isDevBuild, ChanSettings.verboseLogs.get(), this)
-    PersistableChanState.init(createPersistableChanStateInfo())
-    MpvSettings.init()
+
+    Logger.init(
+      prefix = tagPrefix,
+      isDevBuild = AppModuleAndroidUtils.isDevBuild,
+      verboseLogs = kurobaSettings.application.verboseLogs.readBlocking(),
+      appContext = this
+    )
   }
 
   override fun onCreate() {
@@ -217,12 +245,14 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       append(BuildConfig.VERSION_NAME)
     }
 
+    val isLowRamDevice = kurobaSettings.application.isLowRamDeviceBlocking()
+
     val appConstants = AppConstants(
       context = applicationContext,
       flavorType = flavorType,
-      isLowRamDevice = ChanSettings.isLowRamDevice(),
+      isLowRamDevice = isLowRamDevice,
       kurobaExCustomUserAgent = kurobaExUserAgent,
-      overrideUserAgent = { ChanSettings.customUserAgent.get() },
+      overrideUserAgent = { kurobaSettings.application.customUserAgent.readBlocking() },
       maxPostsInDatabaseSettingValue = 75000,
       maxThreadsInDatabaseSettingValue = 12500
     )
@@ -238,22 +268,25 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     val themeEngine = ThemesModuleInjector.build(
       application = this,
       scope = applicationScope,
-      fileManager = fileManager
+      fileManager = fileManager,
+      kurobaSettings = kurobaSettings
     ).getThemeEngine()
 
-    themeEngine.initialize(this, TimeUtils.isHalloweenToday())
-    SpannableModuleInjector.initialize(themeEngine)
+    val kurobaSettingsComponent = KurobaSettingsComponentInjector.build(
+      application = this
+    )
 
-    val modelComponent = ModelModuleInjector.build(
+    val modelComponent = ModelComponentInjector.build(
       application = this,
       scope = applicationScope,
-      normalDnsSelectorFactory = NormalDnsSelectorFactoryImpl(),
-      dnsOverHttpsSelectorFactory = DnsOverHttpsSelectorFactoryImpl(),
-      verboseLogs = ChanSettings.verboseLogs.get(),
+      normalDnsSelectorFactory = NormalDnsSelectorFactoryImpl(kurobaSettings),
+      dnsOverHttpsSelectorFactory = DnsOverHttpsSelectorFactoryImpl(kurobaSettings),
+      verboseLogs = kurobaSettings.application.verboseLogs.readBlocking(),
       isDevFlavor = isDev,
-      isLowRamDevice = ChanSettings.isLowRamDevice(),
-      okHttpUseDnsOverHttps = ChanSettings.okHttpUseDnsOverHttps.get(),
-      appConstants = appConstants
+      isLowRamDevice = isLowRamDevice,
+      okHttpUseDnsOverHttps = kurobaSettings.application.okHttpUseDnsOverHttps.readBlocking(),
+      appConstants = appConstants,
+      kurobaSettings = kurobaSettings
     )
 
     // We need to start initializing ChanPostRepository first because it deletes old posts during
@@ -261,20 +294,22 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     modelComponent.getChanPostRepository().initialize()
 
     applicationComponent = DaggerApplicationComponent.builder()
+      .modelModuleComponent(modelComponent)
+      .kurobaSettingsModuleComponent(kurobaSettingsComponent)
       .application(this)
       .appContext(this)
+      .kurobaSettings(kurobaSettings)
       .themeEngine(themeEngine)
       .fileManager(fileManager)
       .imageSaverFileManagerWrapper(imageSaverFileManagerWrapper)
       .threadDownloaderFileManagerWrapper(threadDownloaderFileManagerWrapper)
       .imageLoaderFileManagerWrapper(imageLoaderFileManagerWrapper)
       .applicationCoroutineScope(applicationScope)
-      .normalDnsSelectorFactory(NormalDnsSelectorFactoryImpl())
-      .dnsOverHttpsSelectorFactory(DnsOverHttpsSelectorFactoryImpl())
+      .normalDnsSelectorFactory(NormalDnsSelectorFactoryImpl(kurobaSettings))
+      .dnsOverHttpsSelectorFactory(DnsOverHttpsSelectorFactoryImpl(kurobaSettings))
       .appConstants(appConstants)
-      .modelMainComponent(modelComponent)
       .appModule(AppModule())
-      .roomDatabaseModule(RoomDatabaseModule())
+      .crossModuleBridge(CrossModuleBridge())
       .gsonModule(JsonParserModule())
       .loaderModule(LoaderModule())
       .managerModule(ManagerModule())
@@ -285,6 +320,9 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       .useCaseModule(UseCaseModule())
       .build()
       .also { component -> component.inject(this) }
+
+    runBlocking { themeEngine.initialize(this@Chan, TimeUtils.isHalloweenToday()) }
+    SpannableModuleInjector.initialize(themeEngine)
 
     appDependenciesInitializer.init()
     setupErrorHandlers()
@@ -396,29 +434,6 @@ class Chan : Application(), ActivityLifecycleCallbacks {
 
       applicationVisibilityManager.get().onEnteredBackground()
     }
-  }
-
-  private fun createPersistableChanStateInfo(): PersistableChanStateInfo {
-    return PersistableChanStateInfo(
-      versionCode = BuildConfig.VERSION_CODE,
-      commitHash = BuildConfig.COMMIT_HASH,
-      applicationMigrationVersion = ApplicationMigrationHelper.LATEST_VERSION
-    )
-  }
-
-  private fun createChanSettingsInfo(): ChanSettingsInfo {
-    return ChanSettingsInfo(
-      applicationId = BuildConfig.APPLICATION_ID,
-      isTablet = AppModuleAndroidUtils.isTablet,
-      defaultFilterOrderName = PostsFilter.CatalogSortingOrder.BUMP.orderName,
-      isDevBuild = AppModuleAndroidUtils.isDevBuild,
-      isBetaBuild = AppModuleAndroidUtils.isBetaBuild,
-      bookmarkGridViewInfo = BookmarkGridViewInfo(
-        getDimen(R.dimen.thread_grid_bookmark_view_default_width),
-        getDimen(R.dimen.thread_grid_bookmark_view_min_width),
-        getDimen(R.dimen.thread_grid_bookmark_view_max_width)
-      )
-    )
   }
 
   /**

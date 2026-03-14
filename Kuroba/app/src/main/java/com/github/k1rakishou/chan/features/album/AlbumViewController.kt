@@ -13,13 +13,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.controller.ControllerComponent
 import com.github.k1rakishou.chan.core.helper.ThumbnailLongtapOptionsHelper
 import com.github.k1rakishou.chan.features.download.media.ImageSaverV2OptionsController
-import com.github.k1rakishou.chan.features.settings.screens.AppearanceSettingsScreen
-import com.github.k1rakishou.chan.features.settings.screens.AppearanceSettingsScreen.Companion.clampColumnsCount
+import com.github.k1rakishou.chan.features.settings.screen.AppearanceSettingsScreenBuilder
 import com.github.k1rakishou.chan.features.toolbar.BackArrowMenuItem
 import com.github.k1rakishou.chan.features.toolbar.CloseMenuItem
 import com.github.k1rakishou.chan.features.toolbar.ToolbarMenuItem
@@ -42,7 +40,6 @@ import com.github.k1rakishou.chan.ui.view.floating_menu.CheckableFloatingListMen
 import com.github.k1rakishou.chan.utils.ViewModelScope
 import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
-import com.github.k1rakishou.persist_state.PersistableChanState
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.onEach
@@ -55,7 +52,7 @@ class AlbumViewController(
   context: Context,
   listenMode: ListenMode,
   initialImageFullUrl: String?
-) : BaseComposeController<AlbumViewControllerViewModel, AlbumViewController.Params>(
+) : BaseComposeController<AlbumViewControllerViewModel, AlbumViewController.Params, Nothing>(
   context = context,
   viewModelClass = AlbumViewControllerViewModel::class.java,
   viewModelParams = Params(listenMode, initialImageFullUrl)
@@ -84,8 +81,8 @@ class AlbumViewController(
   override val layoutAnchor: SnackbarScope.LayoutAnchor?
     get() {
       return when (viewModel.currentListenMode) {
-        ListenMode.Catalog -> SnackbarScope.LayoutAnchor.Catalog
-        ListenMode.Thread -> SnackbarScope.LayoutAnchor.Thread
+        ListenMode.Catalog -> SnackbarScope.LayoutAnchor.Left
+        ListenMode.Thread -> SnackbarScope.LayoutAnchor.Right
       }
     }
 
@@ -105,12 +102,12 @@ class AlbumViewController(
       menuBuilder = {
         withMenuItem(
           id = ACTION_TOGGLE_LAYOUT_MODE,
-          drawableId = if (PersistableChanState.albumLayoutGridMode.get()) {
+          drawableId = if (kurobaSettings.internal.albumLayoutGridMode.readBlocking()) {
             R.drawable.ic_baseline_view_quilt_24
           } else {
             R.drawable.ic_baseline_view_comfy_24
           },
-          onClick = { item -> toggleLayoutModeClicked(item) }
+          onClick = { item -> controllerScope.launch { toggleLayoutModeClicked(item) } }
         )
 
         withMenuItem(
@@ -124,8 +121,8 @@ class AlbumViewController(
             id = ACTION_TOGGLE_IMAGE_DETAILS,
             stringId = R.string.action_album_show_image_details,
             visible = true,
-            checked = PersistableChanState.showAlbumViewsImageDetails.get(),
-            onClick = { onToggleAlbumViewsImageInfoToggled() }
+            checked = kurobaSettings.internal.showAlbumViewsImageDetails.readBlocking(),
+            onClick = { controllerScope.launch { onToggleAlbumViewsImageInfoToggled() } }
           )
 
           withOverflowMenuItem(
@@ -439,11 +436,11 @@ class AlbumViewController(
     }
   }
 
-  private fun toggleLayoutModeClicked(item: ToolbarMenuItem) {
-    PersistableChanState.albumLayoutGridMode.toggle()
+  private suspend fun toggleLayoutModeClicked(item: ToolbarMenuItem) {
+    kurobaSettings.internal.albumLayoutGridMode.toggle()
 
     toolbarState.findItem(ACTION_TOGGLE_LAYOUT_MODE)?.let { toolbarMenuItem ->
-      val drawableId = if (PersistableChanState.albumLayoutGridMode.get()) {
+      val drawableId = if (kurobaSettings.internal.albumLayoutGridMode.read()) {
         R.drawable.ic_baseline_view_quilt_24
       } else {
         R.drawable.ic_baseline_view_comfy_24
@@ -453,9 +450,9 @@ class AlbumViewController(
     }
   }
 
-  private fun onAlbumLayoutGridModeToggled() {
+  private suspend fun onAlbumLayoutGridModeToggled() {
     toolbarState.findItem(ACTION_TOGGLE_LAYOUT_MODE)?.let { toolbarMenuItem ->
-      val downloadDrawableId = if (PersistableChanState.albumLayoutGridMode.get()) {
+      val downloadDrawableId = if (kurobaSettings.internal.albumLayoutGridMode.read()) {
         R.drawable.ic_baseline_view_quilt_24
       } else {
         R.drawable.ic_baseline_view_comfy_24
@@ -465,16 +462,16 @@ class AlbumViewController(
     }
   }
 
-  private fun onToggleAlbumViewsImageInfoToggled() {
+  private suspend fun onToggleAlbumViewsImageInfoToggled() {
     toolbarState.findCheckableOverflowItem(ACTION_TOGGLE_IMAGE_DETAILS)
-      ?.updateChecked(PersistableChanState.showAlbumViewsImageDetails.toggle())
+      ?.updateChecked(kurobaSettings.internal.showAlbumViewsImageDetails.toggle())
   }
 
   private suspend fun onChangeAlbumColumnsCountClicked() {
-    val currentColumnsCount = ChanSettings.albumSpanCount.get()
+    val currentColumnsCount = kurobaSettings.application.albumSpanCount.read()
 
-    val items = AppearanceSettingsScreen.ALL_COLUMNS.mapIndexed { index, columnsCount ->
-      val name = if (columnsCount == AppearanceSettingsScreen.AUTO_COLUMN) {
+    val items = AppearanceSettingsScreenBuilder.ALL_COLUMNS.mapIndexed { index, columnsCount ->
+      val name = if (columnsCount == AppearanceSettingsScreenBuilder.AUTO_COLUMN) {
         appResources.string(R.string.setting_span_count_default)
       } else {
         appResources.string(R.string.setting_span_count_item, columnsCount)
@@ -505,11 +502,11 @@ class AlbumViewController(
       return
     }
 
-    if (clickedColumnCount !in AppearanceSettingsScreen.ALL_COLUMNS) {
+    if (clickedColumnCount !in AppearanceSettingsScreenBuilder.ALL_COLUMNS) {
       return
     }
 
-    ChanSettings.albumSpanCount.set(clickedColumnCount)
+    kurobaSettings.application.albumSpanCount.writeAsync(clickedColumnCount)
   }
 
   private fun Density.calculateActualSpanCount(albumSpanCount: Int, maxWidth: Int): Int {
@@ -521,7 +518,7 @@ class AlbumViewController(
       albumSpanCount
     }
 
-    return clampColumnsCount(actualAlbumSpanCount)
+    return AppearanceSettingsScreenBuilder.clampColumnsCount(actualAlbumSpanCount)
   }
 
   @Parcelize

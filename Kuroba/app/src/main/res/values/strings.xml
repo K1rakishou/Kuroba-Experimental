@@ -600,9 +600,10 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="dont_keep_activities_setting_enabled_description">It appears you have \'Don\'t keep activities\' developer setting enabled. This setting may cause lots of different problems such as not being able to pick any files via file pickers. You are not supposed to use it normally, it\'s mostly used for testing. Normally, when picking a file via a file picker, it should launch a new activity (which should work fine) but with this setting enabled, when launching a new activity, it will destroy the previous activity (which is the KurobaEx main activity) thus reloading everything. Similar problems will occur when using any Android feature that requires launching of a new activity (like file sharing/selecting directory location where downloaded files will be stored/etc). It is strongly recommended to disable this setting. This message won\'t be shown anymore.</string>
 
     <!-- Main settings -->
-    <string name="settings_screen">Settings</string>
+    <string name="main_settings_screen">Settings</string>
 
     <!-- Main "Settings" group -->
+    <string name="main_settings_group">Settings</string>
     <string name="settings_watch">Thread/Filter watchers, thread downloader</string>
     <string name="settings_watch_summary_enabled">Thread/Filter watcher, thread downloader settings.</string>
     <string name="settings_sites">Sites</string>
@@ -638,8 +639,6 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="setting_watch_background_timeout_description">The interval between updates when the app is in the background</string>
     <string name="setting_watch_foreground_timeout">Foreground update interval</string>
     <string name="setting_watch_foreground_timeout_description">The interval between updates when the app is in the foreground</string>
-    <string name="setting_watch_foreground_adaptive_timer">Use adaptive interval for foreground watcher</string>
-    <string name="setting_watch_foreground_adaptive_timer_description">When turned on additional %1$d seconds will be added to foreground update interval for every 10 active bookmarks you have meaning the more active bookmarks you have the less often the bookmark updates will become (which is good for battery)</string>
     <string name="setting_background_watcher_test_option">%1$s (Option for testing. You are not supposed to see this)</string>
     <string name="setting_background_watcher_very_bad_option">%1$s (Terrible for battery. Don\'t tell me I didn\'t warn you!)</string>
     <string name="setting_background_watcher_non_optimal_option">%1$s (More frequent updates, bad for battery)</string>
@@ -701,18 +700,11 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="setting_album_span_count">Album columns count</string>
     <string name="setting_span_count_default">Auto</string>
     <string name="setting_span_count_item">%1$d columns</string>
-    <string name="setting_never_hide_toolbar">Never hide the toolbar</string>
-    <string name="setting_enable_reply_fab">Enable the reply button</string>
-    <string name="setting_bottom_js_captcha">Bottom captcha</string>
-    <string name="setting_bottom_js_captcha_description">Makes the JS captcha float to the bottom of the screen</string>
-    <string name="setting_enable_reply_fab_description">Disabling replaces the round button with a menu option</string>
     <string name="setting_font_size">Font size</string>
     <string name="setting_post_cell_thumbnail_size">Post thumbnail size (percents)</string>
     <string name="setting_post_thumbnail_scaling">Post thumbnail scaling type</string>
     <string name="setting_post_thumbnail_scaling_fit_center">Fit center</string>
     <string name="setting_post_thumbnail_scaling_center_crop">Center crop</string>
-    <string name="setting_never_show_pages">Never show page number</string>
-    <string name="setting_never_show_pages_bottom">Never display the page number in the catalog</string>
     <string name="setting_reorder_bottom_nav_view_buttons">Reorder bottom navigation view buttons</string>
 
     <!-- Appearance post group -->
@@ -745,11 +737,11 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <!-- Appearance post links group -->
     <string name="setting_group_post_links">Post links</string>
     <string name="setting_youtube_title_and_durations">Parse Youtube titles and durations</string>
-    <string name="setting_youtube_title_and_durations_description">Replaces Youtube links with their titles and appends video duration\n\n%1$s</string>
+    <string name="setting_youtube_title_and_durations_description">Replaces Youtube links with their titles and appends video duration</string>
     <string name="setting_soundcloud_title_and_durations">Parse SoundCloud titles and durations</string>
-    <string name="setting_soundcloud_title_and_durations_description">Replaces SoundCloud links with their titles and appends video duration\n\n%1$s</string>
+    <string name="setting_soundcloud_title_and_durations_description">Replaces SoundCloud links with their titles and appends video duration</string>
     <string name="setting_streamable_title_and_durations">Parse Streamable titles and durations</string>
-    <string name="setting_streamable_title_and_durations_description">Replaces Streamable links with their titles and appends video duration\n\n%1$s</string>
+    <string name="setting_streamable_title_and_durations_description">Replaces Streamable links with their titles and appends video duration</string>
     <string name="setting_show_link_along_with_title_and_duration_title">Show the link along with video title and duration</string>
     <string name="setting_show_link_along_with_title_and_duration_description">When disabled only the video title and duration will be shown</string>
 
@@ -766,7 +758,7 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="setting_media_viewer_one_offscreen_page">One offscreen page (3 pages total)</string>
     <string name="setting_media_viewer_two_offscreen_page">Two offscreen pages (5 pages total, may become laggy on some devices)</string>
     <string name="setting_images_high_res">High resolution cells</string>
-    <string name="setting_images_high_res_description">Make the album view and card catalog images higher resolution by pre-rescaling full size images (⚠ May become the reason of freezes while scrolling catalog/thread/album on old devices ⚠)</string>
+    <string name="setting_images_high_res_description">Make the album view and card catalog images higher resolution by pre-rescaling full size images.</string>
     <string name="setting_custom_user_agent">Custom user agent</string>
     <string name="setting_custom_user_agent_description">By default, currently installed WebView\'s user-agent is used for all requests (and for CloudFlare bypass). But it may not work in some situations. So if you experience problems with bypassing CloudFlare try changing this setting. Set it to empty string to use the WebView\'s user agent again.\n\nCurrent WebView user agent:\n\'%1$s\'</string>
 
@@ -786,8 +778,6 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="setting_open_link_confirmation">Ask before opening links</string>
     <string name="setting_captcha_setup">Captcha Settings</string>
     <string name="setting_captcha_setup_description">Captcha settings are per-site configurable. Tap for site setup.</string>
-    <string name="setting_js_captcha_cookies_title">JS captcha cookies</string>
-    <string name="setting_js_captcha_cookies_description">By inputting your desktop browser captcha cookies, captcha solving may become easier</string>
     <string name="setting_load_last_opened_board_upon_app_start_title">Restore last visited catalog upon app start</string>
     <string name="setting_load_last_opened_thread_upon_app_start_title">Restore last visited thread upon app start</string>
 
@@ -796,18 +786,12 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="setting_volume_key_scrolling">Volume keys scroll content</string>
     <string name="setting_tappable_post_title">Tappable post title</string>
     <string name="setting_tappable_post_title_description">When enabled allows tapping post number (to reply) as well as tapping poster id/name/tripcode (to display posts by that id/name/tripcode)</string>
-    <string name="setting_post_links_take_whole_horiz_space">Make post links take whole available horizontal space</string>
-    <string name="setting_post_links_take_whole_horiz_space_descriptor">When enabled makes clicking any kind of post link (including post replies) easier by extending it\'s area to take the whole available horizontal space. Disabling this setting will stop triggering link clicks when clicking seemingly empty post comment space.</string>
     <string name="setting_mark_unseen_posts_title">Mark unseen posts</string>
     <string name="setting_mark_unseen_posts_description">Adds a left-side label for every yet unseen post. Only shows unseen posts in threads.</string>
     <string name="setting_mark_seen_threads_title">Mark already seen threads in the catalog</string>
     <string name="setting_mark_seen_threads_description">Already seen (visited) threads will be marked with additional transparency</string>
 
-    <!-- Other settings group -->
     <string name="setting_other_settings_group">Other Options</string>
-    <string name="setting_full_screen_rotation">Allow full sensor rotation</string>
-    <string name="settings_show_copy_apk_dialog_title">Show copy apk dialog when downloading an update</string>
-    <string name="settings_show_copy_apk_dialog_message">Every time you download a new update a dialog with suggestion to copy that apk to some other directory will be shown</string>
 
     <!-- Media general group -->
     <string name="settings_screen_media">Media</string>
@@ -830,11 +814,6 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="setting_pause_players_when_in_bg">Pause players (video/audio) when app goes into background</string>
     <string name="setting_enable_sound_posts">Enable sound posts</string>
 
-    <!-- Save location group -->
-    <string name="setting_save_location">Save location</string>
-    <string name="setting_save_location_description">Save location was moved to a different place. You need to either long click any thumbnail and then click "Download image (Show options)" or long click the \"download\" icon in image viewer.</string>
-
-
     <!-- Media loading group -->
     <string name="setting_image_auto_load">Automatically load images</string>
     <string name="setting_video_auto_load">Automatically load videos/sound posts</string>
@@ -843,15 +822,13 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="setting_image_auto_load_unmetered">Unmetered network only</string>
     <string name="setting_image_auto_load_none">Never</string>
     <string name="setting_auto_load_thread_images">Enable media prefetching</string>
-    <string name="setting_auto_load_thread_images_description">Loads all images or videos in a thread immediately. Uses it\'s own setting for the cache size which is greater than the regular cache size. (⚠ May become the reason of high battery/network traffic/disk consumption ⚠)</string>
+    <string name="setting_auto_load_thread_images_description">Loads all images or videos in a thread immediately. Uses it\'s own setting for the cache size which is greater than the regular cache size.</string>
     <string name="setting_catalog_search_mode_title">Catalog search mode</string>
     <string name="setting_thread_search_mode_title">Thread search mode</string>
 
     <!-- Misc group -->
     <string name="settings_group_misc">Misc settings</string>
     <string name="setting_always_randomize_picked_files_names">Always randomize picked files names</string>
-    <string name="setting_always_randomize_picked_files_names_description">Current timestamp in milliseconds will be used as the name of any picked file</string>
-
 
     <!-- Plugins group -->
     <string name="settings_plugins_mpv_group">Mpv video player</string>
@@ -896,27 +873,28 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="settings_logs_show_for_level">Show \'%1$s\' logs</string>
 
     <!-- Developer settings -->
+    <string name="settings_developer_group">Developer settings</string>
     <string name="settings_check_update_apk_version_code">Check update apk version code</string>
     <string name="settings_check_update_apk_version_code_description">For development only! When turned off you will always be suggested to install the apk update.</string>
     <string name="settings_force_low_ram_device">Force low ram device</string>
     <string name="settings_force_low_ram_device_description">This setting should only be used by old devices with less than ~2GB of memory (very approximate number because this heavily depends on the device). It will enable some additional optimizations and attempt to reduce the amount of memory that is used by memory caches. Additionally it will force media viewer view pager to only have 1 offscreen page instead of 2 (which should reduce OutOfMemory and other similar crashes).</string>
     <string name="settings_open_logs">View logs</string>
-    <string name="settings_enable_verbose_logs">Enable verbose logs</string>
-    <string name="settings_disable_verbose_logs">Disable verbose logs</string>
+    <string name="settings_verbose_logs">Verbose logs</string>
     <string name="settings_crash_app">Crash the app</string>
     <string name="settings_clear_file_cache">Clear \'%1$s\' disk cache</string>
     <string name="settings_clear_file_cache_bottom_description">%1$s cache: %2$s / %3$s</string>
     <string name="settings_clear_exo_player_file_cache">Clear exoplayer cache</string>
+    <string name="settings_cleared_exo_player_file_cache">Cleared exoplayer cache</string>
     <string name="settings_clear_exo_player_cache_bottom_description">Exoplayer cache: %1$s</string>
     <string name="settings_clear_thread_downloader_disk_cache">Clear thread downloader disk cache</string>
     <string name="settings_thread_downloader_clear_disk_cache_clear">Clear cache</string>
     <string name="settings_thread_downloader_clear_disk_cache_do_not_clear">Do not</string>
     <string name="settings_thread_downloader_clear_disk_cache_title">Clear thread downloader disk cache?</string>
     <string name="settings_thread_downloader_clear_disk_cache_description">This action will delete all downloaded media for all downloading/downloaded threads. Are you sure you want to do that?</string>
+    <string name="settings_thread_downloader_cache_cleared">Thread downloader cached cleared</string>
     <string name="settings_thread_download_cache_bottom_description">Currently: %1$s</string>
-    <string name="settings_reset_thread_open_counter">Reset thread open counter</string>
-    <string name="settings_crash_on_safe_throw_enabled">Crash on safe throw (ENABLED)</string>
-    <string name="settings_crash_on_safe_throw_disabled">Crash on safe throw (DISABLED)</string>
+    <string name="settings_crash_on_safe_throw">Crash on safe throw</string>
+    <string name="settings_crash_on_safe_throw_description">When enabled, some debug checks with crash the app instead of just printing a log. Useful for debugging.</string>
     <string name="settings_simulate_app_updated">Simulate app updated</string>
     <string name="settings_simulate_app_updated_bottom">Makes the app think it\'s updated to the latest version. This will be reset the next time you manually check for updates</string>
     <string name="settings_simulate_app_not_updated">Simulate app not updated</string>
@@ -934,8 +912,9 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="settings_screen_security_main_group">Main</string>
     <string name="settings_screen_security_proxy">Proxy settings</string>
     <string name="settings_screen_security_proxy_description">%1$d proxies enabled</string>
-    <string name="settings_screen_security_force_https_urls">Force HTTPS urls</string>
-    <string name="settings_screen_security_force_https_urls_description">Turning this setting on will forcibly convert all HTTP urls into HTTPS. Android starting with API 28 (Pie) doesn\'t allow cleartype communication by default so you won\'t be able to open HTTP urls and may want to covert them into HTTPS urls.</string>
+
+    <string name="settings_screen_caches_disk_cache_group">Disk caches</string>
+    <string name="settings_screen_caches_cleared_disk_cache">Cleared %1$s disk cache</string>
 
     <!-- Captcha solvers settings -->
     <string name="two_captcha_solver_group">2captcha solver</string>
@@ -952,8 +931,6 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="setting_allow_okhttp_ipv6">Allow OkHttp to use IPv6</string>
     <string name="setting_allow_okhttp_use_dns_over_https">Use DNS over HTTPS</string>
     <string name="setting_allow_okhttp_http2_ipv6_description">Disabling this setting may resolve issues with images not loading whatsoever in some rare cases. Try disabling this setting if images refuse to start loading.</string>
-    <string name="setting_cloudflare_preloading_dialog_title">Cloudflare image preloading (4chan only)</string>
-    <string name="setting_cloudflare_preloading_dialog_description">This option will be forcing Cloudflare to preload all currently visible images in a thread. No images will be downloaded on your phone and no additional traffic will be used. Only HEAD requests will be sent for every image in the thread which will force Cloudflare to cache those images. This SHOULD make subsequent image downloads way faster because you will be loading them from Cloudflare servers, not 4chan\'s. This feature works similar to how media prefetching works (you don\'t need to click anything, just scroll through the thread like you always do).</string>
     <string name="setting_update_colors_for_text_selection_cursor">Colorize text selection cursors</string>
     <string name="setting_update_colors_for_text_selection_cursor_description">Some devices behave weirdly when text selection cursor colors are changed (for example on some xiaomi devices they become stretched vertically). Disabling this setting will make the text selection cursor use the default theme\'s color (which is gray)</string>
 
@@ -964,8 +941,8 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="import_settings">Import backup file</string>
     <string name="import_settings_from_a_file">Restore application state from backup file. This is only supposed to work on the same application version or higher (downgrades are not supported).</string>
 
-    <string name="import_from_kuroba">Import from Kuroba</string>
-    <string name="import_settings_from_kuroba">Import Bookmarks/Filters/Filters/Hidden posts and threads/Added sites and boards and some other stuff from Kuroba (the settings file must be exported on 4.13.X-release version of Kuroba, other versions probably won\'t work). Settings are not imported since they differ too much. You need to clear the app data beforehand.</string>
+    <!-- Site settings -->
+    <string name="settings_screen_site">Configure %1$s</string>
 
     <string name="settings_logs_copied_to_clipboard">Copied to clipboard</string>
     <string name="settings_screen_pass_title">%1$s pass</string>
@@ -1006,6 +983,11 @@ If you ever log out or if the passcode expires you will have to change reply mod
 
     <string name="site_settings_not_site_found">No site found with siteDescriptor: %1$s</string>
     <string name="site_settings_site_is_not_active">Site %1$s is not active. It\'s either completely disabled or you need to activate it first</string>
+
+    <string name="site_settings_experimental_warning">Warning!</string>
+    <string name="site_settings_experimental_warning_prefetch">May become the reason of high battery/network traffic/disk consumption</string>
+    <string name="site_settings_experimental_warning_high_res_cells">May become the reason of freezes while scrolling catalog/thread/album on old devices</string>
+    <string name="site_settings_experimental_warning_custom_user_agent">May break some anti-bot checks, like CloudFlare/spur.us</string>
 
     <string name="thread_presenter_no_archives_found_to_open_thread">No archives found to open %1$s. Check that you have enabled archives to open this thread. It is also possible that no archives support this site/board.</string>
     <string name="thread_presenter_no_posts_of_the_same_poster_found">No posts of the same poster found</string>
@@ -1310,14 +1292,6 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="archive_is_not_enabled">Archive for boards /%1$s/ is not enabled or does not exist</string>
     <string name="failed_to_find_board_with_code">Failed to find board with code /%1$s/</string>
 
-    <string name="update_manager_copy_apk_title">Copy apk?</string>
-    <string name="update_manager_copy_apk_message">Would you like to store this apk?</string>
-    <string name="update_manager_could_not_convert_uri">Couldn\'t convert uri (%1$s) into an ExternalFile</string>
-    <string name="update_manager_input_file_does_not_exist">Input apk file (%1$s) does not exist</string>
-    <string name="update_manager_output_file_does_not_exist">Output file (%1$s) does not exist</string>
-    <string name="update_manager_could_not_copy_apk">Couldn\'t copy file contents from file (%1$s) into (%2$s)</string>
-    <string name="update_manager_apk_copied">Apk successfully copied</string>
-
     <string name="fail_reason_webview_is_not_installed">WebView is not installed</string>
     <string name="fail_reason_some_part_of_webview_not_initialized">Some part of WebViewChromium couldn\'t get initialized: (%1$s)</string>
 
@@ -1434,15 +1408,13 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="import_export_backup_import_error">Import error: %1$s</string>
     <string name="import_export_backup_import_success">Import success!</string>
     <string name="import_export_backup_import_success_description">The app will be restarted once this dialog is closed</string>
-    <string name="import_export_backup_import_from_kuroba_error">Import from Kuroba error!</string>
-    <string name="import_export_backup_import_from_kuroba_error_description">Import from Kuroba error!\nSee logs for more info!\nError: %1$s</string>
-    <string name="import_export_backup_import_from_kuroba_success">Import from Kuroba success!</string>
 
     <string name="mpv_hw_decoding">HW</string>
     <string name="mpv_sw_decoding">SW</string>
     <string name="mpv_switching_to_sw_decoding">Switching to software decoding</string>
     <string name="mpv_switching_to_hw_decoding">Switching to hardware decoding</string>
     <string name="mpv_fast_video_decoding">Fast video decoding mode</string>
+    <string name="mpv_use_gpu_next_vo">Use gpu_next video output</string>
     <string name="mpv_library_load_error">Failed to load mpv native libraries.
 Check whether the libraries are installed correctly or installed at all.
 The simplest way to do that is to fully reinstall them (Go to Settings -> Plugins -> Click \'Mpv libraries status\').
@@ -1450,6 +1422,7 @@ The simplest way to do that is to fully reinstall them (Go to Settings -> Plugin
 Actual error: \'%1$s\'</string>
 
     <string name="export_backup_options_title">Export backup options</string>
+    <string name="export_backup_options_export_logger_database_option">Export database with all logs (Might make the backup file quite large)</string>
     <string name="export_backup_options_export_thread_download_media_option">Export downloaded thread media (Might make the backup file very large)</string>
 
     <string name="bookmark_groups_controller_title">Bookmark groups</string>
@@ -1630,15 +1603,19 @@ Actual error: \'%1$s\'</string>
     <string name="gesture_exclusion_zone_dialog_title">Android 10 gesture zone blockers</string>
     <string name="gesture_exclusion_zone_dialog_description">On Android 10 and above, when gesture system navigation is enabled (in Android settings), in order to avoid gesture conflicts with some UI elements (right now only enabled when Reply layout is opened), special gesture exclusion zones are used that block the system gestures based on where the last touch position was. When hitting such zone, it will be highlighted for a short period of time so you can visually see it and adjust your next touch position depending on whether you actually want to trigger system navigation gesture or not. If you do want to perform a system navigation gesture then just do it outside of the zone. Due to how the API for gesture exclusion zones is designed the first touch will always trigger the system navigation gesture. If you touch the same place again (or within a certain vertical distance from the last touch) the system navigation gesture will be ignored. Not the best solution, but such is the API Google has provided. The previous implementation was removed because it wasn\'t very flexible since the zones were global for all screens.</string>
 
-    <string name="cookie_captcha_input_controller_expiration_description">Use negative value for a cookie that has no expiration, zero for a session cookie and a positive value for a duration (current time + duration)</string>
+    <string name="cookie_captcha_input_controller_lifetime_description">Cookie lifetime duration in minutes.\nUse negative value for a cookie that has no expiration, zero for a session cookie. Positive values are the cookie\'s actual lifetime in minutes.</string>
     <string name="cookie_captcha_input_controller_path_description">What url path the cookie is applied to</string>
     <string name="cookie_captcha_input_controller_value">Value</string>
-    <string name="cookie_captcha_input_controller_lifetime">Lifetime in minutes %1$s</string>
     <string name="cookie_captcha_input_controller_path">Path</string>
+    <string name="cookie_captcha_input_controller_cookie_already_expired">Already expired: %1$s</string>
+    <string name="cookie_captcha_input_controller_expires_at">Expires: %1$s</string>
+    <string name="cookie_captcha_input_controller_expires_never">Expires: never</string>
+    <string name="cookie_captcha_input_controller_expires_end_of_session">Expires: end of session</string>
+    <string name="cookie_captcha_input_controller_cookie_error_empty">Cookie value cannot be empty/blank</string>
+    <string name="cookie_captcha_input_controller_cookie_error_invalid_lifetime">Invalid lifetime (cannot be converted into a number)</string>
 
     <string name="add_boards_controller_toolbar_title">Select boards</string>
     <string name="add_boards_controller_no_boards">Site has no boards</string>
-    <string name="add_boards_controller_nothing_found_by_query">Nothing found by query \'%1$s\'</string>
     <string name="add_boards_controller_toggle_all">Toggle\nall</string>
     <string name="add_boards_controller_add_boards">Add %1$d\nboards</string>
     <string name="add_boards_controller_adding_too_many_boards_dialog_title">Adding %1$d boards</string>
@@ -1649,8 +1626,14 @@ Actual error: \'%1$s\'</string>
     <string name="add_boards_controller_found_boards_displaying_by_query">Displaying %1$d board(s) matched by search query</string>
     <string name="add_boards_controller_check_all">Check all</string>
 
+    <string name="setting_badge_explanation_dialog_title">Setting info</string>
+    <string name="setting_badge_new">New!</string>
+    <string name="setting_badge_new_description">This setting haven\'t been seen yet since it\'s introduction in one of the latest updates. This badge will be removed auto removed on the next app restart.</string>
+    <string name="setting_badge_requires_restart">Requires restart</string>
+    <string name="setting_badge_deprecated">Deprecated</string>
+    <string name="setting_badge_deprecated_description">"Will be removed in the future</string>
+
     <string name="not_allowed_during_halloween">You are not allowed to do this</string>
-    <string name="setting_show_prefetch_loading_indicator_title">Show loading indicator for prefetching images</string>
     <string name="epoxy_no_settings_found_by_query">No settings were found by query \"%1$s\"</string>
     <string name="updater_is_disabled_for_dev_builds">Updater is disabled for dev builds</string>
     <string name="updater_is_disabled_for_fdroid_builds">Updater is disabled for F-Droid builds</string>
@@ -1671,11 +1654,13 @@ Actual error: \'%1$s\'</string>
     <string name="post_comment_search_query_hint">Post comment search query</string>
     <string name="no_boards_supporting_search_found">No boards supporting search found</string>
     <string name="no_filter_watched_threads">You have no filter watched threads here yet (They may be in the update process)</string>
-    <string name="the_app_will_be_restarted">The app will be restarted when exiting the settings screen</string>
+    <string name="the_app_will_be_restarted">App will be restarted</string>
     <string name="selected_text_is_empty">Selected text is empty</string>
     <string name="catalog_end_reached">Catalog end reached</string>
     <string name="archives_end_reached">End reached</string>
     <string name="clipboard_contains_invalid_image_url">Clipboard contains invalid image url: \'%1$s\'</string>
+    <string name="setting_requires_other_settings">Requires:</string>
+    <string name="update_available">Update available!</string>
 
     <string name="api_33_android_13_notifications_permission_title">Api 33 (Android 13+) notifications permission</string>
     <string name="api_33_android_13_notifications_permission_descriptor">Api 33 (Android 13+) requires applications to request for a permission to display notifications. Without this permission some application features may not work correctly (posting, media downloading, reply notifications, thread last page notifications, etc).\n\nYou can always enable this manually in Android OS application settings.</string>

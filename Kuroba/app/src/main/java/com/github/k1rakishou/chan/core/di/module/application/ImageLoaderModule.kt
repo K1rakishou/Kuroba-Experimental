@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.core.di.module.application
 
 import android.content.Context
 import coil.ImageLoader
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.okhttp.CoilOkHttpClient
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.cache.downloader.ChunkedMediaDownloader
@@ -24,6 +23,7 @@ import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.fsaf.FileManager
+import com.github.k1rakishou.v2.KurobaSettings
 import dagger.Lazy
 import dagger.Module
 import dagger.Provides
@@ -38,6 +38,7 @@ class ImageLoaderModule {
   fun provideImageLoaderDeprecated(
     appScope: CoroutineScope,
     appContext: Context,
+    kurobaSettings: KurobaSettings,
     coilImageLoader: Lazy<ImageLoader>,
     replyManager: Lazy<ReplyManager>,
     themeEngine: Lazy<ThemeEngine>,
@@ -51,18 +52,18 @@ class ImageLoaderModule {
     Logger.deps("ImageLoaderDeprecated")
 
     return ImageLoaderDeprecated(
-      verboseLogs = ChanSettings.verboseLogs.get(),
       appScope = appScope,
       appContext = appContext,
-      _imageLoader = coilImageLoader,
-      _replyManager = replyManager,
-      _themeEngine = themeEngine,
-      _cacheHandler = cacheHandler,
-      _chunkedMediaDownloader = chunkedMediaDownloader,
-      _imageLoaderFileManagerWrapper = imageLoaderFileManagerWrapper,
-      _siteResolver = siteResolver,
-      _coilOkHttpClient = coilOkHttpClient,
-      _threadDownloadManager = threadDownloadManager
+      kurobaSettings = kurobaSettings,
+      imageLoaderLazy = coilImageLoader,
+      replyManagerLazy = replyManager,
+      themeEngineLazy = themeEngine,
+      cacheHandlerLazy = cacheHandler,
+      chunkedMediaDownloaderLazy = chunkedMediaDownloader,
+      imageLoaderFileManagerWrapperLazy = imageLoaderFileManagerWrapper,
+      siteResolverLazy = siteResolver,
+      coilOkHttpClientLazy = coilOkHttpClient,
+      threadDownloadManagerLazy = threadDownloadManager
     )
   }
 
@@ -99,6 +100,7 @@ class ImageLoaderModule {
   @Provides
   @Singleton
   fun provideKurobaImageFromNetworkLoader(
+    kurobaSettings: KurobaSettings,
     cacheHandlerLazy: Lazy<CacheHandler>,
     chunkedMediaDownloaderLazy: Lazy<ChunkedMediaDownloader>,
     siteResolverLazy: Lazy<SiteResolver>,
@@ -109,6 +111,7 @@ class ImageLoaderModule {
     Logger.deps("KurobaImageFromNetworkLoader")
 
     return KurobaImageFromNetworkLoaderImpl(
+      kurobaSettings = kurobaSettings,
       cacheHandlerLazy = cacheHandlerLazy,
       chunkedMediaDownloaderLazy = chunkedMediaDownloaderLazy,
       siteResolverLazy = siteResolverLazy,

@@ -8,7 +8,6 @@ import android.widget.TextView
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.graphics.toArgb
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
@@ -63,6 +62,7 @@ class ThreadSlideController(
 
   private val emptyCatalogToolbar by lazy(LazyThreadSafetyMode.NONE) {
     val kurobaToolbarState = KurobaToolbarState(
+      controllerHash = 0, // Hardcoded
       controllerKey = controllerKey,
       globalUiStateHolder = globalUiStateHolder
     )
@@ -80,6 +80,7 @@ class ThreadSlideController(
 
   private val emptyThreadToolbar by lazy(LazyThreadSafetyMode.NONE) {
     val kurobaToolbarState = KurobaToolbarState(
+      controllerHash = 1, // Hardcoded
       controllerKey = controllerKey,
       globalUiStateHolder = globalUiStateHolder
     )
@@ -131,9 +132,9 @@ class ThreadSlideController(
       slidingPane.setThreadSlideController(this)
       slidingPane.setPanelSlideListener(this)
       slidingPane.setParallaxDistance(AppModuleAndroidUtils.dp(100f))
-      slidingPane.allowedToSlide(ChanSettings.viewThreadControllerSwipeable.get())
+      slidingPane.allowedToSlide(kurobaSettings.application.viewThreadControllerSwipeable.readBlocking())
 
-      if (ChanSettings.isSlideLayoutMode()) {
+      if (kurobaSettings.application.isSlideLayoutModeBlocking()) {
         slidingPane.setShadowResourceLeft(R.drawable.panel_shadow)
       }
 

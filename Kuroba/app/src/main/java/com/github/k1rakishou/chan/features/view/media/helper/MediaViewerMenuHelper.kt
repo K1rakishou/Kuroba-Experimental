@@ -1,8 +1,6 @@
 package com.github.k1rakishou.chan.features.view.media.helper
 
-import ReorderableMediaViewerActions
 import android.content.Context
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.features.reordering.SimpleListItemsReorderingController
@@ -15,9 +13,11 @@ import com.github.k1rakishou.chan.ui.view.floating_menu.CheckableFloatingListMen
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
-import com.github.k1rakishou.persist_state.PersistableChanState
+import com.github.k1rakishou.v2.KurobaSettings
+import com.github.k1rakishou.v2.parameters.ReorderableMediaViewerActions
 
 class MediaViewerMenuHelper(
+  private val kurobaSettings: KurobaSettings,
   private val globalWindowInsetsManager: GlobalWindowInsetsManager,
   private val snackbarManager: SnackbarManager,
   private val presentControllerFunc: (Controller) -> Unit
@@ -51,67 +51,67 @@ class MediaViewerMenuHelper(
     options += CheckableFloatingListMenuItem(
       key = ACTION_DRAW_BEHIND_NOTCH,
       name = getString(R.string.action_draw_behind_notch),
-      checked = ChanSettings.mediaViewerDrawBehindNotch.get()
+      checked = kurobaSettings.application.mediaViewerDrawBehindNotch.readBlocking()
     )
 
     options += CheckableFloatingListMenuItem(
       key = ACTION_ALLOW_IMAGE_TRANSPARENCY,
       name = getString(R.string.action_allow_image_transparency),
-      checked = ChanSettings.transparencyOn.get()
+      checked = kurobaSettings.application.transparencyOn.readBlocking()
     )
 
     options += CheckableFloatingListMenuItem(
       key = ACTION_AUTO_REVEAL_SPOILERS,
       name = getString(R.string.settings_reveal_image_spoilers),
-      checked = ChanSettings.mediaViewerRevealImageSpoilers.get()
+      checked = kurobaSettings.application.mediaViewerRevealImageSpoilers.readBlocking()
     )
 
     options += CheckableFloatingListMenuItem(
       key = ACTION_VIDEO_AUTO_LOOP,
       name = getString(R.string.setting_video_auto_loop),
-      checked = ChanSettings.videoAutoLoop.get()
+      checked = kurobaSettings.application.videoAutoLoop.readBlocking()
     )
 
     options += CheckableFloatingListMenuItem(
       key = ACTION_VIDEO_START_MUTED,
       name = getString(R.string.setting_video_default_muted),
-      checked = ChanSettings.videoDefaultMuted.get()
+      checked = kurobaSettings.application.videoDefaultMuted.readBlocking()
     )
 
     options += CheckableFloatingListMenuItem(
       key = ACTION_VIDEO_START_MUTED_WITH_HEADSET,
       name = getString(R.string.setting_headset_default_muted),
-      checked = ChanSettings.headsetDefaultMuted.get()
+      checked = kurobaSettings.application.headsetDefaultMuted.readBlocking()
     )
 
     options += CheckableFloatingListMenuItem(
       key = ACTION_VIDEO_ALWAYS_RESET_TO_START,
       name = getString(R.string.setting_video_always_reset_to_start),
-      checked = ChanSettings.videoAlwaysResetToStart.get()
+      checked = kurobaSettings.application.videoAlwaysResetToStart.readBlocking()
     )
 
     options += CheckableFloatingListMenuItem(
       key = ACTION_AUTO_SWIPE_AFTER_DOWNLOAD,
       name = getString(R.string.setting_auto_swipe_after_download),
-      checked = ChanSettings.mediaViewerAutoSwipeAfterDownload.get()
+      checked = kurobaSettings.application.mediaViewerAutoSwipeAfterDownload.readBlocking()
     )
 
     options += CheckableFloatingListMenuItem(
       key = ACTION_PAUSE_PLAYERS_WHEN_IN_BG,
       name = getString(R.string.setting_pause_players_when_in_bg),
-      checked = ChanSettings.mediaViewerPausePlayersWhenInBackground.get()
+      checked = kurobaSettings.application.mediaViewerPausePlayersWhenInBackground.readBlocking()
     )
 
     options += CheckableFloatingListMenuItem(
       key = ACTION_ENABLE_SOUND_POSTS,
       name = getString(R.string.setting_enable_sound_posts),
-      checked = ChanSettings.mediaViewerSoundPostsEnabled.get()
+      checked = kurobaSettings.application.mediaViewerSoundPostsEnabled.readBlocking()
     )
 
     options += CheckableFloatingListMenuItem(
       key = ACTION_USE_MPV,
       name = getString(R.string.settings_plugins_use_mpv),
-      checked = ChanSettings.useMpvVideoPlayer.get()
+      checked = kurobaSettings.application.useMpvVideoPlayer.readBlocking()
     )
 
     options += FloatingListMenuItem(
@@ -123,9 +123,9 @@ class MediaViewerMenuHelper(
       key = ACTION_MAX_OFFSCREEN_PAGES_SETTING,
       name = getString(
         R.string.setting_media_viewer_offscreen_pages_count,
-        ChanSettings.mediaViewerOffscreenPagesCount()
+        kurobaSettings.application.mediaViewerOffscreenPagesCount()
       ),
-      enabled = !ChanSettings.isLowRamDevice()
+      enabled = !kurobaSettings.application.isLowRamDeviceBlocking()
     )
 
     options += FloatingListMenuItem(
@@ -151,40 +151,40 @@ class MediaViewerMenuHelper(
   ) {
     when (clickedItem.key as Int) {
       ACTION_DRAW_BEHIND_NOTCH -> {
-        ChanSettings.mediaViewerDrawBehindNotch.toggle()
+        kurobaSettings.application.mediaViewerDrawBehindNotch.toggleBlocking()
         snackbarManager.toast(messageId = R.string.restart_the_media_viewer)
       }
       ACTION_ALLOW_IMAGE_TRANSPARENCY -> {
-        ChanSettings.transparencyOn.toggle()
+        kurobaSettings.application.transparencyOn.toggleBlocking()
         mediaViewerAdapter.updateTransparency()
       }
       ACTION_AUTO_REVEAL_SPOILERS -> {
-        ChanSettings.mediaViewerRevealImageSpoilers.toggle()
+        kurobaSettings.application.mediaViewerRevealImageSpoilers.toggleBlocking()
       }
       ACTION_VIDEO_AUTO_LOOP -> {
-        ChanSettings.videoAutoLoop.toggle()
+        kurobaSettings.application.videoAutoLoop.toggleBlocking()
       }
       ACTION_VIDEO_START_MUTED -> {
-        ChanSettings.videoDefaultMuted.toggle()
+        kurobaSettings.application.videoDefaultMuted.toggleBlocking()
       }
       ACTION_VIDEO_START_MUTED_WITH_HEADSET -> {
-        ChanSettings.headsetDefaultMuted.toggle()
+        kurobaSettings.application.headsetDefaultMuted.toggleBlocking()
       }
       ACTION_VIDEO_ALWAYS_RESET_TO_START -> {
-        ChanSettings.videoAlwaysResetToStart.toggle()
+        kurobaSettings.application.videoAlwaysResetToStart.toggleBlocking()
       }
       ACTION_AUTO_SWIPE_AFTER_DOWNLOAD -> {
-        ChanSettings.mediaViewerAutoSwipeAfterDownload.toggle()
+        kurobaSettings.application.mediaViewerAutoSwipeAfterDownload.toggleBlocking()
       }
       ACTION_PAUSE_PLAYERS_WHEN_IN_BG -> {
-        ChanSettings.mediaViewerPausePlayersWhenInBackground.toggle()
+        kurobaSettings.application.mediaViewerPausePlayersWhenInBackground.toggleBlocking()
       }
       ACTION_ENABLE_SOUND_POSTS -> {
-        ChanSettings.mediaViewerSoundPostsEnabled.toggle()
+        kurobaSettings.application.mediaViewerSoundPostsEnabled.toggleBlocking()
         snackbarManager.toast(messageId = R.string.restart_the_media_viewer)
       }
       ACTION_USE_MPV -> {
-        ChanSettings.useMpvVideoPlayer.toggle()
+        kurobaSettings.application.useMpvVideoPlayer.toggleBlocking()
         handleClickedOption(ACTION_USE_MPV)
       }
       ACTION_MEDIA_VIEWER_GESTURE_SETTINGS -> {
@@ -195,7 +195,7 @@ class MediaViewerMenuHelper(
         showMediaViewerOffscreenPagesSelector(context)
       }
       ACTION_REORDER_MEDIA_VIEWER_ACTIONS -> {
-        val reorderableMediaViewerActions = PersistableChanState.reorderableMediaViewerActions.get()
+        val reorderableMediaViewerActions = kurobaSettings.internal.reorderableMediaViewerActions.readBlocking()
 
         val items = reorderableMediaViewerActions.mediaViewerActionButtons()
           .map { button -> SimpleListItemsReorderingController.SimpleListReorderableItem(button.id, button.title) }
@@ -205,7 +205,7 @@ class MediaViewerMenuHelper(
           items = items,
           onApplyClicked = { itemsReordered ->
             val reorderedButtons = ReorderableMediaViewerActions(itemsReordered.map { it.id })
-            PersistableChanState.reorderableMediaViewerActions.set(reorderedButtons)
+            kurobaSettings.internal.reorderableMediaViewerActions.writeAsync(reorderedButtons)
 
             snackbarManager.toast(messageId = R.string.restart_the_media_viewer)
           }
@@ -227,14 +227,14 @@ class MediaViewerMenuHelper(
       key = ACTION_MEDIA_VIEWER_ONE_OFFSCREEN_PAGE,
       name = getString(R.string.setting_media_viewer_one_offscreen_page),
       groupId = groupId,
-      checked = ChanSettings.mediaViewerOffscreenPagesCount() == 1
+      checked = kurobaSettings.application.mediaViewerOffscreenPagesCount() == 1
     )
 
     options += CheckableFloatingListMenuItem(
       key = ACTION_MEDIA_VIEWER_TWO_OFFSCREEN_PAGES,
       name = getString(R.string.setting_media_viewer_two_offscreen_page),
       groupId = groupId,
-      checked = ChanSettings.mediaViewerOffscreenPagesCount() == 2
+      checked = kurobaSettings.application.mediaViewerOffscreenPagesCount() == 2
     )
 
     val floatingListMenuController = FloatingListMenuController(
@@ -256,7 +256,7 @@ class MediaViewerMenuHelper(
           selectedPagesCount = 2
         }
 
-        ChanSettings.mediaViewerMaxOffscreenPages.set(selectedPagesCount)
+        kurobaSettings.application.mediaViewerMaxOffscreenPages.writeAsync(selectedPagesCount)
         snackbarManager.toast(messageId = R.string.restart_the_media_viewer)
       }
     )

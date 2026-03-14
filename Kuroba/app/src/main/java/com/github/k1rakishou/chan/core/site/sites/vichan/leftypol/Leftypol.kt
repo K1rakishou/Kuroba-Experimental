@@ -27,7 +27,13 @@ class Leftypol : BaseVichanSite(
   override val endpoints by lazy { LeftypolEndpoints(this) }
   override val api: SiteApi by lazy { LeftypolApi(this) }
   override val actions: SiteActions by lazy { LeftypolActions(this) }
-  override val postParser: PostParser by lazy { DefaultPostParser(LeftypolCommentParser(), archivesManager) }
+  override val postParser: PostParser by lazy {
+    DefaultPostParser(
+      kurobaSettings = kurobaSettings,
+      archivesManager = archivesManager,
+      commentParser = LeftypolCommentParser(kurobaSettings)
+    )
+  }
 
   override fun hasSiteFeature(siteFeature: SiteConfiguration.SiteFeature): Boolean {
     return super.hasSiteFeature(siteFeature)

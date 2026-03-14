@@ -1,6 +1,6 @@
 package com.github.k1rakishou.model.source.local
 
-import com.github.k1rakishou.model.KurobaDatabase
+import com.github.k1rakishou.model.KurobaMainDatabase
 import com.github.k1rakishou.model.data.media.GenericVideoId
 import com.github.k1rakishou.model.data.video_service.MediaServiceLinkExtraContent
 import com.github.k1rakishou.model.mapper.MediaServiceLinkExtraContentMapper
@@ -8,7 +8,7 @@ import com.github.k1rakishou.model.repository.MediaServiceLinkExtraContentReposi
 import org.joda.time.DateTime
 
 open class MediaServiceLinkExtraContentLocalSource(
-  database: KurobaDatabase
+  database: KurobaMainDatabase
 ) : AbstractLocalSource(database) {
   private val TAG = "MediaServiceLinkExtraContentLocalSource"
   private val mediaServiceLinkExtraContentDao = database.mediaServiceLinkExtraContentDao()

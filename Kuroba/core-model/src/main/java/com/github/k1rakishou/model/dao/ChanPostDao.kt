@@ -6,7 +6,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.RewriteQueriesToDropUnusedColumns
-import com.github.k1rakishou.model.KurobaDatabase
+import com.github.k1rakishou.model.KurobaMainDatabase
 import com.github.k1rakishou.model.entity.chan.board.ChanBoardIdEntity
 import com.github.k1rakishou.model.entity.chan.post.ChanPostEntity
 import com.github.k1rakishou.model.entity.chan.post.ChanPostFull
@@ -28,7 +28,7 @@ abstract class ChanPostDao {
         AND 
             cp_id.${ChanPostIdEntity.POST_SUB_NO_COLUMN_NAME} = 0
         AND 
-            cpe.${ChanPostEntity.IS_OP_COLUMN_NAME} = ${KurobaDatabase.SQLITE_FALSE}
+            cpe.${ChanPostEntity.IS_OP_COLUMN_NAME} = ${KurobaMainDatabase.SQLITE_FALSE}
         ORDER BY cp_id.${ChanPostIdEntity.POST_NO_COLUMN_NAME} DESC
     """)
   abstract suspend fun selectAllByThreadIdExceptOp(ownerThreadId: Long): List<ChanPostFull>
@@ -71,7 +71,7 @@ abstract class ChanPostDao {
     ownerThreadIdList: List<Long>
   ): List<ChanPostFull> {
     return ownerThreadIdList
-      .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+      .chunked(KurobaMainDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
       .flatMap { ownerThreadIdChunk -> selectManyOriginalPostsByThreadIdListGrouped(ownerThreadIdChunk) }
   }
 
@@ -149,7 +149,7 @@ abstract class ChanPostDao {
         WHERE 
             cp_id.${ChanPostIdEntity.OWNER_THREAD_ID_COLUMN_NAME} IN (:ownerThreadIds)
         AND 
-            cpe.${ChanPostEntity.IS_OP_COLUMN_NAME} = ${KurobaDatabase.SQLITE_TRUE}
+            cpe.${ChanPostEntity.IS_OP_COLUMN_NAME} = ${KurobaMainDatabase.SQLITE_TRUE}
     """)
   protected abstract suspend fun selectOriginalPostsGrouped(ownerThreadIds: Collection<Long>): List<ChanPostFull>
 
@@ -162,7 +162,7 @@ abstract class ChanPostDao {
         WHERE 
             cp_id.${ChanPostIdEntity.OWNER_THREAD_ID_COLUMN_NAME} IN (:ownerThreadIdList)
         AND
-            cpe.${ChanPostEntity.IS_OP_COLUMN_NAME} = ${KurobaDatabase.SQLITE_TRUE}
+            cpe.${ChanPostEntity.IS_OP_COLUMN_NAME} = ${KurobaMainDatabase.SQLITE_TRUE}
     """)
   protected abstract suspend fun selectManyOriginalPostsByThreadIdListGrouped(ownerThreadIdList: List<Long>): List<ChanPostFull>
 
@@ -206,7 +206,7 @@ abstract class ChanPostDao {
           WHERE 
               cpie.${ChanPostIdEntity.OWNER_THREAD_ID_COLUMN_NAME} IN (:ownerThreadIds)
           AND 
-              cpe.${ChanPostEntity.IS_OP_COLUMN_NAME} = ${KurobaDatabase.SQLITE_FALSE}
+              cpe.${ChanPostEntity.IS_OP_COLUMN_NAME} = ${KurobaMainDatabase.SQLITE_FALSE}
       )
   """)
   abstract suspend fun deletePostsByThreadIds(ownerThreadIds: List<Long>): Int

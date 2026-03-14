@@ -42,6 +42,7 @@ object ChanPostEntityMapper {
     chanPostIdEntity: ChanPostIdEntity,
     chanPostEntity: ChanPostEntity?,
     chanTextSpanEntityList: List<ChanTextSpanEntity>?,
+    revealTextSpoilers: Boolean,
     postAdditionalData: ChanPostLocalSource.PostAdditionalData
   ): ChanPost? {
     if (chanPostEntity == null) {
@@ -114,7 +115,10 @@ object ChanPostEntityMapper {
         deleted = chanPostEntity.deleted,
         timestamp = chanPostEntity.timestamp,
         name = chanPostEntity.name,
-        postComment = mapPostComment(chanTextSpanEntityList),
+        postComment = mapPostComment(
+          chanTextSpanEntityList = chanTextSpanEntityList,
+          revealTextSpoilers = revealTextSpoilers
+        ),
         subject = mapSubject(chanTextSpanEntityList),
         tripcode = mapTripcode(chanTextSpanEntityList),
         posterId = chanPostEntity.posterId,
@@ -134,7 +138,10 @@ object ChanPostEntityMapper {
         repliesTo = repliesTo,
         timestamp = chanPostEntity.timestamp,
         name = chanPostEntity.name,
-        postComment = mapPostComment(chanTextSpanEntityList),
+        postComment = mapPostComment(
+          chanTextSpanEntityList = chanTextSpanEntityList,
+          revealTextSpoilers = revealTextSpoilers
+        ),
         subject = mapSubject(chanTextSpanEntityList),
         tripcode = mapTripcode(chanTextSpanEntityList),
         posterId = chanPostEntity.posterId,
@@ -148,14 +155,18 @@ object ChanPostEntityMapper {
   }
 
   fun mapTripcode(
-    chanTextSpanEntityList: List<ChanTextSpanEntity>?
+    chanTextSpanEntityList: List<ChanTextSpanEntity>?,
   ): CharSequence {
     val tripcode = TextSpanMapper.fromEntity(
       chanTextSpanEntityList,
       ChanTextSpanEntity.TextType.Tripcode
     ) ?: ParcelableSpannableString()
 
-    return ParcelableSpannableStringMapper.fromParcelableSpannableString(tripcode)
+    return ParcelableSpannableStringMapper.fromParcelableSpannableString(
+      parcelableSpannableString = tripcode,
+      // No spoilers in tripcodes
+      revealTextSpoilers = false
+    )
   }
 
   fun mapSubject(
@@ -166,18 +177,26 @@ object ChanPostEntityMapper {
       ChanTextSpanEntity.TextType.Subject
     ) ?: ParcelableSpannableString()
 
-    return ParcelableSpannableStringMapper.fromParcelableSpannableString(subject)
+    return ParcelableSpannableStringMapper.fromParcelableSpannableString(
+      parcelableSpannableString = subject,
+      // No spoilers in subjects
+      revealTextSpoilers = false
+    )
   }
 
   fun mapPostComment(
-    chanTextSpanEntityList: List<ChanTextSpanEntity>?
+    chanTextSpanEntityList: List<ChanTextSpanEntity>?,
+    revealTextSpoilers: Boolean
   ): PostComment {
     val commentParcelableSpannableString = TextSpanMapper.fromEntity(
       chanTextSpanEntityList,
       ChanTextSpanEntity.TextType.PostComment
     ) ?: ParcelableSpannableString()
 
-    val comment = ParcelableSpannableStringMapper.fromParcelableSpannableString(commentParcelableSpannableString)
+    val comment = ParcelableSpannableStringMapper.fromParcelableSpannableString(
+      parcelableSpannableString = commentParcelableSpannableString,
+      revealTextSpoilers = revealTextSpoilers
+    )
 
     val postLinkables = comment.toSpanned().getSpans(
       0,

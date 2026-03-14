@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.core.cache
 
 import android.os.Environment
 import androidx.annotation.GuardedBy
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.synchronizers.BlockingKeySynchronizer
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
@@ -14,6 +13,7 @@ import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.util.ChanPostUtils
+import com.github.k1rakishou.v2.KurobaSettings
 import org.joda.time.format.DateTimeFormatterBuilder
 import org.joda.time.format.ISODateTimeFormat
 import java.io.File
@@ -31,7 +31,8 @@ internal class InnerCache(
   cacheDirFile: File,
   chunksCacheDirFile: File,
   private val fileCacheDiskSizeBytes: Long,
-  private val cacheFileType: CacheFileType
+  private val cacheFileType: CacheFileType,
+  private val kurobaSettings: KurobaSettings
 ) {
   private val TAG = "InnerCache{${cacheFileType.id}}"
 
@@ -811,7 +812,8 @@ internal class InnerCache(
     }
 
     val sizeDiff = (size.get() - fileCacheDiskSizeBytes).coerceAtLeast(0)
-    val calculatedSizeToFree = (currentCacheSizeToUse / (100f / ChanSettings.diskCacheCleanupRemovePercent.get().toFloat())).toLong()
+    val cleanupPercentage = kurobaSettings.application.diskCacheCleanupRemovePercent.readBlocking().toFloat()
+    val calculatedSizeToFree = (currentCacheSizeToUse / (100f / cleanupPercentage)).toLong()
     val sizeToFree = sizeDiff + calculatedSizeToFree
 
     Logger.d(

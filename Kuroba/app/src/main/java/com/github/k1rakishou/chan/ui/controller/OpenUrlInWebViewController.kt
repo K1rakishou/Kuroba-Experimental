@@ -9,7 +9,6 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
 import android.widget.ImageView
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.site.SiteResolver
@@ -132,7 +131,7 @@ class OpenUrlInWebViewController(
     webSettings.loadWithOverviewMode = true
     webSettings.cacheMode = WebSettings.LOAD_DEFAULT
 
-    ChanSettings.customUserAgent.get()
+    kurobaSettings.application.customUserAgent.read()
       .takeIf { customUserAgent -> customUserAgent.isNotBlank() }
       ?.let { customUserAgent -> webSettings.userAgentString = customUserAgent }
 

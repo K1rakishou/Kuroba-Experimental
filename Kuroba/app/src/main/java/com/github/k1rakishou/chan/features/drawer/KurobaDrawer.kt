@@ -56,7 +56,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.features.drawer.data.HistoryControllerState
@@ -232,7 +231,7 @@ private fun ColumnScope.BuildNavigationHistoryList(
   }
 
   val selectedHistoryEntries = remember { kurobaDrawerState.selectedHistoryEntries }
-  val isLowRamDevice = ChanSettings.isLowRamDevice()
+  val isLowRamDevice by kurobaDrawerState.isLowRamDevice
 
   BoxWithConstraints(
     modifier = Modifier

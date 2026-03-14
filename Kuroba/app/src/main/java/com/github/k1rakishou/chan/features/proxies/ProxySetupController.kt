@@ -24,7 +24,6 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.common.updateMargins
-import com.github.k1rakishou.persist_state.PersistableChanState
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -253,11 +252,11 @@ class ProxySetupController(
   }
 
   private fun showProxyEditingNotification() {
-    if (PersistableChanState.proxyEditingNotificationShown.get()) {
+    if (kurobaSettings.internal.proxyEditingNotificationShown.readBlocking()) {
       return
     }
 
-    PersistableChanState.proxyEditingNotificationShown.set(true)
+    kurobaSettings.internal.proxyEditingNotificationShown.writeAsync(true)
 
     dialogFactory.createSimpleInformationDialog(
       context = context,

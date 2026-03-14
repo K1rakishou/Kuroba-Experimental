@@ -23,7 +23,16 @@ abstract class BaseFoolFuukaSite(defaultDomain: String) : CommonSite(defaultDoma
   override val commentParserType = SiteConfiguration.CommentParserType.FoolFuukaParser
   override val boardsType: SiteConfiguration.BoardsType = SiteConfiguration.BoardsType.Dynamic
   override val catalogType: SiteConfiguration.CatalogType = SiteConfiguration.CatalogType.Dynamic
-  override val postParser by lazy { DefaultPostParser(FoolFuukaCommentParser(archivesManager), archivesManager) }
+  override val postParser by lazy {
+    DefaultPostParser(
+      kurobaSettings = kurobaSettings,
+      archivesManager = archivesManager,
+      commentParser = FoolFuukaCommentParser(
+        kurobaSettings = kurobaSettings,
+        archivesManager = archivesManager
+      )
+    )
+  }
   override val postingLimitationConfig: PostingLimitationConfig? = null
   override val chunkedDownloaderConfig = SiteConfiguration.ChunkedDownloaderConfig(
     enabled = true,

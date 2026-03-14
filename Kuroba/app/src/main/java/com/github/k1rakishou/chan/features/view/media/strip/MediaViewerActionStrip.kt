@@ -25,6 +25,7 @@ import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.common.requireComponentActivity
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.v2.KurobaSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -36,6 +37,8 @@ abstract class MediaViewerActionStrip(
   attributeSet: AttributeSet? = null
 ) : LinearLayout(context, attributeSet), IHasViewModelScope {
 
+  @Inject
+  lateinit var kurobaSettings: KurobaSettings
   @Inject
   lateinit var chanThreadManager: ChanThreadManager
   @Inject

@@ -95,6 +95,7 @@ class DialogFactory(
     return dialogHandle
   }
 
+  @Deprecated("Use showDialog")
   @JvmOverloads
   fun createSimpleInformationDialog(
     context: Context,
@@ -150,6 +151,7 @@ class DialogFactory(
     return alertDialogHandle
   }
 
+  @Deprecated("Use showDialog")
   @JvmOverloads
   fun createSimpleConfirmationDialog(
     context: Context,
@@ -211,6 +213,7 @@ class DialogFactory(
     return alertDialogHandle
   }
 
+  @Deprecated("Use showDialog")
   @JvmOverloads
   fun createSimpleDialogWithInputAndResetButton(
     context: Context,
@@ -290,6 +293,7 @@ class DialogFactory(
     return alertDialogHandle
   }
 
+  @Deprecated("Use showDialog")
   @JvmOverloads
   fun createSimpleDialogWithInputAndRemoveButton(
     context: Context,
@@ -369,6 +373,7 @@ class DialogFactory(
     return alertDialogHandle
   }
 
+  @Deprecated("Use showDialog")
   @JvmOverloads
   fun createSimpleDialogWithInput(
     context: Context,
@@ -443,6 +448,7 @@ class DialogFactory(
     return alertDialogHandle
   }
 
+  @Deprecated("Use showDialog")
   fun applyColorsToDialog(dialog: AlertDialog): AlertDialog {
     val view = dialog.window
       ?: return dialog
@@ -591,6 +597,7 @@ class DialogFactory(
     Integer
   }
 
+  @Deprecated("Use showDialog")
   class Builder(
     private val context: Context,
     private val dialogFactory: DialogFactory
@@ -716,6 +723,7 @@ class DialogFactory(
     }
   }
 
+  @Deprecated("Use showDialog")
   class AlertDialogHandleImpl : KurobaAlertDialog.AlertDialogHandle {
     private var dismissed = false
     private var dialog: KurobaAlertDialog? = null

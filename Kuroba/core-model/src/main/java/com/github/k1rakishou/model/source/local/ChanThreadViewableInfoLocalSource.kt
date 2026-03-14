@@ -1,7 +1,7 @@
 package com.github.k1rakishou.model.source.local
 
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.model.KurobaDatabase
+import com.github.k1rakishou.model.KurobaMainDatabase
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.thread.ChanThreadViewableInfo
 import com.github.k1rakishou.model.mapper.ChanThreadViewableInfoMapper
@@ -9,7 +9,7 @@ import com.github.k1rakishou.model.source.cache.ChanDescriptorCache
 import com.github.k1rakishou.model.source.cache.GenericSuspendableCacheSource
 
 class ChanThreadViewableInfoLocalSource(
-  database: KurobaDatabase,
+  database: KurobaMainDatabase,
   private val chanDescriptorCache: ChanDescriptorCache
 ) : AbstractLocalSource(database) {
   private val TAG = "ChanThreadViewableInfoLocalSource"

@@ -6,19 +6,10 @@ import okhttp3.Request
 import okhttp3.Response
 import java.io.IOException
 
-/**
- * Http calls are an abstraction over a normal OkHttp call.
- *
- * These HttpCalls are used for emulating &lt;form&gt; elements used for posting, reporting, deleting, etc.
- *
- * Implement [.setup] and [.process].
- * `setup()` is called on the main thread, set up up the request builder here. `execute()` is
- * called on a worker thread after the response was executed, do something with the response here.
- */
 abstract class HttpCall(val site: Site) {
   @Throws(IOException::class)
-  abstract fun setup(requestBuilder: Request.Builder, progressListener: ProgressRequestListener?)
-  abstract fun process(response: Response, result: String)
+  abstract suspend fun setup(requestBuilder: Request.Builder, progressListener: ProgressRequestListener?)
+  abstract suspend fun process(response: Response, result: String)
   
   sealed class HttpCallWithProgressResult<out T : HttpCall> {
     class Success<T: HttpCall>(val httpCall: T) : HttpCallWithProgressResult<T>()

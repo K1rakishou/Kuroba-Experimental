@@ -1,13 +1,13 @@
 package com.github.k1rakishou.model.source.local
 
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.model.KurobaDatabase
+import com.github.k1rakishou.model.KurobaMainDatabase
 import com.github.k1rakishou.model.data.navigation.NavHistoryElement
 import com.github.k1rakishou.model.mapper.NavHistoryElementMapper
 import com.squareup.moshi.Moshi
 
 class NavHistoryLocalSource(
-  database: KurobaDatabase,
+  database: KurobaMainDatabase,
   private val moshi: Moshi
 ) : AbstractLocalSource(database) {
   private val TAG = "NavHistoryLocalSource"

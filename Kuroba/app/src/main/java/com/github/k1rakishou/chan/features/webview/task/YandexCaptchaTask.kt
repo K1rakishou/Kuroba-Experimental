@@ -7,9 +7,7 @@ import com.github.k1rakishou.chan.features.webview.WebViewTaskResult
 import com.github.k1rakishou.chan.features.webview.client.AbstractCookieWebViewClient
 import com.github.k1rakishou.chan.features.webview.client.AbstractWebViewClient
 import com.github.k1rakishou.common.isNotNullNorBlank
-import com.github.k1rakishou.persist_state.ImageSearchInstanceType
-import com.github.k1rakishou.persist_state.PersistableChanState
-import com.github.k1rakishou.persist_state.RemoteImageSearchInstanceSettings
+import com.github.k1rakishou.v2.parameters.RemoteImageSearchSettings
 import kotlinx.coroutines.CompletableDeferred
 
 class YandexCaptchaTask(
@@ -35,12 +33,13 @@ class YandexCaptchaTask(
   }
 
   override suspend fun persistCookies(site: Site, cookies: String, userData: Any?) {
-    PersistableChanState.remoteImageSearchSettings.get().update(
-      instanceType = ImageSearchInstanceType.Yandex,
+    kurobaSettings.internal.remoteImageSearchSettings.read().update(
+      internalSettings = kurobaSettings.internal,
+      instanceType = RemoteImageSearchSettings.InstanceType.Yandex,
       updater = { settings -> settings.copy(cookies = cookies ) },
       creator = {
-        RemoteImageSearchInstanceSettings(
-          instanceType = ImageSearchInstanceType.Yandex,
+        RemoteImageSearchSettings.InstanceSettings(
+          instanceType = RemoteImageSearchSettings.InstanceType.Yandex,
           baseUrl = (loadable as Loadable.Url).url.toString(),
           cookies = null
         )

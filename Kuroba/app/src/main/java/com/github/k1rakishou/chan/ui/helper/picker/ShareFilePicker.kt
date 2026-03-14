@@ -10,15 +10,22 @@ import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileManager
+import com.github.k1rakishou.v2.KurobaSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class ShareFilePicker(
+  kurobaSettings: KurobaSettings,
   appConstants: AppConstants,
   fileManager: FileManager,
   replyManager: ReplyManager,
   private val appContext: Context
-) : AbstractFilePicker<ShareFilePicker.ShareFilePickerInput>(appConstants, replyManager, fileManager) {
+) : AbstractFilePicker<ShareFilePicker.ShareFilePickerInput>(
+  kurobaSettings = kurobaSettings,
+  appConstants = appConstants,
+  replyManager = replyManager,
+  fileManager = fileManager
+) {
 
   override suspend fun pickFile(filePickerInput: ShareFilePickerInput): ModularResult<PickedFile> {
     return withContext(Dispatchers.IO) {

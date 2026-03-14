@@ -37,7 +37,7 @@ abstract class MultipartHttpCall(site: Site) : HttpCall(site) {
     return this
   }
 
-  override fun setup(
+  override suspend fun setup(
     requestBuilder: Request.Builder,
     progressListener: ProgressRequestListener?
   ) {

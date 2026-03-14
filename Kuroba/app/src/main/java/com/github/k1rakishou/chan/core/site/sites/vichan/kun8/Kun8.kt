@@ -50,7 +50,13 @@ class Kun8 : BaseVichanSite(
   override val urlHandler: SiteUrlHandler by lazy { Kun8UrlHandler(this) }
   override val endpoints: SiteEndpoints by lazy { Kun8Endpoints(this) }
   override val actions: SiteActions by lazy { Kun8Actions(this) }
-  override val postParser: PostParser by lazy { DefaultPostParser(Kun8CommentParser(), archivesManager) }
+  override val postParser: PostParser by lazy {
+    DefaultPostParser(
+      kurobaSettings = kurobaSettings,
+      archivesManager = archivesManager,
+      commentParser = Kun8CommentParser(kurobaSettings)
+    )
+  }
 
   override fun hasSiteFeature(siteFeature: SiteConfiguration.SiteFeature): Boolean {
     return super.hasSiteFeature(siteFeature)
@@ -101,14 +107,8 @@ class Kun8 : BaseVichanSite(
     }
 
     override fun postAuthenticate(): SiteAuthentication {
-      val url = kun8.sysDomain.newBuilder()
-        .addPathSegment("dnsbls_bypass.php")
-
-      return SiteAuthentication.fromUrl(
-        url = url.toString(),
-        retryText = "You failed the CAPTCHA",
-        successText = "You may now go back and make your post"
-      )
+      // TODO:
+      return SiteAuthentication.fromNone()
     }
   }
 

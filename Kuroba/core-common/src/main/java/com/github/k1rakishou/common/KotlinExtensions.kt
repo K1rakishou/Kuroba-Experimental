@@ -29,7 +29,6 @@ import com.google.gson.stream.JsonToken
 import com.squareup.moshi.JsonAdapter
 import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -1000,7 +999,7 @@ inline fun CharSequence?.isNotNullNorBlank(): Boolean {
   return this != null && this.isNotBlank()
 }
 
-suspend fun <T> CompletableDeferred<T>.awaitSilently(defaultValue: T): T {
+suspend fun <T> Deferred<T>.awaitSilently(defaultValue: T): T {
   return try {
     await()
   } catch (ignored: CancellationException) {
@@ -1017,16 +1016,7 @@ suspend fun Deferred<*>.awaitSilently(): Boolean {
   }
 }
 
-suspend fun CompletableDeferred<*>.awaitSilently(): Boolean {
-  try {
-    await()
-    return true
-  } catch (ignored: CancellationException) {
-    return false
-  }
-}
-
-suspend fun <T> CompletableDeferred<T>.awaitCatching(): ModularResult<T> {
+suspend fun <T> Deferred<T>.awaitCatching(): ModularResult<T> {
   return ModularResult.Try { await() }
 }
 

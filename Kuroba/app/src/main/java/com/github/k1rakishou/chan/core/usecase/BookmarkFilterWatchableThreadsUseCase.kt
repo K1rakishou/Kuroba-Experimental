@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.core.usecase
 
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.helper.FilterEngine
 import com.github.k1rakishou.chan.core.manager.BoardManager
@@ -32,6 +31,7 @@ import com.github.k1rakishou.model.data.filter.FilterWatchCatalogThreadInfoObjec
 import com.github.k1rakishou.model.repository.ChanFilterWatchRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.util.ChanPostUtils
+import com.github.k1rakishou.v2.KurobaSettings
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -44,7 +44,7 @@ import java.io.IOException
 import java.util.BitSet
 
 class BookmarkFilterWatchableThreadsUseCase(
-  private val verboseLogsEnabled: Boolean,
+  private val kurobaSettings: KurobaSettings,
   private val appConstants: AppConstants,
   private val boardManager: BoardManager,
   private val bookmarksManager: BookmarksManager,
@@ -269,7 +269,7 @@ class BookmarkFilterWatchableThreadsUseCase(
     bookmarkGroupsToCreate: Map<String, MutableList<ChanDescriptor.ThreadDescriptor>>,
     createdThreadBookmarks: List<BookmarksManager.SimpleThreadBookmark>
   ) {
-    if (ChanSettings.filterWatchUseFilterPatternForGroup.get()) {
+    if (kurobaSettings.application.filterWatchUseFilterPatternForGroup.read()) {
       // Filter pattern will be used as the bookmark group. It will be created if it doesn't exist
         
       if (bookmarkGroupsToCreate.isEmpty()) {
@@ -432,7 +432,7 @@ class BookmarkFilterWatchableThreadsUseCase(
     }
   }
 
-  private fun filterOutNonSuccessResults(
+  private suspend fun filterOutNonSuccessResults(
     catalogFetchResults: List<CatalogFetchResult>
   ): List<FilterWatchCatalogInfoObject> {
     return catalogFetchResults.mapNotNull { catalogFetchResult ->
@@ -441,7 +441,7 @@ class BookmarkFilterWatchableThreadsUseCase(
           return@mapNotNull catalogFetchResult.filterWatchCatalogInfoObject
         }
         is CatalogFetchResult.Error -> {
-          if (verboseLogsEnabled) {
+          if (kurobaSettings.application.verboseLogs.read()) {
             Logger.e(TAG, "catalogFetchResult failure", catalogFetchResult.error)
           } else {
             val errorMessage = catalogFetchResult.error.errorMessageOrClassName()
@@ -486,7 +486,7 @@ class BookmarkFilterWatchableThreadsUseCase(
     catalogJsonEndpoint: HttpUrl,
     siteApi: SiteApi
   ): CatalogFetchResult {
-    if (verboseLogsEnabled) {
+    if (kurobaSettings.application.verboseLogs.read()) {
       Logger.d(TAG, "fetchBoardCatalog() catalogJsonEndpoint=$catalogJsonEndpoint")
     }
 

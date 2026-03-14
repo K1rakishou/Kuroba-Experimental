@@ -1,7 +1,7 @@
 package com.github.k1rakishou.model.source.local
 
 import com.github.k1rakishou.common.putIfNotContains
-import com.github.k1rakishou.model.KurobaDatabase
+import com.github.k1rakishou.model.KurobaMainDatabase
 import com.github.k1rakishou.model.data.bookmark.CreateBookmarkGroupEntriesTransaction
 import com.github.k1rakishou.model.data.bookmark.DeleteBookmarkGroupEntriesTransaction
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkGroup
@@ -14,7 +14,7 @@ import com.github.k1rakishou.model.source.cache.ChanDescriptorCache
 import com.squareup.moshi.Moshi
 
 class ThreadBookmarkGroupLocalSource(
-  database: KurobaDatabase,
+  database: KurobaMainDatabase,
   private val moshi: Moshi,
   private val isDevFlavor: Boolean,
   private val chanDescriptorCache: ChanDescriptorCache
@@ -35,7 +35,7 @@ class ThreadBookmarkGroupLocalSource(
     }.toSet()
 
     val bookmarkThreadDescriptorsMap = bookmarkIds
-      .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+      .chunked(KurobaMainDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
       .flatMap { chunk -> threadBookmarkGroupDao.selectBookmarkThreadDescriptors(chunk) }
       .associateBy { bookmarkThreadDescriptor -> bookmarkThreadDescriptor.ownerBookmarkId }
 
@@ -92,7 +92,7 @@ class ThreadBookmarkGroupLocalSource(
     }
 
     groupsToCreate
-      .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+      .chunked(KurobaMainDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
       .forEach { chunk -> threadBookmarkGroupDao.insertGroups(chunk) }
 
     val bookmarkEntriesToCreateMap = mutableMapOf<String, MutableList<ThreadBookmarkGroupEntryToCreate>>()
@@ -129,7 +129,7 @@ class ThreadBookmarkGroupLocalSource(
         ThreadBookmarkGroupMapper.toEntityList2(threadBookmarkGroupEntryToCreateList)
 
       val databaseIds = threadBookmarkGroupEntryEntities
-        .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+        .chunked(KurobaMainDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
         .flatMap { chunk -> threadBookmarkGroupDao.insertManyGroupEntries(chunk) }
 
       check(threadBookmarkGroupEntryEntities.size == databaseIds.size) {
@@ -153,7 +153,7 @@ class ThreadBookmarkGroupLocalSource(
       .toSet()
 
     databaseIdsToDelete
-      .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+      .chunked(KurobaMainDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
       .forEach { chunk -> threadBookmarkGroupDao.deleteBookmarkEntries(chunk) }
 
     deleteTransaction.toUpdate.forEach { (_, groupEntries) ->

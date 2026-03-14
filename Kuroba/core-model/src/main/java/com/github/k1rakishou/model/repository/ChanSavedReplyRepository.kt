@@ -1,7 +1,7 @@
 package com.github.k1rakishou.model.repository
 
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.model.KurobaDatabase
+import com.github.k1rakishou.model.KurobaMainDatabase
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanSavedReply
@@ -9,7 +9,7 @@ import com.github.k1rakishou.model.source.local.ChanSavedReplyLocalSource
 import kotlinx.coroutines.CoroutineScope
 
 class ChanSavedReplyRepository(
-  database: KurobaDatabase,
+  database: KurobaMainDatabase,
   applicationScope: CoroutineScope,
   private val localSource: ChanSavedReplyLocalSource
 ) : AbstractRepository(database, applicationScope) {

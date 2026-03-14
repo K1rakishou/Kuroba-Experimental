@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.core.usecase
 
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
@@ -12,10 +11,12 @@ import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.filter.FilterAction
 import com.github.k1rakishou.model.data.post.ChanPost
+import com.github.k1rakishou.v2.KurobaSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 class ExtractPostMapInfoHolderUseCase(
+  private val kurobaSettings: KurobaSettings,
   private val savedReplyManager: SavedReplyManager,
   private val siteManager: SiteManager,
   private val chanThreadManager: ChanThreadManager,
@@ -92,13 +93,13 @@ class ExtractPostMapInfoHolderUseCase(
     return replyRanges
   }
 
-  private fun extractHotPostsPositionsFromPostList(
+  private suspend fun extractHotPostsPositionsFromPostList(
     params: Params,
     postsMap: Map<PostDescriptor, ChanPost>
   ): List<PostMapInfoEntry> {
     BackgroundUtils.ensureBackgroundThread()
 
-    if (!ChanSettings.markHotPostsOnScrollbar.get()) {
+    if (!kurobaSettings.application.markHotPostsOnScrollbar.read()) {
       return emptyList()
     }
 
@@ -157,13 +158,13 @@ class ExtractPostMapInfoHolderUseCase(
     return replyRanges
   }
 
-  private fun extractDeletedPostsPositionsFromPostList(
+  private suspend fun extractDeletedPostsPositionsFromPostList(
     params: Params,
     postsMap: Map<PostDescriptor, ChanPost>
   ): List<PostMapInfoEntry> {
     BackgroundUtils.ensureBackgroundThread()
 
-    if (!ChanSettings.markDeletedPostsOnScrollbar.get()) {
+    if (!kurobaSettings.application.markDeletedPostsOnScrollbar.read()) {
       return emptyList()
     }
 
@@ -237,10 +238,10 @@ class ExtractPostMapInfoHolderUseCase(
     return replyRanges
   }
 
-  private fun extractMyPostsPositionsFromPostList(params: Params): List<PostMapInfoEntry> {
+  private suspend fun extractMyPostsPositionsFromPostList(params: Params): List<PostMapInfoEntry> {
     BackgroundUtils.ensureBackgroundThread()
 
-    if (!ChanSettings.markYourPostsOnScrollbar.get()) {
+    if (!kurobaSettings.application.markYourPostsOnScrollbar.read()) {
       return emptyList()
     }
 
@@ -281,13 +282,13 @@ class ExtractPostMapInfoHolderUseCase(
     return replyRanges
   }
 
-  private fun extractReplyPositionsFromPostList(
+  private suspend fun extractReplyPositionsFromPostList(
     params: Params,
     postsMap: Map<PostDescriptor, ChanPost>
   ): List<PostMapInfoEntry> {
     BackgroundUtils.ensureBackgroundThread()
 
-    if (!ChanSettings.markRepliesToYourPostOnScrollbar.get()) {
+    if (!kurobaSettings.application.markRepliesToYourPostOnScrollbar.read()) {
       return emptyList()
     }
 
@@ -334,10 +335,13 @@ class ExtractPostMapInfoHolderUseCase(
     return replyRanges
   }
 
-  private fun extractCrossThreadReplyPositionsFromPostList(params: Params, postsMap: Map<PostDescriptor, ChanPost>): List<PostMapInfoEntry> {
+  private suspend fun extractCrossThreadReplyPositionsFromPostList(
+    params: Params,
+    postsMap: Map<PostDescriptor, ChanPost>
+  ): List<PostMapInfoEntry> {
     BackgroundUtils.ensureBackgroundThread()
 
-    if (!ChanSettings.markCrossThreadQuotesOnScrollbar.get()) {
+    if (!kurobaSettings.application.markCrossThreadQuotesOnScrollbar.read()) {
       return emptyList()
     }
 

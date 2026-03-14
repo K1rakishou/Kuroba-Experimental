@@ -1,6 +1,6 @@
 package com.github.k1rakishou.model.source.local
 
-import com.github.k1rakishou.model.KurobaDatabase
+import com.github.k1rakishou.model.KurobaMainDatabase
 import com.github.k1rakishou.model.data.id.PostDBId
 import com.github.k1rakishou.model.data.id.ThreadDBId
 import com.github.k1rakishou.model.data.post.ChanPostImage
@@ -9,7 +9,7 @@ import com.github.k1rakishou.model.source.cache.ChanDescriptorCache
 import okhttp3.HttpUrl
 
 class ChanPostImageLocalSource(
-  database: KurobaDatabase,
+  database: KurobaMainDatabase,
   private val chanDescriptorCache: ChanDescriptorCache
 ) : AbstractLocalSource(database) {
   private val TAG = "ChanPostImageLocalSource"
@@ -19,7 +19,7 @@ class ChanPostImageLocalSource(
     ensureInTransaction()
 
     val chanPostImageEntities = imagesUrls
-      .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+      .chunked(KurobaMainDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
       .flatMap { chunk -> chanPostImageDao.selectByImageUrlMany(chunk) }
 
     val chanPostOwnerIds = chanPostImageEntities

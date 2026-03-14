@@ -1,7 +1,6 @@
 package com.github.k1rakishou.chan.features.posting
 
 import androidx.annotation.GuardedBy
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.concurrency.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.helper.withReentrantLock
@@ -36,7 +35,8 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanSavedReply
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.util.ChanPostUtils
-import com.github.k1rakishou.persist_state.ReplyMode
+import com.github.k1rakishou.v2.KurobaSettings
+import com.github.k1rakishou.v2.parameters.ReplyMode
 import dagger.Lazy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -59,6 +59,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
 class PostingServiceDelegate(
+  private val kurobaSettings: KurobaSettings,
   private val appScope: CoroutineScope,
   private val appConstants: AppConstants,
   private val replyManagerLazy: Lazy<ReplyManager>,
@@ -166,16 +167,16 @@ class PostingServiceDelegate(
   suspend fun listenForPostingStatusUpdates(chanDescriptor: ChanDescriptor): SharedFlow<PostingStatus> {
     Logger.d(TAG, "listenForPostingStatusUpdates($chanDescriptor)")
 
+    val replyMode = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
+      ?.commonSettings
+      ?.lastUsedReplyMode
+      ?.read()
+      ?: ReplyMode.ReplyModeSolveCaptchaManually
+
     return mutex.withReentrantLock {
       if (activeReplyDescriptors.containsKey(chanDescriptor)) {
         return@withReentrantLock activeReplyDescriptors[chanDescriptor]!!.statusUpdates
       }
-
-      val replyMode = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
-        ?.commonSettings
-        ?.lastUsedReplyMode
-        ?.get()
-        ?: ReplyMode.ReplyModeSolveCaptchaManually
 
       activeReplyDescriptors[chanDescriptor] = ReplyInfo(
         chanDescriptor = chanDescriptor,
@@ -838,7 +839,7 @@ class PostingServiceDelegate(
     val check4chanPostAcknowledged = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
       ?.siteSettingsOrNull(Chan4SiteSettings::class.java)
       ?.checkPostAcknowledged
-      ?.get()
+      ?.read()
 
     if (check4chanPostAcknowledged == null || !check4chanPostAcknowledged) {
       Logger.d(TAG, "checkPostActuallyExists() skipped. (check4chanPostAcknowledged: ${check4chanPostAcknowledged})")
@@ -1312,7 +1313,7 @@ class PostingServiceDelegate(
 
     val createThreadSuccess = databaseId >= 0L
 
-    if (createThreadSuccess && ChanSettings.postPinThread.get()) {
+    if (createThreadSuccess && kurobaSettings.application.postPinThread.read()) {
       bookmarkThread(newThreadDescriptor, threadNo)
     }
 

@@ -59,8 +59,8 @@ import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
-import com.github.k1rakishou.persist_state.PersistableChanState
-import com.github.k1rakishou.persist_state.ReplyMode
+import com.github.k1rakishou.v2.KurobaSettings
+import com.github.k1rakishou.v2.parameters.ReplyMode
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -70,7 +70,6 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
@@ -82,6 +81,7 @@ class ReplyLayoutState(
   val threadControllerType: ThreadControllerType,
   private val callbacks: Callbacks,
   private val coroutineScope: CoroutineScope,
+  private val kurobaSettings: KurobaSettings,
   private val appResourcesLazy: Lazy<AppResources>,
   private val replyLayoutHelperLazy: Lazy<ReplyLayoutHelper>,
   private val siteManagerLazy: Lazy<SiteManager>,
@@ -268,8 +268,7 @@ class ReplyLayoutState(
         return@launch
       }
 
-      replyModeSetting.listenForChangesDeprecated()
-        .asFlow()
+      replyModeSetting.listen()
         .onEach { updateCaptchaButtonVisibility() }
         .collect()
     }
@@ -1034,7 +1033,7 @@ class ReplyLayoutState(
     val site = siteManager.bySiteDescriptorAndActive(descriptor.siteDescriptor())
       ?: return
 
-    val replyMode = site.commonSettings.lastUsedReplyMode.get()
+    val replyMode = site.commonSettings.lastUsedReplyMode.readBlocking()
       ?: return
 
     val siteDoesNotRequireAuthentication = site.actions.postAuthenticate().type == SiteAuthentication.Type.NONE
@@ -1137,8 +1136,8 @@ class ReplyLayoutState(
     }
 
     if (replyLayoutVisibility.isExpanded()) {
-      if (!PersistableChanState.newReplyLayoutTutorialFinished.get()) {
-        PersistableChanState.newReplyLayoutTutorialFinished.set(true)
+      if (!kurobaSettings.internal.newReplyLayoutTutorialFinished.readBlocking()) {
+        kurobaSettings.internal.newReplyLayoutTutorialFinished.writeAsync(true)
       }
     }
 
@@ -1283,8 +1282,7 @@ class ReplyLayoutState(
             callbacks.showCaptcha(
               chanDescriptor = chanDescriptor,
               replyMode = replyMode,
-              autoReply = true,
-              afterPostingAttempt = true
+              autoReply = true
             )
           }
         )
@@ -1463,8 +1461,7 @@ class ReplyLayoutState(
     fun showCaptcha(
       chanDescriptor: ChanDescriptor,
       replyMode: ReplyMode,
-      autoReply: Boolean,
-      afterPostingAttempt: Boolean
+      autoReply: Boolean
     )
 
     fun showDialog(

@@ -164,7 +164,7 @@ class CloudFlareInterceptor(
       return null
     }
 
-    val cookieValue = site.commonSettings.cloudFlareClearanceCookieMap.get(url.domainOrHost())
+    val cookieValue = site.commonSettings.cloudFlareClearanceCookieMap.readBlocking().get(url.domainOrHost())
     if (cookieValue.isNullOrEmpty()) {
       Logger.warning(TAG) { "[$okHttpType] addCloudFlareCookie() cookieValue is null or empty" }
       return null

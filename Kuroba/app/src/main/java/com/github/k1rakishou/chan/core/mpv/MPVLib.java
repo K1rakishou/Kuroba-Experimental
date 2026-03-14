@@ -36,7 +36,7 @@ public class MPVLib {
 
     // When updating the player code or anything related to it update jin/main.cpp:player_version
     // variable as well as the MPVLib.SUPPORTED_MPV_PLAYER_VERSION
-    public static final int SUPPORTED_MPV_PLAYER_VERSION = 4;
+    public static final int SUPPORTED_MPV_PLAYER_VERSION = 5;
 
     /**
      * Libraries are sorted by the order of dependency.
@@ -53,7 +53,6 @@ public class MPVLib {
             "libavformat.so",
             "libavdevice.so",
             "libswscale.so",
-            "libpostproc.so",
             "libavfilter.so",
             "libc++_shared.so",
             "libmpv.so",
@@ -311,6 +310,13 @@ public class MPVLib {
         }
     }
 
+    public static void eventProperty(String property, double value) {
+        synchronized (observers) {
+            for (EventObserver o : observers)
+                o.eventProperty(property, value);
+        }
+    }
+
     public static void eventProperty(String property, String value) {
         synchronized (observers) {
             for (EventObserver o : observers)
@@ -404,11 +410,9 @@ public class MPVLib {
 
     public interface EventObserver {
         void eventProperty(@NonNull String property);
-
         void eventProperty(@NonNull String property, long value);
-
         void eventProperty(@NonNull String property, boolean value);
-
+        void eventProperty(@NonNull String property, double value);
         void eventProperty(@NonNull String property, @NonNull String value);
 
         void event(int eventId);

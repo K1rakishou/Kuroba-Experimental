@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.features.bookmarks
 
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.BasePresenter
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
@@ -21,7 +20,8 @@ import com.github.k1rakishou.common.mutableIteration
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkView
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
-import com.github.k1rakishou.persist_state.PersistableChanState
+import com.github.k1rakishou.v2.KurobaSettings
+import com.github.k1rakishou.v2.parameters.BookmarksSortOrder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -36,6 +36,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.Duration.Companion.milliseconds
 
 class BookmarksPresenter(
+  private val kurobaSettings: KurobaSettings,
   private val bookmarksToHighlight: Set<ChanDescriptor.ThreadDescriptor>,
   private val bookmarksManager: BookmarksManager,
   private val threadBookmarkGroupManager: ThreadBookmarkGroupManager,
@@ -277,7 +278,7 @@ class BookmarksPresenter(
     BackgroundUtils.ensureBackgroundThread()
     bookmarksManager.awaitUntilInitialized()
 
-    val isWatcherEnabled = ChanSettings.watchEnabled.get()
+    val isWatcherEnabled = kurobaSettings.application.watchEnabled.read()
     val searchQuery = searchFlow.value as? SearchQuery.Searching
 
     val query = if (searchQuery?.query?.length ?: 0 >= AppConstants.MIN_QUERY_LENGTH) {
@@ -360,7 +361,7 @@ class BookmarksPresenter(
 
     val dataState = BookmarksControllerState.Data(
       isReorderingMode = isReorderingMode.get(),
-      viewThreadBookmarksGridMode = PersistableChanState.viewThreadBookmarksGridMode.get(),
+      viewThreadBookmarksGridMode = kurobaSettings.internal.viewThreadBookmarksGridMode.read(),
       groupedBookmarks = groupedFilteredBookmarks
     )
 
@@ -393,17 +394,17 @@ class BookmarksPresenter(
     return resultGroupedBookmarks
   }
 
-  private fun moveBookmarksWithUnreadRepliesToTop(
+  private suspend fun moveBookmarksWithUnreadRepliesToTop(
     bookmarks: List<GroupOfThreadBookmarkItemViews>
   ) {
-    if (!ChanSettings.moveBookmarksWithUnreadRepliesToTop.get()) {
+    if (!kurobaSettings.application.moveBookmarksWithUnreadRepliesToTop.read()) {
       return
     }
 
-    val bookmarksSortOrder = ChanSettings.bookmarksSortOrder.get()
+    val bookmarksSortOrder = kurobaSettings.application.bookmarksSortOrder.read()
 
-    if (bookmarksSortOrder == ChanSettings.BookmarksSortOrder.UnreadRepliesAscending
-      || bookmarksSortOrder == ChanSettings.BookmarksSortOrder.UnreadRepliesDescending) {
+    if (bookmarksSortOrder == BookmarksSortOrder.UnreadRepliesAscending
+      || bookmarksSortOrder == BookmarksSortOrder.UnreadRepliesDescending) {
       return
     }
 
@@ -414,10 +415,10 @@ class BookmarksPresenter(
     }
   }
 
-  private fun moveDeadBookmarksToEnd(
+  private suspend fun moveDeadBookmarksToEnd(
     bookmarks: List<GroupOfThreadBookmarkItemViews>
   ) {
-    if (!ChanSettings.moveNotActiveBookmarksToBottom.get()) {
+    if (!kurobaSettings.application.moveNotActiveBookmarksToBottom.read()) {
       return
     }
 
@@ -429,20 +430,20 @@ class BookmarksPresenter(
   }
 
   @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
-  private fun sortBookmarks(
+  private suspend fun sortBookmarks(
     bookmarks: List<GroupOfThreadBookmarkItemViews>
   ) {
-    val comparator = when (val sortOrder = ChanSettings.bookmarksSortOrder.get()) {
-      ChanSettings.BookmarksSortOrder.CreatedOnAscending -> BOOKMARK_CREATED_ON_ASC_COMPARATOR
-      ChanSettings.BookmarksSortOrder.CreatedOnDescending -> BOOKMARK_CREATED_ON_DESC_COMPARATOR
-      ChanSettings.BookmarksSortOrder.ThreadIdAscending -> THREAD_ID_ASC_COMPARATOR
-      ChanSettings.BookmarksSortOrder.ThreadIdDescending -> THREAD_ID_DESC_COMPARATOR
-      ChanSettings.BookmarksSortOrder.UnreadRepliesAscending -> UNREAD_REPLIES_ASC_COMPARATOR
-      ChanSettings.BookmarksSortOrder.UnreadRepliesDescending -> UNREAD_REPLIES_DESC_COMPARATOR
-      ChanSettings.BookmarksSortOrder.UnreadPostsAscending -> UNREAD_POSTS_ASC_COMPARATOR
-      ChanSettings.BookmarksSortOrder.UnreadPostsDescending -> UNREAD_POSTS_DESC_COMPARATOR
-      ChanSettings.BookmarksSortOrder.CustomAscending,
-      ChanSettings.BookmarksSortOrder.CustomDescending -> {
+    val comparator = when (val sortOrder = kurobaSettings.application.bookmarksSortOrder.read()) {
+      BookmarksSortOrder.CreatedOnAscending -> BOOKMARK_CREATED_ON_ASC_COMPARATOR
+      BookmarksSortOrder.CreatedOnDescending -> BOOKMARK_CREATED_ON_DESC_COMPARATOR
+      BookmarksSortOrder.ThreadIdAscending -> THREAD_ID_ASC_COMPARATOR
+      BookmarksSortOrder.ThreadIdDescending -> THREAD_ID_DESC_COMPARATOR
+      BookmarksSortOrder.UnreadRepliesAscending -> UNREAD_REPLIES_ASC_COMPARATOR
+      BookmarksSortOrder.UnreadRepliesDescending -> UNREAD_REPLIES_DESC_COMPARATOR
+      BookmarksSortOrder.UnreadPostsAscending -> UNREAD_POSTS_ASC_COMPARATOR
+      BookmarksSortOrder.UnreadPostsDescending -> UNREAD_POSTS_DESC_COMPARATOR
+      BookmarksSortOrder.CustomAscending,
+      BookmarksSortOrder.CustomDescending -> {
         handleCustomOrder(sortOrder, bookmarks)
         return
       }
@@ -454,14 +455,14 @@ class BookmarksPresenter(
   }
 
   private fun handleCustomOrder(
-    sortOrder: ChanSettings.BookmarksSortOrder?,
+    sortOrder: BookmarksSortOrder?,
     bookmarks: List<GroupOfThreadBookmarkItemViews>
   ) {
-    if (sortOrder == ChanSettings.BookmarksSortOrder.CustomAscending) {
+    if (sortOrder == BookmarksSortOrder.CustomAscending) {
       return
     }
 
-    check(sortOrder == ChanSettings.BookmarksSortOrder.CustomDescending) {
+    check(sortOrder == BookmarksSortOrder.CustomDescending) {
       "Unexpected sortOrder! sortOrder: $sortOrder"
     }
 
@@ -486,7 +487,7 @@ class BookmarksPresenter(
       )
     }
 
-    val boardPage = pageRequestManager.getPage(threadBookmarkView.threadDescriptor)
+    val boardPage = runBlocking { pageRequestManager.getPage(threadBookmarkView.threadDescriptor) }
     val currentPage = boardPage?.currentPage ?: 0
     val totalPages = boardPage?.totalPages ?: 0
 

@@ -5,7 +5,6 @@ import android.util.LruCache
 import android.webkit.MimeTypeMap
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.di.module.shared.ViewModelAssistedFactory
@@ -27,6 +26,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.ChanPostImageType
+import com.github.k1rakishou.v2.KurobaSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,6 +42,7 @@ import javax.inject.Inject
 
 class MediaViewerControllerViewModel(
   private val savedStateHandle: SavedStateHandle,
+  private val kurobaSettings: KurobaSettings,
   private val chanThreadManager: ChanThreadManager,
   private val filterOutHiddenImagesUseCase: FilterOutHiddenImagesUseCase,
   private val replyManager: ReplyManager,
@@ -61,14 +62,10 @@ class MediaViewerControllerViewModel(
   val mediaViewerOptions: StateFlow<MediaViewerOptions>
     get() = _mediaViewerOptions
 
-  private val _mediaViewStateCache = LruCache<MediaLocation, MediaViewState>(offscreenPageLimit())
-
-  private val defaultMuteState: Boolean
-    get() = ChanSettings.videoDefaultMuted.get()
-      && (ChanSettings.headsetDefaultMuted.get() || !AndroidUtils.audioManager.isWiredHeadsetOn)
+  private val _mediaViewStateCache = LruCache<MediaLocation, MediaViewState>(kurobaSettings.application.mediaViewerOffscreenPagesCount())
 
   private var lastPagerIndex = -1
-  private var _isSoundMuted = defaultMuteState
+  private var _isSoundMuted = false
   val isSoundMuted: Boolean
     get() = _isSoundMuted
 
@@ -97,6 +94,9 @@ class MediaViewerControllerViewModel(
     isNotActivityRecreation: Boolean,
     viewableMediaParcelableHolder: ViewableMediaParcelableHolder
   ): Boolean {
+    _isSoundMuted = kurobaSettings.application.videoDefaultMuted.read()
+      && (kurobaSettings.application.headsetDefaultMuted.read() || !AndroidUtils.audioManager.isWiredHeadsetOn)
+
     return withContext(Dispatchers.Default) {
       BackgroundUtils.ensureBackgroundThread()
 
@@ -140,27 +140,43 @@ class MediaViewerControllerViewModel(
         _transitionInfoFlow.emit(null)
       }
 
+      val mediaViewerSoundPostsEnabled = kurobaSettings.application.mediaViewerSoundPostsEnabled.read()
+
       val mediaViewerControllerState = when (viewableMediaParcelableHolder) {
         is ViewableMediaParcelableHolder.CompositeCatalogMediaParcelableHolder -> {
           val compositeCatalogDescriptor = viewableMediaParcelableHolder.compositeCatalogDescriptor
           val initialImageUrl = viewableMediaParcelableHolder.initialImageUrl?.toHttpUrlOrNull()
 
-          collectCatalogMedia(compositeCatalogDescriptor, initialImageUrl)
+          collectCatalogMedia(
+            mediaViewerSoundPostsEnabled = mediaViewerSoundPostsEnabled,
+            catalogDescriptor = compositeCatalogDescriptor,
+            initialImageUrl = initialImageUrl
+          )
         }
         is ViewableMediaParcelableHolder.CatalogMediaParcelableHolder -> {
           val catalogDescriptor = viewableMediaParcelableHolder.catalogDescriptor
           val initialImageUrl = viewableMediaParcelableHolder.initialImageUrl?.toHttpUrlOrNull()
 
-          collectCatalogMedia(catalogDescriptor, initialImageUrl)
+          collectCatalogMedia(
+            mediaViewerSoundPostsEnabled = mediaViewerSoundPostsEnabled,
+            catalogDescriptor = catalogDescriptor,
+            initialImageUrl = initialImageUrl
+          )
         }
         is ViewableMediaParcelableHolder.ThreadMediaParcelableHolder -> {
-          collectThreadMedia(viewableMediaParcelableHolder)
+          collectThreadMedia(
+            mediaViewerSoundPostsEnabled = mediaViewerSoundPostsEnabled,
+            viewableMediaParcelableHolder = viewableMediaParcelableHolder
+          )
         }
         is ViewableMediaParcelableHolder.MixedMediaParcelableHolder -> {
           collectMixedMedia(viewableMediaParcelableHolder)
         }
         is ViewableMediaParcelableHolder.ReplyAttachMediaParcelableHolder -> {
-          collectAttachReplyMedia(viewableMediaParcelableHolder)
+          collectAttachReplyMedia(
+            mediaViewerSoundPostsEnabled = mediaViewerSoundPostsEnabled,
+            viewableMediaParcelableHolder = viewableMediaParcelableHolder
+          )
         }
       }
 
@@ -173,7 +189,44 @@ class MediaViewerControllerViewModel(
     }
   }
 
+  suspend fun videoAutoLoop(): Boolean {
+    return kurobaSettings.application.videoAutoLoop.read()
+  }
+
+  suspend fun hardwareDecoding(): Boolean {
+    return kurobaSettings.mpv.hardwareDecoding.read()
+  }
+
+  suspend fun updateHardwareDecoding(enabled: Boolean) {
+    kurobaSettings.mpv.hardwareDecoding.write(enabled)
+  }
+
+  suspend fun videoFastCode(): Boolean {
+    return kurobaSettings.mpv.videoFastCode.read()
+  }
+
+  suspend fun toggleVideoFastCode(): Boolean {
+    return kurobaSettings.mpv.videoFastCode.toggle()
+  }
+
+  suspend fun gpuNextVO(): Boolean {
+    return kurobaSettings.mpv.gpuNextVO.read()
+  }
+
+  suspend fun toggleGpuNextVO() {
+    kurobaSettings.mpv.gpuNextVO.toggle()
+  }
+
+  suspend fun mpvUseConfigFile(): Boolean {
+    return kurobaSettings.application.mpvUseConfigFile.read()
+  }
+
+  suspend fun videoAlwaysResetToStart(): Boolean {
+    return kurobaSettings.application.videoAlwaysResetToStart.read()
+  }
+
   private fun collectAttachReplyMedia(
+    mediaViewerSoundPostsEnabled: Boolean,
     viewableMediaParcelableHolder: ViewableMediaParcelableHolder.ReplyAttachMediaParcelableHolder
   ): MediaViewerControllerState? {
     val viewableMediaList = viewableMediaParcelableHolder.replyUuidList.mapNotNull { replyUuid ->
@@ -199,6 +252,7 @@ class MediaViewerControllerViewModel(
       val extension = StringUtils.extractFileNameExtension(originalFileName)
 
       val meta = ViewableMediaMeta(
+        mediaViewerSoundPostsEnabled = mediaViewerSoundPostsEnabled,
         ownerPostDescriptor = null,
         serverMediaName = fileName,
         originalMediaName = null,
@@ -241,7 +295,8 @@ class MediaViewerControllerViewModel(
     )
   }
 
-  private fun collectThreadMedia(
+  private suspend fun collectThreadMedia(
+    mediaViewerSoundPostsEnabled: Boolean,
     viewableMediaParcelableHolder: ViewableMediaParcelableHolder.ThreadMediaParcelableHolder
   ): MediaViewerControllerState? {
     BackgroundUtils.ensureBackgroundThread()
@@ -268,6 +323,7 @@ class MediaViewerControllerViewModel(
 
         chanPost.iteratePostImages { chanPostImage ->
           val viewableMedia = processChanPostImage(
+            mediaViewerSoundPostsEnabled = mediaViewerSoundPostsEnabled,
             chanPostImage = chanPostImage,
             scrollToImageWithUrl = scrollToImageWithUrl,
             lastViewedIndex = initialPagerIndex,
@@ -288,6 +344,7 @@ class MediaViewerControllerViewModel(
         chanThread.iteratePostsOrdered { chanPost ->
           chanPost.iteratePostImages { chanPostImage ->
             val viewableMedia = processChanPostImage(
+              mediaViewerSoundPostsEnabled = mediaViewerSoundPostsEnabled,
               chanPostImage = chanPostImage,
               scrollToImageWithUrl = scrollToImageWithUrl,
               lastViewedIndex = initialPagerIndex,
@@ -334,6 +391,7 @@ class MediaViewerControllerViewModel(
   }
 
   private fun collectCatalogMedia(
+    mediaViewerSoundPostsEnabled: Boolean,
     catalogDescriptor: ChanDescriptor.ICatalogDescriptor,
     initialImageUrl: HttpUrl?
   ): MediaViewerControllerState? {
@@ -349,6 +407,7 @@ class MediaViewerControllerViewModel(
 
       chanOriginalPost.iteratePostImages { chanPostImage ->
         val viewableMedia = processChanPostImage(
+          mediaViewerSoundPostsEnabled = mediaViewerSoundPostsEnabled,
           chanPostImage = chanPostImage,
           scrollToImageWithUrl = initialImageUrl,
           lastViewedIndex = initialPagerIndex,
@@ -390,7 +449,7 @@ class MediaViewerControllerViewModel(
     )
   }
 
-  private fun collectMixedMedia(
+  private suspend fun collectMixedMedia(
     viewableMediaParcelableHolder: ViewableMediaParcelableHolder.MixedMediaParcelableHolder
   ): MediaViewerControllerState? {
     val viewableMediaList = viewableMediaParcelableHolder.mixedMedia.mapNotNull { mediaLocation ->
@@ -411,7 +470,7 @@ class MediaViewerControllerViewModel(
     )
   }
 
-  private fun mapRemoteMedia(mediaLocation: MediaLocation.Remote): ViewableMedia? {
+  private suspend fun mapRemoteMedia(mediaLocation: MediaLocation.Remote): ViewableMedia? {
     if (mediaLocation.urlRaw.toHttpUrlOrNull() == null) {
       return null
     }
@@ -421,6 +480,7 @@ class MediaViewerControllerViewModel(
     val extension = StringUtils.extractFileNameExtension(mediaLocation.urlRaw)
 
     val meta = ViewableMediaMeta(
+      mediaViewerSoundPostsEnabled = kurobaSettings.application.mediaViewerSoundPostsEnabled.read(),
       ownerPostDescriptor = null,
       serverMediaName = fileName,
       originalMediaName = null,
@@ -452,7 +512,7 @@ class MediaViewerControllerViewModel(
     return ViewableMedia.Unsupported(mediaLocation, null, null, meta)
   }
 
-  private fun mapLocalMedia(mediaLocation: MediaLocation.Local): ViewableMedia? {
+  private suspend fun mapLocalMedia(mediaLocation: MediaLocation.Local): ViewableMedia? {
     val uri = try {
       Uri.parse(mediaLocation.path)
     } catch (error: Throwable) {
@@ -476,6 +536,7 @@ class MediaViewerControllerViewModel(
     val extension = StringUtils.extractFileNameExtension(fullFileName)
 
     val meta = ViewableMediaMeta(
+      mediaViewerSoundPostsEnabled = kurobaSettings.application.mediaViewerSoundPostsEnabled.read(),
       ownerPostDescriptor = null,
       serverMediaName = fileName,
       originalMediaName = null,
@@ -508,6 +569,7 @@ class MediaViewerControllerViewModel(
   }
 
   private fun processChanPostImage(
+    mediaViewerSoundPostsEnabled: Boolean,
     chanPostImage: ChanPostImage,
     scrollToImageWithUrl: HttpUrl?,
     lastViewedIndex: AtomicInteger,
@@ -527,7 +589,9 @@ class MediaViewerControllerViewModel(
       ?.let { thumbnailUrl -> MediaLocation.Remote(thumbnailUrl.toString()) }
       ?: MediaLocation.Remote(AppConstants.INLINED_IMAGE_THUMBNAIL)
 
-    val spoilerLocation = if (chanPostImage.imageSpoilered) {
+    val imageSpoilered = chanPostImage.imageSpoilered(kurobaSettings)
+
+    val spoilerLocation = if (imageSpoilered) {
       chanPostImage.spoilerThumbnailUrl
         ?.let { spoilerUrl -> MediaLocation.Remote(spoilerUrl.toString()) }
     } else {
@@ -535,6 +599,7 @@ class MediaViewerControllerViewModel(
     }
 
     val viewableMediaMeta = ViewableMediaMeta(
+      mediaViewerSoundPostsEnabled = mediaViewerSoundPostsEnabled,
       ownerPostDescriptor = chanPostImage.ownerPostDescriptor,
       serverMediaName = chanPostImage.serverFilename,
       originalMediaName = chanPostImage.filename,
@@ -543,7 +608,7 @@ class MediaViewerControllerViewModel(
       mediaHeight = chanPostImage.imageHeight,
       mediaSize = chanPostImage.size,
       mediaHash = chanPostImage.fileHash,
-      isSpoiler = chanPostImage.imageSpoilered
+      isSpoiler = imageSpoilered
     )
 
     val viewableMedia = when (chanPostImage.type) {
@@ -581,6 +646,7 @@ class MediaViewerControllerViewModel(
 
   class ViewModelFactory @Inject constructor(
     private val chanThreadManager: ChanThreadManager,
+    private val kurobaSettings: KurobaSettings,
     private val filterOutHiddenImagesUseCase: FilterOutHiddenImagesUseCase,
     private val replyManager: ReplyManager,
     private val currentlyDisplayedCatalogPostsRepository: CurrentlyDisplayedCatalogPostsRepository,
@@ -588,6 +654,7 @@ class MediaViewerControllerViewModel(
     override fun create(handle: SavedStateHandle): MediaViewerControllerViewModel {
       return MediaViewerControllerViewModel(
         savedStateHandle = handle,
+        kurobaSettings = kurobaSettings,
         chanThreadManager = chanThreadManager,
         filterOutHiddenImagesUseCase = filterOutHiddenImagesUseCase,
         replyManager = replyManager,
@@ -599,25 +666,24 @@ class MediaViewerControllerViewModel(
   companion object {
     private const val TAG = "MediaViewerControllerViewModel"
 
-    fun offscreenPageLimit(): Int {
-      return ChanSettings.mediaViewerOffscreenPagesCount()
-    }
-
     @JvmStatic
     fun canAutoLoad(
+      kurobaSettings: KurobaSettings,
       cacheHandler: CacheHandler,
       postImage: ChanPostImage
     ): Boolean {
       return canAutoLoad(
         cacheHandler = cacheHandler,
+        kurobaSettings = kurobaSettings,
         url = postImage.imageUrl,
         imageType = postImage.type,
-        isSpoiler = postImage.imageSpoilered,
+        isSpoiler = postImage.imageSpoilered(kurobaSettings),
         cacheFileType = CacheFileType.PostMediaFull
       )
     }
 
     fun canAutoLoad(
+      kurobaSettings: KurobaSettings,
       cacheHandler: CacheHandler,
       viewableMedia: ViewableMedia,
       cacheFileType: CacheFileType
@@ -639,6 +705,7 @@ class MediaViewerControllerViewModel(
 
       return canAutoLoad(
         cacheHandler = cacheHandler,
+        kurobaSettings = kurobaSettings,
         url = url,
         imageType = imageType,
         isSpoiler = viewableMedia.viewableMediaMeta.isSpoiler,
@@ -648,6 +715,7 @@ class MediaViewerControllerViewModel(
 
     private fun canAutoLoad(
       cacheHandler: CacheHandler,
+      kurobaSettings: KurobaSettings,
       url: HttpUrl?,
       imageType: ChanPostImageType?,
       isSpoiler: Boolean,
@@ -661,17 +729,20 @@ class MediaViewerControllerViewModel(
         return true
       }
 
-      if (isSpoiler && !ChanSettings.mediaViewerRevealImageSpoilers.get()) {
+      if (isSpoiler && !kurobaSettings.application.mediaViewerRevealImageSpoilers.readBlocking()) {
         return false
       }
 
       return when (postImageType) {
         ChanPostImageType.GIF,
-        ChanPostImageType.STATIC -> shouldLoadForNetworkType(ChanSettings.imageAutoLoadNetwork.get())
-        ChanPostImageType.MOVIE -> shouldLoadForNetworkType(ChanSettings.videoAutoLoadNetwork.get())
+        ChanPostImageType.STATIC -> {
+          shouldLoadForNetworkType(kurobaSettings.application.imageAutoLoadNetwork.readBlocking())
+        }
+        ChanPostImageType.MOVIE -> {
+          shouldLoadForNetworkType(kurobaSettings.application.videoAutoLoadNetwork.readBlocking())
+        }
         ChanPostImageType.PDF,
         ChanPostImageType.SWF -> false
-        else -> throw IllegalArgumentException("Not handled " + postImageType.name)
       }
     }
   }

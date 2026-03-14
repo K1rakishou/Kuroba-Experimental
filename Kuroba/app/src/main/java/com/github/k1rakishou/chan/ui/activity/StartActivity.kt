@@ -1,7 +1,6 @@
 package com.github.k1rakishou.chan.ui.activity
 
 import android.content.Intent
-import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.os.Bundle
 import android.view.KeyEvent
@@ -12,7 +11,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.OnLifecycleEvent
 import androidx.lifecycle.lifecycleScope
 import com.airbnb.epoxy.EpoxyController
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.ControllerHostActivity
@@ -22,6 +20,7 @@ import com.github.k1rakishou.chan.core.di.module.activity.ActivityModule
 import com.github.k1rakishou.chan.core.helper.AppRestarter
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
+import com.github.k1rakishou.chan.core.helper.migration.settings.KurobaSettingsMigrationHelper
 import com.github.k1rakishou.chan.core.manager.ApplicationCrashNotifier
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
@@ -52,9 +51,10 @@ import com.github.k1rakishou.fsaf.callback.FSAFActivityCallbacks
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.v2.KurobaSettings
+import com.github.k1rakishou.v2.parameters.LayoutMode
 import dagger.Lazy
 import io.reactivex.disposables.CompositeDisposable
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -67,6 +67,8 @@ class StartActivity :
   StartActivityStartupHandlerHelper.StartActivityCallbacks,
   ThemeEngine.ThemeChangesListener {
 
+  @Inject
+  lateinit var kurobaSettings: KurobaSettings
   @Inject
   lateinit var appConstants: AppConstants
   @Inject
@@ -93,6 +95,8 @@ class StartActivity :
   lateinit var globalUiStateHolder: GlobalUiStateHolder
   @Inject
   lateinit var hapticFeedbackManager: HapticFeedbackManager
+  @Inject
+  lateinit var kurobaSettingsMigrationHelper: KurobaSettingsMigrationHelper
 
   private val compositeDisposable = CompositeDisposable()
   private var intentMismatchWorkaroundActive = false
@@ -159,10 +163,11 @@ class StartActivity :
     )
 
     lifecycleScope.launch {
-      val initializeDepsTime = measureTime { initializeDependencies(this, savedInstanceState) }
-      Logger.d(TAG, "initializeDependencies took $initializeDepsTime")
+      updateManager.get().autoUpdateCheck()
     }
-
+    lifecycleScope.launch {
+      startActivityStartupHandlerHelper.setupFromStateOrFreshLaunch(intent, savedInstanceState)
+    }
     lifecycleScope.launch {
       applicationCrashNotifier.applicationCrashedEventFlow
         .onEach { finish() }
@@ -171,6 +176,11 @@ class StartActivity :
 
     mainController.loadMainControllerDrawerData()
     Logger.d(TAG, "onCreate() end isFreshStart: $isFreshStart")
+
+    // TODO: remove me in 1 year
+    if (kurobaSettingsMigrationHelper.perform(forced = false)) {
+      appRestarter.restart()
+    }
   }
 
   override fun onDestroy() {
@@ -255,22 +265,7 @@ class StartActivity :
     // default non-null drawable
     window.setBackgroundDrawable(null)
 
-    if (ChanSettings.fullUserRotationEnable.get()) {
-      requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_USER
-    }
-
     browseController?.showLoading(animateTransition = false)
-  }
-
-  private suspend fun initializeDependencies(
-    coroutineScope: CoroutineScope,
-    savedInstanceState: Bundle?
-  ) {
-    updateManager.get().autoUpdateCheck()
-
-    coroutineScope.launch {
-      startActivityStartupHandlerHelper.setupFromStateOrFreshLaunch(intent, savedInstanceState)
-    }
   }
 
   override fun onNewIntent(intent: Intent) {
@@ -315,10 +310,10 @@ class StartActivity :
 
   @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
   private fun setupLayout() {
-    val layoutMode = ChanSettings.getCurrentLayoutMode()
+    val layoutMode = kurobaSettings.application.getCurrentLayoutModeBlocking()
 
     when (layoutMode) {
-      ChanSettings.LayoutMode.SPLIT -> {
+      LayoutMode.Split -> {
         val split = SplitNavigationController(
           context = this,
           emptyView = inflate(this, R.layout.layout_split_empty)
@@ -327,16 +322,16 @@ class StartActivity :
         mainController.pushChildController(split)
         split.updateLeftController(mainNavigationController, false)
       }
-      ChanSettings.LayoutMode.PHONE,
-      ChanSettings.LayoutMode.SLIDE -> {
+      LayoutMode.Phone,
+      LayoutMode.Slide -> {
         mainController.pushChildController(mainNavigationController)
       }
-      ChanSettings.LayoutMode.AUTO -> throw IllegalStateException("Shouldn't happen")
+      LayoutMode.Auto -> throw IllegalStateException("Shouldn't happen")
     }
 
     browseController = BrowseController(this, mainController)
 
-    if (layoutMode == ChanSettings.LayoutMode.PHONE || layoutMode == ChanSettings.LayoutMode.SLIDE) {
+    if (layoutMode == LayoutMode.Phone || layoutMode == LayoutMode.Slide) {
       val slideController = ThreadSlideController(
         context = this,
         mainControllerCallbacks = mainController,
@@ -439,7 +434,7 @@ class StartActivity :
   override fun onConfigurationChanged(newConfig: Configuration) {
     super.onConfigurationChanged(newConfig)
 
-    if (AndroidUtils.isAndroidQ && !ChanSettings.ignoreDarkNightMode.get()) {
+    if (AndroidUtils.isAndroidQ && !kurobaSettings.application.ignoreDarkNightMode.readBlocking()) {
       applyLightDarkThemeIfNeeded(newConfig)
     }
 

@@ -18,7 +18,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
-import com.github.k1rakishou.persist_state.ReplyMode
+import com.github.k1rakishou.v2.parameters.ReplyMode
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
@@ -42,8 +42,8 @@ class DvachReplyCall internal constructor(
   private val replyManager: ReplyManager
     get() = site.dependencies.replyManager
 
-  override fun addParameters(
-    formBuilder: MultipartBody.Builder,
+  override suspend fun addParameters(
+    builder: MultipartBody.Builder,
     progressListener: ProgressRequestListener?
   ) {
     val chanDescriptor: ChanDescriptor = Objects.requireNonNull(
@@ -62,23 +62,23 @@ class DvachReplyCall internal constructor(
         0L
       }
 
-      formBuilder.addFormDataPart("board", chanDescriptor.boardCode())
-      formBuilder.addFormDataPart("thread", threadNo.toString())
-      formBuilder.addFormDataPart("name", reply.postName)
-      formBuilder.addFormDataPart("email", reply.options)
-      formBuilder.addFormDataPart("comment", reply.comment)
+      builder.addFormDataPart("board", chanDescriptor.boardCode())
+      builder.addFormDataPart("thread", threadNo.toString())
+      builder.addFormDataPart("name", reply.postName)
+      builder.addFormDataPart("email", reply.options)
+      builder.addFormDataPart("comment", reply.comment)
 
       if (chanDescriptor is CatalogDescriptor && !TextUtils.isEmpty(reply.subject)) {
-        formBuilder.addFormDataPart("subject", reply.subject)
+        builder.addFormDataPart("subject", reply.subject)
       }
 
       if (reply.captchaSolution != null) {
         when (val captchaSolution = reply.captchaSolution!!) {
           is CaptchaSolution.SimpleTokenSolution -> {
-            recaptchaAuth(formBuilder, reply, captchaSolution)
+            recaptchaAuth(builder, reply, captchaSolution)
           }
           is CaptchaSolution.ChallengeWithSolution -> {
-            dvachCaptchaAuth(formBuilder, captchaSolution)
+            dvachCaptchaAuth(builder, captchaSolution)
           }
         }
       }
@@ -95,7 +95,7 @@ class DvachReplyCall internal constructor(
           val replyFileMetaInfo = (replyFileMetaResult as ModularResult.Value).value
 
           attachFile(
-            formBuilder = formBuilder,
+            formBuilder = builder,
             fileIndex = fileIndex + 1,
             totalFiles = filesCount,
             progressListener = progressListener,
@@ -107,7 +107,7 @@ class DvachReplyCall internal constructor(
     }
   }
 
-  override fun addHeaders(requestBuilder: Request.Builder, boundary: String) {
+  override suspend fun addHeaders(requestBuilder: Request.Builder, boundary: String) {
     site.requestModifier.modifyHttpCall(this, requestBuilder)
 
     val replyUrl = site.endpoints.reply(replyChanDescriptor)
@@ -148,7 +148,7 @@ class DvachReplyCall internal constructor(
   ) {
     formBuilder.addFormDataPart("captcha_type", "recaptcha")
 
-    val replyMode = site.commonSettings.lastUsedReplyMode.get()
+    val replyMode = site.commonSettings.lastUsedReplyMode.readBlocking()
     if (replyMode == ReplyMode.ReplyModeSendWithoutCaptcha) {
       formBuilder.addFormDataPart("captcha_key", Dvach.INVISIBLE_CAPTCHA_KEY)
     } else {
@@ -191,7 +191,7 @@ class DvachReplyCall internal constructor(
     formBuilder.addFormDataPart("file[]", replyFileMeta.fileName, requestBody)
   }
 
-  override fun process(response: Response, result: String) {
+  override suspend fun process(response: Response, result: String) {
     val postingResult = try {
       moshi
         .adapter(PostingResult::class.java)
@@ -284,9 +284,9 @@ class DvachReplyCall internal constructor(
   }
 
   // usercode_auth=1234567890abcdef
-  private fun storeUserCodeCookieIfNeeded(headers: Headers) {
+  private suspend fun storeUserCodeCookieIfNeeded(headers: Headers) {
     val userCodeSetting = site.requireSiteSettings(DvachSiteSettings::class.java).userCodeCookie
-    if (userCodeSetting.get().isNotEmpty()) {
+    if (userCodeSetting.read().isNotEmpty()) {
       return
     }
 
@@ -306,7 +306,7 @@ class DvachReplyCall internal constructor(
       return
     }
 
-    userCodeSetting.set(userCodeCookieValue)
+    userCodeSetting.write(userCodeCookieValue)
   }
 
   @JsonClass(generateAdapter = true)

@@ -5,6 +5,7 @@ import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.application.AppModule
+import com.github.k1rakishou.chan.core.di.module.application.CrossModuleBridge
 import com.github.k1rakishou.chan.core.di.module.application.HelperModule
 import com.github.k1rakishou.chan.core.di.module.application.ImageLoaderModule
 import com.github.k1rakishou.chan.core.di.module.application.JsonParserModule
@@ -13,7 +14,6 @@ import com.github.k1rakishou.chan.core.di.module.application.ManagerModule
 import com.github.k1rakishou.chan.core.di.module.application.NetModule
 import com.github.k1rakishou.chan.core.di.module.application.ParserModule
 import com.github.k1rakishou.chan.core.di.module.application.RepositoryModule
-import com.github.k1rakishou.chan.core.di.module.application.RoomDatabaseModule
 import com.github.k1rakishou.chan.core.di.module.application.SiteModule
 import com.github.k1rakishou.chan.core.di.module.application.UseCaseModule
 import com.github.k1rakishou.chan.core.helper.ImageLoaderFileManagerWrapper
@@ -22,6 +22,7 @@ import com.github.k1rakishou.chan.core.helper.ThreadDownloaderFileManagerWrapper
 import com.github.k1rakishou.chan.core.receiver.ImageSaverBroadcastReceiver
 import com.github.k1rakishou.chan.core.receiver.PostingServiceBroadcastReceiver
 import com.github.k1rakishou.chan.core.receiver.ReplyNotificationDeleteIntentBroadcastReceiver
+import com.github.k1rakishou.chan.core.receiver.SelectedFilePickerBroadcastReceiver
 import com.github.k1rakishou.chan.core.site.SiteBase
 import com.github.k1rakishou.chan.core.site.SiteDependencies
 import com.github.k1rakishou.chan.core.site.sites.CompositeCatalogSite
@@ -36,6 +37,8 @@ import com.github.k1rakishou.common.dns.NormalDnsSelectorFactory
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.model.di.ModelComponent
+import com.github.k1rakishou.v2.KurobaSettings
+import com.github.k1rakishou.v2.di.KurobaSettingsComponent
 import dagger.BindsInstance
 import dagger.Component
 import kotlinx.coroutines.CoroutineScope
@@ -53,7 +56,7 @@ import javax.inject.Singleton
     NetModule::class,
     ParserModule::class,
     RepositoryModule::class,
-    RoomDatabaseModule::class,
+    CrossModuleBridge::class,
     SiteModule::class,
     UseCaseModule::class
   ]
@@ -72,14 +75,21 @@ interface ApplicationComponent : ApplicationDependencies, SiteDependencies {
   fun inject(postingService: PostingService)
   fun inject(imageSaverBroadcastReceiver: ImageSaverBroadcastReceiver)
   fun inject(postingServiceBroadcastReceiver: PostingServiceBroadcastReceiver)
+  fun inject(selectedFilePickerBroadcastReceiver: SelectedFilePickerBroadcastReceiver)
   fun inject(siteBase: SiteBase)
 
   @Component.Builder
   interface Builder {
     @BindsInstance
+    fun modelModuleComponent(modelComponent: ModelComponent): Builder
+    @BindsInstance
+    fun kurobaSettingsModuleComponent(kurobaSettingsComponent: KurobaSettingsComponent): Builder
+    @BindsInstance
     fun appContext(application: Context): Builder
     @BindsInstance
     fun application(application: Chan): Builder
+    @BindsInstance
+    fun kurobaSettings(kurobaSettings: KurobaSettings): Builder
     @BindsInstance
     fun themeEngine(themeEngine: ThemeEngine): Builder
     @BindsInstance
@@ -99,8 +109,6 @@ interface ApplicationComponent : ApplicationDependencies, SiteDependencies {
     @BindsInstance
     fun appConstants(appConstants: AppConstants): Builder
     @BindsInstance
-    fun modelMainComponent(modelComponent: ModelComponent): Builder
-    @BindsInstance
     fun appModule(appModule: AppModule): Builder
     @BindsInstance
     fun gsonModule(jsonParserModule: JsonParserModule): Builder
@@ -115,7 +123,7 @@ interface ApplicationComponent : ApplicationDependencies, SiteDependencies {
     @BindsInstance
     fun repositoryModule(repositoryModule: RepositoryModule): Builder
     @BindsInstance
-    fun roomDatabaseModule(roomDatabaseModule: RoomDatabaseModule): Builder
+    fun crossModuleBridge(crossModuleBridge: CrossModuleBridge): Builder
     @BindsInstance
     fun siteModule(siteModule: SiteModule): Builder
     @BindsInstance

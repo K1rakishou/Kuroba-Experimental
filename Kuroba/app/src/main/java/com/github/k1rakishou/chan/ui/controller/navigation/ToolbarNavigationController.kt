@@ -12,7 +12,7 @@ abstract class ToolbarNavigationController(context: Context) : NavigationControl
 
   private val _containerToolbarState by lazy(LazyThreadSafetyMode.NONE) {
     mutableStateOf<KurobaToolbarState>(
-      kurobaToolbarStateManager.getOrCreate(controllerKey)
+      kurobaToolbarStateManager.getOrCreate(this, controllerKey)
     )
   }
 

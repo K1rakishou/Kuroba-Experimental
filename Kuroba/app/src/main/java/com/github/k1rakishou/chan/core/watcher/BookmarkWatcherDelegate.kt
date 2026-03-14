@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.core.watcher
 
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.helper.LastPageNotificationsHelper
 import com.github.k1rakishou.chan.core.helper.LastViewedPostNoInfoHolder
 import com.github.k1rakishou.chan.core.helper.ReplyNotificationsHelper
@@ -25,6 +24,7 @@ import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoPostObject
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkReply
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.v2.KurobaSettings
 import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -34,7 +34,7 @@ import kotlin.time.measureTime
 
 class BookmarkWatcherDelegate(
   private val isDevFlavor: Boolean,
-  private val verboseLogsEnabled: Boolean,
+  private val kurobaSettings: KurobaSettings,
   private val bookmarksManager: BookmarksManager,
   private val archivesManager: ArchivesManager,
   private val siteManager: SiteManager,
@@ -57,9 +57,9 @@ class BookmarkWatcherDelegate(
 
     if (isDevFlavor) {
       if (isCalledFromForeground) {
-        check(ChanSettings.watchEnabled.get()) { "Watcher is disabled" }
+        check(kurobaSettings.application.watchEnabled.read()) { "Watcher is disabled" }
       } else {
-        check(ChanSettings.watchBackground.get()) { "Background watcher is disabled" }
+        check(kurobaSettings.application.watchBackground.read()) { "Background watcher is disabled" }
       }
     }
 
@@ -394,7 +394,7 @@ class BookmarkWatcherDelegate(
     Logger.d(TAG, "awaitUntilAllDependenciesAreReady()...done")
   }
 
-  private fun printDebugLogs(threadBookmarkFetchResults: List<ThreadBookmarkFetchResult>) {
+  private suspend fun printDebugLogs(threadBookmarkFetchResults: List<ThreadBookmarkFetchResult>) {
     if (threadBookmarkFetchResults.isEmpty()) {
       Logger.d(TAG, "printDebugLogs() no fetch results")
       return
@@ -415,21 +415,21 @@ class BookmarkWatcherDelegate(
           ++errorsCount
         }
         is ThreadBookmarkFetchResult.AlreadyDeleted -> {
-          if (verboseLogsEnabled) {
+          if (kurobaSettings.application.verboseLogs.read()) {
             Logger.d(TAG, "FetchResult.AlreadyDeleted: descriptor=${fetchResult.threadDescriptor}")
           }
 
           ++alreadyDeletedCount
         }
         is ThreadBookmarkFetchResult.NotFoundOnServer -> {
-          if (verboseLogsEnabled) {
+          if (kurobaSettings.application.verboseLogs.read()) {
             Logger.d(TAG, "FetchResult.NotFoundOnServer: descriptor=${fetchResult.threadDescriptor}")
           }
 
           ++notFoundOnServerCount
         }
         is ThreadBookmarkFetchResult.BadStatusCode -> {
-          if (verboseLogsEnabled) {
+          if (kurobaSettings.application.verboseLogs.read()) {
             Logger.d(TAG, "FetchResult.BadStatusCode: descriptor=${fetchResult.threadDescriptor}, " +
               "status=${fetchResult.statusCode}")
           }
@@ -437,7 +437,7 @@ class BookmarkWatcherDelegate(
           ++badStatusCount
         }
         is ThreadBookmarkFetchResult.Success -> {
-          if (verboseLogsEnabled) {
+          if (kurobaSettings.application.verboseLogs.read()) {
             val originalPost = fetchResult.threadBookmarkInfoObject.simplePostObjects.firstOrNull { post ->
               post is ThreadBookmarkInfoPostObject.OriginalPost
             } as? ThreadBookmarkInfoPostObject.OriginalPost

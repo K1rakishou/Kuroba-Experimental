@@ -4,7 +4,6 @@ import android.content.Context
 import android.widget.FrameLayout
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.updateLayoutParams
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.ui.controller.base.BaseFloatingController
@@ -53,8 +52,10 @@ class BookmarksSortingController(
     cancel.setOnClickListener { pop() }
     outsideArea.setOnClickListener { pop() }
 
-    moveNotActiveBookmarksToBottom.isChecked = ChanSettings.moveNotActiveBookmarksToBottom.get()
-    moveBookmarksWithUnreadRepliesToTop.isChecked = ChanSettings.moveBookmarksWithUnreadRepliesToTop.get()
+    moveNotActiveBookmarksToBottom.isChecked =
+      kurobaSettings.application.moveNotActiveBookmarksToBottom.readBlocking()
+    moveBookmarksWithUnreadRepliesToTop.isChecked =
+      kurobaSettings.application.moveBookmarksWithUnreadRepliesToTop.readBlocking()
 
     apply.setOnClickListener {
       var shouldReloadBookmarks = false
@@ -72,38 +73,38 @@ class BookmarksSortingController(
   }
 
   private fun updateMoveBookmarksWithUnreadRepliesToTopSetting(): Boolean {
-    val prevSettingValue = ChanSettings.moveBookmarksWithUnreadRepliesToTop.get()
+    val prevSettingValue = kurobaSettings.application.moveBookmarksWithUnreadRepliesToTop.readBlocking()
     val newSettingValue = moveBookmarksWithUnreadRepliesToTop.isChecked
 
     if (prevSettingValue == newSettingValue) {
       return false
     }
 
-    ChanSettings.moveBookmarksWithUnreadRepliesToTop.set(newSettingValue)
+    kurobaSettings.application.moveBookmarksWithUnreadRepliesToTop.writeAsync(newSettingValue)
     return true
   }
 
   private fun updateMoveDeadBookmarksToBottomSetting(): Boolean {
-    val prevSettingValue = ChanSettings.moveNotActiveBookmarksToBottom.get()
+    val prevSettingValue = kurobaSettings.application.moveNotActiveBookmarksToBottom.readBlocking()
     val newSettingValue = moveNotActiveBookmarksToBottom.isChecked
 
     if (prevSettingValue == newSettingValue) {
       return false
     }
 
-    ChanSettings.moveNotActiveBookmarksToBottom.set(newSettingValue)
+    kurobaSettings.application.moveNotActiveBookmarksToBottom.writeAsync(newSettingValue)
     return true
   }
 
   private fun updateBookmarkSortingSetting(): Boolean {
-    val prevOrder = ChanSettings.bookmarksSortOrder.get()
+    val prevOrder = kurobaSettings.application.bookmarksSortOrder.readBlocking()
     val newOrder = bookmarkSortingItemsViewGroup.getCurrentSortingOrder()
 
     if (prevOrder == newOrder) {
       return false
     }
 
-    ChanSettings.bookmarksSortOrder.set(newOrder)
+    kurobaSettings.application.bookmarksSortOrder.writeAsync(newOrder)
     return true
   }
 

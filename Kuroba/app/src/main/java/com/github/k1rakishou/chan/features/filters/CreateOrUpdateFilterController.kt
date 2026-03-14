@@ -51,7 +51,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.DialogFactory
@@ -722,7 +721,7 @@ class CreateOrUpdateFilterController(
       BackgroundUtils.ensureMainThread()
 
       if (chanFilterMutable.enabled && chanFilterMutable.isWatchFilter()) {
-        if (!ChanSettings.filterWatchEnabled.get()) {
+        if (!kurobaSettings.application.filterWatchEnabled.readBlocking()) {
           showToast(R.string.filter_watcher_disabled_message, Toast.LENGTH_LONG)
         }
       }

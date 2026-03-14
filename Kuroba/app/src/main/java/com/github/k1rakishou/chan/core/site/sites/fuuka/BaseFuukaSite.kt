@@ -19,7 +19,7 @@ abstract class BaseFuukaSite(defaultDomain: String) : CommonSite(defaultDomain) 
   override val commentParserType = SiteConfiguration.CommentParserType.FuukaParser
   override val boardsType: SiteConfiguration.BoardsType = SiteConfiguration.BoardsType.Static
   override val catalogType: SiteConfiguration.CatalogType = SiteConfiguration.CatalogType.Dynamic
-  override val postParser by lazy { DefaultPostParser(commentParser, archivesManager) }
+  override val postParser by lazy { DefaultPostParser(kurobaSettings, archivesManager, commentParser) }
   override val postingLimitationConfig: PostingLimitationConfig? = null
   override val chunkedDownloaderConfig = SiteConfiguration.ChunkedDownloaderConfig(
     enabled = true,
@@ -31,7 +31,7 @@ abstract class BaseFuukaSite(defaultDomain: String) : CommonSite(defaultDomain) 
   override val requestModifier: SiteRequestModifier by lazy { BaseFuukaRequestModifier(this) }
   override val api: SiteApi by lazy { FuukaApi(this) }
   override val actions: SiteActions by lazy { FuukaActions(this) }
-  open val commentParser by lazy { FuukaCommentParser() }
+  open val commentParser by lazy { FuukaCommentParser(kurobaSettings) }
 
   open class BaseFuukaRequestModifier(
     site: BaseFuukaSite

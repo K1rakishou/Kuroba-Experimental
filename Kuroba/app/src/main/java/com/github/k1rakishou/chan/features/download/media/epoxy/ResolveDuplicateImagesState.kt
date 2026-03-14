@@ -1,7 +1,7 @@
 package com.github.k1rakishou.chan.features.download.media.epoxy
 
 import android.net.Uri
-import com.github.k1rakishou.persist_state.ImageSaverV2Options
+import com.github.k1rakishou.v2.parameters.ImageSaverV2Options
 import okhttp3.HttpUrl
 
 sealed class ResolveDuplicateImagesState {

@@ -67,6 +67,7 @@ class PostLinksController(
     val linkables = post.postComment.linkables
       .filter { postLinkable -> postLinkable.type == PostLinkable.Type.LINK }
 
+    val revealTextSpoilers = kurobaSettings.application.revealTextSpoilers.readBlocking()
     val links = hashSetWithCap<PostLink>(linkables.size)
 
     for (index in linkables.indices) {
@@ -82,7 +83,8 @@ class PostLinksController(
         PostLinkable(
           key = link,
           linkableValue = PostLinkable.Value.StringValue(link),
-          type = PostLinkable.Type.LINK
+          type = PostLinkable.Type.LINK,
+          revealTextSpoilers = revealTextSpoilers
         ),
         0,
         linkText.length,

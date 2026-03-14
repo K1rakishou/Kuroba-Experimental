@@ -17,7 +17,6 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import coil.transform.CircleCropTransformation
 import coil.transform.Transformation
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheFileType
@@ -48,6 +47,7 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptorParcelable
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.repository.ChanPostRepository
+import com.github.k1rakishou.v2.KurobaSettings
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -62,7 +62,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 class ReplyNotificationsHelper(
   private val isDevFlavor: Boolean,
-  private val verboseLogsEnabled: Boolean,
+  private val kurobaSettings: KurobaSettings,
   private val appContext: Context,
   private val appScope: CoroutineScope,
   private val notificationManagerCompat: NotificationManagerCompat,
@@ -116,7 +116,7 @@ class ReplyNotificationsHelper(
   }
 
   private suspend fun showOrUpdateNotificationsInternal() {
-    if (!ChanSettings.replyNotifications.get()) {
+    if (!kurobaSettings.application.replyNotifications.read()) {
       Logger.d(TAG, "showOrUpdateNotificationsInternal() ChanSettings.replyNotifications == false")
       return
     }
@@ -200,7 +200,7 @@ class ReplyNotificationsHelper(
       sortedUnreadNotificationsGrouped
     )
 
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && verboseLogsEnabled) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && kurobaSettings.application.verboseLogs.read()) {
       notificationManager.activeNotifications.forEach { notification ->
         Logger.d(
           TAG, "active notification, id: ${notification.id}, " +
@@ -252,7 +252,7 @@ class ReplyNotificationsHelper(
       .count { threadBookmarkReplyView -> !threadBookmarkReplyView.alreadyNotified }
     val hasNewReplies = newRepliesCount > 0
 
-    val useSoundForReplyNotifications = ChanSettings.useSoundForReplyNotifications.get()
+    val useSoundForReplyNotifications = kurobaSettings.application.useSoundForReplyNotifications.read()
 
     Logger.d(
       TAG, "showNotificationsForAndroidNougatAndBelow() " +
@@ -335,7 +335,7 @@ class ReplyNotificationsHelper(
   }
 
   @RequiresApi(Build.VERSION_CODES.O)
-  private fun showSummaryNotification(
+  private suspend fun showSummaryNotification(
     notificationTime: DateTime,
     unreadNotificationsGrouped: Map<ChanDescriptor.ThreadDescriptor, List<ThreadBookmarkReplyView>>
   ): Boolean {
@@ -353,7 +353,7 @@ class ReplyNotificationsHelper(
       .flatten()
       .count { threadBookmarkReplyView -> !threadBookmarkReplyView.alreadyNotified }
     val hasNewReplies = newRepliesCount > 0
-    val useSoundForReplyNotifications = ChanSettings.useSoundForReplyNotifications.get()
+    val useSoundForReplyNotifications = kurobaSettings.application.useSoundForReplyNotifications.read()
 
     Logger.d(
       TAG, "showSummaryNotification() " +

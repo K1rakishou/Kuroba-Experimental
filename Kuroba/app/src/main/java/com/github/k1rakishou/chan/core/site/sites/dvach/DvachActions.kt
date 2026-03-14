@@ -20,13 +20,12 @@ import com.github.k1rakishou.chan.core.site.sites.search.SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
-import com.github.k1rakishou.common.unreachable
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.board.pages.BoardPages
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
-import com.github.k1rakishou.persist_state.ReplyMode
+import com.github.k1rakishou.v2.parameters.ReplyMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -113,7 +112,7 @@ class DvachActions(
 
   override suspend fun <T : AbstractLoginRequest> login(loginRequest: T): SiteActions.LoginResult {
     val dvachLoginRequest = loginRequest as DvachLoginRequest
-    dvachSettings.passCode.set(dvachLoginRequest.passcode)
+    dvachSettings.passCode.write(dvachLoginRequest.passcode)
 
     val loginResult = dvach.httpCallManager.makeHttpCall(
       DvachGetPassCookieHttpCall(
@@ -129,7 +128,7 @@ class DvachActions(
 
         return when (loginResponse) {
           is DvachLoginResponse.Success -> {
-            dvachSettings.passCookie.set(loginResponse.authCookie)
+            dvachSettings.passCookie.write(loginResponse.authCookie ?: "")
             SiteActions.LoginResult.LoginComplete(loginResponse)
           }
           is DvachLoginResponse.Failure -> {
@@ -153,15 +152,15 @@ class DvachActions(
     }
 
     if (dvachSettings.passCodeInfo.isNotDefault()) {
-      val dvachPasscodeInfo = dvachSettings.passCodeInfo.get()
+      val dvachPasscodeInfo = dvachSettings.passCodeInfo.read()
 
       val maxAttachedFilesPerPost = dvachPasscodeInfo.files
       val maxTotalAttachablesSize = dvachPasscodeInfo.filesSize
 
       if (maxAttachedFilesPerPost != null && maxTotalAttachablesSize != null) {
         val passcodePostingLimitationsInfo = PasscodePostingLimitationsInfo(
-          maxAttachedFilesPerPost,
-          maxTotalAttachablesSize
+          maxAttachedFilesPerPost = maxAttachedFilesPerPost,
+          maxTotalAttachablesSize = maxTotalAttachablesSize
         )
 
         return SiteActions.GetPasscodeInfoResult.Success(passcodePostingLimitationsInfo)
@@ -196,35 +195,31 @@ class DvachActions(
       filesSize = passcodePostingLimitationsInfo.maxTotalAttachablesSize
     )
 
-    dvachSettings.passCodeInfo.set(dvachPasscodeInfo)
+    dvachSettings.passCodeInfo.write(dvachPasscodeInfo)
 
     return SiteActions.GetPasscodeInfoResult.Success(passcodePostingLimitationsInfo)
   }
 
   override fun postAuthenticate(): SiteAuthentication {
-    return when (dvachSettings.captchaType.get()) {
-      CaptchaType.V2JS -> dvach.captchaV2Js
-      CaptchaType.V2NOJS -> dvach.captchaV2NoJs
-      CaptchaType.V2_INVISIBLE -> dvach.captchaV2Invisible
+    return when (dvachSettings.captchaType.readBlocking()) {
       CaptchaType.DVACH_CAPTCHA -> dvach.dvachCaptcha
       CaptchaType.DVACH_CAPTCHA_PUZZLE -> dvach.dvachCaptchaPuzzle
       CaptchaType.DVACH_CAPTCHA_EMOJI -> dvach.dvachEmojiCaptcha
-      else -> unreachable(dvachSettings.captchaType.get().toString())
     }
   }
 
   override fun logout() {
-    dvachSettings.passCode.remove()
-    dvachSettings.passCookie.remove()
-    dvachSettings.passCodeInfo.reset()
+    dvachSettings.passCode.resetBlocking()
+    dvachSettings.passCookie.resetBlocking()
+    dvachSettings.passCodeInfo.resetBlocking()
   }
 
   override fun isLoggedIn(): Boolean {
-    return dvachSettings.passCookie.get().isNotEmpty()
+    return dvachSettings.passCookie.readBlocking().isNotEmpty()
   }
 
   override fun loginDetails(): DvachLoginRequest {
-    return DvachLoginRequest(dvachSettings.passCode.get())
+    return DvachLoginRequest(dvachSettings.passCode.readBlocking())
   }
 
   override suspend fun pages(

@@ -1,7 +1,7 @@
 package com.github.k1rakishou.model.source.local
 
 import androidx.room.withTransaction
-import com.github.k1rakishou.model.KurobaDatabase
+import com.github.k1rakishou.model.KurobaMainDatabase
 import com.github.k1rakishou.model.TestDatabaseModuleComponent
 import com.github.k1rakishou.model.dao.MediaServiceLinkExtraContentDao
 import com.github.k1rakishou.model.data.media.GenericVideoId
@@ -20,7 +20,7 @@ import org.robolectric.shadows.ShadowLog
 
 @RunWith(RobolectricTestRunner::class)
 class MediaServiceLinkExtraContentLocalSourceTest {
-  lateinit var database: KurobaDatabase
+  lateinit var database: KurobaMainDatabase
   lateinit var localSource: MediaServiceLinkExtraContentLocalSource
   lateinit var dao: MediaServiceLinkExtraContentDao
 

@@ -1,26 +1,9 @@
-/*
- * KurobaEx - *chan browser https://github.com/K1rakishou/Kuroba-Experimental/
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 package com.github.k1rakishou.chan.features.reencoding
 
 import android.content.Context
 import android.graphics.Bitmap
 import androidx.core.util.Pair
 import coil.size.Scale
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.concurrency.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.image.ImageLoaderDeprecated
@@ -32,7 +15,9 @@ import com.github.k1rakishou.chan.utils.MediaUtils.getImageFormat
 import com.github.k1rakishou.common.AndroidUtils.getDisplaySize
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.v2.KurobaSettings
 import com.google.gson.Gson
+import com.squareup.moshi.JsonClass
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -49,6 +34,8 @@ class ImageReencodingPresenter(
   private val context: Context
 
   @Inject
+  lateinit var kurobaSettings: KurobaSettings
+  @Inject
   lateinit var replyManager: ReplyManager
   @Inject
   lateinit var gson: Gson
@@ -57,7 +44,7 @@ class ImageReencodingPresenter(
 
   private val callback: ImageReencodingPresenterCallback
   private val chanDescriptor: ChanDescriptor
-  private val imageOptions: ImageOptions
+  private var imageOptions: ImageOptions
 
   private var scope = KurobaCoroutineScope()
   private var bitmapReencodeJob: Job? = null
@@ -67,10 +54,7 @@ class ImageReencodingPresenter(
   val imageFormat: Bitmap.CompressFormat?
     get() {
       val replyFile = replyManager.getReplyFileByFileUuid(fileUuid).valueOrNull()
-
-      if (replyFile == null) {
-        return null
-      }
+        ?: return null
 
       return getImageFormat(replyFile.fileOnDisk)
     }
@@ -78,10 +62,7 @@ class ImageReencodingPresenter(
   val imageDims: Pair<Int, Int>?
     get() {
       val replyFile = replyManager.getReplyFileByFileUuid(fileUuid).valueOrNull()
-
-      if (replyFile == null) {
-        return null
-      }
+        ?: return null
 
       return getImageDims(replyFile.fileOnDisk)
     }
@@ -141,22 +122,22 @@ class ImageReencodingPresenter(
 
   fun setReencode(reencodeSettings: ReencodeSettings?) {
     if (reencodeSettings != null) {
-      imageOptions.reencodeSettings = reencodeSettings
+      imageOptions = imageOptions.copy(reencodeSettings = reencodeSettings)
     } else {
-      imageOptions.reencodeSettings = null
+      imageOptions = imageOptions.copy(reencodeSettings = null)
     }
   }
 
   fun fixExif(isChecked: Boolean) {
-    imageOptions.fixExif = isChecked
+    imageOptions = imageOptions.copy(fixExif = isChecked)
   }
 
   fun removeMetadata(isChecked: Boolean) {
-    imageOptions.removeMetadata = isChecked
+    imageOptions = imageOptions.copy(removeMetadata = isChecked)
   }
 
   fun changeImageChecksum(isChecked: Boolean) {
-    imageOptions.changeImageChecksum = isChecked
+    imageOptions = imageOptions.copy(changeImageChecksum = isChecked)
   }
 
   fun applyImageOptions(fileName: String?) {
@@ -171,13 +152,15 @@ class ImageReencodingPresenter(
       return
     }
 
-    imageOptions.newFileName = if (fileName.isNullOrEmpty()) {
-      null
-    } else {
-      fileName
-    }
+    imageOptions = imageOptions.copy(
+      newFileName = if (fileName.isNullOrEmpty()) {
+        null
+      } else {
+        fileName
+      }
+    )
 
-    ChanSettings.lastImageOptions.set(gson.toJson(imageOptions))
+    kurobaSettings.application.lastImageOptions.writeAsync(gson.toJson(imageOptions))
     Logger.d(TAG, "imageOptions: [$imageOptions]")
 
     // all options are default - do nothing
@@ -203,11 +186,11 @@ class ImageReencodingPresenter(
         }
 
         val reencodedFile = MediaUtils.reencodeBitmapFile(
-          replyFile.fileOnDisk,
-          imageOptions.fixExif,
-          imageOptions.removeMetadata,
-          imageOptions.changeImageChecksum,
-          imageOptions.reencodeSettings
+          inputBitmapFile = replyFile.fileOnDisk,
+          fixExif = imageOptions.fixExif,
+          removeMetadata = imageOptions.removeMetadata,
+          changeImageChecksum = imageOptions.changeImageChecksum,
+          reencodeSettings = imageOptions.reencodeSettings
         )
 
         if (reencodedFile == null) {
@@ -250,18 +233,17 @@ class ImageReencodingPresenter(
 
   private fun updateFileName(newFileName: String? = null) {
     val replyFile = replyManager.getReplyFileByFileUuid(fileUuid).valueOrNull()
-    if (replyFile != null) {
-      val oldFileName = replyFile.getReplyFileMeta().valueOrNull()?.fileName
-      if (oldFileName != null) {
-        val fileName = newFileName
-          ?: replyManager.getNewImageName(oldFileName, ReencodeType.AS_IS)
+      ?: return
 
-        replyManager.updateFileName(fileUuid, fileName, false)
-          .onError { error ->
-            Logger.e(TAG, "updateFileName() old='$oldFileName', new='$newFileName' error", error)
-          }.ignore()
-      }
-    }
+    val oldFileName = replyFile.getReplyFileMeta().valueOrNull()?.fileName
+      ?: return
+
+    val fileName = newFileName
+      ?: replyManager.getNewImageName(oldFileName, ReencodeType.AS_IS)
+
+    replyManager.updateFileName(fileUuid, fileName, false)
+      .onError { error -> Logger.e(TAG, "updateFileName() old='$oldFileName', new='$newFileName' error", error) }
+      .ignore()
   }
 
   private fun onlyRemoveFileNameSelected(): Boolean {
@@ -280,41 +262,25 @@ class ImageReencodingPresenter(
       && imageOptions.reencodeSettings == null
   }
 
-  class ImageOptions {
-    var fixExif = false
-    var removeMetadata = false
-    var newFileName: String? = null
-    var changeImageChecksum = false
-    var reencodeSettings: ReencodeSettings? = null
+  @JsonClass(generateAdapter = true)
+  data class ImageOptions(
+    val fixExif: Boolean = false,
+    val removeMetadata: Boolean = false,
+    val newFileName: String? = null,
+    val changeImageChecksum: Boolean = false,
+    val reencodeSettings: ReencodeSettings? = null
+  )
 
-    override fun toString(): String {
-      val reencodeSettingsString = if (reencodeSettings != null) {
-        reencodeSettings.toString()
-      } else {
-        "null"
-      }
-
-      return "fixExif='$fixExif', removeMetadata='$removeMetadata', " +
-        "newFileName='$newFileName', changeImageChecksum='$changeImageChecksum', " +
-        "reencodeSettings='$reencodeSettingsString'"
-    }
-  }
-
-  class ReencodeSettings(
-    var reencodeType: ReencodeType,
-    var reencodeQuality: Int,
-    var reducePercent: Int
+  @JsonClass(generateAdapter = true)
+  data class ReencodeSettings(
+    val reencodeType: ReencodeType,
+    val reencodeQuality: Int,
+    val reducePercent: Int
   ) {
-
     val isDefault: Boolean
       get() = reencodeType == ReencodeType.AS_IS
         && reencodeQuality == 100
         && reducePercent == 0
-
-    override fun toString(): String {
-      return "reencodeType='$reencodeType', reencodeQuality='$reencodeQuality', " +
-        "reducePercent='$reducePercent'"
-    }
 
     fun prettyPrint(currentFormat: Bitmap.CompressFormat?): String {
       var type = "Unknown"
@@ -355,7 +321,7 @@ class ImageReencodingPresenter(
           AS_IS.ordinal -> AS_IS
           AS_PNG.ordinal -> AS_PNG
           AS_JPEG.ordinal -> AS_JPEG
-          else -> throw RuntimeException("Cannot get ReencodeType from int value: $value")
+          else -> error("Cannot get ReencodeType from int value: $value")
         }
       }
     }

@@ -3,11 +3,13 @@ package com.github.k1rakishou.chan.features.search.remotemedia
 import androidx.annotation.DrawableRes
 import com.github.k1rakishou.chan.features.search.remotemedia.instances.SearxInstance
 import com.github.k1rakishou.chan.features.search.remotemedia.instances.YandexInstance
-import com.github.k1rakishou.persist_state.ImageSearchInstanceType
+import com.github.k1rakishou.v2.KurobaSettings
+import com.github.k1rakishou.v2.parameters.RemoteImageSearchSettings
 import okhttp3.HttpUrl
 
 abstract class ImageSearchInstance(
-  val type: ImageSearchInstanceType,
+  protected val kurobaSettings: KurobaSettings,
+  val type: RemoteImageSearchSettings.InstanceType,
   @DrawableRes val icon: Int
 ) {
 
@@ -31,7 +33,7 @@ abstract class ImageSearchInstance(
 
   abstract fun baseUrl(): HttpUrl
   abstract suspend fun buildSearchUrl(baseUrl: HttpUrl, query: String, page: Int?): HttpUrl
-  abstract fun updateCookies(newCookies: String)
+  abstract suspend fun updateCookies(newCookies: String)
 
   fun updateLazyListState(firstVisibleItemIndex: Int, firstVisibleItemScrollOffset: Int) {
     _rememberedFirstVisibleItemIndex = firstVisibleItemIndex
@@ -47,8 +49,11 @@ abstract class ImageSearchInstance(
   }
 
   companion object {
-    fun createAll(): List<ImageSearchInstance> {
-      return listOf(SearxInstance(), YandexInstance())
+    fun createAll(kurobaSettings: KurobaSettings): List<ImageSearchInstance> {
+      return listOf(
+        SearxInstance(kurobaSettings),
+        YandexInstance(kurobaSettings)
+      )
     }
   }
 }

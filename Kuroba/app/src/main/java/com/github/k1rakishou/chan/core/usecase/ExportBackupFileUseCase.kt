@@ -1,27 +1,26 @@
 package com.github.k1rakishou.chan.core.usecase
 
 import android.content.Context
-import com.github.k1rakishou.ChanSettings
-import com.github.k1rakishou.chan.features.settings.screens.delegate.ExportBackupOptions
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.features.settings.delegate.ExportBackupOptions
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.core_logger.LOGGER_DATABASE_NAME
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeParser
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.ExternalFile
-import com.github.k1rakishou.model.KurobaDatabase
+import com.github.k1rakishou.model.KurobaMainDatabase
 import com.github.k1rakishou.model.repository.DatabaseMetaRepository
+import com.github.k1rakishou.v2.database.KurobaSettingsDatabase
 import okhttp3.internal.closeQuietly
 import java.io.BufferedInputStream
 import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
+import java.nio.ByteBuffer
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
-import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
 class ExportBackupFileUseCase(
@@ -40,7 +39,6 @@ class ExportBackupFileUseCase(
     return ModularResult.Try { doExportInternal(outputFile, exportBackupOptions) }
   }
 
-  @OptIn(ExperimentalTime::class)
   private suspend fun doExportInternal(outputFile: ExternalFile, exportBackupOptions: ExportBackupOptions) {
     Logger.d(TAG, "Export start")
 
@@ -57,35 +55,23 @@ class ExportBackupFileUseCase(
       filesToExport += darkThemeFile
     }
 
+    val mpvConfFile = File(File(appContext.filesDir, AppConstants.MPV_CONF_DIR), AppConstants.MPV_CONF_FILE)
+    if (mpvConfFile.exists() && mpvConfFile.length() > 0) {
+      filesToExport += mpvConfFile
+    }
+
     filesToExport += databases.mapNotNull { databaseName ->
-      if (!databaseName.contains(KurobaDatabase.DATABASE_NAME, ignoreCase = true)) {
+      val isKurobaAppDatabase =
+        databaseName.contains(KurobaMainDatabase.DATABASE_NAME, ignoreCase = true) ||
+        databaseName.contains(KurobaSettingsDatabase.DATABASE_NAME, ignoreCase = true) ||
+        (exportBackupOptions.exportLogsDatabase && databaseName.contains(LOGGER_DATABASE_NAME, ignoreCase = true))
+
+      if (!isKurobaAppDatabase) {
+        Logger.debug(TAG) { "Skipping database '${databaseName}'" }
         return@mapNotNull null
       }
 
       return@mapNotNull appContext.getDatabasePath(databaseName)
-    }
-
-    val sharedFilesDir = File(appContext.applicationInfo.dataDir, ChanSettings.SHARED_PREFS_DIR_NAME)
-    val mainSharedPrefsFileName = ChanSettings.chanSettingsInfo.applicationId + "_preferences.xml"
-    val chanStatePrefsFileName = AndroidUtils.CHAN_STATE_PREFS_NAME + ".xml"
-
-    sharedFilesDir.listFiles()?.forEach { file ->
-      val fileName = file.name
-
-      if (fileName == mainSharedPrefsFileName) {
-        filesToExport += file
-        return@forEach
-      }
-
-      if (fileName.startsWith(AppModuleAndroidUtils.SITE_PREFS_FILE_PREFIX) && fileName.endsWith(".xml")) {
-        filesToExport += file
-        return@forEach
-      }
-
-      if (fileName == chanStatePrefsFileName) {
-        filesToExport += file
-        return@forEach
-      }
     }
 
     if (exportBackupOptions.exportDownloadedThreadsMedia) {
@@ -109,12 +95,24 @@ class ExportBackupFileUseCase(
       ?: throw IOException("Failed to open output stream for file '${outputFile.getFullPath()}'")
     val zipOutputStream = ZipOutputStream(outputStream)
 
-    Logger.d(TAG, "Output zip file='${outputFile.getFullPath()}'")
+    Logger.d(TAG, "Output zip file: '${outputFile.getFullPath()}'")
 
     try {
+      // Put the backup version as the first entry
+      run {
+        zipOutputStream.putNextEntry(ZipEntry(BACKUP_VERSION_ENTRY_NAME))
+
+        val bytes = with(ByteBuffer.allocate(Int.SIZE_BYTES)) {
+          putInt(CURRENT_BACKUP_VERSION)
+          array()
+        }
+
+        zipOutputStream.write(bytes)
+        zipOutputStream.closeEntry()
+      }
+
       zipFiles(null, filesToExport, zipOutputStream) { directory, fileToExport ->
         val fileName = when {
-          fileToExport.name == mainSharedPrefsFileName -> MAIN_PREFS_FILE_NAME
           fileToExport == appConstants.threadDownloaderCacheDir -> THREAD_DOWNLOADS_CACHE_DIR
           else -> fileToExport.name
         }
@@ -131,6 +129,8 @@ class ExportBackupFileUseCase(
       Logger.e(TAG, "Export error", error)
       throw error
     } finally {
+      zipOutputStream.finish()
+      zipOutputStream.flush()
       outputStream.closeQuietly()
       zipOutputStream.closeQuietly()
     }
@@ -165,11 +165,11 @@ class ExportBackupFileUseCase(
         bufferedInputStream.copyTo(zipOutputStream, BUFFER_SIZE)
 
         Logger.d(TAG, "Writing file (zipEntryName='${zipEntryName}') '${fileToExport.absolutePath}' success!")
-        zipOutputStream.closeEntry()
       } catch (error: Throwable) {
         Logger.e(TAG, "Writing file '${fileToExport.absolutePath}' error", error)
         throw error
       } finally {
+        zipOutputStream.closeEntry()
         fileInputStream.closeQuietly()
         bufferedInputStream.closeQuietly()
       }
@@ -183,7 +183,10 @@ class ExportBackupFileUseCase(
 
   companion object {
     private const val TAG = "ExportBackupFileUseCase"
-    const val MAIN_PREFS_FILE_NAME = "main_prefs.xml"
+
+    const val BACKUP_VERSION_ENTRY_NAME = "backup_version"
+    const val CURRENT_BACKUP_VERSION = 1
+
     const val THREAD_DOWNLOADS_CACHE_DIR = "thread_downloads_cache_dir"
     const val BUFFER_SIZE = 8192
   }

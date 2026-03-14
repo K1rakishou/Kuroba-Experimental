@@ -1,12 +1,14 @@
 package com.github.k1rakishou.chan.core.site.sites.chan4
 
-import com.google.gson.annotations.SerializedName
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 
+@JsonClass(generateAdapter = true)
 data class Chan4CaptchaSettings(
-  @SerializedName("remember_captcha_cookies")
+  @field:Json("remember_captcha_cookies")
   val rememberCaptchaCookies: Boolean = true,
-  @SerializedName("captcha_ticket")
+  @field:Json("captcha_ticket")
   val captchaTicket: String? = null,
-  @SerializedName("last_refresh_time")
+  @field:Json("last_refresh_time")
   val lastRefreshTime: Long = 0L
 )

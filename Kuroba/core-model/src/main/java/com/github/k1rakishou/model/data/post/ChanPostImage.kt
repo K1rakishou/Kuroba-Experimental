@@ -1,12 +1,12 @@
 package com.github.k1rakishou.model.data.post
 
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.util.ChanPostUtils
+import com.github.k1rakishou.v2.KurobaSettings
 import okhttp3.HttpUrl
 import java.util.Locale
 
@@ -25,20 +25,8 @@ class ChanPostImage(
   val fileHash: String? = null,
   val type: ChanPostImageType? = null
 ) {
-  val hidden: Boolean
-    get() = ChanSettings.hideImages.get()
-
   val size: Long = fileSize
     get() = _loadedFileSize ?: field
-
-  val imageSpoilered: Boolean
-    get() {
-      if (ChanSettings.postThumbnailRemoveImageSpoilers.get()) {
-        return false
-      }
-
-      return spoiler
-    }
 
   @get:Synchronized
   @set:Synchronized
@@ -92,6 +80,14 @@ class ChanPostImage(
     }
   }
 
+  fun imageSpoilered(kurobaSettings: KurobaSettings): Boolean {
+    if (kurobaSettings.application.postThumbnailRemoveImageSpoilers.readBlocking()) {
+      return false
+    }
+
+    return spoiler
+  }
+
   fun isPlayableType(): Boolean {
     return type === ChanPostImageType.MOVIE || type === ChanPostImageType.GIF
   }
@@ -108,12 +104,12 @@ class ChanPostImage(
     return imageUrl != null
   }
 
-  fun canBeUsedAsHighResolutionThumbnail(): Boolean {
+  fun canBeUsedAsHighResolutionThumbnail(kurobaSettings: KurobaSettings): Boolean {
     if (isInlined) {
       return false
     }
 
-    if (imageSpoilered) {
+    if (imageSpoilered(kurobaSettings)) {
       return false
     }
 
@@ -145,12 +141,15 @@ class ChanPostImage(
   }
 
   @JvmOverloads
-  fun getThumbnailUrl(isSpoilerRevealed: Boolean = false): HttpUrl? {
-    if (hidden) {
+  fun getThumbnailUrl(
+    kurobaSettings: KurobaSettings,
+    isSpoilerRevealed: Boolean = false
+  ): HttpUrl? {
+    if (kurobaSettings.application.hideImages.readBlocking()) {
       return AppConstants.HIDDEN_IMAGE_THUMBNAIL_URL
     }
 
-    if (!isSpoilerRevealed && imageSpoilered && spoilerThumbnailUrl != null) {
+    if (!isSpoilerRevealed && imageSpoilered(kurobaSettings) && spoilerThumbnailUrl != null) {
       return spoilerThumbnailUrl
     }
 

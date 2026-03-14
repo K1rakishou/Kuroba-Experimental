@@ -23,6 +23,7 @@ object CommentParserHelper {
     post: ChanPostBuilder,
     text: CharSequence,
     forceHttpsScheme: Boolean,
+    revealTextSpoilers: Boolean,
     linkHandler: ((CharSequence) -> PostLinkable?)?
   ): SpannableString {
     val ranges = splitTextIntoRanges(text)
@@ -63,9 +64,10 @@ object CommentParserHelper {
         }
 
         val postLinkable = PostLinkable(
-          linkText,
-          PostLinkable.Value.StringValue(linkText),
-          PostLinkable.Type.LINK
+          key = linkText,
+          linkableValue = PostLinkable.Value.StringValue(linkText),
+          type = PostLinkable.Type.LINK,
+          revealTextSpoilers = revealTextSpoilers
         )
 
         val newLink = SpannableString(linkText)

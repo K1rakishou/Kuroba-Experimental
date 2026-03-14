@@ -8,7 +8,6 @@ import android.text.TextUtils
 import android.text.style.StyleSpan
 import android.text.style.UnderlineSpan
 import androidx.core.graphics.ColorUtils
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.site.parser.StaticHtmlColorRepository.getColorValueByHtmlColorName
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRule
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRulesParams
@@ -34,6 +33,7 @@ import com.github.k1rakishou.core_themes.ChanThemeColorId
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.data.post.ChanPostImageBuilder
+import com.github.k1rakishou.v2.KurobaSettings
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
@@ -41,7 +41,9 @@ import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 @Suppress("LargeClass")
-open class CommentParser : ICommentParser, HasQuotePatterns {
+open class CommentParser(
+  protected val kurobaSettings: KurobaSettings
+) : ICommentParser, HasQuotePatterns {
   private val rules = mutableMapWithCap<String, MutableList<StyleRule>>(initialCapacity = 16)
 
   private val defaultQuoteRegex: Pattern = Pattern.compile("//boards\\.4chan.*?\\.org/(.*?)/thread/(\\d*?)#p(\\d*)")
@@ -63,8 +65,8 @@ open class CommentParser : ICommentParser, HasQuotePatterns {
   }
 
   fun addDefaultRules(): CommentParser {
-    val codeTagFontSize = sp(ChanSettings.codeTagFontSizePx())
-    val sjisTagFontSize = sp(ChanSettings.sjisTagFontSizePx())
+    val codeTagFontSize = sp(kurobaSettings.application.codeTagFontSizePx())
+    val sjisTagFontSize = sp(kurobaSettings.application.sjisTagFontSizePx())
 
     addRule(
       StyleRule.tagRule("a")
@@ -191,8 +193,16 @@ open class CommentParser : ICommentParser, HasQuotePatterns {
     text: CharSequence,
     htmlTag: HtmlTag
   ): CharSequence? {
-    val forceHttpsScheme = ChanSettings.forceHttpsUrlScheme.get()
+    val revealTextSpoilers = kurobaSettings.application.revealTextSpoilers.readBlocking()
     val normalRules = this.rules.get(tag)
+    val styleRulesParams = StyleRulesParams(
+      text = text,
+      htmlTag = htmlTag,
+      callback = callback,
+      post = post,
+      forceHttpsScheme = true,
+      revealTextSpoilers = revealTextSpoilers
+    )
 
     // Execute rules which must be executed before the wildcard rules
     if (normalRules != null) {
@@ -205,7 +215,7 @@ open class CommentParser : ICommentParser, HasQuotePatterns {
           }
 
           if (rule.highPriority() == highPriority && rule.applies(htmlTag)) {
-            return rule.apply(StyleRulesParams(text, htmlTag, callback, post, forceHttpsScheme))
+            return rule.apply(styleRulesParams)
           }
         }
       }
@@ -219,7 +229,7 @@ open class CommentParser : ICommentParser, HasQuotePatterns {
 
         for (rule in wildcardRules) {
           if (rule.highPriority() == highPriority && rule.applies(htmlTag, true)) {
-            val result = rule.apply(StyleRulesParams(text, htmlTag, callback, post, forceHttpsScheme))
+            val result = rule.apply(styleRulesParams)
             if (!TextUtils.isEmpty(result)) {
               return result
             }
@@ -241,7 +251,7 @@ open class CommentParser : ICommentParser, HasQuotePatterns {
           }
 
           if (rule.highPriority() == highPriority && rule.applies(htmlTag)) {
-            return rule.apply(StyleRulesParams(text, htmlTag, callback, post, forceHttpsScheme))
+            return rule.apply(styleRulesParams)
           }
         }
       }
@@ -403,7 +413,8 @@ open class CommentParser : ICommentParser, HasQuotePatterns {
     val pl = PostLinkable(
       key = link.key,
       linkableValue = link.linkValue,
-      type = link.type
+      type = link.type,
+      revealTextSpoilers = kurobaSettings.application.revealTextSpoilers.readBlocking()
     )
     res.setSpan(pl, 0, res.length, (250 shl Spanned.SPAN_PRIORITY_SHIFT) and Spanned.SPAN_PRIORITY)
 
@@ -479,7 +490,8 @@ open class CommentParser : ICommentParser, HasQuotePatterns {
     val postLinkable = PostLinkable(
       key = srcValue,
       linkableValue = PostLinkable.Value.StringValue(srcValue),
-      type = PostLinkable.Type.LINK
+      type = PostLinkable.Type.LINK,
+      revealTextSpoilers = kurobaSettings.application.revealTextSpoilers.readBlocking()
     )
 
     spannableStringBuilder.setSpan(
@@ -553,7 +565,8 @@ open class CommentParser : ICommentParser, HasQuotePatterns {
     val pl = PostLinkable(
       key = handlerLink.key,
       linkableValue = handlerLink.linkValue,
-      type = handlerLink.type
+      type = handlerLink.type,
+      revealTextSpoilers = kurobaSettings.application.revealTextSpoilers.readBlocking()
     )
     res.setSpan(pl, 0, res.length, (250 shl Spanned.SPAN_PRIORITY_SHIFT) and Spanned.SPAN_PRIORITY)
     post.addLinkable(pl)

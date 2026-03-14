@@ -119,7 +119,7 @@ class LynxchanCaptchaLayoutViewModel(
         }
 
         if (resetCaptchaCookies) {
-          site.settings.captchaIdCookie.set(null)
+          site.settings.captchaIdCookie.write(null)
         }
 
         val needBlockBypass = needBlockBypass(
@@ -133,7 +133,7 @@ class LynxchanCaptchaLayoutViewModel(
           needBlockBypass = needBlockBypass
         )
 
-        site.settings.captchaIdCookie.set(lynxchanCaptchaFull.captchaInfo.kurobaCookie)
+        site.settings.captchaIdCookie.write(lynxchanCaptchaFull.captchaInfo.kurobaCookie)
         _captchaInfoToShow.value = AsyncUiData.UiData(lynxchanCaptchaFull)
       } catch (error: Throwable) {
         Logger.error(TAG, error) { "Failed to load captcha for ${chanDescriptor}" }
@@ -345,12 +345,12 @@ class LynxchanCaptchaLayoutViewModel(
         throw LynxchanCaptchaError("Failed to parse bypass extraCookie cookie")
       }
 
-      lynxchanSite.settings.bypassCookie.setSync(bypassCookie)
-      lynxchanSite.settings.extraCookie.setSync(extraCookie)
+      lynxchanSite.settings.bypassCookie.write(bypassCookie)
+      lynxchanSite.settings.extraCookie.write(extraCookie)
 
       Logger.debug(TAG) { "Successfully received HashCash challenge cookies (site: ${lynxchanSite.descriptor})!" }
 
-      val captchaIdCookie = lynxchanSite.settings.captchaIdCookie.get()
+      val captchaIdCookie = lynxchanSite.settings.captchaIdCookie.read()
       if (captchaIdCookie == null) {
         return@Try null
       }
@@ -579,7 +579,7 @@ class LynxchanCaptchaLayoutViewModel(
     }
   }
 
-  private fun extractAndStoreBypassCookie(
+  private suspend fun extractAndStoreBypassCookie(
     chanDescriptor: ChanDescriptor,
     headers: Headers
   ) {
@@ -608,7 +608,7 @@ class LynxchanCaptchaLayoutViewModel(
       return
     }
 
-    site.settings.bypassCookie.set(bypassKurobaCookie)
+    site.settings.bypassCookie.write(bypassKurobaCookie)
   }
 
   class LynxchanCaptchaError(message: String) : ClientException(message)

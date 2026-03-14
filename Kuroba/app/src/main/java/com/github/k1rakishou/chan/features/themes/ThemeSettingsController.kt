@@ -11,7 +11,6 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.viewpager.widget.ViewPager
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
@@ -42,7 +41,6 @@ import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.callback.FileChooserCallback
 import com.github.k1rakishou.fsaf.callback.FileCreateCallback
-import com.github.k1rakishou.persist_state.PersistableChanState
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -97,7 +95,7 @@ class ThemeSettingsController(context: Context) : Controller(context), WindowIns
               id = ACTION_IGNORE_DARK_NIGHT_MODE,
               stringId = R.string.action_ignore_dark_night_mode,
               visible = true,
-              checked = ChanSettings.ignoreDarkNightMode.get(),
+              checked = kurobaSettings.application.ignoreDarkNightMode.readBlocking(),
               onClick = { item -> onIgnoreDarkNightModeClick(item) }
             )
           }
@@ -145,11 +143,11 @@ class ThemeSettingsController(context: Context) : Controller(context), WindowIns
   }
 
   private fun showIgnoreDayNightModeDialog() {
-    if (ChanSettings.ignoreDarkNightMode.get()) {
+    if (kurobaSettings.application.ignoreDarkNightMode.readBlocking()) {
       return
     }
 
-    if (PersistableChanState.themesIgnoreSystemDayNightModeMessageShown.get()) {
+    if (kurobaSettings.internal.themesIgnoreSystemDayNightModeMessageShown.readBlocking()) {
       return
     }
 
@@ -159,12 +157,12 @@ class ThemeSettingsController(context: Context) : Controller(context), WindowIns
       descriptionText = context.getString(R.string.android_day_night_mode_dialog_description)
     )
 
-    PersistableChanState.themesIgnoreSystemDayNightModeMessageShown.set(true)
+    kurobaSettings.internal.themesIgnoreSystemDayNightModeMessageShown.writeAsync(true)
   }
 
   private fun onIgnoreDarkNightModeClick(item: ToolbarMenuCheckableOverflowItem) {
     toolbarState.findCheckableOverflowItem(ACTION_IGNORE_DARK_NIGHT_MODE)
-      ?.updateChecked(ChanSettings.ignoreDarkNightMode.toggle())
+      ?.updateChecked(kurobaSettings.application.ignoreDarkNightMode.toggleBlocking())
   }
 
   private fun reload(itemIndex: Int, postCellDataWidthNoPaddings: Int) {
@@ -456,6 +454,7 @@ class ThemeSettingsController(context: Context) : Controller(context), WindowIns
       postCellDataWidthNoPaddings: Int
     ): CoordinatorLayout {
       val kurobaToolbarState = KurobaToolbarState(
+        controllerHash = this@ThemeSettingsController.hashCode(),
         controllerKey = ControllerKey("${controllerKey.key}_${chanTheme.name}"),
         globalUiStateHolder = globalUiStateHolder
       )
@@ -479,6 +478,7 @@ class ThemeSettingsController(context: Context) : Controller(context), WindowIns
         context = context,
         position = position,
         theme = chanTheme,
+        kurobaSettings = kurobaSettings,
         kurobaToolbarState = kurobaToolbarState,
         navigationController = requireToolbarNavController(),
         options = ThemeControllerHelper.Options(

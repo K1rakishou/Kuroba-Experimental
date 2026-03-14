@@ -1,22 +1,5 @@
-/*
- * KurobaEx - *chan browser https://github.com/K1rakishou/Kuroba-Experimental/
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- */
 package com.github.k1rakishou.chan.core.manager
 
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.pages.BoardPage
@@ -26,6 +9,7 @@ import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
+import com.github.k1rakishou.v2.KurobaSettings
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -36,17 +20,17 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.CoroutineContext
 
 class PageRequestManager(
+  private val kurobaSettings: KurobaSettings,
   private val siteManager: SiteManager,
   private val boardManager: BoardManager
 ) : CoroutineScope {
   private val requestedBoards = Collections.synchronizedSet(HashSet<BoardDescriptor>())
-  private val boardPagesMap: ConcurrentMap<BoardDescriptor, BoardPages> = ConcurrentHashMap()
-  private val boardTimeMap: ConcurrentMap<BoardDescriptor, Long> = ConcurrentHashMap()
+  private val boardPagesMap = ConcurrentHashMap<BoardDescriptor, BoardPages>()
+  private val boardTimeMap = ConcurrentHashMap<BoardDescriptor, Long>()
   private val notifyIntervals = ConcurrentHashMap<ChanDescriptor.ThreadDescriptor, Long>()
 
   private val _boardPagesUpdateFlow = MutableSharedFlow<BoardDescriptor>(extraBufferCapacity = 32)
@@ -56,14 +40,14 @@ class PageRequestManager(
   override val coroutineContext: CoroutineContext
     get() = Dispatchers.Default + SupervisorJob() + CoroutineName("PageRequestManager")
 
-  fun getBoardPages(boardDescriptor: BoardDescriptor, requestPagesIfNotCached: Boolean = false): BoardPages? {
+  suspend fun getBoardPages(boardDescriptor: BoardDescriptor, requestPagesIfNotCached: Boolean = false): BoardPages? {
     return getPages(
       boardDescriptor = boardDescriptor,
       requestPagesIfNotCached = requestPagesIfNotCached
     )
   }
 
-  fun getPage(originalPostDescriptor: PostDescriptor?, requestPagesIfNotCached: Boolean = false): BoardPage? {
+  suspend fun getPage(originalPostDescriptor: PostDescriptor?, requestPagesIfNotCached: Boolean = false): BoardPage? {
     if (originalPostDescriptor == null) {
       return null
     }
@@ -79,7 +63,10 @@ class PageRequestManager(
     )
   }
 
-  fun getPage(threadDescriptor: ChanDescriptor.ThreadDescriptor?, requestPagesIfNotCached: Boolean = false): BoardPage? {
+  suspend fun getPage(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor?,
+    requestPagesIfNotCached: Boolean = false
+  ): BoardPage? {
     if (threadDescriptor == null || threadDescriptor.threadNo < 0) {
       return null
     }
@@ -119,8 +106,7 @@ class PageRequestManager(
     return threadNoTimeModPairSet
   }
 
-  @Synchronized
-  fun canAlertAboutThreadBeingOnLastPage(threadDescriptor: ChanDescriptor.ThreadDescriptor): Boolean {
+  suspend fun canAlertAboutThreadBeingOnLastPage(threadDescriptor: ChanDescriptor.ThreadDescriptor): Boolean {
     val boardPage = findPage(
       boardDescriptor = threadDescriptor.boardDescriptor,
       opNo = threadDescriptor.threadNo,
@@ -156,7 +142,11 @@ class PageRequestManager(
     launch { requestBoardInternal(boardDescriptor) }
   }
 
-  private fun findPage(boardDescriptor: BoardDescriptor, opNo: Long, requestPagesIfNotCached: Boolean): BoardPage? {
+  private suspend fun findPage(
+    boardDescriptor: BoardDescriptor,
+    opNo: Long,
+    requestPagesIfNotCached: Boolean
+  ): BoardPage? {
     val pages = getPages(boardDescriptor, requestPagesIfNotCached)
       ?: return null
 
@@ -171,8 +161,8 @@ class PageRequestManager(
     return null
   }
 
-  private fun getPages(boardDescriptor: BoardDescriptor, requestPagesIfNotCached: Boolean): BoardPages? {
-    if (ChanSettings.neverShowPages.get()) {
+  private suspend fun getPages(boardDescriptor: BoardDescriptor, requestPagesIfNotCached: Boolean): BoardPages? {
+    if (!kurobaSettings.application.showThreadPage.read()) {
       return null
     }
 
@@ -189,8 +179,8 @@ class PageRequestManager(
     return null
   }
 
-  private fun shouldUpdate(boardDescriptor: BoardDescriptor) {
-    if (ChanSettings.neverShowPages.get()) {
+  private suspend fun shouldUpdate(boardDescriptor: BoardDescriptor) {
+    if (!kurobaSettings.application.showThreadPage.read()) {
       return
     }
 
@@ -278,7 +268,6 @@ class PageRequestManager(
     }
   }
 
-  @Synchronized
   private fun onPagesReceived(
     boardDescriptor: BoardDescriptor,
     pages: BoardPages

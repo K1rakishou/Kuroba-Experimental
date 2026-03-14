@@ -1,12 +1,11 @@
 package com.github.k1rakishou.chan.features.view.media.strip
 
-import MediaViewerActionButton
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.LinearLayout
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
-import com.github.k1rakishou.persist_state.PersistableChanState
+import com.github.k1rakishou.v2.parameters.ReorderableMediaViewerActions
 
 class MediaViewerLeftActionStrip @JvmOverloads constructor(
   context: Context,
@@ -25,15 +24,25 @@ class MediaViewerLeftActionStrip @JvmOverloads constructor(
     val container = findViewById<LinearLayout>(R.id.media_viewer_actions_container)
     container.removeAllViews()
 
-    val reorderableMediaViewerActions = PersistableChanState.reorderableMediaViewerActions.get()
+    val reorderableMediaViewerActions = kurobaSettings.internal.reorderableMediaViewerActions.readBlocking()
 
     reorderableMediaViewerActions.mediaViewerActionButtons().forEach { reorderableMediaViewerAction ->
       when (reorderableMediaViewerAction) {
-        MediaViewerActionButton.GoToPost -> container.addView(toolbarGoToPostButtonContainer)
-        MediaViewerActionButton.Replies -> container.addView(toolbarPostRepliesButtonContainer)
-        MediaViewerActionButton.Reload -> container.addView(toolbarReloadButtonContainer)
-        MediaViewerActionButton.Download -> container.addView(toolbarDownloadButtonContainer)
-        MediaViewerActionButton.Settings -> container.addView(toolbarOptionsButtonContainer)
+        ReorderableMediaViewerActions.MediaViewerActionButton.GoToPost -> {
+          container.addView(toolbarGoToPostButtonContainer)
+        }
+        ReorderableMediaViewerActions.MediaViewerActionButton.Replies -> {
+          container.addView(toolbarPostRepliesButtonContainer)
+        }
+        ReorderableMediaViewerActions.MediaViewerActionButton.Reload -> {
+          container.addView(toolbarReloadButtonContainer)
+        }
+        ReorderableMediaViewerActions.MediaViewerActionButton.Download -> {
+          container.addView(toolbarDownloadButtonContainer)
+        }
+        ReorderableMediaViewerActions.MediaViewerActionButton.Settings -> {
+          container.addView(toolbarOptionsButtonContainer)
+        }
       }
     }
   }

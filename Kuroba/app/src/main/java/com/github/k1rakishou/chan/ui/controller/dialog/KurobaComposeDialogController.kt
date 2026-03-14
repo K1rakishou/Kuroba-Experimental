@@ -32,7 +32,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
+import com.github.k1rakishou.chan.core.di.component.controller.ControllerComponent
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeCard
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextBarButton
@@ -42,6 +42,8 @@ import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.controller.base.BaseFloatingComposeController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.ViewModelScope
+import com.github.k1rakishou.core_logger.Logger
 import kotlinx.coroutines.CompletableDeferred
 
 class KurobaComposeDialogController(
@@ -53,7 +55,10 @@ class KurobaComposeDialogController(
   private val onDismissed: (() -> Unit)? = null
 ) : BaseFloatingComposeController(context) {
 
-  override fun injectActivityDependencies(component: ActivityComponent) {
+  override val viewModelScope: ViewModelScope
+    get() = ViewModelScope.ControllerScope(this)
+
+  override fun injectControllerDependencies(component: ControllerComponent) {
     component.inject(this)
   }
 
@@ -68,8 +73,8 @@ class KurobaComposeDialogController(
     onDismissed?.invoke()
 
     params.inputs.forEach { input ->
-      if (input.result.isActive) {
-        input.result.complete("")
+      if (!input.result.isCompleted) {
+        input.result.complete(InputResult.NoResult)
       }
     }
   }
@@ -230,8 +235,8 @@ class KurobaComposeDialogController(
         onClick = {
           inputValueStates.forEachIndexed { index, mutableState ->
             val result = params.inputs[index].result
-            if (result.isActive) {
-              result.complete(mutableState.value.text)
+            if (!result.isCompleted) {
+              result.complete(InputResult.Result(mutableState.value.text))
             }
           }
 
@@ -285,8 +290,7 @@ class KurobaComposeDialogController(
     val neutralButton: DialogButton? = null,
     val positiveButton: PositiveDialogButton
   ) {
-
-    suspend fun awaitInputResult(): String? {
+    suspend fun awaitInputResult(): InputResult? {
       check(inputs.isNotEmpty()) { "You have to add at least one input before using this function" }
       check(inputs.size == 1) { "To wait for multiple inputs use awaitInputResults()" }
 
@@ -295,46 +299,57 @@ class KurobaComposeDialogController(
           try {
             return@map input.result.await()
           } catch (error: Throwable) {
+            Logger.error(TAG, error) { "Failed to await for input result defaulting to null" }
             return@map null
           }
         }
-        .firstOrNull()
+        .first()
     }
 
-    suspend fun awaitInputResults(): List<String?> {
+    suspend fun awaitInputResults(): List<InputResult?> {
       check(inputs.isNotEmpty()) { "You have to add at least one input before using this function" }
       check(inputs.size > 1) { "To wait for a single input use awaitInputResult()" }
 
-      return inputs.map { input ->
+      return inputs.mapIndexed { index, input ->
         try {
-          return@map input.result.await()
+          return@mapIndexed input.result.await()
         } catch (error: Throwable) {
-          return@map null
+          Logger.error(TAG, error) { "Failed to await for input result at index ${index} defaulting to null" }
+          return@mapIndexed null
         }
       }
+    }
+
+    companion object {
+      private const val TAG = "KurobaComposeDialogController.Params"
     }
 
   }
 
   sealed class Input {
     abstract val hint: Text?
-    abstract val result: CompletableDeferred<kotlin.String>
+    abstract val result: CompletableDeferred<InputResult>
 
     class String(
       override val hint: Text? = null,
-      override val result: CompletableDeferred<kotlin.String> = CompletableDeferred(),
+      override val result: CompletableDeferred<InputResult> = CompletableDeferred(),
       val initialValue: kotlin.String? = null,
     ) : Input()
 
     class Number(
       override val hint: Text? = null,
-      override val result: CompletableDeferred<kotlin.String> = CompletableDeferred(),
+      override val result: CompletableDeferred<InputResult> = CompletableDeferred(),
       val initialValue: Int? = null
     ) : Input()
   }
 
+  sealed interface InputResult {
+    data object NoResult : InputResult
+    data class Result(val value: String) : InputResult
+  }
+
   class DialogButton(
-    @StringRes val buttonText: Int,
+    @field:StringRes val buttonText: Int,
     val onClick: (() -> Unit)? = null
   )
 
@@ -358,13 +373,13 @@ class KurobaComposeDialogController(
       }
     }
 
-    data class Id(@StringRes val textId: Int) : Text()
+    data class Id(@field:StringRes val textId: Int) : Text()
     data class String(val value: kotlin.String) : Text()
     data class AnnotatedString(val value: androidx.compose.ui.text.AnnotatedString) : Text()
   }
 
   class PositiveDialogButton(
-    @StringRes val buttonText: Int,
+    @field:StringRes val buttonText: Int,
     val isActionDangerous: Boolean = false,
     val onClick: (() -> Unit)? = null
   )

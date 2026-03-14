@@ -75,7 +75,11 @@ import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 class BoardsReorderController(
   context: Context,
   siteDescriptor: SiteDescriptor
-) : BaseComposeController<BoardsReorderControllerViewModel, BoardsReorderControllerParams>(
+) : BaseComposeController<
+  BoardsReorderControllerViewModel,
+  BoardsReorderControllerParams,
+  Nothing
+>(
   context = context,
   viewModelClass = BoardsReorderControllerViewModel::class.java,
   viewModelParams = BoardsReorderControllerParams(siteDescriptor)
@@ -84,7 +88,7 @@ class BoardsReorderController(
     get() = ViewModelScope.ControllerScope(this)
 
   override val layoutAnchor: SnackbarScope.LayoutAnchor
-    get() = SnackbarScope.LayoutAnchor.Catalog
+    get() = SnackbarScope.LayoutAnchor.Left
 
   override fun injectControllerDependencies(component: ControllerComponent) {
     component.inject(this)

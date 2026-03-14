@@ -8,7 +8,6 @@ import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
@@ -27,6 +26,7 @@ import com.github.k1rakishou.chan.utils.setEnabledFast
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.v2.KurobaSettings
 import com.google.android.exoplayer2.upstream.DataSource
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
@@ -51,6 +51,7 @@ class AudioPlayerView @JvmOverloads constructor(
 
   private lateinit var audioPlayerViewState: AudioPlayerViewState
   private lateinit var mediaViewContract: MediaViewContract
+  private lateinit var kurobaSettings: KurobaSettings
   private lateinit var cacheHandler: CacheHandler
   private lateinit var threadDownloadManager: ThreadDownloadManager
   private lateinit var snackbarManager: SnackbarManager
@@ -60,12 +61,10 @@ class AudioPlayerView @JvmOverloads constructor(
 
   private val scope = KurobaCoroutineScope()
 
-  private val pauseInBg: Boolean
-    get() = ChanSettings.mediaViewerPausePlayersWhenInBackground.get()
-
   private val soundPostVideoPlayerLazy = lazy {
     ExoPlayerWrapper(
       context = context,
+      kurobaSettings = kurobaSettings,
       threadDownloadManager = threadDownloadManager,
       cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
       fileDataSourceFactory = fileDataSourceFactory,
@@ -85,6 +84,7 @@ class AudioPlayerView @JvmOverloads constructor(
   fun bind(
     audioPlayerCallbacks: AudioPlayerCallbacks,
     viewableMedia: ViewableMedia,
+    kurobaSettings: KurobaSettings,
     cacheHandler: CacheHandler,
     audioPlayerViewState: AudioPlayerViewState,
     mediaViewContract: MediaViewContract,
@@ -102,6 +102,7 @@ class AudioPlayerView @JvmOverloads constructor(
     this.audioPlayerCallbacks = audioPlayerCallbacks
     this.audioPlayerViewState = audioPlayerViewState
     this.mediaViewContract = mediaViewContract
+    this.kurobaSettings = kurobaSettings
     this.cacheHandler = cacheHandler
     this.threadDownloadManager = threadDownloadManager
     this.snackbarManager = snackbarManager
@@ -181,7 +182,11 @@ class AudioPlayerView @JvmOverloads constructor(
         audioPlayerViewState.playing = soundPostVideoPlayer.isPlaying()
       }
 
-      val needPause = soundPostVideoPlayer.isPlaying() && ((isPausing && pauseInBg) || isBecomingInactive)
+      fun pauseInBg(): Boolean {
+        return kurobaSettings.application.mediaViewerPausePlayersWhenInBackground.readBlocking()
+      }
+
+      val needPause = soundPostVideoPlayer.isPlaying() && ((isPausing && pauseInBg()) || isBecomingInactive)
       if (needPause) {
         soundPostVideoPlayer.pause()
       }
@@ -250,7 +255,8 @@ class AudioPlayerView @JvmOverloads constructor(
 
     val soundPostActualSoundMedia = viewableMedia.viewableMediaMeta.soundPostActualSoundMedia
     if (soundPostActualSoundMedia != null) {
-      val canAutoLoad = MediaViewerControllerViewModel.Companion.canAutoLoad(
+      val canAutoLoad = MediaViewerControllerViewModel.canAutoLoad(
+        kurobaSettings = kurobaSettings,
         cacheHandler = cacheHandler,
         viewableMedia = soundPostActualSoundMedia,
         cacheFileType = CacheFileType.PostMediaFull,
@@ -298,7 +304,7 @@ class AudioPlayerView @JvmOverloads constructor(
     soundPostActualSoundMedia: ViewableMedia.Audio
   ): Boolean {
     try {
-      if (!isLifecycleChange && ChanSettings.videoAlwaysResetToStart.get()) {
+      if (!isLifecycleChange && kurobaSettings.application.videoAlwaysResetToStart.read()) {
         audioPlayerViewState.resetPosition()
         soundPostVideoPlayer.resetPosition()
       }

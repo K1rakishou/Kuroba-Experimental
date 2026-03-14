@@ -19,9 +19,8 @@ import com.github.k1rakishou.common.FirewallType
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.persist_state.ImageSearchInstanceType
-import com.github.k1rakishou.persist_state.PersistableChanState
-import com.github.k1rakishou.persist_state.RemoteImageSearchInstanceSettings
+import com.github.k1rakishou.v2.KurobaSettings
+import com.github.k1rakishou.v2.parameters.RemoteImageSearchSettings
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -29,26 +28,28 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import javax.inject.Inject
 
 class ImageSearchControllerViewModel(
   private val savedStateHandle: SavedStateHandle,
+  private val kurobaSettings: KurobaSettings,
   private val searxImageSearchUseCase: SearxImageSearchUseCase,
   private val yandexImageSearchUseCase: YandexImageSearchUseCase,
 ) : KurobaViewModel() {
 
-  private val _lastUsedSearchInstance = mutableStateOf<ImageSearchInstanceType?>(null)
-  val lastUsedSearchInstance: State<ImageSearchInstanceType?>
+  private val _lastUsedSearchInstance = mutableStateOf<RemoteImageSearchSettings.InstanceType?>(null)
+  val lastUsedSearchInstance: State<RemoteImageSearchSettings.InstanceType?>
     get() = _lastUsedSearchInstance
 
-  private val _searchInstances = mutableStateMapOf<ImageSearchInstanceType, ImageSearchInstance>()
-  val searchInstances: Map<ImageSearchInstanceType, ImageSearchInstance>
+  private val _searchInstances = mutableStateMapOf<RemoteImageSearchSettings.InstanceType, ImageSearchInstance>()
+  val searchInstances: Map<RemoteImageSearchSettings.InstanceType, ImageSearchInstance>
     get() = _searchInstances
 
-  private val _searchResults = mutableStateMapOf<ImageSearchInstanceType, AsyncUiData<ImageResults>>()
-  val searchResults: Map<ImageSearchInstanceType, AsyncUiData<ImageResults>>
+  private val _searchResults = mutableStateMapOf<RemoteImageSearchSettings.InstanceType, AsyncUiData<ImageResults>>()
+  val searchResults: Map<RemoteImageSearchSettings.InstanceType, AsyncUiData<ImageResults>>
     get() = _searchResults
 
   private val _solvingCaptcha = MutableStateFlow<HttpUrl?>(null)
@@ -68,13 +69,13 @@ class ImageSearchControllerViewModel(
 
   override suspend fun onViewModelReady() {
     Snapshot.withMutableSnapshot {
-      ImageSearchInstance.createAll().forEach { imageSearchInstance ->
+      ImageSearchInstance.createAll(kurobaSettings).forEach { imageSearchInstance ->
         _searchInstances[imageSearchInstance.type] = imageSearchInstance
         baseUrl.value = imageSearchInstance.baseUrl().toString()
       }
 
-      val lastUsedSearchType = PersistableChanState.remoteImageSearchSettings.get().lastUsedSearchType
-        ?: ImageSearchInstanceType.Yandex
+      val lastUsedSearchType = kurobaSettings.internal.remoteImageSearchSettings.read().lastUsedSearchType
+        ?: RemoteImageSearchSettings.InstanceType.Yandex
 
       changeSearchInstance(lastUsedSearchType)
     }
@@ -86,7 +87,7 @@ class ImageSearchControllerViewModel(
     cleanup()
   }
 
-  fun updateYandexSmartCaptchaCookies(newCookies: String) {
+  suspend fun updateYandexSmartCaptchaCookies(newCookies: String) {
     val imageSearchInstance = getCurrentSearchInstance()
       ?: return
 
@@ -97,10 +98,10 @@ class ImageSearchControllerViewModel(
     _solvingCaptcha.value = null
   }
 
-  fun changeSearchInstance(newImageSearchInstanceType: ImageSearchInstanceType) {
+  fun changeSearchInstance(newImageSearchInstanceType: RemoteImageSearchSettings.InstanceType) {
     _lastUsedSearchInstance.value = newImageSearchInstanceType
 
-    val baseUrlFromSettings = PersistableChanState.remoteImageSearchSettings.get()
+    val baseUrlFromSettings = kurobaSettings.internal.remoteImageSearchSettings.readBlocking()
       .byImageSearchInstanceType(newImageSearchInstanceType)
       ?.baseUrl
       ?.toHttpUrlOrNull()
@@ -114,13 +115,19 @@ class ImageSearchControllerViewModel(
     val newQuery = searchQuery.value
 
     val searchResults = _searchResults[newImageSearchInstanceType]
-    if ((searchResults !is AsyncUiData.UiData || prevQuery != newQuery) && newQuery.isNotEmpty() && baseUrlFromSettings != null) {
+    if (
+      (searchResults !is AsyncUiData.UiData || prevQuery != newQuery) &&
+      newQuery.isNotEmpty() &&
+      baseUrlFromSettings != null
+    ) {
       onSearchQueryChanged(newQuery)
     }
 
-    val prev = PersistableChanState.remoteImageSearchSettings.get()
+    val prev = kurobaSettings.internal.remoteImageSearchSettings.readBlocking()
     if (prev.lastUsedSearchType != newImageSearchInstanceType) {
-      PersistableChanState.remoteImageSearchSettings.set(prev.copy(lastUsedSearchType = newImageSearchInstanceType))
+      kurobaSettings.internal.remoteImageSearchSettings.writeAsync(
+        value = prev.copy(lastUsedSearchType = newImageSearchInstanceType)
+      )
     }
   }
 
@@ -162,17 +169,20 @@ class ImageSearchControllerViewModel(
     baseUrlError.value = null
     baseUrl.value = newBaseUrl.toString()
 
-    PersistableChanState.remoteImageSearchSettings.get().update(
-      instanceType = imageSearchInstance.type,
-      updater = { old -> old.copy(baseUrl = newBaseUrl.toString()) },
-      creator = {
-        RemoteImageSearchInstanceSettings(
-          instanceType = imageSearchInstance.type,
-          baseUrl = newBaseUrl.toString(),
-          cookies = null
-        )
-      }
-    )
+    runBlocking {
+      kurobaSettings.internal.remoteImageSearchSettings.readBlocking().update(
+        internalSettings = kurobaSettings.internal,
+        instanceType = imageSearchInstance.type,
+        updater = { old -> old.copy(baseUrl = newBaseUrl.toString()) },
+        creator = {
+          RemoteImageSearchSettings.InstanceSettings(
+            instanceType = imageSearchInstance.type,
+            baseUrl = newBaseUrl.toString(),
+            cookies = null
+          )
+        }
+      )
+    }
   }
 
   fun onSearchQueryChanged(newQuery: String) {
@@ -239,10 +249,10 @@ class ImageSearchControllerViewModel(
         "hasCookies=${hasCookies}, searchUrl=${searchUrl}")
 
       val foundImagesResult = when (currentImageSearchInstance.type) {
-        ImageSearchInstanceType.Searx -> {
+        RemoteImageSearchSettings.InstanceType.Searx -> {
           searxImageSearchUseCase.execute(searchUrl)
         }
-        ImageSearchInstanceType.Yandex -> {
+        RemoteImageSearchSettings.InstanceType.Yandex -> {
           val params = YandexImageSearchUseCase.Params(
             searchUrl = searchUrl,
             cookies = currentImageSearchInstance.cookies
@@ -313,12 +323,14 @@ class ImageSearchControllerViewModel(
   }
 
   class ViewModelFactory @Inject constructor(
+    private val kurobaSettings: KurobaSettings,
     private val searxImageSearchUseCase: SearxImageSearchUseCase,
     private val yandexImageSearchUseCase: YandexImageSearchUseCase,
   ) : ViewModelAssistedFactory<ImageSearchControllerViewModel> {
     override fun create(handle: SavedStateHandle): ImageSearchControllerViewModel {
       return ImageSearchControllerViewModel(
         savedStateHandle = handle,
+        kurobaSettings = kurobaSettings,
         searxImageSearchUseCase = searxImageSearchUseCase,
         yandexImageSearchUseCase = yandexImageSearchUseCase
       )

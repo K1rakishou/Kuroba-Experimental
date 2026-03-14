@@ -31,7 +31,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.waitForLayout
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_themes.ThemeEngine
-import com.github.k1rakishou.persist_state.ReplyMode
+import com.github.k1rakishou.v2.parameters.ReplyMode
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -297,7 +297,7 @@ class LoginController(
   }
 
   private fun resetReplyLayoutMode() {
-    site.commonSettings.lastUsedReplyMode.set(ReplyMode.Unknown)
+    site.commonSettings.lastUsedReplyMode.writeAsync(ReplyMode.Unknown)
   }
 
   private fun showError(error: String) {

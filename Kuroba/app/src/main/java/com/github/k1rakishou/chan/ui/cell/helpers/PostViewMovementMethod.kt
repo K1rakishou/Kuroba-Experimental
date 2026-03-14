@@ -11,19 +11,20 @@ import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.ViewConfiguration
 import android.widget.TextView
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.ui.cell.PostCellData
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface
 import com.github.k1rakishou.chan.ui.view.PostCommentTextView
 import com.github.k1rakishou.core_spannable.BackgroundColorIdSpan
 import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.model.data.post.ChanPost
+import com.github.k1rakishou.v2.KurobaSettings
 
 /**
  * A MovementMethod that searches for PostLinkables.<br></br>
  * See [PostLinkable] for more information.
  */
 class PostViewMovementMethod(
+  private val kurobaSettings: KurobaSettings,
   private val linkClickSpan: BackgroundColorIdSpan,
   private val quoteClickSpan: BackgroundColorIdSpan,
   private val spoilerClickSpan: BackgroundColorSpan,
@@ -84,25 +85,21 @@ class PostViewMovementMethod(
 
     val layout = widget.layout
     val line = layout.getLineForVertical(y)
-    val lineLeft = layout.getLineLeft(line)
-    val lineRight = layout.getLineRight(line)
+    val offset = layout.getOffsetForHorizontal(line, x.toFloat())
 
-    if (clickCoordinatesHitPostComment(x, lineLeft, lineRight)) {
-      val offset = layout.getOffsetForHorizontal(line, x.toFloat())
-      val clickableSpans = buffer.getSpans(offset, offset, ClickableSpan::class.java).toList()
-      if (clickableSpans.isNotEmpty()) {
-        onClickableSpanClicked(widget, buffer, action, clickableSpans)
+    val clickableSpans = buffer.getSpans(offset, offset, ClickableSpan::class.java).toList()
+    if (clickableSpans.isNotEmpty()) {
+      onClickableSpanClicked(widget, buffer, action, clickableSpans)
 
-        if (action == MotionEvent.ACTION_DOWN && performLinkLongClick == null) {
-          val postLinkables = clickableSpans.filterIsInstance<PostLinkable>()
-          if (postLinkables.isNotEmpty()) {
-            performLinkLongClick = PerformalLinkLongClick(postLinkables)
-            handler.postDelayed(performLinkLongClick!!, longPressTimeout)
-          }
+      if (action == MotionEvent.ACTION_DOWN && performLinkLongClick == null) {
+        val postLinkables = clickableSpans.filterIsInstance<PostLinkable>()
+        if (postLinkables.isNotEmpty()) {
+          performLinkLongClick = PerformalLinkLongClick(postLinkables)
+          handler.postDelayed(performLinkLongClick!!, longPressTimeout)
         }
-
-        return true
       }
+
+      return true
     }
 
     buffer.removeSpan(linkClickSpan)
@@ -110,14 +107,6 @@ class PostViewMovementMethod(
     buffer.removeSpan(spoilerClickSpan)
 
     return false
-  }
-
-  private fun clickCoordinatesHitPostComment(x: Int, lineLeft: Float, lineRight: Float): Boolean {
-    if (ChanSettings.postLinksTakeWholeHorizSpace.get()) {
-      return true
-    }
-
-    return x >= lineLeft && x < lineRight
   }
 
   fun touchOverlapsAnyClickableSpan(textView: TextView, event: MotionEvent): Boolean {

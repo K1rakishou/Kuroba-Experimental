@@ -17,7 +17,7 @@ class Chan4PassHttpCall(
 ) : HttpCall(site) {
   var loginResponse: Chan4LoginResponse? = null
 
-  override fun setup(
+  override suspend fun setup(
     requestBuilder: Request.Builder,
     progressListener: ProgressRequestListener?
   ) {
@@ -32,7 +32,7 @@ class Chan4PassHttpCall(
     site.requestModifier.modifyHttpCall(this, requestBuilder)
   }
 
-  override fun process(response: Response, result: String) {
+  override suspend fun process(response: Response, result: String) {
     if (result.contains("Success! Your device is now authorized")) {
       val cookies = response.headers("Set-Cookie")
       var passId: String? = null

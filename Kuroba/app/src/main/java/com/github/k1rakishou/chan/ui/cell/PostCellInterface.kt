@@ -66,7 +66,7 @@ interface PostCellInterface {
     fun onPostNoClicked(post: ChanPost)
     fun onPostSelectionQuoted(postDescriptor: PostDescriptor, selection: CharSequence)
     fun onPostSelectionFilter(postDescriptor: PostDescriptor, selection: CharSequence)
-    fun getBoardPages(boardDescriptor: BoardDescriptor): BoardPages?
+    suspend fun getBoardPages(boardDescriptor: BoardDescriptor): BoardPages?
     fun showPostOptions(post: ChanPost, inPopup: Boolean, items: List<FloatingListMenuItem>)
     fun onUnhidePostClick(post: ChanPost, inPopup: Boolean)
     fun currentSpanCount(): Int

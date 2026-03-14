@@ -28,7 +28,7 @@ import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.updateMargins
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.util.ChanPostUtils
-import com.github.k1rakishou.persist_state.ImageSaverV2Options
+import com.github.k1rakishou.v2.parameters.ImageSaverV2Options
 import okhttp3.HttpUrl
 import javax.inject.Inject
 

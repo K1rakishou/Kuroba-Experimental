@@ -2,7 +2,7 @@ package com.github.k1rakishou.chan.features.search.posts
 
 import com.github.k1rakishou.chan.features.search.posts.data.GlobalSearchControllerStateData
 import com.github.k1rakishou.chan.features.search.posts.data.SearchResultsControllerStateData
-import com.github.k1rakishou.persist_state.IndexAndTop
+import com.github.k1rakishou.v2.parameters.RecyclerIndexAndTopInfo
 
 internal object SearchResultsStateStorage {
   @get:Synchronized
@@ -12,7 +12,7 @@ internal object SearchResultsStateStorage {
 
   @get:Synchronized
   @set:Synchronized
-  var lastRecyclerViewScrollState: IndexAndTop? = null
+  var lastRecyclerViewScrollState: RecyclerIndexAndTopInfo.IndexAndTop? = null
     private set
 
   @get:Synchronized
@@ -24,13 +24,11 @@ internal object SearchResultsStateStorage {
     this.searchResultsState = searchResultsState
   }
 
-  fun updateLastRecyclerViewScrollState(indexAndTop: IndexAndTop) {
-    if (lastRecyclerViewScrollState == null) {
-      lastRecyclerViewScrollState = IndexAndTop()
-    }
-
-    lastRecyclerViewScrollState!!.index = indexAndTop.index
-    lastRecyclerViewScrollState!!.top = indexAndTop.top
+  fun updateLastRecyclerViewScrollState(indexAndTop: RecyclerIndexAndTopInfo.IndexAndTop) {
+    lastRecyclerViewScrollState = RecyclerIndexAndTopInfo.IndexAndTop(
+      index = indexAndTop.index,
+      top = indexAndTop.top
+    )
   }
 
   fun updateSearchInputState(searchInputState: GlobalSearchControllerStateData) {

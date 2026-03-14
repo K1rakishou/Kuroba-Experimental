@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.ui.compose.components
 
 import androidx.compose.material.Divider
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
@@ -24,13 +23,7 @@ fun KurobaComposeDivider(
     thickness
   }
 
-  val dividerColor = if (color == null) {
-    remember(key1 = chanTheme.dividerColorCompose) {
-      chanTheme.dividerColorCompose.copy(alpha = 0.1f)
-    }
-  } else {
-    color
-  }
+  val dividerColor = color ?: chanTheme.dividerColorCompose
 
   Divider(
     modifier = modifier,

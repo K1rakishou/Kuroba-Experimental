@@ -20,7 +20,7 @@ class DvachGetPassCookieHttpCall(
 ) : HttpCall(site) {
   var loginResponse: DvachLoginResponse? = null
 
-  override fun setup(
+  override suspend fun setup(
     requestBuilder: Request.Builder,
     progressListener: ProgressRequestBody.ProgressRequestListener?
   ) {
@@ -36,7 +36,7 @@ class DvachGetPassCookieHttpCall(
     site.requestModifier.modifyHttpCall(this, requestBuilder)
   }
 
-  override fun process(response: Response, result: String) {
+  override suspend fun process(response: Response, result: String) {
     if (!response.isSuccessful) {
       loginResponse = DvachLoginResponse.Failure("Login failure! Bad response status code: ${response.code}")
       return

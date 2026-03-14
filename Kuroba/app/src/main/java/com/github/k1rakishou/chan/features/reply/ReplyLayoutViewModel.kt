@@ -54,8 +54,8 @@ import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
-import com.github.k1rakishou.persist_state.PersistableChanState
-import com.github.k1rakishou.persist_state.ReplyMode
+import com.github.k1rakishou.v2.KurobaSettings
+import com.github.k1rakishou.v2.parameters.ReplyMode
 import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -68,7 +68,6 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onSubscription
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -79,6 +78,7 @@ import javax.inject.Inject
 @Suppress("LargeClass")
 class ReplyLayoutViewModel(
   private val savedStateHandle: SavedStateHandle,
+  private val kurobaSettings: KurobaSettings,
   private val appContext: Context,
   private val appResourcesLazy: Lazy<AppResources>,
   private val appConstantsLazy: Lazy<AppConstants>,
@@ -132,8 +132,7 @@ class ReplyLayoutViewModel(
 
   val drawerAppearanceEventFlow: StateFlow<DrawerAppearanceEvent>
     get() = globalUiStateHolder.drawer.drawerAppearanceEventFlow
-  val newReplyLayoutTutorialFinished: StateFlow<Boolean> = PersistableChanState.newReplyLayoutTutorialFinished.listenForChangesDeprecated()
-    .asFlow()
+  val newReplyLayoutTutorialFinished: StateFlow<Boolean> = kurobaSettings.internal.newReplyLayoutTutorialFinished.listen()
     .stateIn(
       scope = viewModelScope,
       started = SharingStarted.Eagerly,
@@ -159,12 +158,12 @@ class ReplyLayoutViewModel(
     when (threadControllerType) {
       ThreadControllerType.Catalog -> {
         snackbarManagerFactoryLazy.get().snackbarManager(
-          SnackbarScope.PostList(layoutAnchor = SnackbarScope.LayoutAnchor.Catalog)
+          SnackbarScope.PostList(layoutAnchor = SnackbarScope.LayoutAnchor.Left)
         )
       }
       ThreadControllerType.Thread -> {
         snackbarManagerFactoryLazy.get().snackbarManager(
-          SnackbarScope.PostList(layoutAnchor = SnackbarScope.LayoutAnchor.Thread)
+          SnackbarScope.PostList(layoutAnchor = SnackbarScope.LayoutAnchor.Right)
         )
       }
     }
@@ -200,10 +199,9 @@ class ReplyLayoutViewModel(
   override fun showCaptcha(
     chanDescriptor: ChanDescriptor,
     replyMode: ReplyMode,
-    autoReply: Boolean,
-    afterPostingAttempt: Boolean
+    autoReply: Boolean
   ) {
-    threadListLayoutCallbacks?.showCaptcha(chanDescriptor, replyMode, autoReply, afterPostingAttempt)
+    threadListLayoutCallbacks?.showCaptcha(chanDescriptor, replyMode, autoReply)
   }
 
   override fun showDialog(
@@ -305,6 +303,7 @@ class ReplyLayoutViewModel(
       threadControllerType = threadControllerType,
       callbacks = this,
       coroutineScope = viewModelScope,
+      kurobaSettings = kurobaSettings,
       appResourcesLazy = appResourcesLazy,
       replyLayoutHelperLazy = replyLayoutHelperLazy,
       siteManagerLazy = siteManagerLazy,
@@ -412,7 +411,7 @@ class ReplyLayoutViewModel(
             actualReplyMode = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
               ?.commonSettings
               ?.lastUsedReplyMode
-              ?.get()
+              ?.read()
               ?: ReplyMode.Unknown
           }
 
@@ -629,7 +628,7 @@ class ReplyLayoutViewModel(
   }
 
   fun onPickLocalMediaButtonClicked() {
-    if (AppModuleAndroidUtils.checkDontKeepActivitiesSettingEnabledForWarningDialog(appContext)) {
+    if (AppModuleAndroidUtils.checkDontKeepActivitiesSettingEnabledForWarningDialog(appContext, kurobaSettings)) {
       replyLayoutViewCallbacks?.onDontKeepActivitiesSettingDetected()
       return
     }
@@ -719,8 +718,7 @@ class ReplyLayoutViewModel(
       threadListLayoutCallbacks?.showCaptcha(
         chanDescriptor = chanDescriptor,
         replyMode = replyMode,
-        autoReply = true,
-        afterPostingAttempt = false
+        autoReply = true
       )
 
       return false
@@ -830,7 +828,6 @@ class ReplyLayoutViewModel(
       chanDescriptor: ChanDescriptor,
       replyMode: ReplyMode,
       autoReply: Boolean,
-      afterPostingAttempt: Boolean,
       onFinished: ((Boolean) -> Unit)? = null
     )
 
@@ -883,6 +880,7 @@ class ReplyLayoutViewModel(
   class ReplyFileDoesNotExist(fileUUID: UUID) : ClientException("Reply file with UUID '${fileUUID}' does not exist")
 
   class ViewModelFactory @Inject constructor(
+    private val kurobaSettings: KurobaSettings,
     private val appResourcesLazy: Lazy<AppResources>,
     private val appContext: Context,
     private val appConstantsLazy: Lazy<AppConstants>,
@@ -905,6 +903,7 @@ class ReplyLayoutViewModel(
     override fun create(handle: SavedStateHandle): ReplyLayoutViewModel {
       return ReplyLayoutViewModel(
         savedStateHandle = handle,
+        kurobaSettings = kurobaSettings,
         appContext = appContext,
         appResourcesLazy = appResourcesLazy,
         appConstantsLazy = appConstantsLazy,

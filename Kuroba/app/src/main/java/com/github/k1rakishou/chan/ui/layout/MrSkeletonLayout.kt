@@ -23,6 +23,7 @@ import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.findChild
 import com.github.k1rakishou.common.updateMargins
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.v2.KurobaSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -37,6 +38,8 @@ class MrSkeletonLayout @JvmOverloads constructor(
   defAttrStyle: Int = 0
 ) : FrameLayout(context, attributeSet, defAttrStyle), WindowInsetsListener {
 
+  @Inject
+  lateinit var kurobaSettings: KurobaSettings
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
   @Inject

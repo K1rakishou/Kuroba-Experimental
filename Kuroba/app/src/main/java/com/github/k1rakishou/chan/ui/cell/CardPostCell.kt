@@ -8,8 +8,6 @@ import android.view.View
 import android.widget.TextView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.constraintlayout.widget.ConstraintLayout
-import com.github.k1rakishou.ChanSettings
-import com.github.k1rakishou.ChanSettings.BoardPostViewMode
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.concurrency.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.image.ImageLoaderDeprecated
@@ -38,6 +36,9 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.core_themes.ThemeEngine.ThemeChangesListener
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
+import com.github.k1rakishou.v2.KurobaSettings
+import com.github.k1rakishou.v2.parameters.BoardPostViewMode
+import com.github.k1rakishou.v2.parameters.PostThumbnailScaling
 import dagger.Lazy
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
@@ -48,6 +49,8 @@ class CardPostCell : ConstraintLayout,
   PostCellInterface,
   ThemeChangesListener {
 
+  @Inject
+  lateinit var kurobaSettings: KurobaSettings
   @Inject
   lateinit var postFilterManagerLazy: Lazy<PostFilterManager>
   @Inject
@@ -125,7 +128,7 @@ class CardPostCell : ConstraintLayout,
       return false
     }
 
-    return ChanSettings.boardPostViewMode.get() == BoardPostViewMode.GRID
+    return kurobaSettings.application.boardPostViewMode.readBlocking() == BoardPostViewMode.Grid
       && postCellData.postCellCallback?.currentSpanCount() != 1
   }
 
@@ -346,7 +349,7 @@ class CardPostCell : ConstraintLayout,
 
     val firstPostImage = postCellData.firstImage
 
-    if (firstPostImage == null || ChanSettings.textOnly.get()) {
+    if (firstPostImage == null || kurobaSettings.application.textOnly.readBlocking()) {
       thumbView?.visibility = GONE
       thumbView?.unbindPostImage()
       return
@@ -362,7 +365,7 @@ class CardPostCell : ConstraintLayout,
       postImage = firstPostImage,
       canUseHighResCells = ColorizableGridRecyclerView.canUseHighResCells(callback!!.currentSpanCount()),
       thumbnailViewOptions = ThumbnailView.ThumbnailViewOptions(
-        postThumbnailScaling = ChanSettings.PostThumbnailScaling.CenterCrop,
+        postThumbnailScaling = PostThumbnailScaling.CenterCrop,
         drawThumbnailBackground = false,
         drawRipple = true
       )

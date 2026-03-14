@@ -150,9 +150,9 @@ class SavedPostsController(
     }
 
     controllerScope.launch {
-      toolbarState.search.listenForSearchQueryUpdates()
-        .onEach { entered ->
-          viewModel.updateSearchQuery(entered)
+      toolbarState.search.listenForSearchState()
+        .onEach { (_, query) ->
+          viewModel.updateSearchQuery(query)
           viewModel.updateQueryAndReload()
         }
         .collect()

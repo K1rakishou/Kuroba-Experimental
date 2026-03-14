@@ -11,6 +11,7 @@ import com.github.k1rakishou.model.data.post.ChanSavedReply
 import com.github.k1rakishou.model.repository.ChanSavedReplyRepository
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
 import com.github.k1rakishou.model.util.ChanPostUtils
+import com.github.k1rakishou.v2.KurobaSettings
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -21,7 +22,7 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
 class SavedReplyManager(
-  private val verboseLogsEnabled: Boolean,
+  private val kurobaSettings: KurobaSettings,
   private val chanThreadsCache: ChanThreadsCache,
   private val savedReplyRepository: ChanSavedReplyRepository
 ) {
@@ -35,7 +36,7 @@ class SavedReplyManager(
 
   init {
     chanThreadsCache.addChanThreadDeleteEventListener { threadDeleteEvent ->
-      if (verboseLogsEnabled) {
+      if (kurobaSettings.application.verboseLogs.readBlocking()) {
         Logger.d(TAG, "chanThreadsCache.chanThreadDeleteEventFlow() " +
           "threadDeleteEvent=${threadDeleteEvent.javaClass.simpleName}")
       }
@@ -51,13 +52,13 @@ class SavedReplyManager(
       return
     }
 
-    if (verboseLogsEnabled) {
+    if (kurobaSettings.application.verboseLogs.readBlocking()) {
       Logger.d(TAG, "preloadForThread($threadDescriptor) begin")
     }
 
     val time = measureTime { preloadForThreadInternal(threadDescriptor) }
 
-    if (verboseLogsEnabled) {
+    if (kurobaSettings.application.verboseLogs.readBlocking()) {
       Logger.d(TAG, "preloadForThread($threadDescriptor) end, took $time")
     }
   }

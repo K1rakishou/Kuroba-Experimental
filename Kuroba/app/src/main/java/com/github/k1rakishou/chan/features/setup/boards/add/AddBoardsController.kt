@@ -65,7 +65,7 @@ class AddBoardsController(
   context: Context,
   siteDescriptor: SiteDescriptor,
   private val refreshBoardsFunc: () -> Unit
-) : BaseComposeController<AddBoardsControllerViewModel, AddBoardsControllerParams>(
+) : BaseComposeController<AddBoardsControllerViewModel, AddBoardsControllerParams, Nothing>(
   context = context,
   viewModelClass = AddBoardsControllerViewModel::class.java,
   viewModelParams = AddBoardsControllerParams(siteDescriptor)
@@ -74,7 +74,7 @@ class AddBoardsController(
     get() = ViewModelScope.ControllerScope(this)
 
   override val layoutAnchor: SnackbarScope.LayoutAnchor
-    get() = SnackbarScope.LayoutAnchor.Catalog
+    get() = SnackbarScope.LayoutAnchor.Left
 
   override fun injectControllerDependencies(component: ControllerComponent) {
     component.inject(this)
@@ -207,7 +207,7 @@ class AddBoardsController(
                       KurobaComposeMessage(
                         modifier = Modifier.fillParentMaxSize(),
                         message = stringResource(
-                          R.string.add_boards_controller_nothing_found_by_query,
+                          R.string.search_nothing_found_with_query,
                           currentSearchQuery
                         )
                       )
@@ -261,7 +261,7 @@ class AddBoardsController(
             footer = { bottomPadding ->
               val toggleAllButton = ListScaffoldShared.Button(
                 text = stringResource(R.string.add_boards_controller_toggle_all),
-                fontSize = 18.ktu,
+                fontSize = 14.ktu,
                 enabled = !processing,
                 onClick = {
                   viewModel.toggleAll()
@@ -273,7 +273,7 @@ class AddBoardsController(
               } else {
                 ListScaffoldShared.Button(
                   text = stringResource(R.string.add_boards_controller_add_boards, checkedBoards.size),
-                  fontSize = 18.ktu,
+                  fontSize = 14.ktu,
                   enabled = !processing,
                   onClick = {
                     if (checkedBoards.size < maxDisplayedBoards) {

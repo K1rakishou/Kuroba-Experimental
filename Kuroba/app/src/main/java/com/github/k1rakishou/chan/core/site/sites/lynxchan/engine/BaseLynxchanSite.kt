@@ -6,7 +6,7 @@ import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.limitations.BoardDependantAttachablesCount
 import com.github.k1rakishou.chan.core.site.limitations.BoardDependantPostAttachablesMaxTotalSize
 import com.github.k1rakishou.chan.core.site.limitations.PostingLimitationConfig
-import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
+import com.github.k1rakishou.chan.core.site.settings.SiteSetting
 import com.github.k1rakishou.chan.core.site.settings.SiteSettingsForUi
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.model.data.board.LynxchanBoardMeta
@@ -30,7 +30,13 @@ abstract class BaseLynxchanSite(defaultDomain: String) : CommonSite(defaultDomai
   override val globalSearchType = SiteConfiguration.GlobalSearchType.SearchNotSupported
   override val boardsType = SiteConfiguration.BoardsType.Dynamic
   override val catalogType = SiteConfiguration.CatalogType.Dynamic
-  override val postParser by lazy { LynxchanPostParser(LynxchanCommentParser(), archivesManager) }
+  override val postParser by lazy {
+    LynxchanPostParser(
+      kurobaSettings = kurobaSettings,
+      archivesManager = archivesManager,
+      commentParser = LynxchanCommentParser(kurobaSettings)
+    )
+  }
   override val postingLimitationConfig by lazy {
     PostingLimitationConfig(
       postMaxAttachables = BoardDependantAttachablesCount(
@@ -61,17 +67,17 @@ abstract class BaseLynxchanSite(defaultDomain: String) : CommonSite(defaultDomai
   override val settingsForUi: SiteSettingsForUi by lazy {
     val settingsForUi = SiteSettingsForUi(super.settingsForUi)
 
-    settingsForUi += SiteSettingForUi.SiteCookieSetting(
+    settingsForUi += SiteSetting.SiteCookieSetting(
       settingName = "captchaIdCookie",
       settingDescription = getString(R.string.site_captcha_id_cookie_description),
       setting = settings.captchaIdCookie
     )
-    settingsForUi += SiteSettingForUi.SiteCookieSetting(
+    settingsForUi += SiteSetting.SiteCookieSetting(
       settingName = "bypassCookie",
       settingDescription = getString(R.string.site_block_bypass_cookie_description),
       setting = settings.bypassCookie
     )
-    settingsForUi += SiteSettingForUi.SiteCookieSetting(
+    settingsForUi += SiteSetting.SiteCookieSetting(
       settingName = "extraCookie",
       settingDescription = getString(R.string.site_proof_of_work_cookie_description),
       setting = settings.extraCookie
@@ -85,7 +91,7 @@ abstract class BaseLynxchanSite(defaultDomain: String) : CommonSite(defaultDomai
       || siteFeature == SiteConfiguration.SiteFeature.Posting
   }
 
-  override val settings by lazy { LynxchanSiteSettings(dependencies, prefs) }
+  override val settings by lazy { LynxchanSiteSettings(descriptor, dependencies) }
 
   open class BaseLynxchanUrlHandler(
     site: BaseLynxchanSite,

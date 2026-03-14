@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -43,6 +44,7 @@ import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_themes.resolveTextColor
 import kotlinx.coroutines.delay
 import javax.inject.Inject
 
@@ -147,6 +149,15 @@ class WebViewTaskController(
     Column(
       modifier = Modifier
         .size(webViewSize)
+        .pointerInteropFilter(
+          onTouchEvent = {
+            if (!webViewTask.performingAutoClick && currentlyInvisible.value) {
+              currentlyInvisible.value = false
+            }
+
+            return@pointerInteropFilter false
+          }
+        )
         .padding(horizontal = 16.dp, vertical = 8.dp)
         .drawWithContent {
           drawContent()
@@ -168,11 +179,15 @@ class WebViewTaskController(
         verticalAlignment = Alignment.CenterVertically
       ) {
         if (webViewTask.headerTitleText.isNotNullNorBlank()) {
+          Spacer(modifier = Modifier.size(8.dp))
+
           KurobaComposeText(
             text = webViewTask.headerTitleText,
             fontSize = 16.ktu,
-            color = Color.White
+            color = chanTheme.backColorSecondaryCompose.resolveTextColor()
           )
+
+          Spacer(modifier = Modifier.size(8.dp))
         }
 
         Spacer(modifier = Modifier.weight(1f))

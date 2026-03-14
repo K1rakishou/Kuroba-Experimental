@@ -7,8 +7,7 @@ import android.util.AttributeSet
 import android.view.Surface
 import android.view.TextureView
 import android.view.WindowManager
-import com.github.k1rakishou.ChanSettings
-import com.github.k1rakishou.MpvSettings
+import com.github.k1rakishou.chan.core.mpv.MPVLib.mpvFormat.MPV_FORMAT_DOUBLE
 import com.github.k1rakishou.chan.core.mpv.MPVLib.mpvFormat.MPV_FORMAT_FLAG
 import com.github.k1rakishou.chan.core.mpv.MPVLib.mpvFormat.MPV_FORMAT_INT64
 import com.github.k1rakishou.chan.core.mpv.MPVLib.mpvFormat.MPV_FORMAT_NONE
@@ -38,7 +37,14 @@ class MPVView(
     val initialized: Boolean
         get() = _initialized
 
-    fun create(applicationContext: Context, appConstants: AppConstants) {
+    fun create(
+        applicationContext: Context,
+        appConstants: AppConstants,
+        hardwareDecoding: Boolean,
+        videoFastCode: Boolean,
+        gpuNext: Boolean,
+        mpvUseConfigFile: Boolean
+    ) {
         if (!MPVLib.librariesAreLoaded()) {
             Logger.d(TAG, "create() librariesAreLoaded: false")
             _initialized = false
@@ -52,11 +58,11 @@ class MPVView(
         Logger.d(TAG, "create()")
 
         MPVLib.mpvCreate(applicationContext)
-        setupMpvConf(applicationContext)
+        setupMpvConf(applicationContext, mpvUseConfigFile)
 
         // hwdec
-        val hwdec = if (MpvSettings.hardwareDecoding.get()) {
-            "mediacodec-copy"
+        val hwdec = if (hardwareDecoding) {
+            "mediacodec,mediacodec-copy"
         } else {
             "no"
         }
@@ -78,11 +84,10 @@ class MPVView(
 
         MPVLib.mpvSetOptionString("video-sync", "audio")
         MPVLib.mpvSetOptionString("interpolation", "no")
-
-        reloadFastVideoDecodeOption()
-
-        MPVLib.mpvSetOptionString("vo", "gpu")
+        reloadFastVideoDecodeOption(videoFastCode)
+        MPVLib.mpvSetOptionString("profile", "fast")
         MPVLib.mpvSetOptionString("gpu-context", "android")
+        reloadUseGpuNext(gpuNext)
         MPVLib.mpvSetOptionString("hwdec", hwdec)
         MPVLib.mpvSetOptionString("hwdec-codecs", "h264,hevc,mpeg4,mpeg2video,vp8,vp9,av1")
         MPVLib.mpvSetOptionString("ao", "audiotrack,opensles")
@@ -109,14 +114,17 @@ class MPVView(
         _initialized = true
     }
 
-    private fun setupMpvConf(applicationContext: Context) {
-        if (!ChanSettings.mpvUseConfigFile.get()) {
+    private fun setupMpvConf(
+        applicationContext: Context,
+        mpvUseConfigFile: Boolean
+    ) {
+        if (!mpvUseConfigFile) {
             MPVLib.mpvSetPropertyString("config", "no")
             return
         }
 
-        val mpvconfDir = File(applicationContext.filesDir, MPV_CONF_DIR)
-        val mpvconfFile = File(mpvconfDir, MPV_CONF_FILE)
+        val mpvconfDir = File(applicationContext.filesDir, AppConstants.MPV_CONF_DIR)
+        val mpvconfFile = File(mpvconfDir, AppConstants.MPV_CONF_FILE)
 
         if (!mpvconfFile.exists() || mpvconfFile.length() <= 0) {
             Logger.d(TAG, "initOptions() mpv.conf doesn't exist or empty")
@@ -152,13 +160,13 @@ class MPVView(
         _initialized = false
     }
 
-    fun reloadFastVideoDecodeOption() {
+    fun reloadFastVideoDecodeOption(videoFastCode: Boolean) {
         if (!MPVLib.librariesAreLoaded()) {
             Logger.d(TAG, "reloadFastVideoDecodeOption() librariesAreLoaded: false")
             return
         }
 
-        if (MpvSettings.videoFastCode.get()) {
+        if (videoFastCode) {
             Logger.d(TAG, "initOptions() videoFastCode: true")
 
             MPVLib.mpvSetOptionString("vd-lavc-fast", "yes")
@@ -171,7 +179,11 @@ class MPVView(
         }
     }
 
-    fun playFile(filePath: String) {
+    fun reloadUseGpuNext(gpuNext: Boolean) {
+        MPVLib.mpvSetOptionString("vo", if (gpuNext) "gpu-next" else "gpu")
+    }
+
+    fun playFile(filePath: String, videoAutoLoop: Boolean) {
         if (!MPVLib.librariesAreLoaded()) {
             Logger.d(TAG, "playFile() librariesAreLoaded: false")
             return
@@ -184,7 +196,7 @@ class MPVView(
             MPVLib.mpvCommand(arrayOf("loadfile", filePath))
         }
 
-        if (ChanSettings.videoAutoLoop.get()) {
+        if (videoAutoLoop) {
             MPVLib.mpvSetOptionString("loop-file", "inf")
         } else {
             MPVLib.mpvSetOptionString("loop-file", "no")
@@ -197,7 +209,7 @@ class MPVView(
         val p = arrayOf(
             Property("time-pos", MPV_FORMAT_INT64),
             Property("demuxer-cache-duration", MPV_FORMAT_INT64),
-            Property("duration", MPV_FORMAT_INT64),
+            Property("duration/full", MPV_FORMAT_DOUBLE),
             Property("pause", MPV_FORMAT_FLAG),
             Property("audio", MPV_FORMAT_FLAG),
             Property("mute", MPV_FORMAT_STRING),
@@ -229,9 +241,9 @@ class MPVView(
     val demuxerCacheDuration: Int?
         get() = MPVLib.mpvGetPropertyInt("demuxer-cache-duration")
 
-    var timePos: Int?
-        get() = MPVLib.mpvGetPropertyInt("time-pos")
-        set(progress) = MPVLib.mpvSetPropertyInt("time-pos", progress!!)
+    var timePos: Double?
+        get() = MPVLib.mpvGetPropertyDouble("time-pos/full")
+        set(progress) = MPVLib.mpvCommand(arrayOf("seek", "$progress", "absolute+keyframes"))
 
     val hwdecActive: Boolean
         get() = (MPVLib.mpvGetPropertyString("hwdec-current") ?: "no") != "no"
@@ -359,8 +371,5 @@ class MPVView(
 
     companion object {
         private const val TAG = "MPVView"
-
-        const val MPV_CONF_DIR = "mpvconf"
-        const val MPV_CONF_FILE = "mpv.conf"
     }
 }

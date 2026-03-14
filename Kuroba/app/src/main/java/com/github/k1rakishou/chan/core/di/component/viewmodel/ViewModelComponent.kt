@@ -15,6 +15,7 @@ import com.github.k1rakishou.chan.features.posts.SavedPostsViewModel
 import com.github.k1rakishou.chan.features.reply.ReplyLayoutViewModel
 import com.github.k1rakishou.chan.features.report.posts.Chan4ReportPostControllerViewModel
 import com.github.k1rakishou.chan.features.search.remotemedia.ImageSearchControllerViewModel
+import com.github.k1rakishou.chan.features.settings.AppSettingsControllerViewModel
 import com.github.k1rakishou.chan.features.setup.boards.add.AddBoardsControllerViewModel
 import com.github.k1rakishou.chan.features.setup.boards.composing.ComposeBoardsControllerViewModel
 import com.github.k1rakishou.chan.features.setup.boards.composing.ComposeBoardsSelectorControllerViewModel
@@ -55,6 +56,7 @@ abstract class ViewModelComponent {
   abstract fun inject(addBoardsControllerViewModel: AddBoardsControllerViewModel)
   abstract fun inject(boardsReorderControllerViewModel: BoardsReorderControllerViewModel)
   abstract fun inject(boardSelectionControllerViewModel: BoardSelectionControllerViewModel)
+  abstract fun inject(appSettingsControllerViewModel: AppSettingsControllerViewModel)
 
   @Subcomponent.Builder
   interface Builder {

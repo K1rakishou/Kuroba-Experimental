@@ -15,7 +15,7 @@ sealed interface KurobaToolbarTransition {
     val progress: Float
   ) : KurobaToolbarTransition
 
-  data class Instant(
+  data class Animated(
     override val transitionMode: TransitionMode,
     override val transitionToolbarState: KurobaToolbarSubState,
   ) : KurobaToolbarTransition

@@ -1,13 +1,13 @@
 package com.github.k1rakishou.model.source.local
 
-import com.github.k1rakishou.model.KurobaDatabase
+import com.github.k1rakishou.model.KurobaMainDatabase
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.site.ChanSiteData
 import com.github.k1rakishou.model.mapper.ChanSiteMapper
 import com.github.k1rakishou.model.source.cache.ChanDescriptorCache
 
 class SiteLocalSource(
-  database: KurobaDatabase,
+  database: KurobaMainDatabase,
   private val isDevFlavor: Boolean,
   private val chanDescriptorCache: ChanDescriptorCache
 ) : AbstractLocalSource(database) {

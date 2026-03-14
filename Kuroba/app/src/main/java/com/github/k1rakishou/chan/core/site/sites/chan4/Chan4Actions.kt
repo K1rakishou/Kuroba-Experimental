@@ -25,7 +25,7 @@ import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
-import com.github.k1rakishou.persist_state.ReplyMode
+import com.github.k1rakishou.v2.parameters.ReplyMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -130,8 +130,8 @@ class Chan4Actions(
   override suspend fun <T : AbstractLoginRequest> login(loginRequest: T): SiteActions.LoginResult {
     val chan4LoginRequest = loginRequest as Chan4LoginRequest
 
-    chan4Settings.passUser.set(chan4LoginRequest.user)
-    chan4Settings.passPass.set(chan4LoginRequest.pass)
+    chan4Settings.passToken.write(chan4LoginRequest.user)
+    chan4Settings.passPin.write(chan4LoginRequest.pass)
 
     val loginResult = chan4.httpCallManager.makeHttpCall(
       Chan4PassHttpCall(chan4, chan4LoginRequest)
@@ -143,7 +143,7 @@ class Chan4Actions(
 
         return when (loginResponse) {
           is Chan4LoginResponse.Success -> {
-            chan4Settings.passToken.set(loginResponse.authCookie)
+            chan4Settings.passId.write(loginResponse.authCookie ?: "")
             SiteActions.LoginResult.LoginComplete(loginResponse)
           }
           is Chan4LoginResponse.Failure -> {
@@ -159,27 +159,25 @@ class Chan4Actions(
 
   @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
   override fun postAuthenticate(): SiteAuthentication {
-    return when (chan4Settings.captchaType.get()) {
-      CaptchaType.V2JS -> SiteAuthentication.fromCaptcha2(CAPTCHA_KEY, "https://boards.4chan.org")
-      CaptchaType.V2NOJS -> SiteAuthentication.fromCaptcha2nojs(CAPTCHA_KEY, "https://boards.4chan.org")
+    return when (chan4Settings.captchaType.readBlocking()) {
       CaptchaType.CHAN4_CAPTCHA -> SiteAuthentication.endpointBased()
     }
   }
 
   override fun logout() {
-    chan4Settings.passToken.remove()
-    chan4Settings.passUser.remove()
-    chan4Settings.passPass.remove()
+    chan4Settings.passId.resetBlocking()
+    chan4Settings.passToken.resetBlocking()
+    chan4Settings.passPin.resetBlocking()
   }
 
   override fun isLoggedIn(): Boolean {
-    return chan4Settings.passToken.get().isNotEmpty()
+    return chan4Settings.passId.readBlocking().isNotEmpty()
   }
 
   override fun loginDetails(): Chan4LoginRequest {
     return Chan4LoginRequest(
-      user = chan4Settings.passUser.get(),
-      pass = chan4Settings.passPass.get()
+      user = chan4Settings.passToken.readBlocking(),
+      pass = chan4Settings.passPin.readBlocking()
     )
   }
 
@@ -251,10 +249,10 @@ class Chan4Actions(
   }
 
   override fun clearPostingCookies() {
-    chan4Settings.captchaCookie.setSync("")
-    chan4.commonSettings.cloudFlareClearanceCookieMap.clear(sync = true)
-    chan4Settings.captchaSettings.update(sync = true) { chan4CaptchaSetting ->
-      chan4CaptchaSetting.copy(captchaTicket = null)
+    chan4Settings.captchaCookie.readBlocking()
+    chan4.commonSettings.cloudFlareClearanceCookieMap.resetBlocking()
+    chan4Settings.captchaSettings.updateBlocking { captchaSettings ->
+      captchaSettings.copy(captchaTicket = null)
     }
   }
 
@@ -271,9 +269,5 @@ class Chan4Actions(
     }
 
     return addQueryParameter("b", boardCode)
-  }
-
-  companion object {
-    private const val CAPTCHA_KEY = "6Ldp2bsSAAAAAAJ5uyx_lx34lJeEpTLVkP5k04qc"
   }
 }

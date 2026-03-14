@@ -4,7 +4,6 @@ import android.content.Context
 import android.net.Uri
 import android.util.AttributeSet
 import androidx.annotation.CallSuper
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
@@ -43,6 +42,8 @@ import com.github.k1rakishou.fsaf.file.ExternalFile
 import com.github.k1rakishou.fsaf.file.RawFile
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.v2.KurobaSettings
+import com.github.k1rakishou.v2.parameters.ImageGestureActionType
 import com.google.android.exoplayer2.upstream.DataSource
 import dagger.Lazy
 import kotlinx.coroutines.CompletableDeferred
@@ -57,6 +58,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   context: Context,
   attributeSet: AttributeSet?,
   protected val mediaViewContract: MediaViewContract,
+  protected val kurobaSettings: KurobaSettings,
   private val cachedHttpDataSourceFactory: DataSource.Factory,
   private val fileDataSourceFactory: DataSource.Factory,
   private val contentDataSourceFactory: DataSource.Factory,
@@ -109,9 +111,6 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
 
   protected val scope = KurobaCoroutineScope()
 
-  protected val pauseInBg: Boolean
-    get() = ChanSettings.mediaViewerPausePlayersWhenInBackground.get()
-
   protected val audioPlayerView: AudioPlayerView? by lazy {
     return@lazy findViewById<AudioPlayerView>(R.id.audio_player_view)
   }
@@ -142,7 +141,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   }
 
   fun onUpdateTransparency() {
-    val backgroundColor = if (ChanSettings.transparencyOn.get()) {
+    val backgroundColor = if (kurobaSettings.application.transparencyOn.readBlocking()) {
       null
     } else {
       chanPostBackgroundColorStorage.getBackgroundColor(
@@ -173,6 +172,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
       audioPlayerView?.bind(
         audioPlayerCallbacks = this,
         viewableMedia = viewableMedia,
+        kurobaSettings = kurobaSettings,
         cacheHandler = cacheHandler.get(),
         audioPlayerViewState = mediaViewState.audioPlayerViewState,
         mediaViewContract = mediaViewContract,
@@ -318,13 +318,13 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
 
   protected fun createGestureAction(isTopGesture: Boolean): CloseMediaActionHelper.GestureInfo? {
     val gestureSetting = if (isTopGesture) {
-      ChanSettings.mediaViewerTopGestureAction.get()
+      kurobaSettings.application.mediaViewerTopGestureAction.readBlocking()
     } else {
-      ChanSettings.mediaViewerBottomGestureAction.get()
+      kurobaSettings.application.mediaViewerBottomGestureAction.readBlocking()
     }
 
     when (gestureSetting) {
-      ChanSettings.ImageGestureActionType.SaveImage -> {
+      ImageGestureActionType.SaveImage -> {
         return CloseMediaActionHelper.GestureInfo(
           gestureLabelText = AppModuleAndroidUtils.getString(R.string.download),
           isClosingMediaViewerGesture = false,
@@ -338,7 +338,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
           }
         )
       }
-      ChanSettings.ImageGestureActionType.CloseImage -> {
+      ImageGestureActionType.CloseImage -> {
         return CloseMediaActionHelper.GestureInfo(
           gestureLabelText = AppModuleAndroidUtils.getString(R.string.close),
           isClosingMediaViewerGesture = true,
@@ -346,7 +346,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
           gestureCanBeExecuted = { gestureCanBeExecuted(gestureSetting) }
         )
       }
-      ChanSettings.ImageGestureActionType.OpenAlbum -> {
+      ImageGestureActionType.OpenAlbum -> {
         return CloseMediaActionHelper.GestureInfo(
           gestureLabelText = AppModuleAndroidUtils.getString(R.string.media_viewer_open_album_action),
           isClosingMediaViewerGesture = true,
@@ -367,7 +367,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
           }
         )
       }
-      ChanSettings.ImageGestureActionType.Disabled -> {
+      ImageGestureActionType.Disabled -> {
         return null
       }
       null -> return null
@@ -466,6 +466,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     }
 
     return MediaViewerControllerViewModel.canAutoLoad(
+      kurobaSettings = kurobaSettings,
       cacheHandler = cacheHandler.get(),
       viewableMedia = viewableMedia,
       cacheFileType = cacheFileType
@@ -488,7 +489,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     }
   }
 
-  open fun gestureCanBeExecuted(imageGestureActionType: ChanSettings.ImageGestureActionType): Boolean {
+  open fun gestureCanBeExecuted(imageGestureActionType: ImageGestureActionType): Boolean {
     return true
   }
 

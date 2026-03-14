@@ -33,7 +33,7 @@ import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.callback.FSAFActivityCallbacks
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
-import com.github.k1rakishou.persist_state.PersistableChanState
+import com.github.k1rakishou.v2.KurobaSettings
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -47,6 +47,8 @@ class MediaViewerActivity :
   ThemeEngine.ThemeChangesListener,
   FSAFActivityCallbacks {
 
+  @Inject
+  lateinit var kurobaSettings: KurobaSettings
   @Inject
   lateinit var themeEngine: ThemeEngine
   @Inject
@@ -189,7 +191,7 @@ class MediaViewerActivity :
   }
 
   override fun isImmersiveModeEnabled(): Boolean {
-    return PersistableChanState.imageViewerImmersiveModeEnabled.get()
+    return kurobaSettings.internal.imageViewerImmersiveModeEnabled.readBlocking()
   }
 
   override fun toggleFullScreenMode() {
@@ -237,7 +239,7 @@ class MediaViewerActivity :
   }
 
   private fun toggleImmersiveMode() {
-    PersistableChanState.imageViewerImmersiveModeEnabled.toggle()
+    kurobaSettings.internal.imageViewerImmersiveModeEnabled.toggleBlocking()
   }
 
   private suspend fun handleNewIntent(isNotActivityRecreation: Boolean, intent: Intent?): Boolean {

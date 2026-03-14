@@ -5,9 +5,8 @@ import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.SpannedString
 import android.text.TextUtils
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRule
-import com.github.k1rakishou.chan.core.site.parser.style.StyleRulesParamsBuilder
+import com.github.k1rakishou.chan.core.site.parser.style.StyleRulesParams
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_parser.comment.HtmlNode
@@ -15,10 +14,13 @@ import com.github.k1rakishou.core_parser.comment.HtmlParser
 import com.github.k1rakishou.core_parser.comment.HtmlTag
 import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.core_themes.ChanThemeColorId
+import com.github.k1rakishou.v2.KurobaSettings
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.getOrSet
 
-open class SimpleCommentParser {
+open class SimpleCommentParser(
+  private val kurobaSettings: KurobaSettings
+) {
   private val rules = ConcurrentHashMap<String, MutableList<StyleRule>>()
   private val htmlParserThreadLocal = ThreadLocal<HtmlParser>()
 
@@ -118,18 +120,21 @@ open class SimpleCommentParser {
   ): CharSequence? {
     val rules = rules[tag]
       ?: return text
-    val forceHttpsScheme = ChanSettings.forceHttpsUrlScheme.get()
+    val revealTextSpoilers = kurobaSettings.application.revealTextSpoilers.readBlocking()
 
     for (i in 0..1) {
       val highPriority = i == 0
 
       for (rule in rules) {
         if (rule.highPriority() == highPriority && rule.applies(htmlTag)) {
-          val params = StyleRulesParamsBuilder()
-            .withText(text)
-            .withHtmlTag(htmlTag)
-            .forceHttpsScheme(forceHttpsScheme)
-            .build()
+          val params = StyleRulesParams(
+            text = text,
+            htmlTag = htmlTag,
+            callback = null,
+            post = null,
+            forceHttpsScheme = true,
+            revealTextSpoilers = revealTextSpoilers
+          )
 
           return rule.apply(params)
         }

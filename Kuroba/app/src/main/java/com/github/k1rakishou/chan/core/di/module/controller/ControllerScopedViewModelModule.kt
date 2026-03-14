@@ -5,6 +5,7 @@ import com.github.k1rakishou.chan.core.di.key.ViewModelKey
 import com.github.k1rakishou.chan.core.di.module.shared.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.di.scope.PerController
 import com.github.k1rakishou.chan.features.album.AlbumViewControllerViewModel
+import com.github.k1rakishou.chan.features.settings.AppSettingsControllerViewModel
 import com.github.k1rakishou.chan.features.setup.boards.add.AddBoardsControllerViewModel
 import com.github.k1rakishou.chan.features.setup.boards.reorder.BoardsReorderControllerViewModel
 import com.github.k1rakishou.chan.features.setup.boards.selection.BoardSelectionControllerViewModel
@@ -45,6 +46,14 @@ abstract class ControllerScopedViewModelModule {
   @PerController
   abstract fun bindBoardSelectionControllerViewModel(
     impl: BoardSelectionControllerViewModel.ViewModelFactory
+  ): ViewModelAssistedFactory<out ViewModel>
+
+  @IntoMap
+  @ViewModelKey(AppSettingsControllerViewModel::class)
+  @Binds
+  @PerController
+  abstract fun bindMainSettingsControllerViewModel(
+    impl: AppSettingsControllerViewModel.ViewModelFactory
   ): ViewModelAssistedFactory<out ViewModel>
 
 }

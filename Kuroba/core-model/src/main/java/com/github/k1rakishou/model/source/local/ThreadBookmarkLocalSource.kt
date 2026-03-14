@@ -5,7 +5,7 @@ import com.github.k1rakishou.common.mapReverseIndexedNotNull
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.model.KurobaDatabase
+import com.github.k1rakishou.model.KurobaMainDatabase
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmark
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.id.ThreadBookmarkDBId
@@ -17,7 +17,7 @@ import com.github.k1rakishou.model.source.cache.ChanDescriptorCache
 import com.github.k1rakishou.model.source.cache.ThreadBookmarkCache
 
 class ThreadBookmarkLocalSource(
-  database: KurobaDatabase,
+  database: KurobaMainDatabase,
   private val isDevFlavor: Boolean,
   private val chanDescriptorCache: ChanDescriptorCache,
   private val threadBookmarkCache: ThreadBookmarkCache
@@ -82,7 +82,7 @@ class ThreadBookmarkLocalSource(
     ).map { (_, threadBookmarkId) -> threadBookmarkId.id }.toSet()
 
     threadBookmarkIdSet
-      .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+      .chunked(KurobaMainDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
       .forEach { batch -> threadBookmarkDao.deleteMany(batch) }
 
     threadBookmarkCache.deleteMany(toDelete)

@@ -20,13 +20,12 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.helper.PinHelper
+import com.github.k1rakishou.chan.utils.appDependencies
 import com.github.k1rakishou.core_themes.ThemeEngine
-import kotlinx.coroutines.reactive.asFlow
 
 sealed class MenuItemBadge {
   data object Dot : MenuItemBadge()
@@ -41,6 +40,7 @@ sealed class MenuItemBadge {
 fun BoxScope.BottomPanelBadge(menuItemBadge: MenuItemBadge) {
   val chanTheme = LocalChanTheme.current
   val configuration = LocalConfiguration.current
+  val kurobaSettings = appDependencies().kurobaSettings
 
   when (menuItemBadge) {
     MenuItemBadge.Dot -> {
@@ -58,10 +58,7 @@ fun BoxScope.BottomPanelBadge(menuItemBadge: MenuItemBadge) {
         label = "Menu item badge counter animation"
       )
       val highlight = menuItemBadge.highlight
-
-      val watchEnabled by ChanSettings.watchEnabled.listenForChangesDeprecated()
-        .asFlow()
-        .collectAsState(initial = false)
+      val watchEnabled by kurobaSettings.application.watchEnabled.listen().collectAsState(initial = false)
 
       val backgroundColor = if (!watchEnabled) {
         chanTheme.bookmarkCounterNotWatchingColorCompose

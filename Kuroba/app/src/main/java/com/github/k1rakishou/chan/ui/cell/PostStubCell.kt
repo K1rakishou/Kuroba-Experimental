@@ -22,7 +22,6 @@ import android.view.View
 import android.widget.TextView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.constraintlayout.widget.ConstraintLayout
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableDivider
@@ -34,6 +33,7 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.core_themes.ThemeEngine.ThemeChangesListener
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
+import com.github.k1rakishou.v2.parameters.BoardPostViewMode
 import javax.inject.Inject
 
 class PostStubCell : ConstraintLayout, PostCellInterface, View.OnClickListener, ThemeChangesListener {
@@ -141,7 +141,7 @@ class PostStubCell : ConstraintLayout, PostCellInterface, View.OnClickListener, 
 
     val textSizeSp = postCellData.textSizeSp
     title.textSize = textSizeSp.toFloat()
-    title.isSingleLine = postCellData.boardPostViewMode == ChanSettings.BoardPostViewMode.LIST
+    title.isSingleLine = postCellData.boardPostViewMode == BoardPostViewMode.List
 
     val leftPadding = if (postCellData.isViewingCatalog) {
       PostCellLayout.horizPaddingPx + postAttentionLabelPaddings
@@ -188,8 +188,8 @@ class PostStubCell : ConstraintLayout, PostCellInterface, View.OnClickListener, 
 
     title.setText(postCellData.postTitleStub, TextView.BufferType.SPANNABLE)
 
-    val isGridOrStagger = (postCellData.boardPostViewMode === ChanSettings.BoardPostViewMode.GRID
-      || postCellData.boardPostViewMode === ChanSettings.BoardPostViewMode.STAGGER)
+    val isGridOrStagger = (postCellData.boardPostViewMode === BoardPostViewMode.Grid
+      || postCellData.boardPostViewMode === BoardPostViewMode.Stagger)
 
     divider.visibility = if (isGridOrStagger) {
       GONE

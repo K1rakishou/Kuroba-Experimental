@@ -11,7 +11,6 @@ import android.view.View
 import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.ProgressBar
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.features.view.media.MediaLocation
@@ -34,6 +33,7 @@ import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.findChild
 import com.github.k1rakishou.common.isExceptionImportant
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.v2.KurobaSettings
 import com.google.android.exoplayer2.upstream.DataSource
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
@@ -45,6 +45,7 @@ class ExoPlayerVideoMediaView(
   context: Context,
   initialMediaViewState: VideoMediaViewState,
   mediaViewContract: MediaViewContract,
+  kurobaSettings: KurobaSettings,
   private val viewModel: MediaViewerControllerViewModel,
   private val cachedHttpDataSourceFactory: DataSource.Factory,
   private val fileDataSourceFactory: DataSource.Factory,
@@ -59,6 +60,7 @@ class ExoPlayerVideoMediaView(
     context = context,
     attributeSet = null,
     mediaViewContract = mediaViewContract,
+    kurobaSettings = kurobaSettings,
     mediaViewState = initialMediaViewState,
     cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
     fileDataSourceFactory = fileDataSourceFactory,
@@ -74,6 +76,7 @@ class ExoPlayerVideoMediaView(
   private val mainVideoPlayer by lazy {
     ExoPlayerWrapper(
       context = context,
+      kurobaSettings = kurobaSettings,
       threadDownloadManager = threadDownloadManager,
       cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
       fileDataSourceFactory = fileDataSourceFactory,
@@ -305,7 +308,11 @@ class ExoPlayerVideoMediaView(
       mediaViewState.playing = mainVideoPlayer.isPlaying()
     }
 
-    val needPause = mainVideoPlayer.isPlaying() && ((isPausing && pauseInBg) || isBecomingInactive)
+    fun pauseInBg(): Boolean {
+      return kurobaSettings.application.mediaViewerPausePlayersWhenInBackground.readBlocking()
+    }
+
+    val needPause = mainVideoPlayer.isPlaying() && ((isPausing && pauseInBg()) || isBecomingInactive)
     if (needPause) {
       mainVideoPlayer.pause()
     }
@@ -468,7 +475,7 @@ class ExoPlayerVideoMediaView(
   private suspend fun switchToPlayerViewAndStartPlaying(isLifecycleChange: Boolean) {
     actualVideoPlayerView.setVisibilityFast(VISIBLE)
 
-    if (!isLifecycleChange && ChanSettings.videoAlwaysResetToStart.get()) {
+    if (!isLifecycleChange && kurobaSettings.application.videoAlwaysResetToStart.read()) {
       mediaViewState.resetPosition()
       mainVideoPlayer.resetPosition()
     }

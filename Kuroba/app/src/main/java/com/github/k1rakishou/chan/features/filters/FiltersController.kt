@@ -102,7 +102,7 @@ import javax.inject.Inject
 
 class FiltersController(
   context: Context,
-  private val chanFilterMutable: ChanFilterMutable?
+  private val chanFilterMutable: ChanFilterMutable? = null
 ) : Controller(context) {
 
   @Inject
@@ -442,7 +442,7 @@ class FiltersController(
                   .wrapContentWidth()
                   .wrapContentHeight()
                   .padding(all = 4.dp),
-                initiallyChecked = chanFilter.enabled,
+                checked = chanFilter.enabled,
                 onCheckedChange = { nowChecked ->
                   if (isDragging) {
                     return@KurobaComposeSwitch

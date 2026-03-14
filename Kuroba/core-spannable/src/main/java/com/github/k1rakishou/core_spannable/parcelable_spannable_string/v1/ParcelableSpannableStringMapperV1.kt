@@ -171,7 +171,8 @@ internal object ParcelableSpannableStringMapperV1 : ParcelableStringMapper {
   }
 
   override fun fromParcelableSpannableString(
-    parcelableSpannableString: ParcelableSpannableString?
+    parcelableSpannableString: ParcelableSpannableString?,
+    revealTextSpoilers: Boolean
   ): CharSequence {
     if (parcelableSpannableString == null || parcelableSpannableString.text.isEmpty()) {
       return ""
@@ -250,7 +251,10 @@ internal object ParcelableSpannableStringMapperV1 : ParcelableStringMapper {
           )
         }
         ParcelableSpanType.PostLinkable -> {
-          val postLinkable = extractPostLinkableSpan((parcelableSpan as ParcelableSpan.PostLinkable))
+          val postLinkable = extractPostLinkableSpan(
+            parcelableSpan = (parcelableSpan as ParcelableSpan.PostLinkable),
+            revealTextSpoilers = revealTextSpoilers
+          )
           if (postLinkable == null) {
             continue
           }
@@ -432,7 +436,10 @@ internal object ParcelableSpannableStringMapperV1 : ParcelableStringMapper {
     )
   }
 
-  private fun extractPostLinkableSpan(parcelableSpan: ParcelableSpan.PostLinkable): PostLinkable? {
+  private fun extractPostLinkableSpan(
+    parcelableSpan: ParcelableSpan.PostLinkable,
+    revealTextSpoilers: Boolean
+  ): PostLinkable? {
     val postLinkableType = PostLinkableType.from(parcelableSpan.postLinkableTypeRaw)
     if (postLinkableType == null) {
       Log.e(TAG, "extractPostLinkableSpan() unknown postLinkableTypeRaw: ${parcelableSpan.postLinkableTypeRaw}")
@@ -462,7 +469,8 @@ internal object ParcelableSpannableStringMapperV1 : ParcelableStringMapper {
             postId = postLinkableValue.postNo,
             postSubId = postLinkableValue.postSubNo
           ),
-          type = PostLinkable.Type.ARCHIVE
+          type = PostLinkable.Type.ARCHIVE,
+          revealTextSpoilers = false,
         )
       }
       PostLinkableType.Quote -> {
@@ -476,7 +484,8 @@ internal object ParcelableSpannableStringMapperV1 : ParcelableStringMapper {
         return PostLinkable(
           key = key,
           linkableValue = linkableValue,
-          type = PostLinkable.Type.QUOTE
+          type = PostLinkable.Type.QUOTE,
+          revealTextSpoilers = false,
         )
       }
       PostLinkableType.Board -> {
@@ -487,7 +496,8 @@ internal object ParcelableSpannableStringMapperV1 : ParcelableStringMapper {
           linkableValue = PostLinkable.Value.StringValue(
             value = postLinkableValue.boardCode
           ),
-          type = PostLinkable.Type.BOARD
+          type = PostLinkable.Type.BOARD,
+          revealTextSpoilers = false,
         )
       }
       PostLinkableType.Link -> {
@@ -498,14 +508,16 @@ internal object ParcelableSpannableStringMapperV1 : ParcelableStringMapper {
           linkableValue = PostLinkable.Value.StringValue(
             value = postLinkableValue.link
           ),
-          type = PostLinkable.Type.LINK
+          type = PostLinkable.Type.LINK,
+          revealTextSpoilers = false,
         )
       }
       PostLinkableType.Spoiler -> {
         return PostLinkable(
           key = key,
           linkableValue = PostLinkable.Value.NoValue,
-          type = PostLinkable.Type.SPOILER
+          type = PostLinkable.Type.SPOILER,
+          revealTextSpoilers = revealTextSpoilers,
         )
       }
       PostLinkableType.Thread -> {
@@ -519,7 +531,8 @@ internal object ParcelableSpannableStringMapperV1 : ParcelableStringMapper {
             postId = postLinkableValue.postNo,
             postSubId = postLinkableValue.postSubNo
           ),
-          type = PostLinkable.Type.THREAD
+          type = PostLinkable.Type.THREAD,
+          revealTextSpoilers = false
         )
       }
       PostLinkableType.Search -> {
@@ -531,7 +544,8 @@ internal object ParcelableSpannableStringMapperV1 : ParcelableStringMapper {
             board = postLinkableValue.boardCode,
             query = postLinkableValue.searchQuery
           ),
-          type = PostLinkable.Type.SEARCH
+          type = PostLinkable.Type.SEARCH,
+          revealTextSpoilers = false
         )
       }
       PostLinkableType.Dead -> {
@@ -567,7 +581,8 @@ internal object ParcelableSpannableStringMapperV1 : ParcelableStringMapper {
         return PostLinkable(
           key = key,
           linkableValue = linkableValue,
-          type = PostLinkable.Type.DEAD
+          type = PostLinkable.Type.DEAD,
+          revealTextSpoilers = false
         )
       }
     }

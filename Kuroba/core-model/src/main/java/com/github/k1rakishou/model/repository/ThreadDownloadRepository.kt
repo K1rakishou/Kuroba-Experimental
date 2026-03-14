@@ -1,14 +1,14 @@
 package com.github.k1rakishou.model.repository
 
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.model.KurobaDatabase
+import com.github.k1rakishou.model.KurobaMainDatabase
 import com.github.k1rakishou.model.data.thread.ThreadDownload
 import com.github.k1rakishou.model.source.local.ThreadDownloadLocalSource
 import kotlinx.coroutines.CoroutineScope
 import kotlin.time.ExperimentalTime
 
 class ThreadDownloadRepository(
-  database: KurobaDatabase,
+  database: KurobaMainDatabase,
   applicationScope: CoroutineScope,
   private val localSource: ThreadDownloadLocalSource
 ) : AbstractRepository(database, applicationScope) {

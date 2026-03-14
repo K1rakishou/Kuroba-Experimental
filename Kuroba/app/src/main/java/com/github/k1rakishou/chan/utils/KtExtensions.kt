@@ -381,11 +381,14 @@ fun appDependencies(): ApplicationDependencies {
   return Chan.getComponent()
 }
 
+fun activityDependencies(context: Context): ActivityDependencies {
+  return (context as IHasActivityComponent).activityComponent
+}
+
 @Composable
 fun activityDependencies(): ActivityDependencies {
   val context = LocalContext.current
-
-  return (context as IHasActivityComponent).activityComponent
+  return activityDependencies(context)
 }
 
 @Composable

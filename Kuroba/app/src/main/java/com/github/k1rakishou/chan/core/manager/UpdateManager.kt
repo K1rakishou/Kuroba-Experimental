@@ -11,7 +11,6 @@ import android.os.StrictMode.VmPolicy
 import android.text.TextUtils
 import androidx.core.content.FileProvider
 import androidx.core.text.parseAsHtml
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.ControllerHostActivity
@@ -24,13 +23,12 @@ import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.net.update.UpdateApiRequest
 import com.github.k1rakishou.chan.core.net.update.UpdateApiRequest.ReleaseUpdateApiResponse
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper.PermissionRequiredDialogCallback
-import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
+import com.github.k1rakishou.chan.ui.settings.SettingNotification
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openIntent
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.chan.utils.BackgroundUtils.runOnMainThread
 import com.github.k1rakishou.chan.utils.NotificationConstants
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AndroidUtils.FlavorType
@@ -43,12 +41,8 @@ import com.github.k1rakishou.common.exhaustive
 import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.fsaf.FileChooser
-import com.github.k1rakishou.fsaf.FileManager
-import com.github.k1rakishou.fsaf.callback.FileCreateCallback
-import com.github.k1rakishou.persist_state.ApkUpdateInfo
-import com.github.k1rakishou.persist_state.ApkUpdateInfoJson
-import com.github.k1rakishou.persist_state.PersistableChanState
+import com.github.k1rakishou.v2.KurobaSettings
+import com.github.k1rakishou.v2.parameters.ApkUpdateInfoJson
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -56,6 +50,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
@@ -73,11 +68,10 @@ import kotlin.coroutines.CoroutineContext
  */ 
 class UpdateManager(
   private val context: Context,
+  private val kurobaSettings: KurobaSettings,
   private val cacheHandler: Lazy<CacheHandler>,
-  private val fileManager: Lazy<FileManager>,
   private val settingsNotificationManager: SettingsNotificationManager,
   private val kurobaSystemNotifications: KurobaSystemNotifications,
-  private val fileChooser: Lazy<FileChooser>,
   private val proxiedOkHttpClient: Lazy<ProxiedOkHttpClient>,
   private val dialogFactory: Lazy<DialogFactory>
 ) : CoroutineScope {
@@ -96,7 +90,7 @@ class UpdateManager(
   /**
    * Runs every time onCreate is called on the StartActivity.
    */
-  fun autoUpdateCheck() {
+  suspend fun autoUpdateCheck() {
     BackgroundUtils.ensureMainThread()
     Logger.d(TAG, "autoUpdateCheck()")
 
@@ -154,14 +148,14 @@ class UpdateManager(
   private suspend fun runUpdateApi(manual: Boolean) {
     Logger.d(TAG, "runUpdateApi() manual=$manual")
 
-    if (PersistableChanState.hasNewApkUpdate.get()) {
+    if (kurobaSettings.internal.hasNewApkUpdate.read()) {
       // If we noticed that there was an apk update on the previous check - show the
       // notification
       notifyNewApkUpdate(responseRelease = null)
     }
 
     if (!manual) {
-      val lastUpdateTime = PersistableChanState.updateCheckTime.get()
+      val lastUpdateTime = kurobaSettings.internal.updateCheckTime.read()
       val interval = TimeUnit.DAYS.toMillis(BuildConfig.UPDATE_DELAY.toLong())
       val now = System.currentTimeMillis()
       val delta = lastUpdateTime + interval - now
@@ -170,7 +164,7 @@ class UpdateManager(
         return
       }
 
-      PersistableChanState.updateCheckTime.set(now)
+      kurobaSettings.internal.updateCheckTime.write(now)
     }
 
     when (val flavorType = AppModuleAndroidUtils.flavorType) {
@@ -250,7 +244,7 @@ class UpdateManager(
     }
 
     val continueWithUpdate = when {
-      !ChanSettings.checkUpdateApkVersionCode.get() -> {
+      !kurobaSettings.application.checkUpdateApkVersionCode.read() -> {
         Logger.d(TAG, "processUpdateApiResponse() checkUpdateApkVersionCode is false")
         true
       }
@@ -316,7 +310,7 @@ class UpdateManager(
                 )
 
                 Logger.d(TAG, "processUpdateApiResponse() onUpdateClicked() updating apkUpdateInfoJson with ${apkUpdateInfoJson}")
-                PersistableChanState.apkUpdateInfoJson.setSync(apkUpdateInfoJson)
+                kurobaSettings.internal.apkUpdateInfoJson.writeAsync(apkUpdateInfoJson)
               }
             )
           }
@@ -332,7 +326,7 @@ class UpdateManager(
     }
   }
 
-  private fun onBetaAlreadyUpdated(apkUpdateInfo: ApkUpdateInfo) {
+  private suspend fun onBetaAlreadyUpdated(apkUpdateInfo: ApkUpdateInfoJson) {
     BackgroundUtils.ensureMainThread()
 
     val toastMessage = if (apkUpdateInfo.versionName.isNotNullNorBlank()) {
@@ -343,12 +337,11 @@ class UpdateManager(
 
     showToast(context, toastMessage)
 
-    PersistableChanState.previousDevHash.setSync(BuildConfig.COMMIT_HASH)
-    PersistableChanState.previousBuildNumber.setSync(apkUpdateInfo.buildNumber)
+    kurobaSettings.internal.previousBuildNumber.write(apkUpdateInfo.buildNumber)
     cancelApkUpdateNotification()
   }
 
-  private fun onReleaseAlreadyUpdated(apkUpdateInfo: ApkUpdateInfo) {
+  private suspend fun onReleaseAlreadyUpdated(apkUpdateInfo: ApkUpdateInfoJson) {
     BackgroundUtils.ensureMainThread()
 
     val text = if (apkUpdateInfo.versionName.isNotNullNorBlank()) {
@@ -366,13 +359,13 @@ class UpdateManager(
     )
 
     // Also set the new app version to not show this message again
-    PersistableChanState.previousVersion.setSync(BuildConfig.VERSION_CODE)
+    kurobaSettings.internal.previousVersion.write(BuildConfig.VERSION_CODE)
     cancelApkUpdateNotification()
   }
 
   private suspend fun notifyNewApkUpdate(responseRelease: ReleaseUpdateApiResponse?) {
-    PersistableChanState.hasNewApkUpdate.set(true)
-    settingsNotificationManager.notify(SettingNotificationType.ApkUpdate)
+    kurobaSettings.internal.hasNewApkUpdate.write(true)
+    settingsNotificationManager.notify(SettingNotification.ApkUpdate)
 
     if (responseRelease != null) {
       val versionCode = responseRelease.versionCode
@@ -402,9 +395,9 @@ class UpdateManager(
     }
   }
 
-  private fun cancelApkUpdateNotification() {
-    PersistableChanState.hasNewApkUpdate.set(false)
-    settingsNotificationManager.cancel(SettingNotificationType.ApkUpdate)
+  private suspend fun cancelApkUpdateNotification() {
+    kurobaSettings.internal.hasNewApkUpdate.write(false)
+    settingsNotificationManager.dismiss(SettingNotification.ApkUpdate)
   }
 
   private fun failedUpdate(manual: Boolean, error: Throwable) {
@@ -498,96 +491,18 @@ class UpdateManager(
       }
       is ModularResult.Value -> {
         Logger.d(TAG, "APK download success")
-        val fileName = AndroidUtils.applicationLabel.toString() + "_" + responseRelease.versionCodeString + ".apk"
 
-        suggestCopyingApkToAnotherDirectory(apkFile, fileName) {
-          runOnMainThread({
-            installApk(apkFile, responseRelease, onUpdateClicked)
-          }, TimeUnit.SECONDS.toMillis(1))
-        }
+        delay(1000)
+        installApk(apkFile, responseRelease, onUpdateClicked)
       }
     }
   }
 
-  private fun suggestCopyingApkToAnotherDirectory(
-    file: File,
-    fileName: String,
-    onDone: () -> Unit
+  private suspend fun installApk(
+    apkFile: File,
+    responseRelease: ReleaseUpdateApiResponse,
+    onUpdateClicked: () -> Unit
   ) {
-    if (!BackgroundUtils.isInForeground() || !ChanSettings.showCopyApkUpdateDialog.get()) {
-      onDone.invoke()
-      return
-    }
-
-    dialogFactory.get().createSimpleConfirmationDialog(
-      context = context,
-      titleTextId = R.string.update_manager_copy_apk_title,
-      descriptionTextId = R.string.update_manager_copy_apk_message,
-      negativeButtonText = getString(R.string.no),
-      onNegativeButtonClickListener = { onDone.invoke() },
-      positiveButtonText = getString(R.string.yes),
-      onPositiveButtonClickListener = {
-        fileChooser.get().openCreateFileDialog(fileName, object : FileCreateCallback() {
-          override fun onResult(uri: Uri) {
-            onApkFilePathSelected(file, uri)
-            onDone.invoke()
-          }
-
-          override fun onCancel(reason: String) {
-            showToast(context, reason)
-            onDone.invoke()
-          }
-        })
-      }
-    )
-
-  }
-
-  private fun onApkFilePathSelected(downloadedFile: File, uri: Uri) {
-    val newApkFile = fileManager.get().fromUri(uri)
-    if (newApkFile == null) {
-      val message = getString(R.string.update_manager_could_not_convert_uri, uri.toString())
-      showToast(context, message)
-      return
-    }
-
-    if (!downloadedFile.exists()) {
-      val message = getString(
-        R.string.update_manager_input_file_does_not_exist,
-        downloadedFile.absolutePath
-      )
-
-      showToast(context, message)
-      return
-    }
-
-    if (!fileManager.get().exists(newApkFile)) {
-      val message = getString(
-        R.string.update_manager_output_file_does_not_exist,
-        newApkFile.toString()
-      )
-
-      showToast(context, message)
-      return
-    }
-
-    val downloadedFileRaw = fileManager.get().fromRawFile(downloadedFile)
-
-    if (!fileManager.get().copyFileContents(downloadedFileRaw, newApkFile)) {
-      val message = getString(
-        R.string.update_manager_could_not_copy_apk,
-        downloadedFileRaw.getFullPath(),
-        newApkFile.getFullPath()
-      )
-
-      showToast(context, message)
-      return
-    }
-
-    showToast(context, R.string.update_manager_apk_copied)
-  }
-
-  private fun installApk(apkFile: File, responseRelease: ReleaseUpdateApiResponse, onUpdateClicked: () -> Unit) {
     BackgroundUtils.ensureMainThread()
 
     if (!BackgroundUtils.isInForeground()) {
@@ -603,7 +518,11 @@ class UpdateManager(
       descriptionText = getString(R.string.update_retry, AndroidUtils.applicationLabel),
       negativeButtonText = getString(R.string.cancel),
       positiveButtonText = getString(R.string.update_retry_button),
-      onPositiveButtonClickListener = { installApk(apkFile, responseRelease, onUpdateClicked) }
+      onPositiveButtonClickListener = {
+        launch {
+          installApk(apkFile, responseRelease, onUpdateClicked)
+        }
+      }
     )
 
     try {
@@ -721,8 +640,8 @@ class UpdateManager(
     }
   }
 
-  private fun getAndResetApkUpdateInfo(): ApkUpdateInfo? {
-    val apkUpdateInfo = PersistableChanState.apkUpdateInfoJson.get().let { apkUpdateInfoJson ->
+  private fun getAndResetApkUpdateInfo(): ApkUpdateInfoJson? {
+    val apkUpdateInfo = kurobaSettings.internal.apkUpdateInfoJson.readBlocking().let { apkUpdateInfoJson ->
       val versionCode = apkUpdateInfoJson.versionCode
         ?.takeIf { it >= 0L }
         ?: return@let null
@@ -731,20 +650,22 @@ class UpdateManager(
         ?: return@let null
       val versionName = apkUpdateInfoJson.versionName
 
-      return@let ApkUpdateInfo(versionCode, buildNumber, versionName)
+      return@let ApkUpdateInfoJson(versionCode, buildNumber, versionName)
     }
 
-    PersistableChanState.apkUpdateInfoJson.setSync(ApkUpdateInfoJson())
+    kurobaSettings.internal.apkUpdateInfoJson.writeBlocking(ApkUpdateInfoJson())
     return apkUpdateInfo
   }
 
-  private fun canContinueBetaUpdate(responseRelease: ReleaseUpdateApiResponse): Boolean {
+  private suspend fun canContinueBetaUpdate(responseRelease: ReleaseUpdateApiResponse): Boolean {
+    val previousBuildNumber = kurobaSettings.internal.previousBuildNumber.read()
+
     Logger.debug(TAG) {
       "canContinueBetaUpdate() " +
       "responseRelease.versionCode: ${responseRelease.versionCode}," +
       "BuildConfig.VERSION_CODE: ${BuildConfig.VERSION_CODE}, " +
       "responseRelease.buildNumber: ${responseRelease.buildNumber}, " +
-      "PersistableChanState.previousBuildNumber: ${PersistableChanState.previousBuildNumber.get()}"
+      "PersistableChanState.previousBuildNumber: ${previousBuildNumber}"
     }
 
     if (responseRelease.versionCode < BuildConfig.VERSION_CODE.toLong()) {
@@ -760,7 +681,7 @@ class UpdateManager(
     }
 
     // If they are the same then check the build numbers
-    val buildNumberIsGreater = responseRelease.buildNumber > PersistableChanState.previousBuildNumber.get()
+    val buildNumberIsGreater = responseRelease.buildNumber > previousBuildNumber
     Logger.debug(TAG) { "canContinueBetaUpdate() responseRelease.buildNumber > PersistableChanState.previousBuildNumber.get()" }
 
     return buildNumberIsGreater

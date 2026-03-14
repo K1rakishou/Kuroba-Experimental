@@ -1,12 +1,11 @@
 package com.github.k1rakishou.chan.utils
 
-import com.github.k1rakishou.ChanSettings
 import org.joda.time.DateTime
 import org.joda.time.Period
 import org.joda.time.format.DateTimeFormatterBuilder
 import org.joda.time.format.ISODateTimeFormat
 import org.joda.time.format.PeriodFormatterBuilder
-import java.util.*
+import java.util.Calendar
 
 object TimeUtils {
   private val calendar = Calendar.getInstance()
@@ -38,11 +37,12 @@ object TimeUtils {
 
   @JvmStatic
   fun isHalloweenToday(): Boolean {
-    if (!ChanSettings.funThingsAreFun.get()) {
+    val kurobaSettings = appDependencies().kurobaSettings
+    if (!kurobaSettings.application.funThingsAreFun.readBlocking()) {
       return false
     }
 
-    if (ChanSettings.forceHalloweenMode.get()) {
+    if (kurobaSettings.application.forceHalloweenMode.readBlocking()) {
       return true
     }
 
@@ -57,11 +57,12 @@ object TimeUtils {
 
   @JvmStatic
   fun is4chanBirthdayToday(): Boolean {
-    if (!ChanSettings.funThingsAreFun.get()) {
+    val kurobaSettings = appDependencies().kurobaSettings
+    if (!kurobaSettings.application.funThingsAreFun.readBlocking()) {
       return false
     }
 
-    if (ChanSettings.force4chanBirthdayMode.get()) {
+    if (kurobaSettings.application.force4chanBirthdayMode.readBlocking()) {
       return true
     }
 
@@ -71,11 +72,12 @@ object TimeUtils {
 
   @JvmStatic
   fun isChristmasToday(): Boolean {
-    if (!ChanSettings.funThingsAreFun.get()) {
+    val kurobaSettings = appDependencies().kurobaSettings
+    if (!kurobaSettings.application.funThingsAreFun.readBlocking()) {
       return false
     }
 
-    if (ChanSettings.forceChristmasMode.get()) {
+    if (kurobaSettings.application.forceChristmasMode.readBlocking()) {
       return true
     }
 
@@ -91,11 +93,12 @@ object TimeUtils {
 
   @JvmStatic
   fun isNewYearToday(): Boolean {
-    if (!ChanSettings.funThingsAreFun.get()) {
+    val kurobaSettings = appDependencies().kurobaSettings
+    if (!kurobaSettings.application.funThingsAreFun.readBlocking()) {
       return false
     }
 
-    if (ChanSettings.forceNewYearMode.get()) {
+    if (kurobaSettings.application.forceNewYearMode.readBlocking()) {
       return true
     }
 

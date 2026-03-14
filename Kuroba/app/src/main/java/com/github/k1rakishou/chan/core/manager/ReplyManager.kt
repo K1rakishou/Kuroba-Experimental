@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.core.manager
 
 import android.graphics.Bitmap
 import androidx.annotation.GuardedBy
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.features.reencoding.ImageReencodingPresenter
 import com.github.k1rakishou.chan.features.reply.data.Reply
 import com.github.k1rakishou.chan.features.reply.data.ReplyDataJson
@@ -19,6 +18,7 @@ import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.common.toHashSetBy
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.v2.KurobaSettings
 import com.google.gson.Gson
 import com.squareup.moshi.Moshi
 import kotlinx.coroutines.flow.Flow
@@ -26,7 +26,7 @@ import okio.buffer
 import okio.source
 import java.io.File
 import java.io.IOException
-import java.util.*
+import java.util.UUID
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -37,6 +37,7 @@ import kotlin.time.measureTimedValue
  * Manages replies.
  */
 class ReplyManager(
+  private val kurobaSettings: KurobaSettings,
   private val applicationVisibilityManager: ApplicationVisibilityManager,
   private val appConstants: AppConstants,
   private val moshi: Moshi,
@@ -296,7 +297,7 @@ class ReplyManager(
     }
 
     if (reply.postName.isEmpty()) {
-      reply.postName = ChanSettings.postDefaultName.get()
+      reply.postName = kurobaSettings.application.postDefaultName.readBlocking()
     }
 
     return reply

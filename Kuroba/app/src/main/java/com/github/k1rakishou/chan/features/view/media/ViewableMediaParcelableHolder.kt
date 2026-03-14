@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.features.view.media
 
 import android.os.Parcelable
 import android.webkit.MimeTypeMap
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.features.download.media.ImageSaverV2
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.StringUtils
@@ -331,6 +330,7 @@ sealed class ViewableMedia(
 }
 
 data class ViewableMediaMeta(
+  val mediaViewerSoundPostsEnabled: Boolean,
   val ownerPostDescriptor: PostDescriptor?,
   val serverMediaName: String?,
   val originalMediaName: String?,
@@ -362,7 +362,7 @@ data class ViewableMediaMeta(
   }
 
   val soundPostActualSoundMedia by lazy {
-    if (!ChanSettings.mediaViewerSoundPostsEnabled.get()) {
+    if (!mediaViewerSoundPostsEnabled) {
       return@lazy null
     }
 
@@ -417,6 +417,7 @@ data class ViewableMediaMeta(
         previewLocation = null,
         spoilerLocation = null,
         viewableMediaMeta = ViewableMediaMeta(
+          mediaViewerSoundPostsEnabled = mediaViewerSoundPostsEnabled,
           ownerPostDescriptor = null,
           serverMediaName = null,
           originalMediaName = null,

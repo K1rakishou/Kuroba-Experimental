@@ -61,7 +61,7 @@ internal class PartialContentSupportChecker(
       return PartialContentCheckResult(supportsPartialContentDownload = false)
     }
 
-    if (site.commonSettings.concurrentFileDownloadingChunks.get()?.chunksCount() == 1) {
+    if (site.commonSettings.concurrentFileDownloadingChunks.read().chunksCount == 1) {
       // The setting is set to only use 1 chunk per download
       return PartialContentCheckResult(supportsPartialContentDownload = false)
     }

@@ -1,7 +1,6 @@
 package com.github.k1rakishou.chan.core.manager
 
 import androidx.annotation.GuardedBy
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.concurrency.DebouncingCoroutineExecutor
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.hashSetWithCap
@@ -17,10 +16,12 @@ import com.github.k1rakishou.model.data.post.SeenPost
 import com.github.k1rakishou.model.repository.SeenPostRepository
 import com.github.k1rakishou.model.source.cache.ChanCatalogSnapshotCache
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
+import com.github.k1rakishou.v2.KurobaSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.runBlocking
 import org.joda.time.DateTime
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -31,7 +32,7 @@ import kotlin.time.measureTime
 @Suppress("EXPERIMENTAL_API_USAGE")
 class SeenPostsManager(
   private val appScope: CoroutineScope,
-  private val verboseLogsEnabled: Boolean,
+  private val kurobaSettings: KurobaSettings,
   private val chanThreadsCache: ChanThreadsCache,
   private val catalogSnapshotCache: ChanCatalogSnapshotCache,
   private val seenPostsRepository: SeenPostRepository
@@ -54,7 +55,7 @@ class SeenPostsManager(
 
   init {
     chanThreadsCache.addChanThreadDeleteEventListener { threadDeleteEvent ->
-      if (verboseLogsEnabled) {
+      if (kurobaSettings.application.verboseLogs.readBlocking()) {
         Logger.d(TAG, "chanThreadsCache.chanThreadDeleteEventFlow() " +
             "threadDeleteEvent=${threadDeleteEvent.javaClass.simpleName}")
       }
@@ -78,7 +79,7 @@ class SeenPostsManager(
       return
     }
 
-    if (verboseLogsEnabled) {
+    if (kurobaSettings.application.verboseLogs.read()) {
       Logger.d(TAG, "preloadForThread($threadDescriptor) begin")
     }
 
@@ -102,7 +103,7 @@ class SeenPostsManager(
       }
     }
 
-    if (verboseLogsEnabled) {
+    if (kurobaSettings.application.verboseLogs.read()) {
       Logger.d(TAG, "preloadForThread($threadDescriptor) end, took $time")
     }
   }
@@ -148,7 +149,7 @@ class SeenPostsManager(
   }
 
   fun onPostBind(threadMode: Boolean, postDescriptor: PostDescriptor) {
-    if (!threadMode || !isEnabled()) {
+    if (!threadMode || !isEnabledBlocking()) {
       return
     }
 
@@ -230,7 +231,7 @@ class SeenPostsManager(
       }
 
       toPersistMap.forEach { (threadDescriptor, seenPostSet) ->
-        if (verboseLogsEnabled) {
+        if (kurobaSettings.application.verboseLogs.read()) {
           Logger.d(TAG, "onPostBind() persisting ${seenPostSet.size} posts")
         }
 
@@ -253,7 +254,8 @@ class SeenPostsManager(
     }
   }
 
-  private fun isEnabled() = ChanSettings.markUnseenPosts.get()
+  private fun isEnabledBlocking() = runBlocking { isEnabled() }
+  private suspend fun isEnabled() = kurobaSettings.application.markUnseenPosts.read()
 
   private fun onThreadDeleteEventReceived(threadDeleteEvent: ChanThreadsCache.ThreadDeleteEvent) {
     lock.write {

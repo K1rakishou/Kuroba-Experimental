@@ -1,7 +1,6 @@
 package com.github.k1rakishou.chan.core.manager
 
 import androidx.annotation.GuardedBy
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.common.awaitSilently
 import com.github.k1rakishou.common.bidirectionalMap
@@ -18,6 +17,7 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.thread.ChanThread
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
+import com.github.k1rakishou.v2.KurobaSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -33,7 +33,7 @@ import kotlin.concurrent.write
 
 class Chan4CloudFlareImagePreloaderManager(
   private val appScope: CoroutineScope,
-  private val verboseLogsEnabled: Boolean,
+  private val kurobaSettings: KurobaSettings,
   private val proxiedOkHttpClient: ProxiedOkHttpClient,
   private val chanThreadsCache: ChanThreadsCache,
   private val prefetchStateManager: PrefetchStateManager
@@ -141,17 +141,13 @@ class Chan4CloudFlareImagePreloaderManager(
 
   init {
     chanThreadsCache.addChanThreadDeleteEventListener { threadDeleteEvent ->
-      if (verboseLogsEnabled) {
-        Logger.d(TAG, "chanThreadsCache.chanThreadDeleteEventFlow() " +
-          "threadDeleteEvent=${threadDeleteEvent.javaClass.simpleName}")
-      }
-
       onThreadDeleteEventReceived(threadDeleteEvent)
     }
   }
 
-  fun isCached(postDescriptor: PostDescriptor): Boolean {
-    if (!ChanSettings.cloudflareForcePreload.get()) {
+  suspend fun isCached(postDescriptor: PostDescriptor): Boolean {
+    // Disabled
+    if (true) {
       return true
     }
 
@@ -185,7 +181,8 @@ class Chan4CloudFlareImagePreloaderManager(
   }
 
   fun startLoading(postDescriptor: PostDescriptor): Boolean {
-    if (!ChanSettings.cloudflareForcePreload.get()) {
+    // Disabled
+    if (true) {
       return false
     }
 
@@ -205,10 +202,6 @@ class Chan4CloudFlareImagePreloaderManager(
       POSTS_AROUND_COUNT,
       POSTS_AROUND_COUNT
     )
-
-    if (possibleToPreload.isEmpty()) {
-      return false
-    }
 
     if (possibleToPreload.isEmpty()) {
       return false
@@ -234,6 +227,11 @@ class Chan4CloudFlareImagePreloaderManager(
   }
 
   fun cancelLoading(postDescriptor: PostDescriptor, swipedForward: Boolean) {
+    // Disabled
+    if (true) {
+      return
+    }
+
     val threadDescriptor = postDescriptor.descriptor as? ChanDescriptor.ThreadDescriptor
       ?: return
 
@@ -253,7 +251,8 @@ class Chan4CloudFlareImagePreloaderManager(
   }
 
   fun cancelLoading(postDescriptor: PostDescriptor) {
-    if (!ChanSettings.cloudflareForcePreload.get()) {
+    // Disabled
+    if (true) {
       return
     }
 

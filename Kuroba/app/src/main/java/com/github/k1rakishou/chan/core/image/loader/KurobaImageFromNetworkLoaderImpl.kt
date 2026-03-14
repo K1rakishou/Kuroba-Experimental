@@ -18,6 +18,7 @@ import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileManager
+import com.github.k1rakishou.v2.KurobaSettings
 import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runInterruptible
@@ -28,6 +29,7 @@ import java.io.File
 import java.io.IOException
 
 class KurobaImageFromNetworkLoaderImpl(
+  private val kurobaSettings: KurobaSettings,
   private val cacheHandlerLazy: Lazy<CacheHandler>,
   private val chunkedMediaDownloaderLazy: Lazy<ChunkedMediaDownloader>,
   private val siteResolverLazy: Lazy<SiteResolver>,
@@ -87,7 +89,9 @@ class KurobaImageFromNetworkLoaderImpl(
             memoryCacheKey = memoryCacheKey,
             cacheFileType = cacheFileType,
             imageSize = imageSize,
-            transformations = transformations
+            transformations = transformations,
+            highResCells = kurobaSettings.application.highResCells.read(),
+            isLowRamDevice = kurobaSettings.application.isLowRamDevice()
           ).unwrap()
 
           when (diskCacheResolution) {

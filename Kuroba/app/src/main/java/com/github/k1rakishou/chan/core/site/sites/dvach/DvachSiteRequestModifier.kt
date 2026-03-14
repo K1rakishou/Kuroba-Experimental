@@ -20,7 +20,7 @@ class DvachSiteRequestModifier(
     super.modifyHttpCall(httpCall, requestBuilder)
 
     if (site.actions.isLoggedIn()) {
-      requestBuilder.addOrReplaceCookieHeader("passcode_auth=" + dvachSiteSettings.passCookie.get())
+      requestBuilder.addOrReplaceCookieHeader("passcode_auth=" + dvachSiteSettings.passCookie.readBlocking())
     }
 
     addAntiSpamCookie(requestBuilder)
@@ -45,7 +45,7 @@ class DvachSiteRequestModifier(
   ) {
     super.modifyVideoStreamRequest(site, requestProperties, url)
 
-    val userCookie = dvachSiteSettings.userCodeCookie.get()
+    val userCookie = dvachSiteSettings.userCodeCookie.readBlocking()
     requestProperties.updateCookieHeader("${USER_CODE_COOKIE_KEY}=${userCookie}")
 
     // For 2ch.hk we want to use our custom user-agent because when using the WebView's one the
@@ -63,7 +63,7 @@ class DvachSiteRequestModifier(
   private fun addUserCodeCookie(
     requestBuilder: Request.Builder
   ) {
-    val userCodeCookie = dvachSiteSettings.userCodeCookie.get()
+    val userCodeCookie = dvachSiteSettings.userCodeCookie.readBlocking()
     if (userCodeCookie.isEmpty()) {
       return
     }
@@ -72,7 +72,7 @@ class DvachSiteRequestModifier(
   }
 
   private fun addAntiSpamCookie(requestBuilder: Request.Builder) {
-    val antiSpamCookie = dvachSiteSettings.antiSpamCookie.get()
+    val antiSpamCookie = dvachSiteSettings.antiSpamCookie.readBlocking()
     if (antiSpamCookie.isNotEmpty()) {
       requestBuilder.addOrReplaceCookieHeader(antiSpamCookie)
     }

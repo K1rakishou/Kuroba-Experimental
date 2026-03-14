@@ -16,7 +16,6 @@ import com.airbnb.epoxy.EpoxyController
 import com.airbnb.epoxy.EpoxyModel
 import com.airbnb.epoxy.EpoxyModelTouchCallback
 import com.airbnb.epoxy.EpoxyViewHolder
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.BaseSelectionHelper
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
@@ -65,7 +64,6 @@ import com.github.k1rakishou.common.exhaustive
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
-import com.github.k1rakishou.persist_state.PersistableChanState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -113,6 +111,7 @@ class BookmarksController(
 
   private val bookmarksPresenter by lazy {
     BookmarksPresenter(
+      kurobaSettings,
       bookmarksToHighlight.toSet(),
       bookmarksManager,
       threadBookmarkGroupManager,
@@ -129,6 +128,10 @@ class BookmarksController(
   private val needScrollToHighlightedBookmark = AtomicBoolean(bookmarksToHighlight.isNotEmpty())
   private var isInSearchMode = false
 
+  private var viewThreadBookmarksGridMode = false
+  private var moveNotActiveBookmarksToBottom = false
+  private var moveBookmarksWithUnreadRepliesToTop = false
+
   private val touchHelperCallback = object : EpoxyModelTouchCallback<EpoxyModel<*>>(controller, EpoxyModel::class.java) {
 
     override fun isLongPressDragEnabled(): Boolean = false
@@ -139,7 +142,7 @@ class BookmarksController(
         return makeMovementFlags(0, 0)
       }
 
-      val moveFlags = if (PersistableChanState.viewThreadBookmarksGridMode.get()) {
+      val moveFlags = if (viewThreadBookmarksGridMode) {
         ItemTouchHelper.UP or ItemTouchHelper.DOWN or ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT
       } else {
         ItemTouchHelper.UP or ItemTouchHelper.DOWN
@@ -163,7 +166,7 @@ class BookmarksController(
         return false
       }
 
-      if (ChanSettings.moveNotActiveBookmarksToBottom.get()) {
+      if (moveNotActiveBookmarksToBottom) {
         val isDeadOrNotWatching = targetUnifiedBookmarkInfoAccessor.getBookmarkStats()?.isDeadOrNotWatching()
           ?: false
 
@@ -174,7 +177,7 @@ class BookmarksController(
         }
       }
 
-      if (ChanSettings.moveBookmarksWithUnreadRepliesToTop.get()) {
+      if (moveBookmarksWithUnreadRepliesToTop) {
         val newQuotes = targetUnifiedBookmarkInfoAccessor.getBookmarkStats()?.newQuotes ?: 0
 
         if (newQuotes > 0) {
@@ -225,7 +228,7 @@ class BookmarksController(
     }
 
     override fun onDragReleased(model: EpoxyModel<*>?, itemView: View?) {
-      val groupId = when (PersistableChanState.viewThreadBookmarksGridMode.get()) {
+      val groupId = when (viewThreadBookmarksGridMode) {
         true -> (model as? EpoxyGridThreadBookmarkViewHolder_)?.groupId()
         false -> (model as? EpoxyListThreadBookmarkViewHolder_)?.groupId()
       }
@@ -338,9 +341,26 @@ class BookmarksController(
         .collect()
     }
 
+    viewThreadBookmarksGridMode = kurobaSettings.internal.viewThreadBookmarksGridMode.readBlocking()
+    moveNotActiveBookmarksToBottom = kurobaSettings.application.moveNotActiveBookmarksToBottom.readBlocking()
+    moveBookmarksWithUnreadRepliesToTop = kurobaSettings.application.moveBookmarksWithUnreadRepliesToTop.readBlocking()
+
     controllerScope.launch {
-      toolbarState.search.listenForSearchQueryUpdates()
-        .onEach { entered -> bookmarksPresenter.onSearchEntered(entered) }
+      kurobaSettings.internal.viewThreadBookmarksGridMode.listen()
+        .collect { gridMode -> viewThreadBookmarksGridMode = gridMode }
+    }
+    controllerScope.launch {
+      kurobaSettings.application.moveNotActiveBookmarksToBottom.listen()
+        .collect { move -> moveNotActiveBookmarksToBottom = move }
+    }
+    controllerScope.launch {
+      kurobaSettings.application.moveBookmarksWithUnreadRepliesToTop.listen()
+        .collect { move -> moveBookmarksWithUnreadRepliesToTop = move }
+    }
+
+    controllerScope.launch {
+      toolbarState.search.listenForSearchState()
+        .onEach { (_, query) -> bookmarksPresenter.onSearchEntered(query) }
         .collect()
     }
 
@@ -535,7 +555,7 @@ class BookmarksController(
   }
 
   private fun onChangeViewModeClicked() {
-    PersistableChanState.viewThreadBookmarksGridMode.toggle()
+    kurobaSettings.internal.viewThreadBookmarksGridMode.toggleBlocking()
 
     onViewBookmarksModeChanged()
 
@@ -566,14 +586,17 @@ class BookmarksController(
       title = getString(R.string.controller_bookmarks_set_grid_view_width_text),
       minValue = context.resources.getDimension(R.dimen.thread_grid_bookmark_view_min_width).toInt(),
       maxValue = context.resources.getDimension(R.dimen.thread_grid_bookmark_view_max_width).toInt(),
-      currentValue = ChanSettings.bookmarkGridViewWidth.get(),
+      defaultValue =  kurobaSettings.application.bookmarkGridViewWidth.default,
+      currentValue = kurobaSettings.application.bookmarkGridViewWidth.readBlocking(),
       resetClickedFunc = {
-        ChanSettings.bookmarkGridViewWidth.set(ChanSettings.bookmarkGridViewWidth.getDefault())
+        kurobaSettings.application.bookmarkGridViewWidth.writeAsync(
+          kurobaSettings.application.bookmarkGridViewWidth.default
+        )
       },
       applyClickedFunc = { newValue ->
-        val currentValue = ChanSettings.bookmarkGridViewWidth.get()
+        val currentValue = kurobaSettings.application.bookmarkGridViewWidth.readBlocking()
         if (currentValue != newValue) {
-          ChanSettings.bookmarkGridViewWidth.set(newValue)
+          kurobaSettings.application.bookmarkGridViewWidth.writeAsync(newValue)
           reloadBookmarksAndUpdateViewMode()
         }
       }
@@ -609,12 +632,12 @@ class BookmarksController(
   }
 
   private fun updateLayoutManager(forced: Boolean = false) {
-    if (PersistableChanState.viewThreadBookmarksGridMode.get()) {
+    if (viewThreadBookmarksGridMode) {
       if (!forced && epoxyRecyclerView.layoutManager is GridLayoutManager) {
         return
       }
 
-      val bookmarkWidth = ChanSettings.bookmarkGridViewWidth.get()
+      val bookmarkWidth = kurobaSettings.application.bookmarkGridViewWidth.readBlocking()
       val screenWidth = getDisplaySize(context).x
       val spanCount = (screenWidth / bookmarkWidth).coerceIn(MIN_SPAN_COUNT, MAX_SPAN_COUNT)
 
@@ -632,7 +655,7 @@ class BookmarksController(
   }
 
   private fun onStateChanged(state: BookmarksControllerState) {
-    val isGridMode = PersistableChanState.viewThreadBookmarksGridMode.get()
+    val isGridMode = viewThreadBookmarksGridMode
 
     controller.callback = {
       when (state) {
@@ -851,15 +874,16 @@ class BookmarksController(
     val isGridLayoutManager = when (recyclerView.layoutManager) {
       is GridLayoutManager -> true
       is LinearLayoutManager -> false
-      else -> throw IllegalStateException("Unknown layout manager: " +
-        "${recyclerView.layoutManager?.javaClass?.simpleName}"
+      else -> throw IllegalStateException(
+        "Unknown layout manager: " +
+          "${recyclerView.layoutManager?.javaClass?.simpleName}"
       )
     }
 
-    PersistableChanState.storeRecyclerIndexAndTopInfo(
-      PersistableChanState.bookmarksRecyclerIndexAndTop,
-      isGridLayoutManager,
-      RecyclerUtils.getIndexAndTop(recyclerView)
+    kurobaSettings.internal.storeRecyclerIndexAndTopInfo(
+      setting = kurobaSettings.internal.bookmarksRecyclerIndexAndTop,
+      isForGridLayoutManager = isGridLayoutManager,
+      indexAndTop = RecyclerUtils.getIndexAndTop(recyclerView)
     )
   }
 
@@ -900,9 +924,9 @@ class BookmarksController(
       )
     }
 
-    val indexAndTop = PersistableChanState.getRecyclerIndexAndTopInfo(
-      PersistableChanState.bookmarksRecyclerIndexAndTop,
-      isForGridLayoutManager
+    val indexAndTop = kurobaSettings.internal.getRecyclerIndexAndTopInfo(
+      setting = kurobaSettings.internal.bookmarksRecyclerIndexAndTop,
+      isForGridLayoutManager = isForGridLayoutManager
     )
 
     when (val layoutManager = epoxyRecyclerView.layoutManager) {
@@ -947,11 +971,11 @@ class BookmarksController(
     toolbarState.findItem(ACTION_CHANGE_VIEW_BOOKMARK_MODE)
       ?.updateDrawableId(getBookmarksModeChangeToolbarButtonDrawableId())
     toolbarState.findOverflowItem(ACTION_SET_GRID_BOOKMARK_VIEW_WIDTH)
-      ?.updateVisibility(visible = PersistableChanState.viewThreadBookmarksGridMode.get())
+      ?.updateVisibility(visible = viewThreadBookmarksGridMode)
   }
 
   private fun getBookmarksModeChangeToolbarButtonDrawableId(): Int {
-    return when (PersistableChanState.viewThreadBookmarksGridMode.get()) {
+    return when (viewThreadBookmarksGridMode) {
       // Should be a reverse of whatever viewThreadBookmarksGridMode currently is because the
       // button's meaning is to switch into that mode, not show the current mode
       false -> R.drawable.ic_baseline_view_comfy_24
@@ -1051,7 +1075,7 @@ class BookmarksController(
           withOverflowMenuItem(
             id = ACTION_SET_GRID_BOOKMARK_VIEW_WIDTH,
             stringId = R.string.controller_bookmarks_set_grid_bookmark_view_width,
-            visible = PersistableChanState.viewThreadBookmarksGridMode.get(),
+            visible = viewThreadBookmarksGridMode,
             onClick = { onSetGridBookmarkViewWidthClicked() }
           )
           withOverflowMenuItem(

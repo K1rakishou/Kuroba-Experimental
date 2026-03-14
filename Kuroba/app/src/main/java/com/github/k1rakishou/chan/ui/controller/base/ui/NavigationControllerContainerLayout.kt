@@ -13,11 +13,14 @@ import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.findControllerOrNull
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.v2.KurobaSettings
 import javax.inject.Inject
 
 class NavigationControllerContainerLayout : FrameLayout {
   private var controllerTracker: ControllerTracker? = null
 
+  @Inject
+  lateinit var kurobaSettings: KurobaSettings
   @Inject
   lateinit var globalUiStateHolder: GlobalUiStateHolder
 
@@ -53,6 +56,7 @@ class NavigationControllerContainerLayout : FrameLayout {
 
     controllerTracker = ThreadControllerTracker(
       context = context,
+      kurobaSettings = kurobaSettings,
       globalUiStateHolder = globalUiStateHolder,
       getWidthFunc = { this.width },
       getHeightFunc = { this.height },

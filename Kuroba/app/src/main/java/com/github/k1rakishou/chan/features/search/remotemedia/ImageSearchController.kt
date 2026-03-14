@@ -71,8 +71,9 @@ import com.github.k1rakishou.common.FirewallType
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.deprecated.persist_state.ImageSearchInstanceTypeDeprecated
 import com.github.k1rakishou.model.util.ChanPostUtils
-import com.github.k1rakishou.persist_state.ImageSearchInstanceType
+import com.github.k1rakishou.v2.parameters.RemoteImageSearchSettings
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.debounce
@@ -83,7 +84,11 @@ import javax.inject.Inject
 class ImageSearchController(
   context: Context,
   private val onImageSelected: (HttpUrl) -> Unit
-) : BaseComposeController<ImageSearchControllerViewModel, Nothing>(
+) : BaseComposeController<
+  ImageSearchControllerViewModel,
+  Nothing,
+  Nothing
+>(
   context = context,
   viewModelClass = ImageSearchControllerViewModel::class.java,
   viewModelParams = null
@@ -351,7 +356,7 @@ class ImageSearchController(
 
   @Composable
   private fun BuildImageSearchResults(
-    lastUsedSearchInstance: ImageSearchInstanceType,
+    lastUsedSearchInstance: RemoteImageSearchSettings.InstanceType,
     onImageClicked: (ImageSearchResult) -> Unit
   ) {
     val chanTheme = LocalChanTheme.current
@@ -540,7 +545,7 @@ class ImageSearchController(
 
     menuItems += HeaderFloatingListMenuItem("header", "Select image search instance")
 
-    ImageSearchInstanceType.entries.forEach { imageSearchInstanceType ->
+    ImageSearchInstanceTypeDeprecated.entries.forEach { imageSearchInstanceType ->
       menuItems += FloatingListMenuItem(
         key = imageSearchInstanceType,
         name = imageSearchInstanceType.name,
@@ -553,7 +558,7 @@ class ImageSearchController(
       constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
       items = menuItems,
       itemClickListener = { clickedItem ->
-        val selectedImageSearchInstanceType = (clickedItem.value as? ImageSearchInstanceType)
+        val selectedImageSearchInstanceType = (clickedItem.value as? RemoteImageSearchSettings.InstanceType)
           ?: return@FloatingListMenuController
 
         viewModel.changeSearchInstance(selectedImageSearchInstanceType)

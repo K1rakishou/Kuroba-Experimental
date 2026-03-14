@@ -3,7 +3,6 @@ package com.github.k1rakishou.chan.features.view.media
 import android.content.Context
 import android.view.View
 import android.view.ViewGroup
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager
 import com.github.k1rakishou.chan.features.view.media.element.AudioMediaView
 import com.github.k1rakishou.chan.features.view.media.element.ExoPlayerVideoMediaView
@@ -21,12 +20,14 @@ import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.mutableIteration
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.post.ChanPostImage
+import com.github.k1rakishou.v2.KurobaSettings
 import com.google.android.exoplayer2.upstream.DataSource
 import kotlinx.coroutines.CompletableDeferred
 
 class MediaViewerAdapter(
   private val context: Context,
   private val appConstants: AppConstants,
+  private val kurobaSettings: KurobaSettings,
   private val viewModel: MediaViewerControllerViewModel,
   private val mediaViewerToolbar: MediaViewerToolbar,
   private val mediaViewContract: MediaViewContract,
@@ -155,6 +156,7 @@ class MediaViewerAdapter(
           context = context,
           initialMediaViewState = initialMediaViewState,
           mediaViewContract = mediaViewContract,
+          kurobaSettings = kurobaSettings,
           cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
           fileDataSourceFactory = fileDataSourceFactory,
           contentDataSourceFactory = contentDataSourceFactory,
@@ -174,6 +176,7 @@ class MediaViewerAdapter(
           context = context,
           initialMediaViewState = initialMediaViewState,
           mediaViewContract = mediaViewContract,
+          kurobaSettings = kurobaSettings,
           cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
           fileDataSourceFactory = fileDataSourceFactory,
           contentDataSourceFactory = contentDataSourceFactory,
@@ -185,7 +188,7 @@ class MediaViewerAdapter(
         )
       }
       is ViewableMedia.Video -> {
-        if (ChanSettings.useMpvVideoPlayer.get()) {
+        if (kurobaSettings.application.useMpvVideoPlayer.readBlocking()) {
           val initialMediaViewState = viewModel.getPrevMediaViewStateOrNull(viewableMedia.mediaLocation)
             as? MpvVideoMediaView.VideoMediaViewState
             ?: MpvVideoMediaView.VideoMediaViewState()
@@ -195,6 +198,7 @@ class MediaViewerAdapter(
             initialMediaViewState = initialMediaViewState,
             viewModel = viewModel,
             mediaViewContract = mediaViewContract,
+            kurobaSettings = kurobaSettings,
             cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
             fileDataSourceFactory = fileDataSourceFactory,
             contentDataSourceFactory = contentDataSourceFactory,
@@ -214,6 +218,7 @@ class MediaViewerAdapter(
             initialMediaViewState = initialMediaViewState,
             viewModel = viewModel,
             mediaViewContract = mediaViewContract,
+            kurobaSettings = kurobaSettings,
             cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
             fileDataSourceFactory = fileDataSourceFactory,
             contentDataSourceFactory = contentDataSourceFactory,
@@ -230,6 +235,7 @@ class MediaViewerAdapter(
           context = context,
           initialMediaViewState = AudioMediaView.AudioMediaViewState(),
           mediaViewContract = mediaViewContract,
+          kurobaSettings = kurobaSettings,
           cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
           fileDataSourceFactory = fileDataSourceFactory,
           contentDataSourceFactory = contentDataSourceFactory,
@@ -245,6 +251,7 @@ class MediaViewerAdapter(
           context = context,
           initialMediaViewState = UnsupportedMediaView.UnsupportedMediaViewState(),
           mediaViewContract = mediaViewContract,
+          kurobaSettings = kurobaSettings,
           cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
           fileDataSourceFactory = fileDataSourceFactory,
           contentDataSourceFactory = contentDataSourceFactory,

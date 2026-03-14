@@ -3,7 +3,6 @@ package com.github.k1rakishou.chan.ui.helper.picker
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.features.reply.data.ReplyFile
 import com.github.k1rakishou.chan.utils.BackgroundUtils
@@ -17,18 +16,20 @@ import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.v2.KurobaSettings
 import okhttp3.HttpUrl
 import java.io.FileInputStream
 import java.io.IOException
 
 abstract class AbstractFilePicker<T>(
+  protected val kurobaSettings: KurobaSettings,
   protected val appConstants: AppConstants,
   protected val replyManager: ReplyManager,
   protected val fileManager: FileManager
 ) {
   abstract suspend fun pickFile(filePickerInput: T): ModularResult<PickedFile>
 
-  protected fun copyExternalFileToReplyFileStorage(
+  protected suspend fun copyExternalFileToReplyFileStorage(
     appContext: Context,
     externalFileUri: Uri,
     addedOn: Long
@@ -65,7 +66,7 @@ abstract class AbstractFilePicker<T>(
     }
   }
 
-  private fun tryExtractFileNameOrDefault(uri: Uri, appContext: Context): String {
+  private suspend fun tryExtractFileNameOrDefault(uri: Uri, appContext: Context): String {
     var fileName: String? = null
 
     try {
@@ -81,7 +82,7 @@ abstract class AbstractFilePicker<T>(
       Logger.e(TAG, "tryExtractFileNameOrDefault() contentResolver.query failed(url='$uri')", error)
     }
 
-    if (ChanSettings.alwaysRandomizePickedFilesNames.get()) {
+    if (kurobaSettings.internal.alwaysRandomizePickedFilesNames.read()) {
       return getRandomFileName(fileName ?: uri.lastPathSegment)
     }
 
@@ -96,10 +97,10 @@ abstract class AbstractFilePicker<T>(
     return fileName
   }
 
-  protected fun getRemoteFileName(url: HttpUrl): String {
+  protected suspend fun getRemoteFileName(url: HttpUrl): String {
     val actualFileName = url.extractFileName()
 
-    if (ChanSettings.alwaysRandomizePickedFilesNames.get()) {
+    if (kurobaSettings.internal.alwaysRandomizePickedFilesNames.read()) {
       return getRandomFileName(actualFileName)
     }
 

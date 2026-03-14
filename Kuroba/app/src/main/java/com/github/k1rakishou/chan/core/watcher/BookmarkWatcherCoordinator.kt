@@ -7,23 +7,24 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.await
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.v2.KurobaSettings
 import dagger.Lazy
-import io.reactivex.Flowable
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.reactive.asFlow
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 class BookmarkWatcherCoordinator(
-  private val verboseLogsEnabled: Boolean,
+  private val kurobaSettings: KurobaSettings,
   private val appContext: Context,
   private val appScope: CoroutineScope,
   private val appConstants: AppConstants,
@@ -54,28 +55,27 @@ class BookmarkWatcherCoordinator(
     }
 
     appScope.launch {
-      val watchEnabledFlowable = ChanSettings.watchEnabled.listenForChangesDeprecated()
+      val watchEnabledFlowable = kurobaSettings.application.watchEnabled.listen()
         .map { enabled -> WatchSettingChange.WatcherSettingChanged(enabled) }
         .distinctUntilChanged()
-      val watchBackgroundFlowable = ChanSettings.watchBackground.listenForChangesDeprecated()
+      val watchBackgroundFlowable = kurobaSettings.application.watchBackground.listen()
         .map { enabled -> WatchSettingChange.BackgroundWatcherSettingChanged(enabled) }
         .distinctUntilChanged()
-      val watchBackgroundIntervalFlowable = ChanSettings.watchBackgroundInterval.listenForChangesDeprecated()
+      val watchBackgroundIntervalFlowable = kurobaSettings.application.watchBackgroundInterval.listen()
         .map { interval -> WatchSettingChange.BackgroundWatcherIntervalSettingChanged(interval) }
         .distinctUntilChanged()
-      val watchForegroundIntervalFlowable = ChanSettings.watchForegroundInterval.listenForChangesDeprecated()
+      val watchForegroundIntervalFlowable = kurobaSettings.application.watchForegroundInterval.listen()
         .map { interval -> WatchSettingChange.ForegroundWatcherIntervalSettingChanged(interval) }
         .distinctUntilChanged()
 
-      Flowable.merge(
+      merge(
         watchEnabledFlowable,
         watchBackgroundFlowable,
         watchBackgroundIntervalFlowable,
         watchForegroundIntervalFlowable
       )
-        .asFlow()
         .collect { watchSettingChange ->
-          if (verboseLogsEnabled) {
+          if (kurobaSettings.application.verboseLogs.read()) {
             when (watchSettingChange) {
               is WatchSettingChange.WatcherSettingChanged -> {
                 Logger.d(TAG, "Calling onBookmarksChanged() watchEnabled setting changed")
@@ -92,7 +92,12 @@ class BookmarkWatcherCoordinator(
             }
           }
 
-          restartBackgroundWork(appConstants, appContext)
+          restartBackgroundWork(
+            kurobaSettings = kurobaSettings,
+            appConstants = appConstants,
+            appContext = appContext
+          )
+
           onBookmarksChanged(hasCreateBookmarkChange = false)
         }
     }
@@ -124,7 +129,7 @@ class BookmarkWatcherCoordinator(
           return@launch
         }
 
-        if (!ChanSettings.watchEnabled.get()) {
+        if (!kurobaSettings.application.watchEnabled.read()) {
           Logger.d(TAG, "onBookmarksChanged() watchEnabled is false, stopping foreground watcher")
 
           cancelForegroundBookmarkWatching()
@@ -132,7 +137,7 @@ class BookmarkWatcherCoordinator(
           return@launch
         }
 
-        if (!ChanSettings.watchBackground.get()) {
+        if (!kurobaSettings.application.watchBackground.read()) {
           Logger.d(TAG, "onBookmarksChanged() watchBackground is false, stopping background watcher")
           cancelBackgroundBookmarkWatching(appConstants, appContext)
 
@@ -173,14 +178,18 @@ class BookmarkWatcherCoordinator(
   private sealed class WatchSettingChange {
     data class WatcherSettingChanged(val enabled: Boolean) : WatchSettingChange()
     data class BackgroundWatcherSettingChanged(val enabled: Boolean) : WatchSettingChange()
-    data class BackgroundWatcherIntervalSettingChanged(val interval: Int) : WatchSettingChange()
-    data class ForegroundWatcherIntervalSettingChanged(val interval: Int) : WatchSettingChange()
+    data class BackgroundWatcherIntervalSettingChanged(val interval: Long) : WatchSettingChange()
+    data class ForegroundWatcherIntervalSettingChanged(val interval: Long) : WatchSettingChange()
   }
 
   companion object {
     private const val TAG = "BookmarkWatcherCoordinator"
 
-    suspend fun restartBackgroundWork(appConstants: AppConstants, appContext: Context) {
+    suspend fun restartBackgroundWork(
+      kurobaSettings: KurobaSettings,
+      appConstants: AppConstants,
+      appContext: Context
+    ) {
       if (AndroidUtils.isNotMainProcess) {
         return
       }
@@ -188,16 +197,16 @@ class BookmarkWatcherCoordinator(
       val tag = appConstants.bookmarkWatchWorkUniqueTag
       Logger.d(TAG, "restartBackgroundWork() called tag=$tag")
 
-      if (!ChanSettings.watchEnabled.get() || !ChanSettings.watchBackground.get()) {
+      if (!kurobaSettings.application.watchEnabled.read() || !kurobaSettings.application.watchBackground.read()) {
         Logger.d(TAG, "restartBackgroundWork() cannot restart watcher because one of the required " +
-          "settings is turned off (watchEnabled=${ChanSettings.watchEnabled.get()}, " +
-          "watchBackground=${ChanSettings.watchBackground.get()})")
+          "settings is turned off (watchEnabled=${kurobaSettings.application.watchEnabled.read()}, " +
+          "watchBackground=${kurobaSettings.application.watchBackground.read()})")
 
         cancelBackgroundBookmarkWatching(appConstants, appContext)
         return
       }
 
-      val backgroundIntervalMillis = ChanSettings.watchBackgroundInterval.get().toLong()
+      val backgroundIntervalMillis = kurobaSettings.application.watchBackgroundInterval.read().toLong()
 
       val constraints = Constraints.Builder()
         .setRequiredNetworkType(NetworkType.CONNECTED)

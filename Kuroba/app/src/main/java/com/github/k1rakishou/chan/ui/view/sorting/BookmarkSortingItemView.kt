@@ -6,7 +6,6 @@ import android.view.Gravity
 import android.widget.LinearLayout
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.core.content.ContextCompat
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -16,6 +15,7 @@ import com.github.k1rakishou.common.updateMargins
 import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.core_themes.ThemeEngine.Companion.isDarkColor
+import com.github.k1rakishou.v2.parameters.BookmarksSortOrder
 import javax.inject.Inject
 
 class BookmarkSortingItemView @JvmOverloads constructor(
@@ -66,7 +66,7 @@ class BookmarkSortingItemView @JvmOverloads constructor(
     }
   }
 
-  fun init(index: Int, bookmarksSortOrder: ChanSettings.BookmarksSortOrder) {
+  fun init(index: Int, bookmarksSortOrder: BookmarksSortOrder) {
     tag = indexToTag(index)
 
     val image = AppCompatImageView(context)
@@ -77,7 +77,7 @@ class BookmarkSortingItemView @JvmOverloads constructor(
     image.updatePaddings(IMAGE_PADDING, IMAGE_PADDING, IMAGE_PADDING, IMAGE_PADDING)
 
     if (sortOrderToIndex(bookmarksSortOrder) == index) {
-      setSortDirection(!bookmarksSortOrder.isAscending)
+      setSortDirection(!bookmarksSortOrder.ascending)
     } else {
       clearSortDirection()
     }
@@ -162,18 +162,18 @@ class BookmarkSortingItemView @JvmOverloads constructor(
     }
   }
 
-  private fun sortOrderToIndex(bookmarksSortOrder: ChanSettings.BookmarksSortOrder): Int {
+  private fun sortOrderToIndex(bookmarksSortOrder: BookmarksSortOrder): Int {
     return when (bookmarksSortOrder) {
-      ChanSettings.BookmarksSortOrder.CreatedOnAscending,
-      ChanSettings.BookmarksSortOrder.CreatedOnDescending -> 0
-      ChanSettings.BookmarksSortOrder.ThreadIdAscending,
-      ChanSettings.BookmarksSortOrder.ThreadIdDescending -> 1
-      ChanSettings.BookmarksSortOrder.UnreadRepliesAscending,
-      ChanSettings.BookmarksSortOrder.UnreadRepliesDescending -> 2
-      ChanSettings.BookmarksSortOrder.UnreadPostsAscending,
-      ChanSettings.BookmarksSortOrder.UnreadPostsDescending -> 3
-      ChanSettings.BookmarksSortOrder.CustomAscending,
-      ChanSettings.BookmarksSortOrder.CustomDescending -> 4
+      BookmarksSortOrder.CreatedOnAscending,
+      BookmarksSortOrder.CreatedOnDescending -> 0
+      BookmarksSortOrder.ThreadIdAscending,
+      BookmarksSortOrder.ThreadIdDescending -> 1
+      BookmarksSortOrder.UnreadRepliesAscending,
+      BookmarksSortOrder.UnreadRepliesDescending -> 2
+      BookmarksSortOrder.UnreadPostsAscending,
+      BookmarksSortOrder.UnreadPostsDescending -> 3
+      BookmarksSortOrder.CustomAscending,
+      BookmarksSortOrder.CustomDescending -> 4
     }
   }
 

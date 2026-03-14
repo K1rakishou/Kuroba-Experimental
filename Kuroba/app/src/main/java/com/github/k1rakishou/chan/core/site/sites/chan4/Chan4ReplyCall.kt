@@ -3,7 +3,6 @@ package com.github.k1rakishou.chan.core.site.sites.chan4
 import android.text.SpannableStringBuilder
 import android.text.TextUtils
 import androidx.core.text.set
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.repository.BoardFlagInfoRepository
 import com.github.k1rakishou.chan.core.site.Site
@@ -28,7 +27,8 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
-import com.github.k1rakishou.persist_state.ReplyMode
+import com.github.k1rakishou.v2.KurobaSettings
+import com.github.k1rakishou.v2.parameters.ReplyMode
 import okhttp3.Headers
 import okhttp3.HttpUrl
 import okhttp3.MediaType.Companion.toMediaType
@@ -56,6 +56,8 @@ class Chan4ReplyCall(
     get() = site.dependencies.boardFlagInfoRepository
   private val appConstants: AppConstants
     get() = site.dependencies.appConstants
+  private val kurobaSettings: KurobaSettings
+    get() = site.dependencies.kurobaSettings
   private val chan4SiteSettings: Chan4SiteSettings
     get() = site.requireSiteSettings(Chan4SiteSettings::class.java)
 
@@ -63,9 +65,8 @@ class Chan4ReplyCall(
   @set:Synchronized
   private var captchaSolution: CaptchaSolution? = null
 
-  @Throws(IOException::class)
-  override fun addParameters(
-    formBuilder: MultipartBody.Builder,
+  override suspend fun addParameters(
+    builder: MultipartBody.Builder,
     progressListener: ProgressRequestListener?
   ) {
     val chanDescriptor = Objects.requireNonNull(
@@ -78,37 +79,37 @@ class Chan4ReplyCall(
     }
 
     replyManager.readReply(chanDescriptor) { reply ->
-      formBuilder.addFormDataPart("mode", "regist")
-      formBuilder.addFormDataPart("pwd", replyResponse.password)
+      builder.addFormDataPart("mode", "regist")
+      builder.addFormDataPart("pwd", replyResponse.password)
 
       if (chanDescriptor is ThreadDescriptor) {
         val threadNo = chanDescriptor.threadNo
-        formBuilder.addFormDataPart("resto", threadNo.toString())
+        builder.addFormDataPart("resto", threadNo.toString())
       }
 
-      formBuilder.addFormDataPart("name", reply.postName)
-      formBuilder.addFormDataPart("email", reply.options)
+      builder.addFormDataPart("name", reply.postName)
+      builder.addFormDataPart("email", reply.options)
 
       if (chanDescriptor is CatalogDescriptor
         && !TextUtils.isEmpty(reply.subject)) {
-        formBuilder.addFormDataPart("sub", reply.subject)
+        builder.addFormDataPart("sub", reply.subject)
       }
 
-      formBuilder.addFormDataPart("com", reply.comment)
+      builder.addFormDataPart("com", reply.comment)
 
       if (reply.captchaSolution != null) {
         when (val captchaSolution = reply.captchaSolution!!) {
           is CaptchaSolution.SimpleTokenSolution -> {
             if (reply.captchaChallenge != null) {
-              formBuilder.addFormDataPart("recaptcha_challenge_field", reply.captchaChallenge!!)
-              formBuilder.addFormDataPart("recaptcha_response_field", captchaSolution.token)
+              builder.addFormDataPart("recaptcha_challenge_field", reply.captchaChallenge!!)
+              builder.addFormDataPart("recaptcha_response_field", captchaSolution.token)
             } else {
-              formBuilder.addFormDataPart("g-recaptcha-response", captchaSolution.token)
+              builder.addFormDataPart("g-recaptcha-response", captchaSolution.token)
             }
           }
           is CaptchaSolution.ChallengeWithSolution -> {
-            formBuilder.addFormDataPart("t-challenge", captchaSolution.challenge)
-            formBuilder.addFormDataPart("t-response", captchaSolution.solution)
+            builder.addFormDataPart("t-challenge", captchaSolution.challenge)
+            builder.addFormDataPart("t-response", captchaSolution.solution)
           }
         }
 
@@ -117,13 +118,13 @@ class Chan4ReplyCall(
 
       if (site is Chan4) {
         if (reply.flag.isNotEmpty()) {
-          formBuilder.addFormDataPart("flag", reply.flag)
+          builder.addFormDataPart("flag", reply.flag)
         } else {
           val lastUsedFlag = boardFlagInfoRepository
             .getLastUsedFlagKey(replyChanDescriptor.boardDescriptor())
 
           if (lastUsedFlag.isNotNullNorEmpty()) {
-            formBuilder.addFormDataPart("flag", lastUsedFlag)
+            builder.addFormDataPart("flag", lastUsedFlag)
           }
         }
       }
@@ -136,16 +137,16 @@ class Chan4ReplyCall(
         }
 
         val replyFileMetaInfo = (replyFileMetaResult as ModularResult.Value).value
-        attachFile(formBuilder, progressListener, replyFile, replyFileMetaInfo)
+        attachFile(builder, progressListener, replyFile, replyFileMetaInfo)
 
         if (replyFileMetaInfo.spoiler) {
-          formBuilder.addFormDataPart("spoiler", "on")
+          builder.addFormDataPart("spoiler", "on")
         }
       }
     }
   }
 
-  override fun addHeaders(requestBuilder: Request.Builder, boundary: String) {
+  override suspend fun addHeaders(requestBuilder: Request.Builder, boundary: String) {
     arrayOf("Referer", "User-Agent", "Accept-Encoding", "Cookie",
       "Content-Type", "Content-Length", "Host", "Connection")
       .forEach { header -> requestBuilder.removeHeader(header) }
@@ -171,10 +172,10 @@ class Chan4ReplyCall(
     site.requestModifier.modifyHttpCall(this, requestBuilder)
   }
 
-  override fun process(response: Response, result: String) {
+  override suspend fun process(response: Response, result: String) {
     setChan4CaptchaHeader(response.headers)
 
-    if (ChanSettings.verboseLogs.get()) {
+    if (kurobaSettings.application.verboseLogs.readBlocking()) {
       Logger.d(TAG, "process() result:")
 
       result
@@ -310,8 +311,8 @@ class Chan4ReplyCall(
     }
   }
 
-  private fun setChan4CaptchaHeader(headers: Headers) {
-    val chan4CaptchaSettings = chan4SiteSettings.captchaSettings.get()
+  private suspend fun setChan4CaptchaHeader(headers: Headers) {
+    val chan4CaptchaSettings = chan4SiteSettings.captchaSettings.read()
     if (!chan4CaptchaSettings.rememberCaptchaCookies) {
       Logger.d(TAG, "setChan4CaptchaHeader() rememberCaptchaCookies is false")
       return
@@ -333,7 +334,7 @@ class Chan4ReplyCall(
               "wholeCookieHeader='${wholeCookieHeader}', " +
               "headersDebugString='${headersDebugString}'")
 
-    val oldCookie = chan4SiteSettings.captchaCookie.get()
+    val oldCookie = chan4SiteSettings.captchaCookie.read()
     Logger.d(TAG, "oldCookie='${formatToken(oldCookie)}', newCookie='${formatToken(newCookie)}'")
 
     if (newCookie.isNullOrEmpty()) {
@@ -341,7 +342,7 @@ class Chan4ReplyCall(
       return
     }
 
-    chan4SiteSettings.captchaCookie.set(newCookie)
+    chan4SiteSettings.captchaCookie.write(newCookie)
   }
 
   private fun createRateLimitInfo(rateLimitMatcher: Matcher): ReplyResponse.RateLimitInfo {
@@ -403,9 +404,9 @@ class Chan4ReplyCall(
     formBuilder.addFormDataPart("upfile", replyFileMeta.fileName, requestBody)
   }
 
-  private fun readCookies(requestUrl: HttpUrl): String {
+  private suspend fun readCookies(requestUrl: HttpUrl): String {
     val domainOrHost = requestUrl.domainOrHost()
-    val cloudflareCookie = site.commonSettings.cloudFlareClearanceCookieMap.get(domainOrHost)
+    val cloudflareCookie = site.commonSettings.cloudFlareClearanceCookieMap.read().get(domainOrHost)
 
     return buildString {
       if (cloudflareCookie.isNotNullNorEmpty()) {
@@ -413,11 +414,11 @@ class Chan4ReplyCall(
         append(cloudflareCookie)
       }
 
-      val chan4CaptchaSettings = chan4SiteSettings.captchaSettings.get()
+      val chan4CaptchaSettings = chan4SiteSettings.captchaSettings.read()
       val rememberCaptchaCookies = chan4CaptchaSettings.rememberCaptchaCookies
 
       if (rememberCaptchaCookies) {
-        val captchaCookie = chan4SiteSettings.captchaCookie.get()
+        val captchaCookie = chan4SiteSettings.captchaCookie.read()
         if (captchaCookie.isNotBlank()) {
           Logger.d(TAG, "readCookies() domainOrHost: ${domainOrHost}, captchaCookie: ${formatToken(captchaCookie)}")
 

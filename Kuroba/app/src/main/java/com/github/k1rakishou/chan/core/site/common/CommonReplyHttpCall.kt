@@ -24,7 +24,7 @@ abstract class CommonReplyHttpCall(
   }
 
   @Throws(IOException::class)
-  override fun setup(
+  override suspend fun setup(
     requestBuilder: Request.Builder,
     progressListener: ProgressRequestListener?
   ) {
@@ -45,16 +45,16 @@ abstract class CommonReplyHttpCall(
     requestBuilder.post(formBuilder.build())
   }
 
-  abstract override fun process(response: Response, result: String)
+  abstract override suspend fun process(response: Response, result: String)
 
   @Throws(IOException::class)
-  abstract fun addParameters(
+  abstract suspend fun addParameters(
     builder: MultipartBody.Builder,
     progressListener: ProgressRequestListener?
   )
 
   @Throws(IOException::class)
-  abstract fun addHeaders(
+  abstract suspend fun addHeaders(
     requestBuilder: Request.Builder,
     boundary: String
   )

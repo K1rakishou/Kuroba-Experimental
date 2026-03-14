@@ -8,13 +8,15 @@ import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 @Composable
 fun KurobaComposeSwitch(
   modifier: Modifier = Modifier,
-  initiallyChecked: Boolean,
+  checked: Boolean,
+  enabled: Boolean = true,
   onCheckedChange: (Boolean) -> Unit
 ) {
   val chanTheme = LocalChanTheme.current
 
   Switch(
-    checked = initiallyChecked,
+    enabled = enabled,
+    checked = checked,
     onCheckedChange = onCheckedChange,
     colors = chanTheme.switchColors(),
     modifier = modifier

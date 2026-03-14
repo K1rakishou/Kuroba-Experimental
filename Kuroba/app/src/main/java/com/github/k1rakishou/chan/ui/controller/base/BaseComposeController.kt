@@ -24,12 +24,15 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-abstract class BaseComposeController<VM : KurobaViewModel, Params: Parcelable>(
+abstract class BaseComposeController<
+  VM : KurobaViewModel,
+  Params: Parcelable,
+  Result : Parcelable
+>(
   context: Context,
   viewModelClass: Class<VM>,
   viewModelParams: Params?,
 ) : Controller(context) {
-
   @Inject
   lateinit var themeEngine: ThemeEngine
   @Inject
@@ -95,6 +98,15 @@ abstract class BaseComposeController<VM : KurobaViewModel, Params: Parcelable>(
   @Composable
   abstract fun ScreenContent()
 
+  protected fun popWithResult(result: Result) {
+    setControllerResult(result)
+    requireNavController().popController()
+  }
+
+  suspend fun awaitForControllerResult(): ControllerResult<Result> {
+    return awaitForResult<Result>()
+  }
+
   private fun bridgeDelegate() {
     controllerScope.launch {
       viewModel.controllerDelegate.navigationEvents
@@ -111,8 +123,14 @@ abstract class BaseComposeController<VM : KurobaViewModel, Params: Parcelable>(
 
   private fun handleNavigationEvent(navigationEvent: ControllerNavigationDelegate.NavigationEvent) {
     when (navigationEvent) {
+      is ControllerNavigationDelegate.NavigationEvent.Push -> {
+        requireNavController().pushController(navigationEvent.controller)
+      }
       ControllerNavigationDelegate.NavigationEvent.Pop -> {
         requireNavController().popController()
+      }
+      is ControllerNavigationDelegate.NavigationEvent.Present -> {
+        presentController(navigationEvent.controller)
       }
     }
   }

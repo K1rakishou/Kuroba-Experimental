@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.ui.adapter
 
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.PostFilterHighlightManager
@@ -18,6 +17,8 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.PostIndexed
+import com.github.k1rakishou.v2.KurobaSettings
+import com.github.k1rakishou.v2.parameters.BoardPostViewMode
 import dagger.Lazy
 
 class PostRepliesAdapter(
@@ -25,29 +26,31 @@ class PostRepliesAdapter(
   private val postViewMode: PostCellData.PostViewMode,
   private val postCellCallback: PostCellInterface.PostCellCallback,
   val chanDescriptor: ChanDescriptor,
-  _chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>,
-  _chanThreadManager: Lazy<ChanThreadManager>,
-  _postFilterManager: Lazy<PostFilterManager>,
-  _savedReplyManager: Lazy<SavedReplyManager>,
-  _postFilterHighlightManager: Lazy<PostFilterHighlightManager>,
-  _postHideManager: Lazy<PostHideManager>,
+  kurobaSettings: KurobaSettings,
+  chanThreadViewableInfoManagerLazy: Lazy<ChanThreadViewableInfoManager>,
+  chanThreadManagerLazy: Lazy<ChanThreadManager>,
+  postFilterManagerLazy: Lazy<PostFilterManager>,
+  savedReplyManagerLazy: Lazy<SavedReplyManager>,
+  postFilterHighlightManagerLazy: Lazy<PostFilterHighlightManager>,
+  postHideManagerLazy: Lazy<PostHideManager>,
   initialTheme: ChanTheme
 ) : RecyclerView.Adapter<PostRepliesAdapter.ReplyViewHolder>() {
 
   private val threadCellData = ThreadCellData(
-    _chanThreadViewableInfoManager = _chanThreadViewableInfoManager,
-    _chanThreadManager = _chanThreadManager,
-    _postFilterManager = _postFilterManager,
-    _savedReplyManager = _savedReplyManager,
-    _postFilterHighlightManager = _postFilterHighlightManager,
-    _postHideManager = _postHideManager,
+    kurobaSettings = kurobaSettings,
+    chanThreadViewableInfoManagerLazy = chanThreadViewableInfoManagerLazy,
+    chanThreadManagerLazy = chanThreadManagerLazy,
+    postFilterManagerLazy = postFilterManagerLazy,
+    savedReplyManagerLazy = savedReplyManagerLazy,
+    postFilterHighlightManagerLazy = postFilterHighlightManagerLazy,
+    postHideManagerLazy = postHideManagerLazy,
     initialTheme = initialTheme
   )
 
   fun init(clickedPostDescriptor: PostDescriptor?) {
     threadCellData.postViewMode = postViewMode
     threadCellData.defaultIsCompact = false
-    threadCellData.defaultBoardPostViewMode = ChanSettings.BoardPostViewMode.LIST
+    threadCellData.defaultBoardPostViewMode = BoardPostViewMode.List
     threadCellData.defaultMarkedPostDescriptor = clickedPostDescriptor
     threadCellData.defaultShowDividerFunc = { postIndex: Int, totalPostsCount: Int -> postIndex < totalPostsCount - 1 }
   }

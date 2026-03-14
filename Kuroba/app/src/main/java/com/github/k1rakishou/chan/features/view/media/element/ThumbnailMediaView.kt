@@ -8,7 +8,6 @@ import android.util.AttributeSet
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
@@ -25,6 +24,7 @@ import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isExceptionImportant
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.v2.KurobaSettings
 import dagger.Lazy
 import okhttp3.HttpUrl
 import javax.inject.Inject
@@ -43,6 +43,8 @@ class ThumbnailMediaView @JvmOverloads constructor(
   private var currentlyVisible = false
   private var requestDisposable: ImageLoaderDeprecated.ImageLoaderRequestDisposable? = null
 
+  @Inject
+  lateinit var kurobaSettings: KurobaSettings
   @Inject
   lateinit var imageLoaderDeprecated: Lazy<ImageLoaderDeprecated>
   @Inject
@@ -187,7 +189,7 @@ class ThumbnailMediaView @JvmOverloads constructor(
   }
 
   private fun extractThumbnailLocation(parameters: ThumbnailMediaViewParameters): MediaLocation? {
-    if (ChanSettings.mediaViewerRevealImageSpoilers.get()) {
+    if (kurobaSettings.application.mediaViewerRevealImageSpoilers.readBlocking()) {
       return parameters.viewableMedia.previewLocation
     }
 

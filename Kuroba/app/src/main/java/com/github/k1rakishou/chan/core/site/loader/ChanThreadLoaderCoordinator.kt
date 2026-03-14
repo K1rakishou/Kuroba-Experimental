@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.core.site.loader
 
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.helper.ChanLoadProgressEvent
 import com.github.k1rakishou.chan.core.helper.ChanLoadProgressNotifier
@@ -39,6 +38,7 @@ import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.source.cache.ChanCatalogSnapshotCache
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
+import com.github.k1rakishou.v2.KurobaSettings
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -63,6 +63,7 @@ import kotlin.time.measureTimedValue
  * future. For now it will stay the way it is.
  * */
 class ChanThreadLoaderCoordinator(
+  private val kurobaSettings: KurobaSettings,
   private val proxiedOkHttpClient: ProxiedOkHttpClient,
   private val chanPostRepository: ChanPostRepository,
   private val chanCatalogSnapshotRepository: ChanCatalogSnapshotRepository,
@@ -311,7 +312,7 @@ class ChanThreadLoaderCoordinator(
         appendLine("Current thread cached posts count: $currentThreadCachedPostsCount")
       }
 
-      val isLowRamDevice = ChanSettings.isLowRamDevice()
+      val isLowRamDevice = kurobaSettings.application.isLowRamDevice()
 
       appendLine("Threads with more than one post " +
         "count: ($threadsWithMoreThanOnePostCount/${ChanThreadsCache.immuneThreadsCount(isLowRamDevice)}), " +

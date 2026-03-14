@@ -1,14 +1,16 @@
 package com.github.k1rakishou.chan.ui.controller.navigation
 
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.navigation.ControllerWithNavigation
 import com.github.k1rakishou.chan.core.navigation.HasNavigation
 import com.github.k1rakishou.chan.features.toolbar.KurobaToolbarState
 import com.github.k1rakishou.chan.ui.controller.base.Controller
 import com.github.k1rakishou.chan.utils.findControllerOrNull
+import com.github.k1rakishou.v2.KurobaSettings
 import kotlinx.coroutines.flow.StateFlow
 
 interface DoubleNavigationController : ControllerWithNavigation, HasNavigation {
+  val kurobaSettings: KurobaSettings
+
   val leftControllerToolbarState: KurobaToolbarState?
   val rightControllerToolbarState: KurobaToolbarState?
 
@@ -34,16 +36,18 @@ enum class DoubleControllerType {
 }
 
 fun DoubleNavigationController.determineDoubleControllerType(currentController: Controller): DoubleControllerType? {
-  if (!ChanSettings.isSplitLayoutMode()) {
+  if (!kurobaSettings.application.isSplitLayoutModeBlocking()) {
     return null
   }
 
-  val isLeft = leftController()?.findControllerOrNull { leftController -> leftController === currentController } != null
+  val isLeft = leftController()
+    ?.findControllerOrNull { leftController -> leftController === currentController } != null
   if (isLeft) {
     return DoubleControllerType.Left
   }
 
-  val isRight = rightController()?.findControllerOrNull { rightController -> rightController === currentController } != null
+  val isRight = rightController()
+    ?.findControllerOrNull { rightController -> rightController === currentController } != null
   if (isRight) {
     return DoubleControllerType.Right
   }

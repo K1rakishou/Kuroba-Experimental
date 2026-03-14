@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.core.cache
 
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.cache.downloader.Chunk
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
@@ -10,6 +9,7 @@ import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.common.mbytesToBytes
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.util.ChanPostUtils
+import com.github.k1rakishou.v2.KurobaSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -33,9 +33,9 @@ import kotlin.time.measureTime
  * as all media files retrieved via [ImageLoaderV2]
  */
 class CacheHandler(
-  private val autoLoadThreadImages: Boolean,
-  private val appConstants: AppConstants
-) {
+  private val appConstants: AppConstants,
+  private val kurobaSettings: KurobaSettings
+  ) {
   private val temporaryFilesCleared = AtomicBoolean(false)
   private val innerCaches = ConcurrentHashMap<CacheFileType, InnerCache>()
 
@@ -49,10 +49,10 @@ class CacheHandler(
       CacheFileType.checkValid()
     }
 
-    val totalFileCacheDiskSizeBytes = if (autoLoadThreadImages) {
-      ChanSettings.prefetchDiskCacheSizeMegabytes.get().mbytesToBytes()
+    val totalFileCacheDiskSizeBytes = if (kurobaSettings.application.prefetchMedia.readBlocking()) {
+      kurobaSettings.application.prefetchDiskCacheSizeMegabytes.readBlocking().mbytesToBytes()
     } else {
-      ChanSettings.diskCacheSizeMegabytes.get().mbytesToBytes()
+      kurobaSettings.application.diskCacheSizeMegabytes.readBlocking().mbytesToBytes()
     }
 
     val diskCacheDir = appConstants.diskCacheDir
@@ -82,7 +82,8 @@ class CacheHandler(
         cacheDirFile = innerCacheDirFile,
         chunksCacheDirFile = innerCacheChunksDirFile,
         fileCacheDiskSizeBytes = cacheFileType.calculateDiskSize(totalFileCacheDiskSizeBytes),
-        cacheFileType = cacheFileType
+        cacheFileType = cacheFileType,
+        kurobaSettings = kurobaSettings
       )
 
       innerCaches.put(cacheFileType, innerCache)

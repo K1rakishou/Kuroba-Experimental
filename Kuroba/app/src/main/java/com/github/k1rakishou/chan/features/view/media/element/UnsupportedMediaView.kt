@@ -17,6 +17,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink
 import com.github.k1rakishou.chan.utils.setVisibilityFast
+import com.github.k1rakishou.v2.KurobaSettings
 import com.google.android.exoplayer2.upstream.DataSource
 
 @SuppressLint("ViewConstructor", "ClickableViewAccessibility")
@@ -24,6 +25,7 @@ class UnsupportedMediaView(
   context: Context,
   initialMediaViewState: UnsupportedMediaViewState,
   mediaViewContract: MediaViewContract,
+  kurobaSettings: KurobaSettings,
   private val onThumbnailFullyLoadedFunc: () -> Unit,
   private val isSystemUiHidden: () -> Boolean,
   cachedHttpDataSourceFactory: DataSource.Factory,
@@ -36,6 +38,7 @@ class UnsupportedMediaView(
   context = context,
   attributeSet = null,
   mediaViewContract = mediaViewContract,
+  kurobaSettings = kurobaSettings,
   mediaViewState = initialMediaViewState,
   cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
   fileDataSourceFactory = fileDataSourceFactory,

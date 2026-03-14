@@ -33,8 +33,8 @@ import com.github.k1rakishou.chan.utils.setEnabledFast
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.model.repository.ImageDownloadRequestRepository
-import com.github.k1rakishou.persist_state.ImageSaverV2Options
-import com.github.k1rakishou.persist_state.IndexAndTop
+import com.github.k1rakishou.v2.parameters.ImageSaverV2Options
+import com.github.k1rakishou.v2.parameters.RecyclerIndexAndTopInfo
 import com.google.gson.Gson
 import dagger.Lazy
 import kotlinx.coroutines.launch
@@ -64,7 +64,7 @@ class ResolveDuplicateImagesController(
   private lateinit var selectAllDuplicates: ColorizableCheckBox
 
   private val checkState = mutableMapOf<CompoundButton, Boolean>()
-  private var indexAndTop: IndexAndTop? = null
+  private var indexAndTop: RecyclerIndexAndTopInfo.IndexAndTop? = null
 
   private val resolveDuplicateImagesPresenter by lazy {
     return@lazy ResolveDuplicateImagesPresenter(

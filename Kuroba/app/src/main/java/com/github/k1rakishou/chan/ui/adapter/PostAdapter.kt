@@ -7,8 +7,6 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
-import com.github.k1rakishou.ChanSettings
-import com.github.k1rakishou.ChanSettings.BoardPostViewMode
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
@@ -36,6 +34,9 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.PostIndexed
+import com.github.k1rakishou.v2.KurobaSettings
+import com.github.k1rakishou.v2.parameters.BoardPostViewMode
+import com.github.k1rakishou.v2.parameters.PostAlignmentMode
 import dagger.Lazy
 import javax.inject.Inject
 
@@ -46,6 +47,8 @@ class PostAdapter(
   statusCellCallback: ThreadStatusCell.Callback
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
+  @Inject
+  lateinit var kurobaSettings: KurobaSettings
   @Inject
   lateinit var chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>
   @Inject
@@ -112,12 +115,13 @@ class PostAdapter(
     this.statusCellCallback = statusCellCallback
 
     threadCellData = ThreadCellData(
-      _chanThreadViewableInfoManager = chanThreadViewableInfoManager,
-      _chanThreadManager = chanThreadManager,
-      _postFilterManager = postFilterManager,
-      _postFilterHighlightManager = postFilterHighlightManager,
-      _savedReplyManager = savedReplyManager,
-      _postHideManager = postHideManager,
+      kurobaSettings = kurobaSettings,
+      chanThreadViewableInfoManagerLazy = chanThreadViewableInfoManager,
+      chanThreadManagerLazy = chanThreadManager,
+      postFilterManagerLazy = postFilterManager,
+      postFilterHighlightManagerLazy = postFilterHighlightManager,
+      savedReplyManagerLazy = savedReplyManager,
+      postHideManagerLazy = postHideManager,
       initialTheme = themeEngine.chanTheme
     )
 
@@ -559,20 +563,20 @@ class PostAdapter(
 
     val postAlignmentMode = when (postCellData.chanDescriptor) {
       is ChanDescriptor.CatalogDescriptor,
-      is ChanDescriptor.CompositeCatalogDescriptor -> ChanSettings.catalogPostAlignmentMode.get()
-      is ChanDescriptor.ThreadDescriptor -> ChanSettings.threadPostAlignmentMode.get()
+      is ChanDescriptor.CompositeCatalogDescriptor -> kurobaSettings.application.catalogPostAlignmentMode.readBlocking()
+      is ChanDescriptor.ThreadDescriptor -> kurobaSettings.application.threadPostAlignmentMode.readBlocking()
     }
 
     checkNotNull(postAlignmentMode) { "postAlignmentMode is null" }
 
     when (postViewMode) {
-      BoardPostViewMode.LIST -> {
+      BoardPostViewMode.List -> {
         if (postCellData.imagesCount <= 1) {
           when (postAlignmentMode) {
-            ChanSettings.PostAlignmentMode.AlignLeft -> {
+            PostAlignmentMode.AlignLeft -> {
               return PostCellData.PostCellItemViewType.TypePostZeroOrSingleThumbnailLeftAlignment.viewTypeRaw
             }
-            ChanSettings.PostAlignmentMode.AlignRight -> {
+            PostAlignmentMode.AlignRight -> {
               return PostCellData.PostCellItemViewType.TypePostZeroOrSingleThumbnailRightAlignment.viewTypeRaw
             }
           }
@@ -580,8 +584,8 @@ class PostAdapter(
           return PostCellData.PostCellItemViewType.TypePostMultipleThumbnails.viewTypeRaw
         }
       }
-      BoardPostViewMode.GRID,
-      BoardPostViewMode.STAGGER -> {
+      BoardPostViewMode.Grid,
+      BoardPostViewMode.Stagger -> {
         return PostCellData.PostCellItemViewType.TypePostCard.viewTypeRaw
       }
     }

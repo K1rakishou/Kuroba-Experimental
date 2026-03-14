@@ -1,69 +1,93 @@
 package com.github.k1rakishou.chan.core.site.settings
 
-import com.github.k1rakishou.ChanSettings
-import com.github.k1rakishou.SharedPreferencesSettingProvider
 import com.github.k1rakishou.chan.core.site.SiteDependencies
-import com.github.k1rakishou.persist_state.ReplyMode
-import com.github.k1rakishou.prefs.BooleanSetting
-import com.github.k1rakishou.prefs.LongSetting
-import com.github.k1rakishou.prefs.MapSetting
-import com.github.k1rakishou.prefs.OptionsSetting
-import com.github.k1rakishou.prefs.StringSetting
+import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
+import com.github.k1rakishou.v2.KurobaInitialSettingsState
+import com.github.k1rakishou.v2.KurobaSettingInfo
+import com.github.k1rakishou.v2.KurobaSettingKey
+import com.github.k1rakishou.v2.parameters.ConcurrentFileDownloadingChunks
+import com.github.k1rakishou.v2.parameters.ReplyMode
+import com.github.k1rakishou.v2.settings.KurobaBooleanSetting
+import com.github.k1rakishou.v2.settings.KurobaEnumSetting
+import com.github.k1rakishou.v2.settings.KurobaLongSetting
+import com.github.k1rakishou.v2.settings.KurobaMapSetting
+import com.github.k1rakishou.v2.settings.KurobaStringSetting
 
 class SiteCommonSettings(
+  private val siteDescriptor: SiteDescriptor,
   defaultDomain: String,
-  prefs: SharedPreferencesSettingProvider,
   dependencies: SiteDependencies
-) {
+) : KurobaSettingInfo {
+  override val backupable: Boolean = true
+  override val initialSettingsState: KurobaInitialSettingsState = dependencies.kurobaSettings.initialSettingsState
+
   val siteDomainSetting by lazy {
-    StringSetting(prefs, "site_domain", defaultDomain)
+    KurobaStringSetting(
+      database = dependencies.settingsDatabase,
+      kurobaSettingInfo = this,
+      key = KurobaSettingKey.Site.SiteDomainSetting(siteDescriptor.siteName),
+      default = defaultDomain
+    )
   }
 
   val concurrentFileDownloadingChunks by lazy {
-    OptionsSetting(
-      prefs,
-      "concurrent_download_chunk_count",
-      ChanSettings.ConcurrentFileDownloadingChunks::class.java,
-      ChanSettings.ConcurrentFileDownloadingChunks.Two
+    KurobaEnumSetting(
+      database = dependencies.settingsDatabase,
+      kurobaSettingInfo = this,
+      clazz = ConcurrentFileDownloadingChunks::class.java,
+      key = KurobaSettingKey.Site.ConcurrentFileDownloadingChunks(siteDescriptor.siteName),
+      default = ConcurrentFileDownloadingChunks.Two
     )
   }
 
   val cloudFlareClearanceCookieMap by lazy {
-    MapSetting(
+    KurobaMapSetting<String, String>(
       moshi = dependencies.moshi,
+      kurobaSettingInfo = this,
       mapperFrom = { mapSettingEntry ->
-        return@MapSetting MapSetting.KeyValue(
+        return@KurobaMapSetting KurobaMapSetting.KeyValue(
           key = mapSettingEntry.key,
           value = mapSettingEntry.value
         )
       },
       mapperTo = { keyValue ->
-        return@MapSetting MapSetting.MapSettingEntry(
+        return@KurobaMapSetting KurobaMapSetting.MapSettingEntry(
           key = keyValue.key,
           value = keyValue.value
         )
       },
-      settingProvider = prefs,
-      key = "cloud_flare_clearance_cookie_map",
-      def = emptyMap()
+      database = dependencies.settingsDatabase,
+      key = KurobaSettingKey.Site.CloudFlareClearanceCookieMap(siteDescriptor.siteName),
+      default = emptyMap()
     )
   }
 
   val lastUsedReplyMode by lazy {
-    OptionsSetting(
-      prefs,
-      "last_used_reply_mode",
-      ReplyMode::class.java,
-      ReplyMode.Unknown
+    KurobaEnumSetting(
+      database = dependencies.settingsDatabase,
+      kurobaSettingInfo = this,
+      clazz = ReplyMode::class.java,
+      key = KurobaSettingKey.Site.LastUsedReplyMode(siteDescriptor.siteName),
+      default = ReplyMode.Unknown
     )
   }
 
   val ignoreReplyCooldowns by lazy {
-    BooleanSetting(prefs, "ignore_reply_cooldowns", false)
+    KurobaBooleanSetting(
+      database = dependencies.settingsDatabase,
+      kurobaSettingInfo = this,
+      key = KurobaSettingKey.Site.IgnoreReplyCooldowns(siteDescriptor.siteName),
+      default = false
+    )
   }
 
   val lastSiteBoardsRefreshTime by lazy {
-    LongSetting(prefs, "last_site_boards_refresh_time", 0)
+    KurobaLongSetting(
+      database = dependencies.settingsDatabase,
+      kurobaSettingInfo = this,
+      key = KurobaSettingKey.Site.LastSiteBoardsRefreshTime(siteDescriptor.siteName),
+      default = 0
+    )
   }
 
   companion object {

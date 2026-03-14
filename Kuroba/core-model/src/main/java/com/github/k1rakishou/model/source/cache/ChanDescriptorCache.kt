@@ -2,7 +2,7 @@ package com.github.k1rakishou.model.source.cache
 
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.common.mutableMapWithCap
-import com.github.k1rakishou.model.KurobaDatabase
+import com.github.k1rakishou.model.KurobaMainDatabase
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
@@ -15,7 +15,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 class ChanDescriptorCache(
-  private val database: KurobaDatabase
+  private val database: KurobaMainDatabase
 ) {
   private val mutex = Mutex()
 

@@ -13,7 +13,6 @@ import android.os.Build
 import android.provider.Settings
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManager
@@ -26,10 +25,12 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable
+import com.github.k1rakishou.v2.KurobaSettings
 import dagger.Lazy
 
 class LastPageNotificationsHelper(
   private val isDevFlavor: Boolean,
+  private val kurobaSettings: KurobaSettings,
   private val appContext: Context,
   private val notificationManagerCompat: NotificationManagerCompat,
   private val pageRequestManager: Lazy<PageRequestManager>,
@@ -38,7 +39,7 @@ class LastPageNotificationsHelper(
   private val currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager
 ) {
 
-  fun showOrUpdateNotifications(watchingBookmarkDescriptors: List<ChanDescriptor.ThreadDescriptor>) {
+  suspend fun showOrUpdateNotifications(watchingBookmarkDescriptors: List<ChanDescriptor.ThreadDescriptor>) {
     Logger.d(TAG, "showOrUpdateNotifications(${watchingBookmarkDescriptors.size})")
 
     if (watchingBookmarkDescriptors.isEmpty()) {
@@ -46,7 +47,7 @@ class LastPageNotificationsHelper(
       return
     }
 
-    if (!ChanSettings.watchLastPageNotify.get()) {
+    if (!kurobaSettings.application.watchLastPageNotify.read()) {
       Logger.d(TAG, "ChanSettings.watchLastPageNotify is disabled")
       return
     }
@@ -96,7 +97,7 @@ class LastPageNotificationsHelper(
     Logger.d(TAG, "notificationManagerCompat.notify() called")
   }
 
-  private fun getNotification(
+  private suspend fun getNotification(
     threadsWithTitles: List<Pair<ChanDescriptor.ThreadDescriptor, String>>
   ): Notification {
     val threadsOnLastPageCount = threadsWithTitles.size
@@ -104,7 +105,7 @@ class LastPageNotificationsHelper(
       R.string.last_page_notification_threads_hit_last_page_format,
       threadsOnLastPageCount
     )
-    val useSoundForLastPageNotifications = ChanSettings.useSoundForLastPageNotifications.get()
+    val useSoundForLastPageNotifications = kurobaSettings.application.useSoundForLastPageNotifications.read()
 
     val builder = if (useSoundForLastPageNotifications) {
       NotificationCompat.Builder(

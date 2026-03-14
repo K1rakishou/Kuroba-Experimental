@@ -9,7 +9,6 @@ import android.widget.TextView
 import androidx.appcompat.widget.AppCompatImageButton
 import androidx.core.view.doOnPreDraw
 import androidx.core.view.updateLayoutParams
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
@@ -21,6 +20,7 @@ import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.util.ChanPostUtils
+import com.github.k1rakishou.v2.KurobaSettings
 import java.util.Locale
 import javax.inject.Inject
 
@@ -29,6 +29,8 @@ class MediaViewerToolbar @JvmOverloads constructor(
   attributeSet: AttributeSet? = null
 ) : LinearLayout(context, attributeSet), WindowInsetsListener {
 
+  @Inject
+  lateinit var kurobaSettings: KurobaSettings
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
@@ -110,7 +112,7 @@ class MediaViewerToolbar @JvmOverloads constructor(
   fun toolbarHeight(): Int = height
 
   override fun onInsetsChanged() {
-    val topPadding = if (ChanSettings.mediaViewerDrawBehindNotch.get()) {
+    val topPadding = if (kurobaSettings.application.mediaViewerDrawBehindNotch.readBlocking()) {
       globalWindowInsetsManager.top()
     } else {
       0

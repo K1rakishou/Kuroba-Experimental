@@ -245,6 +245,8 @@ open class AppConstants(
     const val TEMP_FILES_DIR_NAME = "temp_files"
 
     const val MPV_CERTIFICATE_FILE_NAME = "cacert.pem"
+    const val MPV_CONF_DIR = "mpvconf"
+    const val MPV_CONF_FILE = "mpv.conf"
 
     const val RESOURCES_ENDPOINT = "https://raw.githubusercontent.com/K1rakishou/Kuroba-Experimental/develop/docs/"
 

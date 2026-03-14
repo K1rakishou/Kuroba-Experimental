@@ -9,17 +9,18 @@ import android.view.MotionEvent
 import android.view.VelocityTracker
 import android.view.ViewParent
 import android.widget.Scroller
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.ui.controller.base.Controller
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
+import com.github.k1rakishou.v2.KurobaSettings
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
 class ThreadControllerTracker(
   context: Context,
+  private val kurobaSettings: KurobaSettings,
   private val globalUiStateHolder: GlobalUiStateHolder,
   private val getWidthFunc: () -> Int,
   private val getHeightFunc: () -> Int,
@@ -294,7 +295,7 @@ class ThreadControllerTracker(
       return true
     }
 
-    if (ChanSettings.isSplitLayoutMode()) {
+    if (kurobaSettings.application.isSplitLayoutModeBlocking()) {
       return true
     }
 

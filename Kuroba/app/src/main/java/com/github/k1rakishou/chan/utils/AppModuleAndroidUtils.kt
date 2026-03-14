@@ -28,7 +28,6 @@ import androidx.annotation.DrawableRes
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
-import com.github.k1rakishou.ChanSettings.NetworkContentAutoLoadMode
 import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.Chan.Companion.getComponent
 import com.github.k1rakishou.chan.R
@@ -48,7 +47,8 @@ import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger.d
 import com.github.k1rakishou.core_logger.Logger.e
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
-import com.github.k1rakishou.persist_state.PersistableChanState
+import com.github.k1rakishou.v2.KurobaSettings
+import com.github.k1rakishou.v2.parameters.NetworkContentAutoLoadMode
 import java.io.File
 import java.util.Locale
 
@@ -66,14 +66,14 @@ object AppModuleAndroidUtils {
     }
   }
 
-  fun checkDontKeepActivitiesSettingEnabledForWarningDialog(context: Context): Boolean {
-    if (PersistableChanState.dontKeepActivitiesWarningShown.get()) {
+  fun checkDontKeepActivitiesSettingEnabledForWarningDialog(context: Context, kurobaSettings: KurobaSettings): Boolean {
+    if (kurobaSettings.internal.dontKeepActivitiesWarningShown.readBlocking()) {
       return false
     }
 
     val settingEnabled = Settings.Global.getInt(context.contentResolver, Settings.Global.ALWAYS_FINISH_ACTIVITIES, 0) == 1
     if (settingEnabled) {
-      PersistableChanState.dontKeepActivitiesWarningShown.set(true)
+      kurobaSettings.internal.dontKeepActivitiesWarningShown.writeAsync(true)
     }
 
     return settingEnabled
@@ -132,6 +132,10 @@ object AppModuleAndroidUtils {
 
   val isFdroidBuild: Boolean
     get() = flavorType == FlavorType.Fdroid
+
+  fun isDevOrBetaBuild(): Boolean {
+    return isDevBuild || isBetaBuild
+  }
 
   val flavorType: FlavorType
     get() = when (BuildConfig.FLAVOR_TYPE) {
@@ -333,12 +337,12 @@ object AppModuleAndroidUtils {
   }
 
   fun shouldLoadForNetworkType(networkType: NetworkContentAutoLoadMode?): Boolean {
-    if (networkType == NetworkContentAutoLoadMode.NONE) {
+    if (networkType == NetworkContentAutoLoadMode.None) {
       return false
-    } else if (networkType == NetworkContentAutoLoadMode.UNMETERED) {
+    } else if (networkType == NetworkContentAutoLoadMode.Unmetered) {
       return isConnectionUnmetered
     } else {
-      return networkType == NetworkContentAutoLoadMode.ALL
+      return networkType == NetworkContentAutoLoadMode.All
     }
   }
 

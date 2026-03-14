@@ -21,10 +21,11 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable
 import com.github.k1rakishou.model.data.filter.FilterType
 import com.github.k1rakishou.model.data.post.ChanPostImage
-import com.github.k1rakishou.persist_state.PersistableChanState
+import com.github.k1rakishou.v2.KurobaSettings
 import dagger.Lazy
 
 class ThumbnailLongtapOptionsHelper(
+  private val kurobaSettings: KurobaSettings,
   private val globalWindowInsetsManager: GlobalWindowInsetsManager,
   private val imageSaverV2: Lazy<ImageSaverV2>
 ) {
@@ -214,7 +215,7 @@ class ThumbnailLongtapOptionsHelper(
       return
     }
 
-    val imageSaverV2Options = PersistableChanState.imageSaverV2PersistedOptions.get()
+    val imageSaverV2Options = kurobaSettings.internal.imageSaverV2PersistedOptions.readBlocking()
 
     if (!showOptions && !imageSaverV2Options.shouldShowImageSaverOptionsController()) {
       imageSaverV2.get().save(imageSaverV2Options, simpleSaveableMediaInfo, null)

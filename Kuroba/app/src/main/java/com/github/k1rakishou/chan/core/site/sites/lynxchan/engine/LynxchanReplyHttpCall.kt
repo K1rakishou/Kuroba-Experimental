@@ -43,7 +43,7 @@ class LynxchanReplyHttpCall(
 
   val replyResponse = ReplyResponse()
 
-  override fun setup(
+  override suspend fun setup(
     requestBuilder: Request.Builder,
     progressListener: ProgressRequestBody.ProgressRequestListener?
   ) {
@@ -277,7 +277,7 @@ class LynxchanReplyHttpCall(
     }
   }
 
-  override fun process(response: Response, result: String) {
+  override suspend fun process(response: Response, result: String) {
     val lynxchanReplyResponse = convertToLynxchanReplyResponse(result)
     if (lynxchanReplyResponse == null) {
       val matcher = GENERIC_ERROR_PATTERN.matcher(result)

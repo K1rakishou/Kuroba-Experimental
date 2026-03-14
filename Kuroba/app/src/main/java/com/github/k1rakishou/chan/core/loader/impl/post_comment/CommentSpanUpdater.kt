@@ -4,7 +4,6 @@ import android.graphics.Bitmap
 import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.style.ImageSpan
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp
 import com.github.k1rakishou.chan.utils.BackgroundUtils
@@ -53,7 +52,9 @@ internal object CommentSpanUpdater {
   fun updateSpansForPostComment(
     chanThreadManager: ChanThreadManager,
     postDescriptor: PostDescriptor,
-    spanUpdateBatchList: List<SpanUpdateBatch>
+    spanUpdateBatchList: List<SpanUpdateBatch>,
+    fontSize: Int,
+    showLinkAlongWithTitleAndDuration: Boolean
   ): Boolean {
     BackgroundUtils.ensureBackgroundThread()
 
@@ -74,7 +75,11 @@ internal object CommentSpanUpdater {
           val start = postLinkableSpan.start + offset
           val end = postLinkableSpan.end + offset
           val originalLinkUrl = stringBuilder.substring(start, end)
-          val formattedLinkUrl = formatLinkUrl(originalLinkUrl, invertedSpanUpdateBatch.extraLinkInfo)
+          val formattedLinkUrl = formatLinkUrl(
+            originalLinkUrl = originalLinkUrl,
+            extraLinkInfo = invertedSpanUpdateBatch.extraLinkInfo,
+            showLinkAlongWithTitleAndDuration = showLinkAlongWithTitleAndDuration
+          )
 
           // Update the offset with the difference between the new and old links
           offset += formattedLinkUrl.length - originalLinkUrl.length
@@ -94,7 +99,7 @@ internal object CommentSpanUpdater {
 
           // Add the icon span
           stringBuilder.setSpanSafe(
-            getIconSpan(invertedSpanUpdateBatch.iconBitmap),
+            getIconSpan(icon = invertedSpanUpdateBatch.iconBitmap, fontSize = fontSize),
             iconPosition - 1,
             iconPosition,
             (500 shl Spanned.SPAN_PRIORITY_SHIFT) and Spanned.SPAN_PRIORITY
@@ -135,31 +140,36 @@ internal object CommentSpanUpdater {
     return map
   }
 
-  private fun getIconSpan(icon: Bitmap): ImageSpan {
+  private fun getIconSpan(
+    icon: Bitmap,
+    fontSize: Int
+  ): ImageSpan {
     BackgroundUtils.ensureBackgroundThread()
 
     // Create the icon span for the linkable
     val iconSpan = ImageSpan(AndroidUtils.appContext, icon)
-    val height = ChanSettings.fontSize.get().toInt()
-    val width = (sp(height.toFloat()) / (icon.height.toFloat() / icon.width.toFloat())).toInt()
+    val width = (sp(fontSize.toFloat()) / (icon.height.toFloat() / icon.width.toFloat())).toInt()
 
-    iconSpan.drawable.setBounds(0, 0, width, sp(height.toFloat()))
+    iconSpan.drawable.setBounds(0, 0, width, sp(fontSize.toFloat()))
     return iconSpan
   }
 
-  private fun formatLinkUrl(originalLinkUrl: String, extraLinkInfo: ExtraLinkInfo): String {
+  private fun formatLinkUrl(
+    originalLinkUrl: String,
+    extraLinkInfo: ExtraLinkInfo,
+    showLinkAlongWithTitleAndDuration: Boolean
+  ): String {
     BackgroundUtils.ensureBackgroundThread()
-    val showLink = ChanSettings.showLinkAlongWithTitleAndDuration.get()
 
     return buildString {
-      if (showLink || extraLinkInfo !is ExtraLinkInfo.Success) {
+      if (showLinkAlongWithTitleAndDuration || extraLinkInfo !is ExtraLinkInfo.Success) {
         // Append the original url
         append(originalLinkUrl)
       }
 
       when (extraLinkInfo) {
         is ExtraLinkInfo.Success -> {
-          tryAppendTitle(extraLinkInfo, showLink)
+          tryAppendTitle(extraLinkInfo, showLinkAlongWithTitleAndDuration)
           tryAppendDuration(extraLinkInfo)
         }
         ExtraLinkInfo.Error -> {

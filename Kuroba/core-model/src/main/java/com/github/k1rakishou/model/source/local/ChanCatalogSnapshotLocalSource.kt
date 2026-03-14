@@ -1,6 +1,6 @@
 package com.github.k1rakishou.model.source.local
 
-import com.github.k1rakishou.model.KurobaDatabase
+import com.github.k1rakishou.model.KurobaMainDatabase
 import com.github.k1rakishou.model.data.catalog.ChanCatalogSnapshot
 import com.github.k1rakishou.model.data.catalog.ChanCompositeCatalogSnapshot
 import com.github.k1rakishou.model.data.catalog.IChanCatalogSnapshot
@@ -10,7 +10,7 @@ import com.github.k1rakishou.model.source.cache.ChanCatalogSnapshotCache
 import com.github.k1rakishou.model.source.cache.ChanDescriptorCache
 
 class ChanCatalogSnapshotLocalSource(
-  database: KurobaDatabase,
+  database: KurobaMainDatabase,
   private val chanDescriptorCache: ChanDescriptorCache,
   private val chanCatalogSnapshotCache: ChanCatalogSnapshotCache
 ) : AbstractLocalSource(database) {

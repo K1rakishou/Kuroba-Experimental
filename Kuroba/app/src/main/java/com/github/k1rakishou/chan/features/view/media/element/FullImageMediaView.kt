@@ -9,7 +9,6 @@ import android.view.GestureDetector
 import android.view.MotionEvent
 import android.widget.FrameLayout
 import com.davemorrissey.labs.subscaleview.ImageSource
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.downloader.CancelableDownload
@@ -29,6 +28,8 @@ import com.github.k1rakishou.common.awaitCatching
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isExceptionImportant
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.v2.KurobaSettings
+import com.github.k1rakishou.v2.parameters.ImageGestureActionType
 import com.google.android.exoplayer2.upstream.DataSource
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -42,6 +43,7 @@ class FullImageMediaView(
   context: Context,
   initialMediaViewState: FullImageState,
   mediaViewContract: MediaViewContract,
+  kurobaSettings: KurobaSettings,
   private val onThumbnailFullyLoadedFunc: () -> Unit,
   private val isSystemUiHidden: () -> Boolean,
   cachedHttpDataSourceFactory: DataSource.Factory,
@@ -54,6 +56,7 @@ class FullImageMediaView(
   context = context,
   attributeSet = null,
   mediaViewContract = mediaViewContract,
+  kurobaSettings = kurobaSettings,
   cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
   fileDataSourceFactory = fileDataSourceFactory,
   contentDataSourceFactory = contentDataSourceFactory,
@@ -167,7 +170,7 @@ class FullImageMediaView(
     }
   }
 
-  override fun gestureCanBeExecuted(imageGestureActionType: ChanSettings.ImageGestureActionType): Boolean {
+  override fun gestureCanBeExecuted(imageGestureActionType: ImageGestureActionType): Boolean {
     return actualImageView.imageViewportTouchSide.isTouchingAllSides
   }
 

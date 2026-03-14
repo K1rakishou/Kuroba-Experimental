@@ -52,7 +52,13 @@ class Lainchan : BaseVichanSite(
   }
   override val urlHandler: SiteUrlHandler by lazy { LainchanUrlHandler(this) }
   override val actions: SiteActions by lazy { LainchanActions(this) }
-  override val postParser: PostParser by lazy { DefaultPostParser(LainchanCommentParser(), archivesManager) }
+  override val postParser: PostParser by lazy {
+    DefaultPostParser(
+      kurobaSettings = kurobaSettings,
+      archivesManager = archivesManager,
+      commentParser = LainchanCommentParser(kurobaSettings)
+    )
+  }
   override val staticBoards: List<ChanBoard> = boards
 
   override fun hasSiteFeature(siteFeature: SiteConfiguration.SiteFeature): Boolean {

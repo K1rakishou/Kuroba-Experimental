@@ -125,7 +125,11 @@ class PostOmittedImagesController(
                 bindPostImage(
                   postImage = postImage,
                   canUseHighResCells = true,
-                  thumbnailViewOptions = ThumbnailView.ThumbnailViewOptions(drawRipple = false)
+                  thumbnailViewOptions = ThumbnailView.ThumbnailViewOptions(
+                    postThumbnailScaling = kurobaSettings.application.postThumbnailScaling.readBlocking(),
+                    drawThumbnailBackground = kurobaSettings.application.drawPostThumbnailBackground.readBlocking(),
+                    drawRipple = false
+                  )
                 )
               }
             },

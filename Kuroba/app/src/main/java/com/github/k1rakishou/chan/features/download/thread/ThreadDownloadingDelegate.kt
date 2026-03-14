@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.features.download.thread
 
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.okhttp.DownloaderOkHttpClient
 import com.github.k1rakishou.chan.core.helper.ThreadDownloaderFileManagerWrapper
 import com.github.k1rakishou.chan.core.manager.SiteManager
@@ -27,6 +26,7 @@ import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.thread.ThreadDownload
 import com.github.k1rakishou.model.repository.ChanPostImageRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
+import com.github.k1rakishou.v2.KurobaSettings
 import dagger.Lazy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -45,6 +45,7 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
 
 class ThreadDownloadingDelegate(
+  private val kurobaSettings: KurobaSettings,
   private val appConstants: AppConstants,
   private val downloaderOkHttpClient: Lazy<DownloaderOkHttpClient>,
   private val siteManager: SiteManager,
@@ -192,7 +193,7 @@ class ThreadDownloadingDelegate(
 
     val ownerThreadDatabaseId = threadDownload.ownerThreadDatabaseId
 
-    val isNetworkGoodForMediaDownload = if (ChanSettings.threadDownloaderDownloadMediaOnMeteredNetwork.get()) {
+    val isNetworkGoodForMediaDownload = if (kurobaSettings.application.threadDownloaderDownloadMediaOnMeteredNetwork.read()) {
       true
     } else {
       AppModuleAndroidUtils.isConnectionUnmetered
@@ -295,7 +296,7 @@ class ThreadDownloadingDelegate(
       parallelization = batchCount,
       dispatcher = Dispatchers.IO
     ) { postImage ->
-      val isNetworkGoodForMediaDownload = if (ChanSettings.threadDownloaderDownloadMediaOnMeteredNetwork.get()) {
+      val isNetworkGoodForMediaDownload = if (kurobaSettings.application.threadDownloaderDownloadMediaOnMeteredNetwork.read()) {
         true
       } else {
         AppModuleAndroidUtils.isConnectionUnmetered

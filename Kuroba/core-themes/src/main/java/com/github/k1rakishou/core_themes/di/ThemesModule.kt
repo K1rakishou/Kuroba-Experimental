@@ -15,7 +15,11 @@ class ThemesModule {
     dependencies: ThemesComponent.Dependencies,
     themeParser: ThemeParser
   ): ThemeEngine {
-    return ThemeEngine(dependencies.appScope, themeParser)
+    return ThemeEngine(
+      appScope = dependencies.appScope,
+      kurobaSettings = dependencies.kurobaSettings,
+      themeParser = themeParser
+    )
   }
 
   @Singleton

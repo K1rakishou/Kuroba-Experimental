@@ -35,7 +35,6 @@ import android.view.MotionEvent
 import android.view.animation.Interpolator
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
@@ -49,6 +48,7 @@ import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.v2.parameters.PostThumbnailScaling
 import dagger.Lazy
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -175,8 +175,8 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
     thumbnailViewOptions: ThumbnailViewOptions
   ) {
     scaleType = when (thumbnailViewOptions.postThumbnailScaling) {
-      ChanSettings.PostThumbnailScaling.FitCenter -> ScaleType.FIT_CENTER
-      ChanSettings.PostThumbnailScaling.CenterCrop -> ScaleType.CENTER_CROP
+      PostThumbnailScaling.FitCenter -> ScaleType.FIT_CENTER
+      PostThumbnailScaling.CenterCrop -> ScaleType.CENTER_CROP
     }
 
     onThemeChanged()
@@ -446,8 +446,8 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
   }
 
   data class ThumbnailViewOptions(
-    val postThumbnailScaling: ChanSettings.PostThumbnailScaling = ChanSettings.postThumbnailScaling.get(),
-    val drawThumbnailBackground: Boolean = ChanSettings.drawPostThumbnailBackground.get(),
+    val postThumbnailScaling: PostThumbnailScaling,
+    val drawThumbnailBackground: Boolean,
     val drawRipple: Boolean = true,
     val revealSpoilerImage: Boolean = false
   )

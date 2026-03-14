@@ -3,11 +3,11 @@ package com.github.k1rakishou.chan.core.watcher
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.v2.KurobaSettings
 import javax.inject.Inject
 
 class FilterWatcherWorker(
@@ -15,6 +15,8 @@ class FilterWatcherWorker(
   params: WorkerParameters
 ) : CoroutineWorker(context, params) {
 
+  @Inject
+  lateinit var kurobaSettings: KurobaSettings
   @Inject
   lateinit var appConstants: AppConstants
   @Inject
@@ -26,7 +28,7 @@ class FilterWatcherWorker(
     Chan.getComponent()
       .inject(this)
 
-    if (!ChanSettings.filterWatchEnabled.get()) {
+    if (!kurobaSettings.application.filterWatchEnabled.read()) {
       Logger.e(TAG, "FilterWatcherWorker.doWork() ChanSettings.filterWatchEnabled is false")
       FilterWatcherCoordinator.cancelFilterWatching(appConstants, applicationContext)
       return Result.success()
@@ -37,8 +39,9 @@ class FilterWatcherWorker(
         "(already stopped), restarting")
 
       FilterWatcherCoordinator.startFilterWatching(
-        appConstants,
-        applicationContext
+        kurobaSettings = kurobaSettings,
+        appConstants = appConstants,
+        appContext = applicationContext
       )
 
       return Result.success()
@@ -60,8 +63,9 @@ class FilterWatcherWorker(
         "There is at least one active watch filter, work restarted")
 
       FilterWatcherCoordinator.startFilterWatching(
-        appConstants,
-        applicationContext
+        kurobaSettings = kurobaSettings,
+        appConstants = appConstants,
+        appContext = applicationContext
       )
     } else {
       Logger.d(TAG, "FilterWatcherWorker.doWork() work done. " +

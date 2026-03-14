@@ -3,11 +3,13 @@ package com.github.k1rakishou.chan.core.site.sites.lynxchan.engine
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.site.common.DefaultPostParser
 import com.github.k1rakishou.core_parser.comment.HtmlNode
+import com.github.k1rakishou.v2.KurobaSettings
 
 class LynxchanPostParser(
-  commentParser: LynxchanCommentParser,
-  archivesManager: ArchivesManager
-) : DefaultPostParser(commentParser, archivesManager) {
+  kurobaSettings: KurobaSettings,
+  archivesManager: ArchivesManager,
+  commentParser: LynxchanCommentParser
+) : DefaultPostParser(kurobaSettings, archivesManager, commentParser) {
 
   override fun postProcessText(textNode: HtmlNode.Text, text: String): String {
     val parentTag = textNode.parentNode?.asTagOrNull()?.htmlTag

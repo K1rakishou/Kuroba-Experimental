@@ -1,7 +1,7 @@
 package com.github.k1rakishou.chan.core.site.settings
 
-class SiteSettingsForUi : Collection<SiteSettingForUi> {
-  private val _settings = mutableListOf<SiteSettingForUi>()
+class SiteSettingsForUi : Collection<SiteSetting> {
+  private val _settings = mutableListOf<SiteSetting>()
 
   override val size: Int
     get() = _settings.size
@@ -12,19 +12,19 @@ class SiteSettingsForUi : Collection<SiteSettingForUi> {
 
   constructor()
 
-  operator fun plusAssign(single: SiteSettingForUi) {
+  operator fun plusAssign(single: SiteSetting) {
     _settings.add(single)
   }
 
-  override fun iterator(): Iterator<SiteSettingForUi> {
+  override fun iterator(): Iterator<SiteSetting> {
     return IteratorImpl(_settings.toList())
   }
 
-  override fun contains(element: SiteSettingForUi): Boolean {
+  override fun contains(element: SiteSetting): Boolean {
     error("Not supported")
   }
 
-  override fun containsAll(elements: Collection<SiteSettingForUi>): Boolean {
+  override fun containsAll(elements: Collection<SiteSetting>): Boolean {
     error("Not supported")
   }
 
@@ -33,15 +33,15 @@ class SiteSettingsForUi : Collection<SiteSettingForUi> {
   }
 
   class IteratorImpl(
-    private val settings: List<SiteSettingForUi>
-  ) : Iterator<SiteSettingForUi> {
+    private val settings: List<SiteSetting>
+  ) : Iterator<SiteSetting> {
     private var _index = 0
 
     override fun hasNext(): Boolean {
       return settings.getOrNull(_index) != null
     }
 
-    override fun next(): SiteSettingForUi {
+    override fun next(): SiteSetting {
       return settings.getOrNull(_index++)
         ?: throw NoSuchElementException("Index: ${_index}, elements count: ${settings.size}")
     }

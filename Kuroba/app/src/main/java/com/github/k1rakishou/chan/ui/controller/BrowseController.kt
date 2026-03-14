@@ -4,8 +4,6 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.widget.Toast
-import com.github.k1rakishou.ChanSettings
-import com.github.k1rakishou.ChanSettings.BoardPostViewMode
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.concurrency.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
@@ -18,8 +16,9 @@ import com.github.k1rakishou.chan.core.presenter.ThreadPresenter
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.features.archive.BoardArchiveController
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
+import com.github.k1rakishou.chan.features.settings.AppSettingsController
+import com.github.k1rakishou.chan.features.settings.SettingsScreenKey
 import com.github.k1rakishou.chan.features.setup.boards.selection.BoardSelectionController
-import com.github.k1rakishou.chan.features.setup.site.settings.SiteSettingsController
 import com.github.k1rakishou.chan.features.setup.site.setup.SitesSetupController
 import com.github.k1rakishou.chan.features.toolbar.HamburgMenuItem
 import com.github.k1rakishou.chan.features.toolbar.KurobaToolbarState
@@ -60,6 +59,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescript
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
+import com.github.k1rakishou.v2.parameters.BoardPostViewMode
 import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -111,7 +111,7 @@ class BrowseController(
     get() = toolbarState
 
   val catalogControllerToolbarState: KurobaToolbarState
-    get() = kurobaToolbarStateManager.getOrCreate(BrowseController.catalogControllerKey)
+    get() = kurobaToolbarStateManager.getOrCreate(this, BrowseController.catalogControllerKey)
 
   override val controllerKey: ControllerKey
     get() = BrowseController.catalogControllerKey
@@ -146,10 +146,10 @@ class BrowseController(
     // Initialization
     serializedCoroutineExecutor = SerializedCoroutineExecutor(controllerScope)
 
-    threadLayout.setBoardPostViewMode(ChanSettings.boardPostViewMode.get())
+    threadLayout.setBoardPostViewMode(kurobaSettings.application.boardPostViewMode.readBlocking())
 
     serializedCoroutineExecutor.post {
-      val catalogSortingOrder = PostsFilter.CatalogSortingOrder.current()
+      val catalogSortingOrder = PostsFilter.CatalogSortingOrder.current(kurobaSettings)
 
       threadLayout.presenter.setOrder(
         catalogSortingOrder = catalogSortingOrder,
@@ -689,7 +689,6 @@ class BrowseController(
     }
   }
 
-
   private fun openBoardSelectionController() {
      val boardSelectionController = BoardSelectionController(
       context = context,
@@ -699,7 +698,14 @@ class BrowseController(
         }
 
         override fun onSiteSelected(siteDescriptor: SiteDescriptor) {
-          pushChildController(SiteSettingsController(context, siteDescriptor))
+          pushChildController(
+            AppSettingsController(
+              context = context,
+              params = AppSettingsController.Params.createForInitialScreen(
+                screenKey = SettingsScreenKey.Site(siteDescriptor)
+              )
+            )
+          )
         }
 
         override fun onCatalogSelected(catalogDescriptor: ChanDescriptor.ICatalogDescriptor) {
@@ -716,10 +722,10 @@ class BrowseController(
 
   @Suppress("MoveLambdaOutsideParentheses")
   private fun buildMenu() {
-    val modeStringId = when (ChanSettings.boardPostViewMode.get()) {
-      BoardPostViewMode.LIST -> R.string.action_switch_catalog_grid
-      BoardPostViewMode.GRID -> R.string.action_switch_catalog_stagger
-      BoardPostViewMode.STAGGER -> R.string.action_switch_board
+    val modeStringId = when (kurobaSettings.application.boardPostViewMode.readBlocking()) {
+      BoardPostViewMode.List -> R.string.action_switch_catalog_grid
+      BoardPostViewMode.Grid -> R.string.action_switch_catalog_stagger
+      BoardPostViewMode.Stagger -> R.string.action_switch_board
     }
 
     val supportsArchive = siteSupportsBuiltInBoardArchive()
@@ -852,7 +858,7 @@ class BrowseController(
 
   @Suppress("MoveLambdaOutsideParentheses")
   private fun ToolbarOverflowMenuBuilder.addSortMenu() {
-    val currentSortingOrder = PostsFilter.CatalogSortingOrder.current()
+    val currentSortingOrder = PostsFilter.CatalogSortingOrder.current(kurobaSettings)
     val groupId = "catalog_sort"
 
     withOverflowMenuItem(
@@ -932,7 +938,7 @@ class BrowseController(
       val catalogSortingOrder = subItem.value as? PostsFilter.CatalogSortingOrder
         ?: return@post
 
-      ChanSettings.boardOrder.set(catalogSortingOrder.orderName)
+      kurobaSettings.application.boardOrder.write(catalogSortingOrder.orderName)
       toolbarState.checkOrUncheckItem(subItem, true)
 
       val presenter = threadLayout.presenter
@@ -940,7 +946,7 @@ class BrowseController(
       val currentChanDescriptor = chanDescriptor
       if (
         currentChanDescriptor is ChanDescriptor.CompositeCatalogDescriptor &&
-        !PostsFilter.CatalogSortingOrder.current().isBump &&
+        !PostsFilter.CatalogSortingOrder.current(kurobaSettings).isBump &&
         !presenter.isCompositeCatalogFullyLoaded(currentChanDescriptor)
       ) {
         presenter.loadWholeCompositeCatalog()
@@ -988,20 +994,20 @@ class BrowseController(
       return
     }
 
-    var postViewMode = ChanSettings.boardPostViewMode.get()
+    var postViewMode = kurobaSettings.application.boardPostViewMode.readBlocking()
 
     postViewMode = when (postViewMode) {
-      BoardPostViewMode.LIST -> BoardPostViewMode.GRID
-      BoardPostViewMode.GRID -> BoardPostViewMode.STAGGER
-      BoardPostViewMode.STAGGER -> BoardPostViewMode.LIST
+      BoardPostViewMode.List -> BoardPostViewMode.Grid
+      BoardPostViewMode.Grid -> BoardPostViewMode.Stagger
+      BoardPostViewMode.Stagger -> BoardPostViewMode.List
     }
 
-    ChanSettings.boardPostViewMode.set(postViewMode)
+    kurobaSettings.application.boardPostViewMode.writeAsync(postViewMode)
 
     val viewModeText = when (postViewMode) {
-      BoardPostViewMode.LIST -> R.string.action_switch_catalog_grid
-      BoardPostViewMode.GRID -> R.string.action_switch_catalog_stagger
-      BoardPostViewMode.STAGGER -> R.string.action_switch_board
+      BoardPostViewMode.List -> R.string.action_switch_catalog_grid
+      BoardPostViewMode.Grid -> R.string.action_switch_catalog_stagger
+      BoardPostViewMode.Stagger -> R.string.action_switch_board
     }
 
     item.updateMenuText(getString(viewModeText))

@@ -48,8 +48,7 @@ class CloudFlareTask(
 
     cloudFlareClearanceCookieSetting.put(
       key = key,
-      value = cookies,
-      sync = true
+      value = cookies
     )
   }
 

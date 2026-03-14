@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.features.drawer
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.viewmodel.KurobaViewModel
 import com.github.k1rakishou.chan.core.concurrency.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
@@ -18,6 +17,7 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.features.drawer.data.NavigationHistoryEntry
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.v2.KurobaSettings
 import dagger.Lazy
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,6 +28,7 @@ import javax.inject.Inject
 
 class MainControllerViewModel(
   private val savedStateHandle: SavedStateHandle,
+  private val kurobaSettings: KurobaSettings,
   private val historyNavigationManagerLazy: Lazy<HistoryNavigationManager>,
   private val siteManagerLazy: Lazy<SiteManager>,
   private val bookmarksManagerLazy: Lazy<BookmarksManager>,
@@ -59,6 +60,7 @@ class MainControllerViewModel(
   private val updateNavigationHistoryEntryListExecutor = SerializedCoroutineExecutor(scope = viewModelScope)
 
   val kurobaDrawerState = KurobaDrawerState(
+    kurobaSettings = kurobaSettings,
     siteManagerLazy = siteManagerLazy,
     historyNavigationManagerLazy = historyNavigationManagerLazy,
     bookmarksManagerLazy = bookmarksManagerLazy,
@@ -124,7 +126,7 @@ class MainControllerViewModel(
   suspend fun deleteNavElementsByDescriptors(descriptors: Collection<ChanDescriptor>) {
     historyNavigationManager.deleteNavElements(descriptors)
 
-    if (ChanSettings.drawerDeleteBookmarksWhenDeletingNavHistory.get()) {
+    if (kurobaSettings.application.drawerDeleteBookmarksWhenDeletingNavHistory.read()) {
       val bookmarkDescriptors = descriptors
         .mapNotNull { chanDescriptor -> chanDescriptor.threadDescriptorOrNull() }
 
@@ -136,7 +138,7 @@ class MainControllerViewModel(
 
   fun deleteBookmarkedNavHistoryElements() {
     viewModelScope.launch {
-      ChanSettings.drawerShowBookmarkedThreads.toggle()
+      kurobaSettings.application.drawerShowBookmarkedThreads.toggle()
 
       reloadNavigationHistory()
     }
@@ -211,6 +213,7 @@ class MainControllerViewModel(
   )
 
   class ViewModelFactory @Inject constructor(
+    private val kurobaSettings: KurobaSettings,
     private val historyNavigationManagerLazy: Lazy<HistoryNavigationManager>,
     private val siteManagerLazy: Lazy<SiteManager>,
     private val bookmarksManagerLazy: Lazy<BookmarksManager>,
@@ -223,6 +226,7 @@ class MainControllerViewModel(
     override fun create(handle: SavedStateHandle): MainControllerViewModel {
       return MainControllerViewModel(
         savedStateHandle = handle,
+        kurobaSettings = kurobaSettings,
         historyNavigationManagerLazy = historyNavigationManagerLazy,
         siteManagerLazy = siteManagerLazy,
         bookmarksManagerLazy = bookmarksManagerLazy,

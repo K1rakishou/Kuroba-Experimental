@@ -15,12 +15,13 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.features.settings.AppSettingsController
+import com.github.k1rakishou.chan.features.settings.SettingsScreenKey
 import com.github.k1rakishou.chan.features.setup.data.SiteEnableState
 import com.github.k1rakishou.chan.features.setup.data.SitesSetupControllerState
 import com.github.k1rakishou.chan.features.setup.epoxy.site.EpoxySiteView
 import com.github.k1rakishou.chan.features.setup.epoxy.site.EpoxySiteViewModel_
 import com.github.k1rakishou.chan.features.setup.epoxy.site.epoxySiteView
-import com.github.k1rakishou.chan.features.setup.site.settings.SiteSettingsController
 import com.github.k1rakishou.chan.features.toolbar.BackArrowMenuItem
 import com.github.k1rakishou.chan.features.toolbar.ToolbarMiddleContent
 import com.github.k1rakishou.chan.features.toolbar.ToolbarText
@@ -192,10 +193,12 @@ class SitesSetupController(context: Context) : Controller(context), SitesSetupVi
 
               bindRowClickCallback(Pair(callback, siteCellData.siteEnableState))
               bindSettingClickCallback {
-                navigationController!!.pushController(
-                  SiteSettingsController(
-                    context,
-                    siteCellData.siteDescriptor
+                requireNavController().pushController(
+                  AppSettingsController(
+                    context = context,
+                    params = AppSettingsController.Params.createForInitialScreen(
+                      screenKey = SettingsScreenKey.Site(siteCellData.siteDescriptor)
+                    )
                   )
                 )
               }

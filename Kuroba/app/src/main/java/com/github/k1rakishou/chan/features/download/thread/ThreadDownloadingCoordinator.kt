@@ -7,28 +7,28 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.await
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.v2.KurobaSettings
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.reactive.asFlow
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.seconds
 
 class ThreadDownloadingCoordinator(
+  private val kurobaSettings: KurobaSettings,
   private val appContext: Context,
   private val appScope: CoroutineScope,
   private val appConstants: AppConstants,
-  private val _threadDownloadManager: Lazy<ThreadDownloadManager>
+  private val threadDownloadManagerLazy: Lazy<ThreadDownloadManager>
 ) {
 
   private val threadDownloadManager: ThreadDownloadManager
-    get() = _threadDownloadManager.get()
+    get() = threadDownloadManagerLazy.get()
 
   fun initialize() {
     appScope.launch {
@@ -38,9 +38,15 @@ class ThreadDownloadingCoordinator(
     }
 
     appScope.launch {
-      ChanSettings.threadDownloaderUpdateInterval.listenForChangesDeprecated()
-        .asFlow()
-        .collect { startOrRestartThreadDownloading(appContext, appConstants, eager = true) }
+      kurobaSettings.application.threadDownloaderUpdateInterval.listen()
+        .collect {
+          startOrRestartThreadDownloading(
+            kurobaSettings = kurobaSettings,
+            appContext = appContext,
+            appConstants = appConstants,
+            eager = true
+          )
+        }
     }
   }
 
@@ -50,7 +56,12 @@ class ThreadDownloadingCoordinator(
         // no-op
       }
       is ThreadDownloadManager.Event.StartDownload -> {
-        startOrRestartThreadDownloading(appContext, appConstants, eager = true)
+        startOrRestartThreadDownloading(
+          kurobaSettings = kurobaSettings,
+          appContext = appContext,
+          appConstants = appConstants,
+          eager = true
+        )
       }
       is ThreadDownloadManager.Event.CancelDownload,
       is ThreadDownloadManager.Event.CompleteDownload,
@@ -66,6 +77,7 @@ class ThreadDownloadingCoordinator(
     private const val TAG = "ThreadDownloadingCoordinator"
 
     suspend fun startOrRestartThreadDownloading(
+      kurobaSettings: KurobaSettings,
       appContext: Context,
       appConstants: AppConstants,
       eager: Boolean
@@ -80,7 +92,7 @@ class ThreadDownloadingCoordinator(
       val threadDownloadInterval = if (eager) {
         TimeUnit.SECONDS.toMillis(5)
       } else {
-        ChanSettings.threadDownloaderUpdateInterval.get().toLong()
+        kurobaSettings.application.threadDownloaderUpdateInterval.read().toLong()
       }
 
       val constraints = Constraints.Builder()

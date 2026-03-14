@@ -18,7 +18,6 @@ import androidx.lifecycle.ViewModelStore
 import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.ControllerHostActivity
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.di.component.controller.ControllerComponent
@@ -42,13 +41,17 @@ import com.github.k1rakishou.chan.ui.helper.AppResources
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.IHasViewModelScope
 import com.github.k1rakishou.chan.utils.ViewModelScope
+import com.github.k1rakishou.chan.utils.activityDependencies
+import com.github.k1rakishou.chan.utils.appDependencies
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.awaitSilently
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.requireComponentActivity
 import com.github.k1rakishou.core_logger.Logger
-import dagger.Lazy
+import com.github.k1rakishou.v2.KurobaSettings
 import io.reactivex.disposables.CompositeDisposable
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -57,7 +60,6 @@ import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import javax.inject.Inject
 
 abstract class Controller(
   @JvmField var context: Context
@@ -68,37 +70,22 @@ abstract class Controller(
   override val viewModelFactory: ViewModelProvider.Factory
     get() = injectedViewModelFactory
 
-  @Inject
-  lateinit var kurobaToolbarStateManagerLazy: Lazy<KurobaToolbarStateManager>
-  @Inject
-  lateinit var globalUiStateHolderLazy: Lazy<GlobalUiStateHolder>
-  @Inject
-  lateinit var appResourcesLazy: Lazy<AppResources>
-  @Inject
-  lateinit var snackbarManagerFactoryLazy: Lazy<SnackbarManagerFactory>
-  @Inject
-  lateinit var dialogFactoryLazy: Lazy<DialogFactory>
+  val kurobaSettings: KurobaSettings by lazy { appDependencies().kurobaSettings }
+  val kurobaToolbarStateManager: KurobaToolbarStateManager by lazy { appDependencies().kurobaToolbarStateManager }
+  val globalUiStateHolder: GlobalUiStateHolder by lazy { appDependencies().globalUiStateHolder }
+  val appResources: AppResources by lazy { appDependencies().appResources }
+  val snackbarManagerFactory: SnackbarManagerFactory by lazy { appDependencies().snackbarManagerFactory }
+  val dialogFactory: DialogFactory by lazy { activityDependencies(context).dialogFactory }
 
   private val _lifecycleRegistry by lazy(LazyThreadSafetyMode.NONE) { LifecycleRegistry(this) }
   private val _savedStateRegistryController by lazy(LazyThreadSafetyMode.NONE) { SavedStateRegistryController.create(this) }
   // TODO: scoped viewmodels. Move this thing into an activity scoped ViewModel so that it can outlive configuration changes.
   val viewModelStore by lazy(LazyThreadSafetyMode.NONE) { ViewModelStore() }
 
-  val kurobaToolbarStateManager: KurobaToolbarStateManager
-    get() = kurobaToolbarStateManagerLazy.get()
-  val globalUiStateHolder: GlobalUiStateHolder
-    get() = globalUiStateHolderLazy.get()
-  val appResources: AppResources
-    get() = appResourcesLazy.get()
-  val snackbarManagerFactory: SnackbarManagerFactory
-    get() = snackbarManagerFactoryLazy.get()
-  val dialogFactory: DialogFactory
-    get() = dialogFactoryLazy.get()
-
   open val controllerKey: ControllerKey
     get() = ControllerKey(this::class.java.name)
   open val toolbarState: KurobaToolbarState
-    get() = kurobaToolbarStateManager.getOrCreate(controllerKey)
+    get() = kurobaToolbarStateManager.getOrCreate(this, controllerKey)
   open var containerToolbarState: KurobaToolbarState
     get() = requireToolbarNavController().containerToolbarState
     set(value) { requireToolbarNavController().containerToolbarState = value }
@@ -115,10 +102,12 @@ abstract class Controller(
 
   lateinit var view: ViewGroup
 
+  private val _controllerResult = CompletableDeferred<ControllerResultInternal>()
+
   @JvmField
   var parentController: Controller? = null
   @JvmField
-  var childControllers: MutableList<Controller> = ArrayList()
+  val childControllers = ArrayList<Controller>()
 
   // NavigationControllers members
   @JvmField
@@ -143,7 +132,7 @@ abstract class Controller(
   var presentingThisController: Controller? = null
 
   val topController: Controller?
-    get() = if (childControllers.size > 0) {
+    get() = if (childControllers.isNotEmpty()) {
       childControllers[childControllers.size - 1]
     } else {
       null
@@ -181,9 +170,7 @@ abstract class Controller(
   open val isFloating: Boolean = false
 
   init {
-    Logger.verbose(TAG) { "${controllerKey} initDependencies start" }
     initDependencies()
-    Logger.verbose(TAG) { "${controllerKey} initDependencies done" }
   }
 
   fun updateNavigationFlags(newNavigationFlags: DeprecatedNavigationFlags) {
@@ -311,6 +298,7 @@ abstract class Controller(
     //  In all different cases it should be false.
     //  Call `viewModelStore.clear()` only when isBeingDestroyed == true
     viewModelStore.clear()
+    setControllerNoResult()
   }
 
   @CallSuper
@@ -525,7 +513,7 @@ abstract class Controller(
     phone: (() -> Unit)? = null,
     tablet: (() -> Unit)? = null
   ) {
-    if (ChanSettings.isSplitLayoutMode()) {
+    if (kurobaSettings.application.isSplitLayoutModeBlocking()) {
       tablet?.invoke()
     } else {
       phone?.invoke()
@@ -645,6 +633,36 @@ abstract class Controller(
     val bottom = view.bottom
 
     return (x >= left && x <= right && y >= top && y <= bottom)
+  }
+
+  protected fun setControllerResult(result: Any?) {
+    if (!_controllerResult.isCompleted) {
+      _controllerResult.complete(ControllerResultInternal.Result(result))
+    }
+  }
+
+  protected fun setControllerNoResult() {
+    if (!_controllerResult.isCompleted) {
+      _controllerResult.complete(ControllerResultInternal.NoResult)
+    }
+  }
+
+  suspend fun <T> awaitForResult(): ControllerResult<T> {
+    return when (val result = _controllerResult.awaitSilently(null)) {
+      is ControllerResultInternal.Result -> ControllerResult.Result(result as T)
+      ControllerResultInternal.NoResult,
+      null -> ControllerResult.NoResult
+    }
+  }
+
+  private sealed interface ControllerResultInternal {
+    data class Result(val value: Any?) : ControllerResultInternal
+    data object NoResult : ControllerResultInternal
+  }
+
+  sealed interface ControllerResult<out T> {
+    data class Result<T>(val value: T) : ControllerResult<T>
+    data object NoResult : ControllerResult<Nothing>
   }
 
   override fun equals(other: Any?): Boolean {

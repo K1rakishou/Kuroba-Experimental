@@ -20,8 +20,8 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.download.ImageDownloadRequest
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.repository.ImageDownloadRequestRepository
-import com.github.k1rakishou.persist_state.ImageSaverV2Options
-import com.github.k1rakishou.persist_state.PersistableChanState
+import com.github.k1rakishou.v2.KurobaSettings
+import com.github.k1rakishou.v2.parameters.ImageSaverV2Options
 import com.google.gson.Gson
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,9 +33,9 @@ import java.io.IOException
 
 
 class ImageSaverV2(
-  private val verboseLogs: Boolean,
   private val appContext: Context,
   private val appScope: CoroutineScope,
+  private val kurobaSettings: KurobaSettings,
   private val gson: Gson,
   private val fileManager: FileManager,
   private val imageDownloadRequestRepository: ImageDownloadRequestRepository,
@@ -54,7 +54,7 @@ class ImageSaverV2(
 
     try {
       val imageSaverV2Options = overrideImageSaverV2Options
-        ?: PersistableChanState.imageSaverV2PersistedOptions.get().copy()
+        ?: kurobaSettings.internal.imageSaverV2PersistedOptions.readBlocking().copy()
 
       startImageSaverService(
         uniqueId = uniqueId,

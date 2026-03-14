@@ -97,7 +97,7 @@ object Logger {
             val threadName = "[" + Thread.currentThread().name + ":" + Thread.currentThread().id + "]"
             val actualMessage = "${threadName} ${message}"
 
-            d(DI_TAG, actualMessage)
+            Log.d(DI_TAG, actualMessage)
             logStorage.persistLog(LogStorage.LogLevel.Dependencies, DI_TAG, actualMessage)
         }
     }

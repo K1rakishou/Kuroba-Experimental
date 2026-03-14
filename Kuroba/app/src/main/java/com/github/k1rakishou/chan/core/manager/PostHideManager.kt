@@ -12,6 +12,7 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostHide
 import com.github.k1rakishou.model.repository.ChanPostHideRepository
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
+import com.github.k1rakishou.v2.KurobaSettings
 import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -28,7 +29,7 @@ interface IPostHideManager {
 // This class hold hidden/unhidden/removed posts as well as some other information, like what to do with replies to
 // such posts.
 open class PostHideManager(
-  private val verboseLogsEnabled: Boolean,
+  private val kurobaSettings: KurobaSettings,
   private val appScope: CoroutineScope,
   private val chanPostHideRepository: ChanPostHideRepository,
   private val chanThreadsCache: ChanThreadsCache
@@ -43,7 +44,7 @@ open class PostHideManager(
 
   init {
     chanThreadsCache.addChanThreadDeleteEventListener { threadDeleteEvent ->
-      if (verboseLogsEnabled) {
+      if (kurobaSettings.application.verboseLogs.readBlocking()) {
         Logger.d(TAG, "chanThreadsCache.chanThreadDeleteEventFlow() " +
           "threadDeleteEvent=${threadDeleteEvent.javaClass.simpleName}")
       }
@@ -96,13 +97,13 @@ open class PostHideManager(
       return
     }
 
-    if (verboseLogsEnabled) {
+    if (kurobaSettings.application.verboseLogs.readBlocking()) {
       Logger.d(TAG, "preloadForThread($threadDescriptor) begin")
     }
 
     val time = measureTime { preloadForThreadInternal(threadDescriptor) }
 
-    if (verboseLogsEnabled) {
+    if (kurobaSettings.application.verboseLogs.readBlocking()) {
       Logger.d(TAG, "preloadForThread($threadDescriptor) end, took $time")
     }
   }
@@ -113,13 +114,13 @@ open class PostHideManager(
       return
     }
 
-    if (verboseLogsEnabled) {
+    if (kurobaSettings.application.verboseLogs.readBlocking()) {
       Logger.d(TAG, "preloadForCatalog($catalogDescriptor) begin")
     }
 
     val time = measureTime { preloadForCatalogInternal(catalogDescriptor, CATALOG_PRELOAD_MAX_COUNT) }
 
-    if (verboseLogsEnabled) {
+    if (kurobaSettings.application.verboseLogs.readBlocking()) {
       Logger.d(TAG, "preloadForCatalog($catalogDescriptor) end, took $time")
     }
   }

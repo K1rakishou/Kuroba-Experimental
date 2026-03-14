@@ -4,7 +4,6 @@ import android.app.ActivityManager
 import android.content.Context
 import android.os.Build
 import android.provider.Settings
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
@@ -17,7 +16,7 @@ import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.persist_state.PersistableChanState
+import com.github.k1rakishou.v2.KurobaSettings
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import dagger.Lazy
@@ -30,6 +29,7 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 
 class ReportManager(
+  private val kurobaSettings: KurobaSettings,
   private val appScope: CoroutineScope,
   private val appContext: Context,
   private val proxiedOkHttpClient: Lazy<ProxiedOkHttpClient>,
@@ -128,6 +128,7 @@ class ReportManager(
     return getReportFooter(context, appRunningTime, appConstants.userAgentMightBeOverridden)
   }
 
+  @Suppress("MaxLineLength")
   fun getReportFooter(context: Context, appRunningTime: String, userAgent: String): String {
     return buildString(capacity = 2048) {
       appendLine("------------------------------")
@@ -141,18 +142,18 @@ class ReportManager(
       }
 
       appendLine("Flavor type: " + AppModuleAndroidUtils.flavorType.name)
-      appendLine("isLowRamDevice: ${ChanSettings.isLowRamDevice()}, isLowRamDeviceForced: ${ChanSettings.isLowRamDeviceForced.get()}")
+      appendLine("isLowRamDevice: ${kurobaSettings.application.isLowRamDeviceBlocking()}, " +
+        "isLowRamDeviceForced: ${kurobaSettings.application.isLowRamDeviceForced.readBlocking()}")
       appendLine("MemoryClass: ${activityManager?.memoryClass}")
       appendLine("App running time: ${appRunningTime}")
       appendLine("System animations state: ${systemAnimationsState(context)}")
       appendLine("------------------------------")
-      appendLine("Current layout mode: ${ChanSettings.getCurrentLayoutMode().name}")
-      appendLine("Board view mode: ${ChanSettings.boardPostViewMode.get()}")
-      appendLine("Prefetching enabled: ${ChanSettings.prefetchMedia.get()}")
-      appendLine("Hi-res thumbnails enabled: ${ChanSettings.highResCells.get()}")
-      appendLine("mediaViewerMaxOffscreenPages: ${ChanSettings.mediaViewerMaxOffscreenPages.get()}")
-      appendLine("CloudFlare force preload enabled: ${ChanSettings.cloudflareForcePreload.get()}")
-      appendLine("useMpvVideoPlayer: ${ChanSettings.useMpvVideoPlayer.get()}")
+      appendLine("Current layout mode: ${kurobaSettings.application.getCurrentLayoutModeBlocking().name}")
+      appendLine("Board view mode: ${kurobaSettings.application.boardPostViewMode.readBlocking()}")
+      appendLine("Prefetching enabled: ${kurobaSettings.application.prefetchMedia.readBlocking()}")
+      appendLine("Hi-res thumbnails enabled: ${kurobaSettings.application.highResCells.readBlocking()}")
+      appendLine("mediaViewerMaxOffscreenPages: ${kurobaSettings.application.mediaViewerMaxOffscreenPages.readBlocking()}")
+      appendLine("useMpvVideoPlayer: ${kurobaSettings.application.useMpvVideoPlayer.readBlocking()}")
       appendLine("userAgent: ${userAgent}")
       appendLine("kurobaExCustomUserAgent: ${appConstants.kurobaExCustomUserAgent}")
 
@@ -160,31 +161,31 @@ class ReportManager(
       appendLine("maxAmountOfPostsInDatabase: ${appConstants.maxAmountOfPostsInDatabase}")
       appendLine("maxAmountOfThreadsInDatabase: ${appConstants.maxAmountOfThreadsInDatabase}")
 
-      appendLine("diskCacheSizeMegabytes: ${ChanSettings.diskCacheSizeMegabytes.get()}")
-      appendLine("prefetchDiskCacheSizeMegabytes: ${ChanSettings.prefetchDiskCacheSizeMegabytes.get()}")
-      appendLine("diskCacheCleanupRemovePercent: ${ChanSettings.diskCacheCleanupRemovePercent.get()}")
+      appendLine("diskCacheSizeMegabytes: ${kurobaSettings.application.diskCacheSizeMegabytes.readBlocking()}")
+      appendLine("prefetchDiskCacheSizeMegabytes: ${kurobaSettings.application.prefetchDiskCacheSizeMegabytes.readBlocking()}")
+      appendLine("diskCacheCleanupRemovePercent: ${kurobaSettings.application.diskCacheCleanupRemovePercent.readBlocking()}")
 
-      appendLine("ImageSaver root directory: ${PersistableChanState.imageSaverV2PersistedOptions.get().rootDirectoryUri}")
-      appendLine("OkHttp IPv6 support enabled: ${ChanSettings.okHttpAllowIpv6.get()}")
+      appendLine("ImageSaver root directory: ${kurobaSettings.internal.imageSaverV2PersistedOptions.readBlocking().rootDirectoryUri}")
+      appendLine("OkHttp IPv6 support enabled: ${kurobaSettings.application.okHttpAllowIpv6.readBlocking()}")
 
-      appendLine("Foreground watcher enabled: ${ChanSettings.watchEnabled.get()}")
-      if (ChanSettings.watchEnabled.get()) {
-        appendLine("Watch foreground interval: ${ChanSettings.watchForegroundInterval.get()}")
-        appendLine("Watch foreground adaptive interval: ${ChanSettings.watchForegroundAdaptiveInterval.get()}")
+      appendLine("Foreground watcher enabled: ${kurobaSettings.application.watchEnabled.readBlocking()}")
+      if (kurobaSettings.application.watchEnabled.readBlocking()) {
+        appendLine("Watch foreground interval: ${kurobaSettings.application.watchForegroundInterval.readBlocking()}")
       }
 
-      appendLine("Background watcher enabled: ${ChanSettings.watchBackground.get()}")
-      if (ChanSettings.watchBackground.get()) {
-        appendLine("Watch background interval: ${ChanSettings.watchBackgroundInterval.get()}")
+      appendLine("Background watcher enabled: ${kurobaSettings.application.watchBackground.readBlocking()}")
+      if (kurobaSettings.application.watchBackground.readBlocking()) {
+        appendLine("Watch background interval: ${kurobaSettings.application.watchBackgroundInterval.readBlocking()}")
       }
 
-      appendLine("Filter watch enabled: ${ChanSettings.filterWatchEnabled.get()}")
-      if (ChanSettings.filterWatchEnabled.get()) {
-        appendLine("Filter watch interval: ${ChanSettings.filterWatchInterval.get()}")
+      appendLine("Filter watch enabled: ${kurobaSettings.application.filterWatchEnabled.readBlocking()}")
+      if (kurobaSettings.application.filterWatchEnabled.readBlocking()) {
+        appendLine("Filter watch interval: ${kurobaSettings.application.filterWatchInterval.readBlocking()}")
       }
 
-      appendLine("Thread downloader interval: ${ChanSettings.threadDownloaderUpdateInterval.get()}")
-      appendLine("Thread downloader download media on metered network: ${ChanSettings.threadDownloaderDownloadMediaOnMeteredNetwork.get()}")
+      appendLine("Thread downloader interval: ${kurobaSettings.application.threadDownloaderUpdateInterval.readBlocking()}")
+      appendLine("Thread downloader download media on metered network: " +
+        "${kurobaSettings.application.threadDownloaderDownloadMediaOnMeteredNetwork.readBlocking()}")
 
       appendLine("------------------------------")
     }

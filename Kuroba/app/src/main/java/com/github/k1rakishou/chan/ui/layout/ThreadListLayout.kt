@@ -10,8 +10,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ItemDecoration
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
-import com.github.k1rakishou.ChanSettings
-import com.github.k1rakishou.ChanSettings.BoardPostViewMode
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.concurrency.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.concurrency.SerializedCoroutineExecutor
@@ -60,6 +58,7 @@ import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.deprecated.persist_state.IndexAndTopDeprecated
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
@@ -68,8 +67,10 @@ import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.PostIndexed
 import com.github.k1rakishou.model.source.cache.ChanCatalogSnapshotCache
-import com.github.k1rakishou.persist_state.IndexAndTop
-import com.github.k1rakishou.persist_state.ReplyMode
+import com.github.k1rakishou.v2.KurobaSettings
+import com.github.k1rakishou.v2.parameters.BoardPostViewMode
+import com.github.k1rakishou.v2.parameters.LayoutMode
+import com.github.k1rakishou.v2.parameters.ReplyMode
 import dagger.Lazy
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.CoroutineName
@@ -100,6 +101,8 @@ class ThreadListLayout @JvmOverloads constructor(
   ScrollbarView.ThumbDragListener,
   ReplyLayoutViewModel.ThreadListLayoutCallbacks {
 
+  @Inject
+  lateinit var kurobaSettings: KurobaSettings
   @Inject
   lateinit var dialogFactory: DialogFactory
   @Inject
@@ -163,7 +166,7 @@ class ThreadListLayout @JvmOverloads constructor(
   val displayingPostDescriptors: List<PostDescriptor>
     get() = postAdapter.displayList
 
-  val indexAndTop: IndexAndTop?
+  val indexAndTop: IndexAndTopDeprecated?
     get() {
       var index = 0
       var top = 0
@@ -180,7 +183,7 @@ class ThreadListLayout @JvmOverloads constructor(
         top = layoutManager.getDecoratedTop(topChild) - params.topMargin - recyclerView.paddingTop
       }
 
-      return IndexAndTop(index = index, top = top)
+      return IndexAndTopDeprecated(index = index, top = top)
     }
 
   val currentSpanCount: Int
@@ -190,9 +193,9 @@ class ThreadListLayout @JvmOverloads constructor(
       }
 
       return when (boardPostViewMode) {
-        BoardPostViewMode.LIST -> 1
-        BoardPostViewMode.GRID,
-        BoardPostViewMode.STAGGER -> (layoutManager as StaggeredGridLayoutManager).spanCount
+        BoardPostViewMode.List -> 1
+        BoardPostViewMode.Grid,
+        BoardPostViewMode.Stagger -> (layoutManager as StaggeredGridLayoutManager).spanCount
         null -> 1
       }
     }
@@ -204,9 +207,9 @@ class ThreadListLayout @JvmOverloads constructor(
       }
 
       when (boardPostViewMode) {
-        BoardPostViewMode.LIST -> return (layoutManager as FixedLinearLayoutManager).findLastCompletelyVisibleItemPosition()
-        BoardPostViewMode.GRID,
-        BoardPostViewMode.STAGGER -> {
+        BoardPostViewMode.List -> return (layoutManager as FixedLinearLayoutManager).findLastCompletelyVisibleItemPosition()
+        BoardPostViewMode.Grid,
+        BoardPostViewMode.Stagger -> {
           val positions = (layoutManager as StaggeredGridLayoutManager).findLastCompletelyVisibleItemPositions(null)
           if (positions.isEmpty()) {
             return -1
@@ -295,7 +298,7 @@ class ThreadListLayout @JvmOverloads constructor(
     super.onMeasure(widthMeasureSpec, heightMeasureSpec)
 
     val cardWidth = getDimen(R.dimen.grid_card_width)
-    val gridCountSetting = ChanSettings.catalogSpanCount.get()
+    val gridCountSetting = kurobaSettings.application.catalogSpanCount.readBlocking()
 
     if (gridCountSetting > 0) {
       spanCount = gridCountSetting
@@ -303,8 +306,8 @@ class ThreadListLayout @JvmOverloads constructor(
       spanCount = max(1, (measuredWidth.toFloat() / cardWidth).roundToInt())
     }
 
-    if (boardPostViewMode == BoardPostViewMode.GRID
-      || boardPostViewMode == BoardPostViewMode.STAGGER) {
+    if (boardPostViewMode == BoardPostViewMode.Grid
+      || boardPostViewMode == BoardPostViewMode.Stagger) {
       (layoutManager as StaggeredGridLayoutManager).spanCount = spanCount
     }
   }
@@ -330,7 +333,6 @@ class ThreadListLayout @JvmOverloads constructor(
       chanDescriptor = chanDescriptor,
       replyMode = replyMode,
       autoReply = false,
-      afterPostingAttempt = false,
       onFinished = null
     )
   }
@@ -406,7 +408,7 @@ class ThreadListLayout @JvmOverloads constructor(
     attachToolbarScroll(attach = true)
 
     coroutineScope.launch {
-      if (ChanSettings.isSplitLayoutMode()) {
+      if (kurobaSettings.application.isSplitLayoutMode()) {
         combine(
           flow = globalUiStateHolder.replyLayout.state(ThreadControllerType.Catalog).height,
           flow2 = globalUiStateHolder.replyLayout.state(ThreadControllerType.Thread).height,
@@ -580,7 +582,7 @@ class ThreadListLayout @JvmOverloads constructor(
     layoutManager = null
 
     when (boardPostViewMode) {
-      BoardPostViewMode.LIST -> {
+      BoardPostViewMode.List -> {
         val linearLayoutManager = object : FixedLinearLayoutManager(recyclerView) {
           override fun requestChildRectangleOnScreen(
             parent: RecyclerView,
@@ -598,8 +600,8 @@ class ThreadListLayout @JvmOverloads constructor(
         recyclerView.layoutManager = linearLayoutManager
         layoutManager = linearLayoutManager
       }
-      BoardPostViewMode.GRID,
-      BoardPostViewMode.STAGGER -> {
+      BoardPostViewMode.Grid,
+      BoardPostViewMode.Stagger -> {
         val staggerLayoutManager = object : StaggeredGridLayoutManager(
           spanCount,
           StaggeredGridLayoutManager.VERTICAL,
@@ -633,12 +635,12 @@ class ThreadListLayout @JvmOverloads constructor(
     when (event.keyCode) {
       KeyEvent.KEYCODE_VOLUME_UP,
       KeyEvent.KEYCODE_VOLUME_DOWN -> {
-        if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
+        if (kurobaSettings.application.getCurrentLayoutModeBlocking() == LayoutMode.Split) {
           // Both controllers are always focused when in SPLIT layout mode
           return false
         }
 
-        if (!ChanSettings.volumeKeysScrolling.get()) {
+        if (!kurobaSettings.application.volumeKeysScrolling.readBlocking()) {
           return false
         }
 
@@ -706,12 +708,10 @@ class ThreadListLayout @JvmOverloads constructor(
     chanDescriptor: ChanDescriptor,
     replyMode: ReplyMode,
     autoReply: Boolean,
-    afterPostingAttempt: Boolean,
     onFinished: ((Boolean) -> Unit)?
   ) {
     val controller = CaptchaContainerController(
       context = context,
-      afterPostingAttempt = afterPostingAttempt,
       chanDescriptor = chanDescriptor
     ) { authenticationResult ->
       when (authenticationResult) {
@@ -934,8 +934,8 @@ class ThreadListLayout @JvmOverloads constructor(
   }
 
   private fun setRecyclerViewPadding() {
-    val defaultPadding = if (boardPostViewMode == BoardPostViewMode.GRID ||
-      boardPostViewMode == BoardPostViewMode.STAGGER) {
+    val defaultPadding = if (boardPostViewMode == BoardPostViewMode.Grid ||
+      boardPostViewMode == BoardPostViewMode.Stagger) {
       dp(1f)
     } else {
       0
@@ -946,7 +946,7 @@ class ThreadListLayout @JvmOverloads constructor(
     var recyclerBottom = defaultPadding
 
     if (replyLayoutView.isOpened()) {
-      val replyLayoutViewHeight = if (ChanSettings.isSplitLayoutMode()) {
+      val replyLayoutViewHeight = if (kurobaSettings.application.isSplitLayoutModeBlocking()) {
         maxOf(
           globalUiStateHolder.replyLayout.state(ThreadControllerType.Catalog).height.value,
           globalUiStateHolder.replyLayout.state(ThreadControllerType.Thread).height.value,
@@ -983,7 +983,7 @@ class ThreadListLayout @JvmOverloads constructor(
   }
 
   private fun attachToolbarScroll(attach: Boolean) {
-    if (!ChanSettings.canCollapseToolbar()) {
+    if (!kurobaSettings.application.canCollapseToolbar()) {
       return
     }
 
@@ -1000,7 +1000,7 @@ class ThreadListLayout @JvmOverloads constructor(
   }
 
   fun showToolbarIfNeeded() {
-    if (!ChanSettings.canCollapseToolbar()) {
+    if (!kurobaSettings.application.canCollapseToolbar()) {
       return
     }
 
@@ -1179,11 +1179,11 @@ class ThreadListLayout @JvmOverloads constructor(
 
     chanThreadViewableInfoManager.view(chanDescriptor) { (_, index, top) ->
       when (boardPostViewMode) {
-        BoardPostViewMode.LIST -> {
+        BoardPostViewMode.List -> {
           (lm as FixedLinearLayoutManager).scrollToPositionWithOffset(index, top)
         }
-        BoardPostViewMode.GRID,
-        BoardPostViewMode.STAGGER -> {
+        BoardPostViewMode.Grid,
+        BoardPostViewMode.Stagger -> {
           (lm as StaggeredGridLayoutManager).scrollToPositionWithOffset(index, top)
         }
         null -> {

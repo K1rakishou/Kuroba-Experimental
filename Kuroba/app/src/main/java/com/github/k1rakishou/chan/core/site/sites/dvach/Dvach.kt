@@ -1,7 +1,6 @@
 package com.github.k1rakishou.chan.core.site.sites.dvach
 
 import androidx.annotation.CallSuper
-import com.github.k1rakishou.OptionSettingItem
 import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.core.site.SiteConfiguration
@@ -13,10 +12,11 @@ import com.github.k1rakishou.chan.core.site.limitations.PasscodeDependantMaxAtta
 import com.github.k1rakishou.chan.core.site.limitations.PostingLimitationConfig
 import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.core.site.parser.SiteApi
-import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
-import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi.SiteOptionsSetting
+import com.github.k1rakishou.chan.core.site.settings.SiteSetting
+import com.github.k1rakishou.chan.core.site.settings.SiteSetting.SiteOptionsSetting
 import com.github.k1rakishou.chan.core.site.settings.SiteSettingsForUi
 import com.github.k1rakishou.chan.core.site.settings.SiteSpecificSettings
+import com.github.k1rakishou.deprecated.OptionSettingItem
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 
 class Dvach : CommonSite(
@@ -28,7 +28,13 @@ class Dvach : CommonSite(
   override val globalSearchType = SiteConfiguration.GlobalSearchType.SimpleQueryBoardSearch
   override val boardsType: SiteConfiguration.BoardsType = SiteConfiguration.BoardsType.Dynamic
   override val catalogType: SiteConfiguration.CatalogType = SiteConfiguration.CatalogType.Static
-  override val postParser: PostParser by lazy { DvachPostParser(DvachCommentParser(), archivesManager) }
+  override val postParser: PostParser by lazy {
+    DvachPostParser(
+      kurobaSettings = kurobaSettings,
+      archivesManager = archivesManager,
+      commentParser = DvachCommentParser(kurobaSettings)
+    )
+  }
   override val postingLimitationConfig: PostingLimitationConfig by lazy {
     PostingLimitationConfig(
       postMaxAttachables = PasscodeDependantAttachablesCount(
@@ -60,17 +66,16 @@ class Dvach : CommonSite(
       settingName = "Captcha type",
       settingDescription = null,
       groupId = "captcha_type",
-      options = dvachSettings.captchaType,
-      optionNames = mutableListOf("Javascript", "Noscript", "Invisible")
+      setting = dvachSettings.captchaType
     )
 
-    settings += SiteSettingForUi.SiteStringSetting(
+    settings += SiteSetting.SiteStringSetting(
       settingName = "User code cookie",
       settingDescription = null,
       setting = dvachSettings.userCodeCookie
     )
 
-    settings += SiteSettingForUi.SiteStringSetting(
+    settings += SiteSetting.SiteStringSetting(
       settingName = "Anti-spam cookie",
       settingDescription = null,
       setting = dvachSettings.antiSpamCookie
@@ -79,7 +84,7 @@ class Dvach : CommonSite(
     return@lazy settings
   }
 
-  override val settings: SiteSpecificSettings by lazy { DvachSiteSettings(dependencies, prefs) }
+  override val settings: SiteSpecificSettings by lazy { DvachSiteSettings(descriptor, dependencies) }
 
   @CallSuper
   override fun hasSiteFeature(siteFeature: SiteConfiguration.SiteFeature): Boolean {
@@ -91,27 +96,6 @@ class Dvach : CommonSite(
 
   val dvachSettings: DvachSiteSettings
     get() = requireSiteSettings(DvachSiteSettings::class.java)
-
-  val captchaV2NoJs by lazy {
-    SiteAuthentication.fromCaptcha2nojs(
-      NORMAL_CAPTCHA_KEY,
-      "${currentDomainString}/api/captcha/recaptcha/mobile"
-    )
-  }
-
-  val captchaV2Js by lazy {
-    SiteAuthentication.fromCaptcha2(
-      NORMAL_CAPTCHA_KEY,
-      "${currentDomainString}/api/captcha/recaptcha/mobile"
-    )
-  }
-
-  val captchaV2Invisible by lazy {
-    SiteAuthentication.fromCaptcha2Invisible(
-      INVISIBLE_CAPTCHA_KEY,
-      "${currentDomainString}/api/captcha/invisible_recaptcha/mobile"
-    )
-  }
 
   val dvachCaptcha by lazy {
     SiteAuthentication.idBased(
@@ -132,9 +116,6 @@ class Dvach : CommonSite(
   }
 
   enum class CaptchaType(val value: String) : OptionSettingItem {
-    V2JS("v2js"),
-    V2NOJS("v2nojs"),
-    V2_INVISIBLE("v2_invisible"),
     DVACH_CAPTCHA("dvach_captcha"),
     DVACH_CAPTCHA_PUZZLE("dvach_captcha_puzzle"),
     DVACH_CAPTCHA_EMOJI("dvach_captcha_emoji");

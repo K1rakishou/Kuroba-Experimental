@@ -10,7 +10,7 @@ import com.github.k1rakishou.common.StringUtils.formatToken
 import com.github.k1rakishou.common.addOrReplaceCookieHeader
 import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.persist_state.ReplyMode
+import com.github.k1rakishou.v2.parameters.ReplyMode
 import okhttp3.HttpUrl
 import okhttp3.Request
 
@@ -25,8 +25,8 @@ class Chan4SiteRequestModifier(
 
     if (httpCall is Chan4ReplyCall && httpCall.replyMode == ReplyMode.ReplyModeUsePasscode) {
       if (site.actions.isLoggedIn()) {
-        val passTokenSetting = chan4SiteSettings.passToken
-        requestBuilder.addOrReplaceCookieHeader("pass_id=" + passTokenSetting.get())
+        val passTokenSetting = chan4SiteSettings.passId
+        requestBuilder.addOrReplaceCookieHeader("pass_id=" + passTokenSetting.readBlocking())
       }
     }
 
@@ -40,7 +40,7 @@ class Chan4SiteRequestModifier(
 
     if (site.actions.isLoggedIn()) {
       cookieBuilder.addOrReplace("pass_enabled", "1")
-      cookieBuilder.addOrReplace("pass_id", chan4SiteSettings.passToken.get())
+      cookieBuilder.addOrReplace("pass_id", chan4SiteSettings.passId.readBlocking())
     }
 
     val captchaCookie = get4chanPassCookie()
@@ -79,8 +79,8 @@ class Chan4SiteRequestModifier(
     super.modifyPostReportRequest(site, requestBuilder)
 
     if (site.actions.isLoggedIn()) {
-      val passTokenSetting = chan4SiteSettings.passToken
-      requestBuilder.addOrReplaceCookieHeader("pass_id=" + passTokenSetting.get())
+      val passTokenSetting = chan4SiteSettings.passId
+      requestBuilder.addOrReplaceCookieHeader("pass_id=" + passTokenSetting.readBlocking())
     }
 
     addChan4CookieHeader(requestBuilder)
@@ -107,13 +107,13 @@ class Chan4SiteRequestModifier(
   }
 
   private fun get4chanPassCookie(): String? {
-    val rememberCaptchaCookies = chan4SiteSettings.captchaSettings.get().rememberCaptchaCookies
+    val rememberCaptchaCookies = chan4SiteSettings.captchaSettings.readBlocking().rememberCaptchaCookies
     if (!rememberCaptchaCookies) {
       Logger.d(TAG, "addChan4CookieHeader(), rememberCaptchaCookies is false")
       return null
     }
 
-    return chan4SiteSettings.captchaCookie.get()
+    return chan4SiteSettings.captchaCookie.readBlocking()
   }
 
   companion object {

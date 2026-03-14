@@ -223,7 +223,6 @@ class StyleRule {
 
     var resultText: CharSequence? = styleRulesParams.text
     val htmlTag = styleRulesParams.htmlTag
-
     val post = styleRulesParams.post
     val callback = styleRulesParams.callback
 
@@ -287,7 +286,8 @@ class StyleRule {
       val pl = PostLinkable(
         key = resultText,
         linkableValue = PostLinkable.Value.StringValue(resultText),
-        type = link!!
+        type = link!!,
+        revealTextSpoilers = styleRulesParams.revealTextSpoilers
       )
 
       post.addLinkable(pl)
@@ -307,8 +307,9 @@ class StyleRule {
       resultText = detectLinks(
         post = post,
         text = resultText,
-        forceHttpsScheme = styleRulesParams.isForceHttpsScheme,
-        linkHandler = null
+        forceHttpsScheme = styleRulesParams.forceHttpsScheme,
+        revealTextSpoilers = styleRulesParams.revealTextSpoilers,
+        linkHandler = null,
       )
     }
 

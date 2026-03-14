@@ -25,7 +25,6 @@ import coil.size.Scale
 import coil.size.Size
 import coil.size.ViewSizeResolver
 import coil.transform.Transformation
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.okhttp.CoilOkHttpClient
 import com.github.k1rakishou.chan.core.cache.CacheFileType
@@ -57,6 +56,7 @@ import com.github.k1rakishou.fsaf.file.AbstractFile
 import com.github.k1rakishou.fsaf.file.ExternalFile
 import com.github.k1rakishou.fsaf.file.RawFile
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.v2.KurobaSettings
 import com.google.android.exoplayer2.util.MimeTypes
 import dagger.Lazy
 import kotlinx.coroutines.CompletableDeferred
@@ -79,18 +79,18 @@ import kotlin.time.measureTimedValue
 
 @Deprecated("There are bugs when using suspend versions of load functions related to cancellation. Use KurobaImageLoader instead!")
 class ImageLoaderDeprecated(
-  private val verboseLogs: Boolean,
   private val appScope: CoroutineScope,
   private val appContext: Context,
-  private val _imageLoader: Lazy<ImageLoader>,
-  private val _replyManager: Lazy<ReplyManager>,
-  private val _themeEngine: Lazy<ThemeEngine>,
-  private val _cacheHandler: Lazy<CacheHandler>,
-  private val _chunkedMediaDownloader: Lazy<ChunkedMediaDownloader>,
-  private val _imageLoaderFileManagerWrapper: Lazy<ImageLoaderFileManagerWrapper>,
-  private val _siteResolver: Lazy<SiteResolver>,
-  private val _coilOkHttpClient: Lazy<CoilOkHttpClient>,
-  private val _threadDownloadManager: Lazy<ThreadDownloadManager>
+  private val kurobaSettings: KurobaSettings,
+  private val imageLoaderLazy: Lazy<ImageLoader>,
+  private val replyManagerLazy: Lazy<ReplyManager>,
+  private val themeEngineLazy: Lazy<ThemeEngine>,
+  private val cacheHandlerLazy: Lazy<CacheHandler>,
+  private val chunkedMediaDownloaderLazy: Lazy<ChunkedMediaDownloader>,
+  private val imageLoaderFileManagerWrapperLazy: Lazy<ImageLoaderFileManagerWrapper>,
+  private val siteResolverLazy: Lazy<SiteResolver>,
+  private val coilOkHttpClientLazy: Lazy<CoilOkHttpClient>,
+  private val threadDownloadManagerLazy: Lazy<ThreadDownloadManager>
 ) {
   private val mutex = Mutex()
 
@@ -98,23 +98,23 @@ class ImageLoaderDeprecated(
   private val activeRequests = LruCache<String, ActiveRequest>(1024)
 
   val imageLoader: ImageLoader
-    get() = _imageLoader.get()
+    get() = imageLoaderLazy.get()
   val replyManager: ReplyManager
-    get() = _replyManager.get()
+    get() = replyManagerLazy.get()
   val themeEngine: ThemeEngine
-    get() = _themeEngine.get()
+    get() = themeEngineLazy.get()
   val cacheHandler: CacheHandler
-    get() = _cacheHandler.get()
+    get() = cacheHandlerLazy.get()
   val chunkedMediaDownloader: ChunkedMediaDownloader
-    get() = _chunkedMediaDownloader.get()
+    get() = chunkedMediaDownloaderLazy.get()
   val imageLoaderFileManagerWrapper: ImageLoaderFileManagerWrapper
-    get() = _imageLoaderFileManagerWrapper.get()
+    get() = imageLoaderFileManagerWrapperLazy.get()
   val siteResolver: SiteResolver
-    get() = _siteResolver.get()
+    get() = siteResolverLazy.get()
   val coilOkHttpClient: CoilOkHttpClient
-    get() = _coilOkHttpClient.get()
+    get() = coilOkHttpClientLazy.get()
   val threadDownloadManager: ThreadDownloadManager
-    get() = _threadDownloadManager.get()
+    get() = threadDownloadManagerLazy.get()
 
   private val fileManager: FileManager
     get() = imageLoaderFileManagerWrapper.fileManager
@@ -255,7 +255,7 @@ class ImageLoaderDeprecated(
         }
 
         if (activeListeners == null || activeListeners.isEmpty()) {
-          if (verboseLogs) {
+          if (kurobaSettings.application.verboseLogs.read()) {
             Logger.e(TAG, "Failed to load '$url', activeListeners is null or empty")
           }
 
@@ -355,8 +355,8 @@ class ImageLoaderDeprecated(
     // When using any transformations at all we won't be able to use HARDWARE bitmaps. We only really
     // need the RESIZE_TRANSFORMATION when highResCells setting is turned on because we load original
     // images which we then want to resize down to ThumbnailView dimensions.
-    val transformations = if (ChanSettings.highResCells.get()) {
-      activeListener.transformations + RESIZE_TRANSFORMATION
+    val transformations = if (kurobaSettings.application.highResCells.read()) {
+      activeListener.transformations + ResizeTransformation(kurobaSettings)
     } else {
       activeListener.transformations
     }
@@ -658,7 +658,7 @@ class ImageLoaderDeprecated(
       try {
         val bitmapDrawable = loadFromResources(context, drawableId, imageSize, scale, transformations)
         if (bitmapDrawable == null) {
-          if (verboseLogs) {
+          if (kurobaSettings.application.verboseLogs.read()) {
             Logger.d(TAG, "loadFromResources() Failed to load '$drawableId', $imageSize")
           }
 
@@ -666,7 +666,7 @@ class ImageLoaderDeprecated(
           return@launch
         }
 
-        if (verboseLogs) {
+        if (kurobaSettings.application.verboseLogs.read()) {
           Logger.d(
             TAG, "loadFromResources() Loaded '$drawableId', $imageSize, bitmap size = " +
               "${bitmapDrawable.intrinsicWidth}x${bitmapDrawable.intrinsicHeight}"
@@ -721,7 +721,7 @@ class ImageLoaderDeprecated(
 
     val job = appScope.launch(Dispatchers.Main) {
       try {
-        if (verboseLogs) {
+        if (kurobaSettings.application.verboseLogs.read()) {
           Logger.d(TAG, "loadFromDisk() inputFilePath=${inputFile.path()}, imageSize=${imageSize}")
         }
 
@@ -785,7 +785,7 @@ class ImageLoaderDeprecated(
 
         val bitmapDrawable = withContext(Dispatchers.IO) { getBitmapDrawable() }
         if (bitmapDrawable == null) {
-          if (verboseLogs) {
+          if (kurobaSettings.application.verboseLogs.read()) {
             Logger.d(
               TAG, "loadFromDisk() inputFilePath=${inputFile.path()}, " +
                 "imageSize=${imageSize} error or canceled"
@@ -796,7 +796,7 @@ class ImageLoaderDeprecated(
           return@launch
         }
 
-        if (verboseLogs) {
+        if (kurobaSettings.application.verboseLogs.read()) {
           Logger.d(
             TAG, "loadFromDisk() inputFilePath=${inputFile.path()}, " +
               "imageSize=${imageSize} success"
@@ -1236,7 +1236,9 @@ class ImageLoaderDeprecated(
 
   }
 
-  private class ResizeTransformation : Transformation {
+  private class ResizeTransformation(
+    private val kurobaSettings: KurobaSettings
+  ) : Transformation {
     override val cacheKey: String = "${TAG}_ResizeTransformation"
 
     override suspend fun transform(input: Bitmap, size: Size): Bitmap {
@@ -1260,7 +1262,7 @@ class ImageLoaderDeprecated(
     }
 
     private fun config(): Bitmap.Config {
-      if (ChanSettings.isLowRamDevice()) {
+      if (kurobaSettings.application.isLowRamDeviceBlocking()) {
         return Bitmap.Config.RGB_565
       }
 
@@ -1367,8 +1369,6 @@ class ImageLoaderDeprecated(
   companion object {
     private const val TAG = "ImageLoaderV2"
     private const val PREVIEW_SIZE = 1024
-
-    private val RESIZE_TRANSFORMATION = ResizeTransformation()
   }
 
 }

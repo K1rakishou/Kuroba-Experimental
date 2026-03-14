@@ -7,7 +7,6 @@ import android.graphics.PorterDuff
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.widget.FrameLayout
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.downloader.CancelableDownload
@@ -27,6 +26,7 @@ import com.github.k1rakishou.common.isCancellationException
 import com.github.k1rakishou.common.isExceptionImportant
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.file.FileDescriptorMode
+import com.github.k1rakishou.v2.KurobaSettings
 import com.google.android.exoplayer2.upstream.DataSource
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -44,6 +44,7 @@ class GifMediaView(
   context: Context,
   initialMediaViewState: GifMediaViewState,
   mediaViewContract: MediaViewContract,
+  kurobaSettings: KurobaSettings,
   private val onThumbnailFullyLoadedFunc: () -> Unit,
   private val isSystemUiHidden: () -> Boolean,
   cachedHttpDataSourceFactory: DataSource.Factory,
@@ -56,6 +57,7 @@ class GifMediaView(
   context = context,
   attributeSet = null,
   mediaViewContract = mediaViewContract,
+  kurobaSettings = kurobaSettings,
   mediaViewState = initialMediaViewState,
   cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
   fileDataSourceFactory = fileDataSourceFactory,
@@ -292,7 +294,7 @@ class GifMediaView(
 
       val gifImageViewDrawable = actualGifView.drawable as? GifDrawable
       if (gifImageViewDrawable != null) {
-        if (!isLifecycleChange && ChanSettings.videoAlwaysResetToStart.get()) {
+        if (!isLifecycleChange && kurobaSettings.application.videoAlwaysResetToStart.read()) {
           mediaViewState.resetPosition()
         }
 
@@ -456,7 +458,6 @@ class GifMediaView(
     }
   }
 
-  @Suppress("BlockingMethodInNonBlockingContext")
   private suspend fun createGifDrawableSafe(filePath: FilePath): GifDrawable {
     return withContext(Dispatchers.IO) {
       val gifDrawable = when (filePath) {

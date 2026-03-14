@@ -202,8 +202,8 @@ class LocalArchiveController(
     }
 
     controllerScope.launch {
-      toolbarState.search.listenForSearchQueryUpdates()
-        .onEach { query -> viewModel.updateQueryAndReload(query) }
+      toolbarState.search.listenForSearchState()
+        .onEach { (_, query) -> viewModel.updateQueryAndReload(query) }
         .collect()
     }
 
@@ -961,6 +961,7 @@ class LocalArchiveController(
       }
 
       ThreadDownloadingCoordinator.startOrRestartThreadDownloading(
+        kurobaSettings = kurobaSettings,
         appContext = context.applicationContext,
         appConstants = appConstants,
         eager = true

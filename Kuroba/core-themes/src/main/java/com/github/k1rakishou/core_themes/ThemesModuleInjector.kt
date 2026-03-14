@@ -4,6 +4,7 @@ import android.app.Application
 import com.github.k1rakishou.core_themes.di.DaggerThemesComponent
 import com.github.k1rakishou.core_themes.di.ThemesComponent
 import com.github.k1rakishou.fsaf.FileManager
+import com.github.k1rakishou.v2.KurobaSettings
 import kotlinx.coroutines.CoroutineScope
 
 object ThemesModuleInjector {
@@ -13,12 +14,14 @@ object ThemesModuleInjector {
   fun build(
     application: Application,
     scope: CoroutineScope,
-    fileManager: FileManager
+    fileManager: FileManager,
+    kurobaSettings: KurobaSettings
   ): ThemesComponent {
     val dependencies = ThemesComponent.Dependencies(
-      application,
-      scope,
-      fileManager
+      application = application,
+      appScope = scope,
+      fileManager = fileManager,
+      kurobaSettings = kurobaSettings
     )
 
     val mainComponent = DaggerThemesComponent.builder()

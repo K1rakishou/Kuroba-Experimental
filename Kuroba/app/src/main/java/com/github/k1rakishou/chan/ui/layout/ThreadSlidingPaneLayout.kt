@@ -4,12 +4,12 @@ import android.content.Context
 import android.os.Parcelable
 import android.util.AttributeSet
 import android.view.ViewGroup
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
 import com.github.k1rakishou.chan.ui.view.widget.SlidingPaneLayoutEx
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.v2.KurobaSettings
 import javax.inject.Inject
 
 class ThreadSlidingPaneLayout @JvmOverloads constructor(
@@ -19,6 +19,8 @@ class ThreadSlidingPaneLayout @JvmOverloads constructor(
 ) : SlidingPaneLayoutEx(
   context, attrs, defStyle
 ) {
+  @Inject
+  lateinit var kurobaSettings: KurobaSettings
   @Inject
   lateinit var themeEngine: ThemeEngine
 
@@ -44,7 +46,7 @@ class ThreadSlidingPaneLayout @JvmOverloads constructor(
   }
 
   private fun currentOverhangSize(): Int {
-    if (ChanSettings.isSlideLayoutMode()) {
+    if (kurobaSettings.application.isSlideLayoutModeBlocking()) {
       return SLIDE_PANE_OVERHANG_SIZE
     }
 

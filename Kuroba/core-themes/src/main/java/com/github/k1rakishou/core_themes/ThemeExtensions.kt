@@ -26,9 +26,17 @@ fun Color.resolveColor(
   ifDark: Color,
   ifLight: Color
 ): Color {
-  if (ThemeEngine.isDarkColor(this)) {
+  if (this.isDarkColor()) {
     return ifDark
   } else {
     return ifLight
   }
+}
+
+fun Color.isDarkColor(): Boolean {
+  return ThemeEngine.isDarkColor(this)
+}
+
+fun Color.isLightColor(): Boolean {
+  return !this.isDarkColor()
 }

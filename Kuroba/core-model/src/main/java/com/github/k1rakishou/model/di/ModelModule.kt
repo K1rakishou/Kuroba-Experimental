@@ -1,6 +1,6 @@
 package com.github.k1rakishou.model.di
 
-import com.github.k1rakishou.model.KurobaDatabase
+import com.github.k1rakishou.model.KurobaMainDatabase
 import com.github.k1rakishou.model.repository.BoardRepository
 import com.github.k1rakishou.model.repository.BookmarksRepository
 import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
@@ -59,8 +59,8 @@ class ModelModule {
   @Provides
   fun provideDatabase(
     dependencies: ModelComponent.Dependencies
-  ): KurobaDatabase {
-    return KurobaDatabase.buildDatabase(dependencies.application)
+  ): KurobaMainDatabase {
+    return KurobaMainDatabase.buildDatabase(dependencies.application)
   }
 
   @Singleton
@@ -80,7 +80,7 @@ class ModelModule {
 
   @Singleton
   @Provides
-  fun provideChanDescriptorCache(database: KurobaDatabase): ChanDescriptorCache {
+  fun provideChanDescriptorCache(database: KurobaMainDatabase): ChanDescriptorCache {
     return ChanDescriptorCache(database)
   }
 
@@ -117,7 +117,7 @@ class ModelModule {
   @Singleton
   @Provides
   fun provideMediaServiceLinkExtraContentLocalSource(
-    database: KurobaDatabase,
+    database: KurobaMainDatabase,
   ): MediaServiceLinkExtraContentLocalSource {
     return MediaServiceLinkExtraContentLocalSource(
       database
@@ -127,7 +127,7 @@ class ModelModule {
   @Singleton
   @Provides
   fun provideSeenPostLocalSource(
-    database: KurobaDatabase
+    database: KurobaMainDatabase
   ): SeenPostLocalSource {
     return SeenPostLocalSource(
       database
@@ -137,17 +137,19 @@ class ModelModule {
   @Singleton
   @Provides
   fun provideChanPostLocalSource(
-    database: KurobaDatabase
+    dependencies: ModelComponent.Dependencies,
+    database: KurobaMainDatabase,
   ): ChanPostLocalSource {
     return ChanPostLocalSource(
-      database
+      database = database,
+      kurobaSettings = dependencies.kurobaSettings
     )
   }
 
   @Singleton
   @Provides
   fun provideNavHistoryLocalSource(
-    database: KurobaDatabase,
+    database: KurobaMainDatabase,
     moshi: Moshi
   ): NavHistoryLocalSource {
     return NavHistoryLocalSource(
@@ -160,7 +162,7 @@ class ModelModule {
   @Provides
   fun provideThreadBookmarkLocalSource(
     dependencies: ModelComponent.Dependencies,
-    database: KurobaDatabase,
+    database: KurobaMainDatabase,
     chanDescriptorCache: ChanDescriptorCache,
     threadBookmarkCache: ThreadBookmarkCache
   ): ThreadBookmarkLocalSource {
@@ -175,7 +177,7 @@ class ModelModule {
   @Singleton
   @Provides
   fun provideChanThreadViewableInfoLocalSource(
-    database: KurobaDatabase,
+    database: KurobaMainDatabase,
     chanDescriptorCache: ChanDescriptorCache
   ): ChanThreadViewableInfoLocalSource {
     return ChanThreadViewableInfoLocalSource(
@@ -187,7 +189,7 @@ class ModelModule {
   @Singleton
   @Provides
   fun provideSiteLocalSource(
-    database: KurobaDatabase,
+    database: KurobaMainDatabase,
     dependencies: ModelComponent.Dependencies,
     chanDescriptorCache: ChanDescriptorCache
   ): SiteLocalSource {
@@ -201,7 +203,7 @@ class ModelModule {
   @Singleton
   @Provides
   fun provideBoardLocalSource(
-    database: KurobaDatabase,
+    database: KurobaMainDatabase,
     dependencies: ModelComponent.Dependencies,
     chanDescriptorCache: ChanDescriptorCache
   ): BoardLocalSource {
@@ -215,7 +217,7 @@ class ModelModule {
   @Singleton
   @Provides
   fun provideChanSavedReplyLocalSource(
-    database: KurobaDatabase,
+    database: KurobaMainDatabase,
     dependencies: ModelComponent.Dependencies,
   ): ChanSavedReplyLocalSource {
     return ChanSavedReplyLocalSource(
@@ -227,7 +229,7 @@ class ModelModule {
   @Singleton
   @Provides
   fun provideChanPostHideLocalSource(
-    database: KurobaDatabase,
+    database: KurobaMainDatabase,
     dependencies: ModelComponent.Dependencies,
   ): ChanPostHideLocalSource {
     return ChanPostHideLocalSource(
@@ -239,7 +241,7 @@ class ModelModule {
   @Singleton
   @Provides
   fun provideChanFilterLocalSource(
-    database: KurobaDatabase,
+    database: KurobaMainDatabase,
     dependencies: ModelComponent.Dependencies,
   ): ChanFilterLocalSource {
     return ChanFilterLocalSource(
@@ -251,7 +253,7 @@ class ModelModule {
   @Singleton
   @Provides
   fun provideThreadBookmarkGroupLocalSource(
-    database: KurobaDatabase,
+    database: KurobaMainDatabase,
     moshi: Moshi,
     dependencies: ModelComponent.Dependencies,
     chanDescriptorCache: ChanDescriptorCache
@@ -267,7 +269,7 @@ class ModelModule {
   @Singleton
   @Provides
   fun provideChanCatalogSnapshotLocalSource(
-    database: KurobaDatabase,
+    database: KurobaMainDatabase,
     chanDescriptorCache: ChanDescriptorCache,
     chanCatalogSnapshotCache: ChanCatalogSnapshotCache
   ): ChanCatalogSnapshotLocalSource {
@@ -281,7 +283,7 @@ class ModelModule {
   @Singleton
   @Provides
   fun provideChanFilterWatchLocalSource(
-    database: KurobaDatabase,
+    database: KurobaMainDatabase,
     chanDescriptorCache: ChanDescriptorCache
   ): ChanFilterWatchLocalSource {
     return ChanFilterWatchLocalSource(
@@ -293,7 +295,7 @@ class ModelModule {
   @Singleton
   @Provides
   fun provideDatabaseMetaLocalSource(
-    database: KurobaDatabase
+    database: KurobaMainDatabase
   ): DatabaseMetaLocalSource {
     return DatabaseMetaLocalSource(database)
   }
@@ -301,7 +303,7 @@ class ModelModule {
   @Singleton
   @Provides
   fun provideChanPostImageLocalSource(
-    database: KurobaDatabase,
+    database: KurobaMainDatabase,
     chanDescriptorCache: ChanDescriptorCache,
   ): ChanPostImageLocalSource {
     return ChanPostImageLocalSource(
@@ -313,7 +315,7 @@ class ModelModule {
   @Singleton
   @Provides
   fun provideImageDownloadRequestLocalSource(
-    database: KurobaDatabase
+    database: KurobaMainDatabase
   ): ImageDownloadRequestLocalSource {
     return ImageDownloadRequestLocalSource(database)
   }
@@ -321,7 +323,7 @@ class ModelModule {
   @Singleton
   @Provides
   fun provideThreadDownloadLocalSource(
-    database: KurobaDatabase
+    database: KurobaMainDatabase
   ): ThreadDownloadLocalSource {
     return ThreadDownloadLocalSource(database)
   }
@@ -329,7 +331,7 @@ class ModelModule {
   @Singleton
   @Provides
   fun provideCompositeCatalogLocalSource(
-    database: KurobaDatabase
+    database: KurobaMainDatabase
   ): CompositeCatalogLocalSource {
     return CompositeCatalogLocalSource(database)
   }
@@ -354,7 +356,7 @@ class ModelModule {
   @Provides
   fun provideYoutubeLinkExtraContentRepository(
     dependencies: ModelComponent.Dependencies,
-    database: KurobaDatabase,
+    database: KurobaMainDatabase,
     mediaServiceLinkExtraContentLocalSource: MediaServiceLinkExtraContentLocalSource,
     mediaServiceLinkExtraContentRemoteSource: MediaServiceLinkExtraContentRemoteSource,
   ): MediaServiceLinkExtraContentRepository {
@@ -371,7 +373,7 @@ class ModelModule {
   @Provides
   fun provideSeenPostRepository(
     dependencies: ModelComponent.Dependencies,
-    database: KurobaDatabase,
+    database: KurobaMainDatabase,
     seenPostLocalSource: SeenPostLocalSource,
   ): SeenPostRepository {
     return SeenPostRepository(
@@ -385,7 +387,7 @@ class ModelModule {
   @Provides
   fun provideChanPostRepository(
     dependencies: ModelComponent.Dependencies,
-    database: KurobaDatabase,
+    database: KurobaMainDatabase,
     chanPostLocalSource: ChanPostLocalSource,
     chanThreadsCache: ChanThreadsCache,
     chanDescriptorCache: ChanDescriptorCache
@@ -405,7 +407,7 @@ class ModelModule {
   @Provides
   fun provideHistoryNavigationRepository(
     dependencies: ModelComponent.Dependencies,
-    database: KurobaDatabase,
+    database: KurobaMainDatabase,
     navHistoryLocalSource: NavHistoryLocalSource
   ): HistoryNavigationRepository {
     return HistoryNavigationRepository(
@@ -419,7 +421,7 @@ class ModelModule {
   @Provides
   fun provideBookmarksRepository(
     dependencies: ModelComponent.Dependencies,
-    database: KurobaDatabase,
+    database: KurobaMainDatabase,
     threadBookmarkLocalSource: ThreadBookmarkLocalSource
   ): BookmarksRepository {
     return BookmarksRepository(
@@ -433,7 +435,7 @@ class ModelModule {
   @Provides
   fun provideChanThreadViewableInfoRepository(
     dependencies: ModelComponent.Dependencies,
-    database: KurobaDatabase,
+    database: KurobaMainDatabase,
     chanThreadViewableInfoLocalSource: ChanThreadViewableInfoLocalSource
   ): ChanThreadViewableInfoRepository {
     return ChanThreadViewableInfoRepository(
@@ -447,7 +449,7 @@ class ModelModule {
   @Provides
   fun provideSiteRepository(
     dependencies: ModelComponent.Dependencies,
-    database: KurobaDatabase,
+    database: KurobaMainDatabase,
     siteLocalSource: SiteLocalSource
   ): SiteRepository {
     return SiteRepository(
@@ -461,7 +463,7 @@ class ModelModule {
   @Provides
   fun provideBoardRepository(
     dependencies: ModelComponent.Dependencies,
-    database: KurobaDatabase,
+    database: KurobaMainDatabase,
     boardLocalSource: BoardLocalSource
   ): BoardRepository {
     return BoardRepository(
@@ -475,7 +477,7 @@ class ModelModule {
   @Provides
   fun provideChanSavedReplyRepository(
     dependencies: ModelComponent.Dependencies,
-    database: KurobaDatabase,
+    database: KurobaMainDatabase,
     chanSavedReplyLocalSource: ChanSavedReplyLocalSource
   ): ChanSavedReplyRepository {
     return ChanSavedReplyRepository(
@@ -489,7 +491,7 @@ class ModelModule {
   @Provides
   fun provideChanPostHideRepository(
     dependencies: ModelComponent.Dependencies,
-    database: KurobaDatabase,
+    database: KurobaMainDatabase,
     chanPostHideLocalSource: ChanPostHideLocalSource
   ): ChanPostHideRepository {
     return ChanPostHideRepository(
@@ -503,7 +505,7 @@ class ModelModule {
   @Provides
   fun provideChanFilterRepository(
     dependencies: ModelComponent.Dependencies,
-    database: KurobaDatabase,
+    database: KurobaMainDatabase,
     chanFilterLocalSource: ChanFilterLocalSource
   ): ChanFilterRepository {
     return ChanFilterRepository(
@@ -517,7 +519,7 @@ class ModelModule {
   @Provides
   fun provideThreadBookmarkGroupRepository(
     dependencies: ModelComponent.Dependencies,
-    database: KurobaDatabase,
+    database: KurobaMainDatabase,
     localSource: ThreadBookmarkGroupLocalSource
   ): ThreadBookmarkGroupRepository {
     return ThreadBookmarkGroupRepository(
@@ -531,7 +533,7 @@ class ModelModule {
   @Provides
   fun provideChanCatalogSnapshotRepository(
     dependencies: ModelComponent.Dependencies,
-    database: KurobaDatabase,
+    database: KurobaMainDatabase,
     localSource: ChanCatalogSnapshotLocalSource
   ): ChanCatalogSnapshotRepository {
     return ChanCatalogSnapshotRepository(
@@ -545,7 +547,7 @@ class ModelModule {
   @Singleton
   @Provides
   fun provideChanFilterWatchRepository(
-    database: KurobaDatabase,
+    database: KurobaMainDatabase,
     dependencies: ModelComponent.Dependencies,
     localSource: ChanFilterWatchLocalSource
   ): ChanFilterWatchRepository {
@@ -559,7 +561,7 @@ class ModelModule {
   @Singleton
   @Provides
   fun provideDatabaseMetaRepository(
-    database: KurobaDatabase,
+    database: KurobaMainDatabase,
     dependencies: ModelComponent.Dependencies,
     localSource: DatabaseMetaLocalSource
   ): DatabaseMetaRepository {
@@ -573,7 +575,7 @@ class ModelModule {
   @Singleton
   @Provides
   fun provideChanPostImageRepository(
-    database: KurobaDatabase,
+    database: KurobaMainDatabase,
     dependencies: ModelComponent.Dependencies,
     localSource: ChanPostImageLocalSource
   ): ChanPostImageRepository {
@@ -588,7 +590,7 @@ class ModelModule {
   @Singleton
   @Provides
   fun provideImageDownloadRequestRepository(
-    database: KurobaDatabase,
+    database: KurobaMainDatabase,
     dependencies: ModelComponent.Dependencies,
     localSource: ImageDownloadRequestLocalSource
   ): ImageDownloadRequestRepository {
@@ -602,7 +604,7 @@ class ModelModule {
   @Singleton
   @Provides
   fun provideThreadDownloadRepository(
-    database: KurobaDatabase,
+    database: KurobaMainDatabase,
     dependencies: ModelComponent.Dependencies,
     localSource: ThreadDownloadLocalSource
   ): ThreadDownloadRepository {
@@ -616,7 +618,7 @@ class ModelModule {
   @Singleton
   @Provides
   fun provideCompositeCatalogRepository(
-    database: KurobaDatabase,
+    database: KurobaMainDatabase,
     dependencies: ModelComponent.Dependencies,
     localSource: CompositeCatalogLocalSource
   ): CompositeCatalogRepository {

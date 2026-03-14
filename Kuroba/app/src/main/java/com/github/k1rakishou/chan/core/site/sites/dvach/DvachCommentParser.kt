@@ -10,10 +10,11 @@ import com.github.k1rakishou.core_parser.comment.HtmlTag
 import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
+import com.github.k1rakishou.v2.KurobaSettings
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
-class DvachCommentParser : VichanCommentParser(), ICommentParser {
+class DvachCommentParser(kurobaSettings: KurobaSettings) : VichanCommentParser(kurobaSettings), ICommentParser {
 
   init {
     addDefaultRules()

@@ -1,7 +1,7 @@
 package com.github.k1rakishou.chan.core.site.sites.lynxchan.chan8
 
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.site.settings.SiteSettingForUi
+import com.github.k1rakishou.chan.core.site.settings.SiteSetting
 import com.github.k1rakishou.chan.core.site.settings.SiteSettingsForUi
 import com.github.k1rakishou.chan.core.site.sites.lynxchan.engine.BaseLynxchanSite
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
@@ -19,12 +19,12 @@ class Chan8Moe : BaseLynxchanSite(
   override val settingsForUi: SiteSettingsForUi by lazy {
     val settingsForUi = SiteSettingsForUi(super.settingsForUi)
 
-    settingsForUi += SiteSettingForUi.SiteCookieSetting(
+    settingsForUi += SiteSetting.SiteCookieSetting(
       settingName = "powToken",
       settingDescription = getString(R.string.chan8moe_pow_token),
       setting = settings.powToken
     )
-    settingsForUi += SiteSettingForUi.SiteCookieSetting(
+    settingsForUi += SiteSetting.SiteCookieSetting(
       settingName = "powId",
       settingDescription = getString(R.string.chan8moe_pow_id),
       setting = settings.powId
@@ -33,7 +33,7 @@ class Chan8Moe : BaseLynxchanSite(
     return@lazy settingsForUi
   }
 
-  override val settings by lazy { Chan8MoeSiteSettings(dependencies, prefs) }
+  override val settings by lazy { Chan8MoeSiteSettings(descriptor, dependencies) }
 
   class Chan8MoeUrlHandler(
     site: BaseLynxchanSite,

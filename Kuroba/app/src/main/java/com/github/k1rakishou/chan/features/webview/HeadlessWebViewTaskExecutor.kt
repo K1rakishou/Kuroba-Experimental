@@ -7,11 +7,11 @@ import android.webkit.CookieManager
 import android.webkit.WebSettings
 import android.webkit.WebView
 import androidx.annotation.GuardedBy
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.features.webview.task.AbstractWebViewTask
 import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
 import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.v2.KurobaSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class HeadlessWebViewTaskExecutor(
   private val appContext: Context,
+  private val kurobaSettings: KurobaSettings,
   private val appScope: CoroutineScope,
   private val globalUiStateHolder: GlobalUiStateHolder
 ) {
@@ -164,7 +165,7 @@ class HeadlessWebViewTaskExecutor(
     webSettings.loadWithOverviewMode = true
     webSettings.cacheMode = WebSettings.LOAD_DEFAULT
 
-    ChanSettings.customUserAgent.get()
+    kurobaSettings.application.customUserAgent.read()
       .takeIf { customUserAgent -> customUserAgent.isNotBlank() }
       ?.let { customUserAgent -> webSettings.userAgentString = customUserAgent }
 

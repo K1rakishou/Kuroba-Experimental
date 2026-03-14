@@ -333,7 +333,7 @@ internal open class ConcurrentChunkedFileDownloader @Inject constructor(
     throw MediaDownloadException.GenericException("Failed to download '${mediaUrl}' (Timeout)")
   }
 
-  private fun getChunksCount(
+  private suspend fun getChunksCount(
     supportsPartialContentDownload: Boolean,
     partialContentCheckResult: PartialContentCheckResult,
     mediaUrl: HttpUrl
@@ -364,7 +364,7 @@ internal open class ConcurrentChunkedFileDownloader @Inject constructor(
       return 1
     }
 
-    val chunksCount = site.commonSettings.concurrentFileDownloadingChunks.get().chunksCount()
+    val chunksCount = site.commonSettings.concurrentFileDownloadingChunks.read().chunksCount
 
     activeDownload.chunksCount(chunksCount)
     return chunksCount

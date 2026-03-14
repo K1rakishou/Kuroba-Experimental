@@ -1,10 +1,10 @@
 package com.github.k1rakishou.model.source.local
 
 import androidx.sqlite.db.SimpleSQLiteQuery
-import com.github.k1rakishou.model.KurobaDatabase
+import com.github.k1rakishou.model.KurobaMainDatabase
 
 class DatabaseMetaLocalSource(
-  database: KurobaDatabase,
+  database: KurobaMainDatabase,
 ) : AbstractLocalSource(database) {
   private val TAG = "DatabaseMetaLocalSource"
   private val dao = database.databaseMetaDao()

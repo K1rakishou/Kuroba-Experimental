@@ -6,6 +6,7 @@ import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileManager
+import com.github.k1rakishou.fsaf.file.AbstractFile
 import java.io.File
 
 class InstallMpvNativeLibrariesFromLocalDirectoryUseCase(
@@ -21,10 +22,10 @@ class InstallMpvNativeLibrariesFromLocalDirectoryUseCase(
     val directory = fileManager.fromUri(uri)
       ?: throw MpvInstallLibsFromDirectoryException("Failed to open directory uri: \'$uri\'")
 
-    val libFiles = fileManager.listFiles(directory)
+    val files = fileManager.listFiles(directory)
       .filter { file -> fileManager.getName(file).endsWith(".so") }
 
-    if (libFiles.isEmpty()) {
+    if (files.isEmpty()) {
       throw MpvInstallLibsFromDirectoryException("No \'.so\' files found in the directory \'$uri\'")
     }
 
@@ -33,11 +34,16 @@ class InstallMpvNativeLibrariesFromLocalDirectoryUseCase(
       libFile.delete()
     }
 
-    libFiles.forEach { libFile ->
-      val libName = fileManager.getName(libFile)
+    files.forEach { file ->
+      val fileName = fileManager.getName(file)
+      if (fileName == AppConstants.MPV_CERTIFICATE_FILE_NAME) {
+        Logger.d(TAG, "Moving cacert.pem")
+        copyCertificateFile(file)
+        return@forEach
+      }
 
       val isLibraryExpected = MPVLib.LIBS.any { expectedLibName ->
-        if (expectedLibName.equals(libName, ignoreCase = true)) {
+        if (expectedLibName.equals(fileName, ignoreCase = true)) {
           return@any true
         }
 
@@ -45,16 +51,16 @@ class InstallMpvNativeLibrariesFromLocalDirectoryUseCase(
       }
 
       if (!isLibraryExpected) {
-        Logger.d(TAG, "Skipping \'${libName}\'")
+        Logger.d(TAG, "Skipping \'${fileName}\'")
         return@forEach
       }
 
-      val outputFile = File(appConstants.mpvNativeLibsDir, libName)
+      val outputFile = File(appConstants.mpvNativeLibsDir, fileName)
 
-      Logger.d(TAG, "Moving mpv library file: \'${libFile.getFullPath()}\' into \'${outputFile.absolutePath}\'")
+      Logger.d(TAG, "Moving mpv library file: \'${file.getFullPath()}\' into \'${outputFile.absolutePath}\'")
 
-      val inputStream = fileManager.getInputStream(libFile)
-        ?: throw MpvInstallLibsFromDirectoryException("Failed to get input stream for file \'${libFile.getFullPath()}\'")
+      val inputStream = fileManager.getInputStream(file)
+        ?: throw MpvInstallLibsFromDirectoryException("Failed to get input stream for file \'${file.getFullPath()}\'")
 
       inputStream.use { input ->
         outputFile.outputStream().use { output ->
@@ -66,6 +72,28 @@ class InstallMpvNativeLibrariesFromLocalDirectoryUseCase(
     }
 
     Logger.d(TAG, "All done")
+  }
+
+  private fun copyCertificateFile(libFile: AbstractFile) {
+    val mpvCertFile = File(appConstants.mpvCertDir, AppConstants.MPV_CERTIFICATE_FILE_NAME)
+    if (mpvCertFile.exists()) {
+      val deleteSuccess = mpvCertFile.delete()
+      Logger.d(TAG, "Deleting old cert file: ${mpvCertFile.absolutePath}, success: $deleteSuccess")
+    }
+
+    val createSuccess = mpvCertFile.createNewFile()
+    Logger.d(TAG, "Creating new cert file: ${mpvCertFile.absolutePath}, success: $createSuccess")
+
+    val inputStream = fileManager.getInputStream(libFile)
+      ?: throw MpvInstallLibsFromDirectoryException("Failed to get input stream for file \'${libFile.getFullPath()}\'")
+
+    inputStream.use { input ->
+      mpvCertFile.outputStream().use { output ->
+        input.copyTo(output)
+      }
+    }
+
+    Logger.d(TAG, "Copied ${AppConstants.MPV_CERTIFICATE_FILE_NAME}")
   }
 
   class MpvInstallLibsFromDirectoryException(message: String) : Exception(message)

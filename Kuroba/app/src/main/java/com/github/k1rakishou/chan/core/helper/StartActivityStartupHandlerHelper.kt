@@ -8,7 +8,6 @@ import android.provider.DocumentsContract
 import android.widget.Toast
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.util.Pair
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
@@ -34,10 +33,12 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptorParcelable
+import com.github.k1rakishou.v2.KurobaSettings
 import dagger.Lazy
 
 
 class StartActivityStartupHandlerHelper(
+  private val kurobaSettings: KurobaSettings,
   private val historyNavigationManagerLazy: Lazy<HistoryNavigationManager>,
   private val siteManagerLazy: Lazy<SiteManager>,
   private val boardManagerLazy: Lazy<BoardManager>,
@@ -146,7 +147,7 @@ class StartActivityStartupHandlerHelper(
         ?.descriptor()
 
       val isThreadTheTopElement = topElement == threadToOpen
-      val isSplitLayout = ChanSettings.isSplitLayoutMode()
+      val isSplitLayout = kurobaSettings.application.isSplitLayoutMode()
 
       Logger.d(TAG, "restoreFresh() isThreadTheTopElement=$isThreadTheTopElement, " +
         "isSplitLayout=$isSplitLayout, (topElement=${topElement}, threadToOpen=$threadToOpen)")
@@ -161,7 +162,7 @@ class StartActivityStartupHandlerHelper(
   }
 
   private suspend fun getThreadToOpen(): ChanDescriptor.ThreadDescriptor? {
-    val loadLastOpenedThreadUponAppStart = ChanSettings.loadLastOpenedThreadUponAppStart.get()
+    val loadLastOpenedThreadUponAppStart = kurobaSettings.application.loadLastOpenedThreadUponAppStart.read()
     Logger.d(TAG, "getThreadToOpen(), loadLastOpenedThreadUponAppStart=$loadLastOpenedThreadUponAppStart")
 
     if (!loadLastOpenedThreadUponAppStart) {
@@ -188,7 +189,7 @@ class StartActivityStartupHandlerHelper(
   }
 
   private suspend fun getCatalogToOpen(): ChanDescriptor.ICatalogDescriptor? {
-    val loadLastOpenedBoardUponAppStart = ChanSettings.loadLastOpenedBoardUponAppStart.get()
+    val loadLastOpenedBoardUponAppStart = kurobaSettings.application.loadLastOpenedBoardUponAppStart.read()
     Logger.d(TAG, "getCatalogToOpen(), loadLastOpenedBoardUponAppStart=$loadLastOpenedBoardUponAppStart")
 
     if (!loadLastOpenedBoardUponAppStart) {

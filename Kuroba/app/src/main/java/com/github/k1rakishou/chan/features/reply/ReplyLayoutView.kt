@@ -45,8 +45,8 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
-import com.github.k1rakishou.persist_state.PersistableChanState
-import com.github.k1rakishou.persist_state.ReplyMode
+import com.github.k1rakishou.v2.KurobaSettings
+import com.github.k1rakishou.v2.parameters.ReplyMode
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.util.UUID
@@ -63,6 +63,8 @@ class ReplyLayoutView @JvmOverloads constructor(
   WebViewLinkMovementMethod.ClickListener,
   IHasViewModelScope {
 
+  @Inject
+  lateinit var kurobaSettings: KurobaSettings
   @Inject
   lateinit var dialogFactory: DialogFactory
   @Inject
@@ -223,7 +225,11 @@ class ReplyLayoutView @JvmOverloads constructor(
       params = params
     )
 
-    return params.awaitInputResult()
+    return when (val result = params.awaitInputResult()) {
+      is KurobaComposeDialogController.InputResult.Result -> result.value
+      KurobaComposeDialogController.InputResult.NoResult,
+      null -> null
+    }
   }
 
   override fun showDialog(
@@ -380,7 +386,7 @@ class ReplyLayoutView @JvmOverloads constructor(
     val prevReplyMode = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor())
       ?.commonSettings
       ?.lastUsedReplyMode
-      ?.get()
+      ?.readBlocking()
       ?: ReplyMode.Unknown
 
     showReplyOptions(chanDescriptor, prevReplyMode)
@@ -623,11 +629,11 @@ class ReplyLayoutView @JvmOverloads constructor(
     menuItems += CheckableFloatingListMenuItem(
       key = ACTION_IGNORE_REPLY_COOLDOWNS,
       name = appResources.string(R.string.reply_layout_ignore_reply_cooldowns),
-      checked = ignoreReplyCooldowns?.get() == true
+      checked = ignoreReplyCooldowns?.readBlocking() == true
     )
 
     if (chanDescriptor.siteDescriptor().is4chan()) {
-      check4chanPostAcknowledgedSetting?.get()?.let { check4chanPostAcknowledged ->
+      check4chanPostAcknowledgedSetting?.readBlocking()?.let { check4chanPostAcknowledged ->
         menuItems += CheckableFloatingListMenuItem(
           key = ACTION_CHECK_4CHAN_POST_ACKNOWLEDGED,
           name = appResources.string(R.string.reply_layout_check_if_post_was_actually_acknowledged_by_4chan),
@@ -641,6 +647,11 @@ class ReplyLayoutView @JvmOverloads constructor(
       name = appResources.string(R.string.reply_layout_reset_remembered_file_picker)
     )
 
+    menuItems += FloatingListMenuItem(
+      key = ACTION_ALWAYS_RANDOMIZE_FILE_NAME,
+      name = appResources.string(R.string.setting_always_randomize_picked_files_names)
+    )
+
     val floatingListMenuController = FloatingListMenuController(
       context = context,
       constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
@@ -649,21 +660,20 @@ class ReplyLayoutView @JvmOverloads constructor(
         if (clickedItem.key is Int) {
           when (clickedItem.key) {
             ACTION_IGNORE_REPLY_COOLDOWNS -> {
-              ignoreReplyCooldowns?.toggle()
+              ignoreReplyCooldowns?.toggleBlocking()
             }
             ACTION_CHECK_4CHAN_POST_ACKNOWLEDGED -> {
-              check4chanPostAcknowledgedSetting?.toggle()
+              check4chanPostAcknowledgedSetting?.toggleBlocking()
             }
             ACTION_RESET_REMEMBERED_FILE_PICKER -> {
-              PersistableChanState.lastRememberedFilePicker.remove()
+              kurobaSettings.internal.lastRememberedFilePicker.resetBlocking()
+            }
+            ACTION_ALWAYS_RANDOMIZE_FILE_NAME -> {
+              kurobaSettings.internal.alwaysRandomizePickedFilesNames.toggleBlocking()
             }
           }
         } else if (clickedItem.key is ReplyMode) {
-          val replyMode = clickedItem.key as? ReplyMode
-            ?: return@FloatingListMenuController
-
-          lastUsedReplyMode?.set(replyMode)
-
+          lastUsedReplyMode?.writeAsync(clickedItem.key)
           replyLayoutViewModel.updateCaptchaButtonVisibility()
         }
       }
@@ -737,6 +747,7 @@ class ReplyLayoutView @JvmOverloads constructor(
     private const val ACTION_IGNORE_REPLY_COOLDOWNS = 101
     private const val ACTION_CHECK_4CHAN_POST_ACKNOWLEDGED = 102
     private const val ACTION_RESET_REMEMBERED_FILE_PICKER = 103
+    private const val ACTION_ALWAYS_RANDOMIZE_FILE_NAME = 104
   }
 
 }

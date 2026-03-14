@@ -17,6 +17,7 @@ import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
+import com.github.k1rakishou.v2.KurobaSettings
 import com.squareup.moshi.Moshi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -32,8 +33,8 @@ import java.io.File
 import java.io.IOException
 
 class ThirdEyeManager(
+  private val kurobaSettings: KurobaSettings,
   private val appContext: Context,
-  private val verboseLogsEnabled: Boolean,
   private val appConstants: AppConstants,
   private val moshi: Moshi,
   private val chanThreadsCache: ChanThreadsCache,
@@ -67,7 +68,7 @@ class ThirdEyeManager(
 
   init {
     chanThreadsCache.addChanThreadDeleteEventListener { threadDeleteEvent ->
-      if (verboseLogsEnabled) {
+      if (kurobaSettings.application.verboseLogs.readBlocking()) {
         Logger.d(TAG, "chanThreadsCache.chanThreadDeleteEventFlow() " +
           "threadDeleteEvent=${threadDeleteEvent.javaClass.simpleName}")
       }

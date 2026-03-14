@@ -1,11 +1,11 @@
 package com.github.k1rakishou.chan.ui.viewstate
 
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.CurrentFocusedControllers
 import com.github.k1rakishou.chan.features.toolbar.state.ToolbarStateKind
 import com.github.k1rakishou.chan.ui.controller.BrowseController
 import com.github.k1rakishou.chan.ui.controller.ViewThreadController
 import com.github.k1rakishou.chan.ui.controller.base.ControllerKey
+import com.github.k1rakishou.v2.KurobaSettings
 import kotlinx.collections.immutable.ImmutableMap
 
 data class ToolbarVisibilityState(
@@ -24,7 +24,7 @@ data class ToolbarVisibilityState(
   val toolbarAlpha: Float
     get() = scrollProgress
 
-  fun isToolbarForceVisible(): Boolean {
+  fun isToolbarForceVisible(kurobaSettings: KurobaSettings): Boolean {
     if (topControllerKeys.isEmpty()) {
       return false
     }
@@ -37,11 +37,11 @@ data class ToolbarVisibilityState(
       return true
     }
 
-    if (!ChanSettings.canCollapseToolbar()) {
+    if (!kurobaSettings.application.canCollapseToolbar()) {
       return true
     }
 
-    if (ChanSettings.isSplitLayoutMode()) {
+    if (kurobaSettings.application.isSplitLayoutModeBlocking()) {
       if (currentToolbarStates[topControllerKeys.first()]?.needForceShowToolbar() == true) {
         return true
       }
@@ -56,7 +56,10 @@ data class ToolbarVisibilityState(
           CurrentFocusedControllers.FocusState.Both -> null
         }
 
-        if (currentFocusedScreenKey != null && currentToolbarStates[currentFocusedScreenKey]?.needForceShowToolbar() == true) {
+        if (
+          currentFocusedScreenKey != null &&
+          currentToolbarStates[currentFocusedScreenKey]?.needForceShowToolbar() == true
+        ) {
           return true
         }
 

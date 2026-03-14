@@ -31,7 +31,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
@@ -52,6 +51,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.ChanPostImageType
+import com.github.k1rakishou.v2.KurobaSettings
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -80,6 +80,7 @@ fun AlbumItem(
   clearDownloadingAlbumItemState: (DownloadingAlbumItem) -> Unit
 ) {
   val onDemandContentLoaderManager = appDependencies().onDemandContentLoaderManager
+  val kurobaSettings = appDependencies().kurobaSettings
 
   DisposableEffect(key1 = Unit) {
     onDemandContentLoaderManager.onPostBind(albumItemData.postDescriptor, albumItemData.isCatalogMode)
@@ -88,6 +89,7 @@ fun AlbumItem(
 
   val requestProvider = remember(chanDescriptorUi, albumItemData, albumSpanCount, isInSelectionMode) {
     getImageLoaderRequestProvider(
+      kurobaSettings = kurobaSettings,
       chanDescriptor = chanDescriptorUi?.chanDescriptor,
       albumItemData = albumItemData,
       albumSpanCount = albumSpanCount,
@@ -294,6 +296,7 @@ private fun Modifier.albumItemSelection(
 }
 
 private fun getImageLoaderRequestProvider(
+  kurobaSettings: KurobaSettings,
   chanDescriptor: ChanDescriptor?,
   albumItemData: AlbumItemData,
   albumSpanCount: Int,
@@ -332,6 +335,7 @@ private fun getImageLoaderRequestProvider(
 
         val (imageUrl, cacheFileType) = getImageUrlAndCacheFileType(
           cacheHandler = cacheHandler,
+          kurobaSettings = kurobaSettings,
           postImage = postImage,
           canUseHighResCells = canUseHighResCells,
           revealSpoilerImage = revealSpoilerImage || isInSelectionMode
@@ -360,22 +364,26 @@ private fun getImageLoaderRequestProvider(
 
 private fun getImageUrlAndCacheFileType(
   cacheHandler: CacheHandler,
+  kurobaSettings: KurobaSettings,
   postImage: ChanPostImage,
   canUseHighResCells: Boolean,
   revealSpoilerImage: Boolean
 ): Pair<HttpUrl?, CacheFileType?> {
-  val thumbnailUrl = postImage.getThumbnailUrl(isSpoilerRevealed = revealSpoilerImage)
+  val thumbnailUrl = postImage.getThumbnailUrl(
+    kurobaSettings = kurobaSettings,
+    isSpoilerRevealed = revealSpoilerImage
+  )
   if (thumbnailUrl == null) {
     Logger.e(TAG, "getUrl() postImage: $postImage, has no thumbnail url")
     return null to null
   }
 
   val highRes = postImage.imageUrl != null
-    && ChanSettings.highResCells.get()
-    && postImage.canBeUsedAsHighResolutionThumbnail()
+    && kurobaSettings.application.highResCells.readBlocking()
+    && postImage.canBeUsedAsHighResolutionThumbnail(kurobaSettings)
     && canUseHighResCells
     && postImage.type == ChanPostImageType.STATIC
-    && MediaViewerControllerViewModel.canAutoLoad(cacheHandler, postImage)
+    && MediaViewerControllerViewModel.canAutoLoad(kurobaSettings, cacheHandler, postImage)
 
   if (!highRes) {
     return thumbnailUrl to CacheFileType.PostMediaThumbnail

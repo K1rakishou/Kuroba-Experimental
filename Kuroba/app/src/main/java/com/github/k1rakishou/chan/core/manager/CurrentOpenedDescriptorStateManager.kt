@@ -1,12 +1,14 @@
 package com.github.k1rakishou.chan.core.manager
 
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.v2.KurobaSettings
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class CurrentOpenedDescriptorStateManager {
+class CurrentOpenedDescriptorStateManager(
+  private val kurobaSettings: KurobaSettings
+) {
   private val _currentCatalogDescriptorFlow = MutableStateFlow<ChanDescriptor.ICatalogDescriptor?>(null)
   val currentCatalogDescriptorFlow: StateFlow<ChanDescriptor.ICatalogDescriptor?>
     get() = _currentCatalogDescriptorFlow.asStateFlow()
@@ -28,8 +30,9 @@ class CurrentOpenedDescriptorStateManager {
 
   val currentFocusedDescriptors: CurrentFocusedDescriptors
     get() {
-      if (ChanSettings.isSplitLayoutMode()) {
+      if (kurobaSettings.application.isSplitLayoutModeBlocking()) {
         return CurrentFocusedDescriptors(
+          kurobaSettings = kurobaSettings,
           catalogDescriptor = currentCatalogDescriptor,
           threadDescriptor = currentThreadDescriptor
         )
@@ -38,22 +41,26 @@ class CurrentOpenedDescriptorStateManager {
       return when (_currentFocusedControllers.value.focusState()) {
         CurrentFocusedControllers.FocusState.Both -> {
           CurrentFocusedDescriptors(
+            kurobaSettings = kurobaSettings,
             catalogDescriptor = currentCatalogDescriptor,
             threadDescriptor = currentThreadDescriptor
           )
         }
         CurrentFocusedControllers.FocusState.Catalog -> {
           CurrentFocusedDescriptors(
+            kurobaSettings = kurobaSettings,
             catalogDescriptor = currentCatalogDescriptor
           )
         }
         CurrentFocusedControllers.FocusState.Thread -> {
           CurrentFocusedDescriptors(
+            kurobaSettings = kurobaSettings,
             threadDescriptor = currentThreadDescriptor
           )
         }
         CurrentFocusedControllers.FocusState.None -> {
           CurrentFocusedDescriptors(
+            kurobaSettings = kurobaSettings,
             catalogDescriptor = null,
             threadDescriptor = null
           )
@@ -62,7 +69,7 @@ class CurrentOpenedDescriptorStateManager {
     }
 
   fun isDescriptorFocused(chanDescriptor: ChanDescriptor): Boolean {
-    if (ChanSettings.isSplitLayoutMode()) {
+    if (kurobaSettings.application.isSplitLayoutModeBlocking()) {
       return true
     }
 
@@ -82,7 +89,7 @@ class CurrentOpenedDescriptorStateManager {
   }
 
   fun updateCurrentFocusedController(focusedController: CurrentFocusedController) {
-    if (ChanSettings.isSplitLayoutMode()) {
+    if (kurobaSettings.application.isSplitLayoutModeBlocking()) {
       _currentFocusedControllers.value = CurrentFocusedControllers(
         catalogFocused = currentCatalogDescriptor != null,
         threadFocused = currentThreadDescriptor != null
@@ -98,6 +105,7 @@ class CurrentOpenedDescriptorStateManager {
 }
 
 data class CurrentFocusedDescriptors(
+  private val kurobaSettings: KurobaSettings,
   private val catalogDescriptor: ChanDescriptor.ICatalogDescriptor? = null,
   private val threadDescriptor: ChanDescriptor.ThreadDescriptor? = null
 ) {
@@ -119,7 +127,7 @@ data class CurrentFocusedDescriptors(
   }
 
   fun getFocused(): ChanDescriptor? {
-    if (ChanSettings.isSplitLayoutMode()) {
+    if (kurobaSettings.application.isSplitLayoutModeBlocking()) {
       error("Cannot be used in SPLIT layout mode because both descriptors are always focused")
     }
 

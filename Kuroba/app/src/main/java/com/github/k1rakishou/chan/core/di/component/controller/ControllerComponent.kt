@@ -5,10 +5,14 @@ import com.github.k1rakishou.chan.core.di.module.controller.ControllerScopedView
 import com.github.k1rakishou.chan.core.di.module.controller.ControllerScopedViewModelModule
 import com.github.k1rakishou.chan.core.di.scope.PerController
 import com.github.k1rakishou.chan.features.album.AlbumViewController
+import com.github.k1rakishou.chan.features.settings.AppSettingsController
+import com.github.k1rakishou.chan.features.settings.delegate.CookieCaptchaInputController
 import com.github.k1rakishou.chan.features.setup.boards.add.AddBoardsController
 import com.github.k1rakishou.chan.features.setup.boards.reorder.BoardsReorderController
 import com.github.k1rakishou.chan.features.setup.boards.selection.BoardSelectionController
 import com.github.k1rakishou.chan.ui.controller.base.Controller
+import com.github.k1rakishou.chan.ui.controller.dialog.KurobaComposeDialogController
+import com.github.k1rakishou.chan.ui.controller.settings.RangeSettingUpdaterController
 import dagger.BindsInstance
 import dagger.Subcomponent
 
@@ -21,11 +25,14 @@ import dagger.Subcomponent
   ]
 )
 interface ControllerComponent : ControllerDependencies {
-  fun inject(controller: Controller)
   fun inject(albumViewController: AlbumViewController)
   fun inject(addBoardsController: AddBoardsController)
   fun inject(boardsReorderController: BoardsReorderController)
   fun inject(boardSelectionController: BoardSelectionController)
+  fun inject(cookieCaptchaInputController: CookieCaptchaInputController)
+  fun inject(rangeSettingUpdaterController: RangeSettingUpdaterController)
+  fun inject(kurobaComposeDialogController: KurobaComposeDialogController)
+  fun inject(appSettingsController: AppSettingsController)
 
   @Subcomponent.Builder
   interface Builder {

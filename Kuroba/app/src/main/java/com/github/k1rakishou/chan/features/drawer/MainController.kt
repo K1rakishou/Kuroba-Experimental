@@ -19,13 +19,11 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
-import com.github.k1rakishou.BottomNavViewButton
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.AppRestarter
 import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
-import com.github.k1rakishou.chan.core.helper.migration.ApplicationMigrationHelper
+import com.github.k1rakishou.chan.core.helper.migration.app.ApplicationMigrationHelper
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
@@ -39,7 +37,8 @@ import com.github.k1rakishou.chan.features.download.thread.LocalArchiveControlle
 import com.github.k1rakishou.chan.features.drawer.data.NavigationHistoryEntry
 import com.github.k1rakishou.chan.features.posts.SavedPostsController
 import com.github.k1rakishou.chan.features.search.posts.GlobalSearchController
-import com.github.k1rakishou.chan.features.settings.MainSettingsController
+import com.github.k1rakishou.chan.features.settings.AppSettingsController
+import com.github.k1rakishou.chan.features.settings.SettingsScreenKey
 import com.github.k1rakishou.chan.features.toolbar.state.ToolbarStateKind
 import com.github.k1rakishou.chan.ui.compose.panel.KurobaIconPanel
 import com.github.k1rakishou.chan.ui.compose.panel.KurobaIconPanelState
@@ -68,10 +67,11 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.TimeUtils
 import com.github.k1rakishou.chan.utils.findControllerOrNull
 import com.github.k1rakishou.chan.utils.viewModelByKey
+import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
-import com.github.k1rakishou.persist_state.PersistableChanState
+import com.github.k1rakishou.v2.parameters.ReorderableBottomNavViewButtons
 import dagger.Lazy
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -79,7 +79,9 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import javax.inject.Inject
 
 
@@ -225,7 +227,7 @@ class MainController(
                 onSwitchDayNightThemeIconClick()
               },
               onShowDrawerOptionIconClick = {
-                showDrawerOptions()
+                controllerScope.launch { showDrawerOptions() }
               },
               onHistoryEntryViewClicked = { navigationHistoryEntry ->
                 onHistoryEntryViewClicked(navigationHistoryEntry)
@@ -307,7 +309,6 @@ class MainController(
 
   override fun onThemeChanged() {
     mainControllerViewModel.onThemeChanged()
-    settingsNotificationManager.onThemeChanged()
   }
 
   override fun onDestroy() {
@@ -343,38 +344,43 @@ class MainController(
 
   @Composable
   private fun KurobaComposeBottomPanelContent() {
-    val bottomNavViewButtons by PersistableChanState.reorderableBottomNavViewButtons
-      .listenForChanges()
-      .collectAsState()
+    val bottomNavViewButtonsMut by kurobaSettings.internal.reorderableBottomNavViewButtons
+      .listen()
+      .collectAsState(null)
+
+    val bottomNavViewButtons = bottomNavViewButtonsMut
+    if (bottomNavViewButtons == null) {
+      return
+    }
 
     val menuItems = remember(key1 = bottomNavViewButtons) {
       return@remember bottomNavViewButtons.bottomNavViewButtons().map { bottomNavViewButton ->
         return@map when (bottomNavViewButton) {
-          BottomNavViewButton.Search -> {
+          ReorderableBottomNavViewButtons.BottomNavViewButton.Search -> {
             KurobaIconPanelState.MenuItem(
               id = com.github.k1rakishou.chan.R.id.action_search,
               iconId = com.github.k1rakishou.chan.R.drawable.ic_search_white_24dp
             )
           }
-          BottomNavViewButton.Archive -> {
+          ReorderableBottomNavViewButtons.BottomNavViewButton.Archive -> {
             KurobaIconPanelState.MenuItem(
               id = com.github.k1rakishou.chan.R.id.action_archive,
               iconId = com.github.k1rakishou.chan.R.drawable.ic_baseline_archive_24
             )
           }
-          BottomNavViewButton.MyPosts -> {
+          ReorderableBottomNavViewButtons.BottomNavViewButton.MyPosts -> {
             KurobaIconPanelState.MenuItem(
               id = com.github.k1rakishou.chan.R.id.action_posts,
               iconId = com.github.k1rakishou.chan.R.drawable.ic_baseline_posts
             )
           }
-          BottomNavViewButton.Bookmarks -> {
+          ReorderableBottomNavViewButtons.BottomNavViewButton.Bookmarks -> {
             KurobaIconPanelState.MenuItem(
               id = com.github.k1rakishou.chan.R.id.action_bookmarks,
               iconId = com.github.k1rakishou.chan.R.drawable.ic_bookmark_white_24dp
             )
           }
-          BottomNavViewButton.Settings -> {
+          ReorderableBottomNavViewButtons.BottomNavViewButton.Settings -> {
             KurobaIconPanelState.MenuItem(
               id = com.github.k1rakishou.chan.R.id.action_settings,
               iconId = com.github.k1rakishou.chan.R.drawable.ic_baseline_settings
@@ -407,10 +413,9 @@ class MainController(
     }
 
     LaunchedEffect(key1 = Unit) {
-      compositeDisposable.add(
-        settingsNotificationManager.listenForNotificationUpdates()
-          .subscribe { onSettingsNotificationChanged(panelStateUpdated.value) }
-      )
+      settingsNotificationManager.notificationUpdates
+        .onStart { onSettingsNotificationChanged(panelStateUpdated.value) }
+        .collect { onSettingsNotificationChanged(panelStateUpdated.value) }
     }
 
     KurobaIconPanel(
@@ -460,8 +465,14 @@ class MainController(
   }
 
   fun openSettingsController() {
-    val mainSettingsController = MainSettingsController(context)
-    mainToolbarNavigationController?.pushController(mainSettingsController)
+    mainToolbarNavigationController?.pushController(
+      AppSettingsController(
+        context = context,
+        params = AppSettingsController.Params.createForInitialScreen(
+          screenKey = SettingsScreenKey.Main,
+        )
+      )
+    )
   }
 
   fun getViewThreadController(): ViewThreadController? {
@@ -623,7 +634,6 @@ class MainController(
 
   private fun onSettingsNotificationChanged(panelState: KurobaIconPanelState) {
     val notificationsCount = settingsNotificationManager.count()
-
     if (notificationsCount <= 0) {
       panelState.updateBadge(
         menuItemId = R.id.action_settings,
@@ -895,61 +905,61 @@ class MainController(
     }
   }
 
-  private fun showDrawerOptions() {
+  private suspend fun showDrawerOptions() {
     val drawerOptions = mutableListOf<FloatingListMenuItem>()
 
     drawerOptions += CheckableFloatingListMenuItem(
       key = ACTION_GRID_MODE,
       name = AppModuleAndroidUtils.getString(R.string.drawer_controller_grid_mode),
-      checked = ChanSettings.drawerGridMode.get()
+      checked = kurobaSettings.application.drawerGridMode.read()
     )
 
     drawerOptions += CheckableFloatingListMenuItem(
       key = ACTION_MOVE_LAST_ACCESSED_THREAD_TO_TOP,
       name = AppModuleAndroidUtils.getString(R.string.drawer_controller_move_last_accessed_thread_to_top),
-      checked = ChanSettings.drawerMoveLastAccessedThreadToTop.get()
+      checked = kurobaSettings.application.drawerMoveLastAccessedThreadToTop.read()
     )
 
     drawerOptions += CheckableFloatingListMenuItem(
       key = ACTION_SHOW_BOOKMARKS,
       name = AppModuleAndroidUtils.getString(R.string.drawer_controller_show_bookmarks),
-      checked = ChanSettings.drawerShowBookmarkedThreads.get()
+      checked = kurobaSettings.application.drawerShowBookmarkedThreads.read()
     )
 
     drawerOptions += CheckableFloatingListMenuItem(
       key = ACTION_SHOW_NAV_HISTORY,
       name = AppModuleAndroidUtils.getString(R.string.drawer_controller_show_navigation_history),
-      checked = ChanSettings.drawerShowNavigationHistory.get()
+      checked = kurobaSettings.application.drawerShowNavigationHistory.read()
     )
 
     drawerOptions += CheckableFloatingListMenuItem(
       key = ACTION_SHOW_DELETE_SHORTCUT,
       name = AppModuleAndroidUtils.getString(R.string.drawer_controller_delete_shortcut),
-      checked = ChanSettings.drawerShowDeleteButtonShortcut.get()
+      checked = kurobaSettings.application.drawerShowDeleteButtonShortcut.read()
     )
 
     drawerOptions += CheckableFloatingListMenuItem(
       key = ACTION_DELETE_BOOKMARK_WHEN_DELETING_NAV_HISTORY,
       name = AppModuleAndroidUtils.getString(R.string.drawer_controller_delete_bookmark_on_history_delete),
-      checked = ChanSettings.drawerDeleteBookmarksWhenDeletingNavHistory.get()
+      checked = kurobaSettings.application.drawerDeleteBookmarksWhenDeletingNavHistory.read()
     )
 
     drawerOptions += CheckableFloatingListMenuItem(
       key = ACTION_DELETE_NAV_HISTORY_WHEN_BOOKMARK_DELETED,
       name = AppModuleAndroidUtils.getString(R.string.drawer_controller_delete_nav_history_on_bookmark_delete),
-      checked = ChanSettings.drawerDeleteNavHistoryWhenBookmarkDeleted.get()
+      checked = kurobaSettings.application.drawerDeleteNavHistoryWhenBookmarkDeleted.read()
     )
 
     drawerOptions += CheckableFloatingListMenuItem(
       key = ACTION_RESTORE_LAST_VISITED_CATALOG,
       name = AppModuleAndroidUtils.getString(R.string.setting_load_last_opened_board_upon_app_start_title),
-      checked = ChanSettings.loadLastOpenedBoardUponAppStart.get()
+      checked = kurobaSettings.application.loadLastOpenedBoardUponAppStart.read()
     )
 
     drawerOptions += CheckableFloatingListMenuItem(
       key = ACTION_RESTORE_LAST_VISITED_THREAD,
       name = AppModuleAndroidUtils.getString(R.string.setting_load_last_opened_thread_upon_app_start_title),
-      checked = ChanSettings.loadLastOpenedThreadUponAppStart.get()
+      checked = kurobaSettings.application.loadLastOpenedThreadUponAppStart.read()
     )
 
     drawerOptions += FloatingListMenuItem(
@@ -957,68 +967,75 @@ class MainController(
       name = AppModuleAndroidUtils.getString(R.string.drawer_controller_clear_nav_history)
     )
 
-    val floatingListMenuController = FloatingListMenuController(
-      context = context,
-      constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
-      items = drawerOptions,
-      itemClickListener = { item ->
-        controllerScope.launch {
-          when (item.key) {
-            ACTION_GRID_MODE -> {
-              val drawerGridMode = ChanSettings.drawerGridMode.toggle()
-              kurobaDrawerState.drawerGridMode.value = drawerGridMode
-            }
+    val clickedItem = suspendCancellableCoroutine { continuation ->
+      val floatingListMenuController = FloatingListMenuController(
+        context = context,
+        constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
+        items = drawerOptions,
+        itemClickListener = { item ->
+          continuation.resumeValueSafe(item)
+        },
+        menuDismissListener = { continuation.resumeValueSafe(null) }
+      )
 
-            ACTION_MOVE_LAST_ACCESSED_THREAD_TO_TOP -> {
-              ChanSettings.drawerMoveLastAccessedThreadToTop.toggle()
-            }
+      presentController(floatingListMenuController)
+    }
 
-            ACTION_SHOW_BOOKMARKS -> {
-              mainControllerViewModel.deleteBookmarkedNavHistoryElements()
-            }
+    if (clickedItem == null) {
+      return
+    }
 
-            ACTION_SHOW_NAV_HISTORY -> {
-              ChanSettings.drawerShowNavigationHistory.toggle()
-              mainControllerViewModel.reloadNavigationHistory()
-            }
-
-            ACTION_SHOW_DELETE_SHORTCUT -> {
-              kurobaDrawerState.updateDeleteButtonShortcut(ChanSettings.drawerShowDeleteButtonShortcut.toggle())
-            }
-
-            ACTION_DELETE_BOOKMARK_WHEN_DELETING_NAV_HISTORY -> {
-              ChanSettings.drawerDeleteBookmarksWhenDeletingNavHistory.toggle()
-            }
-
-            ACTION_DELETE_NAV_HISTORY_WHEN_BOOKMARK_DELETED -> {
-              ChanSettings.drawerDeleteNavHistoryWhenBookmarkDeleted.toggle()
-            }
-
-            ACTION_RESTORE_LAST_VISITED_CATALOG -> {
-              ChanSettings.loadLastOpenedBoardUponAppStart.toggle()
-            }
-
-            ACTION_RESTORE_LAST_VISITED_THREAD -> {
-              ChanSettings.loadLastOpenedThreadUponAppStart.toggle()
-            }
-
-            ACTION_CLEAR_NAV_HISTORY -> {
-              dialogFactory.createSimpleConfirmationDialog(
-                context = context,
-                titleTextId = R.string.drawer_controller_clear_nav_history_dialog_title,
-                negativeButtonText = AppModuleAndroidUtils.getString(R.string.do_not),
-                positiveButtonText = AppModuleAndroidUtils.getString(R.string.clear),
-                onPositiveButtonClickListener = {
-                  controllerScope.launch { historyNavigationManager.clear() }
-                }
-              )
-            }
-          }
-        }
+    when (clickedItem.key) {
+      ACTION_GRID_MODE -> {
+        val drawerGridMode = kurobaSettings.application.drawerGridMode.toggle()
+        kurobaDrawerState.drawerGridMode.value = drawerGridMode
       }
-    )
 
-    presentController(floatingListMenuController)
+      ACTION_MOVE_LAST_ACCESSED_THREAD_TO_TOP -> {
+        kurobaSettings.application.drawerMoveLastAccessedThreadToTop.toggle()
+      }
+
+      ACTION_SHOW_BOOKMARKS -> {
+        mainControllerViewModel.deleteBookmarkedNavHistoryElements()
+      }
+
+      ACTION_SHOW_NAV_HISTORY -> {
+        kurobaSettings.application.drawerShowNavigationHistory.toggle()
+        mainControllerViewModel.reloadNavigationHistory()
+      }
+
+      ACTION_SHOW_DELETE_SHORTCUT -> {
+        kurobaDrawerState.updateDeleteButtonShortcut(kurobaSettings.application.drawerShowDeleteButtonShortcut.toggle())
+      }
+
+      ACTION_DELETE_BOOKMARK_WHEN_DELETING_NAV_HISTORY -> {
+        kurobaSettings.application.drawerDeleteBookmarksWhenDeletingNavHistory.toggle()
+      }
+
+      ACTION_DELETE_NAV_HISTORY_WHEN_BOOKMARK_DELETED -> {
+        kurobaSettings.application.drawerDeleteNavHistoryWhenBookmarkDeleted.toggle()
+      }
+
+      ACTION_RESTORE_LAST_VISITED_CATALOG -> {
+        kurobaSettings.application.loadLastOpenedBoardUponAppStart.toggle()
+      }
+
+      ACTION_RESTORE_LAST_VISITED_THREAD -> {
+        kurobaSettings.application.loadLastOpenedThreadUponAppStart.toggle()
+      }
+
+      ACTION_CLEAR_NAV_HISTORY -> {
+        dialogFactory.createSimpleConfirmationDialog(
+          context = context,
+          titleTextId = R.string.drawer_controller_clear_nav_history_dialog_title,
+          negativeButtonText = AppModuleAndroidUtils.getString(R.string.do_not),
+          positiveButtonText = AppModuleAndroidUtils.getString(R.string.clear),
+          onPositiveButtonClickListener = {
+            controllerScope.launch { historyNavigationManager.clear() }
+          }
+        )
+      }
+    }
   }
 
   private fun restartTheAppAfterMigration() {
@@ -1047,7 +1064,8 @@ class MainController(
     dialogFactory.createSimpleInformationDialog(
       context = context,
       titleText = "Application restart is required.",
-      descriptionText = "Application's internal data has been migrated so now the application needs to be restarted to ensure there are no inconsistencies.\n\n${changelog}",
+      descriptionText = "Application's internal data has been migrated so now the application needs to be " +
+        "restarted to ensure there are no inconsistencies.\n\n${changelog}",
       cancelable = false,
       checkAppVisibility = true,
       positiveButtonTextId = com.github.k1rakishou.chan.R.string.restart_the_app,
