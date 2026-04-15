@@ -98,7 +98,6 @@ import com.github.k1rakishou.chan.ui.controller.BrowseController
 import com.github.k1rakishou.chan.ui.controller.CaptchaContainerController
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.LicensesController
-import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.controller.LogsController
 import com.github.k1rakishou.chan.ui.controller.OpenUrlInWebViewController
 import com.github.k1rakishou.chan.ui.controller.PostLinksController
@@ -220,7 +219,6 @@ interface ActivityComponent : ActivityDependencies {
   fun inject(appSettingsController: AppSettingsController)
   fun inject(reportIssueController: ReportIssueController)
   fun inject(floatingListMenuController: FloatingListMenuController)
-  fun inject(loadingViewController: LoadingViewController)
   fun inject(postLinksController: PostLinksController)
   fun inject(selectSiteForSearchController: SelectSiteForSearchController)
   fun inject(selectBoardForSearchController: SelectBoardForSearchController)

@@ -11,7 +11,8 @@ import com.github.k1rakishou.chan.core.repository.ImportExportRepository
 import com.github.k1rakishou.chan.core.site.loader.ClientException
 import com.github.k1rakishou.chan.features.download.thread.ThreadDownloadingDelegate
 import com.github.k1rakishou.chan.features.settings.screen.SettingActions
-import com.github.k1rakishou.chan.ui.controller.LoadingViewController
+import com.github.k1rakishou.chan.ui.controller.KurobaProgressDialogController
+import com.github.k1rakishou.chan.ui.helper.AppResources
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.common.ModularResult
@@ -31,6 +32,7 @@ import org.joda.time.format.ISODateTimeFormat
 
 class ImportExportSettingsDelegate(
   private val coroutineScope: CoroutineScope,
+  private val appResources: AppResources,
   private val appRestarter: AppRestarter,
   private val fileChooser: FileChooser,
   private val fileManager: FileManager,
@@ -107,13 +109,20 @@ class ImportExportSettingsDelegate(
       context = context,
       onOptionsSelected = { exportBackupOptions ->
         coroutineScope.launch {
-          val loadingViewController = LoadingViewController(context, true)
+          val progressDialogController = KurobaProgressDialogController(
+            context = context,
+            params = KurobaProgressDialogController.Params.create(
+              appResources = appResources,
+              intermediate = true
+            )
+          )
+
           val result = try {
-            settingActions.presentController(loadingViewController)
+            settingActions.presentController(progressDialogController)
 
             importExportRepository.exportTo(externalFile, exportBackupOptions)
           } finally {
-            loadingViewController.stopPresenting()
+            progressDialogController.stopPresenting()
           }
 
           when (result) {
@@ -150,13 +159,20 @@ class ImportExportSettingsDelegate(
     }
 
     coroutineScope.launch {
-      val loadingViewController = LoadingViewController(context, true)
+      val progressDialogController = KurobaProgressDialogController(
+        context = context,
+        params = KurobaProgressDialogController.Params.create(
+          appResources = appResources,
+          intermediate = true
+        )
+      )
+
       val result = try {
-        settingActions.presentController(loadingViewController)
+        settingActions.presentController(progressDialogController)
 
         importExportRepository.importFrom(externalFile)
       } finally {
-        loadingViewController.stopPresenting()
+        progressDialogController.stopPresenting()
       }
 
       when (result) {

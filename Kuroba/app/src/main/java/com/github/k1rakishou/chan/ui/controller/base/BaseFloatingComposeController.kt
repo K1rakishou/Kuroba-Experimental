@@ -43,7 +43,7 @@ abstract class BaseFloatingComposeController(
   private var presenting = true
 
   open val contentAlignment: Alignment = Alignment.Center
-  open val closableByClickingOutside = true
+  open val closableByClickingOutside = mutableStateOf(true)
   open val currentlyInvisible = mutableStateOf(false)
   final override val isFloating: Boolean = true
 
@@ -73,7 +73,7 @@ abstract class BaseFloatingComposeController(
               .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
-                onClick = { pop() }
+                onClick = { onOutsideOfDialogClicked() }
               )
           }
 
@@ -149,7 +149,7 @@ abstract class BaseFloatingComposeController(
   }
 
   protected open fun onOutsideOfDialogClicked() {
-    if (closableByClickingOutside) {
+    if (closableByClickingOutside.value) {
       pop()
     }
   }

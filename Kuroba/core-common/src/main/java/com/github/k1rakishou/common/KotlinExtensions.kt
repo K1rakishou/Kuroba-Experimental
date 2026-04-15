@@ -22,6 +22,8 @@ import android.widget.TextView
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.children
 import com.github.k1rakishou.common.ModularResult.Companion.Try
+import com.github.k1rakishou.common.network.ProgressResponseBody
+import com.github.k1rakishou.common.network.asProgressResponseBody
 import com.github.k1rakishou.core_logger.Logger
 import com.google.gson.Gson
 import com.google.gson.stream.JsonReader
@@ -40,6 +42,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
@@ -60,7 +63,6 @@ import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import java.io.File
-import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.io.InputStreamReader
@@ -112,46 +114,37 @@ suspend fun OkHttpClient.suspendCall(request: Request): Response {
 suspend fun OkHttpClient.downloadIntoFile(
   request: Request,
   outputFile: File,
-  validateResponse: (suspend (Response) -> Unit)? = null,
-  onProgress: ((Float) -> Unit)? = null
+  onProgress: ((ProgressResponseBody.ProgressEvent) -> Unit)? = null
 ): ModularResult<Unit> {
   return ModularResult.Try {
     withContext(Dispatchers.IO) {
-      withContext(Dispatchers.Main) { onProgress?.invoke(0f) }
-
       val response = suspendCall(request)
       if (!response.isSuccessful) {
         throw BadStatusResponseException(response.code)
       }
 
-      val body = response.body
-      if (body == null) {
-        throw EmptyBodyResponseException()
-      }
+      val progressResponseBody = response.body.asProgressResponseBody()
 
-      validateResponse?.invoke(response)
-
-      body.byteStream().use { inputStream ->
-        FileOutputStream(outputFile).use { fileOutputStream ->
-          val totalBytes = body.contentLength()
-          val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
-
-          var bytesCopied: Long = 0
-          var bytes = inputStream.read(buffer)
-
-          while (bytes >= 0) {
-            fileOutputStream.write(buffer, 0, bytes)
-            bytesCopied += bytes
-
-            val progress = if (totalBytes > 0) {
-              bytesCopied.toFloat() / totalBytes
-            } else {
-              1f
-            }
-
-            withContext(Dispatchers.Main) { onProgress?.invoke(progress) }
-            bytes = inputStream.read(buffer)
+      coroutineScope {
+        val job = launch(start = CoroutineStart.LAZY) {
+          if (onProgress != null) {
+            progressResponseBody.progressFlow
+              .collect { progressEvent -> onProgress.invoke(progressEvent) }
           }
+        }
+
+        try {
+          if (onProgress != null) {
+            job.start()
+          }
+
+          progressResponseBody.source().inputStream().use { inputStream ->
+            outputFile.outputStream().use { outputStream ->
+              inputStream.copyTo(outputStream)
+            }
+          }
+        } finally {
+          job.cancel()
         }
       }
     }

@@ -2,9 +2,9 @@ package com.github.k1rakishou.chan.core.site.sites.dvach
 
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.http.HttpCall
-import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody
 import com.github.k1rakishou.chan.core.site.http.login.DvachLoginRequest
 import com.github.k1rakishou.chan.core.site.http.login.DvachLoginResponse
+import com.github.k1rakishou.common.network.ProgressRequestBody
 import com.github.k1rakishou.core_logger.Logger
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi

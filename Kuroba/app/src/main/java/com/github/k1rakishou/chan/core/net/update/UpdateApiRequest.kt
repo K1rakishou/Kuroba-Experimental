@@ -1,8 +1,6 @@
 package com.github.k1rakishou.chan.core.net.update
 
 import android.os.Build
-import android.text.Spanned
-import androidx.core.text.toSpanned
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.net.update.UpdateApiRequest.ReleaseUpdateApiResponse
@@ -50,7 +48,7 @@ class UpdateApiRequest(
   
   private fun readBody(reader: JsonReader, responseRelease: ReleaseUpdateApiResponse) {
     val updateComment = reader.nextString()
-    responseRelease.body = "Changelog:\n${updateComment}".trimIndent().toSpanned()
+    responseRelease.body = "Changelog:\n${updateComment}".trimIndent()
   }
   
   private fun readApkUrl(reader: JsonReader, responseRelease: ReleaseUpdateApiResponse) {
@@ -136,7 +134,7 @@ class UpdateApiRequest(
     var versionCodeString: String? = null,
     var updateTitle: String = "",
     var apkURL: HttpUrl? = null,
-    var body: Spanned? = null
+    var body: String? = null
   ) {
 
     override fun toString(): String {

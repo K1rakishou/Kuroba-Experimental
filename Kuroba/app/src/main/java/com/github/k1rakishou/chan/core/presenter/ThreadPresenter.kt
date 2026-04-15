@@ -54,9 +54,10 @@ import com.github.k1rakishou.chan.ui.cell.PostCellData
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
-import com.github.k1rakishou.chan.ui.controller.LoadingViewController
+import com.github.k1rakishou.chan.ui.controller.KurobaProgressDialogController
 import com.github.k1rakishou.chan.ui.controller.PostOmittedImagesController
 import com.github.k1rakishou.chan.ui.controller.base.Controller
+import com.github.k1rakishou.chan.ui.helper.AppResources
 import com.github.k1rakishou.chan.ui.helper.PostLinkableClickHelper
 import com.github.k1rakishou.chan.ui.helper.PostPopupHelper
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout
@@ -124,6 +125,7 @@ import kotlin.time.measureTimedValue
 
 class ThreadPresenter @Inject constructor(
   private val kurobaSettings: KurobaSettings,
+  private val appResources: AppResources,
   private val bookmarksManagerLazy: Lazy<BookmarksManager>,
   private val pageRequestManagerLazy: Lazy<PageRequestManager>,
   private val siteManagerLazy: Lazy<SiteManager>,
@@ -642,18 +644,23 @@ class ThreadPresenter @Inject constructor(
     chanThreadLoadingState = ChanThreadLoadingState.Loading
 
     val alreadyPresenting = threadPresenterCallback
-      ?.isAlreadyPresentingController { controller -> controller is LoadingViewController } == true
+      ?.isAlreadyPresentingController { controller -> controller is KurobaProgressDialogController } == true
 
     val loadingController = if (!alreadyPresenting) {
-      val loadingController = LoadingViewController(context, false)
-      loadingController.enableCancellation {
+      val progressDialog = KurobaProgressDialogController(
+        context = context,
+        params = KurobaProgressDialogController.Params.create(
+          appResources = appResources,
+          intermediate = true
+        )
+      ).withCancellation {
         currentFullLoadThreadJob?.cancel()
         currentFullLoadThreadJob = null
       }
 
-      threadPresenterCallback?.presentController(loadingController, true)
+      threadPresenterCallback?.presentController(progressDialog, true)
 
-      loadingController
+      progressDialog
     } else {
       null
     }

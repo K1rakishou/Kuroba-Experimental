@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.core.site.http
+package com.github.k1rakishou.common.network
 
 import okhttp3.MediaType
 import okhttp3.RequestBody
@@ -70,7 +70,7 @@ open class ProgressRequestBody : RequestBody {
         try {
           // so we can know that the uploading has just started
           listener.onRequestProgress(fileIndex, totalFiles, 0)
-        } catch (cancellationException: CancellationException) {
+        } catch (ignored: CancellationException) {
           throw IOException("Canceled")
         }
       }
@@ -87,7 +87,7 @@ open class ProgressRequestBody : RequestBody {
           // CancellationException was found to be thrown somewhere deep inside the listener.
           try {
             listener.onRequestProgress(fileIndex, totalFiles, percent)
-          } catch (cancellationException: CancellationException) {
+          } catch (ignored: CancellationException) {
             throw IOException("Canceled")
           }
         }

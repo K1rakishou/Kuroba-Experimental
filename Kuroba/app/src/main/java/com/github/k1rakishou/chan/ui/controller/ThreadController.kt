@@ -200,6 +200,7 @@ abstract class ThreadController(
     showPostsInExternalThreadHelper = ShowPostsInExternalThreadHelper(
       context = context,
       scope = controllerScope,
+      appResources = appResources,
       postPopupHelper = threadLayout.popupHelper,
       chanThreadManagerLazy = chanThreadManagerLazy,
       presentControllerFunc = { controller -> presentController(controller) },

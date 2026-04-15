@@ -17,7 +17,7 @@ import com.github.k1rakishou.chan.features.toolbar.BackArrowMenuItem
 import com.github.k1rakishou.chan.features.toolbar.KurobaToolbarState
 import com.github.k1rakishou.chan.features.toolbar.ToolbarMiddleContent
 import com.github.k1rakishou.chan.features.toolbar.ToolbarText
-import com.github.k1rakishou.chan.ui.controller.LoadingViewController
+import com.github.k1rakishou.chan.ui.controller.KurobaProgressDialogController
 import com.github.k1rakishou.chan.ui.controller.base.Controller
 import com.github.k1rakishou.chan.ui.controller.base.ControllerKey
 import com.github.k1rakishou.chan.ui.controller.base.DeprecatedNavigationFlags
@@ -53,7 +53,6 @@ class ThemeGalleryController(
   }
 
   private lateinit var themesList: ColorizableInsetAwareEpoxyRecyclerView
-  private lateinit var loadingViewController: LoadingViewController
 
   override fun injectActivityDependencies(component: ActivityComponent) {
     component.inject(this)
@@ -91,15 +90,23 @@ class ThemeGalleryController(
     themesList.adapter = adapter
     themesList.isVerticalScrollBarEnabled = true
 
-    loadingViewController = LoadingViewController(context, true, getString(R.string.theme_gallery_screen_loading_themes))
-    presentController(loadingViewController)
+    val progressDialogController = KurobaProgressDialogController(
+      context = context,
+      params = KurobaProgressDialogController.Params.create(
+        appResources = appResources,
+        title = appResources.string(R.string.theme_gallery_screen_loading_themes),
+        intermediate = true
+      )
+    )
+
+    presentController(progressDialogController)
 
     themesList.doOnPreDraw {
       controllerScope.launch {
         val themes = themeJsonFilesRepository.download()
           .filter { chanTheme -> chanTheme.isLightTheme == lightThemes }
 
-        loadingViewController.stopPresenting()
+        progressDialogController.stopPresenting()
 
         if (themes.isEmpty()) {
           showToast(R.string.theme_gallery_screen_loading_themes_failed, Toast.LENGTH_LONG)

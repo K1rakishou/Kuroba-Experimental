@@ -28,6 +28,7 @@ class ImportExportSettingsScreenBuilder(
   private val importExportSettingsDelegate by lazy {
     ImportExportSettingsDelegate(
       coroutineScope = coroutineScope,
+      appResources = appResources,
       appRestarter = appRestarter,
       fileChooser = fileChooser,
       fileManager = fileManager,

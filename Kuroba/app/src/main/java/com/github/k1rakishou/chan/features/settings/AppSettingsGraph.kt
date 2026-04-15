@@ -294,16 +294,33 @@ class AppSettingsGraph(
   }
 
   private suspend fun updateBadgesFromNotifications() {
+    fun dismiss(key: KurobaSettingKey, filterFunc: (SettingUiElement.Badge) -> Boolean) {
+      val badges = _settingBadges[key.raw]
+        ?: emptyList()
+
+      _settingBadges[key.raw] = badges.filter(filterFunc)
+    }
+
+    fun show(key: KurobaSettingKey, newBadge: SettingUiElement.Badge) {
+      val badges = _settingBadges[key.raw]
+        ?: emptyList()
+
+      _settingBadges[key.raw] = badges + newBadge
+    }
+
     settingsNotificationManager.dismissedNotifications.forEach { settingNotification ->
       when (settingNotification) {
         SettingNotification.ApkUpdate -> {
-          val badges = _settingBadges[KurobaSettingKey.Application.AppUpdate.raw]
-            ?: emptyList()
-
-          val updatedBadges = badges
-            .filter { badge -> badge !is SettingUiElement.Badge.NewAppUpdate }
-
-          _settingBadges[KurobaSettingKey.Application.AppUpdate.raw] = updatedBadges
+          dismiss(
+            key = KurobaSettingKey.Application.AppUpdate,
+            filterFunc = { badge -> badge !is SettingUiElement.Badge.NewAppUpdate }
+          )
+        }
+        SettingNotification.MpvLibsUpdate -> {
+          dismiss(
+            key = KurobaSettingKey.Mpv.MpvLibsUpdate,
+            filterFunc = { badge -> badge !is SettingUiElement.Badge.NewAppUpdate }
+          )
         }
       }
     }
@@ -311,15 +328,21 @@ class AppSettingsGraph(
     settingsNotificationManager.activeNotifications.forEach { settingNotification ->
       when (settingNotification) {
         SettingNotification.ApkUpdate -> {
-          val badges = _settingBadges[KurobaSettingKey.Application.AppUpdate.raw]
-            ?: emptyList()
-
-          val updatedBadges = badges + SettingUiElement.Badge.NewAppUpdate(
-            text = appResources.string(R.string.update_available),
-            description = kurobaSettings.internal.apkUpdateInfoJson.read().versionName
+          show(
+            key = KurobaSettingKey.Application.AppUpdate,
+            newBadge = SettingUiElement.Badge.NewAppUpdate(
+              text = appResources.string(R.string.update_available),
+              description = kurobaSettings.internal.apkUpdateInfoJson.read().versionName
+            )
           )
-
-          _settingBadges[KurobaSettingKey.Application.AppUpdate.raw] = updatedBadges
+        }
+        SettingNotification.MpvLibsUpdate -> {
+          show(
+            key = KurobaSettingKey.Mpv.MpvLibsUpdate,
+            newBadge = SettingUiElement.Badge.NewAppUpdate(
+              text = appResources.string(R.string.update_available)
+            )
+          )
         }
       }
     }

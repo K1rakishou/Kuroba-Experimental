@@ -5,7 +5,7 @@ import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.core.manager.UpdateManager
+import com.github.k1rakishou.chan.core.manager.update.KurobaAppUpdateManager
 import com.github.k1rakishou.chan.features.filters.FiltersController
 import com.github.k1rakishou.chan.features.report.bugs.ReportIssueController
 import com.github.k1rakishou.chan.features.settings.SettingsScreen
@@ -25,7 +25,7 @@ class MainSettingsScreenBuilder(
   private val appResources: AppResources,
   private val chanFilterManager: ChanFilterManager,
   private val siteManager: SiteManager,
-  private val updateManager: UpdateManager
+  private val kurobaAppUpdateManager: KurobaAppUpdateManager
 ) : SettingsScreenBuilder {
 
   override suspend fun build(context: Context, settingActions: SettingActions, settingsScreen: SettingsScreen) {
@@ -189,7 +189,7 @@ class MainSettingsScreenBuilder(
                 settingActions.showToast(appResources.string(R.string.updater_is_disabled_for_fdroid_builds))
               }
               else -> {
-                updateManager.manualUpdateCheck()
+                kurobaAppUpdateManager.manualUpdateCheck()
               }
             }
           }

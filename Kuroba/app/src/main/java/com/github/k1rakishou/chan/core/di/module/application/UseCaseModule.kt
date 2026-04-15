@@ -37,10 +37,10 @@ import com.github.k1rakishou.chan.core.usecase.GetThreadBookmarkGroupIdsUseCase
 import com.github.k1rakishou.chan.core.usecase.GlobalSearchUseCase
 import com.github.k1rakishou.chan.core.usecase.ImportBackupFileUseCase
 import com.github.k1rakishou.chan.core.usecase.ImportFiltersUseCase
-import com.github.k1rakishou.chan.core.usecase.InstallMpvNativeLibrariesFromGithubUseCase
 import com.github.k1rakishou.chan.core.usecase.InstallMpvNativeLibrariesFromLocalDirectoryUseCase
 import com.github.k1rakishou.chan.core.usecase.LoadBoardFlagsUseCase
 import com.github.k1rakishou.chan.core.usecase.LoadChan4CaptchaUseCase
+import com.github.k1rakishou.chan.core.usecase.MpvNativeLibrariesUseCase
 import com.github.k1rakishou.chan.core.usecase.ParsePostRepliesUseCase
 import com.github.k1rakishou.chan.core.usecase.SearxImageSearchUseCase
 import com.github.k1rakishou.chan.core.usecase.ThreadDataPreloader
@@ -413,9 +413,9 @@ class UseCaseModule {
     appConstants: AppConstants,
     moshi: Moshi,
     proxiedOkHttpClient: ProxiedOkHttpClient
-  ): InstallMpvNativeLibrariesFromGithubUseCase {
+  ): MpvNativeLibrariesUseCase {
     deps("InstallMpvNativeLibrariesFromGithubUseCase")
-    return InstallMpvNativeLibrariesFromGithubUseCase(
+    return MpvNativeLibrariesUseCase(
       applicationContext,
       appConstants,
       moshi,

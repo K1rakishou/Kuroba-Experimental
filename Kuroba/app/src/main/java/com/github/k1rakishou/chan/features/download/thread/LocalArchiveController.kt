@@ -77,7 +77,7 @@ import com.github.k1rakishou.chan.ui.compose.providers.ComposeEntrypoint
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.providers.LocalContentPaddings
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
-import com.github.k1rakishou.chan.ui.controller.LoadingViewController
+import com.github.k1rakishou.chan.ui.controller.KurobaProgressDialogController
 import com.github.k1rakishou.chan.ui.controller.base.Controller
 import com.github.k1rakishou.chan.ui.controller.base.DeprecatedNavigationFlags
 import com.github.k1rakishou.chan.ui.view.floating_menu.CheckableFloatingListMenuItem
@@ -772,7 +772,10 @@ class LocalArchiveController(
       }
 
       override fun onResult(uri: Uri) {
-        val loadingViewController = LoadingViewController(context, false)
+        val progressDialogController = KurobaProgressDialogController(
+          context = context,
+          params = KurobaProgressDialogController.Params.create(appResources)
+        )
 
         val job = controllerScope.launch(start = CoroutineStart.LAZY) {
           try {
@@ -780,25 +783,25 @@ class LocalArchiveController(
               outputDirUri = uri,
               threadDescriptors = threadDescriptors,
               onUpdate = { exported, total ->
-                val text = context.resources.getString(R.string.controller_local_archive_exported_format, exported, total)
-                loadingViewController.updateWithText(text)
+                val text = appResources.string(R.string.controller_local_archive_exported_format, exported, total)
+                progressDialogController.updateWithText(text)
               }
             )
               .toastOnError(message = { error -> "Failed to export. Error: ${error.errorMessageOrClassName()}" })
               .toastOnSuccess(message = { "Successfully exported" })
               .ignore()
           } finally {
-            loadingViewController.stopPresenting()
+            progressDialogController.stopPresenting()
           }
         }
 
-        loadingViewController.enableCancellation {
+        progressDialogController.withCancellation {
           if (job.isActive) {
             job.cancel()
           }
         }
 
-        presentController(loadingViewController)
+        presentController(progressDialogController)
         job.start()
       }
     })
@@ -815,7 +818,10 @@ class LocalArchiveController(
       }
 
       override fun onResult(uri: Uri) {
-        val loadingViewController = LoadingViewController(context, false)
+        val progressDialogController = KurobaProgressDialogController(
+          context = context,
+          params = KurobaProgressDialogController.Params.create(appResources)
+        )
 
         val job = controllerScope.launch(start = CoroutineStart.LAZY) {
           try {
@@ -823,25 +829,25 @@ class LocalArchiveController(
               outputDirUri = uri,
               threadDescriptors = threadDescriptors,
               onUpdate = { exported, total ->
-                val text = context.resources.getString(R.string.controller_local_archive_exported_format, exported, total)
-                loadingViewController.updateWithText(text)
+                val text = appResources.string(R.string.controller_local_archive_exported_format, exported, total)
+                progressDialogController.updateWithText(text)
               }
             )
               .toastOnError(message = { error -> "Failed to export. Error: ${error.errorMessageOrClassName()}" })
               .toastOnSuccess(message = { "Successfully exported" })
               .ignore()
           } finally {
-            loadingViewController.stopPresenting()
+            progressDialogController.stopPresenting()
           }
         }
 
-        loadingViewController.enableCancellation {
+        progressDialogController.withCancellation {
           if (job.isActive) {
             job.cancel()
           }
         }
 
-        presentController(loadingViewController)
+        presentController(progressDialogController)
         job.start()
       }
     })
@@ -854,7 +860,10 @@ class LocalArchiveController(
       }
 
       override fun onResult(uri: Uri) {
-        val loadingViewController = LoadingViewController(context, false)
+        val progressDialogController = KurobaProgressDialogController(
+          context = context,
+          params = KurobaProgressDialogController.Params.create(appResources)
+        )
 
         val job = controllerScope.launch(start = CoroutineStart.LAZY) {
           try {
@@ -862,25 +871,25 @@ class LocalArchiveController(
               outputDirectoryUri = uri,
               threadDescriptors = threadDescriptors,
               onUpdate = { exported, total ->
-                val text = context.resources.getString(R.string.controller_local_archive_exported_format, exported, total)
-                loadingViewController.updateWithText(text)
+                val text = appResources.string(R.string.controller_local_archive_exported_format, exported, total)
+                progressDialogController.updateWithText(text)
               }
             )
               .toastOnError(message = { error -> "Failed to export. Error: ${error.errorMessageOrClassName()}" })
               .toastOnSuccess(message = { "Successfully exported" })
               .ignore()
           } finally {
-            loadingViewController.stopPresenting()
+            progressDialogController.stopPresenting()
           }
         }
 
-        loadingViewController.enableCancellation {
+        progressDialogController.withCancellation {
           if (job.isActive) {
             job.cancel()
           }
         }
 
-        presentController(loadingViewController)
+        presentController(progressDialogController)
         job.start()
       }
     })

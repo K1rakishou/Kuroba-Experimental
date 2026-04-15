@@ -1,7 +1,7 @@
 package com.github.k1rakishou.chan.core.site.http
 
 import com.github.k1rakishou.chan.core.site.Site
-import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody.ProgressRequestListener
+import com.github.k1rakishou.common.network.ProgressRequestBody.ProgressRequestListener
 import okhttp3.Request
 import okhttp3.Response
 import java.io.IOException

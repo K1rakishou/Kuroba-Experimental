@@ -40,7 +40,7 @@ import com.github.k1rakishou.chan.ui.cell.PreviousThreadScrollPositionData
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
 import com.github.k1rakishou.chan.ui.compose.lazylist.ScrollbarView
 import com.github.k1rakishou.chan.ui.controller.CaptchaContainerController
-import com.github.k1rakishou.chan.ui.controller.LoadingViewController
+import com.github.k1rakishou.chan.ui.controller.KurobaProgressDialogController
 import com.github.k1rakishou.chan.ui.controller.ThreadControllerType
 import com.github.k1rakishou.chan.ui.controller.base.BaseFloatingController
 import com.github.k1rakishou.chan.ui.controller.base.Controller
@@ -349,12 +349,20 @@ class ThreadListLayout @JvmOverloads constructor(
   }
 
   override fun showProgressDialog(title: String) {
-    val loadingViewController = LoadingViewController(context, true, title)
-    presentController(loadingViewController)
+    val progressDialogController = KurobaProgressDialogController(
+      context = context,
+      params = KurobaProgressDialogController.Params.create(
+        appResources = appResources,
+        title = title,
+        intermediate = true
+      )
+    )
+
+    presentController(progressDialogController)
   }
 
   override fun hideProgressDialog() {
-    threadListLayoutCallback?.unpresentController { controller -> controller is LoadingViewController }
+    threadListLayoutCallback?.unpresentController { controller -> controller is KurobaProgressDialogController }
   }
 
   override fun presentController(controller: BaseFloatingController) {

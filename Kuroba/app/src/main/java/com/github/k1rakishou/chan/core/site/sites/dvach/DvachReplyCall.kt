@@ -4,8 +4,6 @@ import android.text.TextUtils
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.core.site.common.CommonReplyHttpCall
-import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody
-import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody.ProgressRequestListener
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
 import com.github.k1rakishou.chan.features.posting.LastReplyRepository
 import com.github.k1rakishou.chan.features.reply.data.Reply
@@ -14,6 +12,8 @@ import com.github.k1rakishou.chan.features.reply.data.ReplyFileMeta
 import com.github.k1rakishou.chan.ui.captcha.CaptchaSolution
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.network.ProgressRequestBody
+import com.github.k1rakishou.common.network.ProgressRequestBody.ProgressRequestListener
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor

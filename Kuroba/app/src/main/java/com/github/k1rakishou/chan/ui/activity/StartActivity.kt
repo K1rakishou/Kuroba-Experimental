@@ -25,7 +25,8 @@ import com.github.k1rakishou.chan.core.manager.ApplicationCrashNotifier
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.HapticFeedbackManager
-import com.github.k1rakishou.chan.core.manager.UpdateManager
+import com.github.k1rakishou.chan.core.manager.update.KurobaAppUpdateManager
+import com.github.k1rakishou.chan.core.manager.update.MpvLibsUpdateManager
 import com.github.k1rakishou.chan.features.drawer.MainController
 import com.github.k1rakishou.chan.ui.controller.BrowseController
 import com.github.k1rakishou.chan.ui.controller.ThreadControllerType
@@ -88,7 +89,9 @@ class StartActivity :
   @Inject
   lateinit var chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>
   @Inject
-  lateinit var updateManager: Lazy<UpdateManager>
+  lateinit var kurobaAppUpdateManager: Lazy<KurobaAppUpdateManager>
+  @Inject
+  lateinit var mpvLibsUpdateManager: Lazy<MpvLibsUpdateManager>
   @Inject
   lateinit var applicationCrashNotifier: ApplicationCrashNotifier
   @Inject
@@ -163,7 +166,10 @@ class StartActivity :
     )
 
     lifecycleScope.launch {
-      updateManager.get().autoUpdateCheck()
+      kurobaAppUpdateManager.get().autoUpdateCheck()
+    }
+    lifecycleScope.launch {
+      mpvLibsUpdateManager.get().check(forced = false)
     }
     lifecycleScope.launch {
       startActivityStartupHandlerHelper.setupFromStateOrFreshLaunch(intent, savedInstanceState)
@@ -193,8 +199,8 @@ class StartActivity :
       appRestarter.detachActivity(this)
     }
 
-    if (::updateManager.isInitialized) {
-      updateManager.get().onDestroy()
+    if (::kurobaAppUpdateManager.isInitialized) {
+      kurobaAppUpdateManager.get().onDestroy()
     }
 
     if (::imagePickHelper.isInitialized) {

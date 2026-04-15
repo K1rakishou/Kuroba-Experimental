@@ -39,7 +39,7 @@ import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.ComposeEntrypoint
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
-import com.github.k1rakishou.chan.ui.controller.LoadingViewController
+import com.github.k1rakishou.chan.ui.controller.KurobaProgressDialogController
 import com.github.k1rakishou.chan.ui.controller.base.Controller
 import com.github.k1rakishou.chan.ui.controller.base.DeprecatedNavigationFlags
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -303,8 +303,14 @@ class ReportIssueController(
       null
     }
 
-    val loadingController = LoadingViewController(context, true)
-    presentController(loadingController)
+    val progressDialogController = KurobaProgressDialogController(
+      context = context,
+      params = KurobaProgressDialogController.Params.create(
+        appResources = appResources,
+        intermediate = true
+      )
+    )
+    presentController(progressDialogController)
 
     reportManager.sendComment(
       issueNumber = issueNumber,
@@ -312,7 +318,7 @@ class ReportIssueController(
       logs = logs,
       onReportSendResult = { result ->
         BackgroundUtils.ensureMainThread()
-        loadingController.stopPresenting()
+        progressDialogController.stopPresenting()
 
         when (result) {
           is ModularResult.Value -> {
@@ -358,8 +364,14 @@ class ReportIssueController(
       return
     }
 
-    val loadingController = LoadingViewController(context, true)
-    presentController(loadingController)
+    val progressDialogController = KurobaProgressDialogController(
+      context = context,
+      params = KurobaProgressDialogController.Params.create(
+        appResources = appResources,
+        intermediate = true
+      )
+    )
+    presentController(progressDialogController)
 
     reportManager.sendReport(
       title = title,
@@ -367,7 +379,7 @@ class ReportIssueController(
       logs = logs,
       onReportSendResult = { result ->
         BackgroundUtils.ensureMainThread()
-        loadingController.stopPresenting()
+        progressDialogController.stopPresenting()
 
         when (result) {
           is ModularResult.Value -> {

@@ -170,6 +170,8 @@ sealed class KurobaSettingKey(val raw: String) {
     data object HardwareDecoding : Mpv("HardwareDecoding")
     data object VideoFastCode : Mpv("VideoFastCode")
     data object GpuNextVO : Mpv("GpuNextVO")
+    data object LastMpvLibsUpdateCheckTime : Mpv("LastMpvLibsUpdateCheckTime")
+    data object MpvLibsUpdate : Mpv("MpvLibsUpdate")
   }
 
   sealed class Site(siteName: String, key: String) : KurobaSettingKey("${siteName}_${key}") {

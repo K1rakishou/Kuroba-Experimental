@@ -2,9 +2,9 @@ package com.github.k1rakishou.chan.core.site.sites.chan4
 
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.http.HttpCall
-import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody.ProgressRequestListener
 import com.github.k1rakishou.chan.core.site.http.login.Chan4LoginRequest
 import com.github.k1rakishou.chan.core.site.http.login.Chan4LoginResponse
+import com.github.k1rakishou.common.network.ProgressRequestBody.ProgressRequestListener
 import com.github.k1rakishou.core_logger.Logger
 import okhttp3.FormBody
 import okhttp3.Request

@@ -152,7 +152,8 @@ object NotificationConstants {
     private val notificationIdMap = mutableMapOf<String, Int>()
 
     enum class Ids {
-      NewAppVersionAvailable
+      NewAppVersionAvailable,
+      NewMpvListVersionAvailable,
     }
 
     fun notificationId(notificationId: String): Int {

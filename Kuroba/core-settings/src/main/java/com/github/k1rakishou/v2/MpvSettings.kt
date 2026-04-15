@@ -10,4 +10,5 @@ class MpvSettings(
   val hardwareDecoding by lazy { createBooleanSetting(KurobaSettingKey.Mpv.HardwareDecoding, true) }
   val videoFastCode by lazy { createBooleanSetting(KurobaSettingKey.Mpv.VideoFastCode, false) }
   val gpuNextVO by lazy { createBooleanSetting(KurobaSettingKey.Mpv.GpuNextVO, false) }
+  val lastMpvLibsUpdateCheckTime by lazy { createLongSetting(KurobaSettingKey.Mpv.LastMpvLibsUpdateCheckTime, 0L) }
 }

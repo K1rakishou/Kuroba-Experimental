@@ -2,9 +2,9 @@ package com.github.k1rakishou.chan.core.site.sites.dvach
 
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.http.HttpCall
-import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody
 import com.github.k1rakishou.chan.core.site.limitations.PasscodePostingLimitationsInfo
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.network.ProgressRequestBody
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import okhttp3.Request

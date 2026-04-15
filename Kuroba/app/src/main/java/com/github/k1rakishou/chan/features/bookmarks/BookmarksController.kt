@@ -45,7 +45,7 @@ import com.github.k1rakishou.chan.features.toolbar.ToolbarMenuOverflowItem
 import com.github.k1rakishou.chan.features.toolbar.ToolbarMiddleContent
 import com.github.k1rakishou.chan.features.toolbar.ToolbarText
 import com.github.k1rakishou.chan.ui.compose.lazylist.ScrollbarView
-import com.github.k1rakishou.chan.ui.controller.LoadingViewController
+import com.github.k1rakishou.chan.ui.controller.KurobaProgressDialogController
 import com.github.k1rakishou.chan.ui.controller.base.Controller
 import com.github.k1rakishou.chan.ui.controller.base.DeprecatedNavigationFlags
 import com.github.k1rakishou.chan.ui.controller.settings.RangeSettingUpdaterController
@@ -486,10 +486,16 @@ class BookmarksController(
       coroutineScope {
         if (threadDescriptors.size > 32) {
           // So it doesn't appear "stuck"
-          val loadingController = LoadingViewController(context, true)
-          presentController(loadingController)
+          val progressDialogController = KurobaProgressDialogController(
+            context = context,
+            params = KurobaProgressDialogController.Params.create(
+              appResources = appResources,
+              intermediate = true
+            )
+          )
+          presentController(progressDialogController)
 
-          coroutineContext[Job.Key]?.invokeOnCompletion { loadingController.stopPresenting() }
+          coroutineContext[Job.Key]?.invokeOnCompletion { progressDialogController.stopPresenting() }
         }
 
         threadDescriptors.forEach { threadDescriptor ->

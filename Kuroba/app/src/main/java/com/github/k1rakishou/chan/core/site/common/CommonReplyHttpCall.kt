@@ -2,10 +2,10 @@ package com.github.k1rakishou.chan.core.site.common
 
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.http.HttpCall
-import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody.ProgressRequestListener
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
 import com.github.k1rakishou.chan.utils.Generators.generateHttpBoundary
 import com.github.k1rakishou.chan.utils.Generators.generateRandomHexString
+import com.github.k1rakishou.common.network.ProgressRequestBody.ProgressRequestListener
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import okhttp3.MultipartBody
 import okhttp3.Request

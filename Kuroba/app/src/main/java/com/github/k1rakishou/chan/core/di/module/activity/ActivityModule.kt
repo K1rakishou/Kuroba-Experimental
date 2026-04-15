@@ -26,11 +26,12 @@ import com.github.k1rakishou.chan.core.manager.PostHighlightManager
 import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.ThreadFollowHistoryManager
-import com.github.k1rakishou.chan.core.manager.UpdateManager
+import com.github.k1rakishou.chan.core.manager.update.KurobaAppUpdateManager
+import com.github.k1rakishou.chan.core.manager.update.MpvLibsUpdateManager
 import com.github.k1rakishou.chan.core.repository.ImportExportRepository
 import com.github.k1rakishou.chan.core.site.SiteResolver
-import com.github.k1rakishou.chan.core.usecase.InstallMpvNativeLibrariesFromGithubUseCase
 import com.github.k1rakishou.chan.core.usecase.InstallMpvNativeLibrariesFromLocalDirectoryUseCase
+import com.github.k1rakishou.chan.core.usecase.MpvNativeLibrariesUseCase
 import com.github.k1rakishou.chan.features.download.media.ImageSaverV2
 import com.github.k1rakishou.chan.features.download.thread.ThreadDownloadingDelegate
 import com.github.k1rakishou.chan.features.reply.data.PostFormattingButtonsFactory
@@ -56,7 +57,6 @@ import com.github.k1rakishou.chan.ui.helper.AppSettingsUpdateAppRefreshHelper
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.core_logger.Logger.deps
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.FileManager
@@ -76,22 +76,43 @@ class ActivityModule {
   @Provides
   fun provideUpdateManager(
     kurobaSettings: KurobaSettings,
+    appResources: AppResources,
     activity: AppCompatActivity,
     cacheHandler: Lazy<CacheHandler>,
     settingsNotificationManager: SettingsNotificationManager,
     kurobaSystemNotifications: KurobaSystemNotifications,
     proxiedOkHttpClient: Lazy<ProxiedOkHttpClient>,
     dialogFactory: Lazy<DialogFactory>
-  ): UpdateManager {
-    Logger.deps("UpdateManager")
-    return UpdateManager(
-      activity,
-      kurobaSettings,
-      cacheHandler,
-      settingsNotificationManager,
-      kurobaSystemNotifications,
-      proxiedOkHttpClient,
-      dialogFactory
+  ): KurobaAppUpdateManager {
+    Logger.deps("KurobaAppUpdateManager")
+    return KurobaAppUpdateManager(
+      context = activity,
+      kurobaSettings = kurobaSettings,
+      appResources = appResources,
+      settingsNotificationManager = settingsNotificationManager,
+      kurobaSystemNotifications = kurobaSystemNotifications,
+      cacheHandlerLazy = cacheHandler,
+      proxiedOkHttpClientLazy = proxiedOkHttpClient,
+      dialogFactoryLazy = dialogFactory
+    )
+  }
+
+  @PerActivity
+  @Provides
+  fun provideMpvLibsUpdateManager(
+    kurobaSettings: KurobaSettings,
+    appResources: AppResources,
+    settingsNotificationManager: SettingsNotificationManager,
+    kurobaSystemNotifications: KurobaSystemNotifications,
+    mpvNativeLibrariesUseCase: MpvNativeLibrariesUseCase
+  ): MpvLibsUpdateManager {
+    Logger.deps("MpvLibsUpdateManager")
+    return MpvLibsUpdateManager(
+      kurobaSettings = kurobaSettings,
+      appResources = appResources,
+      settingsNotificationManager = settingsNotificationManager,
+      kurobaSystemNotifications = kurobaSystemNotifications,
+      mpvNativeLibrariesUseCase = mpvNativeLibrariesUseCase
     )
   }
 
@@ -214,7 +235,7 @@ class ActivityModule {
     siteManager: SiteManager,
     boardManager: BoardManager,
     compositeCatalogManager: CompositeCatalogManager,
-    updateManager: UpdateManager,
+    kurobaAppUpdateManager: KurobaAppUpdateManager,
     postHideManager: PostHideManager,
     appSettingsUpdateAppRefreshHelper: AppSettingsUpdateAppRefreshHelper,
     fileChooser: FileChooser,
@@ -228,14 +249,15 @@ class ActivityModule {
     chunkedMediaDownloader: ChunkedMediaDownloader,
     appConstants: AppConstants,
     globalWindowInsetsManager: GlobalWindowInsetsManager,
-    installMpvNativeLibrariesFromGithubUseCase: InstallMpvNativeLibrariesFromGithubUseCase,
+    mpvLibsUpdateManager: MpvLibsUpdateManager,
+    mpvNativeLibrariesUseCase: MpvNativeLibrariesUseCase,
     installMpvNativeLibrariesFromLocalDirectoryUseCase: InstallMpvNativeLibrariesFromLocalDirectoryUseCase,
     mediaServiceLinkExtraContentRepository: MediaServiceLinkExtraContentRepository,
     seenPostRepository: SeenPostRepository,
     chanPostRepository: ChanPostRepository,
     settingsNotificationManager: SettingsNotificationManager
   ): AppSettingsGraph {
-    deps("SettingsGraph")
+    Logger.deps("AppSettingsGraph")
 
     val builders = linkedMapOf<SettingsScreenKey, SettingsScreenBuilder>()
     builders[SettingsScreenKey.Main] = MainSettingsScreenBuilder(
@@ -243,7 +265,7 @@ class ActivityModule {
       appResources = appResources,
       chanFilterManager = chanFilterManager,
       siteManager = siteManager,
-      updateManager = updateManager,
+      kurobaAppUpdateManager = kurobaAppUpdateManager,
     )
     builders[SettingsScreenKey.Watchers] = WatcherSettingsScreenBuilder(
       kurobaSettings = kurobaSettings,
@@ -295,7 +317,8 @@ class ActivityModule {
       dialogFactory = dialogFactory,
       fileChooser = fileChooser,
       globalWindowInsetsManager = globalWindowInsetsManager,
-      installMpvNativeLibrariesFromGithubUseCase = installMpvNativeLibrariesFromGithubUseCase,
+      mpvLibsUpdateManager = mpvLibsUpdateManager,
+      mpvNativeLibrariesUseCase = mpvNativeLibrariesUseCase,
       installMpvNativeLibrariesFromLocalDirectoryUseCase = installMpvNativeLibrariesFromLocalDirectoryUseCase,
     )
     builders[SettingsScreenKey.CaptchaSolvers] = CaptchaSolversSettingsScreenBuilder()

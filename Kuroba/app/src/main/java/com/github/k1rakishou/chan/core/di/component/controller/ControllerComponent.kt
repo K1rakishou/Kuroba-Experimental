@@ -10,6 +10,7 @@ import com.github.k1rakishou.chan.features.settings.delegate.CookieCaptchaInputC
 import com.github.k1rakishou.chan.features.setup.boards.add.AddBoardsController
 import com.github.k1rakishou.chan.features.setup.boards.reorder.BoardsReorderController
 import com.github.k1rakishou.chan.features.setup.boards.selection.BoardSelectionController
+import com.github.k1rakishou.chan.ui.controller.KurobaProgressDialogController
 import com.github.k1rakishou.chan.ui.controller.base.Controller
 import com.github.k1rakishou.chan.ui.controller.dialog.KurobaComposeDialogController
 import com.github.k1rakishou.chan.ui.controller.settings.RangeSettingUpdaterController
@@ -33,6 +34,7 @@ interface ControllerComponent : ControllerDependencies {
   fun inject(rangeSettingUpdaterController: RangeSettingUpdaterController)
   fun inject(kurobaComposeDialogController: KurobaComposeDialogController)
   fun inject(appSettingsController: AppSettingsController)
+  fun inject(progressDialogController: KurobaProgressDialogController)
 
   @Subcomponent.Builder
   interface Builder {

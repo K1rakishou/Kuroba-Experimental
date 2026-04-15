@@ -100,12 +100,12 @@
     <string name="update_check_failed">Failed to check for updates.</string>
     <string name="update_install_download_failed_description">Reason: %1$s.\n\nIf this error keeps appearing then you will have to update manually.</string>
     <string name="update_install_download_failed_canceled">Reason: canceled</string>
-    <string name="update_retry_title">Retry update</string>
     <string name="update_already_updated">Already updated</string>
     <string name="update_retry">%1$s was not updated yet. Tap \"retry\" to retry the install.</string>
-    <string name="update_retry_button">Retry</string>
     <string name="update_failed_to_install">Failed to install update. Try to install it manually.</string>
     <string name="update_failed_to_install_description">Failed to install update. Reason: \'%1$s\'</string>
+    <string name="update_application_update_available">Application update is available!</string>
+    <string name="update_application_update_available_description">New app version is available: </string>
 
     <string name="update_storage_permission_required_title">Storage permission required</string>
     <string name="update_storage_permission_required">
@@ -837,6 +837,11 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="settings_plugins_use_config_file">Use mpv.conf</string>
     <string name="settings_plugins_edit_config_file">Edit mpv.conf</string>
     <string name="settings_plugins_libs_status">Mpv libraries status</string>
+    <string name="settings_plugins_check_updates">Check for updates</string>
+    <string name="settings_plugins_check_updates_no_updates">No updates available</string>
+    <string name="settings_plugins_update_status_unknown">Unknown</string>
+    <string name="settings_plugins_update_status_current_version_is_bad">Not installed or failed to load libraries</string>
+    <string name="settings_plugins_update_status">Current MPV libs version: %1$s, latest available: %2$s</string>
     <string name="settings_plugins_libs_downloading_libraries">Downloading libraries</string>
     <string name="settings_plugins_libs_installation_failure">Failure</string>
     <string name="settings_plugins_libs_installation_success">Success</string>
@@ -1631,7 +1636,10 @@ Actual error: \'%1$s\'</string>
     <string name="setting_badge_new_description">This setting haven\'t been seen yet since it\'s introduction in one of the latest updates. This badge will be removed auto removed on the next app restart.</string>
     <string name="setting_badge_requires_restart">Requires restart</string>
     <string name="setting_badge_deprecated">Deprecated</string>
-    <string name="setting_badge_deprecated_description">"Will be removed in the future</string>
+    <string name="setting_badge_deprecated_description">Will be removed in the future</string>
+
+    <string name="mpv_libraries_update_title">MPV libraries update is available!</string>
+    <string name="mpv_libraries_update_description">Current MPV libraries version: %1$s, new version: %2$s.</string>
 
     <string name="not_allowed_during_halloween">You are not allowed to do this</string>
     <string name="epoxy_no_settings_found_by_query">No settings were found by query \"%1$s\"</string>

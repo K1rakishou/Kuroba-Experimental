@@ -5,7 +5,6 @@ import android.util.Base64
 import android.webkit.MimeTypeMap
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.site.http.HttpCall
-import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
 import com.github.k1rakishou.chan.features.reply.data.Reply
 import com.github.k1rakishou.chan.features.reply.data.ReplyFile
@@ -16,6 +15,7 @@ import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.groupOrNull
 import com.github.k1rakishou.common.isNotNullNorEmpty
+import com.github.k1rakishou.common.network.ProgressRequestBody
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.squareup.moshi.Json

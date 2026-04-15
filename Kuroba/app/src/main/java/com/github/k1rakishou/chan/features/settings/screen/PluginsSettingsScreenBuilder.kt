@@ -8,14 +8,15 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.helper.AppRestarter
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
+import com.github.k1rakishou.chan.core.manager.update.MpvLibsUpdateManager
 import com.github.k1rakishou.chan.core.mpv.MPVLib
-import com.github.k1rakishou.chan.core.usecase.InstallMpvNativeLibrariesFromGithubUseCase
 import com.github.k1rakishou.chan.core.usecase.InstallMpvNativeLibrariesFromLocalDirectoryUseCase
+import com.github.k1rakishou.chan.core.usecase.MpvNativeLibrariesUseCase
 import com.github.k1rakishou.chan.features.mpv.EditMpvConfController
 import com.github.k1rakishou.chan.features.settings.SettingsScreen
 import com.github.k1rakishou.chan.features.settings.setting.SettingUiElement
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
-import com.github.k1rakishou.chan.ui.controller.LoadingViewController
+import com.github.k1rakishou.chan.ui.controller.KurobaProgressDialogController
 import com.github.k1rakishou.chan.ui.controller.dialog.KurobaComposeDialogController
 import com.github.k1rakishou.chan.ui.helper.AppResources
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
@@ -28,6 +29,7 @@ import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.callback.directory.TemporaryDirectoryCallback
+import com.github.k1rakishou.v2.KurobaSettingKey
 import com.github.k1rakishou.v2.KurobaSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -44,7 +46,8 @@ class PluginsSettingsScreenBuilder(
   private val dialogFactory: DialogFactory,
   private val fileChooser: FileChooser,
   private val globalWindowInsetsManager: GlobalWindowInsetsManager,
-  private val installMpvNativeLibrariesFromGithubUseCase: InstallMpvNativeLibrariesFromGithubUseCase,
+  private val mpvLibsUpdateManager: MpvLibsUpdateManager,
+  private val mpvNativeLibrariesUseCase: MpvNativeLibrariesUseCase,
   private val installMpvNativeLibrariesFromLocalDirectoryUseCase: InstallMpvNativeLibrariesFromLocalDirectoryUseCase
 ) : SettingsScreenBuilder {
 
@@ -90,6 +93,35 @@ class PluginsSettingsScreenBuilder(
           callback = {
             val editMpvConfController = EditMpvConfController(context)
             settingActions.presentController(editMpvConfController)
+          }
+        )
+      )
+
+      addSetting(
+        SettingUiElement.Link(
+          composeKey = KurobaSettingKey.Mpv.MpvLibsUpdate.raw,
+          title = { appResources.string(R.string.settings_plugins_check_updates) },
+          description = {
+            val lastCheckResult = mpvLibsUpdateManager.lastCheckResult
+            if (lastCheckResult == null) {
+              return@Link appResources.string(R.string.settings_plugins_update_status_unknown)
+            }
+
+            val currentVersion = lastCheckResult.currentVersionFormatted(appResources)
+            val supportedVersion = lastCheckResult.supportedVersionFormatted()
+
+            return@Link appResources.string(
+              R.string.settings_plugins_update_status,
+              currentVersion,
+              supportedVersion
+            )
+          },
+          dependencies = listOf(kurobaSettings.application.useMpvVideoPlayer),
+          callback = {
+            val hasUpdate = mpvLibsUpdateManager.check(forced = true)
+            if (hasUpdate == false) {
+              settingActions.showToast(appResources.string(R.string.settings_plugins_check_updates_no_updates))
+            }
           }
         )
       )
@@ -265,18 +297,24 @@ class PluginsSettingsScreenBuilder(
       return
     }
 
-    val loadingViewController = LoadingViewController(
+    val progressDialogController = KurobaProgressDialogController(
       context = context,
-      indeterminate = true,
-      title = appResources.string(R.string.settings_plugins_libs_downloading_libraries)
+      params = KurobaProgressDialogController.Params.create(
+        appResources = appResources,
+        title = appResources.string(R.string.settings_plugins_libs_downloading_libraries),
+        intermediate = true,
+        horizontal = true
+      )
     )
 
-    settingActions.presentController(loadingViewController)
+    settingActions.presentController(progressDialogController)
 
     val result = try {
-      installMpvNativeLibrariesFromGithubUseCase.execute(Unit)
+      mpvNativeLibrariesUseCase.install(onProgress = { progressEvent ->
+        progressDialogController.updateProgress(progressEvent.progress)
+      })
     } finally {
-      loadingViewController.stopPresenting()
+      progressDialogController.stopPresenting()
     }
 
     when (result) {

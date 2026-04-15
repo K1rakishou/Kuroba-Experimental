@@ -19,6 +19,7 @@ import android.widget.TextView
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
 import com.github.k1rakishou.chan.core.site.parser.CommentParserHelper
+import com.github.k1rakishou.chan.ui.controller.KurobaProgressDialogController
 import com.github.k1rakishou.chan.ui.controller.base.Controller
 import com.github.k1rakishou.chan.ui.controller.dialog.KurobaAlertDialogHostController
 import com.github.k1rakishou.chan.ui.controller.dialog.KurobaAlertDialogHostControllerCallbacks
@@ -93,6 +94,11 @@ class DialogFactory(
     }
 
     return dialogHandle
+  }
+
+  fun showProgressDialog(progressDialogController: KurobaProgressDialogController): KurobaProgressDialogController {
+    containerController.presentController(progressDialogController)
+    return progressDialogController
   }
 
   @Deprecated("Use showDialog")

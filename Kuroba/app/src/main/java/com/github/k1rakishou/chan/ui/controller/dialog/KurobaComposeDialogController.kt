@@ -410,9 +410,9 @@ class KurobaComposeDialogController(
 
     fun confirmationDialog(
       title: Text,
-      description: Text?,
-      negativeButton: DialogButton,
-      positionButton: PositiveDialogButton
+      description: Text? = null,
+      negativeButton: DialogButton? = null,
+      positionButton: PositiveDialogButton = okButton()
     ): Params {
       return Params(
         title = title,
@@ -424,7 +424,10 @@ class KurobaComposeDialogController(
       )
     }
 
-    fun informationDialog(title: Text, description: Text): Params {
+    fun informationDialog(
+      title: Text,
+      description: Text? = null
+    ): Params {
       return Params(
         title = title,
         description = description,
@@ -435,7 +438,11 @@ class KurobaComposeDialogController(
       )
     }
 
-    fun dialogWithInput(title: Text, input: Input, description: Text? = null): Params {
+    fun dialogWithInput(
+      title: Text,
+      input: Input,
+      description: Text? = null
+    ): Params {
       return Params(
         title = title,
         description = description,
@@ -454,12 +461,27 @@ class KurobaComposeDialogController(
       return DialogButton(buttonText = R.string.close, onClick = onClick)
     }
 
+    fun noButton(onClick: (() -> Unit)? = null): DialogButton {
+      return DialogButton(buttonText = R.string.no, onClick = onClick)
+    }
+
     fun okButton(
       isActionDangerous: Boolean = false,
       onClick: (() -> Unit)? = null
     ): PositiveDialogButton {
       return PositiveDialogButton(
         buttonText = R.string.ok,
+        isActionDangerous = isActionDangerous,
+        onClick = onClick
+      )
+    }
+
+    fun yesButton(
+      isActionDangerous: Boolean = false,
+      onClick: (() -> Unit)? = null
+    ): PositiveDialogButton {
+      return PositiveDialogButton(
+        buttonText = R.string.yes,
         isActionDangerous = isActionDangerous,
         onClick = onClick
       )

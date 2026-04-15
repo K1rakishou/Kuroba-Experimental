@@ -4,7 +4,7 @@ import android.content.Context
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
 import com.github.k1rakishou.chan.ui.cell.PostCellData
-import com.github.k1rakishou.chan.ui.controller.LoadingViewController
+import com.github.k1rakishou.chan.ui.controller.KurobaProgressDialogController
 import com.github.k1rakishou.chan.ui.controller.base.Controller
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
@@ -24,6 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 class ShowPostsInExternalThreadHelper(
   private val context: Context,
   private val scope: CoroutineScope,
+  private val appResources: AppResources,
   private val postPopupHelper: PostPopupHelper,
   private val chanThreadManagerLazy: Lazy<ChanThreadManager>,
   private val presentControllerFunc: (Controller) -> Unit,
@@ -46,15 +47,18 @@ class ShowPostsInExternalThreadHelper(
     }
 
     val cancellationFlag = AtomicBoolean(false)
-    val loadingController = LoadingViewController(
-      context,
-      true,
-      "Loading '${postDescriptor.userReadableString()}'"
+    val progressDialogController = KurobaProgressDialogController(
+      context = context,
+      params = KurobaProgressDialogController.Params.create(
+        appResources = appResources,
+        title = "Loading '${postDescriptor.userReadableString()}'",
+        intermediate = true
+      )
     )
 
     val job = scope.launch {
       coroutineContext[Job]?.invokeOnCompletion {
-        loadingController.stopPresenting()
+        progressDialogController.stopPresenting()
 
         if (cancellationFlag.get()) {
           showToastFunc("'${threadDescriptor}' thread loading canceled")
@@ -86,7 +90,7 @@ class ShowPostsInExternalThreadHelper(
         chanReadOptions = ChanReadOptions.default()
       )
 
-      loadingController.stopPresenting()
+      progressDialogController.stopPresenting()
 
       if (cancellationFlag.get()) {
         showToastFunc("'${threadDescriptor}' thread loading canceled")
@@ -158,12 +162,12 @@ class ShowPostsInExternalThreadHelper(
       )
     }
 
-    loadingController.enableCancellation {
+    progressDialogController.withCancellation {
       cancellationFlag.set(true)
       job.cancel()
     }
 
-    presentControllerFunc(loadingController)
+    presentControllerFunc(progressDialogController)
   }
 
   companion object {
