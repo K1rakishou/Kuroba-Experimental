@@ -152,6 +152,7 @@ class MpvVideoMediaView(
       }
     }
 
+    @Suppress("ForbiddenComment")
     mpvHwSw.setOnClickListener {
       scope.launch {
         // TODO: HW+

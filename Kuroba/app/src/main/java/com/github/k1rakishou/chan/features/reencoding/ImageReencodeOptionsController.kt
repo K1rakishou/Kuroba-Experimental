@@ -121,7 +121,7 @@ class ImageReencodeOptionsController(
     )
 
     if (lastSettings != null) {
-      //this variable is to ignore any side effects of checking/setting progress on these views
+      // this variable is to ignore any side effects of checking/setting progress on these views
       ignoreSetup = true
       quality.value = lastSettings.reencodeQuality.toFloat()
       reduce.value = lastSettings.reducePercent.toFloat()
@@ -203,9 +203,5 @@ class ImageReencodeOptionsController(
   interface ImageReencodeOptionsCallbacks {
     fun onCanceled()
     fun onOk(reencodeSettings: ReencodeSettings)
-  }
-
-  companion object {
-    private const val TAG = "ImageReencodeOptionsController"
   }
 }

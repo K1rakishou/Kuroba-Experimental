@@ -8,7 +8,7 @@ class Kohlchan : BaseLynxchanSite(
 ) {
   override val name: String = SITE_NAME
   override val postingViaFormData: Boolean = true
-  override val urlHandler by lazy {  KohlchanUrlHandler(this, mediaHosts) }
+  override val urlHandler by lazy { KohlchanUrlHandler(this, mediaHosts) }
   override val endpoints by lazy { KohlchanEndpoints(this) }
 
   class KohlchanUrlHandler(

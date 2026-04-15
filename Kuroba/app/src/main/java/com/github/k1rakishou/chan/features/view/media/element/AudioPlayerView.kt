@@ -327,7 +327,8 @@ class AudioPlayerView @JvmOverloads constructor(
         // We need to do this hacky stuff to force exoplayer to show the video frame instead of nothing
         // after the activity is paused and then unpaused (like when the user turns off/on the phone
         // screen).
-        val newPosition = (audioPlayerViewState.prevPosition - ExoPlayerWrapper.Companion.SEEK_POSITION_DELTA).coerceAtLeast(0)
+        val newPosition = (audioPlayerViewState.prevPosition - ExoPlayerWrapper.Companion.SEEK_POSITION_DELTA)
+          .coerceAtLeast(0)
         soundPostVideoPlayer.seekTo(audioPlayerViewState.prevWindowIndex, newPosition)
       }
 

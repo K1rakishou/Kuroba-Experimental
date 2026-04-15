@@ -69,5 +69,4 @@ class AppSettingsRestartTracker {
     _requireRestart.clear()
     _requireRefresh.clear()
   }
-
 }

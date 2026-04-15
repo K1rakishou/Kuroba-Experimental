@@ -36,9 +36,9 @@ class KurobaLibraryPlugin : Plugin<Project> {
       }
 
       compileOptions {
-        val javaVersion = JavaVersion.toVersion(libs.findVersion("javaVersion").get().requiredVersion)
-        sourceCompatibility = javaVersion
-        targetCompatibility = javaVersion
+        val jvmTarget = JavaVersion.toVersion(libs.findVersion("jvmTarget").get().requiredVersion)
+        sourceCompatibility = jvmTarget
+        targetCompatibility = jvmTarget
       }
 
       if (isComposeModule) {

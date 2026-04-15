@@ -207,7 +207,9 @@ class ThreadListLayout @JvmOverloads constructor(
       }
 
       when (boardPostViewMode) {
-        BoardPostViewMode.List -> return (layoutManager as FixedLinearLayoutManager).findLastCompletelyVisibleItemPosition()
+        BoardPostViewMode.List -> {
+          return (layoutManager as FixedLinearLayoutManager).findLastCompletelyVisibleItemPosition()
+        }
         BoardPostViewMode.Grid,
         BoardPostViewMode.Stagger -> {
           val positions = (layoutManager as StaggeredGridLayoutManager).findLastCompletelyVisibleItemPositions(null)
@@ -224,10 +226,8 @@ class ThreadListLayout @JvmOverloads constructor(
 
           return totalItemsCount
         }
-        null -> -1
+        null -> return -1
       }
-
-      return -1
     }
 
   private val gridModeSpaceItemDecoration = GridModeSpaceItemDecoration()

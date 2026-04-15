@@ -106,6 +106,7 @@ class Kun8 : BaseVichanSite(
       return false
     }
 
+    @Suppress("ForbiddenComment")
     override fun postAuthenticate(): SiteAuthentication {
       // TODO:
       return SiteAuthentication.fromNone()

@@ -97,7 +97,6 @@ class SoyjakParty : BaseVichanSite(
     }
   }
 
-
   companion object {
     const val SITE_NAME: String = "Soyjak.party"
   }

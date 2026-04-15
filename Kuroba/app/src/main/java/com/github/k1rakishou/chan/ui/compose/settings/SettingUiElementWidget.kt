@@ -1,3 +1,5 @@
+@file:Suppress("MatchingDeclarationName")
+
 package com.github.k1rakishou.chan.ui.compose.settings
 
 import android.content.Context

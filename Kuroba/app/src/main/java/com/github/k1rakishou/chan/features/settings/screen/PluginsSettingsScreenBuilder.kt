@@ -451,5 +451,4 @@ class PluginsSettingsScreenBuilder(
     private const val ACTION_INSTALL_FROM_LOCAL_DIRECTORY = 1
     private const val ACTION_DELETE_INSTALLED_LIBS = 2
   }
-
 }

@@ -89,8 +89,4 @@ class SiteCommonSettings(
       default = 0
     )
   }
-
-  companion object {
-    private const val TAG = "SiteCommonSettings"
-  }
 }

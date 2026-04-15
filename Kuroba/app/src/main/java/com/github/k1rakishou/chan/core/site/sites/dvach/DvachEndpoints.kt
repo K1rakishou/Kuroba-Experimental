@@ -161,5 +161,4 @@ class DvachEndpoints(
       .addPathSegment(requireNotNull(arg.get("icon")) { "Bad arg map: $arg" })
       .build()
   }
-
 }

@@ -112,6 +112,7 @@ class StartActivity :
   private lateinit var mainNavigationController: NavigationController
   private lateinit var mainController: MainController
 
+  @Suppress("ForbiddenComment")
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 

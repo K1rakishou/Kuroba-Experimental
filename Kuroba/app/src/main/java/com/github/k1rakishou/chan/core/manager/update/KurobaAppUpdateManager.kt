@@ -728,5 +728,4 @@ class KurobaAppUpdateManager(
   companion object {
     private const val TAG = "UpdateManager"
   }
-
 }

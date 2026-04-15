@@ -11,8 +11,6 @@ import java.io.IOException
 /**
  * Vichan applies garbage looking fields to the post form, to combat bots.
  * Load up the normal html, parse the form, and get these fields for our post.
- * 
- * 
  * [get] blocks, run it off the main thread.
  */
 class VichanAntispam(

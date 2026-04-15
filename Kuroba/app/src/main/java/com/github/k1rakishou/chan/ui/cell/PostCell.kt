@@ -248,7 +248,6 @@ class PostCell @JvmOverloads constructor(
     spoilerClickSpan = BackgroundColorSpan(themeEngine.chanTheme.postSpoilerColor)
 
     commentMovementMethod = PostViewMovementMethod(
-      kurobaSettings = kurobaSettings,
       linkClickSpan = linkClickSpan,
       quoteClickSpan = quoteClickSpan,
       spoilerClickSpan = spoilerClickSpan,

@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.core.presenter
 
-import com.github.k1rakishou.chan.core.image.ImageLoaderDeprecated
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
@@ -30,7 +29,6 @@ class BrowsePresenter @Inject constructor(
   private val compositeCatalogManagerLazy: Lazy<CompositeCatalogManager>,
   private val chanThreadManagerLazy: Lazy<ChanThreadManager>,
   private val chanPostRepositoryLazy: Lazy<ChanPostRepository>,
-  private val imageLoaderDeprecatedLazy: Lazy<ImageLoaderDeprecated>,
   private val currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager,
   private val mediaViewerOpenThreadHelper: MediaViewerOpenThreadHelper
 ) {
@@ -47,8 +45,6 @@ class BrowsePresenter @Inject constructor(
     get() = chanThreadManagerLazy.get()
   private val chanPostRepository: ChanPostRepository
     get() = chanPostRepositoryLazy.get()
-  private val imageLoaderDeprecated: ImageLoaderDeprecated
-    get() = imageLoaderDeprecatedLazy.get()
   private val compositeCatalogManager: CompositeCatalogManager
     get() = compositeCatalogManagerLazy.get()
 

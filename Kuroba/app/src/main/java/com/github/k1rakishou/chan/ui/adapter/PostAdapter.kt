@@ -118,7 +118,6 @@ class PostAdapter(
       kurobaSettings = kurobaSettings,
       chanThreadViewableInfoManagerLazy = chanThreadViewableInfoManager,
       chanThreadManagerLazy = chanThreadManager,
-      postFilterManagerLazy = postFilterManager,
       postFilterHighlightManagerLazy = postFilterHighlightManager,
       savedReplyManagerLazy = savedReplyManager,
       postHideManagerLazy = postHideManager,

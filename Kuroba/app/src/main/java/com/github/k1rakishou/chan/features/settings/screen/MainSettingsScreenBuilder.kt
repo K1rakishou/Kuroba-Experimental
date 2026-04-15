@@ -168,7 +168,6 @@ class MainSettingsScreenBuilder(
       key = "about_app",
       title = appResources.string(R.string.settings_group_about)
     ) {
-
       addSetting(
         SettingUiElement.Link(
           composeKey = KurobaSettingKey.Application.AppUpdate.raw,

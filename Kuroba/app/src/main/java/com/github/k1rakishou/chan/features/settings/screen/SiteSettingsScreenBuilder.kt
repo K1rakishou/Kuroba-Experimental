@@ -253,5 +253,4 @@ class SiteSettingsScreenBuilder(
   companion object {
     private const val TAG = "SiteSettingsScreenBuilder"
   }
-
 }

@@ -131,7 +131,6 @@ class PostRepliesPopupController(
       kurobaSettings = kurobaSettings,
       chanThreadViewableInfoManagerLazy = chanThreadViewableInfoManager,
       chanThreadManagerLazy = chanThreadManager,
-      postFilterManagerLazy = postFilterManager,
       savedReplyManagerLazy = savedReplyManager,
       postFilterHighlightManagerLazy = postFilterHighlightManager,
       postHideManagerLazy = postHideManager,

@@ -16,6 +16,7 @@ abstract class SiteConfiguration {
   enum class BoardsType {
     // Boards are hardcoded as there is no endpoint to retrieve them
     Static,
+
     // Boards are loaded from some endpoint
     Dynamic
   }
@@ -23,14 +24,17 @@ abstract class SiteConfiguration {
   enum class CatalogType {
     // Whole catalog is loaded in one request
     Static,
+
     // Catalog has pages, and you load the whole thing in multiple requests
     Dynamic
   }
 
   enum class NsfwBoardDisplayType {
     NotSupported,
+
     // Site has a separate flag in its API for both SFW/NSFW boards
     Both,
+
     // Site only has a flag for NSFW boards (4chan)
     OnlyNsfw
   }
@@ -81,5 +85,4 @@ abstract class SiteConfiguration {
      * */
     val siteSendsCorrectFileSizeInBytes: Boolean
   )
-
 }

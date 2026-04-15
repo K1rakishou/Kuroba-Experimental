@@ -17,14 +17,12 @@ import com.github.k1rakishou.chan.ui.view.PostCommentTextView
 import com.github.k1rakishou.core_spannable.BackgroundColorIdSpan
 import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.model.data.post.ChanPost
-import com.github.k1rakishou.v2.KurobaSettings
 
 /**
  * A MovementMethod that searches for PostLinkables.<br></br>
  * See [PostLinkable] for more information.
  */
 class PostViewMovementMethod(
-  private val kurobaSettings: KurobaSettings,
   private val linkClickSpan: BackgroundColorIdSpan,
   private val quoteClickSpan: BackgroundColorIdSpan,
   private val spoilerClickSpan: BackgroundColorSpan,

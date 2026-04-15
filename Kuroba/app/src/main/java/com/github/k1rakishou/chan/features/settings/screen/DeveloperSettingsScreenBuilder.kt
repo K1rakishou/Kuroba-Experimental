@@ -187,5 +187,4 @@ class DeveloperSettingsScreenBuilder(
       )
     }
   }
-
 }

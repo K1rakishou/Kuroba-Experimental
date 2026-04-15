@@ -417,5 +417,4 @@ class AppearanceSettingsScreenBuilder(
       return columns.coerceIn(1, ALL_COLUMNS.last())
     }
   }
-
 }

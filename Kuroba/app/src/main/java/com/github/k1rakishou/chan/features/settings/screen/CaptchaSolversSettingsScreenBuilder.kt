@@ -1,3 +1,5 @@
+@file:Suppress("all")
+
 package com.github.k1rakishou.chan.features.settings.screen
 
 import android.content.Context

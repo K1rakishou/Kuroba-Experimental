@@ -13,6 +13,7 @@ import com.github.k1rakishou.model.data.post.ChanPostHttpIcon
 import com.github.k1rakishou.model.data.post.PostComment
 import com.github.k1rakishou.model.data.post.PostFilter
 import com.github.k1rakishou.model.data.post.PostFilterResult
+import com.github.k1rakishou.v2.KurobaSettings
 import junit.framework.Assert.assertEquals
 import org.junit.Test
 import org.mockito.Mockito
@@ -22,6 +23,7 @@ class PostHideHelperTest {
   private val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(catalogDescriptor, 1L)
 
   private var postHideHelper = PostHideHelper(
+    kurobaSettings = Mockito.mock(KurobaSettings::class.java),
     postHideManager = Mockito.mock(IPostHideManager::class.java),
     postFilterManager = Mockito.mock(IPostFilterManager::class.java),
     threadPostSearchManager = Mockito.mock(IThreadPostSearchManager::class.java),

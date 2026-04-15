@@ -88,6 +88,7 @@ class AppSettingsControllerViewModel(
     }
   }
 
+  @Suppress("ForbiddenComment")
   suspend fun buildSettings(context: Context) {
     withContext(Dispatchers.Default) {
       val siteSettingsScreenKey = settingsScreenKey

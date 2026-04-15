@@ -99,5 +99,4 @@ class MpvLibsUpdateManager(
 
     private val UPDATE_CHECK_INTERVAL = 7.days
   }
-
 }

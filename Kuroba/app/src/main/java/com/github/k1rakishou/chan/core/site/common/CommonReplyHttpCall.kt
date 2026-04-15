@@ -58,8 +58,4 @@ abstract class CommonReplyHttpCall(
     requestBuilder: Request.Builder,
     boundary: String
   )
-
-  companion object {
-    private const val TAG = "CommonReplyHttpCall"
-  }
 }

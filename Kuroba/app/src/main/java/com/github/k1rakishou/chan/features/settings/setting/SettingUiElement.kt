@@ -301,5 +301,4 @@ sealed class SettingUiElement {
       override val key: String = this::class.java.name
     }
   }
-
 }

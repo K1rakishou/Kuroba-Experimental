@@ -198,10 +198,11 @@ class ImageOptionsController(
     if (v === imageOptionsCancel) {
       imageReencodingHelper.pop()
     } else if (v === imageOptionsApply) {
-      val newFileName = if (imageFileName.getText() == null)
+      val newFileName = if (imageFileName.getText() == null) {
         null
-      else
+      } else {
         imageFileName.getText().toString()
+      }
 
       presenter.applyImageOptions(newFileName)
     } else if (v === viewHolder) {
@@ -302,9 +303,5 @@ class ImageOptionsController(
     fun onImageOptionsApplied(fileUuid: UUID)
 
     fun pushCreateSoundMediaController(controller: CreateSoundMediaController)
-  }
-
-  companion object {
-    private const val TAG = "ImageOptionsController"
   }
 }

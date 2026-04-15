@@ -5,7 +5,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.PostFilterHighlightManager
-import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.PostHideManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.ui.cell.GenericPostCell
@@ -29,7 +28,6 @@ class PostRepliesAdapter(
   kurobaSettings: KurobaSettings,
   chanThreadViewableInfoManagerLazy: Lazy<ChanThreadViewableInfoManager>,
   chanThreadManagerLazy: Lazy<ChanThreadManager>,
-  postFilterManagerLazy: Lazy<PostFilterManager>,
   savedReplyManagerLazy: Lazy<SavedReplyManager>,
   postFilterHighlightManagerLazy: Lazy<PostFilterHighlightManager>,
   postHideManagerLazy: Lazy<PostHideManager>,
@@ -40,7 +38,6 @@ class PostRepliesAdapter(
     kurobaSettings = kurobaSettings,
     chanThreadViewableInfoManagerLazy = chanThreadViewableInfoManagerLazy,
     chanThreadManagerLazy = chanThreadManagerLazy,
-    postFilterManagerLazy = postFilterManagerLazy,
     savedReplyManagerLazy = savedReplyManagerLazy,
     postFilterHighlightManagerLazy = postFilterHighlightManagerLazy,
     postHideManagerLazy = postHideManagerLazy,

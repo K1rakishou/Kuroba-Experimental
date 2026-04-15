@@ -82,5 +82,4 @@ object RootDirBackgroundAnimationFactory {
       private const val ALPHA_ANIMATION_DURATION = 2_000L
     }
   }
-
 }

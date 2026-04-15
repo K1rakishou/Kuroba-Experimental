@@ -115,7 +115,7 @@ class Chan420 : CommonSite(
 
   class Chan420UrlHandler(
     private val chan420: Chan420
-  ): CommonSiteUrlHandler(chan420) {
+  ) : CommonSiteUrlHandler(chan420) {
     override val rootUrl: HttpUrl
       get() = chan420.currentDomain
 

@@ -62,6 +62,7 @@ class FetchThreadBookmarkInfoUseCase(
     }
   }
 
+  @Suppress("ForbiddenComment")
   private suspend fun fetchThreadBookmarkInfo(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
     threadJsonEndpoint: HttpUrl,

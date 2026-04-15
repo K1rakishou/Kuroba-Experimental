@@ -77,5 +77,4 @@ class DvachSiteRequestModifier(
       requestBuilder.addOrReplaceCookieHeader(antiSpamCookie)
     }
   }
-
 }

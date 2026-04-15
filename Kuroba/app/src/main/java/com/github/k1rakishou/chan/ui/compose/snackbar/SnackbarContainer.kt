@@ -232,7 +232,6 @@ fun SnackbarContainer(
         BoxWithConstraints {
           KurobaSnackbarItem(
             containerWidth = constraints.maxWidth,
-            layoutAnimationIsInProgress = animationInProgress,
             animationDuration = animationDuration,
             isTablet = isTablet,
             chanTheme = chanTheme,
@@ -364,7 +363,6 @@ private class AnimationData(
 @Composable
 private fun KurobaSnackbarItem(
   containerWidth: Int,
-  layoutAnimationIsInProgress: Boolean,
   animationDuration: Int,
   isTablet: Boolean,
   chanTheme: ChanTheme,

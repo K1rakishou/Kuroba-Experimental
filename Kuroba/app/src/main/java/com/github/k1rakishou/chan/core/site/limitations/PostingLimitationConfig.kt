@@ -59,7 +59,6 @@ class PasscodeDependantMaxAttachablesTotalSize(
 
     return null
   }
-
 }
 
 class BoardDependantPostAttachablesMaxTotalSize(
@@ -69,7 +68,7 @@ class BoardDependantPostAttachablesMaxTotalSize(
 ) : PostAttachlesMaxTotalSize {
 
   override suspend fun getMaxTotalAttachablesSize(params: PostAttachlesMaxTotalSize.Params): Long? {
-    val boardDescriptor =  params.boardDescriptor
+    val boardDescriptor = params.boardDescriptor
 
     val chanBoard = boardManager.byBoardDescriptor(boardDescriptor)
     if (chanBoard == null) {
@@ -88,7 +87,6 @@ class BoardDependantPostAttachablesMaxTotalSize(
   companion object {
     private const val TAG = "BoardDependantPostAttachablesMaxTotalSize"
   }
-
 }
 
 class PasscodeDependantAttachablesCount(
@@ -165,5 +163,4 @@ class BoardDependantAttachablesCount(
   companion object {
     private const val TAG = "BoardDependantAttachablesCount"
   }
-
 }

@@ -54,7 +54,9 @@ class MediaViewerControllerViewModel(
   val chanDescriptor: ChanDescriptor?
     get() = mediaViewerState.value?.descriptor
 
-  private val _transitionInfoFlow = MutableSharedFlow<ViewableMediaParcelableHolder.TransitionInfo?>(extraBufferCapacity = 1)
+  private val _transitionInfoFlow = MutableSharedFlow<ViewableMediaParcelableHolder.TransitionInfo?>(
+    extraBufferCapacity = 1
+  )
   val transitionInfoFlow: SharedFlow<ViewableMediaParcelableHolder.TransitionInfo?>
     get() = _transitionInfoFlow.asSharedFlow()
 
@@ -62,7 +64,9 @@ class MediaViewerControllerViewModel(
   val mediaViewerOptions: StateFlow<MediaViewerOptions>
     get() = _mediaViewerOptions
 
-  private val _mediaViewStateCache = LruCache<MediaLocation, MediaViewState>(kurobaSettings.application.mediaViewerOffscreenPagesCount())
+  private val _mediaViewStateCache = LruCache<MediaLocation, MediaViewState>(
+    kurobaSettings.application.mediaViewerOffscreenPagesCount()
+  )
 
   private var lastPagerIndex = -1
   private var _isSoundMuted = false

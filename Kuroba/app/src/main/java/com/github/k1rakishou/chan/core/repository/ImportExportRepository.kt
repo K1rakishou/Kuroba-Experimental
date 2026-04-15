@@ -35,8 +35,4 @@ class ImportExportRepository @Inject constructor(
     object Success : ImportResult()
     class Error(val error: Throwable) : ImportResult()
   }
-
-  companion object {
-    private const val TAG = "ImportExportRepository"
-  }
 }

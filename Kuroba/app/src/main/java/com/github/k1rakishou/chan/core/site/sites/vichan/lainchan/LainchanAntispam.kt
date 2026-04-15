@@ -16,7 +16,6 @@ import java.io.IOException
  *
  * Lainchan uses some additional (custom?) logic that effectively restricts which fields are allowed
  * to be POSTed to post.php.
- * 
  * @see "https://github.com/lainchan/lainchan/blob/master/inc/anti-bot.php.checkSpam"
  */
 class LainchanAntispam(

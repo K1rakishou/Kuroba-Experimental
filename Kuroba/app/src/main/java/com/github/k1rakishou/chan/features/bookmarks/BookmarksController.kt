@@ -592,7 +592,7 @@ class BookmarksController(
       title = getString(R.string.controller_bookmarks_set_grid_view_width_text),
       minValue = context.resources.getDimension(R.dimen.thread_grid_bookmark_view_min_width).toInt(),
       maxValue = context.resources.getDimension(R.dimen.thread_grid_bookmark_view_max_width).toInt(),
-      defaultValue =  kurobaSettings.application.bookmarkGridViewWidth.default,
+      defaultValue = kurobaSettings.application.bookmarkGridViewWidth.default,
       currentValue = kurobaSettings.application.bookmarkGridViewWidth.readBlocking(),
       resetClickedFunc = {
         kurobaSettings.application.bookmarkGridViewWidth.writeAsync(

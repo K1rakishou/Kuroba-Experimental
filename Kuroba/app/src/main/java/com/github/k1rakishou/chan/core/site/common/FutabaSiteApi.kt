@@ -312,8 +312,9 @@ class FutabaSiteApi(
 
       val originalPost = postObjects.firstOrNull { postObject ->
         postObject is ThreadBookmarkInfoPostObject.OriginalPost
-      } as? ThreadBookmarkInfoPostObject.OriginalPost
-        ?: throw IllegalStateException("Thread $threadDescriptor has no OP")
+      }
+        as? ThreadBookmarkInfoPostObject.OriginalPost
+        ?: error("Thread $threadDescriptor has no OP")
 
       check(threadDescriptor.threadNo == originalPost.postNo) {
         "Original post has incorrect postNo, " +

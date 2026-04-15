@@ -1,6 +1,0 @@
-deps
-sdk
-prefix
-prefix64
-*.tgz
-/deps/*

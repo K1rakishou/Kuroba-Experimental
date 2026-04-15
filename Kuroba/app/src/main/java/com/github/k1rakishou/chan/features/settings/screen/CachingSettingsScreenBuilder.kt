@@ -178,5 +178,4 @@ class CachingSettingsScreenBuilder(
   companion object {
     private const val TAG = "CachingSettingsScreenBuilder"
   }
-
 }

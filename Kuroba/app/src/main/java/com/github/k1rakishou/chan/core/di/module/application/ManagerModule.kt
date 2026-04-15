@@ -642,7 +642,6 @@ class ManagerModule {
   @Provides
   fun provideChan4CloudFlareImagePreloaderManager(
     appScope: CoroutineScope,
-    kurobaSettings: KurobaSettings,
     proxiedOkHttpClient: ProxiedOkHttpClient,
     chanThreadsCache: ChanThreadsCache,
     prefetchStateManager: PrefetchStateManager
@@ -650,7 +649,6 @@ class ManagerModule {
     deps("Chan4CloudFlareImagePreloaderManager")
     return Chan4CloudFlareImagePreloaderManager(
       appScope,
-      kurobaSettings,
       proxiedOkHttpClient,
       chanThreadsCache,
       prefetchStateManager

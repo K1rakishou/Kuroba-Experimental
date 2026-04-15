@@ -4,7 +4,6 @@ import com.github.k1rakishou.chan.core.concurrency.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.PostFilterHighlightManager
-import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.PostHideManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
@@ -35,7 +34,6 @@ class ThreadCellData(
   val kurobaSettings: KurobaSettings,
   private val chanThreadViewableInfoManagerLazy: Lazy<ChanThreadViewableInfoManager>,
   private val chanThreadManagerLazy: Lazy<ChanThreadManager>,
-  private val postFilterManagerLazy: Lazy<PostFilterManager>,
   private val postFilterHighlightManagerLazy: Lazy<PostFilterHighlightManager>,
   private val savedReplyManagerLazy: Lazy<SavedReplyManager>,
   private val postHideManagerLazy: Lazy<PostHideManager>,
@@ -48,8 +46,6 @@ class ThreadCellData(
     get() = chanThreadViewableInfoManagerLazy.get()
   private val chanThreadManager: ChanThreadManager
     get() = chanThreadManagerLazy.get()
-  private val postFilterManager: PostFilterManager
-    get() = postFilterManagerLazy.get()
   private val postFilterHighlightManager: PostFilterHighlightManager
     get() = postFilterHighlightManagerLazy.get()
   private val savedReplyManager: SavedReplyManager

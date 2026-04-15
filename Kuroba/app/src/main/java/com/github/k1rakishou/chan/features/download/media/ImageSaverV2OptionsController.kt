@@ -171,10 +171,14 @@ class ImageSaverV2OptionsController(
 
       when (itemId) {
         R.id.image_name_options_use_server_name -> {
-          currentSetting = currentSetting.copy(imageNameOptions = ImageSaverV2Options.ImageNameOptions.UseServerFileName.rawValue)
+          currentSetting = currentSetting.copy(
+            imageNameOptions = ImageSaverV2Options.ImageNameOptions.UseServerFileName.rawValue
+          )
         }
         R.id.image_name_options_use_original_name -> {
-          currentSetting = currentSetting.copy(imageNameOptions =  ImageSaverV2Options.ImageNameOptions.UseOriginalFileName.rawValue)
+          currentSetting = currentSetting.copy(
+            imageNameOptions = ImageSaverV2Options.ImageNameOptions.UseOriginalFileName.rawValue
+          )
         }
       }
 

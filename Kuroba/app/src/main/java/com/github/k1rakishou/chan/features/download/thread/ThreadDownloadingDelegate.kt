@@ -193,7 +193,9 @@ class ThreadDownloadingDelegate(
 
     val ownerThreadDatabaseId = threadDownload.ownerThreadDatabaseId
 
-    val isNetworkGoodForMediaDownload = if (kurobaSettings.application.threadDownloaderDownloadMediaOnMeteredNetwork.read()) {
+    val isNetworkGoodForMediaDownload =
+      if (kurobaSettings.application.threadDownloaderDownloadMediaOnMeteredNetwork.read()
+    ) {
       true
     } else {
       AppModuleAndroidUtils.isConnectionUnmetered
@@ -296,7 +298,9 @@ class ThreadDownloadingDelegate(
       parallelization = batchCount,
       dispatcher = Dispatchers.IO
     ) { postImage ->
-      val isNetworkGoodForMediaDownload = if (kurobaSettings.application.threadDownloaderDownloadMediaOnMeteredNetwork.read()) {
+      val isNetworkGoodForMediaDownload =
+        if (kurobaSettings.application.threadDownloaderDownloadMediaOnMeteredNetwork.read()
+      ) {
         true
       } else {
         AppModuleAndroidUtils.isConnectionUnmetered

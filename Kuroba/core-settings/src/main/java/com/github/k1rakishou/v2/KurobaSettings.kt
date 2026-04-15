@@ -3,7 +3,7 @@ package com.github.k1rakishou.v2
 import com.github.k1rakishou.v2.database.KurobaSeenSettingEntity
 import com.github.k1rakishou.v2.database.KurobaSettingsDatabase
 
-class KurobaSettings(
+open class KurobaSettings(
   val database: KurobaSettingsDatabase,
   private val applicationSettingsParameters: ApplicationSettingsParameters,
   private val internalSettingsParameters: InternalSettingsParameters,

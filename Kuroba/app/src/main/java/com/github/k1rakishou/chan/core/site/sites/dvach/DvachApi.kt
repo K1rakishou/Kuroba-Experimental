@@ -135,7 +135,7 @@ class DvachApi(
     val posters = dvachThreadIncremental?.posters
 
     if (threadPosts == null) {
-      throw IllegalStateException("No posts parsed for '$requestUrl'")
+      error("No posts parsed for '$requestUrl'")
     }
 
     if (threadPosts.isEmpty()) {
@@ -181,7 +181,7 @@ class DvachApi(
     val catalogThreadPosts = dvachCatalog?.threads
 
     if (catalogThreadPosts == null) {
-      throw IllegalStateException("No posts parsed for '$requestUrl'")
+      error("No posts parsed for '$requestUrl'")
     }
 
     if (catalogThreadPosts.isEmpty()) {
@@ -318,7 +318,7 @@ class DvachApi(
       val threadPosts = dvachThreadsFresh?.threads?.firstOrNull()?.posts
 
       if (threadPosts == null) {
-        throw IllegalStateException("No posts parsed for '$requestUrl'")
+        error("No posts parsed for '$requestUrl'")
       }
 
       if (threadPosts.isEmpty()) {
@@ -383,7 +383,7 @@ class DvachApi(
         ?.threads
 
       if (catalogThreadPosts == null) {
-        throw IllegalStateException("No posts parsed for '$requestUrl'")
+        error("No posts parsed for '$requestUrl'")
       }
 
       if (catalogThreadPosts.isEmpty()) {
@@ -488,7 +488,6 @@ class DvachApi(
         return errorCode == BOARD_DOES_NOT_EXIST || errorCode == THREAD_DOES_NOT_EXIST
       }
     }
-
   }
 
   @JsonClass(generateAdapter = true)
@@ -649,7 +648,6 @@ class DvachApi(
 
       return null
     }
-
   }
 
   @JsonClass(generateAdapter = true)

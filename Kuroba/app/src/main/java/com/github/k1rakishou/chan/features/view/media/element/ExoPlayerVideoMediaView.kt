@@ -99,7 +99,7 @@ class ExoPlayerVideoMediaView(
 
   override val hasContent: Boolean
     get() = mainVideoPlayer.hasContent
-  override val mediaViewerActionStrip: MediaViewerActionStrip?
+  override val mediaViewerActionStrip: MediaViewerActionStrip
     get() = actionStrip
 
   init {
@@ -246,7 +246,7 @@ class ExoPlayerVideoMediaView(
   override fun show(isLifecycleChange: Boolean) {
     super.updateComponentsWithViewableMedia(pagerPosition, totalPageItemsCount, viewableMedia)
 
-    onSystemUiVisibilityChanged(isImmersiveModeEnabled())
+    onSystemUiVisibilityChanged(isImmersiveModeEnabled)
     updateMuteUnMuteState()
     thumbnailMediaView.show()
 
@@ -488,7 +488,8 @@ class ExoPlayerVideoMediaView(
         // We need to do this hacky stuff to force exoplayer to show the video frame instead of nothing
         // after the activity is paused and then unpaused (like when the user turns off/on the phone
         // screen).
-        val newPosition = (mediaViewState.prevPosition - ExoPlayerWrapper.Companion.SEEK_POSITION_DELTA).coerceAtLeast(0)
+        val newPosition = (mediaViewState.prevPosition - ExoPlayerWrapper.SEEK_POSITION_DELTA)
+          .coerceAtLeast(0)
         mainVideoPlayer.seekTo(mediaViewState.prevWindowIndex, newPosition)
       }
     }

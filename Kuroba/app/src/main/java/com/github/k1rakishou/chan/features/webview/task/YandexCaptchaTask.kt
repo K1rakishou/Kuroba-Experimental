@@ -36,7 +36,7 @@ class YandexCaptchaTask(
     kurobaSettings.internal.remoteImageSearchSettings.read().update(
       internalSettings = kurobaSettings.internal,
       instanceType = RemoteImageSearchSettings.InstanceType.Yandex,
-      updater = { settings -> settings.copy(cookies = cookies ) },
+      updater = { settings -> settings.copy(cookies = cookies) },
       creator = {
         RemoteImageSearchSettings.InstanceSettings(
           instanceType = RemoteImageSearchSettings.InstanceType.Yandex,

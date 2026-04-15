@@ -17,7 +17,6 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.thread.ChanThread
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
-import com.github.k1rakishou.v2.KurobaSettings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -33,7 +32,6 @@ import kotlin.concurrent.write
 
 class Chan4CloudFlareImagePreloaderManager(
   private val appScope: CoroutineScope,
-  private val kurobaSettings: KurobaSettings,
   private val proxiedOkHttpClient: ProxiedOkHttpClient,
   private val chanThreadsCache: ChanThreadsCache,
   private val prefetchStateManager: PrefetchStateManager

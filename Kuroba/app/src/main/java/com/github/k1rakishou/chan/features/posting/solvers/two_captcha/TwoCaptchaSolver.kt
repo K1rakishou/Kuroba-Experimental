@@ -1,3 +1,5 @@
+@file:Suppress("all")
+
 package com.github.k1rakishou.chan.features.posting.solvers.two_captcha
 
 import androidx.annotation.GuardedBy

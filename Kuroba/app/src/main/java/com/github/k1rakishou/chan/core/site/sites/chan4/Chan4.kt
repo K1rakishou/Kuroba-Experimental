@@ -103,7 +103,7 @@ class Chan4 : SiteBase(
     get() = requireSiteSettings(Chan4SiteSettings::class.java)
 
   enum class CaptchaType {
-    CHAN4_CAPTCHA;
+    CHAN4_CAPTCHA
   }
 
   companion object {

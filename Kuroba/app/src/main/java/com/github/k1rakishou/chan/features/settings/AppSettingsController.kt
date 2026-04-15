@@ -719,7 +719,6 @@ class AppSettingsController(
         )
       }
     }
-
   }
 
   @Parcelize
@@ -728,8 +727,6 @@ class AppSettingsController(
   ) : Parcelable
 
   companion object {
-    private const val TAG = "MainSettingsController"
-
     private const val ACTION_SEARCH = 0
   }
 }

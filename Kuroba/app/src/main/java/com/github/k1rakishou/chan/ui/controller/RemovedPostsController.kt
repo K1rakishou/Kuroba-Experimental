@@ -34,6 +34,7 @@ import java.io.IOException
 import java.util.Locale
 import javax.inject.Inject
 
+@Suppress("ForbiddenComment")
 class RemovedPostsController(
   context: Context,
   private val removedPostsHelper: RemovedPostsHelper

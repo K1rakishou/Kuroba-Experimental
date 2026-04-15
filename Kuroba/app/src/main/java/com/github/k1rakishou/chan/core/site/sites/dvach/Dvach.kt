@@ -126,8 +126,6 @@ class Dvach : CommonSite(
   }
 
   companion object {
-    private const val TAG = "Dvach"
-
     const val SITE_NAME = "2ch.hk"
     val SITE_DESCRIPTOR = SiteDescriptor.create(SITE_NAME)
 

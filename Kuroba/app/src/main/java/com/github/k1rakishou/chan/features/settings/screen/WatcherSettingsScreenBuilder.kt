@@ -289,5 +289,4 @@ class WatcherSettingsScreenBuilder(
       TimeUnit.HOURS.toMillis(4),
     )
   }
-
 }

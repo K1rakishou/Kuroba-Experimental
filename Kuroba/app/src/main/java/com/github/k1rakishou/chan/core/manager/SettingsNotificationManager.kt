@@ -39,8 +39,4 @@ class SettingsNotificationManager {
   fun count(): Int {
     return _activeNotifications.size
   }
-
-  companion object {
-    private const val TAG = "SettingsNotificationManager"
-  }
 }

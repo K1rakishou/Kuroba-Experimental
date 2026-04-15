@@ -413,7 +413,6 @@ class AppSettingsGraph(
   private fun requireBuilder(screenKey: SettingsScreenKey): SettingsScreenBuilder {
     return requireNotNull(builders[screenKey]) { "Unknown screenKey: ${screenKey}" }
   }
-
 }
 
 class SettingsScreen(

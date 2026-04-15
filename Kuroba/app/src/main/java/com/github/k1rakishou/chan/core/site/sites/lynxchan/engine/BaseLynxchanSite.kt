@@ -16,6 +16,7 @@ import okhttp3.HttpUrl
 abstract class BaseLynxchanSite(defaultDomain: String) : CommonSite(defaultDomain) {
   open val initialPageIndex: Int = 1
   open val mediaHosts: Set<HttpUrl> by lazy { setOf(currentDomain) }
+
   // When false, json payload will be used.
   // When true, form data parameters will be used.
   open val postingViaFormData: Boolean = false
@@ -123,9 +124,4 @@ abstract class BaseLynxchanSite(defaultDomain: String) : CommonSite(defaultDomai
       }
     }
   }
-
-  companion object {
-    private const val TAG = "LynxchanSite"
-  }
-
 }
