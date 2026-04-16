@@ -7,7 +7,7 @@ BetaRepoName = 'K1rakishou/Kuroba-Experimental-beta'
 StableRepoName = 'K1rakishou/Kuroba-Experimental'
 
 BetaTagPattern = r'v(\d+?)\.(\d{1,2})\.(\d{1,2})\.(\d+)-beta$'
-VersionNamePattern = r'versionName\s+\"v(\d+)\.(\d{1,2})\.(\d{1,2})\"'
+VersionNamePattern = r'versionName\s*=\s*\"v(\d+)\.(\d{1,2})\.(\d{1,2})\"'
 
 BetaApkRelativePath = "/Kuroba/app/build/outputs/apk/beta/release"
 StableApkRelativePath = "/Kuroba/app/build/outputs/apk/stable/release"
@@ -101,7 +101,7 @@ def get_new_beta_tag_name(version_code: VersionCode):
 
 
 def parse_project_version_name(workspace_dir):
-    build_gradle_file_path = workspace_dir + "/Kuroba/app/build.gradle"
+    build_gradle_file_path = workspace_dir + "/Kuroba/app/build.gradle.kts"
     print(f'parse_project_version_name() build_gradle_file_path: {build_gradle_file_path}')
     
     with open(build_gradle_file_path, "rb") as file:
