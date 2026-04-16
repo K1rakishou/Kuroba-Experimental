@@ -127,6 +127,13 @@ class Chan4Actions(
     }
   }
 
+  @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
+  override fun postAuthenticate(): SiteAuthentication {
+    return when (chan4Settings.captchaType.readBlocking()) {
+      CaptchaType.CHAN4_CAPTCHA -> SiteAuthentication.endpointBased()
+    }
+  }
+
   override suspend fun <T : AbstractLoginRequest> login(loginRequest: T): SiteActions.LoginResult {
     val chan4LoginRequest = loginRequest as Chan4LoginRequest
 
@@ -154,13 +161,6 @@ class Chan4Actions(
       is HttpCall.HttpCallResult.Fail -> {
         return SiteActions.LoginResult.LoginError(loginResult.error.errorMessageOrClassName())
       }
-    }
-  }
-
-  @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
-  override fun postAuthenticate(): SiteAuthentication {
-    return when (chan4Settings.captchaType.readBlocking()) {
-      CaptchaType.CHAN4_CAPTCHA -> SiteAuthentication.endpointBased()
     }
   }
 
@@ -249,7 +249,7 @@ class Chan4Actions(
   }
 
   override fun clearPostingCookies() {
-    chan4Settings.captchaCookie.readBlocking()
+    chan4Settings.postingCookie.readBlocking()
     chan4.commonSettings.cloudFlareClearanceCookieMap.resetBlocking()
     chan4Settings.captchaSettings.updateBlocking { captchaSettings ->
       captchaSettings.copy(captchaTicket = null)
@@ -261,6 +261,15 @@ class Chan4Actions(
       site = chan4,
       boardManager = chan4.boardManager
     ).execute()
+  }
+
+  suspend fun emailVerified(): Boolean {
+    val cookie = chan4Settings.emailVerificationCookie.read()
+    if (cookie == null) {
+      return false
+    }
+
+    return !cookie.expired(System.currentTimeMillis())
   }
 
   private fun HttpUrl.Builder.addBoardCodeParameter(boardCode: String?): HttpUrl.Builder {

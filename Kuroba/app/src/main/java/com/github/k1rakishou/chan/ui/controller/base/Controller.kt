@@ -649,7 +649,7 @@ abstract class Controller(
 
   suspend fun <T> awaitForResult(): ControllerResult<T> {
     return when (val result = _controllerResult.awaitSilently(null)) {
-      is ControllerResultInternal.Result -> ControllerResult.Result(result as T)
+      is ControllerResultInternal.Result -> ControllerResult.Result(result.value as T)
       ControllerResultInternal.NoResult,
       null -> ControllerResult.NoResult
     }

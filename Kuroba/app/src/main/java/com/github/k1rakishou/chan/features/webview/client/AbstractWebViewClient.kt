@@ -19,6 +19,8 @@ abstract class AbstractWebViewClient(
   val taskCompleted: Boolean
     get() = webViewClientResultWaiter.isCompleted
 
+  open val maxPageLoadsCount = MAX_PAGE_LOADS_COUNT
+
   private val _pageLoadState = AtomicReference<PageLoadState>(PageLoadState.Undefined)
   val pageLoadState: PageLoadState
     get() = _pageLoadState.get()
@@ -40,6 +42,7 @@ abstract class AbstractWebViewClient(
     return super.shouldOverrideUrlLoading(view, request)
   }
 
+  @Deprecated("Deprecated in Java")
   override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
     _pageLoadState.set(PageLoadState.Started)
     return super.shouldOverrideUrlLoading(view, url)

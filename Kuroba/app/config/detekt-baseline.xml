@@ -2357,7 +2357,6 @@
     <ID>MayBeConst:ArchiveOfSins.kt$ArchiveOfSins.Companion$val ROOT: String = "https://archiveofsins.com/"</ID>
     <ID>MayBeConst:ArchivedMoe.kt$ArchivedMoe.Companion$val ROOT: String = "https://archived.moe/"</ID>
     <ID>MayBeConst:B4k.kt$B4k.Companion$val ROOT: String = "https://arch.b4k.dev/"</ID>
-    <ID>MayBeConst:Chan4.kt$Chan4.Companion$val CAPTCHA_COOKIE_KEY = "4chan_pass"</ID>
     <ID>MayBeConst:CompositeCatalogSite.kt$CompositeCatalogSite.Companion$val SITE_NAME = "composite-catalog-site"</ID>
     <ID>MayBeConst:DesuArchive.kt$DesuArchive.Companion$val ROOT: String = "https://desuarchive.org/"</ID>
     <ID>MayBeConst:Fireden.kt$Fireden.Companion$val ROOT: String = "https://boards.fireden.net/"</ID>

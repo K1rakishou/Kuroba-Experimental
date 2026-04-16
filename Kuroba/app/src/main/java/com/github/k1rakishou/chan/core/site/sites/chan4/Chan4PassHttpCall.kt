@@ -62,17 +62,7 @@ class Chan4PassHttpCall(
       return
     }
 
-    val message = if (result.contains("Your Token must be exactly 10 characters")) {
-      "Incorrect token"
-    } else if (result.contains("You have left one or more fields blank")) {
-      "You have left one or more fields blank"
-    } else if (result.contains("Incorrect Token or PIN")) {
-      "Incorrect Token or PIN"
-    } else {
-      "Unknown error"
-    }
-
-    loginResponse = Chan4LoginResponse.Failure(message)
+    loginResponse = Chan4LoginResponse.Failure(result)
   }
 
   companion object {

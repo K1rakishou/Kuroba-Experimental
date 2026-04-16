@@ -15,6 +15,7 @@ import com.github.k1rakishou.chan.core.site.sites.lynxchan.engine.BaseLynxchanSi
 import com.github.k1rakishou.chan.core.site.sites.lynxchan.engine.LynxchanSiteSettings
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.KurobaCookie
 import com.github.k1rakishou.common.StringUtils.asFormattedToken
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.deprecated.ChanSettingsDeprecated
@@ -58,6 +59,7 @@ import com.squareup.moshi.Moshi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import java.io.File
+import java.util.concurrent.TimeUnit
 
 @Suppress("all")
 class KurobaSettingsMigrationHelper(
@@ -233,11 +235,30 @@ class KurobaSettingsMigrationHelper(
   ) {
     val settings = site.requireSiteSettings(Chan4SiteSettings::class.java)
 
+    tryMigrateSetting(settings.postingCookie.key) {
+      val value = prefs.getString("preference_4chan_captcha_cookie", "")
+      if (value.isBlank() || value == settings.postingCookie.default?.value) {
+        return@tryMigrateSetting
+      }
+
+      Logger.debug(TAG) {
+        "migrateStringSetting() preference_4chan_captcha_cookie -> ${settings.postingCookie.key.raw}, " +
+          "value: ${value.asFormattedToken()}"
+      }
+
+      settings.postingCookie.writeBlocking(
+        KurobaCookie(
+          value = value,
+          expiration = KurobaCookie.Expiration.Time(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(180))
+        )
+      )
+    }
+
     migrateStringSetting(prefs, "preference_pass_token", settings.passToken)
     migrateStringSetting(prefs, "preference_pass_pin", settings.passPin)
     migrateStringSetting(prefs, "preference_pass_id", settings.passId)
     migrateStringSetting(prefs, "preference_flag_chan4", settings.lastUsedFlagPerBoard)
-    migrateStringSetting(prefs, "preference_4chan_captcha_cookie", settings.captchaCookie)
+
     migrateBooleanSetting(prefs, "chan_4chan_post_acknowledged", settings.checkPostAcknowledged)
 
     settings.captchaType.writeBlocking(Chan4.CaptchaType.CHAN4_CAPTCHA)
@@ -261,7 +282,7 @@ class KurobaSettingsMigrationHelper(
     site: Site,
     prefs: SharedPreferencesSettingProvider
   ) {
-    migrateStringSetting(prefs, "concurrent_download_chunk_count", site.commonSettings.siteDomainSetting)
+    migrateStringSetting(prefs, "site_domain", site.commonSettings.siteDomainSetting)
     migrateBooleanSetting(prefs, "ignore_reply_cooldowns", site.commonSettings.ignoreReplyCooldowns)
     migrateLongSetting(prefs, "last_site_boards_refresh_time", site.commonSettings.lastSiteBoardsRefreshTime)
 

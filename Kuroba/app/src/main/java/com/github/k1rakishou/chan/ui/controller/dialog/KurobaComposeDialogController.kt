@@ -290,7 +290,7 @@ class KurobaComposeDialogController(
     val neutralButton: DialogButton? = null,
     val positiveButton: PositiveDialogButton
   ) {
-    suspend fun awaitInputResult(): InputResult? {
+    suspend fun awaitInputResult(): InputResult {
       check(inputs.isNotEmpty()) { "You have to add at least one input before using this function" }
       check(inputs.size == 1) { "To wait for multiple inputs use awaitInputResults()" }
 
@@ -300,13 +300,13 @@ class KurobaComposeDialogController(
             return@map input.result.await()
           } catch (error: Throwable) {
             Logger.error(TAG, error) { "Failed to await for input result defaulting to null" }
-            return@map null
+            return@map InputResult.NoResult
           }
         }
         .first()
     }
 
-    suspend fun awaitInputResults(): List<InputResult?> {
+    suspend fun awaitInputResults(): List<InputResult> {
       check(inputs.isNotEmpty()) { "You have to add at least one input before using this function" }
       check(inputs.size > 1) { "To wait for a single input use awaitInputResult()" }
 
@@ -315,7 +315,7 @@ class KurobaComposeDialogController(
           return@mapIndexed input.result.await()
         } catch (error: Throwable) {
           Logger.error(TAG, error) { "Failed to await for input result at index ${index} defaulting to null" }
-          return@mapIndexed null
+          return@mapIndexed InputResult.NoResult
         }
       }
     }
@@ -344,6 +344,13 @@ class KurobaComposeDialogController(
   }
 
   sealed interface InputResult {
+    fun valueOrNull(): String? {
+      return when (this) {
+        NoResult -> null
+        is Result -> value
+      }
+    }
+
     data object NoResult : InputResult
     data class Result(val value: String) : InputResult
   }

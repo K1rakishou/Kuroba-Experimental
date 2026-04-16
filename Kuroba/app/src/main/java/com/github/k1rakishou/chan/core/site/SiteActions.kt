@@ -28,8 +28,8 @@ interface SiteActions {
   suspend fun pages(board: ChanBoard): JsonReaderRequest.JsonReaderResponse<BoardPages>?
   suspend fun post(replyChanDescriptor: ChanDescriptor, replyMode: ReplyMode): Flow<PostResult>
   suspend fun delete(deleteRequest: DeleteRequest): DeleteResult
-  suspend fun <T : AbstractLoginRequest> login(loginRequest: T): LoginResult
   fun postAuthenticate(): SiteAuthentication
+  suspend fun <T : AbstractLoginRequest> login(loginRequest: T): LoginResult
   fun logout()
   fun isLoggedIn(): Boolean
   fun loginDetails(): AbstractLoginRequest?
@@ -63,25 +63,25 @@ interface SiteActions {
   }
 
   sealed class PostResult {
-    class PostComplete(val replyResponse: ReplyResponse) : PostResult()
-    class UploadingProgress(val fileIndex: Int, val totalFiles: Int, val percent: Int) : PostResult()
-    class PostError(val error: Throwable) : PostResult()
+    data class PostComplete(val replyResponse: ReplyResponse) : PostResult()
+    data class UploadingProgress(val fileIndex: Int, val totalFiles: Int, val percent: Int) : PostResult()
+    data class PostError(val error: Throwable) : PostResult()
   }
 
   sealed class DeleteResult {
-    class DeleteComplete(val deleteResponse: DeleteResponse) : DeleteResult()
-    class DeleteError(val error: Throwable) : DeleteResult()
+    data class DeleteComplete(val deleteResponse: DeleteResponse) : DeleteResult()
+    data class DeleteError(val error: Throwable) : DeleteResult()
   }
 
   sealed class LoginResult {
-    class LoginComplete(val loginResponse: AbstractLoginResponse) : LoginResult()
-    class LoginError(val errorMessage: String) : LoginResult()
+    data class LoginComplete(val loginResponse: AbstractLoginResponse) : LoginResult()
+    data class LoginError(val errorMessage: String) : LoginResult()
   }
 
   sealed class GetPasscodeInfoResult {
     data object NotLoggedIn : GetPasscodeInfoResult()
     data object NotAllowedToRefreshFromNetwork : GetPasscodeInfoResult()
-    class Success(val postingLimitationsInfo: PasscodePostingLimitationsInfo) : GetPasscodeInfoResult()
-    class Failure(val error: Throwable) : GetPasscodeInfoResult()
+    data class Success(val postingLimitationsInfo: PasscodePostingLimitationsInfo) : GetPasscodeInfoResult()
+    data class Failure(val error: Throwable) : GetPasscodeInfoResult()
   }
 }

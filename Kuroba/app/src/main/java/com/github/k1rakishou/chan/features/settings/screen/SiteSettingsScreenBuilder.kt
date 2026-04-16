@@ -9,19 +9,29 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteConfiguration
 import com.github.k1rakishou.chan.core.site.settings.SiteSetting
+import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
 import com.github.k1rakishou.chan.features.login.LoginController
 import com.github.k1rakishou.chan.features.settings.SettingsScreen
 import com.github.k1rakishou.chan.features.settings.setting.SettingUiElement
 import com.github.k1rakishou.chan.features.setup.boards.composing.CompositeCatalogsSetupController
 import com.github.k1rakishou.chan.features.setup.boards.reorder.BoardsReorderController
+import com.github.k1rakishou.chan.features.webview.WebViewTaskController
+import com.github.k1rakishou.chan.features.webview.WebViewTaskResult
+import com.github.k1rakishou.chan.features.webview.task.AbstractWebViewTask
+import com.github.k1rakishou.chan.features.webview.task.Chan4EmailVerificationWebViewTask
+import com.github.k1rakishou.chan.ui.controller.dialog.KurobaComposeDialogController
 import com.github.k1rakishou.chan.ui.helper.AppResources
 import com.github.k1rakishou.common.KurobaCookie
+import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
+import kotlinx.coroutines.CompletableDeferred
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
 class SiteSettingsScreenBuilder(
   private val appResources: AppResources,
+  private val dialogFactory: DialogFactory,
   private val siteManager: SiteManager,
   private val boardManager: BoardManager,
   private val compositeCatalogManager: CompositeCatalogManager
@@ -54,21 +64,31 @@ class SiteSettingsScreenBuilder(
   ) {
     addGroup(
       key = "general_${siteDescriptor.siteName}",
-      title = "General settings"
+      title = appResources.string(R.string.site_settings_general_settings)
     ) {
       addSetting(
         SettingUiElement.Link(
           composeKey = "setup_boards",
-          title = { "Set up boards" },
+          title = { appResources.string(R.string.site_settings_general_settings_setup_boards) },
           description = {
             val isCatalogCompositionSite = siteManager.bySiteDescriptorAndActive(siteDescriptor)
               ?.hasSiteFeature(SiteConfiguration.SiteFeature.CatalogComposition) == true
 
             buildString {
               if (isCatalogCompositionSite) {
-                appendLine("${compositeCatalogManager.count()} composite catalog(s) created")
+                val text = appResources.string(
+                  R.string.site_settings_general_settings_setup_composite_catalogs_description,
+                  compositeCatalogManager.count()
+                )
+
+                appendLine(text)
               } else {
-                appendLine("${boardManager.activeBoardsCount(siteDescriptor)} board(s) added")
+                val text = appResources.string(
+                  R.string.site_settings_general_settings_setup_boards_description,
+                  boardManager.activeBoardsCount(siteDescriptor)
+                )
+
+                appendLine(text)
               }
             }
           },
@@ -97,7 +117,7 @@ class SiteSettingsScreenBuilder(
   ) {
     addGroup(
       key = "site_specific",
-      title = "Site specific settings"
+      title = appResources.string(R.string.site_settings_site_specific)
     ) {
       site.settingsForUi.forEach { siteSetting ->
         when (siteSetting) {
@@ -180,18 +200,18 @@ class SiteSettingsScreenBuilder(
   ) {
     addGroup(
       key = "authentication",
-      title = "Authentication"
+      title = appResources.string(R.string.site_settings_authentication)
     ) {
       addSetting(
         SettingUiElement.Link(
           composeKey = "login",
-          title = { "Login" },
+          title = { appResources.string(R.string.site_settings_authentication_passcode_login) },
           description = {
             buildString {
               if (site.actions.isLoggedIn()) {
-                appendLine("On")
+                appendLine(appResources.string(R.string.site_settings_authentication_passcode_logged_in))
               } else {
-                appendLine("Off")
+                appendLine(appResources.string(R.string.site_settings_authentication_passcode_logged_out))
               }
             }
           },
@@ -200,6 +220,144 @@ class SiteSettingsScreenBuilder(
           }
         )
       )
+
+      if (site is Chan4) {
+        addSetting(
+          SettingUiElement.Link(
+            composeKey = "email_verification",
+            title = { appResources.string(R.string.site_settings_authentication_email_verification) },
+            description = {
+              buildString {
+                if (site.actions.emailVerified()) {
+                  appendLine(appResources.string(R.string.site_settings_authentication_email_verification_verified))
+                } else {
+                  appendLine(appResources.string(R.string.site_settings_authentication_email_verification_not_verified))
+                }
+              }
+            },
+            callback = { verifyEmail(context, siteActions) }
+          )
+        )
+      }
+    }
+  }
+
+  private suspend fun verifyEmail(
+    context: Context,
+    siteActions: SettingActions
+  ) {
+    val (enteredValue, verificationUrl) = run {
+      val inputParams = KurobaComposeDialogController.dialogWithInput(
+        title = KurobaComposeDialogController.Text.String(
+          value = appResources.string(R.string.site_settings_authentication_email_verification_verify_dialog_title)
+        ),
+        input = KurobaComposeDialogController.Input.String(
+          hint = KurobaComposeDialogController.Text.String(
+            value = appResources.string(
+              R.string.site_settings_authentication_email_verification_verify_dialog_input_hint
+            )
+          )
+        )
+      )
+
+      dialogFactory.showDialog(
+        context = context,
+        params = inputParams
+      )
+
+      val enteredValue = inputParams.awaitInputResult()
+        .valueOrNull()
+
+      val verificationUrl = enteredValue
+        ?.toHttpUrlOrNull()
+
+      if (verificationUrl != null) {
+        if (verificationUrl.host != "sys.4chan.org") {
+          return@run enteredValue to null
+        }
+
+        if (verificationUrl.queryParameter("action") != "verify") {
+          return@run enteredValue to null
+        }
+
+        if (verificationUrl.queryParameter("tkn").isNullOrBlank()) {
+          return@run enteredValue to null
+        }
+      }
+
+      return@run enteredValue to verificationUrl
+    }
+
+    if (verificationUrl == null) {
+      dialogFactory.showDialog(
+        context = context,
+        params = KurobaComposeDialogController.informationDialog(
+          title = KurobaComposeDialogController.Text.String(
+            appResources.string(R.string.site_settings_authentication_email_verification_error_dialog_title)
+          ),
+          description = KurobaComposeDialogController.Text.String(
+            appResources.string(
+              R.string.site_settings_authentication_email_verification_error_dialog_description,
+              enteredValue ?: "<null>"
+            )
+          )
+        )
+      )
+
+      return
+    }
+
+    val waiter = CompletableDeferred<WebViewTaskResult>()
+
+    siteActions.presentController(
+      WebViewTaskController(
+        context = context,
+        webViewTask = Chan4EmailVerificationWebViewTask(
+          headerTitleText = appResources.string(R.string.site_settings_authentication_email_verification_webview_title),
+          loadable = AbstractWebViewTask.Loadable.Url(verificationUrl),
+          invokerWaiter = waiter
+        )
+      )
+    )
+
+    when (val result = waiter.await()) {
+      WebViewTaskResult.Canceled -> {
+        dialogFactory.showDialog(
+          context = context,
+          params = KurobaComposeDialogController.informationDialog(
+            title = KurobaComposeDialogController.Text.String(
+              appResources.string(R.string.site_settings_authentication_email_verification_webview_error_dialog_title)
+            ),
+            description = KurobaComposeDialogController.Text.String(
+              appResources.string(
+                R.string.site_settings_authentication_email_verification_webview_error_canceled_by_user
+              )
+            )
+          )
+        )
+      }
+      is WebViewTaskResult.Error -> {
+        dialogFactory.showDialog(
+          context = context,
+          params = KurobaComposeDialogController.informationDialog(
+            title = KurobaComposeDialogController.Text.String(
+              appResources.string(R.string.site_settings_authentication_email_verification_webview_error_dialog_title)
+            ),
+            description = KurobaComposeDialogController.Text.String(
+              appResources.string(
+                R.string.site_settings_authentication_email_verification_webview_error_unknown,
+                result.exception.errorMessageOrClassName()
+              )
+            )
+          )
+        )
+      }
+
+      is WebViewTaskResult.Result -> {
+        siteActions.showToast(
+          appResources.string(R.string.site_settings_authentication_email_verification_webview_success)
+        )
+      }
     }
   }
 
@@ -218,16 +376,16 @@ class SiteSettingsScreenBuilder(
 
       val value = kurobaCookie.value
       if (value.isNotNullNorBlank()) {
-        appendLine("Value: ${value}")
+        appendLine(appResources.string(R.string.cookie_captcha_input_controller_cookie_value, value))
       }
 
       when (kurobaCookie.expiration) {
         KurobaCookie.Expiration.Never -> {
-          appendLine(appResources.string(R.string.cookie_captcha_input_controller_expires_never))
+          appendLine(appResources.string(R.string.site_settings_cookie_expires_never))
         }
 
         KurobaCookie.Expiration.Session -> {
-          appendLine(appResources.string(R.string.cookie_captcha_input_controller_expires_end_of_session))
+          appendLine(appResources.string(R.string.site_settings_cookie_expires_end_of_session))
         }
 
         is KurobaCookie.Expiration.Time -> {
@@ -235,7 +393,7 @@ class SiteSettingsScreenBuilder(
           if (expirationDateFormatted.isNotNullNorBlank()) {
             appendLine(
               appResources.string(
-                R.string.cookie_captcha_input_controller_expires_at,
+                R.string.site_settings_cookie_expires_at,
                 expirationDateFormatted
               )
             )
@@ -245,7 +403,7 @@ class SiteSettingsScreenBuilder(
 
       val path = kurobaCookie.path
       if (path.isNotNullNorBlank()) {
-        appendLine("Path: ${path}")
+        appendLine(appResources.string(R.string.cookie_captcha_input_controller_cookie_path, path))
       }
     }
   }

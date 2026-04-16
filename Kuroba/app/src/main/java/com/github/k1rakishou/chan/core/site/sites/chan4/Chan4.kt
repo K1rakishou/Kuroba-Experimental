@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.core.site.sites.chan4
 
-import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.SiteBase
 import com.github.k1rakishou.chan.core.site.SiteConfiguration
 import com.github.k1rakishou.chan.core.site.SiteEndpoints
@@ -46,7 +45,7 @@ class Chan4 : SiteBase(
     )
   }
 
-  override val actions: SiteActions by lazy { Chan4Actions(this) }
+  override val actions: Chan4Actions by lazy { Chan4Actions(this) }
   override val settings by lazy { Chan4SiteSettings(descriptor, dependencies) }
 
   override val settingsForUi by lazy {
@@ -59,10 +58,17 @@ class Chan4 : SiteBase(
       setting = chan4Settings.captchaType
     )
 
-    settings += SiteSetting.SiteStringSetting(
-      settingName = "4chan captcha cookie",
+    settings += SiteSetting.SiteCookieSetting(
+      settingName = "4chan posting cookie",
       settingDescription = null,
-      setting = chan4Settings.captchaCookie
+      setting = chan4Settings.postingCookie
+    )
+
+
+    settings += SiteSetting.SiteCookieSetting(
+      settingName = "Email verification cookie",
+      settingDescription = null,
+      setting = chan4Settings.emailVerificationCookie
     )
 
     return@lazy settings
@@ -108,7 +114,7 @@ class Chan4 : SiteBase(
 
   companion object {
     const val SITE_NAME = "4chan"
-    const val CAPTCHA_COOKIE_KEY = "4chan_pass"
+    const val POSTING_COOKIE = "4chan_pass"
 
     val SITE_DESCRIPTOR = SiteDescriptor.create(SITE_NAME)
   }

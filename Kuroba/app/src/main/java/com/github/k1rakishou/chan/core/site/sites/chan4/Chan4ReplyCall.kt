@@ -14,7 +14,9 @@ import com.github.k1rakishou.chan.features.reply.data.ReplyFileMeta
 import com.github.k1rakishou.chan.ui.captcha.CaptchaSolution
 import com.github.k1rakishou.chan.utils.WebViewLink
 import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.common.KurobaCookie
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.StringUtils.asFormattedToken
 import com.github.k1rakishou.common.StringUtils.formatToken
 import com.github.k1rakishou.common.domainOrHost
 import com.github.k1rakishou.common.fixUrlOrNull
@@ -320,11 +322,11 @@ class Chan4ReplyCall(
 
     val wholeCookieHeader = headers
       .filter { (key, _) -> key.contains(SET_COOKIE_HEADER, ignoreCase = true) }
-      .firstOrNull { (_, value) -> value.startsWith(CAPTCHA_COOKIE_PREFIX) }
+      .firstOrNull { (_, value) -> value.startsWith("${Chan4.POSTING_COOKIE}=") }
       ?.second
 
     val newCookie = wholeCookieHeader
-      ?.substringAfter(CAPTCHA_COOKIE_PREFIX)
+      ?.substringAfter("${Chan4.POSTING_COOKIE}=")
       ?.substringBefore(';')
 
     val headersDebugString = headers.joinToString(separator = ";") { (key, value) -> "${key}=${value}" }
@@ -334,15 +336,26 @@ class Chan4ReplyCall(
               "wholeCookieHeader='${wholeCookieHeader}', " +
               "headersDebugString='${headersDebugString}'")
 
-    val oldCookie = chan4SiteSettings.captchaCookie.read()
-    Logger.d(TAG, "oldCookie='${formatToken(oldCookie)}', newCookie='${formatToken(newCookie)}'")
-
-    if (newCookie.isNullOrEmpty()) {
-      Logger.d(TAG, "setChan4CaptchaHeader() failed to parse 4chan_pass cookie (${formatToken(newCookie)})")
+    val newKurobaCookie = KurobaCookie.fromRawCookie(newCookie ?: "", Chan4.POSTING_COOKIE)
+    if (newKurobaCookie == null) {
+      Logger.d(TAG, "setChan4CaptchaHeader() failed to parse 4chan_pass cookie (${newKurobaCookie})")
       return
     }
 
-    chan4SiteSettings.captchaCookie.write(newCookie)
+    val oldEmailVerificationCookie = chan4SiteSettings.emailVerificationCookie.read()
+    if (oldEmailVerificationCookie != null) {
+      Logger.debug(TAG) {
+        "Updating emailVerificationCookie, oldEmailVerificationCookie='${oldEmailVerificationCookie}', " +
+          "newKurobaCookie='${newKurobaCookie}'"
+      }
+      chan4SiteSettings.emailVerificationCookie.write(newKurobaCookie)
+    } else {
+      val oldPostingCookie = chan4SiteSettings.postingCookie.read()
+      Logger.debug(TAG) {
+        "Updating postingCookie, oldPostingCookie='${oldPostingCookie}', newKurobaCookie='${newKurobaCookie}'"
+      }
+      chan4SiteSettings.postingCookie.write(newKurobaCookie)
+    }
   }
 
   private fun createRateLimitInfo(rateLimitMatcher: Matcher): ReplyResponse.RateLimitInfo {
@@ -418,15 +431,38 @@ class Chan4ReplyCall(
       val rememberCaptchaCookies = chan4CaptchaSettings.rememberCaptchaCookies
 
       if (rememberCaptchaCookies) {
-        val captchaCookie = chan4SiteSettings.captchaCookie.read()
-        if (captchaCookie.isNotBlank()) {
-          Logger.d(TAG, "readCookies() domainOrHost: ${domainOrHost}, captchaCookie: ${formatToken(captchaCookie)}")
+        val emailVerificationCookie = chan4SiteSettings.emailVerificationCookie.read()
+        if (
+          emailVerificationCookie != null &&
+          emailVerificationCookie.value.isNotNullNorBlank() &&
+          !emailVerificationCookie.expired(System.currentTimeMillis())
+        ) {
+          val emailVerificationCookieValue = emailVerificationCookie.value
+
+          Logger.debug(TAG) {
+            "readCookies() domainOrHost: ${domainOrHost}, " +
+              "emailVerificationCookie: ${emailVerificationCookieValue.asFormattedToken()}"
+          }
 
           if (isNotEmpty()) {
             append("; ")
           }
 
-          append("${Chan4.CAPTCHA_COOKIE_KEY}=${captchaCookie}")
+          append("${Chan4.POSTING_COOKIE}=${emailVerificationCookieValue}")
+        } else {
+          val postingCookie = chan4SiteSettings.postingCookie.read()?.value
+          if (postingCookie.isNotNullNorBlank()) {
+            Logger.debug(TAG) {
+              "readCookies() domainOrHost: ${domainOrHost}, " +
+                "postingCookie: ${postingCookie.asFormattedToken()}"
+            }
+
+            if (isNotEmpty()) {
+              append("; ")
+            }
+
+            append("${Chan4.POSTING_COOKIE}=${postingCookie}")
+          }
         }
       }
     }
@@ -442,7 +478,6 @@ class Chan4ReplyCall(
     private const val MISTYPED_CAPTCHA = "Error: You seem to have mistyped the CAPTCHA"
 
     private const val SET_COOKIE_HEADER = "set-cookie"
-    private const val CAPTCHA_COOKIE_PREFIX = "4chan_pass="
 
     private val THREAD_NO_PATTERN = Pattern.compile("<!-- thread:([0-9]+),no:([0-9]+) -->")
 

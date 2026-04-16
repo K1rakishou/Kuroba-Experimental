@@ -187,10 +187,11 @@ sealed class KurobaSettingKey(val raw: String) {
       data class PassPin(val siteName: String) : Chan4(siteName, "PassPin")
       data class PassId(val siteName: String) : Chan4(siteName, "PassId")
       data class Flag(val siteName: String) : Chan4(siteName, "Flag")
-      data class CaptchaCookie(val siteName: String) : Chan4(siteName, "CaptchaCookie")
+      data class PostingCookie(val siteName: String) : Chan4(siteName, "PostingCookie")
       data class CheckPostAcknowledged(val siteName: String) : Chan4(siteName, "CheckPostAcknowledged")
       data class CaptchaType(val siteName: String) : Chan4(siteName, "CaptchaType")
       data class CaptchaSettings(val siteName: String) : Chan4(siteName, "CaptchaSettings")
+      data class EmailVerificationCookie(val siteName: String) : Chan4(siteName, "EmailVerificationCookie")
     }
 
     sealed class Dvach(siteName: String, key: String) : Site(siteName, key) {

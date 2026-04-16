@@ -1,5 +1,6 @@
 package com.github.k1rakishou.common
 
+import com.github.k1rakishou.common.StringUtils.asFormattedToken
 import com.github.k1rakishou.common.StringUtils.splitOnce
 import com.github.k1rakishou.core_logger.Logger
 import com.squareup.moshi.FromJson
@@ -75,7 +76,7 @@ data class KurobaCookie(
       is Expiration.Time -> HttpDateFormatter.print(expiration.expirationTimeMillis)
     }
 
-    return "KurobaCookie(value: ${value}, expiration: ${expirationString})"
+    return "KurobaCookie(value: ${value.asFormattedToken()}, expiration: ${expirationString})"
   }
 
   companion object {

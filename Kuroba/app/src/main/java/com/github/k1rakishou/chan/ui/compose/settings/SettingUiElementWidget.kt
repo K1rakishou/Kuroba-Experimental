@@ -672,7 +672,7 @@ private suspend fun showInputDialog(
   title: String,
   initialValue: String,
   dialogInputType: DialogFactory.DialogInputType
-): Pair<Boolean, KurobaComposeDialogController.InputResult?> {
+): Pair<Boolean, KurobaComposeDialogController.InputResult> {
   val input = when (dialogInputType) {
     DialogFactory.DialogInputType.String -> {
       KurobaComposeDialogController.Input.String(initialValue = initialValue)

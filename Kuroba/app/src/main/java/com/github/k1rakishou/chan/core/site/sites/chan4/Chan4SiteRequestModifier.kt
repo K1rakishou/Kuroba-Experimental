@@ -4,7 +4,7 @@ import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteBase
 import com.github.k1rakishou.chan.core.site.SiteRequestModifier
 import com.github.k1rakishou.chan.core.site.http.HttpCall
-import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4.Companion.CAPTCHA_COOKIE_KEY
+import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4.Companion.POSTING_COOKIE
 import com.github.k1rakishou.common.CookieBuilder
 import com.github.k1rakishou.common.StringUtils.formatToken
 import com.github.k1rakishou.common.addOrReplaceCookieHeader
@@ -45,7 +45,7 @@ class Chan4SiteRequestModifier(
 
     val captchaCookie = get4chanPassCookie()
     if (captchaCookie.isNotNullNorBlank()) {
-      cookieBuilder.addOrReplace(CAPTCHA_COOKIE_KEY, captchaCookie)
+      cookieBuilder.addOrReplace(POSTING_COOKIE, captchaCookie)
     }
 
     val cloudFlareCookies = getCloudFlareCookies(urlToOpen)
@@ -88,22 +88,22 @@ class Chan4SiteRequestModifier(
 
   private fun addChan4CookieHeader(requestBuilder: Request.Builder) {
     val url = requestBuilder.build().url
-    val captchaCookie = get4chanPassCookie()
 
-    if (captchaCookie.isNullOrEmpty()) {
+    val postingCookie = get4chanPassCookie()
+    if (postingCookie.isNullOrEmpty()) {
       Logger.error(TAG) {
-        "addChan4CookieHeader() ${CAPTCHA_COOKIE_KEY} for url '${url}' " +
-          "is null or empty captchaCookie: '${formatToken(captchaCookie)}'"
+        "addChan4CookieHeader() ${POSTING_COOKIE} for url '${url}' " +
+          "is null or empty captchaCookie: '${formatToken(postingCookie)}'"
       }
 
       return
     }
 
     Logger.debug(TAG) {
-      "addChan4CookieHeader(), url: '${url}', ${CAPTCHA_COOKIE_KEY}: '${formatToken(captchaCookie)}'"
+      "addChan4CookieHeader(), url: '${url}', ${POSTING_COOKIE}: '${formatToken(postingCookie)}'"
     }
 
-    requestBuilder.addOrReplaceCookieHeader("$CAPTCHA_COOKIE_KEY=${captchaCookie}")
+    requestBuilder.addOrReplaceCookieHeader("$POSTING_COOKIE=${postingCookie}")
   }
 
   private fun get4chanPassCookie(): String? {
@@ -113,7 +113,18 @@ class Chan4SiteRequestModifier(
       return null
     }
 
-    return chan4SiteSettings.captchaCookie.readBlocking()
+    val emailVerificationCookie = chan4SiteSettings.emailVerificationCookie.readBlocking()
+    if (
+      emailVerificationCookie != null &&
+      emailVerificationCookie.value.isNotNullNorBlank() &&
+      !emailVerificationCookie.expired(System.currentTimeMillis())
+    ) {
+      Logger.debug(TAG) { "Using email verification cookie" }
+      return emailVerificationCookie.value
+    }
+
+    Logger.debug(TAG) { "Using posting cookie" }
+    return chan4SiteSettings.postingCookie.readBlocking()?.value
   }
 
   companion object {

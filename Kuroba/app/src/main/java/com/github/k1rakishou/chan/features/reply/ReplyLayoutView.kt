@@ -227,8 +227,7 @@ class ReplyLayoutView @JvmOverloads constructor(
 
     return when (val result = params.awaitInputResult()) {
       is KurobaComposeDialogController.InputResult.Result -> result.value
-      KurobaComposeDialogController.InputResult.NoResult,
-      null -> null
+      KurobaComposeDialogController.InputResult.NoResult -> null
     }
   }
 

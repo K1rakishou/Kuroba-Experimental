@@ -7,6 +7,7 @@ import com.github.k1rakishou.v2.KurobaInitialSettingsState
 import com.github.k1rakishou.v2.KurobaSettingInfo
 import com.github.k1rakishou.v2.KurobaSettingKey
 import com.github.k1rakishou.v2.settings.KurobaBooleanSetting
+import com.github.k1rakishou.v2.settings.KurobaCookieSetting
 import com.github.k1rakishou.v2.settings.KurobaEnumSetting
 import com.github.k1rakishou.v2.settings.KurobaMoshiSetting
 import com.github.k1rakishou.v2.settings.KurobaStringSetting
@@ -54,12 +55,13 @@ class Chan4SiteSettings(
     )
   }
 
-  val captchaCookie by lazy {
-    KurobaStringSetting(
+  // 4chan_pass cookie
+  val postingCookie by lazy {
+    KurobaCookieSetting(
       database = dependencies.settingsDatabase,
       kurobaSettingInfo = this,
-      key = KurobaSettingKey.Site.Chan4.CaptchaCookie(siteDescriptor.siteName),
-      default = ""
+      moshi = dependencies.moshi,
+      key = KurobaSettingKey.Site.Chan4.PostingCookie(siteDescriptor.siteName)
     )
   }
 
@@ -90,6 +92,15 @@ class Chan4SiteSettings(
       clazz = Chan4CaptchaSettings::class.java,
       key = KurobaSettingKey.Site.Chan4.CaptchaSettings(siteDescriptor.siteName),
       default = Chan4CaptchaSettings()
+    )
+  }
+
+  val emailVerificationCookie by lazy {
+    KurobaCookieSetting(
+      database = dependencies.settingsDatabase,
+      kurobaSettingInfo = this,
+      moshi = dependencies.moshi,
+      key = KurobaSettingKey.Site.Chan4.EmailVerificationCookie(siteDescriptor.siteName),
     )
   }
 }

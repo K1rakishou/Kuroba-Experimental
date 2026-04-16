@@ -343,6 +343,7 @@ class ActivityModule {
 
     val siteSettingsScreenBuilder = SiteSettingsScreenBuilder(
       appResources = appResources,
+      dialogFactory = dialogFactory,
       siteManager = siteManager,
       boardManager = boardManager,
       compositeCatalogManager = compositeCatalogManager

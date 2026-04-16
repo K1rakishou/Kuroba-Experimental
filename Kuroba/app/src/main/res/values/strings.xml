@@ -988,11 +988,31 @@ If you ever log out or if the passcode expires you will have to change reply mod
 
     <string name="site_settings_not_site_found">No site found with siteDescriptor: %1$s</string>
     <string name="site_settings_site_is_not_active">Site %1$s is not active. It\'s either completely disabled or you need to activate it first</string>
-
     <string name="site_settings_experimental_warning">Warning!</string>
     <string name="site_settings_experimental_warning_prefetch">May become the reason of high battery/network traffic/disk consumption</string>
     <string name="site_settings_experimental_warning_high_res_cells">May become the reason of freezes while scrolling catalog/thread/album on old devices</string>
     <string name="site_settings_experimental_warning_custom_user_agent">May break some anti-bot checks, like CloudFlare/spur.us</string>
+    <string name="site_settings_general_settings">General settings</string>
+    <string name="site_settings_general_settings_setup_boards">Set up boards</string>
+    <string name="site_settings_general_settings_setup_boards_description">%1$d board(s) added</string>
+    <string name="site_settings_general_settings_setup_composite_catalogs_description">%1$d composite catalog(s) created</string>
+    <string name="site_settings_site_specific">Site specific settings</string>
+    <string name="site_settings_authentication">Authentication</string>
+    <string name="site_settings_authentication_passcode_login">Passcode login</string>
+    <string name="site_settings_authentication_passcode_logged_in">Logged in</string>
+    <string name="site_settings_authentication_passcode_logged_out">Logged out</string>
+    <string name="site_settings_authentication_email_verification">Email verification</string>
+    <string name="site_settings_authentication_email_verification_verified">Email verified</string>
+    <string name="site_settings_authentication_email_verification_not_verified">Email not verified</string>
+    <string name="site_settings_authentication_email_verification_verify_dialog_title">Enter 4chan email verification link that was sent to your email from 4chan</string>
+    <string name="site_settings_authentication_email_verification_verify_dialog_input_hint">Format: https://sys.4chan.org/signin?action=verify&amp;tkn=1234567890abcdef1234567890abcdef</string>
+    <string name="site_settings_authentication_email_verification_error_dialog_title">Email verification error!</string>
+    <string name="site_settings_authentication_email_verification_error_dialog_description">Canceled by user or invalid link or unexpected error happened (entered: \'%1$s\')</string>
+    <string name="site_settings_authentication_email_verification_webview_title">Email verification</string>
+    <string name="site_settings_authentication_email_verification_webview_error_dialog_title">Email verification error!</string>
+    <string name="site_settings_authentication_email_verification_webview_error_canceled_by_user">Email verification canceled by user</string>
+    <string name="site_settings_authentication_email_verification_webview_error_unknown">Email verification failure! Error: %1$s</string>
+    <string name="site_settings_authentication_email_verification_webview_success">Email verification success!</string>
 
     <string name="thread_presenter_no_archives_found_to_open_thread">No archives found to open %1$s. Check that you have enabled archives to open this thread. It is also possible that no archives support this site/board.</string>
     <string name="thread_presenter_no_posts_of_the_same_poster_found">No posts of the same poster found</string>
@@ -1608,16 +1628,24 @@ Actual error: \'%1$s\'</string>
     <string name="gesture_exclusion_zone_dialog_title">Android 10 gesture zone blockers</string>
     <string name="gesture_exclusion_zone_dialog_description">On Android 10 and above, when gesture system navigation is enabled (in Android settings), in order to avoid gesture conflicts with some UI elements (right now only enabled when Reply layout is opened), special gesture exclusion zones are used that block the system gestures based on where the last touch position was. When hitting such zone, it will be highlighted for a short period of time so you can visually see it and adjust your next touch position depending on whether you actually want to trigger system navigation gesture or not. If you do want to perform a system navigation gesture then just do it outside of the zone. Due to how the API for gesture exclusion zones is designed the first touch will always trigger the system navigation gesture. If you touch the same place again (or within a certain vertical distance from the last touch) the system navigation gesture will be ignored. Not the best solution, but such is the API Google has provided. The previous implementation was removed because it wasn\'t very flexible since the zones were global for all screens.</string>
 
-    <string name="cookie_captcha_input_controller_lifetime_description">Cookie lifetime duration in minutes.\nUse negative value for a cookie that has no expiration, zero for a session cookie. Positive values are the cookie\'s actual lifetime in minutes.</string>
+    <string name="cookie_captcha_input_controller_lifetime_description">Cookie lifetime duration in minutes.\nUse negative value for a cookie that has no expiration, zero for a session cookie.\nPositive values are the cookie\'s actual lifetime in minutes.</string>
     <string name="cookie_captcha_input_controller_path_description">What url path the cookie is applied to</string>
     <string name="cookie_captcha_input_controller_value">Value</string>
     <string name="cookie_captcha_input_controller_path">Path</string>
-    <string name="cookie_captcha_input_controller_cookie_already_expired">Already expired: %1$s</string>
-    <string name="cookie_captcha_input_controller_expires_at">Expires: %1$s</string>
-    <string name="cookie_captcha_input_controller_expires_never">Expires: never</string>
-    <string name="cookie_captcha_input_controller_expires_end_of_session">Expires: end of session</string>
+    <string name="cookie_captcha_input_controller_cookie_already_expired">%1$s (Already expired)</string>
+    <string name="cookie_captcha_input_controller_invalid_value">Invalid value</string>
+    <string name="cookie_captcha_input_controller_current_expiration">Current expiration:</string>
+    <string name="cookie_captcha_input_controller_updated_expiration">Updated expiration:</string>
+    <string name="cookie_captcha_input_controller_expires_never">never</string>
+    <string name="cookie_captcha_input_controller_expires_end_of_session">end of session</string>
     <string name="cookie_captcha_input_controller_cookie_error_empty">Cookie value cannot be empty/blank</string>
     <string name="cookie_captcha_input_controller_cookie_error_invalid_lifetime">Invalid lifetime (cannot be converted into a number)</string>
+    <string name="cookie_captcha_input_controller_cookie_value">Value: %1$s</string>
+    <string name="cookie_captcha_input_controller_cookie_path">Path: %1$s</string>
+    <string name="cookie_captcha_input_controller_invalid_cookie_lifetime">Invalid cookie lifetime</string>
+    <string name="site_settings_cookie_expires_at">Expires: %1$s</string>
+    <string name="site_settings_cookie_expires_never">Expires: never</string>
+    <string name="site_settings_cookie_expires_end_of_session">Expires: end of session</string>
 
     <string name="add_boards_controller_toolbar_title">Select boards</string>
     <string name="add_boards_controller_no_boards">Site has no boards</string>
