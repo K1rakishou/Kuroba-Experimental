@@ -21,6 +21,7 @@ import com.github.k1rakishou.chan.ui.controller.base.Controller
 import com.github.k1rakishou.chan.ui.helper.AppResources
 import com.github.k1rakishou.chan.ui.settings.SettingNotification
 import com.github.k1rakishou.common.mutableListWithCap
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.v2.KurobaSettingKey
 import com.github.k1rakishou.v2.KurobaSettings
@@ -30,6 +31,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.parcelize.Parcelize
+import kotlin.time.measureTime
 
 @Stable
 class AppSettingsGraph(
@@ -405,13 +407,19 @@ class AppSettingsGraph(
     require(!_root.containsKey(key)) { "Already contains screen with key ${key}" }
 
     _root[key] = with(SettingsScreen(key, title)) {
-      builder(key)
+      val duration = measureTime { builder(key) }
+      Logger.debug(TAG) { "buildScreen(${key}) took ${duration}" }
+
       this
     }
   }
 
   private fun requireBuilder(screenKey: SettingsScreenKey): SettingsScreenBuilder {
     return requireNotNull(builders[screenKey]) { "Unknown screenKey: ${screenKey}" }
+  }
+
+  companion object {
+    private const val TAG = "AppSettingsGraph"
   }
 }
 

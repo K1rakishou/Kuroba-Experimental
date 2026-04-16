@@ -84,6 +84,11 @@ fun KurobaDefaultToolbarContent(
             chanTheme = chanTheme,
             scrollableTitle = scrollableTitle
           )
+        } else {
+          Spacer(
+            modifier = Modifier
+              .weight(1f)
+          )
         }
       }
       null -> {
