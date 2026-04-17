@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.ui.controller.dialog
 
 import android.content.Context
 import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -40,10 +41,12 @@ import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeTextField
 import com.github.k1rakishou.chan.ui.compose.consumeClicks
 import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
+import com.github.k1rakishou.chan.ui.compose.scaffold.FloatingListScaffoldBuilder
 import com.github.k1rakishou.chan.ui.controller.base.BaseFloatingComposeController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.ViewModelScope
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_themes.ChanTheme
 import kotlinx.coroutines.CompletableDeferred
 
 class KurobaComposeDialogController(
@@ -116,22 +119,7 @@ class KurobaComposeDialogController(
   @Composable
   private fun ContentInternal() {
     val chanTheme = LocalChanTheme.current
-
-    KurobaComposeText(
-      modifier = Modifier
-        .fillMaxWidth()
-        .padding(vertical = 8.dp),
-      text = params.title.titleText(),
-      maxLines = 4,
-      overflow = TextOverflow.Ellipsis,
-      fontSize = 20.ktu
-    )
-
-    if (params.description != null) {
-      SelectionContainer {
-        DialogDescription(params.description)
-      }
-    }
+    val scrollState = rememberScrollState()
 
     val inputValueStates: List<MutableState<TextFieldValue>> = remember {
       params.inputs.map { input ->
@@ -148,6 +136,108 @@ class KurobaComposeDialogController(
       }
     }
 
+    Box {
+      with(FloatingListScaffoldBuilder()) {
+        Content(
+          boxScope = this@Box,
+          scrollState = scrollState,
+          header = {
+            KurobaComposeText(
+              modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+              text = params.title.titleText(),
+              maxLines = 4,
+              overflow = TextOverflow.Ellipsis,
+              fontSize = 20.ktu
+            )
+          },
+          body = { paddingValues ->
+            Column(
+              modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()
+                .verticalScroll(scrollState)
+            ) {
+              Spacer(modifier = Modifier.height(paddingValues.calculateTopPadding()))
+
+              if (params.description != null) {
+                SelectionContainer {
+                  DialogDescription(params.description)
+                }
+              }
+
+              DialogInputs(chanTheme, inputValueStates)
+
+              Spacer(modifier = Modifier.height(paddingValues.calculateBottomPadding()))
+            }
+          },
+          footer = {
+            Row(
+              modifier = Modifier.fillMaxWidth()
+            ) {
+              if (params.neutralButton != null) {
+                KurobaComposeTextBarButton(
+                  modifier = Modifier.wrapContentSize(),
+                  onClick = {
+                    params.neutralButton.onClick?.invoke()
+                    stopPresenting()
+                  },
+                  text = stringResource(id = params.neutralButton.buttonText)
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+              }
+
+              Spacer(modifier = Modifier.weight(1f))
+
+              if (params.negativeButton != null) {
+                KurobaComposeTextBarButton(
+                  modifier = Modifier.wrapContentSize(),
+                  onClick = {
+                    params.negativeButton.onClick?.invoke()
+                    stopPresenting()
+                  },
+                  text = stringResource(id = params.negativeButton.buttonText)
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+              }
+
+              val buttonTextColor = if (params.positiveButton.isActionDangerous) {
+                chanTheme.accentColorCompose
+              } else {
+                null
+              }
+
+              KurobaComposeTextBarButton(
+                modifier = Modifier.wrapContentSize(),
+                onClick = {
+                  inputValueStates.forEachIndexed { index, mutableState ->
+                    val result = params.inputs[index].result
+                    if (!result.isCompleted) {
+                      result.complete(InputResult.Result(mutableState.value.text))
+                    }
+                  }
+
+                  params.positiveButton.onClick?.invoke()
+                  pop()
+                },
+                customTextColor = buttonTextColor,
+                text = stringResource(id = params.positiveButton.buttonText)
+              )
+            }
+          }
+        )
+      }
+    }
+  }
+
+  @Composable
+  private fun DialogInputs(
+    chanTheme: ChanTheme,
+    inputValueStates: List<MutableState<TextFieldValue>>
+  ) {
     params.inputs.forEachIndexed { index, input ->
       key(index) {
         val inputValueState = inputValueStates[index]
@@ -192,61 +282,6 @@ class KurobaComposeDialogController(
     }
 
     Spacer(modifier = Modifier.height(8.dp))
-
-    Row(
-      modifier = Modifier.fillMaxWidth()
-    ) {
-      if (params.neutralButton != null) {
-        KurobaComposeTextBarButton(
-          modifier = Modifier.wrapContentSize(),
-          onClick = {
-            params.neutralButton.onClick?.invoke()
-            stopPresenting()
-          },
-          text = stringResource(id = params.neutralButton.buttonText)
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-      }
-
-      Spacer(modifier = Modifier.weight(1f))
-
-      if (params.negativeButton != null) {
-        KurobaComposeTextBarButton(
-          modifier = Modifier.wrapContentSize(),
-          onClick = {
-            params.negativeButton.onClick?.invoke()
-            stopPresenting()
-          },
-          text = stringResource(id = params.negativeButton.buttonText)
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-      }
-
-      val buttonTextColor = if (params.positiveButton.isActionDangerous) {
-        chanTheme.accentColorCompose
-      } else {
-        null
-      }
-
-      KurobaComposeTextBarButton(
-        modifier = Modifier.wrapContentSize(),
-        onClick = {
-          inputValueStates.forEachIndexed { index, mutableState ->
-            val result = params.inputs[index].result
-            if (!result.isCompleted) {
-              result.complete(InputResult.Result(mutableState.value.text))
-            }
-          }
-
-          params.positiveButton.onClick?.invoke()
-          pop()
-        },
-        customTextColor = buttonTextColor,
-        text = stringResource(id = params.positiveButton.buttonText)
-      )
-    }
   }
 
   @Composable
@@ -255,8 +290,8 @@ class KurobaComposeDialogController(
       is Text.AnnotatedString -> {
         KurobaComposeText(
           modifier = Modifier
-            .padding(vertical = 8.dp)
-            .verticalScroll(state = rememberScrollState()),
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
           text = description.value,
           fontSize = 16.ktu
         )
@@ -264,8 +299,8 @@ class KurobaComposeDialogController(
       is Text.Id -> {
         KurobaComposeText(
           modifier = Modifier
-            .padding(vertical = 8.dp)
-            .verticalScroll(state = rememberScrollState()),
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
           text = stringResource(id = description.textId),
           fontSize = 16.ktu
         )
@@ -273,8 +308,8 @@ class KurobaComposeDialogController(
       is Text.String -> {
         KurobaComposeText(
           modifier = Modifier
-            .padding(vertical = 8.dp)
-            .verticalScroll(state = rememberScrollState()),
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
           text = description.value,
           fontSize = 16.ktu
         )

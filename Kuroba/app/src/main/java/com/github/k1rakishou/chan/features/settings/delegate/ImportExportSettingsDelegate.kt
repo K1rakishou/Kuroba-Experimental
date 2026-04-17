@@ -42,7 +42,7 @@ class ImportExportSettingsDelegate(
 ) {
   suspend fun onExportClicked(context: Context, settingActions: SettingActions) {
     val dateString = BACKUP_DATE_FORMAT.print(DateTime.now())
-    val exportFileName = "KurobaEx-${BuildConfig.FLAVOR}_v${BuildConfig.VERSION_CODE}_($dateString)_backup.zip"
+    val exportFileName = "KurobaEx_v${BuildConfig.VERSION_CODE}_($dateString)_backup.zip"
 
     val uriResult = suspendCancellableCoroutine { continuation ->
       fileChooser.openCreateFileDialog(

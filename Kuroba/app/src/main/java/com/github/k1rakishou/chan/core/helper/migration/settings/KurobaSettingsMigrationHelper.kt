@@ -423,8 +423,8 @@ class KurobaSettingsMigrationHelper(
       val application = kurobaSettings.application
 
       run {
-        val default = application.detailsSizeSp()
-        application.albumSpanCount.writeBlocking(prefs.getString("preference_font", default.toString()).toIntOrNull() ?: default)
+        val default = application.detailsSizeSp().toString()
+        application.fontSize.writeBlocking(prefs.getString("preference_font", default) ?: default)
       }
 
       migrateStringSetting(prefs, "preference_board_order", application.boardOrder)

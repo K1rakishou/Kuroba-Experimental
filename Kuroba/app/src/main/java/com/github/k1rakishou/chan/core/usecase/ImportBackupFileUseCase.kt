@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.core.usecase
 
 import android.content.Context
 import com.github.k1rakishou.chan.BuildConfig
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AppConstants
@@ -171,9 +172,10 @@ class ImportBackupFileUseCase(
 
   private fun handleSharedPrefsFile(fileName: String, zipInputStream: ZipInputStream) {
     val outputFileStream = if (fileName == MAIN_PREFS_FILE_NAME) {
-      val mainSharedPrefsPath = "shared_prefs/${BuildConfig.APPLICATION_ID}_preferences.xml"
+      val mainSharedPrefsPath =
+        "shared_prefs/${AppModuleAndroidUtils.obsoleteApplicationIdFromBuildType}_preferences.xml"
       val mainSharedPrefsFile = File(AndroidUtils.appDir, mainSharedPrefsPath)
-      Logger.d(TAG, "Creating ${mainSharedPrefsFile.absolutePath} for flavor ${BuildConfig.FLAVOR}")
+      Logger.d(TAG, "Creating ${mainSharedPrefsFile.absolutePath} for buildType ${BuildConfig.BUILD_TYPE}")
 
       mainSharedPrefsFile.outputStream()
     } else {

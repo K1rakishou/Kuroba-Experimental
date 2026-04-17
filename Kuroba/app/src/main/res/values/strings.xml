@@ -100,7 +100,6 @@
     <string name="update_check_failed">Failed to check for updates.</string>
     <string name="update_install_download_failed_description">Reason: %1$s.\n\nIf this error keeps appearing then you will have to update manually.</string>
     <string name="update_install_download_failed_canceled">Reason: canceled</string>
-    <string name="update_already_updated">Already updated</string>
     <string name="update_retry">%1$s was not updated yet. Tap \"retry\" to retry the install.</string>
     <string name="update_failed_to_install">Failed to install update. Try to install it manually.</string>
     <string name="update_failed_to_install_description">Failed to install update. Reason: \'%1$s\'</string>
@@ -859,7 +858,6 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="settings_plugins_libs_install_libs_from_local_directory">Install mpv libraries from local directory</string>
     <string name="settings_plugins_libs_local_installation_dialog_title">Local installation info</string>
     <string name="settings_plugins_libs_local_installation_dialog_description">Local mpv library installation is basically the same thing as simply moving pre-built .so files to \'%1$s\' directory. You will have to select a directory where the .so files are located. The libraries must have specific names because no renaming is being done on the libraries they are only moved from one directory to another. You can check out the existing pre-built libraries and how they are named in this repository: https://github.com/K1rakishou/KurobaEx-mpv-libs The libraries must be built for a specific ABI (Application binary interface). The ABIs this phones supports are: \'%2$s\'. If you attempt to load libraries built for an ABI not supported by your phone the application may crash. The instructions on how to build the libraries by yourself can be found in the main application Github repository.</string>
-    <string name="settings_plugins_libs_fdroid_github_error">Cannot download and use pre-built libraries on FDroid builds because FDroid forbids doing that. You have to build and install them manually.</string>
 
     <!-- Save location settings -->
 

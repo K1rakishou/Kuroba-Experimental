@@ -220,7 +220,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     applicationScope = CoroutineScope(job + Dispatchers.Main + CoroutineName("Chan") + coroutineExceptionHandler)
 
     val isDev = AppModuleAndroidUtils.isDevBuild
-    val flavorType = AppModuleAndroidUtils.flavorType
+    val buildType = AppModuleAndroidUtils.buildType
 
     if (isDev && ENABLE_STRICT_MODE) {
       StrictMode.setThreadPolicy(
@@ -249,7 +249,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
 
     val appConstants = AppConstants(
       context = applicationContext,
-      flavorType = flavorType,
+      buildType = buildType,
       isLowRamDevice = isLowRamDevice,
       kurobaExCustomUserAgent = kurobaExUserAgent,
       overrideUserAgent = { kurobaSettings.application.customUserAgent.readBlocking() },

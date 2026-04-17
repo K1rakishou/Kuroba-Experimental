@@ -220,16 +220,19 @@ class MainSettingsScreenBuilder(
           composeKey = "FindAppOnGithub",
           title = { appResources.string(R.string.settings_find_app_on_github, AndroidUtils.applicationLabel) },
           description = { appResources.string(R.string.settings_find_app_on_github_bottom) },
-          callback = { settingActions.openUrl(BuildConfig.GITHUB_ENDPOINT) }
+          callback = { settingActions.openUrl("https://github.com/K1rakishou/Kuroba-Experimental") }
         )
       )
 
       addSetting(
         SettingUiElement.Link(
           composeKey = "ReportTrackerLink",
+          enabled = false,
           title = { appResources.string(R.string.settings_report_tracker_link) },
           description = { appResources.string(R.string.settings_report_tracker_link_description) },
-          callback = { settingActions.openUrl(BuildConfig.GITHUB_REPORTS_ENDPOINT) }
+          callback = {
+            // no-op
+          }
         )
       )
 

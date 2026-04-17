@@ -1,0 +1,8 @@
+⚠️ Backup before updating! ⚠️
+- Merge beta and stable builds into the same apk. The idea here is to allow people switching between beta/stable builds seamlessly. Normally, the stable update branch will be used, but you can always check an additional checkbox (which will be implemented in the future) to start receiving beta updates in addition to stable updates. Basically, by enabling beta updates you will receive both; by disabling it you will receive only the stable updates.
+- All app settings have been rewritten from scratch. I did some testing, and it kinda works.
+- All internal site code has been reworked.
+- Added 4chan email verification. Tested it only a tiny bit, it worked for me. 
+- MPV libraries have been updated + the app will now periodically check for updates.
+
+If something doesn't work in this HUGE update, you can complain in the usual place ;)

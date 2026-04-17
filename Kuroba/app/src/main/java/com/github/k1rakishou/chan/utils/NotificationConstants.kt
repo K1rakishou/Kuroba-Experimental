@@ -55,8 +55,8 @@ object NotificationConstants {
     const val REPLY_NOTIFICATION_CHANNEL_ID = "${BuildConfig.APPLICATION_ID}_replies_notifications_channel"
     const val REPLY_NOTIFICATION_CHANNEL_NAME = "Notification channel for replies (Yous)"
 
-    val SUMMARY_NOTIFICATION_TAG = "REPLIES_SUMMARY_NOTIFICATION_TAG_${AppModuleAndroidUtils.flavorType.name}"
-    val REPLIES_PRE_OREO_NOTIFICATION_TAG = "REPLIES_PRE_OREO_NOTIFICATION_TAG_${AppModuleAndroidUtils.flavorType.name}"
+    val SUMMARY_NOTIFICATION_TAG = "REPLIES_SUMMARY_NOTIFICATION_TAG_${AppModuleAndroidUtils.buildType.name}"
+    val REPLIES_PRE_OREO_NOTIFICATION_TAG = "REPLIES_PRE_OREO_NOTIFICATION_TAG_${AppModuleAndroidUtils.buildType.name}"
 
     const val R_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY = "reply_notification_click_thread_descriptors"
     const val R_NOTIFICATION_CLICK_POST_DESCRIPTORS_KEY = "reply_notification_click_post_descriptors"
@@ -69,7 +69,7 @@ object NotificationConstants {
     const val LAST_PAGE_SILENT_NOTIFICATION_CHANNEL_ID = "${BuildConfig.APPLICATION_ID}_last_page_silent_notifications_channel"
     const val LAST_PAGE_SILENT_NOTIFICATION_NAME = "Notification channel for threads last pages alerts (silent)"
 
-    val LAST_PAGE_NOTIFICATION_TAG = "LAST_PAGE_NOTIFICATION_TAG_${AppModuleAndroidUtils.flavorType.name}"
+    val LAST_PAGE_NOTIFICATION_TAG = "LAST_PAGE_NOTIFICATION_TAG_${AppModuleAndroidUtils.buildType.name}"
 
     const val LP_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY = "last_page_notification_click_thread_descriptors"
   }
@@ -171,7 +171,7 @@ object NotificationConstants {
     const val CHANNEL_ID = "${BuildConfig.APPLICATION_ID}_generic"
     const val CHANNEL_NAME = "Notification channel for generic app events"
 
-    val TAG = "GENERIC_TAG_${AppModuleAndroidUtils.flavorType.name}"
+    val TAG = "GENERIC_TAG_${AppModuleAndroidUtils.buildType.name}"
   }
 
 }

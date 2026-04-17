@@ -20,6 +20,7 @@ import com.github.k1rakishou.chan.features.settings.setting.SettingUiElementGrou
 import com.github.k1rakishou.chan.ui.controller.base.Controller
 import com.github.k1rakishou.chan.ui.helper.AppResources
 import com.github.k1rakishou.chan.ui.settings.SettingNotification
+import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
@@ -334,7 +335,9 @@ class AppSettingsGraph(
             key = KurobaSettingKey.Application.AppUpdate,
             newBadge = SettingUiElement.Badge.NewAppUpdate(
               text = appResources.string(R.string.update_available),
-              description = kurobaSettings.internal.apkUpdateInfoJson.read().versionName
+              description = kurobaSettings.internal.apkUpdateInfoJson.read()
+                .versionName
+                .takeIf { it.isNotNullNorBlank() }
             )
           )
         }

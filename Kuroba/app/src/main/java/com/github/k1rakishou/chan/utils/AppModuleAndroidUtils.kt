@@ -39,7 +39,7 @@ import com.github.k1rakishou.chan.ui.compose.snackbar.SnackbarManager
 import com.github.k1rakishou.chan.ui.compose.snackbar.SnackbarScope
 import com.github.k1rakishou.chan.utils.HashingUtil.byteArrayHashSha256HexString
 import com.github.k1rakishou.common.AndroidUtils
-import com.github.k1rakishou.common.AndroidUtils.FlavorType
+import com.github.k1rakishou.common.AndroidUtils.BuildType
 import com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType
 import com.github.k1rakishou.common.AndroidUtils.appContext
 import com.github.k1rakishou.common.AndroidUtils.isAndroidP
@@ -54,6 +54,9 @@ import java.util.Locale
 
 object AppModuleAndroidUtils {
   private const val TAG = "AppModuleAndroidUtils"
+
+  private const val ReleaseSignature = "86242978CF53C34361A8C962D0A57107AEB70E10631AE13EB5B006C0CF673FA9"
+  private const val DebugSignature = "DC5195CC40E42B95267D500B6E93E46EC51028C67BDD3D09BBB9C208BF20C8FE"
 
   @SuppressLint("StaticFieldLeak")
   private lateinit var application: Application
@@ -86,12 +89,12 @@ object AppModuleAndroidUtils {
       val signatureHexString =
         byteArrayHashSha256HexString(sig.toByteArray()).uppercase(Locale.getDefault())
 
-      val isOfficialRelease = BuildConfig.RELEASE_SIGNATURE == signatureHexString
+      val isOfficialRelease = ReleaseSignature == signatureHexString
       if (isOfficialRelease) {
         return VerifiedBuildType.Release
       }
 
-      val isOfficialBeta = BuildConfig.DEBUG_SIGNATURE == signatureHexString
+      val isOfficialBeta = DebugSignature == signatureHexString
       if (isOfficialBeta) {
         return VerifiedBuildType.Debug
       }
@@ -122,28 +125,36 @@ object AppModuleAndroidUtils {
   }
 
   val isStableBuild: Boolean
-    get() = flavorType == FlavorType.Stable
+    get() = buildType == BuildType.Stable
 
   val isDevBuild: Boolean
-    get() = flavorType == FlavorType.Dev
+    get() = buildType == BuildType.Dev
 
   val isBetaBuild: Boolean
-    get() = flavorType == FlavorType.Beta
+    get() = buildType == BuildType.Beta
 
   val isFdroidBuild: Boolean
-    get() = flavorType == FlavorType.Fdroid
+    get() = false
 
   fun isDevOrBetaBuild(): Boolean {
     return isDevBuild || isBetaBuild
   }
 
-  val flavorType: FlavorType
-    get() = when (BuildConfig.FLAVOR_TYPE) {
-      0 -> FlavorType.Stable
-      1 -> FlavorType.Beta
-      2 -> FlavorType.Dev
-      3 -> FlavorType.Fdroid
-      else -> error("Unknown flavor type " + BuildConfig.FLAVOR_TYPE)
+  val buildType: BuildType
+    get() = when (BuildConfig.BUILD_TYPE) {
+      "Stable" -> BuildType.Stable
+      "Beta" -> BuildType.Beta
+      "Dev" -> BuildType.Dev
+      else -> error("Unknown build type '${BuildConfig.BUILD_TYPE}'")
+    }
+
+  val obsoleteApplicationIdFromBuildType: String
+    get() {
+      return when (buildType) {
+        BuildType.Stable -> "com.github.k1rakishou.chan"
+        BuildType.Beta -> "com.github.k1rakishou.chan-beta"
+        BuildType.Dev -> "com.github.k1rakishou.chan-dev"
+      }
     }
 
   /**

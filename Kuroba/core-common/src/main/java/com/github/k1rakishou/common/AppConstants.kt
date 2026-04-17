@@ -12,7 +12,7 @@ import java.util.regex.Pattern
 
 open class AppConstants(
   context: Context,
-  private val flavorType: AndroidUtils.FlavorType,
+  private val buildType: AndroidUtils.BuildType,
   private val isLowRamDevice: Boolean,
   val kurobaExCustomUserAgent: String,
   val overrideUserAgent: () -> String,
@@ -25,9 +25,9 @@ open class AppConstants(
   val processorsCount: Int
   val proxiesFileName = PROXIES_FILE_NAME
   val thirdEyeSettingsFileName = THIRD_EYE_SETTINGS_FILE_NAME
-  val bookmarkWatchWorkUniqueTag = "BookmarkWatcherController_${flavorType.name}"
-  val filterWatchWorkUniqueTag = "FilterWatcherController_${flavorType.name}"
-  val threadDownloadWorkUniqueTag = "ThreadDownloadController_${flavorType.name}"
+  val bookmarkWatchWorkUniqueTag = "BookmarkWatcherController_${buildType.name}"
+  val filterWatchWorkUniqueTag = "FilterWatcherController_${buildType.name}"
+  val threadDownloadWorkUniqueTag = "ThreadDownloadController_${buildType.name}"
 
   val userAgentMightBeOverridden by lazy {
     val overriddenUserAgent = overrideUserAgent()

@@ -6,8 +6,6 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Environment
 import android.os.StrictMode
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.fromHtml
 import androidx.core.content.FileProvider
 import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.R
@@ -161,7 +159,7 @@ class KurobaAppUpdateManager(
 
     if (!manual) {
       val lastUpdateTime = kurobaSettings.internal.updateCheckTime.read()
-      val interval = TimeUnit.DAYS.toMillis(BuildConfig.UPDATE_DELAY.toLong())
+      val interval = TimeUnit.DAYS.toMillis(1)
       val now = System.currentTimeMillis()
       val delta = lastUpdateTime + interval - now
 
@@ -172,34 +170,24 @@ class KurobaAppUpdateManager(
       kurobaSettings.internal.updateCheckTime.write(now)
     }
 
-    when (val flavorType = AppModuleAndroidUtils.flavorType) {
-      AndroidUtils.FlavorType.Stable,
-      AndroidUtils.FlavorType.Beta -> {
-        val updateUrl = when (flavorType) {
-          AndroidUtils.FlavorType.Stable -> BuildConfig.RELEASE_UPDATE_API_ENDPOINT
-          AndroidUtils.FlavorType.Beta -> BuildConfig.BETA_UPDATE_API_ENDPOINT
-          AndroidUtils.FlavorType.Dev,
-          AndroidUtils.FlavorType.Fdroid -> {
-            return
-          }
-        }
+    val updateUrl = "https://api.github.com/repos/K1rakishou/Kuroba-Experimental/releases/latest"
 
-        if (flavorType == AndroidUtils.FlavorType.Stable) {
-          Logger.d(TAG, "Calling update API for release ($updateUrl)")
-        } else {
-          Logger.d(TAG, "Calling update API for beta ($updateUrl)")
-        }
-
+    when (val flavorType = AppModuleAndroidUtils.buildType) {
+      AndroidUtils.BuildType.Stable -> {
+        Logger.d(TAG, "Calling update API for release ($updateUrl)")
         updateApk(manual, flavorType, updateUrl)
       }
-      AndroidUtils.FlavorType.Fdroid,
-      AndroidUtils.FlavorType.Dev -> error("Updater should be disabled for dev builds")
+      AndroidUtils.BuildType.Beta -> {
+        Logger.d(TAG, "Calling update API for beta ($updateUrl)")
+        updateApk(manual, flavorType, updateUrl)
+      }
+      AndroidUtils.BuildType.Dev -> error("Updater should be disabled for dev builds")
     }.exhaustive
   }
 
   private suspend fun updateApk(
     manual: Boolean,
-    flavorType: AndroidUtils.FlavorType,
+    buildType: AndroidUtils.BuildType,
     updateUrl: String
   ) {
     val request = Request.Builder()
@@ -211,7 +199,7 @@ class KurobaAppUpdateManager(
       request = request,
       proxiedOkHttpClient = proxiedOkHttpClient,
       loadChangelogUseCase = loadChangelogUseCaseLazy.get(),
-      isRelease = flavorType == AndroidUtils.FlavorType.Stable
+      isRelease = buildType == AndroidUtils.BuildType.Stable
     ).execute()
 
     coroutineScope {
@@ -223,7 +211,7 @@ class KurobaAppUpdateManager(
             processUpdateApiResponse(
               responseRelease = response.result,
               manual = manual,
-              isRelease = flavorType == AndroidUtils.FlavorType.Stable
+              isRelease = buildType == AndroidUtils.BuildType.Stable
             )
           }
 
@@ -343,7 +331,8 @@ class KurobaAppUpdateManager(
         Logger.debug(TAG) {
           "processUpdateApiResponse() onUpdateClicked() updating apkUpdateInfoJson with ${apkUpdateInfoJson}"
         }
-        kurobaSettings.internal.apkUpdateInfoJson.writeAsync(apkUpdateInfoJson)
+
+        kurobaSettings.internal.apkUpdateInfoJson.writeBlocking(apkUpdateInfoJson)
       }
     )
   }
@@ -352,7 +341,7 @@ class KurobaAppUpdateManager(
     BackgroundUtils.ensureMainThread()
 
     val toastMessage = if (apkUpdateInfo.versionName.isNotNullNorBlank()) {
-      "${AndroidUtils.applicationLabel} was updated to the latest version: ${apkUpdateInfo.versionName}."
+      "${AndroidUtils.applicationLabel} was updated to ${apkUpdateInfo.versionName}."
     } else {
       "${AndroidUtils.applicationLabel} was updated to the latest version."
     }
@@ -366,21 +355,13 @@ class KurobaAppUpdateManager(
   private suspend fun onReleaseAlreadyUpdated(apkUpdateInfo: ApkUpdateInfoJson) {
     BackgroundUtils.ensureMainThread()
 
-    val text = if (apkUpdateInfo.versionName.isNotNullNorBlank()) {
-      AnnotatedString.fromHtml("<h3> ${AndroidUtils.applicationLabel} was updated to ${apkUpdateInfo.versionName}</h3>")
+    val toastMessage = if (apkUpdateInfo.versionName.isNotNullNorBlank()) {
+      "${AndroidUtils.applicationLabel} was updated to ${apkUpdateInfo.versionName}"
     } else {
-      AnnotatedString.fromHtml("<h3> ${AndroidUtils.applicationLabel} was updated to the latest version</h3>")
+      "${AndroidUtils.applicationLabel} was updated to the latest version"
     }
 
-    dialogFactory.showDialog(
-      context = context,
-      params = KurobaComposeDialogController.informationDialog(
-        title = KurobaComposeDialogController.Text.String(
-          appResources.string(R.string.update_already_updated)
-        ),
-        description = KurobaComposeDialogController.Text.AnnotatedString(text)
-      )
-    )
+    AppModuleAndroidUtils.showToast(context, toastMessage)
 
     // Also set the new app version to not show this message again
     kurobaSettings.internal.previousVersion.write(BuildConfig.VERSION_CODE)
@@ -412,7 +393,7 @@ class KurobaAppUpdateManager(
             append(appResources.string(R.string.update_application_update_available_description))
 
             if (versionCode > 0) {
-              append("(v${versionCode}.${buildNumber}-${AppModuleAndroidUtils.flavorType.tag})")
+              append("(v${versionCode}.${buildNumber}-${AppModuleAndroidUtils.buildType.tag})")
             } else {
               append("(Unknown)")
             }
@@ -430,13 +411,13 @@ class KurobaAppUpdateManager(
   private fun failedUpdate(manual: Boolean, error: Throwable) {
     Logger.e(TAG, "failedUpdate() manual=$manual", error)
 
-    val manualUpdateUrl = if (AppModuleAndroidUtils.flavorType == AndroidUtils.FlavorType.Beta) {
+    val manualUpdateUrl = if (AppModuleAndroidUtils.buildType == AndroidUtils.BuildType.Beta) {
       "https://github.com/K1rakishou/Kuroba-Experimental-beta/releases/latest"
     } else {
       "https://github.com/K1rakishou/Kuroba-Experimental/releases/latest"
     }
 
-    Logger.e(TAG, "Failed to process ${AppModuleAndroidUtils.flavorType.tag} API call for updating")
+    Logger.e(TAG, "Failed to process ${AppModuleAndroidUtils.buildType.tag} API call for updating")
 
     if (manual && BackgroundUtils.isInForeground()) {
       dialogFactory.showDialog(
@@ -662,20 +643,18 @@ class KurobaAppUpdateManager(
   }
 
   private fun getAndResetApkUpdateInfo(): ApkUpdateInfoJson? {
-    val apkUpdateInfo = kurobaSettings.internal.apkUpdateInfoJson.readBlocking().let { apkUpdateInfoJson ->
-      val versionCode = apkUpdateInfoJson.versionCode
-        ?.takeIf { it >= 0L }
-        ?: return@let null
-      val buildNumber = apkUpdateInfoJson.buildNumber
-        ?.takeIf { it >= 0L }
-        ?: return@let null
-      val versionName = apkUpdateInfoJson.versionName
+    val apkUpdateInfoJson = kurobaSettings.internal.apkUpdateInfoJson.readBlocking()
+    kurobaSettings.internal.apkUpdateInfoJson.resetBlocking()
 
-      return@let ApkUpdateInfoJson(versionCode, buildNumber, versionName)
+    val versionCode = apkUpdateInfoJson.versionCode
+    val buildNumber = apkUpdateInfoJson.buildNumber
+    val versionName = apkUpdateInfoJson.versionName
+
+    if (versionCode <= 0L || buildNumber <= 0L) {
+      return null
     }
 
-    kurobaSettings.internal.apkUpdateInfoJson.writeBlocking(ApkUpdateInfoJson())
-    return apkUpdateInfo
+    return ApkUpdateInfoJson(versionCode, buildNumber, versionName)
   }
 
   private suspend fun canContinueBetaUpdate(responseRelease: UpdateApiRequest.ReleaseUpdateApiResponse): Boolean {

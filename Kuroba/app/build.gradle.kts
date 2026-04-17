@@ -12,6 +12,23 @@ plugins {
     alias(libs.plugins.detekt)
 }
 
+enum class KurobaBuildType {
+    Stable,
+    Beta,
+    Dev;
+
+    companion object {
+        fun fromRaw(value: Int?): KurobaBuildType? {
+            return when (value) {
+                0 -> Stable
+                1 -> Beta
+                2 -> Dev
+                else -> Dev
+            }
+        }
+    }
+}
+
 val gitHashProvider = providers.exec {
     commandLine("git", "rev-parse", "HEAD")
 }.standardOutput.asText.map { it.trim() }
@@ -20,26 +37,46 @@ android {
     namespace = "com.github.k1rakishou.chan"
     compileSdk = libs.versions.compileSdk.get().toInt()
 
+    val kurobaBuildType = KurobaBuildType.fromRaw(project.findProperty("buildType")?.toString()?.toInt())
+    when (kurobaBuildType) {
+        KurobaBuildType.Stable -> println("Using KurobaBuildType.Stable")
+        KurobaBuildType.Beta -> println("Using KurobaBuildType.Beta")
+        KurobaBuildType.Dev -> println("Using KurobaBuildType.Dev")
+        else -> error("Unknown buildType: ${project.findProperty("buildType")}")
+    }
+
     defaultConfig {
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
 
         applicationId = "com.github.k1rakishou.chan"
-
-        buildConfigField("String", "RELEASE_UPDATE_API_ENDPOINT", "\"https://api.github.com/repos/K1rakishou/Kuroba-Experimental/releases/latest\"")
-        buildConfigField("String", "BETA_UPDATE_API_ENDPOINT", "\"https://api.github.com/repos/K1rakishou/Kuroba-Experimental-beta/releases/latest\"")
-        buildConfigField("String", "GITHUB_ENDPOINT", "\"https://github.com/K1rakishou/Kuroba-Experimental\"")
-        buildConfigField("String", "GITHUB_REPORTS_ENDPOINT", "\"https://github.com/KurobaExReports/Reports/issues/\"")
-        buildConfigField("String", "RELEASE_SIGNATURE", "\"86242978CF53C34361A8C962D0A57107AEB70E10631AE13EB5B006C0CF673FA9\"")
-        buildConfigField("String", "DEBUG_SIGNATURE", "\"DC5195CC40E42B95267D500B6E93E46EC51028C67BDD3D09BBB9C208BF20C8FE\"")
+        applicationIdSuffix = ""
+        buildConfigField("String", "BUILD_TYPE", "\"${kurobaBuildType.name}\"")
         buildConfigField("String", "COMMIT_HASH", "\"${gitHashProvider.get()}\"")
+        manifestPlaceholders["fileProviderAuthority"] = "${defaultConfig.applicationId}.fileprovider"
+        manifestPlaceholders["appTheme"] = "@style/Chan.DefaultTheme"
+
+        when (kurobaBuildType) {
+          KurobaBuildType.Stable -> {
+              manifestPlaceholders["appName"] = "KurobaEx"
+              manifestPlaceholders["iconLoc"] = "@mipmap/ic_launcher_release"
+          }
+          KurobaBuildType.Beta -> {
+              manifestPlaceholders["appName"] = "KurobaEx-beta"
+              manifestPlaceholders["iconLoc"] = "@mipmap/ic_launcher_beta"
+          }
+          KurobaBuildType.Dev -> {
+              manifestPlaceholders["appName"] = "KurobaEx-dev"
+              manifestPlaceholders["iconLoc"] = "@mipmap/ic_launcher_dev"
+          }
+        }
 
         //            M -> Major version
         //            m -> Minor version
         //            p -> patch
         //            MmmPP
-        versionCode = 10340
-        versionName = "v1.3.40"
+        versionCode = 10341
+        versionName = "v1.3.41"
 
         configurations.configureEach {
             resolutionStrategy {
@@ -93,60 +130,6 @@ android {
         }
     }
 
-    flavorDimensions += "default"
-
-    productFlavors {
-        // FLAVOR_TYPE 0 - release (stable) build
-        // FLAVOR_TYPE 1 - beta build
-        // FLAVOR_TYPE 2 - dev build
-        // FLAVOR_TYPE 3 - fdroid build
-
-        create("stable") {
-            dimension = "default"
-            applicationIdSuffix = ""
-            extra["apkVersionNameSuffix"] = ""
-            buildConfigField("int", "FLAVOR_TYPE", "0")
-            buildConfigField("int", "UPDATE_DELAY", "1")
-            manifestPlaceholders["appName"] = "KurobaEx"
-            manifestPlaceholders["iconLoc"] = "@mipmap/ic_launcher_release"
-            manifestPlaceholders["fileProviderAuthority"] = "${defaultConfig.applicationId}.fileprovider"
-            manifestPlaceholders["appTheme"] = "@style/Chan.DefaultTheme"
-        }
-        create("beta") {
-            dimension = "default"
-            applicationIdSuffix = ".beta"
-            extra["apkVersionNameSuffix"] = "-beta"
-            buildConfigField("int", "FLAVOR_TYPE", "1")
-            buildConfigField("int", "UPDATE_DELAY", "1")
-            manifestPlaceholders["appName"] = "KurobaEx-beta"
-            manifestPlaceholders["iconLoc"] = "@mipmap/ic_launcher_beta"
-            manifestPlaceholders["fileProviderAuthority"] = "${defaultConfig.applicationId}.beta.fileprovider"
-            manifestPlaceholders["appTheme"] = "@style/Chan.DefaultTheme"
-        }
-        create("dev") {
-            dimension = "default"
-            applicationIdSuffix = ".dev"
-            extra["apkVersionNameSuffix"] = "-dev"
-            buildConfigField("int", "FLAVOR_TYPE", "2")
-            buildConfigField("int", "UPDATE_DELAY", "99999999")
-            manifestPlaceholders["appName"] = "KurobaEx-dev"
-            manifestPlaceholders["iconLoc"] = "@mipmap/ic_launcher_dev"
-            manifestPlaceholders["fileProviderAuthority"] = "${defaultConfig.applicationId}.dev.fileprovider"
-            manifestPlaceholders["appTheme"] = "@style/Chan.DebugTheme"
-        }
-        create("fdroid") {
-            dimension = "default"
-            applicationIdSuffix = ".fdroid"
-            extra["apkVersionNameSuffix"] = "-fdroid"
-            buildConfigField("int", "FLAVOR_TYPE", "3")
-            buildConfigField("int", "UPDATE_DELAY", "99999999")
-            manifestPlaceholders["appName"] = "KurobaEx-fdroid"
-            manifestPlaceholders["iconLoc"] = "@mipmap/ic_launcher_release"
-            manifestPlaceholders["fileProviderAuthority"] = "${defaultConfig.applicationId}.fdroid.fileprovider"
-            manifestPlaceholders["appTheme"] = "@style/Chan.DefaultTheme"
-        }
-    }
-
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -168,22 +151,40 @@ android {
     // APK rename
     applicationVariants.all {
         val variant = this
+
         variant.outputs
             .map { it as BaseVariantOutputImpl }
             .forEach { output ->
-                val flavor = android.productFlavors.find { it.name == variant.flavorName }
-                    ?: throw GradleException("Couldn't find flavor by variant.flavorName: '${variant.flavorName}'")
+                val apkNameSuffix = when (kurobaBuildType) {
+                  KurobaBuildType.Stable -> ""
+                  KurobaBuildType.Beta -> "beta"
+                  KurobaBuildType.Dev -> "dev"
+                }
+                val abi = output.getFilter("ABI") ?: ""
 
-                val apkVersionNameSuffix = flavor.extra["apkVersionNameSuffix"] as String
-                val abiFilter = output.getFilter("ABI")
-                val baseName = "KurobaEx$apkVersionNameSuffix"
+                output.outputFileName = buildString {
+                    append("KurobaEx")
 
-                output.outputFileName = if (abiFilter != null) {
-                    "$baseName-$abiFilter.apk"
-                } else {
-                    "$baseName.apk"
+                    if (apkNameSuffix.isNotEmpty()) {
+                        append("-")
+                        append(apkNameSuffix)
+                    }
+
+                    if (abi.isNotEmpty()) {
+                        append("-")
+                        append(abi)
+                    }
+
+                    append(".")
+                    append("apk")
                 }
             }
+
+        // Force Gradle to actually rebuild apk when we build it with a different buildType
+        // (when nothing else was changed)
+        variant.generateBuildConfigProvider.configure {
+            inputs.property("buildType", kurobaBuildType.name)
+        }
     }
 
     compileOptions {

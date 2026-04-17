@@ -65,19 +65,19 @@ object AndroidUtils {
   val isNotMainProcess: Boolean
     get() = false
 
-  @Deprecated("remove me")
+  @Deprecated("remove me in 1 year")
   @JvmStatic
   val appMainPreferences: SharedPreferences
     get() = PreferenceManager.getDefaultSharedPreferences(application)
 
-  @Deprecated("remove me")
+  @Deprecated("remove me in 1 year")
   val appState: SharedPreferences
     get() = appContext.getSharedPreferences(
       CHAN_STATE_PREFS_NAME,
       Context.MODE_PRIVATE
     )
 
-  @Deprecated("remove me")
+  @Deprecated("remove me in 1 year")
   val mpvState: SharedPreferences
     get() = appContext.getSharedPreferences(
       MPV_PREFS_NAME,
@@ -298,11 +298,10 @@ object AndroidUtils {
   val isAndroidN: Boolean
     get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.N
 
-  enum class FlavorType(val tag: String) {
+  enum class BuildType(val tag: String) {
     Stable("Stable"),
     Beta("Beta"),
-    Dev("Dev"),
-    Fdroid("Fdroid")
+    Dev("Dev")
   }
 
   enum class VerifiedBuildType {

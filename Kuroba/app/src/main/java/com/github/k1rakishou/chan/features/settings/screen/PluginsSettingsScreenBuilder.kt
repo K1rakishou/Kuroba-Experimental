@@ -20,8 +20,6 @@ import com.github.k1rakishou.chan.ui.controller.KurobaProgressDialogController
 import com.github.k1rakishou.chan.ui.controller.dialog.KurobaComposeDialogController
 import com.github.k1rakishou.chan.ui.helper.AppResources
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
-import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
@@ -292,11 +290,6 @@ class PluginsSettingsScreenBuilder(
     context: Context,
     settingActions: SettingActions
   ) {
-    if (AppModuleAndroidUtils.flavorType == AndroidUtils.FlavorType.Fdroid) {
-      settingActions.showToast(appResources.string(R.string.settings_plugins_libs_fdroid_github_error))
-      return
-    }
-
     val progressDialogController = KurobaProgressDialogController(
       context = context,
       params = KurobaProgressDialogController.Params.create(

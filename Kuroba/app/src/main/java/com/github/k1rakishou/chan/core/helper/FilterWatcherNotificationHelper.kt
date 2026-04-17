@@ -280,7 +280,7 @@ class FilterWatcherNotificationHelper(
   companion object {
     private const val TAG = "FilterWatcherNotificationHelper"
 
-    private val notificationsGroup by lazy { "${TAG}_${BuildConfig.APPLICATION_ID}_${AppModuleAndroidUtils.flavorType.name}" }
+    private val notificationsGroup by lazy { "${TAG}_${BuildConfig.APPLICATION_ID}_${AppModuleAndroidUtils.buildType.name}" }
   }
 
 }

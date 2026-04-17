@@ -10,7 +10,6 @@ import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.concurrency.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.isNotNullNorEmpty
@@ -136,12 +135,7 @@ class ReportManager(
       appendLine("App Version: " + BuildConfig.VERSION_NAME)
       appendLine("Phone Model: " + Build.MANUFACTURER + " " + Build.MODEL)
 
-      if (AppModuleAndroidUtils.flavorType != AndroidUtils.FlavorType.Fdroid) {
-        // Do not log this for FDroid builds since it's always going to be "Unknown" which is confusing
-        appendLine("Build type: " + AppModuleAndroidUtils.verifiedBuildType().name)
-      }
-
-      appendLine("Flavor type: " + AppModuleAndroidUtils.flavorType.name)
+      appendLine("Flavor type: " + AppModuleAndroidUtils.buildType.name)
       appendLine("isLowRamDevice: ${kurobaSettings.application.isLowRamDeviceBlocking()}, " +
         "isLowRamDeviceForced: ${kurobaSettings.application.isLowRamDeviceForced.readBlocking()}")
       appendLine("MemoryClass: ${activityManager?.memoryClass}")
