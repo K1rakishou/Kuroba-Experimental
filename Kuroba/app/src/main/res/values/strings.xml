@@ -1669,10 +1669,13 @@ Actual error: \'%1$s\'</string>
     <string name="mpv_libraries_update_title">MPV libraries update is available!</string>
     <string name="mpv_libraries_update_description">Current MPV libraries version: %1$s, new version: %2$s.</string>
 
-    <string name="not_allowed_during_halloween">You are not allowed to do this</string>
-    <string name="epoxy_no_settings_found_by_query">No settings were found by query \"%1$s\"</string>
     <string name="updater_is_disabled_for_dev_builds">Updater is disabled for dev builds</string>
     <string name="updater_is_disabled_for_fdroid_builds">Updater is disabled for F-Droid builds</string>
+    <string name="updater_is_disabled_for_old_beta_build">Beta builds were moved into the Stable branch</string>
+    <string name="updater_is_disabled_for_old_beta_build_description">Beta builds were merged with Stable builds and are now distributed as the same apk in the main repository. Apk builds in this repository are deprecated. You can continue using beta builds by installing the Stable branch and enabling beta branch updates in the main settings.</string>
+
+    <string name="not_allowed_during_halloween">You are not allowed to do this</string>
+    <string name="epoxy_no_settings_found_by_query">No settings were found by query \"%1$s\"</string>
     <string name="see_changelog_for_this_version">Changelog</string>
     <string name="doing_heavy_lifting_please_wait">Doing heavy lifting, please wait…</string>
     <string name="decoding_reply_file_preview">Decoding file preview, this may take some time</string>

@@ -266,6 +266,7 @@ class ActivityModule {
     builders[SettingsScreenKey.Main] = MainSettingsScreenBuilder(
       kurobaSettings = kurobaSettings,
       appResources = appResources,
+      dialogFactory = dialogFactory,
       chanFilterManager = chanFilterManager,
       siteManager = siteManager,
       kurobaAppUpdateManager = kurobaAppUpdateManager,
