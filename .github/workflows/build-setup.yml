@@ -71,7 +71,8 @@ jobs:
 
           if [[ "$TYPE" == "beta" && ("$MSG" == "[beta]"* || "$MSG" == "[stable]"*) ]]; then
             echo "Publishing beta release"
-            ./gradlew assembleBetaRelease \
+            ./gradlew assembleRelease \
+              -PbuildType=1 \
               -Pandroid.injected.signing.store.file=${{ github.workspace }}/kurobaex.jks \
               -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
               -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
@@ -80,7 +81,8 @@ jobs:
             python ${{ github.workspace }}/.github/workflows/publish/main.py beta ${{ github.workspace }}
           elif [[ "$TYPE" == "stable" && "$MSG" == "[stable]"* ]]; then
             echo "Publishing stable release"
-            ./gradlew assembleStableRelease \
+            ./gradlew assembleRelease \
+              -PbuildType=0 \
               -Pandroid.injected.signing.store.file=${{ github.workspace }}/kurobaex.jks \
               -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
               -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
