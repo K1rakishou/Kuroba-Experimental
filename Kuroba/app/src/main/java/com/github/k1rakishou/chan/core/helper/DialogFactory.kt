@@ -29,7 +29,6 @@ import com.github.k1rakishou.common.exhaustive
 import com.github.k1rakishou.common.setSpanSafe
 import dagger.Lazy
 
-
 class DialogFactory(
   private val applicationVisibilityManagerLazy: Lazy<ApplicationVisibilityManager>,
 ) {
