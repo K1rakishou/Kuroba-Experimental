@@ -45,7 +45,7 @@ jobs:
         run: |
           cd Kuroba
           chmod +x ./gradlew
-          ./gradlew testDevDebugUnitTest --stacktrace -Dorg.gradle.jvmargs="-Xmx4096m"
+          ./gradlew testDebugUnitTest --stacktrace -Dorg.gradle.jvmargs="-Xmx4096m"
 
   publish-beta:
       needs: [precheck, unit-test]
