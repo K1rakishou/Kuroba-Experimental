@@ -1,0 +1,7 @@
+⚠️ Backup before updating! ⚠️
+- All app settings have been rewritten from scratch. I did some testing, and it kinda works.
+- All internal site code has been reworked.
+- Added 4chan email verification. Tested it only a tiny bit, it worked for me. 
+- MPV libraries have been updated + the app will now periodically check for updates.
+
+If something doesn't work in this HUGE update, you can complain in the usual place ;)
