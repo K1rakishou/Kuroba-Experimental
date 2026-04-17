@@ -6,6 +6,7 @@ import com.github.k1rakishou.chan.features.album.AlbumViewControllerViewModel
 import com.github.k1rakishou.chan.features.archive.BoardArchiveViewModel
 import com.github.k1rakishou.chan.features.bookmarks.BookmarkGroupPatternSettingsControllerViewModel
 import com.github.k1rakishou.chan.features.bookmarks.BookmarkGroupSettingsControllerViewModel
+import com.github.k1rakishou.chan.features.changelog.ChangelogControllerViewModel
 import com.github.k1rakishou.chan.features.download.thread.LocalArchiveViewModel
 import com.github.k1rakishou.chan.features.download.thread.ThreadDownloaderSettingsViewModel
 import com.github.k1rakishou.chan.features.drawer.MainControllerViewModel
@@ -57,6 +58,7 @@ abstract class ViewModelComponent {
   abstract fun inject(boardsReorderControllerViewModel: BoardsReorderControllerViewModel)
   abstract fun inject(boardSelectionControllerViewModel: BoardSelectionControllerViewModel)
   abstract fun inject(appSettingsControllerViewModel: AppSettingsControllerViewModel)
+  abstract fun inject(changelogControllerViewModel: ChangelogControllerViewModel)
 
   @Subcomponent.Builder
   interface Builder {

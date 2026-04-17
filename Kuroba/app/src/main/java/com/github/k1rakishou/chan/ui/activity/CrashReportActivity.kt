@@ -270,7 +270,7 @@ class CrashReportActivity :
         .drawBehind { drawRect(chanTheme.backColorCompose) }
         .padding(horizontal = 4.dp, vertical = 8.dp)
         .scrollbar(
-          contentPadding = insets,
+          paddings = insets,
           scrollState = scrollState
         ),
       insets = insets

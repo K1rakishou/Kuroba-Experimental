@@ -1659,6 +1659,8 @@ Actual error: \'%1$s\'</string>
     <string name="add_boards_controller_found_boards_displaying_by_query">Displaying %1$d board(s) matched by search query</string>
     <string name="add_boards_controller_check_all">Check all</string>
 
+    <string name="changelog_controller_toolbar_title">Changelog for %1$s</string>
+
     <string name="setting_badge_explanation_dialog_title">Setting info</string>
     <string name="setting_badge_new">New!</string>
     <string name="setting_badge_new_description">This setting haven\'t been seen yet since it\'s introduction in one of the latest updates. This badge will be removed auto removed on the next app restart.</string>

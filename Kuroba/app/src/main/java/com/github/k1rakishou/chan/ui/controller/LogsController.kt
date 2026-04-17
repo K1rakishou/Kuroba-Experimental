@@ -201,7 +201,7 @@ class LogsController(context: Context) : Controller(context) {
         .fillMaxSize()
         .background(Color.Black)
         .scrollbar(
-          contentPadding = contentPadding,
+          paddings = contentPadding,
           scrollState = scrollState
         )
         .padding(contentPadding)

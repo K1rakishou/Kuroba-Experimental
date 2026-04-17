@@ -347,7 +347,7 @@ fun <ItemInfo : LazyItemInfoWrapper, LayoutInfo : LazyLayoutInfoWrapper<ItemInfo
  * Vertical scrollbar for Composables that use ScrollState (like verticalScroll())
  * */
 fun Modifier.scrollbar(
-  contentPadding: PaddingValues,
+  paddings: PaddingValues,
   scrollState: ScrollState,
   enabled: Boolean = true
 ): Modifier {
@@ -368,10 +368,10 @@ fun Modifier.scrollbar(
     val maxScrollPositionPx by remember { derivedStateOf { scrollStateUpdated.maxValue } }
 
     val topPaddingPx = with(density) {
-      remember(key1 = contentPadding) { contentPadding.calculateTopPadding().toPx() }
+      remember(key1 = paddings) { paddings.calculateTopPadding().toPx() }
     }
     val bottomPaddingPx = with(density) {
-      remember(key1 = contentPadding) { contentPadding.calculateBottomPadding().toPx() }
+      remember(key1 = paddings) { paddings.calculateBottomPadding().toPx() }
     }
 
     val duration = if (scrollStateUpdated.isScrollInProgress) 150 else 1000

@@ -5,6 +5,7 @@ import com.github.k1rakishou.chan.core.di.module.controller.ControllerScopedView
 import com.github.k1rakishou.chan.core.di.module.controller.ControllerScopedViewModelModule
 import com.github.k1rakishou.chan.core.di.scope.PerController
 import com.github.k1rakishou.chan.features.album.AlbumViewController
+import com.github.k1rakishou.chan.features.changelog.ChangelogController
 import com.github.k1rakishou.chan.features.settings.AppSettingsController
 import com.github.k1rakishou.chan.features.settings.delegate.CookieCaptchaInputController
 import com.github.k1rakishou.chan.features.setup.boards.add.AddBoardsController
@@ -35,6 +36,7 @@ interface ControllerComponent : ControllerDependencies {
   fun inject(kurobaComposeDialogController: KurobaComposeDialogController)
   fun inject(appSettingsController: AppSettingsController)
   fun inject(progressDialogController: KurobaProgressDialogController)
+  fun inject(changelogController: ChangelogController)
 
   @Subcomponent.Builder
   interface Builder {

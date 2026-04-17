@@ -83,7 +83,7 @@ fun ReplyLayoutContainer(
           state = scrollState
         )
         .scrollbar(
-          contentPadding = emptyPaddings,
+          paddings = emptyPaddings,
           scrollState = scrollState
         )
     ) {

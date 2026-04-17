@@ -31,6 +31,7 @@ import com.github.k1rakishou.chan.core.manager.update.MpvLibsUpdateManager
 import com.github.k1rakishou.chan.core.repository.ImportExportRepository
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.core.usecase.InstallMpvNativeLibrariesFromLocalDirectoryUseCase
+import com.github.k1rakishou.chan.core.usecase.LoadChangelogUseCase
 import com.github.k1rakishou.chan.core.usecase.MpvNativeLibrariesUseCase
 import com.github.k1rakishou.chan.features.download.media.ImageSaverV2
 import com.github.k1rakishou.chan.features.download.thread.ThreadDownloadingDelegate
@@ -78,9 +79,10 @@ class ActivityModule {
     kurobaSettings: KurobaSettings,
     appResources: AppResources,
     activity: AppCompatActivity,
-    cacheHandler: Lazy<CacheHandler>,
     settingsNotificationManager: SettingsNotificationManager,
     kurobaSystemNotifications: KurobaSystemNotifications,
+    loadChangelogUseCase: Lazy<LoadChangelogUseCase>,
+    cacheHandler: Lazy<CacheHandler>,
     proxiedOkHttpClient: Lazy<ProxiedOkHttpClient>,
     dialogFactory: Lazy<DialogFactory>
   ): KurobaAppUpdateManager {
@@ -91,6 +93,7 @@ class ActivityModule {
       appResources = appResources,
       settingsNotificationManager = settingsNotificationManager,
       kurobaSystemNotifications = kurobaSystemNotifications,
+      loadChangelogUseCaseLazy = loadChangelogUseCase,
       cacheHandlerLazy = cacheHandler,
       proxiedOkHttpClientLazy = proxiedOkHttpClient,
       dialogFactoryLazy = dialogFactory

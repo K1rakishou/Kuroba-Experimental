@@ -6,6 +6,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.update.KurobaAppUpdateManager
+import com.github.k1rakishou.chan.features.changelog.ChangelogController
 import com.github.k1rakishou.chan.features.filters.FiltersController
 import com.github.k1rakishou.chan.features.report.bugs.ReportIssueController
 import com.github.k1rakishou.chan.features.settings.SettingsScreen
@@ -200,9 +201,7 @@ class MainSettingsScreenBuilder(
           composeKey = "Changelog",
           title = { appResources.string(R.string.see_changelog_for_this_version) },
           description = { null },
-          callback = {
-            settingActions.openUrl(BuildConfig.GITHUB_CHANGELOGS_ENDPOINT + BuildConfig.VERSION_CODE + ".txt")
-          }
+          callback = { settingActions.pushController(ChangelogController(context)) }
         )
       )
 

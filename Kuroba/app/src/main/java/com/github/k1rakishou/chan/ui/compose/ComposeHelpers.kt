@@ -27,6 +27,7 @@ import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.activityDependencies
 import com.github.k1rakishou.core_logger.Logger
@@ -74,6 +75,43 @@ fun PaddingValues.copy(
     top = top,
     end = end,
     bottom = bottom
+  )
+}
+
+fun PaddingValues.plus(
+  layoutDirection: LayoutDirection,
+  other: PaddingValues
+): PaddingValues {
+  val start = other.calculateStartPadding(layoutDirection)
+  val top = other.calculateTopPadding()
+  val end = other.calculateEndPadding(layoutDirection)
+  val bottom = other.calculateBottomPadding()
+
+  return this.plus(
+    layoutDirection = layoutDirection,
+    start = start,
+    top = top,
+    end = end,
+    bottom = bottom
+  )
+}
+
+fun PaddingValues.plus(
+  layoutDirection: LayoutDirection,
+  start: Dp = 0.dp,
+  top: Dp = 0.dp,
+  end: Dp = 0.dp,
+  bottom: Dp = 0.dp,
+): PaddingValues {
+  if (start == 0.dp && top == 0.dp && end == 0.dp && bottom == 0.dp) {
+    return this
+  }
+
+  return PaddingValues(
+    start = this.calculateStartPadding(layoutDirection) + start,
+    top = this.calculateTopPadding() + top,
+    end = this.calculateEndPadding(layoutDirection) + end,
+    bottom = this.calculateBottomPadding() + bottom,
   )
 }
 

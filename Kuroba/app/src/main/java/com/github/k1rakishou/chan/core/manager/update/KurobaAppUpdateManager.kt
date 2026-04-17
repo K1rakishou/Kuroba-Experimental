@@ -21,6 +21,7 @@ import com.github.k1rakishou.chan.core.helper.KurobaSystemNotifications
 import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.net.update.UpdateApiRequest
+import com.github.k1rakishou.chan.core.usecase.LoadChangelogUseCase
 import com.github.k1rakishou.chan.ui.controller.KurobaProgressDialogController
 import com.github.k1rakishou.chan.ui.controller.dialog.KurobaComposeDialogController
 import com.github.k1rakishou.chan.ui.helper.AppResources
@@ -66,6 +67,7 @@ class KurobaAppUpdateManager(
   private val appResources: AppResources,
   private val settingsNotificationManager: SettingsNotificationManager,
   private val kurobaSystemNotifications: KurobaSystemNotifications,
+  private val loadChangelogUseCaseLazy: Lazy<LoadChangelogUseCase>,
   private val cacheHandlerLazy: Lazy<CacheHandler>,
   private val proxiedOkHttpClientLazy: Lazy<ProxiedOkHttpClient>,
   private val dialogFactoryLazy: Lazy<DialogFactory>
@@ -208,6 +210,7 @@ class KurobaAppUpdateManager(
     val response = UpdateApiRequest(
       request = request,
       proxiedOkHttpClient = proxiedOkHttpClient,
+      loadChangelogUseCase = loadChangelogUseCaseLazy.get(),
       isRelease = flavorType == AndroidUtils.FlavorType.Stable
     ).execute()
 
@@ -304,26 +307,19 @@ class KurobaAppUpdateManager(
       return
     }
 
-    val concat = responseRelease.updateTitle.isNotEmpty()
-
-    val updateMessage = if (concat) {
-      "${responseRelease.updateTitle}; ${responseRelease.body}"
-    } else {
-      responseRelease.body!!
-    }
-
-    val dialogTitle = AndroidUtils.applicationLabel.toString() + " " +
-      responseRelease.versionCodeString + " available"
+    val dialogTitle = "${AndroidUtils.applicationLabel} ${responseRelease.versionCodeString} available"
+    val dialogDescription = responseRelease.body ?: "Update message not available"
 
     val installClicked = suspendCancellableCoroutine { continuation ->
       dialogFactory.showDialog(
         context = context,
         params = KurobaComposeDialogController.confirmationDialog(
           title = KurobaComposeDialogController.Text.String(dialogTitle),
-          description = KurobaComposeDialogController.Text.String(updateMessage),
+          description = KurobaComposeDialogController.Text.String(dialogDescription),
           negativeButton = KurobaComposeDialogController.DialogButton(R.string.update_later),
           positionButton = KurobaComposeDialogController.PositiveDialogButton(
             buttonText = R.string.update_install,
+            isActionDangerous = true,
             onClick = { continuation.resumeValueSafe(true) }
           )
         ),

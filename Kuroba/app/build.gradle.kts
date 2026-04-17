@@ -29,7 +29,6 @@ android {
         buildConfigField("String", "RELEASE_UPDATE_API_ENDPOINT", "\"https://api.github.com/repos/K1rakishou/Kuroba-Experimental/releases/latest\"")
         buildConfigField("String", "BETA_UPDATE_API_ENDPOINT", "\"https://api.github.com/repos/K1rakishou/Kuroba-Experimental-beta/releases/latest\"")
         buildConfigField("String", "GITHUB_ENDPOINT", "\"https://github.com/K1rakishou/Kuroba-Experimental\"")
-        buildConfigField("String", "GITHUB_CHANGELOGS_ENDPOINT", "\"https://raw.githubusercontent.com/K1rakishou/Kuroba-Experimental/develop/fastlane/metadata/android/en-US/changelogs/\"")
         buildConfigField("String", "GITHUB_REPORTS_ENDPOINT", "\"https://github.com/KurobaExReports/Reports/issues/\"")
         buildConfigField("String", "RELEASE_SIGNATURE", "\"86242978CF53C34361A8C962D0A57107AEB70E10631AE13EB5B006C0CF673FA9\"")
         buildConfigField("String", "DEBUG_SIGNATURE", "\"DC5195CC40E42B95267D500B6E93E46EC51028C67BDD3D09BBB9C208BF20C8FE\"")

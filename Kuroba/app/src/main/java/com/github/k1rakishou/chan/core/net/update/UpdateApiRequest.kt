@@ -4,7 +4,9 @@ import android.os.Build
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.net.update.UpdateApiRequest.ReleaseUpdateApiResponse
+import com.github.k1rakishou.chan.core.usecase.LoadChangelogUseCase
 import com.github.k1rakishou.chan.utils.ReleaseHelpers
+import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.jsonArray
 import com.github.k1rakishou.common.jsonObject
@@ -17,6 +19,7 @@ import okhttp3.Request
 class UpdateApiRequest(
   request: Request,
   proxiedOkHttpClient: ProxiedOkHttpClient,
+  private val loadChangelogUseCase: LoadChangelogUseCase,
   private val isRelease: Boolean
 ) : JsonReaderRequest<ReleaseUpdateApiResponse>(request, proxiedOkHttpClient) {
   
@@ -41,6 +44,22 @@ class UpdateApiRequest(
         "apkURL: ${response.apkURL}\n" +
         "hasBody: ${response.body != null}"
       )
+    }
+
+    val changelogResult = loadChangelogUseCase.execute(
+      parameter = LoadChangelogUseCase.Params(
+        versionCode = response.versionCode
+      )
+    )
+
+    when (changelogResult) {
+      is ModularResult.Error<*> -> {
+        // no-op, use changelog from the release page (last commits)
+      }
+      is ModularResult.Value<String> -> {
+        // Use
+        response.body = changelogResult.value
+      }
     }
     
     return response
