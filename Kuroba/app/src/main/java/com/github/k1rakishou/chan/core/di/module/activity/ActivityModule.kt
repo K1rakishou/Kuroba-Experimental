@@ -177,12 +177,10 @@ class ActivityModule {
   @Provides
   fun provideDialogFactory(
     applicationVisibilityManager: Lazy<ApplicationVisibilityManager>,
-    themeEngine: Lazy<ThemeEngine>
   ): DialogFactory {
     Logger.deps("DialogFactory")
     return DialogFactory(
       applicationVisibilityManager,
-      themeEngine
     )
   }
 
@@ -266,7 +264,6 @@ class ActivityModule {
     builders[SettingsScreenKey.Main] = MainSettingsScreenBuilder(
       kurobaSettings = kurobaSettings,
       appResources = appResources,
-      dialogFactory = dialogFactory,
       chanFilterManager = chanFilterManager,
       siteManager = siteManager,
       kurobaAppUpdateManager = kurobaAppUpdateManager,

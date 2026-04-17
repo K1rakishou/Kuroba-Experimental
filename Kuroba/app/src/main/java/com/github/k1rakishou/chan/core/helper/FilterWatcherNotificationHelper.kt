@@ -226,61 +226,71 @@ class FilterWatcherNotificationHelper(
 
     Logger.d(TAG, "setupChannels() called")
 
-    if (notificationManagerCompat.getNotificationChannel(NotificationConstants.FilterWatcherNotifications.FW_NOTIFICATION_CHANNEL_ID) == null) {
-      Logger.d(TAG, "setupChannels() creating ${NotificationConstants.FilterWatcherNotifications.FW_NOTIFICATION_CHANNEL_ID} channel")
+    run {
+      val channelId = NotificationConstants.FilterWatcherNotifications.FW_NOTIFICATION_CHANNEL_ID
 
-      val summaryChannel = NotificationChannel(
-        NotificationConstants.FilterWatcherNotifications.FW_NOTIFICATION_CHANNEL_ID,
-        NotificationConstants.FilterWatcherNotifications.FW_NOTIFICATION_CHANNEL_NAME,
-        NotificationManager.IMPORTANCE_HIGH
-      )
+      if (notificationManagerCompat.getNotificationChannel(channelId) == null) {
+        Logger.d(TAG, "setupChannels() creating ${channelId} channel")
 
-      summaryChannel.setSound(
-        Settings.System.DEFAULT_NOTIFICATION_URI,
-        AudioAttributes.Builder()
-          .setUsage(AudioAttributes.USAGE_NOTIFICATION)
-          .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-          .setLegacyStreamType(AudioManager.STREAM_NOTIFICATION)
-          .build()
-      )
+        val summaryChannel = NotificationChannel(
+          NotificationConstants.FilterWatcherNotifications.FW_NOTIFICATION_CHANNEL_ID,
+          NotificationConstants.FilterWatcherNotifications.FW_NOTIFICATION_CHANNEL_NAME,
+          NotificationManager.IMPORTANCE_HIGH
+        )
 
-      summaryChannel.enableLights(true)
-      summaryChannel.lightColor = themeEngine.chanTheme.accentColor
-      summaryChannel.enableVibration(true)
+        summaryChannel.setSound(
+          Settings.System.DEFAULT_NOTIFICATION_URI,
+          AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .setLegacyStreamType(AudioManager.STREAM_NOTIFICATION)
+            .build()
+        )
 
-      notificationManagerCompat.createNotificationChannel(summaryChannel)
+        summaryChannel.enableLights(true)
+        summaryChannel.lightColor = themeEngine.chanTheme.accentColor
+        summaryChannel.enableVibration(true)
+
+        notificationManagerCompat.createNotificationChannel(summaryChannel)
+      }
     }
 
-    if (notificationManagerCompat.getNotificationChannel(NotificationConstants.FilterWatcherNotifications.FW_SUMMARY_NOTIFICATION_CHANNEL_ID) == null) {
-      Logger.d(TAG, "setupChannels() creating ${NotificationConstants.FilterWatcherNotifications.FW_SUMMARY_NOTIFICATION_CHANNEL_ID} channel")
+    run {
+      val channelId = NotificationConstants.FilterWatcherNotifications.FW_SUMMARY_NOTIFICATION_CHANNEL_ID
 
-      val summaryChannel = NotificationChannel(
-        NotificationConstants.FilterWatcherNotifications.FW_SUMMARY_NOTIFICATION_CHANNEL_ID,
-        NotificationConstants.FilterWatcherNotifications.FW_SUMMARY_NOTIFICATION_CHANNEL_NAME,
-        NotificationManager.IMPORTANCE_HIGH
-      )
+      if (notificationManagerCompat.getNotificationChannel(channelId) == null) {
+        Logger.d(TAG, "setupChannels() creating ${channelId} channel")
 
-      summaryChannel.setSound(
-        Settings.System.DEFAULT_NOTIFICATION_URI,
-        AudioAttributes.Builder()
-          .setUsage(AudioAttributes.USAGE_NOTIFICATION)
-          .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-          .setLegacyStreamType(AudioManager.STREAM_NOTIFICATION)
-          .build()
-      )
+        val summaryChannel = NotificationChannel(
+          NotificationConstants.FilterWatcherNotifications.FW_SUMMARY_NOTIFICATION_CHANNEL_ID,
+          NotificationConstants.FilterWatcherNotifications.FW_SUMMARY_NOTIFICATION_CHANNEL_NAME,
+          NotificationManager.IMPORTANCE_HIGH
+        )
 
-      summaryChannel.enableLights(true)
-      summaryChannel.lightColor = themeEngine.chanTheme.accentColor
-      summaryChannel.enableVibration(true)
+        summaryChannel.setSound(
+          Settings.System.DEFAULT_NOTIFICATION_URI,
+          AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .setLegacyStreamType(AudioManager.STREAM_NOTIFICATION)
+            .build()
+        )
 
-      notificationManagerCompat.createNotificationChannel(summaryChannel)
+        summaryChannel.enableLights(true)
+        summaryChannel.lightColor = themeEngine.chanTheme.accentColor
+        summaryChannel.enableVibration(true)
+
+        notificationManagerCompat.createNotificationChannel(summaryChannel)
+      }
     }
   }
 
   companion object {
     private const val TAG = "FilterWatcherNotificationHelper"
 
-    private val notificationsGroup by lazy { "${TAG}_${BuildConfig.APPLICATION_ID}_${AppModuleAndroidUtils.buildType.name}" }
+    private val notificationsGroup by lazy {
+      "${TAG}_${BuildConfig.APPLICATION_ID}_${AppModuleAndroidUtils.buildType.name}"
+    }
   }
 
 }

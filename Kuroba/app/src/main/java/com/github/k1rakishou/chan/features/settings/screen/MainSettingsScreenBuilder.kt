@@ -3,7 +3,6 @@ package com.github.k1rakishou.chan.features.settings.screen
 import android.content.Context
 import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.update.KurobaAppUpdateManager
@@ -15,7 +14,6 @@ import com.github.k1rakishou.chan.features.settings.SettingsScreenKey
 import com.github.k1rakishou.chan.features.settings.setting.SettingUiElement
 import com.github.k1rakishou.chan.features.setup.site.setup.SitesSetupController
 import com.github.k1rakishou.chan.ui.controller.LicensesController
-import com.github.k1rakishou.chan.ui.controller.dialog.KurobaComposeDialogController
 import com.github.k1rakishou.chan.ui.helper.AppResources
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.common.AndroidUtils
@@ -26,7 +24,6 @@ import java.util.Locale
 class MainSettingsScreenBuilder(
   private val kurobaSettings: KurobaSettings,
   private val appResources: AppResources,
-  private val dialogFactory: DialogFactory,
   private val chanFilterManager: ChanFilterManager,
   private val siteManager: SiteManager,
   private val kurobaAppUpdateManager: KurobaAppUpdateManager
@@ -190,19 +187,6 @@ class MainSettingsScreenBuilder(
               }
               AppModuleAndroidUtils.isFdroidBuild -> {
                 settingActions.showToast(appResources.string(R.string.updater_is_disabled_for_fdroid_builds))
-              }
-              AppModuleAndroidUtils.isBetaBuild -> {
-                dialogFactory.showDialog(
-                  context = context,
-                  params = KurobaComposeDialogController.informationDialog(
-                    title = KurobaComposeDialogController.Text.Id(
-                      R.string.updater_is_disabled_for_old_beta_build
-                    ),
-                    description = KurobaComposeDialogController.Text.Id(
-                      R.string.updater_is_disabled_for_old_beta_build_description
-                    )
-                  )
-                )
               }
               else -> {
                 kurobaAppUpdateManager.manualUpdateCheck()

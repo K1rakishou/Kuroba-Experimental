@@ -104,11 +104,6 @@ class KurobaAppUpdateManager(
         return@launch
       }
 
-      if (AppModuleAndroidUtils.isBetaBuild) {
-        Logger.d(TAG, "autoUpdateCheck() Updater is disabled for old beta builds!")
-        return@launch
-      }
-
       val apkUpdateInfo = getAndResetApkUpdateInfo()
 
       Logger.d(TAG, "autoUpdateCheck() " +

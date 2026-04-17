@@ -27,18 +27,14 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.common.exhaustive
 import com.github.k1rakishou.common.setSpanSafe
-import com.github.k1rakishou.core_themes.ThemeEngine
 import dagger.Lazy
 
 
 class DialogFactory(
   private val applicationVisibilityManagerLazy: Lazy<ApplicationVisibilityManager>,
-  private val themeEngineLazy: Lazy<ThemeEngine>
 ) {
   private val applicationVisibilityManager: ApplicationVisibilityManager
     get() = applicationVisibilityManagerLazy.get()
-  private val themeEngine: ThemeEngine
-    get() = themeEngineLazy.get()
 
   private val visibleDialogs = mutableMapOf<String, AlertDialogHandle>()
   private val visibleComposeDialogs = mutableMapOf<String, KurobaComposeDialogController.DialogHandle>()
