@@ -270,7 +270,7 @@ class KurobaAppUpdateManager(
     }
 
     val dialogTitle = "${AndroidUtils.applicationLabel} ${apkReleaseInfo.tagName} available"
-    val dialogDescription = apkReleaseInfo.releaseDescription ?: "Update message not available"
+    val dialogDescription = apkReleaseInfo.releaseDescription
 
     val installClicked = suspendCancellableCoroutine { continuation ->
       dialogFactory.showDialog(

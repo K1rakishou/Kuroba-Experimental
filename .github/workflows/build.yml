@@ -25,8 +25,7 @@ jobs:
         run: |
           cd Kuroba
           chmod +x ./gradlew
-          # TODO: uncomment me
-          # ./gradlew detekt
+          ./gradlew detekt
 
   unit-test:
     runs-on: ubuntu-latest
@@ -46,8 +45,7 @@ jobs:
         run: |
           cd Kuroba
           chmod +x ./gradlew
-          # TODO: uncomment me
-          # ./gradlew testDebugUnitTest --stacktrace -Dorg.gradle.jvmargs="-Xmx4096m"
+          ./gradlew testDebugUnitTest --stacktrace -Dorg.gradle.jvmargs="-Xmx4096m"
 
   publish-beta:
       needs: [precheck, unit-test]
