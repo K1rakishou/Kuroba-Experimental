@@ -95,13 +95,14 @@ def upload_asset(upload_url, apk_path, headers):
         raise helpers.BuildCreationError(f'Failed to upload asset. StatusCode: {response.status_code}. Message: \'{response.content}\'')
 
 
-def get_latest_release_tag(repo):
-    url = f"https://api.github.com/repos/{repo}/releases/latest"
-    response = requests.get(url)
+def get_latest_release_tag(repo, token=None):
+    url = f"https://api.github.com/repos/{repo}/releases"
+    response = requests.get(url, params={"per_page": 1})
     if response.status_code == 200:
-        return response.json()['tag_name']
+        releases = response.json()
+        return releases[0]['tag_name'] if releases else None
     else:
-        return f"Error: {response.status_code}"
+        raise helpers.BuildCreationError(f"Error: {response.status_code}")
 
 def get_latest_release_commit_hash(repo):
     releases_url = f"https://api.github.com/repos/{repo}/releases/latest"
