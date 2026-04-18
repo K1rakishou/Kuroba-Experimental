@@ -8,7 +8,6 @@ import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.concurrency.SerializedCoroutineExecutor
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
@@ -135,7 +134,7 @@ class ReportManager(
       appendLine("App Version: " + BuildConfig.VERSION_NAME)
       appendLine("Phone Model: " + Build.MANUFACTURER + " " + Build.MODEL)
 
-      appendLine("Flavor type: " + AppModuleAndroidUtils.buildType.name)
+      appendLine("usePrereleaseBuilds: " + kurobaSettings.application.usePrereleaseBuilds.readBlocking())
       appendLine("isLowRamDevice: ${kurobaSettings.application.isLowRamDeviceBlocking()}, " +
         "isLowRamDeviceForced: ${kurobaSettings.application.isLowRamDeviceForced.readBlocking()}")
       appendLine("MemoryClass: ${activityManager?.memoryClass}")

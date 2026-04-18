@@ -2,99 +2,124 @@ package com.github.k1rakishou.chan.core.net.update
 
 import android.os.Build
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
-import com.github.k1rakishou.chan.core.net.JsonReaderRequest
-import com.github.k1rakishou.chan.core.net.update.UpdateApiRequest.ReleaseUpdateApiResponse
 import com.github.k1rakishou.chan.core.usecase.LoadChangelogUseCase
 import com.github.k1rakishou.chan.utils.ReleaseHelpers
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
-import com.github.k1rakishou.common.jsonArray
-import com.github.k1rakishou.common.jsonObject
+import com.github.k1rakishou.common.isNotNullNorBlank
+import com.github.k1rakishou.common.suspendConvertIntoJsonObjectWithAdapter
 import com.github.k1rakishou.core_logger.Logger
-import com.google.gson.stream.JsonReader
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
+import com.squareup.moshi.Moshi
+import com.squareup.moshi.Types
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 
 class UpdateApiRequest(
-  request: Request,
-  proxiedOkHttpClient: ProxiedOkHttpClient,
+  private val proxiedOkHttpClient: ProxiedOkHttpClient,
   private val loadChangelogUseCase: LoadChangelogUseCase,
-  private val isRelease: Boolean
-) : JsonReaderRequest<ReleaseUpdateApiResponse>(request, proxiedOkHttpClient) {
+  private val moshi: Moshi,
+  private val canUpdateToPrerelease: Boolean
+) {
+  private val listOfReleasesAdapter = moshi.adapter<List<Release>>(
+    Types.newParameterizedType(List::class.java, Release::class.java)
+  )
   
-  override suspend fun readJson(reader: JsonReader): ReleaseUpdateApiResponse {
-    val response = ReleaseUpdateApiResponse()
-    
-    reader.jsonObject {
-      while (reader.hasNext()) {
-        when (reader.nextName()) {
-          "tag_name" -> readVersionCode(response, reader)
-          "name" -> response.updateTitle = reader.nextString()
-          "assets" -> readApkUrl(reader, response)
-          "body" -> readBody(reader, response)
-          else -> reader.skipValue()
+  suspend fun execute(): ModularResult<ApkReleaseInfo> {
+    return ModularResult.Try {
+      val request = Request.Builder()
+        .url("https://api.github.com/repos/K1rakishou/Kuroba-Experimental/releases")
+        .get()
+        .build()
+
+      val releases = proxiedOkHttpClient.okHttpClient().suspendConvertIntoJsonObjectWithAdapter(
+        request = request,
+        adapter = listOfReleasesAdapter
+      )
+        .mapError { throwable -> UpdateRequestError(throwable.message ?: throwable.errorMessageOrClassName()) }
+        .unwrap()
+        ?: throw UpdateRequestError("Failed to get a list of releases from Github")
+
+      var apkUpdateInfo = convertFirstSuitableRelease(releases)
+        ?: throw UpdateRequestError("Failed to find a suitable release")
+
+      val changelogResult = loadChangelogUseCase.execute(
+        parameter = LoadChangelogUseCase.Params(
+          versionCode = apkUpdateInfo.versionCode.code
+        )
+      )
+
+      when (changelogResult) {
+        is ModularResult.Error<*> -> {
+          // no-op, use changelog from the release page (last commits)
+        }
+        is ModularResult.Value<String> -> {
+          apkUpdateInfo = apkUpdateInfo.copy(releaseDescription = changelogResult.value)
         }
       }
+
+      return@Try apkUpdateInfo
     }
-    
-    if (response.versionCode == 0L || response.apkURL == null || response.body == null) {
-      throw UpdateRequestError("Update API response is incomplete!\n" +
-        "versionCode: ${response.versionCode}\n" +
-        "apkURL: ${response.apkURL}\n" +
-        "hasBody: ${response.body != null}"
+  }
+
+  private fun convertFirstSuitableRelease(releases: List<Release>): ApkReleaseInfo? {
+    for (release in releases) {
+      val prerelease = release.prerelease
+        ?: continue
+
+      if (!canUpdateToPrerelease && prerelease) {
+        continue
+      }
+
+      val tagName = release.tagName
+      if (tagName.isNullOrBlank()) {
+        continue
+      }
+
+      val versionCode = readVersionCode(release)
+      if (versionCode == null) {
+        continue
+      }
+
+      val releaseTitle = release.releaseTitle
+        ?.takeIf { it.isNotNullNorBlank() }
+        ?: "No release title"
+      val releaseDescription = release.releaseDescription
+        ?.takeIf { it.isNotNullNorBlank() }
+        ?: "No release description"
+
+      val apkURL = findSuitableApkUrl(release.assets)
+      if (apkURL == null) {
+        continue
+      }
+
+      return ApkReleaseInfo(
+        versionCode = versionCode,
+        prerelease = prerelease,
+        tagName = tagName,
+        releaseTitle = releaseTitle,
+        releaseDescription = releaseDescription,
+        apkURL = apkURL
       )
     }
 
-    val changelogResult = loadChangelogUseCase.execute(
-      parameter = LoadChangelogUseCase.Params(
-        versionCode = response.versionCode
-      )
-    )
+    return null
+  }
 
-    when (changelogResult) {
-      is ModularResult.Error<*> -> {
-        // no-op, use changelog from the release page (last commits)
-      }
-      is ModularResult.Value<String> -> {
-        // Use
-        response.body = changelogResult.value
-      }
+  private fun findSuitableApkUrl(assets: List<Release.Asset>?): HttpUrl? {
+    if (assets.isNullOrEmpty()) {
+      Logger.error(TAG) { "assets is null or empty" }
+      return null
     }
-    
-    return response
-  }
-  
-  private fun readBody(reader: JsonReader, responseRelease: ReleaseUpdateApiResponse) {
-    val updateComment = reader.nextString()
-    responseRelease.body = "Changelog:\n${updateComment}".trimIndent()
-  }
-  
-  private fun readApkUrl(reader: JsonReader, responseRelease: ReleaseUpdateApiResponse) {
+
     val supportedAbis = Build.SUPPORTED_ABIS
     Logger.debug(TAG) { "supportedAbis: ${supportedAbis.joinToString()}" }
 
-    val apkUrls = mutableListOf<HttpUrl>()
-
-    try {
-      reader.jsonArray {
-        while (hasNext()) {
-          jsonObject {
-            while (hasNext()) {
-              if ("browser_download_url" == nextName()) {
-                apkUrls += nextString().toHttpUrl()
-              } else {
-                skipValue()
-              }
-            }
-          }
-        }
-      }
-    } catch (e: Exception) {
-      throw UpdateRequestError("No APK URL! (error: ${e.errorMessageOrClassName()})")
-    }
-
+    val apkUrls = assets.mapNotNull { asset -> asset.url?.toHttpUrl() }
     Logger.debug(TAG) { "apkUrls: ${apkUrls.joinToString()}" }
+
     if (apkUrls.isEmpty()) {
       throw UpdateRequestError("No APK URL!")
     }
@@ -123,43 +148,93 @@ class UpdateApiRequest(
     }
 
     Logger.debug(TAG) { "Got apkUrl: '${apkUrl}'" }
-    responseRelease.apkURL = apkUrl
+    return apkUrl
   }
   
-  private fun readVersionCode(responseRelease: ReleaseUpdateApiResponse, reader: JsonReader) {
+  private fun readVersionCode(release: Release): VersionCode? {
+    val tagName = release.tagName
+    if (tagName.isNullOrBlank()) {
+      Logger.error(TAG) { "tagName is null or blank" }
+      return null
+    }
+
+    val prerelease = release.prerelease
+    if (prerelease == null) {
+      Logger.error(TAG) { "prerelease is null" }
+      return null
+    }
+
     try {
-      if (isRelease) {
-        responseRelease.versionCodeString = reader.nextString()
-        responseRelease.versionCode = ReleaseHelpers.calculateReleaseVersionCode(responseRelease.versionCodeString)
-      } else {
-        responseRelease.versionCodeString = reader.nextString()
+      if (prerelease) {
+        val betaVersionCode = ReleaseHelpers.calculateBetaVersionCode(tagName)
+        if (betaVersionCode.versionCode <= 0L) {
+          throw UpdateRequestError("Bad betaVersionCode: ${betaVersionCode}, tagName: ${tagName}")
+        }
 
-        val betaVersionCode = ReleaseHelpers.calculateBetaVersionCode(responseRelease.versionCodeString)
-        responseRelease.versionCode = betaVersionCode.versionCode
-        responseRelease.buildNumber = betaVersionCode.buildNumber
-      }
-    } catch (e: Exception) {
-      if (isRelease) {
-        throw UpdateRequestError("Tag name wasn't of the form v(major).(minor).(patch)!")
+        return VersionCode.Beta(
+          code = betaVersionCode.versionCode,
+          buildNumber = betaVersionCode.buildNumber
+        )
       } else {
+        val stableVersionCode = ReleaseHelpers.calculateReleaseVersionCode(tagName)
+        if (stableVersionCode <= 0L) {
+          throw UpdateRequestError("Bad stableVersionCode: ${stableVersionCode}, tagName: ${tagName}")
+        }
+
+        return VersionCode.Release(
+          code = stableVersionCode
+        )
+      }
+    } catch (ignored: Exception) {
+      if (prerelease) {
         throw UpdateRequestError("Tag name wasn't of the form v(major).(minor).(patch).(build)!")
+      } else {
+        throw UpdateRequestError("Tag name wasn't of the form v(major).(minor).(patch)!")
       }
     }
   }
   
-  class ReleaseUpdateApiResponse(
-    var versionCode: Long = 0L,
-    var buildNumber: Long = 0L,
-    var versionCodeString: String? = null,
-    var updateTitle: String = "",
-    var apkURL: HttpUrl? = null,
-    var body: String? = null
-  ) {
+  data class ApkReleaseInfo(
+    val versionCode: VersionCode,
+    val prerelease: Boolean,
+    val tagName: String,
+    val releaseTitle: String,
+    val releaseDescription: String,
+    val apkURL: HttpUrl
+  )
 
-    override fun toString(): String {
-      return "ReleaseUpdateApiResponse{versionCode=$versionCode, versionCodeString=${versionCodeString}, " +
-        "updateTitle={$updateTitle}, apkURL=${apkURL}, body=${body?.take(60)}"
+  sealed interface VersionCode {
+    val code: Long
+
+    fun buildNumber(): Long? {
+      return when (this) {
+        is Beta -> buildNumber
+        is Release -> null
+      }
     }
+
+    data class Beta(
+      override val code: Long,
+      val buildNumber: Long
+    ) : VersionCode
+
+    data class Release(
+      override val code: Long,
+    ) : VersionCode
+  }
+
+  @JsonClass(generateAdapter = true)
+  data class Release(
+    @field:Json(name = "tag_name") val tagName: String? = null,
+    @field:Json(name = "name") val releaseTitle: String? = null,
+    @field:Json(name = "body") val releaseDescription: String? = null,
+    @field:Json(name = "prerelease") val prerelease: Boolean? = null,
+    @field:Json(name = "assets") val assets: List<Asset>? = null,
+  ) {
+    @JsonClass(generateAdapter = true)
+    data class Asset(
+      @field:Json(name = "browser_download_url") val url: String? = null
+    )
   }
 
   companion object {

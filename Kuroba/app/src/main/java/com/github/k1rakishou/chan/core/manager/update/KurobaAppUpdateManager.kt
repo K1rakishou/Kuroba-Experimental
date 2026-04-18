@@ -17,8 +17,8 @@ import com.github.k1rakishou.chan.core.concurrency.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.helper.KurobaSystemNotifications
 import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager
-import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.net.update.UpdateApiRequest
+import com.github.k1rakishou.chan.core.net.update.UpdateApiRequest.ApkReleaseInfo
 import com.github.k1rakishou.chan.core.usecase.LoadChangelogUseCase
 import com.github.k1rakishou.chan.ui.controller.KurobaProgressDialogController
 import com.github.k1rakishou.chan.ui.controller.dialog.KurobaComposeDialogController
@@ -30,20 +30,18 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.NotificationConstants
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AppConstants
-import com.github.k1rakishou.common.BadStatusResponseException
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.downloadIntoFile
 import com.github.k1rakishou.common.errorMessageOrClassName
-import com.github.k1rakishou.common.exhaustive
 import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.v2.KurobaSettings
 import com.github.k1rakishou.v2.parameters.ApkUpdateInfoJson
+import com.squareup.moshi.Moshi
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -63,6 +61,7 @@ class KurobaAppUpdateManager(
   private val context: Context,
   private val kurobaSettings: KurobaSettings,
   private val appResources: AppResources,
+  private val moshi: Moshi,
   private val settingsNotificationManager: SettingsNotificationManager,
   private val kurobaSystemNotifications: KurobaSystemNotifications,
   private val loadChangelogUseCaseLazy: Lazy<LoadChangelogUseCase>,
@@ -154,7 +153,7 @@ class KurobaAppUpdateManager(
     if (kurobaSettings.internal.hasNewApkUpdate.read()) {
       // If we noticed that there was an apk update on the previous check - show the
       // notification
-      notifyNewApkUpdate(responseRelease = null)
+      notifyNewApkUpdate(apkReleaseInfo = null)
     }
 
     if (!manual) {
@@ -170,101 +169,76 @@ class KurobaAppUpdateManager(
       kurobaSettings.internal.updateCheckTime.write(now)
     }
 
-    val updateUrl = "https://api.github.com/repos/K1rakishou/Kuroba-Experimental/releases/latest"
-
-    when (val flavorType = AppModuleAndroidUtils.buildType) {
-      AndroidUtils.BuildType.Stable -> {
-        Logger.d(TAG, "Calling update API for release ($updateUrl)")
-        updateApk(manual, flavorType, updateUrl)
-      }
-      AndroidUtils.BuildType.Beta -> {
-        Logger.d(TAG, "Calling update API for beta ($updateUrl)")
-        updateApk(manual, flavorType, updateUrl)
-      }
-      AndroidUtils.BuildType.Dev -> error("Updater should be disabled for dev builds")
-    }.exhaustive
+    val usePrereleaseBuilds = kurobaSettings.application.usePrereleaseBuilds.read()
+    Logger.d(TAG, "Calling update API (usePrereleaseBuilds: ${usePrereleaseBuilds})")
+    updateApk(manual, usePrereleaseBuilds)
   }
 
   private suspend fun updateApk(
     manual: Boolean,
-    buildType: AndroidUtils.BuildType,
-    updateUrl: String
+    usePrereleaseBuilds: Boolean
   ) {
-    val request = Request.Builder()
-      .url(updateUrl)
-      .get()
-      .build()
-
-    val response = UpdateApiRequest(
-      request = request,
+    val apkUpdateInfoResult = UpdateApiRequest(
       proxiedOkHttpClient = proxiedOkHttpClient,
       loadChangelogUseCase = loadChangelogUseCaseLazy.get(),
-      isRelease = buildType == AndroidUtils.BuildType.Stable
+      moshi = moshi,
+      canUpdateToPrerelease = usePrereleaseBuilds
     ).execute()
 
-    coroutineScope {
-      withContext(Dispatchers.Main) {
-        when (response) {
-          is JsonReaderRequest.JsonReaderResponse.Success -> {
-            Logger.d(TAG, "ReleaseUpdateApiRequest success")
+    withContext(Dispatchers.Main) {
+      when (apkUpdateInfoResult) {
+        is ModularResult.Error<*> -> {
+          Logger.error(TAG, apkUpdateInfoResult.error) { "Failed to check for updates" }
+          failedUpdate(manual, apkUpdateInfoResult.error)
+        }
+        is ModularResult.Value<ApkReleaseInfo> -> {
+          Logger.d(TAG, "ReleaseUpdateApiRequest success")
 
-            processUpdateApiResponse(
-              responseRelease = response.result,
-              manual = manual,
-              isRelease = buildType == AndroidUtils.BuildType.Stable
-            )
-          }
-
-          is JsonReaderRequest.JsonReaderResponse.ServerError -> {
-            Logger.e(TAG, "Error while trying to get new release apk, status code: ${response.statusCode}")
-            failedUpdate(manual, BadStatusResponseException(response.statusCode))
-          }
-
-          is JsonReaderRequest.JsonReaderResponse.UnknownServerError -> {
-            Logger.e(TAG, "Unknown error while trying to get new release apk", response.error)
-            failedUpdate(manual, response.error)
-          }
-
-          is JsonReaderRequest.JsonReaderResponse.ParsingError -> {
-            Logger.e(TAG, "Parsing error while trying to get new release apk", response.error)
-            failedUpdate(manual, response.error)
-          }
+          processUpdateApiResponse(
+            apkReleaseInfo = apkUpdateInfoResult.value,
+            manual = manual,
+            usePrereleaseBuilds = usePrereleaseBuilds
+          )
         }
       }
     }
   }
 
   private suspend fun processUpdateApiResponse(
-    responseRelease: UpdateApiRequest.ReleaseUpdateApiResponse,
+    apkReleaseInfo: UpdateApiRequest.ApkReleaseInfo,
     manual: Boolean,
-    isRelease: Boolean
+    usePrereleaseBuilds: Boolean
   ) {
     if (!BackgroundUtils.isInForeground()) {
       Logger.d(TAG, "processUpdateApiResponse() not in foreground")
       return
     }
 
-    val continueWithUpdate = when {
-      !kurobaSettings.application.checkUpdateApkVersionCode.read() -> {
+    val continueWithUpdate = run {
+      if (!kurobaSettings.application.checkUpdateApkVersionCode.read()) {
         Logger.d(TAG, "processUpdateApiResponse() checkUpdateApkVersionCode is false")
-        true
+        return@run true
       }
-      isRelease -> canContinueReleaseUpdate(responseRelease)
-      !isRelease -> canContinueBetaUpdate(responseRelease)
-      else -> false
+
+      return@run when (val versionCode = apkReleaseInfo.versionCode) {
+        is UpdateApiRequest.VersionCode.Beta -> canContinueBetaUpdate(versionCode)
+        is UpdateApiRequest.VersionCode.Release -> canContinueReleaseUpdate(versionCode)
+      }
     }
 
     Logger.d(TAG,
       "processUpdateApiResponse() " +
               "manual: ${manual}, " +
-              "actuallyHasUpdate: $continueWithUpdate, " +
-              "releaseVersionCode: ${responseRelease.versionCode}, " +
-              "releaseBuildNumber: ${responseRelease.buildNumber}, " +
-              "apkURL: ${responseRelease.apkURL}, " +
-              "appVersionCode: ${BuildConfig.VERSION_CODE}"
+              "usePrereleaseBuilds: ${usePrereleaseBuilds}, " +
+              "continueWithUpdate: ${continueWithUpdate}, " +
+              "tagName: ${apkReleaseInfo.tagName}, " +
+              "versionCode: ${apkReleaseInfo.versionCode}, " +
+              "prerelease: ${apkReleaseInfo.prerelease}, " +
+              "apkURL: ${apkReleaseInfo.apkURL}, " +
+              "currentVersionName: ${BuildConfig.VERSION_NAME}"
     )
 
-    Logger.d(TAG, "processUpdateApiResponse() responseRelease=${responseRelease}")
+    Logger.d(TAG, "processUpdateApiResponse() apkReleaseInfo=${apkReleaseInfo}")
 
     if (!continueWithUpdate) {
       cancelApkUpdateNotification()
@@ -291,12 +265,12 @@ class KurobaAppUpdateManager(
       // (In case of the dev build we check whether the apk hashes differ or not beforehand,
       // so if they are the same this method won't even get called. In case of the release
       // build this method will be called in both cases so we do the check in this method)
-      notifyNewApkUpdate(responseRelease)
+      notifyNewApkUpdate(apkReleaseInfo)
       return
     }
 
-    val dialogTitle = "${AndroidUtils.applicationLabel} ${responseRelease.versionCodeString} available"
-    val dialogDescription = responseRelease.body ?: "Update message not available"
+    val dialogTitle = "${AndroidUtils.applicationLabel} ${apkReleaseInfo.tagName} available"
+    val dialogDescription = apkReleaseInfo.releaseDescription ?: "Update message not available"
 
     val installClicked = suspendCancellableCoroutine { continuation ->
       dialogFactory.showDialog(
@@ -320,12 +294,12 @@ class KurobaAppUpdateManager(
     }
 
     updateInstallRequested(
-      responseRelease = responseRelease,
+      responseRelease = apkReleaseInfo,
       onUpdateClicked = {
         val apkUpdateInfoJson = ApkUpdateInfoJson(
-          versionCode = responseRelease.versionCode,
-          buildNumber = responseRelease.buildNumber,
-          versionName = responseRelease.versionCodeString
+          versionCode = apkReleaseInfo.versionCode.code,
+          buildNumber = apkReleaseInfo.versionCode.buildNumber() ?: 0L,
+          versionName = apkReleaseInfo.tagName
         )
 
         Logger.debug(TAG) {
@@ -368,16 +342,16 @@ class KurobaAppUpdateManager(
     cancelApkUpdateNotification()
   }
 
-  private suspend fun notifyNewApkUpdate(responseRelease: UpdateApiRequest.ReleaseUpdateApiResponse?) {
+  private suspend fun notifyNewApkUpdate(apkReleaseInfo: UpdateApiRequest.ApkReleaseInfo?) {
     kurobaSettings.internal.hasNewApkUpdate.write(true)
     settingsNotificationManager.notify(SettingNotification.ApkUpdate)
 
-    if (responseRelease == null) {
+    if (apkReleaseInfo == null) {
       return
     }
 
-    val versionCode = responseRelease.versionCode
-    val buildNumber = responseRelease.buildNumber
+    val versionCode = apkReleaseInfo.versionCode.code
+    val buildNumber = apkReleaseInfo.versionCode.buildNumber() ?: 0L
 
     kurobaSystemNotifications.showNotification(
       notificationData = KurobaSystemNotifications.NotificationData(
@@ -393,7 +367,13 @@ class KurobaAppUpdateManager(
             append(appResources.string(R.string.update_application_update_available_description))
 
             if (versionCode > 0) {
-              append("(v${versionCode}.${buildNumber}-${AppModuleAndroidUtils.buildType.tag})")
+              append("(")
+              append("v${versionCode}.${buildNumber}")
+              if (apkReleaseInfo.prerelease) {
+                append("-beta")
+              }
+
+              append(")")
             } else {
               append("(Unknown)")
             }
@@ -409,15 +389,8 @@ class KurobaAppUpdateManager(
   }
 
   private fun failedUpdate(manual: Boolean, error: Throwable) {
-    Logger.e(TAG, "failedUpdate() manual=$manual", error)
-
-    val manualUpdateUrl = if (AppModuleAndroidUtils.buildType == AndroidUtils.BuildType.Beta) {
-      "https://github.com/K1rakishou/Kuroba-Experimental-beta/releases/latest"
-    } else {
-      "https://github.com/K1rakishou/Kuroba-Experimental/releases/latest"
-    }
-
-    Logger.e(TAG, "Failed to process ${AppModuleAndroidUtils.buildType.tag} API call for updating")
+    Logger.e(TAG, "failedUpdate() manual=$manual, error: ${error.errorMessageOrClassName()}")
+    val manualUpdateUrl = "https://github.com/K1rakishou/Kuroba-Experimental/releases/latest"
 
     if (manual && BackgroundUtils.isInForeground()) {
       dialogFactory.showDialog(
@@ -444,7 +417,7 @@ class KurobaAppUpdateManager(
    * @param responseRelease that contains the APK file URL
    */
   private suspend fun doUpdate(
-    responseRelease: UpdateApiRequest.ReleaseUpdateApiResponse,
+    responseRelease: UpdateApiRequest.ApkReleaseInfo,
     onUpdateClicked: () -> Unit
   ) {
     BackgroundUtils.ensureMainThread()
@@ -507,7 +480,7 @@ class KurobaAppUpdateManager(
 
   private suspend fun installApk(
     apkFile: File,
-    responseRelease: UpdateApiRequest.ReleaseUpdateApiResponse,
+    responseRelease: UpdateApiRequest.ApkReleaseInfo,
     onUpdateClicked: () -> Unit
   ) {
     BackgroundUtils.ensureMainThread()
@@ -589,7 +562,7 @@ class KurobaAppUpdateManager(
   }
 
   private suspend fun updateInstallRequested(
-    responseRelease: UpdateApiRequest.ReleaseUpdateApiResponse,
+    responseRelease: UpdateApiRequest.ApkReleaseInfo,
     onUpdateClicked: () -> Unit
   ) {
     if (AndroidUtils.isAndroidT) {
@@ -657,47 +630,46 @@ class KurobaAppUpdateManager(
     return ApkUpdateInfoJson(versionCode, buildNumber, versionName)
   }
 
-  private suspend fun canContinueBetaUpdate(responseRelease: UpdateApiRequest.ReleaseUpdateApiResponse): Boolean {
+  private suspend fun canContinueBetaUpdate(versionCode: UpdateApiRequest.VersionCode.Beta): Boolean {
     val previousBuildNumber = kurobaSettings.internal.previousBuildNumber.read()
 
     Logger.debug(TAG) {
       "canContinueBetaUpdate() " +
-      "responseRelease.versionCode: ${responseRelease.versionCode}, " +
+      "responseRelease.versionCode: ${versionCode}, " +
       "BuildConfig.VERSION_CODE: ${BuildConfig.VERSION_CODE}, " +
-      "responseRelease.buildNumber: ${responseRelease.buildNumber}, " +
-      "PersistableChanState.previousBuildNumber: ${previousBuildNumber}"
+      "previousBuildNumber: ${previousBuildNumber}"
     }
 
-    if (responseRelease.versionCode < BuildConfig.VERSION_CODE.toLong()) {
+    if (versionCode.code < BuildConfig.VERSION_CODE.toLong()) {
       Logger.debug(TAG) { "canContinueBetaUpdate() responseRelease.versionCode < BuildConfig.VERSION_CODE.toLong()" }
       // Do not update if release's version code is less than ours
       return false
     }
 
-    if (responseRelease.versionCode > BuildConfig.VERSION_CODE) {
+    if (versionCode.code > BuildConfig.VERSION_CODE) {
       Logger.debug(TAG) { "canContinueBetaUpdate() responseRelease.versionCode > BuildConfig.VERSION_CODE.toLong()" }
       // Always update if the release's version code is greater than ours
       return true
     }
 
     // If they are the same then check the build numbers
-    val buildNumberIsGreater = responseRelease.buildNumber > previousBuildNumber
+    val buildNumberIsGreater = versionCode.buildNumber > previousBuildNumber
     Logger.debug(TAG) {
       "canContinueBetaUpdate() " +
-        "buildNumber: ${responseRelease.buildNumber} > previousBuilderNumber: ${previousBuildNumber}, " +
+        "buildNumber: ${versionCode.buildNumber} > previousBuilderNumber: ${previousBuildNumber}, " +
         "buildNumberIsGreater: ${buildNumberIsGreater}"
     }
 
     return buildNumberIsGreater
   }
 
-  private fun canContinueReleaseUpdate(responseRelease: UpdateApiRequest.ReleaseUpdateApiResponse): Boolean {
+  private fun canContinueReleaseUpdate(versionCode: UpdateApiRequest.VersionCode.Release): Boolean {
     Logger.debug(TAG) {
-      "canContinueReleaseUpdate() responseRelease.versionCode: ${responseRelease.versionCode}, " +
+      "canContinueReleaseUpdate() versionCode: ${versionCode}, " +
       "BuildConfig.VERSION_CODE: ${BuildConfig.VERSION_CODE}"
     }
 
-    return responseRelease.versionCode > BuildConfig.VERSION_CODE
+    return versionCode.code > BuildConfig.VERSION_CODE
   }
 
   companion object {

@@ -6,6 +6,8 @@ package com.github.k1rakishou.v2
  * */
 sealed class KurobaSettingKey(val raw: String) {
   sealed class Application(key: String) : KurobaSettingKey(key) {
+    data object UsePrereleaseBuilds : Application("UsePrereleaseBuilds")
+
     data object IsLowRamDeviceForced : Application("IsLowRamDeviceForced")
     data object WatchEnabled : Application("WatchEnabled")
     data object WatchBackground : Application("WatchBackground")

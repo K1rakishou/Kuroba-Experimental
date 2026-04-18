@@ -669,6 +669,7 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="setting_thread_downloader_media_metered_network_description">Turning this setting off will disable thread media downloading when not connected to WiFi. Thread posts will still be downloaded.</string>
 
     <string name="settings_group_about">About</string>
+    <string name="settings_use_prerelease_builds">Check for prerelease (beta) updates</string>
     <string name="settings_update_check">Tap to check for updates</string>
     <string name="settings_updates_are_disabled">Updates are disabled</string>
     <string name="settings_report">Report</string>

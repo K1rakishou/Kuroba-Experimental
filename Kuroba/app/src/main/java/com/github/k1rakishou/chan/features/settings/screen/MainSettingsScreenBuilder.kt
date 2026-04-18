@@ -197,6 +197,13 @@ class MainSettingsScreenBuilder(
       )
 
       addSetting(
+        SettingUiElement.Bool(
+          title = { appResources.string(R.string.settings_use_prerelease_builds) },
+          setting = kurobaSettings.application.usePrereleaseBuilds
+        )
+      )
+
+      addSetting(
         SettingUiElement.Link(
           composeKey = "Changelog",
           title = { appResources.string(R.string.see_changelog_for_this_version) },

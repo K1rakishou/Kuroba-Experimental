@@ -19,7 +19,6 @@ abstract class JsonReaderRequest<T>(
   protected val request: Request,
   private val proxiedOkHttpClient: ProxiedOkHttpClient
 ) {
-
   open suspend fun execute(): JsonReaderResponse<T> {
     return withContext(Dispatchers.IO) {
       val response = Try {

@@ -20,10 +20,12 @@ class ApplicationSettings(
 ) : BaseSettings(database) {
   override val backupable: Boolean = true
 
+  val usePrereleaseBuilds by lazy {
+    createBooleanSetting(KurobaSettingKey.Application.UsePrereleaseBuilds, false)
+  }
   val isLowRamDeviceForced by lazy {
     createBooleanSetting(KurobaSettingKey.Application.IsLowRamDeviceForced, false)
   }
-
   val watchEnabled by lazy {
     createBooleanSetting(KurobaSettingKey.Application.WatchEnabled, false)
   }

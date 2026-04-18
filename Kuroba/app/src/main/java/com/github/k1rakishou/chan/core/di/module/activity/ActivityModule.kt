@@ -65,6 +65,7 @@ import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.repository.MediaServiceLinkExtraContentRepository
 import com.github.k1rakishou.model.repository.SeenPostRepository
 import com.github.k1rakishou.v2.KurobaSettings
+import com.squareup.moshi.Moshi
 import dagger.Lazy
 import dagger.Module
 import dagger.Provides
@@ -76,9 +77,10 @@ class ActivityModule {
   @PerActivity
   @Provides
   fun provideUpdateManager(
+    activity: AppCompatActivity,
     kurobaSettings: KurobaSettings,
     appResources: AppResources,
-    activity: AppCompatActivity,
+    moshi: Moshi,
     settingsNotificationManager: SettingsNotificationManager,
     kurobaSystemNotifications: KurobaSystemNotifications,
     loadChangelogUseCase: Lazy<LoadChangelogUseCase>,
@@ -91,6 +93,7 @@ class ActivityModule {
       context = activity,
       kurobaSettings = kurobaSettings,
       appResources = appResources,
+      moshi = moshi,
       settingsNotificationManager = settingsNotificationManager,
       kurobaSystemNotifications = kurobaSystemNotifications,
       loadChangelogUseCaseLazy = loadChangelogUseCase,

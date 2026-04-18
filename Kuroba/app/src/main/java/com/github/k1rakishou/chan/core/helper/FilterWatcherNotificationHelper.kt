@@ -17,7 +17,6 @@ import androidx.core.app.NotificationManagerCompat
 import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.activity.StartActivity
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.hasPostNotificationsPermission
 import com.github.k1rakishou.chan.utils.NotificationConstants
@@ -33,10 +32,13 @@ import org.joda.time.DateTime
 class FilterWatcherNotificationHelper(
   private val appContext: Context,
   private val notificationManagerCompat: NotificationManagerCompat,
-  private val _themeEngine: Lazy<ThemeEngine>
+  private val themeEngineLazy: Lazy<ThemeEngine>
 ) {
   private val themeEngine: ThemeEngine
-    get() = _themeEngine.get()
+    get() = themeEngineLazy.get()
+
+  private val notificationsGroup: String
+    get() = "${TAG}_${BuildConfig.APPLICATION_ID}"
 
   fun showBookmarksCreatedNotification(createdBookmarks: Map<String, MutableList<ChanDescriptor.ThreadDescriptor>>) {
     if (createdBookmarks.isEmpty()) {
@@ -59,7 +61,9 @@ class FilterWatcherNotificationHelper(
   }
 
   @RequiresApi(Build.VERSION_CODES.O)
-  private fun showSummaryNotification(createdBookmarks: Map<String, MutableList<ChanDescriptor.ThreadDescriptor>>): Boolean {
+  private fun showSummaryNotification(
+    createdBookmarks: Map<String, MutableList<ChanDescriptor.ThreadDescriptor>>
+  ): Boolean {
     val summaryNotificationBuilder = NotificationCompat.Builder(
       appContext,
       NotificationConstants.FilterWatcherNotifications.FW_SUMMARY_NOTIFICATION_CHANNEL_ID
@@ -287,10 +291,6 @@ class FilterWatcherNotificationHelper(
 
   companion object {
     private const val TAG = "FilterWatcherNotificationHelper"
-
-    private val notificationsGroup by lazy {
-      "${TAG}_${BuildConfig.APPLICATION_ID}_${AppModuleAndroidUtils.buildType.name}"
-    }
   }
 
 }

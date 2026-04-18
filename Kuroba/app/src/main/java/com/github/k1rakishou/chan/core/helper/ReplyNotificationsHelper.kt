@@ -67,25 +67,29 @@ class ReplyNotificationsHelper(
   private val appScope: CoroutineScope,
   private val notificationManagerCompat: NotificationManagerCompat,
   private val notificationManager: NotificationManager,
-  private val _bookmarksManager: Lazy<BookmarksManager>,
-  private val _chanPostRepository: Lazy<ChanPostRepository>,
-  private val _imageLoaderDeprecated: Lazy<ImageLoaderDeprecated>,
-  private val _themeEngine: Lazy<ThemeEngine>,
-  private val _simpleCommentParser: Lazy<SimpleCommentParser>
+  private val bookmarksManagerLazy: Lazy<BookmarksManager>,
+  private val chanPostRepositoryLazy: Lazy<ChanPostRepository>,
+  private val imageLoaderDeprecatedLazy: Lazy<ImageLoaderDeprecated>,
+  private val themeEngineLazy: Lazy<ThemeEngine>,
+  private val simpleCommentParserLazy: Lazy<SimpleCommentParser>
 ) {
   private val debouncer = DebouncingCoroutineExecutor(appScope)
   private val working = AtomicBoolean(false)
 
   val bookmarksManager: BookmarksManager
-    get() = _bookmarksManager.get()
+    get() = bookmarksManagerLazy.get()
   val chanPostRepository: ChanPostRepository
-    get() = _chanPostRepository.get()
+    get() = chanPostRepositoryLazy.get()
   val imageLoaderDeprecated: ImageLoaderDeprecated
-    get() = _imageLoaderDeprecated.get()
+    get() = imageLoaderDeprecatedLazy.get()
   val themeEngine: ThemeEngine
-    get() = _themeEngine.get()
+    get() = themeEngineLazy.get()
   val simpleCommentParser: SimpleCommentParser
-    get() = _simpleCommentParser.get()
+    get() = simpleCommentParserLazy.get()
+
+  // For Android O and above
+  private val notificationsGroup: String
+    get() = "${TAG}_${BuildConfig.APPLICATION_ID}"
 
   init {
     appScope.launch {
@@ -912,9 +916,6 @@ class ReplyNotificationsHelper(
     private const val MAX_THREAD_TITLE_LENGTH = 50
     private const val MAX_THUMBNAIL_REQUESTS_PER_BATCH = 8
     private const val MAX_NOTIFICATION_LINE_LENGTH = 128
-
-    // For Android O and above
-    private val notificationsGroup by lazy { "${TAG}_${BuildConfig.APPLICATION_ID}_${AppModuleAndroidUtils.buildType.name}" }
 
     private val REPLIES_COMPARATOR = Comparator<ThreadBookmarkReplyView> { o1, o2 ->
       o1.postDescriptor.postNo.compareTo(o2.postDescriptor.postNo)
