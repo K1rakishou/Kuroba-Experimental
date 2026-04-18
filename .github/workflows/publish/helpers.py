@@ -51,13 +51,6 @@ def get_commits_since(commit_hash, repo_path=None):
 
     return all_commits
 
-def get_new_stable_tag_name(version_code: VersionCode):
-    print(f"get_new_tag_name() is_stable: true, version_code: {version_code}")
-    new_stable_tag_name = f"v{version_code.major}.{version_code.minor}.{version_code.patch}-release"
-    print(f"get_new_tag_name() new_stable_tag_name: {new_stable_tag_name}")
-    return new_stable_tag_name
-    
-
 def get_new_beta_tag_name(version_code: VersionCode):
     tag_name = github.get_latest_release_tag(RepoName)
     print(f"get_new_tag_name() is_stable: false, tag_name: {tag_name}")
@@ -65,10 +58,11 @@ def get_new_beta_tag_name(version_code: VersionCode):
     beta_major_version = -1
     beta_minor_version = -1
     beta_patch_version = -1
-    beta_increment_version = -1
+    beta_increment_version = -2
 
     beta_pattern_match = re.search(BetaTagPattern, tag_name)
     release_pattern_match = re.search(ReleaseTagPattern, tag_name)
+
     if beta_pattern_match:
         groups = beta_pattern_match.groups()
         beta_major_version = int(groups[0])
@@ -80,10 +74,8 @@ def get_new_beta_tag_name(version_code: VersionCode):
         beta_major_version = int(groups[0])
         beta_minor_version = int(groups[1])
         beta_patch_version = int(groups[2])
-    else:
-        raise BuildCreationError(f"Failed to parse latest beta tag: {tag_name}")
 
-    if beta_major_version < 0 or beta_minor_version < 0 or beta_patch_version < 0 or beta_increment_version < 0:
+    if beta_major_version < 0 or beta_minor_version < 0 or beta_patch_version < 0 or beta_increment_version < -1:
         raise BuildCreationError(f"Failed to parse latest beta tag: {tag_name}")
     
     # The version code of the last tag is still the same as the version code from the build.gradle.
