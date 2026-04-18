@@ -457,7 +457,6 @@ class KurobaSettingsMigrationHelper(
       migrateBooleanSetting(prefs, "preference_filter_use_filter_pattern_for_group", application.filterWatchUseFilterPatternForGroup)
       migrateBooleanSetting(prefs, "preference_thread_downloader_download_media_on_metered_network", application.threadDownloaderDownloadMediaOnMeteredNetwork)
       migrateBooleanSetting(prefs, "is_current_theme_dark", application.isCurrentThemeDark)
-      migrateBooleanSetting(prefs, "never_show_page_number", application.showThreadPage)
       migrateBooleanSetting(prefs, "preference_post_full_date", application.postFullDate)
       migrateBooleanSetting(prefs, "preference_post_full_date_use_local_locale", application.postFullDateUseLocalLocale)
       migrateBooleanSetting(prefs, "preference_post_file_name", application.postFileInfo)

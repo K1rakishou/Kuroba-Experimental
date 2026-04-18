@@ -299,7 +299,6 @@ class ThreadPresenter @Inject constructor(
   }
 
   private var threadPresenterCallback: ThreadPresenterCallback? = null
-  private var forcePageUpdate = false
   private val alreadyCreatedNavElement = AtomicBoolean(false)
   private var currentNormalLoadThreadJob: Job? = null
   private var currentFullLoadThreadJob: Job? = null
@@ -1218,13 +1217,6 @@ class ThreadPresenter @Inject constructor(
         && threadPresenterCallback?.canShowSnackBar() == true
       ) {
         showThreadStatusSnackbar(chanThread, newPostsCount)
-      }
-
-      if (localChanDescriptor.threadNo == loadedChanDescriptor.threadNoOrNull()) {
-        if (forcePageUpdate) {
-          pageRequestManager.forceUpdateForBoard(localChanDescriptor.boardDescriptor)
-          forcePageUpdate = false
-        }
       }
     }
 
@@ -2566,9 +2558,7 @@ class ThreadPresenter @Inject constructor(
         val canRequestMore = !currentThread.isArchived() && !currentThread.isDeleted()
         if (canRequestMore) {
           chanThreadTicker.resetEverythingAndKickTicker()
-
-          // put in a "request" for a page update whenever the next set of data comes in
-          forcePageUpdate = true
+          pageRequestManager.forceUpdateForBoard(chanDescriptor.boardDescriptor)
         }
       }
     }
@@ -2585,11 +2575,10 @@ class ThreadPresenter @Inject constructor(
   }
 
   override fun requestNewPostLoad() {
-    if (isBound && currentChanDescriptor is ChanDescriptor.ThreadDescriptor) {
+    val chanDescriptor = currentChanDescriptor
+    if (isBound && chanDescriptor is ChanDescriptor.ThreadDescriptor) {
       chanThreadTicker.resetEverythingAndKickTicker()
-
-      // put in a "request" for a page update whenever the next set of data comes in
-      forcePageUpdate = true
+      pageRequestManager.forceUpdateForBoard(chanDescriptor.boardDescriptor)
     }
   }
 

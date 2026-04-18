@@ -770,6 +770,7 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="setting_post_pin">Bookmark thread on post</string>
     <string name="setting_post_default_name">Default post name</string>
     <string name="setting_auto_refresh_thread">Auto refresh threads</string>
+    <string name="setting_show_thread_page">Show thread page</string>
     <string name="setting_controller_swipeable">Allow screens to be swiped away</string>
     <string name="setting_controller_swipeable_description">Works on screens like board archive/album/etc. Does not work on the thread screen! Use the other setting for the thread screen.</string>
     <string name="setting_view_thread_controller_swipeable">Allow the thread screen to be swiped away</string>

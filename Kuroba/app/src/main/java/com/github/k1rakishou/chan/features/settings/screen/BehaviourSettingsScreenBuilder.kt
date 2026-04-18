@@ -43,6 +43,13 @@ class BehaviourSettingsScreenBuilder(
 
       addSetting(
         SettingUiElement.Bool(
+          title = { appResources.string(R.string.setting_show_thread_page) },
+          setting = kurobaSettings.application.showThreadPage
+        )
+      )
+
+      addSetting(
+        SettingUiElement.Bool(
           title = { appResources.string(R.string.setting_controller_swipeable) },
           description = { appResources.string(R.string.setting_controller_swipeable_description) },
           setting = kurobaSettings.application.controllerSwipeable,

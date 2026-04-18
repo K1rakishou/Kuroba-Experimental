@@ -172,11 +172,7 @@ class PageRequestManager(
       shouldUpdate(boardDescriptor)
     }
 
-    if (boardPagesMap.contains(boardDescriptor)) {
-      return boardPagesMap[boardDescriptor]
-    }
-
-    return null
+    return boardPagesMap[boardDescriptor]
   }
 
   private suspend fun shouldUpdate(boardDescriptor: BoardDescriptor) {
