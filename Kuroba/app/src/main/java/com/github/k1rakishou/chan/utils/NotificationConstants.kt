@@ -48,15 +48,17 @@ object NotificationConstants {
 
     const val NOTIFICATION_TAG_PREFIX = "reply_"
 
-    const val REPLY_SUMMARY_NOTIFICATION_CHANNEL_ID = "${BuildConfig.APPLICATION_ID}_reply_summary_notifications_channel"
+    const val REPLY_SUMMARY_NOTIFICATION_CHANNEL_ID =
+      "${BuildConfig.APPLICATION_ID}_reply_summary_notifications_channel"
     const val REPLY_SUMMARY_NOTIFICATION_NAME = "Notification channel for new replies summary"
-    const val REPLY_SUMMARY_SILENT_NOTIFICATION_CHANNEL_ID = "${BuildConfig.APPLICATION_ID}_reply_summary_silent_notifications_channel"
+    const val REPLY_SUMMARY_SILENT_NOTIFICATION_CHANNEL_ID =
+      "${BuildConfig.APPLICATION_ID}_reply_summary_silent_notifications_channel"
     const val REPLY_SUMMARY_SILENT_NOTIFICATION_NAME = "Notification channel for new replies summary (silent)"
     const val REPLY_NOTIFICATION_CHANNEL_ID = "${BuildConfig.APPLICATION_ID}_replies_notifications_channel"
     const val REPLY_NOTIFICATION_CHANNEL_NAME = "Notification channel for replies (Yous)"
 
-    val SUMMARY_NOTIFICATION_TAG = "REPLIES_SUMMARY_NOTIFICATION_TAG"
-    val REPLIES_PRE_OREO_NOTIFICATION_TAG = "REPLIES_PRE_OREO_NOTIFICATION_TAG"
+    const val SUMMARY_NOTIFICATION_TAG = "REPLIES_SUMMARY_NOTIFICATION_TAG"
+    const val REPLIES_PRE_OREO_NOTIFICATION_TAG = "REPLIES_PRE_OREO_NOTIFICATION_TAG"
 
     const val R_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY = "reply_notification_click_thread_descriptors"
     const val R_NOTIFICATION_CLICK_POST_DESCRIPTORS_KEY = "reply_notification_click_post_descriptors"
@@ -66,10 +68,11 @@ object NotificationConstants {
   object LastPageNotifications {
     const val LAST_PAGE_NOTIFICATION_CHANNEL_ID = "${BuildConfig.APPLICATION_ID}_last_page_notifications_channel"
     const val LAST_PAGE_NOTIFICATION_NAME = "Notification channel for threads last pages alerts"
-    const val LAST_PAGE_SILENT_NOTIFICATION_CHANNEL_ID = "${BuildConfig.APPLICATION_ID}_last_page_silent_notifications_channel"
+    const val LAST_PAGE_SILENT_NOTIFICATION_CHANNEL_ID =
+      "${BuildConfig.APPLICATION_ID}_last_page_silent_notifications_channel"
     const val LAST_PAGE_SILENT_NOTIFICATION_NAME = "Notification channel for threads last pages alerts (silent)"
 
-    val LAST_PAGE_NOTIFICATION_TAG = "LAST_PAGE_NOTIFICATION_TAG"
+    const val LAST_PAGE_NOTIFICATION_TAG = "LAST_PAGE_NOTIFICATION_TAG"
 
     const val LP_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY = "last_page_notification_click_thread_descriptors"
   }
@@ -138,7 +141,8 @@ object NotificationConstants {
     const val NOTIFICATION_TAG = "filter_watcher_notification"
     const val SUMMARY_NOTIFICATION_TAG = "filter_watcher_summary_notification"
 
-    const val FW_SUMMARY_NOTIFICATION_CHANNEL_ID = "${BuildConfig.APPLICATION_ID}_filter_watcher_summary_notifications_channel"
+    const val FW_SUMMARY_NOTIFICATION_CHANNEL_ID =
+      "${BuildConfig.APPLICATION_ID}_filter_watcher_summary_notifications_channel"
     const val FW_SUMMARY_NOTIFICATION_CHANNEL_NAME = "Notification channel for filter watcher summary"
 
     const val FW_NOTIFICATION_CHANNEL_ID = "${BuildConfig.APPLICATION_ID}_filter_watcher_notifications_channel"
@@ -171,7 +175,7 @@ object NotificationConstants {
     const val CHANNEL_ID = "${BuildConfig.APPLICATION_ID}_generic"
     const val CHANNEL_NAME = "Notification channel for generic app events"
 
-    val TAG = "GENERIC_TAG"
+    const val TAG = "GENERIC_TAG"
   }
 
 }
