@@ -74,6 +74,7 @@ def get_new_beta_tag_name(version_code: VersionCode):
         beta_major_version = int(groups[0])
         beta_minor_version = int(groups[1])
         beta_patch_version = int(groups[2])
+        beta_increment_version = -1
 
     if beta_major_version < 0 or beta_minor_version < 0 or beta_patch_version < 0 or beta_increment_version < -1:
         raise BuildCreationError(f"Failed to parse latest beta tag: {tag_name}")
