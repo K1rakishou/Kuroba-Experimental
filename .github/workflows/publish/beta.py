@@ -18,7 +18,7 @@ def publish_beta(token, workspace_dir, version_code: helpers.VersionCode):
         print("Failed to get the release tag.")
         exit(-1)
 
-    latest_release_commit_hash = github.get_latest_release_commit_hash(helpers.StableRepoName)
+    latest_release_commit_hash = github.get_latest_release_commit_hash(helpers.RepoName)
     commits = helpers.get_commits_since(latest_release_commit_hash)
 
     print(f'tag_name: {tag_name}')
@@ -28,5 +28,5 @@ def publish_beta(token, workspace_dir, version_code: helpers.VersionCode):
     body = commits
     assets_path = workspace_dir + helpers.BetaApkRelativePath
     
-    github.create_github_release(token, helpers.BetaRepoName, tag_name, release_name, body, assets_path, ApkNames)
+    github.create_github_release(token, helpers.RepoName, tag_name, release_name, body, assets_path, ApkNames, True)
 

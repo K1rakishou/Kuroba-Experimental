@@ -3,8 +3,7 @@ import subprocess
 import re
 import github
 
-BetaRepoName = 'K1rakishou/Kuroba-Experimental-beta'
-StableRepoName = 'K1rakishou/Kuroba-Experimental'
+RepoName = 'K1rakishou/Kuroba-Experimental'
 
 BetaTagPattern = r'v(\d+?)\.(\d{1,2})\.(\d{1,2})\.(\d+)-beta$'
 VersionNamePattern = r'versionName\s*=\s*\"v(\d+)\.(\d{1,2})\.(\d{1,2})\"'
@@ -59,7 +58,7 @@ def get_new_stable_tag_name(version_code: VersionCode):
     
 
 def get_new_beta_tag_name(version_code: VersionCode):
-    tag_name = github.get_latest_release_tag(BetaRepoName)
+    tag_name = github.get_latest_release_tag(RepoName)
     print(f"get_new_tag_name() is_stable: false, tag_name: {tag_name}")
 
     beta_major_version = -1

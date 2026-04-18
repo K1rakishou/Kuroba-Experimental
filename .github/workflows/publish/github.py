@@ -3,7 +3,7 @@ import requests
 import json
 import helpers
 
-def create_github_release(token, repo, tag_name, release_name, body, assets_path, apk_names: list[str]):
+def create_github_release(token, repo, tag_name, release_name, body, assets_path, apk_names: list[str], prerelease: bool):
     if len(apk_names) == 0:
         raise helpers.BuildCreationError("apk_names is empty")
     
@@ -19,7 +19,7 @@ def create_github_release(token, repo, tag_name, release_name, body, assets_path
         "name": release_name,
         "body": body,
         "draft": False,
-        "prerelease": False
+        "prerelease": prerelease
     }
 
     response = requests.post(url, headers=headers, data=json.dumps(payload))
@@ -31,7 +31,7 @@ def create_github_release(token, repo, tag_name, release_name, body, assets_path
     response_json = response.json()
     upload_url = response_json["upload_url"].split("{")[0]
     release_id = response_json["id"]
-    print(f'create_github_release() release_id: {release_id}, upload_url: \'{upload_url}\'')
+    print(f'create_github_release() tag_name: {tag_name}, release_id: {release_id}, upload_url: \'{upload_url}\'')
     
     for apk_name in apk_names:
         apk_path = f"{assets_path}/{apk_name}"

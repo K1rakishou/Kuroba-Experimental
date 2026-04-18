@@ -11,7 +11,7 @@ ApkNames = [
 def publish_stable(token, workspace_dir, version_code: helpers.VersionCode):
     print(f"Publishing stable release")
     
-    latest_release_commit_hash = github.get_latest_release_commit_hash(helpers.StableRepoName)
+    latest_release_commit_hash = github.get_latest_release_commit_hash(helpers.RepoName)
     commits = helpers.get_commits_since(latest_release_commit_hash)
     tag_name = f'v{version_code.major}.{version_code.minor}.{version_code.patch}-release'
     
@@ -22,5 +22,5 @@ def publish_stable(token, workspace_dir, version_code: helpers.VersionCode):
     body = commits
     asset_path = workspace_dir + helpers.StableApkRelativePath
     
-    github.create_github_release(token, helpers.StableRepoName, tag_name, release_name, body, asset_path, ApkNames)
+    github.create_github_release(token, helpers.RepoName, tag_name, release_name, body, asset_path, ApkNames, False)
 
