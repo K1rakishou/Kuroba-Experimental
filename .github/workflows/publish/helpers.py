@@ -6,6 +6,7 @@ import github
 RepoName = 'K1rakishou/Kuroba-Experimental'
 
 BetaTagPattern = r'v(\d+?)\.(\d{1,2})\.(\d{1,2})\.(\d+)-beta$'
+ReleaseTagPattern = r'v(\d+?)\.(\d{1,2})\.(\d{1,2})-release$'
 VersionNamePattern = r'versionName\s*=\s*\"v(\d+)\.(\d{1,2})\.(\d{1,2})\"'
 
 BetaApkRelativePath = "/Kuroba/app/build/outputs/apk/release"
@@ -67,12 +68,18 @@ def get_new_beta_tag_name(version_code: VersionCode):
     beta_increment_version = -1
 
     beta_pattern_match = re.search(BetaTagPattern, tag_name)
+    release_pattern_match = re.search(ReleaseTagPattern, tag_name)
     if beta_pattern_match:
         groups = beta_pattern_match.groups()
         beta_major_version = int(groups[0])
         beta_minor_version = int(groups[1])
         beta_patch_version = int(groups[2])
         beta_increment_version = int(groups[3])
+    elif release_pattern_match:
+        groups = release_pattern_match.groups()
+        beta_major_version = int(groups[0])
+        beta_minor_version = int(groups[1])
+        beta_patch_version = int(groups[2])
     else:
         raise BuildCreationError(f"Failed to parse latest beta tag: {tag_name}")
 
@@ -96,8 +103,6 @@ def get_new_beta_tag_name(version_code: VersionCode):
     print(f"get_new_tag_name() (Version code change detected!) new_beta_tag_name: {new_beta_tag_name}")
 
     return new_beta_tag_name
-    
-
 
 def parse_project_version_name(workspace_dir):
     build_gradle_file_path = workspace_dir + "/Kuroba/app/build.gradle.kts"
