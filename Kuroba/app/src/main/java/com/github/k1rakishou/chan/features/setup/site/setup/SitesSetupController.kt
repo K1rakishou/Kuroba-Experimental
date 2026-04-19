@@ -32,6 +32,8 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.view.insets.InsetAwareEpoxyRecyclerView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class SitesSetupController(context: Context) : Controller(context), SitesSetupView {
@@ -138,10 +140,10 @@ class SitesSetupController(context: Context) : Controller(context), SitesSetupVi
     itemTouchHelper = ItemTouchHelper(touchHelperCallback)
     itemTouchHelper.attachToRecyclerView(epoxyRecyclerView)
 
-    compositeDisposable.add(
-      sitesPresenter.listenForStateChanges()
-        .subscribe { state -> onStateChanged(state) }
-    )
+    controllerScope.launch {
+      sitesPresenter.state
+        .collectLatest { state -> onStateChanged(state) }
+    }
 
     sitesPresenter.onCreate(this)
   }

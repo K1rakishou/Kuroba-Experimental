@@ -49,8 +49,6 @@ class MoshiJsonSetting<T>(
 
     val json = moshi.adapter(clazz).toJson(cached)
     settingProvider.putString(key, json)
-
-    settingStateDeprecated.onNext(value)
   }
 
   override fun setSync(value: T) {
@@ -62,8 +60,6 @@ class MoshiJsonSetting<T>(
 
     val json = moshi.adapter(clazz).toJson(cached)
     settingProvider.putStringSync(key, json)
-
-    settingStateDeprecated.onNext(value)
   }
 
   fun isNotDefault(): Boolean {

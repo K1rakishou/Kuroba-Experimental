@@ -276,7 +276,6 @@ abstract class Controller(
   @CallSuper
   open fun onDestroy() {
     _alive = false
-    compositeDisposable.clear()
     job.cancelChildren()
 
     Logger.verbose(TAG) { "${controllerKey} onDestroy" }
@@ -290,10 +289,10 @@ abstract class Controller(
     }
 
     // TODO: scoped viewmodels.
-    //  Add 'isBeingDestroyed' flag to onDestroy() which should be set to false when:
+    //  Add 'isBeingDestroyed' flag to onDestroy() which should be set to true when:
     //  1. Controller is being removed by some user action (like popController).
     //  2. Owner activity is being destroyed (isChangingOrientations == false)
-    //  In all different cases it should be false.
+    //  In all the other cases it should be false.
     //  Call `viewModelStore.clear()` only when isBeingDestroyed == true
     viewModelStore.clear()
     setControllerNoResult()

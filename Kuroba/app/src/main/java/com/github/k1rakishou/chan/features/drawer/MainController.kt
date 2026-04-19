@@ -316,7 +316,6 @@ class MainController(
 
     drawerLayout.removeDrawerListener(this)
     themeEngine.removeListener(this)
-    compositeDisposable.clear()
   }
 
   override fun onDrawerSlide(drawerView: View, slideOffset: Float) {

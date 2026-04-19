@@ -60,8 +60,6 @@ class GsonJsonSetting<T>(
 
     val json = gson.toJson(cached)
     settingProvider.putString(key, json)
-
-    settingStateDeprecated.onNext(value)
   }
 
   override fun setSync(value: T) {
@@ -73,8 +71,6 @@ class GsonJsonSetting<T>(
 
     val json = gson.toJson(cached)
     settingProvider.putStringSync(key, json)
-
-    settingStateDeprecated.onNext(value)
   }
 
   fun isNotDefault(): Boolean {

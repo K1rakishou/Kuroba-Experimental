@@ -26,7 +26,6 @@ public class StringSetting extends Setting<String> {
         if (!value.equals(get())) {
             settingProvider.putString(key, value);
             cached = value;
-            settingStateDeprecated.onNext(value);
         }
     }
 
@@ -34,21 +33,18 @@ public class StringSetting extends Setting<String> {
         if (!value.equals(get())) {
             settingProvider.putStringSync(key, value);
             cached = value;
-            settingStateDeprecated.onNext(value);
         }
     }
 
     public void setSyncNoCheck(String value) {
         settingProvider.putStringSync(key, value);
         cached = value;
-        settingStateDeprecated.onNext(value);
     }
 
     public void remove() {
         settingProvider.removeSync(key);
         hasCached = false;
         cached = def;
-        settingStateDeprecated.onNext(def);
     }
 
 }

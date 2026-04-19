@@ -27,7 +27,6 @@ public class IntegerSetting extends Setting<Integer> {
         if (!value.equals(get())) {
             settingProvider.putInt(key, value);
             cached = value;
-            settingStateDeprecated.onNext(value);
         }
     }
 
@@ -36,7 +35,6 @@ public class IntegerSetting extends Setting<Integer> {
         if (!value.equals(get())) {
             settingProvider.putIntSync(key, value);
             cached = value;
-            settingStateDeprecated.onNext(value);
         }
     }
 }

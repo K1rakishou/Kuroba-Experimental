@@ -121,7 +121,6 @@ class MapSetting(
     }
 
     settingProvider.putString(key, json)
-    settingStateDeprecated.onNext(value)
   }
 
   override fun setSync(value: Map<String, String>) {
@@ -137,7 +136,6 @@ class MapSetting(
     }
 
     settingProvider.putStringSync(key, json)
-    settingStateDeprecated.onNext(value)
   }
 
   private fun convertMapToJson(value: Map<String, String>): String {
