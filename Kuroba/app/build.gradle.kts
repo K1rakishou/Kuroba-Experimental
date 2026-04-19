@@ -281,8 +281,6 @@ dependencies {
     implementation(libs.subsampling.scale.image.view)
     implementation(libs.autolink)
     implementation(libs.gson)
-    implementation(libs.rxjava)
-    implementation(libs.rxandroid)
     implementation(libs.kotlin.stdlib)
     implementation(libs.kotlin.reflect)
     implementation(libs.kotlin.collections.immutable)

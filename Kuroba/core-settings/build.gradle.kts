@@ -14,8 +14,6 @@ dependencies {
     implementation(libs.core.ktx)
     implementation(libs.appcompat)
     implementation(libs.material)
-    implementation(libs.rxjava)
-    implementation(libs.rxandroid)
     implementation(libs.gson)
     implementation(libs.joda.time)
 

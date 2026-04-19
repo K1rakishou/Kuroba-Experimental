@@ -24,7 +24,6 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicReference
 
@@ -79,8 +78,7 @@ class BookmarkForegroundWatcher(
     }
 
     appScope.launch {
-      bookmarksManager.listenForFetchEventsFromActiveThreads()
-        .asFlow()
+      bookmarksManager.threadIsFetchingEventsFlow
         .collect { threadDescriptor ->
           withContext(Dispatchers.Default) {
             updateBookmarkForOpenedThread(threadDescriptor)

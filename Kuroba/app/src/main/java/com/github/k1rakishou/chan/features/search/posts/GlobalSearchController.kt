@@ -35,6 +35,7 @@ import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.lang.ref.WeakReference
 import javax.inject.Inject
@@ -88,10 +89,10 @@ class GlobalSearchController(
     view = inflate(context, R.layout.controller_global_search)
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
 
-    compositeDisposable.add(
-      presenter.listenForStateChanges()
-        .subscribe { state -> onStateChanged(state) }
-    )
+    controllerScope.launch {
+      presenter.globalSearchControllerState
+        .collectLatest { state -> onStateChanged(state) }
+    }
 
     presenter.onCreate(this)
     themeEngine.addListener(this)

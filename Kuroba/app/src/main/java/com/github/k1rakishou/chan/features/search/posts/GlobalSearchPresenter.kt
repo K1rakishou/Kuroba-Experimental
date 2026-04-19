@@ -10,15 +10,12 @@ import com.github.k1rakishou.chan.features.search.posts.data.GlobalSearchControl
 import com.github.k1rakishou.chan.features.search.posts.data.SearchParameters
 import com.github.k1rakishou.chan.features.search.posts.data.SelectedSite
 import com.github.k1rakishou.chan.features.search.posts.data.SitesWithSearch
-import com.github.k1rakishou.common.errorMessageOrClassName
-import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
-import io.reactivex.Flowable
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.processors.BehaviorProcessor
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 internal class GlobalSearchPresenter(
@@ -26,8 +23,11 @@ internal class GlobalSearchPresenter(
   private val themeEngine: ThemeEngine
 ) : BasePresenter<GlobalSearchView>() {
 
-  private val globalSearchControllerStateSubject =
-    BehaviorProcessor.createDefault<GlobalSearchControllerState>(GlobalSearchControllerState.Uninitialized)
+  private val _globalSearchControllerState =
+    MutableStateFlow<GlobalSearchControllerState>(GlobalSearchControllerState.Uninitialized)
+  val globalSearchControllerState: StateFlow<GlobalSearchControllerState>
+    get() = _globalSearchControllerState
+
   private val searchResultsStateStorage = SearchResultsStateStorage
 
   private val searchUpdateExecutor = RendezvousCoroutineExecutor(scope = presenterScope)
@@ -76,19 +76,8 @@ internal class GlobalSearchPresenter(
     return false
   }
 
-  fun listenForStateChanges(): Flowable<GlobalSearchControllerState> {
-    return globalSearchControllerStateSubject
-      .onBackpressureLatest()
-      .observeOn(AndroidSchedulers.mainThread())
-      .doOnError { error ->
-        Logger.e(TAG, "Unknown error subscribed to globalSearchControllerStateSubject.listenForStateChanges()", error)
-      }
-      .onErrorReturn { error -> GlobalSearchControllerState.Error(error.errorMessageOrClassName()) }
-      .hide()
-  }
-
   fun reloadCurrentState() {
-    val currentStateData = (globalSearchControllerStateSubject.value as? GlobalSearchControllerState.Data)?.data
+    val currentStateData = (_globalSearchControllerState.value as? GlobalSearchControllerState.Data)?.data
       ?: return
 
     val newDataState = GlobalSearchControllerState.Data(
@@ -238,7 +227,7 @@ internal class GlobalSearchPresenter(
   }
 
   private fun setState(state: GlobalSearchControllerState) {
-    globalSearchControllerStateSubject.onNext(state)
+    _globalSearchControllerState.value = state
   }
 
   fun onSearchButtonClicked(selectedSite: SelectedSite, searchParameters: SearchParameters) {

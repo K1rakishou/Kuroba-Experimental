@@ -5,21 +5,19 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.features.setup.data.SiteCellData
 import com.github.k1rakishou.chan.features.setup.data.SiteEnableState
 import com.github.k1rakishou.chan.features.setup.data.SitesSetupControllerState
-import com.github.k1rakishou.common.errorMessageOrClassName
-import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
-import io.reactivex.Flowable
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.processors.BehaviorProcessor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class SitesSetupPresenter(
   private val siteManager: SiteManager
 ) : BasePresenter<SitesSetupView>() {
-
-  private val stateSubject = BehaviorProcessor.create<SitesSetupControllerState>()
+  private val _state = MutableStateFlow<SitesSetupControllerState>(SitesSetupControllerState.Loading)
+  val state: StateFlow<SitesSetupControllerState>
+    get() = _state
 
   override fun onCreate(view: SitesSetupView) {
     super.onCreate(view)
@@ -35,17 +33,6 @@ class SitesSetupPresenter(
       showSites()
       loadingJob.cancel()
     }
-  }
-
-  fun listenForStateChanges(): Flowable<SitesSetupControllerState> {
-    return stateSubject
-      .onBackpressureLatest()
-      .observeOn(AndroidSchedulers.mainThread())
-      .doOnError { error ->
-        Logger.e(TAG, "Unknown error subscribed to stateSubject.listenForStateChanges()", error)
-      }
-      .onErrorReturn { error -> SitesSetupControllerState.Error(error.errorMessageOrClassName()) }
-      .hide()
   }
 
   fun onSiteEnableStateChanged(siteDescriptor: SiteDescriptor, enabled: Boolean) {
@@ -103,7 +90,7 @@ class SitesSetupPresenter(
   }
 
   private fun setState(stateSetup: SitesSetupControllerState) {
-    stateSubject.onNext(stateSetup)
+    _state.value = stateSetup
   }
 
   companion object {

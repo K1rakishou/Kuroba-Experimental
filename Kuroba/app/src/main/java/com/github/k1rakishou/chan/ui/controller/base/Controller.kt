@@ -50,7 +50,6 @@ import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.requireComponentActivity
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.v2.KurobaSettings
-import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -149,7 +148,6 @@ abstract class Controller(
   val shown: Boolean
     get() = _shown
 
-  protected val compositeDisposable = CompositeDisposable()
   protected val snackbarManager by lazy(LazyThreadSafetyMode.NONE) {
     snackbarManagerFactory.snackbarManager(snackbarScope)
   }

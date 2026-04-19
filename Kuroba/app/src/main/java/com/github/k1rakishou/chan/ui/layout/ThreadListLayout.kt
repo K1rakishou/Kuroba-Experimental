@@ -72,7 +72,6 @@ import com.github.k1rakishou.v2.parameters.BoardPostViewMode
 import com.github.k1rakishou.v2.parameters.LayoutMode
 import com.github.k1rakishou.v2.parameters.ReplyMode
 import dagger.Lazy
-import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -238,7 +237,6 @@ class ThreadListLayout @JvmOverloads constructor(
   private lateinit var scrollbarView: ScrollbarView
   private lateinit var postAdapter: PostAdapter
 
-  private val compositeDisposable = CompositeDisposable()
   private val job = SupervisorJob()
   private val coroutineScope = CoroutineScope(job + Dispatchers.Main + CoroutineName("ThreadListLayout"))
 
@@ -453,7 +451,6 @@ class ThreadListLayout @JvmOverloads constructor(
   }
 
   fun onDestroy() {
-    compositeDisposable.clear()
     job.cancelChildren()
 
     updatePostMarksJob?.cancel()

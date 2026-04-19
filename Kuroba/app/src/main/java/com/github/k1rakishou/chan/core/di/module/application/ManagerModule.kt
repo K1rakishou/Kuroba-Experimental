@@ -134,16 +134,14 @@ class ManagerModule {
   @Singleton
   fun provideSiteManager(
     appScope: CoroutineScope,
-    kurobaSettings: KurobaSettings,
     siteRepository: Lazy<SiteRepository>
   ): SiteManager {
     deps("SiteManager")
     return SiteManager(
       appScope,
       AppModuleAndroidUtils.isDevBuild,
-      kurobaSettings.application.verboseLogs.readBlocking(),
-      siteRepository,
-      SiteRegistry
+      SiteRegistry,
+      siteRepository
     )
   }
 

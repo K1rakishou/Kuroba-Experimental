@@ -32,10 +32,9 @@ import com.github.k1rakishou.core_themes.ChanThemeColorId
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.v2.parameters.RecyclerIndexAndTopInfo
-import io.reactivex.Flowable
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.processors.BehaviorProcessor
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.joda.time.DateTimeZone
@@ -50,8 +49,11 @@ internal class SearchResultsPresenter(
   private val themeEngine: ThemeEngine
 ) : BasePresenter<SearchResultsView>(), ThemeEngine.ThemeChangesListener {
 
-  private val searchResultsControllerStateSubject =
-    BehaviorProcessor.createDefault<SearchResultsControllerState>(SearchResultsControllerState.Uninitialized)
+  private val _searchResultsControllerState =
+    MutableStateFlow<SearchResultsControllerState>(SearchResultsControllerState.Uninitialized)
+  val searchResultsControllerState: StateFlow<SearchResultsControllerState>
+    get() = _searchResultsControllerState
+
   private val searchResultsStateStorage = SearchResultsStateStorage
 
   @get:Synchronized
@@ -81,7 +83,7 @@ internal class SearchResultsPresenter(
 
   override fun onThemeChanged() {
     presenterScope.launch {
-      val dataState = (searchResultsControllerStateSubject.value as? SearchResultsControllerState.Data)?.data
+      val dataState = (_searchResultsControllerState.value as? SearchResultsControllerState.Data)?.data
       if (dataState == null) {
         return@launch
       }
@@ -96,17 +98,6 @@ internal class SearchResultsPresenter(
       setState(SearchResultsControllerState.Data(dataState))
       searchResultsStateStorage.updateSearchResultsState(dataState)
     }
-  }
-
-  fun listenForStateChanges(): Flowable<SearchResultsControllerState> {
-    return searchResultsControllerStateSubject
-      .onBackpressureLatest()
-      .observeOn(AndroidSchedulers.mainThread())
-      .doOnError { error ->
-        Logger.e(TAG, "Unknown error subscribed to searchResultsPresenter.listenForStateChanges()", error)
-      }
-      .onErrorReturn { error -> SearchResultsControllerState.Data(errorState(error.errorMessageOrClassName())) }
-      .hide()
   }
 
   fun resetSavedState() {
@@ -149,7 +140,7 @@ internal class SearchResultsPresenter(
       BackgroundUtils.ensureBackgroundThread()
       Logger.d(TAG, "doSearch() siteDescriptor=$siteDescriptor, searchParameters=$searchParameters, currentPage=$currentPage")
 
-      val prevState = requireNotNull(searchResultsControllerStateSubject.value) { "Initial state was not set!" }
+      val prevState = requireNotNull(_searchResultsControllerState.value) { "Initial state was not set!" }
       val prevStateData = (prevState as? SearchResultsControllerState.Data)?.data
 
       val searchResult = executeRequest()
@@ -395,7 +386,7 @@ internal class SearchResultsPresenter(
   }
 
   private fun errorState(errorText: String): SearchResultsControllerStateData {
-    val prevState = requireNotNull(searchResultsControllerStateSubject.value) { "Initial state was not set!" }
+    val prevState = requireNotNull(_searchResultsControllerState.value) { "Initial state was not set!" }
     val prevStateData = (prevState as? SearchResultsControllerState.Data)?.data
       ?: SearchResultsControllerStateData()
 
@@ -403,7 +394,7 @@ internal class SearchResultsPresenter(
   }
 
   private fun setState(state: SearchResultsControllerState) {
-    searchResultsControllerStateSubject.onNext(state)
+    _searchResultsControllerState.value = state
   }
 
   companion object {

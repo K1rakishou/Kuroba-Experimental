@@ -13,9 +13,6 @@ import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkView
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.repository.BookmarksRepository
 import dagger.Lazy
-import io.reactivex.Flowable
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.processors.PublishProcessor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
@@ -42,7 +39,12 @@ class BookmarksManager(
 ) {
   private val lock = ReentrantReadWriteLock()
   private val bookmarksChangeFlow = MutableSharedFlow<BookmarkChange>(extraBufferCapacity = Channel.UNLIMITED)
-  private val threadIsFetchingEventsSubject = PublishProcessor.create<ChanDescriptor.ThreadDescriptor>()
+
+  private val _threadIsFetchingEventsFlow = MutableSharedFlow<ChanDescriptor.ThreadDescriptor>(
+    extraBufferCapacity = 1
+  )
+  val threadIsFetchingEventsFlow: SharedFlow<ChanDescriptor.ThreadDescriptor>
+    get() = _threadIsFetchingEventsFlow.asSharedFlow()
 
   private val persistBookmarksExecutor = SerializedCoroutineExecutor(appScope)
   private val delayedBookmarksChangedExecutor = DebouncingCoroutineExecutor(appScope)
@@ -113,14 +115,6 @@ class BookmarksManager(
     return bookmarksChangeFlow.asSharedFlow()
   }
 
-  fun listenForFetchEventsFromActiveThreads(): Flowable<ChanDescriptor.ThreadDescriptor> {
-    return threadIsFetchingEventsSubject
-      .onBackpressureLatest()
-      .observeOn(AndroidSchedulers.mainThread())
-      .doOnError { error -> Logger.e(TAG, "listenForFetchEventsFromActiveThreads error", error) }
-      .hide()
-  }
-
   suspend fun awaitUntilInitialized() {
     if (isReady()) {
       return
@@ -157,7 +151,7 @@ class BookmarksManager(
     if (threadDescriptor == currentOpenedDescriptorStateManager.currentThreadDescriptor) {
       val isActive = lock.read { bookmarks[threadDescriptor]?.isActive() ?: false }
       if (isActive) {
-        threadIsFetchingEventsSubject.onNext(threadDescriptor)
+        _threadIsFetchingEventsFlow.tryEmit(threadDescriptor)
       }
     }
   }

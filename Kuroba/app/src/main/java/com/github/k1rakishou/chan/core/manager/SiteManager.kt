@@ -13,9 +13,6 @@ import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.site.ChanSiteData
 import com.github.k1rakishou.model.repository.SiteRepository
 import dagger.Lazy
-import io.reactivex.Flowable
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.processors.PublishProcessor
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -28,14 +25,11 @@ import kotlin.time.measureTime
 open class SiteManager(
   private val appScope: CoroutineScope,
   private val isDevFlavor: Boolean,
-  private val verboseLogsEnabled: Boolean,
-  private val _siteRepository: Lazy<SiteRepository>,
-  private val siteRegistry: SiteRegistry
+  private val siteRegistry: SiteRegistry,
+  private val siteRepositoryLazy: Lazy<SiteRepository>
 ) {
   private val suspendableInitializer = SuspendableInitializer<Unit>("SiteManager")
   private val debouncer = DebouncingCoroutineExecutor(appScope)
-
-  private val sitesChangedSubject = PublishProcessor.create<Unit>()
 
   private val lock = ReentrantReadWriteLock()
   @GuardedBy("lock")
@@ -46,7 +40,7 @@ open class SiteManager(
   private val orders = mutableListWithCap<SiteDescriptor>(32)
 
   private val siteRepository: SiteRepository
-    get() = _siteRepository.get()
+    get() = siteRepositoryLazy.get()
 
   fun initialize(allSitesDeferred: CompletableDeferred<List<ChanSiteData>>) {
     Logger.d(TAG, "SiteManager.initialize()")
@@ -101,14 +95,6 @@ open class SiteManager(
       allSitesDeferred.completeExceptionally(error)
       Logger.e(TAG, "siteRepository.initializeSites() unknown error", error)
     }
-  }
-
-  fun listenForSitesChanges(): Flowable<Unit> {
-    return sitesChangedSubject
-      .onBackpressureLatest()
-      .observeOn(AndroidSchedulers.mainThread())
-      .doOnError { error -> Logger.e(TAG, "Error while listening for sitesChangedSubject updates", error) }
-      .hide()
   }
 
   fun firstSiteDescriptor(): SiteDescriptor? {
@@ -394,7 +380,7 @@ open class SiteManager(
       ensureSitesAndOrdersConsistency()
     }
 
-    sitesChangedSubject.onNext(Unit)
+    // no-op (for now)
   }
 
   private fun getSitesOrdered(): List<ChanSiteData> {

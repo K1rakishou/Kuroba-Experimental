@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.core.base
 
 import androidx.annotation.CallSuper
 import com.github.k1rakishou.common.ModularResult
-import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
@@ -15,7 +14,6 @@ abstract class BasePresenter<V> {
   private var view: V? = null
 
   protected val presenterScope = MainScope() + CoroutineName("Presenter_${this::class.java.simpleName}")
-  protected val compositeDisposable = CompositeDisposable()
 
   @CallSuper
   open fun onCreate(view: V) {
@@ -27,7 +25,6 @@ abstract class BasePresenter<V> {
     this.view = null
 
     presenterScope.cancel()
-    compositeDisposable.clear()
   }
 
   fun withViewNormal(func: V.() -> Unit) {

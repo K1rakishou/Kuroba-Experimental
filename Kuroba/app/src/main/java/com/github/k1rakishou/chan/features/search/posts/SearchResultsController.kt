@@ -35,6 +35,8 @@ import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class SearchResultsController(
@@ -90,10 +92,10 @@ class SearchResultsController(
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
     epoxyRecyclerView.descendantFocusability = ViewGroup.FOCUS_BEFORE_DESCENDANTS
 
-    compositeDisposable.add(
-      presenter.listenForStateChanges()
-        .subscribe { state -> onStateChanged(state) }
-    )
+    controllerScope.launch {
+      presenter.searchResultsControllerState
+        .collectLatest { state -> onStateChanged(state) }
+    }
 
     presenter.onCreate(this)
   }

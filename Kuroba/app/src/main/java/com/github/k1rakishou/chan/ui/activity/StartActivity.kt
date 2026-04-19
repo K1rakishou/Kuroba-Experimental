@@ -55,7 +55,6 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.v2.KurobaSettings
 import com.github.k1rakishou.v2.parameters.LayoutMode
 import dagger.Lazy
-import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -101,7 +100,6 @@ class StartActivity :
   @Inject
   lateinit var kurobaSettingsMigrationHelper: KurobaSettingsMigrationHelper
 
-  private val compositeDisposable = CompositeDisposable()
   private var intentMismatchWorkaroundActive = false
   private var browseController: BrowseController? = null
 
@@ -193,8 +191,6 @@ class StartActivity :
   override fun onDestroy() {
     super.onDestroy()
     Logger.d(TAG, "onDestroy()")
-
-    compositeDisposable.clear()
 
     if (::appRestarter.isInitialized) {
       appRestarter.detachActivity(this)
