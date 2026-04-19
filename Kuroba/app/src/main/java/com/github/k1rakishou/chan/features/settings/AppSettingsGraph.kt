@@ -19,12 +19,9 @@ import com.github.k1rakishou.chan.features.settings.setting.SettingUiElement
 import com.github.k1rakishou.chan.features.settings.setting.SettingUiElementGroup
 import com.github.k1rakishou.chan.ui.controller.base.Controller
 import com.github.k1rakishou.chan.ui.helper.AppResources
-import com.github.k1rakishou.chan.ui.settings.SettingNotification
-import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
-import com.github.k1rakishou.v2.KurobaSettingKey
 import com.github.k1rakishou.v2.KurobaSettings
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -43,6 +40,12 @@ class AppSettingsGraph(
   private val builders: Map<SettingsScreenKey, SettingsScreenBuilder>,
   private val siteSettingsScreenBuilder: SiteSettingsScreenBuilder
 ) {
+  private val updateBadgesFromNotificationsHelper = UpdateBadgesFromNotificationsHelper(
+    kurobaSettings = kurobaSettings,
+    appResources = appResources,
+    settingsNotificationManager = settingsNotificationManager
+  )
+
   private val _mutex = Mutex()
   @GuardedBy("_mutex")
   private val _root = mutableMapOf<SettingsScreenKey, SettingsScreen>()
@@ -69,7 +72,7 @@ class AppSettingsGraph(
   fun init() {
     _coroutineScope.launch {
       settingsNotificationManager.notificationUpdates
-        .collectLatest { updateBadgesFromNotifications() }
+        .collectLatest { updateBadgesFromNotificationsHelper.update(_settingBadges) }
     }
   }
 
@@ -163,7 +166,7 @@ class AppSettingsGraph(
         )
 
         updateBadges()
-        updateBadgesFromNotifications()
+        updateBadgesFromNotificationsHelper.update(_settingBadges)
       }
     }
   }
@@ -294,63 +297,6 @@ class AppSettingsGraph(
     }
 
     return false
-  }
-
-  private suspend fun updateBadgesFromNotifications() {
-    fun dismiss(key: KurobaSettingKey, filterFunc: (SettingUiElement.Badge) -> Boolean) {
-      val badges = _settingBadges[key.raw]
-        ?: emptyList()
-
-      _settingBadges[key.raw] = badges.filter(filterFunc)
-    }
-
-    fun show(key: KurobaSettingKey, newBadge: SettingUiElement.Badge) {
-      val badges = _settingBadges[key.raw]
-        ?: emptyList()
-
-      _settingBadges[key.raw] = badges + newBadge
-    }
-
-    settingsNotificationManager.dismissedNotifications.forEach { settingNotification ->
-      when (settingNotification) {
-        SettingNotification.ApkUpdate -> {
-          dismiss(
-            key = KurobaSettingKey.Application.AppUpdate,
-            filterFunc = { badge -> badge !is SettingUiElement.Badge.NewAppUpdate }
-          )
-        }
-        SettingNotification.MpvLibsUpdate -> {
-          dismiss(
-            key = KurobaSettingKey.Mpv.MpvLibsUpdate,
-            filterFunc = { badge -> badge !is SettingUiElement.Badge.NewAppUpdate }
-          )
-        }
-      }
-    }
-
-    settingsNotificationManager.activeNotifications.forEach { settingNotification ->
-      when (settingNotification) {
-        SettingNotification.ApkUpdate -> {
-          show(
-            key = KurobaSettingKey.Application.AppUpdate,
-            newBadge = SettingUiElement.Badge.NewAppUpdate(
-              text = appResources.string(R.string.update_available),
-              description = kurobaSettings.internal.apkUpdateInfoJson.read()
-                .versionName
-                .takeIf { it.isNotNullNorBlank() }
-            )
-          )
-        }
-        SettingNotification.MpvLibsUpdate -> {
-          show(
-            key = KurobaSettingKey.Mpv.MpvLibsUpdate,
-            newBadge = SettingUiElement.Badge.NewAppUpdate(
-              text = appResources.string(R.string.update_available)
-            )
-          )
-        }
-      }
-    }
   }
 
   private suspend fun updateBadges() {
