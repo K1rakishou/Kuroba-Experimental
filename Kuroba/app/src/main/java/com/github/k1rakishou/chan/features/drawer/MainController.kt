@@ -773,7 +773,6 @@ class MainController(
 
     val floatingListMenuController = FloatingListMenuController(
       context = context,
-      constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
       items = drawerOptions,
       itemClickListener = { item ->
         controllerScope.launch {
@@ -969,7 +968,6 @@ class MainController(
     val clickedItem = suspendCancellableCoroutine { continuation ->
       val floatingListMenuController = FloatingListMenuController(
         context = context,
-        constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
         items = drawerOptions,
         itemClickListener = { item ->
           continuation.resumeValueSafe(item)

@@ -701,7 +701,6 @@ class Chan4CaptchaLayout(
 
     val floatingListMenuController = FloatingListMenuController(
       context = context,
-      constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
       items = items,
       itemClickListener = { clickedMenuItem ->
         when (val itemId = clickedMenuItem.key as Int) {

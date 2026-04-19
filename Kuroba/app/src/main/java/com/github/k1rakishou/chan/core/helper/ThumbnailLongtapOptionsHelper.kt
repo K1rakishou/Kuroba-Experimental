@@ -90,7 +90,6 @@ class ThumbnailLongtapOptionsHelper(
 
     val floatingListMenuController = FloatingListMenuController(
       context = context,
-      constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
       items = items,
       itemClickListener = { item ->
         onThumbnailOptionClicked(

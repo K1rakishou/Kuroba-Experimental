@@ -75,11 +75,7 @@ class KurobaComposeDialogController(
     super.onDestroy()
     onDismissed?.invoke()
 
-    params.inputs.forEach { input ->
-      if (!input.result.isCompleted) {
-        input.result.complete(InputResult.NoResult)
-      }
-    }
+    params.onControllerDestroyed()
   }
 
   override fun onOutsideOfDialogClicked() {
@@ -180,6 +176,7 @@ class KurobaComposeDialogController(
                 KurobaComposeTextBarButton(
                   modifier = Modifier.wrapContentSize(),
                   onClick = {
+                    params.onButtonClicked(Params.ClickedButton.Neutral)
                     params.neutralButton.onClick?.invoke()
                     stopPresenting()
                   },
@@ -195,6 +192,7 @@ class KurobaComposeDialogController(
                 KurobaComposeTextBarButton(
                   modifier = Modifier.wrapContentSize(),
                   onClick = {
+                    params.onButtonClicked(Params.ClickedButton.Negative)
                     params.negativeButton.onClick?.invoke()
                     stopPresenting()
                   },
@@ -220,6 +218,7 @@ class KurobaComposeDialogController(
                     }
                   }
 
+                  params.onButtonClicked(Params.ClickedButton.Positive)
                   params.positiveButton.onClick?.invoke()
                   pop()
                 },
@@ -325,6 +324,34 @@ class KurobaComposeDialogController(
     val neutralButton: DialogButton? = null,
     val positiveButton: PositiveDialogButton
   ) {
+    private val _buttonClickDeferred = CompletableDeferred<ClickedButton?>()
+
+    fun onButtonClicked(clickedButton: ClickedButton) {
+      if (!_buttonClickDeferred.isCompleted) {
+        _buttonClickDeferred.complete(clickedButton)
+      }
+    }
+
+    fun onControllerDestroyed() {
+      if (!_buttonClickDeferred.isCompleted) {
+        _buttonClickDeferred.complete(null)
+      }
+
+      inputs.forEach { input ->
+        if (!input.result.isCompleted) {
+          input.result.complete(InputResult.NoResult)
+        }
+      }
+    }
+
+    suspend fun awaitButtonClick(): ClickedButton? {
+      return try {
+        _buttonClickDeferred.await()
+      } catch (ignored: Throwable) {
+        return null
+      }
+    }
+
     suspend fun awaitInputResult(): InputResult {
       check(inputs.isNotEmpty()) { "You have to add at least one input before using this function" }
       check(inputs.size == 1) { "To wait for multiple inputs use awaitInputResults()" }
@@ -355,10 +382,17 @@ class KurobaComposeDialogController(
       }
     }
 
+    enum class ClickedButton {
+      Negative,
+      Neutral,
+      Positive;
+
+      fun isPositive(): Boolean = this == ClickedButton.Positive
+    }
+
     companion object {
       private const val TAG = "KurobaComposeDialogController.Params"
     }
-
   }
 
   sealed class Input {
@@ -396,7 +430,6 @@ class KurobaComposeDialogController(
   )
 
   sealed class Text {
-
     @Composable
     fun titleText(): kotlin.String {
       return when (this) {

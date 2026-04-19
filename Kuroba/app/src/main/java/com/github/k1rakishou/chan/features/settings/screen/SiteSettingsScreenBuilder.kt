@@ -26,6 +26,7 @@ import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
+import com.github.k1rakishou.v2.KurobaSettingKey
 import kotlinx.coroutines.CompletableDeferred
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
@@ -224,7 +225,7 @@ class SiteSettingsScreenBuilder(
       if (site is Chan4) {
         addSetting(
           SettingUiElement.Link(
-            composeKey = "email_verification",
+            composeKey = KurobaSettingKey.Site.Chan4.EmailVerification(site.descriptor.siteName).raw,
             title = { appResources.string(R.string.site_settings_authentication_email_verification) },
             description = {
               buildString {
@@ -235,7 +236,36 @@ class SiteSettingsScreenBuilder(
                 }
               }
             },
-            callback = { verifyEmail(context, siteActions) }
+            callback = {
+              if (!site.actions.emailVerified()) {
+                verifyEmail(context, siteActions)
+                return@Link
+              }
+
+              val params = KurobaComposeDialogController.confirmationDialog(
+                title = KurobaComposeDialogController.Text.Id(
+                  R.string.site_settings_authentication_reset_email_cookie
+                ),
+                description = KurobaComposeDialogController.Text.Id(
+                  R.string.site_settings_authentication_reset_email_cookie_description
+                ),
+                negativeButton = KurobaComposeDialogController.DialogButton(R.string.do_not),
+                positionButton = KurobaComposeDialogController.PositiveDialogButton(
+                  buttonText = R.string.reset,
+                  isActionDangerous = true
+                )
+              )
+
+              dialogFactory.showDialog(
+                context = context,
+                params = params
+              )
+
+              val clickedButton = params.awaitButtonClick()
+              if (clickedButton?.isPositive() == true) {
+                site.actions.resetEmailVerification()
+              }
+            }
           )
         )
       }

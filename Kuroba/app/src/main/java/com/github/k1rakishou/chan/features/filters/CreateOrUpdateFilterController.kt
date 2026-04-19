@@ -654,7 +654,6 @@ class CreateOrUpdateFilterController(
 
     val floatingListMenuController = FloatingListMenuController(
       context = context,
-      constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
       items = items,
       itemClickListener = { clickedMenuItem ->
         chanFilterMutableState.action.value = clickedMenuItem.key as Int

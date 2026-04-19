@@ -53,9 +53,8 @@ class MediaLongClickMenuHelper(
     view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
 
     val floatingListMenuController = FloatingListMenuController(
-      view.context,
-      globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
-      mediaLongClickOptions,
+      context = view.context,
+      items = mediaLongClickOptions,
       itemClickListener = { clickedItem ->
         mediaOptionsHandlerExecutor.post { handleMenuItemClick(view.context, clickedItem, viewableMedia) }
       }
@@ -73,37 +72,73 @@ class MediaLongClickMenuHelper(
     val options = mutableListOf<FloatingListMenuItem>()
 
     options += HeaderFloatingListMenuItem(MEDIA_LONG_CLICK_MENU_HEADER, mediaName)
-    options += FloatingListMenuItem(ACTION_IMAGE_COPY_FULL_URL, getString(R.string.action_copy_image_full_url))
+    options += FloatingListMenuItem(
+      ACTION_IMAGE_COPY_FULL_URL,
+      getString(R.string.action_copy_image_full_url)
+    )
 
     if (viewableMedia.previewLocation is MediaLocation.Remote) {
-      options += FloatingListMenuItem(ACTION_IMAGE_COPY_THUMBNAIL_URL, getString(R.string.action_copy_image_thumbnail_url))
+      options += FloatingListMenuItem(
+        ACTION_IMAGE_COPY_THUMBNAIL_URL,
+        getString(R.string.action_copy_image_thumbnail_url)
+      )
     }
 
     if (viewableMedia.formatFullOriginalFileName().isNotNullNorEmpty()) {
-      options += FloatingListMenuItem(ACTION_IMAGE_COPY_ORIGINAL_FILE_NAME, getString(R.string.action_copy_image_original_name))
+      options += FloatingListMenuItem(
+        ACTION_IMAGE_COPY_ORIGINAL_FILE_NAME,
+        getString(R.string.action_copy_image_original_name)
+      )
     }
 
     if (viewableMedia.formatFullServerFileName().isNotNullNorEmpty()) {
-      options += FloatingListMenuItem(ACTION_IMAGE_COPY_SERVER_FILE_NAME, getString(R.string.action_copy_image_server_name))
+      options += FloatingListMenuItem(
+        ACTION_IMAGE_COPY_SERVER_FILE_NAME,
+        getString(R.string.action_copy_image_server_name)
+      )
     }
 
     if (viewableMedia.viewableMediaMeta.mediaHash.isNotNullNorEmpty()) {
-      options += FloatingListMenuItem(ACTION_IMAGE_COPY_MD5_HASH_HEX, getString(R.string.action_copy_image_file_hash_hex))
+      options += FloatingListMenuItem(
+        ACTION_IMAGE_COPY_MD5_HASH_HEX,
+        getString(R.string.action_copy_image_file_hash_hex)
+      )
     }
 
-    options += FloatingListMenuItem(ACTION_OPEN_IN_BROWSER, getString(R.string.action_open_in_browser))
-    options += FloatingListMenuItem(ACTION_MEDIA_SEARCH, getString(R.string.action_media_search))
+    options += FloatingListMenuItem(
+      ACTION_OPEN_IN_BROWSER,
+      getString(R.string.action_open_in_browser)
+    )
+    options += FloatingListMenuItem(
+      ACTION_MEDIA_SEARCH,
+      getString(R.string.action_media_search)
+    )
 
-    options += FloatingListMenuItem(ACTION_SHARE_MEDIA_URL, getString(R.string.action_share_media_url))
-    options += FloatingListMenuItem(ACTION_SHARE_MEDIA_CONTENT, getString(R.string.action_share_media_content))
+    options += FloatingListMenuItem(
+      ACTION_SHARE_MEDIA_URL,
+      getString(R.string.action_share_media_url)
+    )
+    options += FloatingListMenuItem(
+      ACTION_SHARE_MEDIA_CONTENT,
+      getString(R.string.action_share_media_content)
+    )
 
     if (viewableMedia.canReloadMedia()) {
-      options += FloatingListMenuItem(ACTION_RELOAD_MEDIA, getString(R.string.action_reload))
+      options += FloatingListMenuItem(
+        ACTION_RELOAD_MEDIA,
+        getString(R.string.action_reload)
+      )
     }
 
     if (viewableMedia.canMediaBeDownloaded()) {
-      options += FloatingListMenuItem(ACTION_DOWNLOAD_MEDIA_FILE_CONTENT, getString(R.string.action_download_content))
-      options += FloatingListMenuItem(ACTION_DOWNLOAD_WITH_OPTIONS_MEDIA_FILE_CONTENT, getString(R.string.action_download_content_with_options))
+      options += FloatingListMenuItem(
+        ACTION_DOWNLOAD_MEDIA_FILE_CONTENT,
+        getString(R.string.action_download_content)
+      )
+      options += FloatingListMenuItem(
+        ACTION_DOWNLOAD_WITH_OPTIONS_MEDIA_FILE_CONTENT,
+        getString(R.string.action_download_content_with_options)
+      )
     }
 
     return options
@@ -214,7 +249,6 @@ class MediaLongClickMenuHelper(
 
     val floatingListMenuController = FloatingListMenuController(
       context = context,
-      constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
       items = items,
       itemClickListener = { item ->
         for (imageSearch in ImageSearch.engines) {

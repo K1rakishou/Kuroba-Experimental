@@ -25,6 +25,7 @@ import com.github.k1rakishou.core_spannable.PostSearchQueryForegroundSpan
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.filter.HighlightFilterKeyword
+import okhttp3.HttpUrl
 
 object SpannableHelper {
   fun convertHtmlStringTagsIntoSpans(message: Spannable, chanTheme: ChanTheme): Spannable {
@@ -225,22 +226,17 @@ object SpannableHelper {
 
 }
 
-class WebViewLink(
-  val type: Type,
-  val link: String
+class WebViewUrl(
+  val url: HttpUrl
 ) : ClickableSpan() {
 
   override fun onClick(widget: View) {
   }
 
-  enum class Type {
-    BanMessage
-  }
-
 }
 
-class WebViewLinkMovementMethod(
-  private val webViewLinkClickListener: ClickListener
+class WebUrlMovementMethod(
+  private val webUrlClickListener: ClickListener
 ) : LinkMovementMethod() {
 
   override fun onTouchEvent(widget: TextView?, buffer: Spannable?, event: MotionEvent?): Boolean {
@@ -265,8 +261,8 @@ class WebViewLinkMovementMethod(
         val clickableSpan = buffer.getSpans(offset, offset, ClickableSpan::class.java)?.lastOrNull()
         if (clickableSpan != null) {
           if (actionMasked == MotionEvent.ACTION_UP) {
-            if (clickableSpan is WebViewLink) {
-              webViewLinkClickListener.onWebViewLinkClick(clickableSpan.type, clickableSpan.link)
+            if (clickableSpan is WebViewUrl) {
+              webUrlClickListener.onWebUrlClick(clickableSpan.url)
             } else {
               clickableSpan.onClick(widget)
             }
@@ -286,7 +282,6 @@ class WebViewLinkMovementMethod(
   }
 
   interface ClickListener {
-    fun onWebViewLinkClick(type: WebViewLink.Type, link: String)
+    fun onWebUrlClick(url: HttpUrl)
   }
-
 }

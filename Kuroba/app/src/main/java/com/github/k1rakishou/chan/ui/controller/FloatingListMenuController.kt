@@ -15,14 +15,16 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 
 open class FloatingListMenuController @JvmOverloads constructor(
   context: Context,
-  private val constraintLayoutBias: ConstraintLayoutBias,
   private val items: List<FloatingListMenuItem>,
+  private val customBias: ConstraintLayoutBias? = null,
   private val itemClickListener: (item: FloatingListMenuItem) -> Unit,
   private val menuDismissListener: (() -> Unit)? = null
 ) : BaseFloatingController(context) {
   private lateinit var floatingListMenu: FloatingListMenu
   private lateinit var clickableArea: ConstraintLayout
 
+  private val constraintLayoutBias = customBias
+    ?: globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias()
   private var itemSelected = false
 
   override fun injectActivityDependencies(component: ActivityComponent) {
@@ -43,6 +45,7 @@ open class FloatingListMenuController @JvmOverloads constructor(
       itemSelected = true
 
       itemClickListener.invoke(clickedItem)
+      setControllerResult(clickedItem)
       popAll()
     }
 
@@ -80,7 +83,6 @@ open class FloatingListMenuController @JvmOverloads constructor(
     }
 
     floatingListMenu.onDestroy()
-
     floatingListMenu.setClickListener(null)
     floatingListMenu.setStackCallback(null)
   }
@@ -88,11 +90,11 @@ open class FloatingListMenuController @JvmOverloads constructor(
   open fun stack(moreItems: List<FloatingListMenuItem>) {
     presentController(
       FloatingListMenuController(
-        context,
-        constraintLayoutBias,
-        moreItems,
-        itemClickListener,
-        menuDismissListener
+        context = context,
+        items = moreItems,
+        customBias = customBias,
+        itemClickListener = itemClickListener,
+        menuDismissListener = menuDismissListener
       )
     )
   }

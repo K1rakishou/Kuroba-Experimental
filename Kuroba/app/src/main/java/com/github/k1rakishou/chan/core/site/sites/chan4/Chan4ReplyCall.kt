@@ -12,7 +12,7 @@ import com.github.k1rakishou.chan.features.posting.LastReplyRepository
 import com.github.k1rakishou.chan.features.reply.data.ReplyFile
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileMeta
 import com.github.k1rakishou.chan.ui.captcha.CaptchaSolution
-import com.github.k1rakishou.chan.utils.WebViewLink
+import com.github.k1rakishou.chan.utils.WebViewUrl
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.KurobaCookie
 import com.github.k1rakishou.common.ModularResult
@@ -33,6 +33,7 @@ import com.github.k1rakishou.v2.KurobaSettings
 import com.github.k1rakishou.v2.parameters.ReplyMode
 import okhttp3.Headers
 import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.Request
@@ -302,9 +303,11 @@ class Chan4ReplyCall(
           parseErrorMessageHtmlInternal(builder, node)
           val end = builder.length
 
-          val link = fixUrlOrNull(node.attr("href").takeIf { it.isNotBlank() })
-          if (end > start && link.isNotNullNorBlank()) {
-            builder.set(start, end, WebViewLink(WebViewLink.Type.BanMessage, link))
+          val url = fixUrlOrNull(node.attr("href").takeIf { it.isNotBlank() })
+            ?.toHttpUrlOrNull()
+
+          if (end > start && url != null) {
+            builder.set(start, end, WebViewUrl(url))
           }
         } else if (tagName == "br") {
           builder.append("\n")

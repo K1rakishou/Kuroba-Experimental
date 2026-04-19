@@ -284,7 +284,6 @@ class Chan4ReportPostController(
 
     val floatingListMenuController = FloatingListMenuController(
       context = context,
-      constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
       items = items,
       itemClickListener = { clickedItem ->
         val clickedReportCategoryId = clickedItem.key as? Int

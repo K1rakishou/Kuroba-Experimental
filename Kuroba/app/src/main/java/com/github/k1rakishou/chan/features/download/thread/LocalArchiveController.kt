@@ -676,7 +676,6 @@ class LocalArchiveController(
 
     val floatingMenuScreen = FloatingListMenuController(
       context = context,
-      constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
       items = floatingMenuItems,
       itemClickListener = { clickedItem ->
         val newViewMode = clickedItem.value as? LocalArchiveViewModel.ViewMode
@@ -737,7 +736,6 @@ class LocalArchiveController(
 
         val floatingListMenuController = FloatingListMenuController(
           context = context,
-          constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
           items = items,
           itemClickListener = { clickedItem ->
             controllerScope.launch {

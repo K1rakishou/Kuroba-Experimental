@@ -22,6 +22,7 @@ import com.github.k1rakishou.chan.core.manager.ThreadPostSearchManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ParsePostsV1UseCase
+import com.github.k1rakishou.chan.features.KurobaWebUrlRouter
 import com.github.k1rakishou.chan.features.download.thread.ThreadDownloadProgressNotifier
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutHelper
 import com.github.k1rakishou.chan.features.settings.AppSettingsRestartTracker
@@ -377,6 +378,19 @@ class HelperModule {
   fun provideAppSettingsRestartTracker(): AppSettingsRestartTracker {
     Logger.deps("AppSettingsRestartTracker")
     return AppSettingsRestartTracker()
+  }
+
+  @Singleton
+  @Provides
+  fun provideKurobaWebUrlRouter(
+    appScope: CoroutineScope,
+    siteResolver: SiteResolver
+  ): KurobaWebUrlRouter {
+    Logger.deps("KurobaWebUrlRouter")
+    return KurobaWebUrlRouter(
+      appScope = appScope,
+      siteResolver = siteResolver
+    )
   }
 
 }

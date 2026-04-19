@@ -155,7 +155,6 @@ class PluginsSettingsScreenBuilder(
     val clickedItemId = suspendCancellableCoroutine<Int?> { continuation ->
       val floatingListMenuController = FloatingListMenuController(
         context = context,
-        constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
         items = items,
         menuDismissListener = { continuation.resumeValueSafe(null) },
         itemClickListener = { clickedItem -> continuation.resumeValueSafe(clickedItem.key as Int) }

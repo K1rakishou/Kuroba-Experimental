@@ -34,9 +34,8 @@ class MediaViewerMenuHelper(
     }
 
     val floatingListMenuController = FloatingListMenuController(
-      context,
-      globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
-      mediaLongClickOptions,
+      context = context,
+      items = mediaLongClickOptions,
       itemClickListener = { clickedItem ->
         handleMenuItemClick(context, mediaViewerAdapter, clickedItem, handleClickedOption)
       }
@@ -238,9 +237,8 @@ class MediaViewerMenuHelper(
     )
 
     val floatingListMenuController = FloatingListMenuController(
-      context,
-      globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
-      options,
+      context = context,
+      items = options,
       itemClickListener = { clickedItem ->
         var selectedPagesCount = when (clickedItem.key as Int) {
           ACTION_MEDIA_VIEWER_ONE_OFFSCREEN_PAGE -> 1

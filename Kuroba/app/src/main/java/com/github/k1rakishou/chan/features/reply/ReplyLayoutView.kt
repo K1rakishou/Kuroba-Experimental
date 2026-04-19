@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.features.reply
 
 import android.content.Context
 import android.text.Spannable
+import android.text.Spanned
 import android.util.AttributeSet
 import android.view.ViewGroup
 import android.widget.FrameLayout
@@ -19,12 +20,12 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4SiteSettings
 import com.github.k1rakishou.chan.core.usecase.LoadBoardFlagsUseCase
+import com.github.k1rakishou.chan.features.KurobaWebUrlRouter
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileAttachable
 import com.github.k1rakishou.chan.features.reply.data.ReplyLayoutVisibility
 import com.github.k1rakishou.chan.features.search.remotemedia.ImageSearchController
 import com.github.k1rakishou.chan.ui.compose.providers.ComposeEntrypoint
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
-import com.github.k1rakishou.chan.ui.controller.OpenUrlInWebViewController
 import com.github.k1rakishou.chan.ui.controller.ThreadControllerType
 import com.github.k1rakishou.chan.ui.controller.dialog.KurobaComposeDialogController
 import com.github.k1rakishou.chan.ui.helper.AppResources
@@ -35,13 +36,12 @@ import com.github.k1rakishou.chan.ui.view.widget.dialog.KurobaAlertDialog
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.IHasViewModelScope
 import com.github.k1rakishou.chan.utils.ViewModelScope
-import com.github.k1rakishou.chan.utils.WebViewLink
-import com.github.k1rakishou.chan.utils.WebViewLinkMovementMethod
+import com.github.k1rakishou.chan.utils.WebUrlMovementMethod
+import com.github.k1rakishou.chan.utils.WebViewUrl
 import com.github.k1rakishou.chan.utils.viewModelByKeyEager
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.requireComponentActivity
 import com.github.k1rakishou.common.resumeValueSafe
-import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
@@ -49,6 +49,7 @@ import com.github.k1rakishou.v2.KurobaSettings
 import com.github.k1rakishou.v2.parameters.ReplyMode
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicReference
@@ -61,7 +62,7 @@ class ReplyLayoutView @JvmOverloads constructor(
 ) : FrameLayout(context, attributeSet, defAttrStyle),
   ReplyLayoutViewModel.ReplyLayoutViewCallbacks,
   ThreadListLayout.ReplyLayoutViewCallbacks,
-  WebViewLinkMovementMethod.ClickListener,
+  WebUrlMovementMethod.ClickListener,
   IHasViewModelScope {
 
   @Inject
@@ -74,6 +75,8 @@ class ReplyLayoutView @JvmOverloads constructor(
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
   @Inject
   lateinit var siteManager: SiteManager
+  @Inject
+  lateinit var kurobaWebUrlRouter: KurobaWebUrlRouter
 
   private lateinit var replyLayoutViewModel: ReplyLayoutViewModel
   private lateinit var replyLayoutCallbacks: ReplyLayoutViewModel.ThreadListLayoutCallbacks
@@ -117,7 +120,10 @@ class ReplyLayoutView @JvmOverloads constructor(
     }
   }
 
-  override fun onCreate(threadControllerType: ThreadControllerType, callbacks: ReplyLayoutViewModel.ThreadListLayoutCallbacks) {
+  override fun onCreate(
+    threadControllerType: ThreadControllerType,
+    callbacks: ReplyLayoutViewModel.ThreadListLayoutCallbacks
+  ) {
     replyLayoutCallbacks = callbacks
 
     replyLayoutViewModel = viewModelByKeyEager<ReplyLayoutViewModel>(
@@ -187,20 +193,9 @@ class ReplyLayoutView @JvmOverloads constructor(
     return replyLayoutViewModel.onBack()
   }
 
-  override fun onWebViewLinkClick(type: WebViewLink.Type, link: String) {
-    val clickedUrl = link.toHttpUrlOrNull()
-    if (clickedUrl == null) {
-      Logger.error(TAG) { "onWebViewLinkClick '${link}' is not a HttpUrl" }
-      return
-    }
-
-    Logger.d(TAG, "onWebViewLinkClick type: ${type}, link: ${link}")
-
-    when (type) {
-      WebViewLink.Type.BanMessage -> {
-        replyLayoutCallbacks.presentController(OpenUrlInWebViewController(context, clickedUrl))
-      }
-    }
+  override fun onWebUrlClick(url: HttpUrl) {
+    banDialogHandle.getAndSet(null)?.dismiss()
+    kurobaWebUrlRouter.onUrlClicked(url)
   }
 
   override suspend fun showDialogSuspend(title: String, message: CharSequence?) {
@@ -323,7 +318,6 @@ class ReplyLayoutView @JvmOverloads constructor(
     val selectedBoardFlag = suspendCancellableCoroutine<LoadBoardFlagsUseCase.FlagInfo?> { continuation ->
       val floatingMenuScreen = FloatingListMenuController(
         context = context,
-        constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
         items = floatingMenuItems,
         itemClickListener = { clickedItem ->
           val selectedFlagInfo = clickedItem.value as? LoadBoardFlagsUseCase.FlagInfo
@@ -427,8 +421,8 @@ class ReplyLayoutView @JvmOverloads constructor(
 
     showPostingDialogExecutor.post {
       try {
-        val linkMovementMethod = if (hasWebViewLinks(message)) {
-          WebViewLinkMovementMethod(webViewLinkClickListener = this)
+        val linkMovementMethod = if (hasWebViewUrls(message)) {
+          WebUrlMovementMethod(webUrlClickListener = this)
         } else {
           null
         }
@@ -480,11 +474,13 @@ class ReplyLayoutView @JvmOverloads constructor(
     }
   }
 
-  private fun hasWebViewLinks(message: CharSequence?): Boolean {
+  private fun hasWebViewUrls(message: CharSequence?): Boolean {
     var hasWebViewLinks = false
 
     if (message is Spannable) {
-      hasWebViewLinks = message.getSpans<WebViewLink>().isNotEmpty()
+      hasWebViewLinks = message.getSpans<WebViewUrl>().isNotEmpty()
+    } else if (message is Spanned) {
+      hasWebViewLinks = message.getSpans<WebViewUrl>().isNotEmpty()
     }
 
     return hasWebViewLinks
@@ -576,7 +572,6 @@ class ReplyLayoutView @JvmOverloads constructor(
     val clickedItem = suspendCancellableCoroutine<FloatingListMenuItem?> { cancellableContinuation ->
       val floatingListMenuController = FloatingListMenuController(
         context = context,
-        constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
         items = floatingListMenuItems,
         itemClickListener = { item -> cancellableContinuation.resumeValueSafe(item) },
         menuDismissListener = { cancellableContinuation.resumeValueSafe(null) }
@@ -657,7 +652,6 @@ class ReplyLayoutView @JvmOverloads constructor(
 
     val floatingListMenuController = FloatingListMenuController(
       context = context,
-      constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
       items = menuItems,
       itemClickListener = { clickedItem ->
         if (clickedItem.key is Int) {

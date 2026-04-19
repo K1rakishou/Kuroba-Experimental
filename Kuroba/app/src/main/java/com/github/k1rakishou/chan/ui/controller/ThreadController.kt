@@ -603,9 +603,8 @@ abstract class ThreadController(
     }
 
     val floatingListMenuController = FloatingListMenuController(
-      context,
-      globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
-      items,
+      context = context,
+      items = items,
       itemClickListener = { clickedItem ->
         controllerScope.launch {
           val archiveDescriptor = (clickedItem.key as? ArchiveDescriptor)

@@ -193,6 +193,7 @@ sealed class KurobaSettingKey(val raw: String) {
       data class CheckPostAcknowledged(val siteName: String) : Chan4(siteName, "CheckPostAcknowledged")
       data class CaptchaType(val siteName: String) : Chan4(siteName, "CaptchaType")
       data class CaptchaSettings(val siteName: String) : Chan4(siteName, "CaptchaSettings")
+      data class EmailVerification(val siteName: String) : Chan4(siteName, "EmailVerification")
       data class EmailVerificationCookie(val siteName: String) : Chan4(siteName, "EmailVerificationCookie")
     }
 

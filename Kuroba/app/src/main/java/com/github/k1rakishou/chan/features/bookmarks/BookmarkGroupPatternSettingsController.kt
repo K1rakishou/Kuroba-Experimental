@@ -429,7 +429,6 @@ class BookmarkGroupPatternSettingsController(
 
       val controller = FloatingListMenuController(
         context = context,
-        constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
         items = items,
         menuDismissListener = { cancellableContinuation.resumeValueSafe(null) },
         itemClickListener = { item ->
@@ -484,7 +483,6 @@ class BookmarkGroupPatternSettingsController(
 
       val controller = FloatingListMenuController(
         context = context,
-        constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
         items = items,
         menuDismissListener = { cancellableContinuation.resumeValueSafe(null) },
         itemClickListener = { item ->

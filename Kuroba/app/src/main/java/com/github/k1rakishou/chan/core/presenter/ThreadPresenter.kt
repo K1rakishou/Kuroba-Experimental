@@ -2321,7 +2321,6 @@ class ThreadPresenter @Inject constructor(
 
       val floatingListMenuController = FloatingListMenuController(
         context = context,
-        constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
         items = floatingListMenuItems,
         itemClickListener = { clickedItem ->
           val id = clickedItem.key as Int
@@ -2385,10 +2384,9 @@ class ThreadPresenter @Inject constructor(
     items: List<FloatingListMenuItem>
   ) {
     val floatingListMenuController = FloatingListMenuController(
-      context,
-      globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
-      items,
-      { item -> onPostOptionClicked(post, item, inPopup) }
+      context = context,
+      items = items,
+      itemClickListener = { item -> onPostOptionClicked(post, item, inPopup) }
     )
 
     threadPresenterCallback?.presentController(floatingListMenuController, true)

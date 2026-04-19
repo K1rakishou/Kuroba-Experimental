@@ -623,7 +623,6 @@ class ThirdEyeSettingsController(context: Context) : BaseFloatingComposeControll
 
     val controller = FloatingListMenuController(
       context = context,
-      constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
       items = items,
       itemClickListener = { clickedItem ->
         val itemId = clickedItem.key as Int
@@ -644,7 +643,6 @@ class ThirdEyeSettingsController(context: Context) : BaseFloatingComposeControll
 
     val controller = FloatingListMenuController(
       context = context,
-      constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
       items = items,
       itemClickListener = { clickedItem ->
         controllerScope.launch {

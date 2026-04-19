@@ -14,6 +14,8 @@ import com.github.k1rakishou.chan.core.manager.WebViewTaskManager
 import com.github.k1rakishou.chan.core.presenter.BrowsePresenter
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter
 import com.github.k1rakishou.chan.core.site.SiteResolver
+import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
+import com.github.k1rakishou.chan.features.KurobaWebUrlRouter
 import com.github.k1rakishou.chan.features.archive.BoardArchiveController
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.features.settings.AppSettingsController
@@ -38,6 +40,7 @@ import com.github.k1rakishou.chan.features.webview.task.AbstractWebViewTask
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.ReplyAutoCloseListener
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.SlideChangeListener
+import com.github.k1rakishou.chan.ui.controller.base.Controller
 import com.github.k1rakishou.chan.ui.controller.base.ControllerKey
 import com.github.k1rakishou.chan.ui.controller.base.DeprecatedNavigationFlags
 import com.github.k1rakishou.chan.ui.controller.base.ui.NavigationControllerContainerLayout
@@ -59,6 +62,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescript
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
+import com.github.k1rakishou.v2.KurobaSettingKey
 import com.github.k1rakishou.v2.parameters.BoardPostViewMode
 import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
@@ -93,6 +97,8 @@ class BrowseController(
   lateinit var webViewTaskManagerLazy: Lazy<WebViewTaskManager>
   @Inject
   lateinit var runtimePermissionsHelper: RuntimePermissionsHelper
+  @Inject
+  lateinit var kurobaWebUrlRouter: KurobaWebUrlRouter
 
   private val historyNavigationManager: HistoryNavigationManager
     get() = historyNavigationManagerLazy.get()
@@ -155,6 +161,11 @@ class BrowseController(
         catalogSortingOrder = catalogSortingOrder,
         isManuallyChangedOrder = false
       )
+    }
+
+    controllerScope.launch {
+      kurobaWebUrlRouter.routerEventFlow
+        .collect { routerEvent -> handleRouterEvent(routerEvent) }
     }
 
     controllerScope.launch {
@@ -1225,6 +1236,43 @@ class BrowseController(
     } else {
       AppModuleAndroidUtils.openLink(link)
     }
+  }
+
+  private suspend fun handleRouterEvent(routerEvent: KurobaWebUrlRouter.Event) {
+    val result = when (routerEvent) {
+      KurobaWebUrlRouter.Event.OpenEmailVerificationController -> {
+        RouterEventResult.PushController(
+          AppSettingsController(
+            context = context,
+            params = AppSettingsController.Params.createForInitialScreen(
+              screenKey = SettingsScreenKey.Site(Chan4.SITE_DESCRIPTOR),
+              scrollToSettingKeyRaw = KurobaSettingKey.Site.Chan4.EmailVerification(
+                siteName = Chan4.SITE_DESCRIPTOR.siteName
+              ).raw
+            )
+          )
+        )
+      }
+      is KurobaWebUrlRouter.Event.OpenUrlInWebViewController -> {
+        RouterEventResult.PresentController(
+          OpenUrlInWebViewController(context, routerEvent.url)
+        )
+      }
+    }
+
+    when (result) {
+      is RouterEventResult.PresentController -> presentController(result.controller)
+      is RouterEventResult.PushController -> requireNavController().pushController(result.controller)
+    }
+
+    result.controller.awaitUntilClosed()
+  }
+
+  private sealed interface RouterEventResult {
+    val controller: Controller
+
+    data class PushController(override val controller: Controller) : RouterEventResult
+    data class PresentController(override val controller: Controller) : RouterEventResult
   }
 
   companion object {

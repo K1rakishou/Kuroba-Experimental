@@ -786,7 +786,6 @@ class MpvVideoMediaView(
 
     val controller = FloatingListMenuController(
       context = context,
-      constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
       items = menuItems,
       itemClickListener = { clickedItem ->
         scope.launch {

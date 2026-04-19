@@ -490,7 +490,6 @@ class AlbumViewController(
       val controller = FloatingListMenuController(
         context = context,
         items = items,
-        constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
         itemClickListener = { clickedItem -> continuation.resumeValueSafe(clickedItem.value as Int?) },
         menuDismissListener = { continuation.resumeValueSafe(null) }
       )

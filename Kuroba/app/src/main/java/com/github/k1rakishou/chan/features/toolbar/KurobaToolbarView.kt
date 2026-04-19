@@ -158,7 +158,6 @@ class KurobaToolbarView @JvmOverloads constructor(
     controller.presentController(
       controller = FloatingListMenuController(
         context = context,
-        constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
         items = mapMenuItems(menuItems),
         itemClickListener = { clickedMenuItem ->
           val clickedAbstractMenuItem = findClickedItemRecursively(menuItems, clickedMenuItem.key)

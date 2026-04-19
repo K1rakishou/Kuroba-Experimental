@@ -652,6 +652,14 @@ abstract class Controller(
     }
   }
 
+  suspend fun awaitUntilClosed() {
+    try {
+      _controllerResult.await()
+    } catch (ignored: Throwable) {
+      // no-op
+    }
+  }
+
   private sealed interface ControllerResultInternal {
     data class Result(val value: Any?) : ControllerResultInternal
     data object NoResult : ControllerResultInternal

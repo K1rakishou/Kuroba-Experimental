@@ -741,7 +741,6 @@ private suspend fun <T> showListDialog(
     val controller = FloatingListMenuController(
       context = context,
       items = floatingListMenuItems,
-      constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
       itemClickListener = { clickedItem -> continuation.resumeValueSafe(clickedItem) },
       menuDismissListener = { continuation.resumeValueSafe(null) }
     )
@@ -786,7 +785,6 @@ private suspend fun showEnumListDialog(
     val controller = FloatingListMenuController(
       context = context,
       items = floatingListMenuItems,
-      constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
       itemClickListener = { clickedItem -> continuation.resumeValueSafe(clickedItem) },
       menuDismissListener = { continuation.resumeValueSafe(null) }
     )

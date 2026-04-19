@@ -16,7 +16,9 @@ object CommentParserHelper {
   private const val HTTP_SCHEME = "http://"
   private const val HTTPS_SCHEME = "https://"
 
-  val LINK_EXTRACTOR = LinkExtractor.builder().linkTypes(EnumSet.of(LinkType.URL)).build()
+  val LINK_EXTRACTOR = LinkExtractor.builder()
+    .linkTypes(EnumSet.of(LinkType.URL))
+    .build()
 
   @JvmStatic
   fun detectLinks(

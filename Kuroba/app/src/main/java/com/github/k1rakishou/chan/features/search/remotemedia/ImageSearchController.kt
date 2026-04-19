@@ -555,7 +555,6 @@ class ImageSearchController(
 
     val floatingListMenuController = FloatingListMenuController(
       context = context,
-      constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
       items = menuItems,
       itemClickListener = { clickedItem ->
         val selectedImageSearchInstanceType = (clickedItem.value as? RemoteImageSearchSettings.InstanceType)
@@ -579,7 +578,6 @@ class ImageSearchController(
 
     val floatingListMenuController = FloatingListMenuController(
       context = context,
-      constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
       items = menuItems,
       itemClickListener = { clickedItem ->
         val clickedItemUrl = (clickedItem.value as? HttpUrl)

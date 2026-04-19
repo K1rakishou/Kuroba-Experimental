@@ -272,6 +272,10 @@ class Chan4Actions(
     return !cookie.expired(System.currentTimeMillis())
   }
 
+  suspend fun resetEmailVerification() {
+    chan4Settings.emailVerificationCookie.reset()
+  }
+
   private fun HttpUrl.Builder.addBoardCodeParameter(boardCode: String?): HttpUrl.Builder {
     if (boardCode.isNullOrEmpty()) {
       return this

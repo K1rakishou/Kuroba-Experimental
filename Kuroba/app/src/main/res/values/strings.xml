@@ -1013,6 +1013,8 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="site_settings_authentication_email_verification_webview_error_canceled_by_user">Email verification canceled by user</string>
     <string name="site_settings_authentication_email_verification_webview_error_unknown">Email verification failure! Error: %1$s</string>
     <string name="site_settings_authentication_email_verification_webview_success">Email verification success!</string>
+    <string name="site_settings_authentication_reset_email_cookie">Would you like to reset email cookie?</string>
+    <string name="site_settings_authentication_reset_email_cookie_description">This will remove the verified 4chan_pass cookie so the regular (unverified) 4chan_pass cookie will be used for posting</string>
 
     <string name="thread_presenter_no_archives_found_to_open_thread">No archives found to open %1$s. Check that you have enabled archives to open this thread. It is also possible that no archives support this site/board.</string>
     <string name="thread_presenter_no_posts_of_the_same_poster_found">No posts of the same poster found</string>
