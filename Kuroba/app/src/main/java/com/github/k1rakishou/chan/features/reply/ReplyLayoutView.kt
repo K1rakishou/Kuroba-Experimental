@@ -47,6 +47,7 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.v2.KurobaSettings
 import com.github.k1rakishou.v2.parameters.ReplyMode
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.util.UUID
@@ -388,7 +389,9 @@ class ReplyLayoutView @JvmOverloads constructor(
       ?.readBlocking()
       ?: ReplyMode.Unknown
 
-    showReplyOptions(chanDescriptor, prevReplyMode)
+    coroutineScope.launch {
+      showReplyOptions(chanDescriptor, prevReplyMode)
+    }
   }
 
   override fun onReplyLayoutPickFileButtonLongClicked() {
@@ -609,7 +612,7 @@ class ReplyLayoutView @JvmOverloads constructor(
     }
   }
 
-  private fun showReplyOptions(chanDescriptor: ChanDescriptor, prevReplyMode: ReplyMode) {
+  private suspend fun showReplyOptions(chanDescriptor: ChanDescriptor, prevReplyMode: ReplyMode) {
     val menuItems = mutableListOf<FloatingListMenuItem>()
     val availableReplyModes = buildReplyModeOptions(chanDescriptor, prevReplyMode)
 
@@ -641,14 +644,15 @@ class ReplyLayoutView @JvmOverloads constructor(
       }
     }
 
-    menuItems += FloatingListMenuItem(
-      key = ACTION_RESET_REMEMBERED_FILE_PICKER,
-      name = appResources.string(R.string.reply_layout_reset_remembered_file_picker)
+    menuItems += CheckableFloatingListMenuItem(
+      key = ACTION_ALWAYS_RANDOMIZE_FILE_NAME,
+      name = appResources.string(R.string.setting_always_randomize_picked_files_names),
+      checked = kurobaSettings.internal.alwaysRandomizePickedFilesNames.read()
     )
 
     menuItems += FloatingListMenuItem(
-      key = ACTION_ALWAYS_RANDOMIZE_FILE_NAME,
-      name = appResources.string(R.string.setting_always_randomize_picked_files_names)
+      key = ACTION_RESET_REMEMBERED_FILE_PICKER,
+      name = appResources.string(R.string.reply_layout_reset_remembered_file_picker)
     )
 
     val floatingListMenuController = FloatingListMenuController(
