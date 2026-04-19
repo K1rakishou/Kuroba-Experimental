@@ -229,10 +229,8 @@ object SpannableHelper {
 class WebViewUrl(
   val url: HttpUrl
 ) : ClickableSpan() {
-
   override fun onClick(widget: View) {
   }
-
 }
 
 class WebUrlMovementMethod(
@@ -275,7 +273,6 @@ class WebUrlMovementMethod(
 
     return super.onTouchEvent(widget, buffer, event)
   }
-
 
   private fun clickCoordinatesHitPostComment(x: Int, lineLeft: Float, lineRight: Float): Boolean {
     return x >= lineLeft && x < lineRight

@@ -49,7 +49,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.helper.DialogFactory
-import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.features.settings.AppSettingsGraph
 import com.github.k1rakishou.chan.features.settings.AppSettingsRestartTracker
 import com.github.k1rakishou.chan.features.settings.delegate.CookieCaptchaInputController
@@ -141,7 +140,6 @@ fun SettingUiElementWidget(
   val density = LocalDensity.current
   val chanTheme = LocalChanTheme.current
 
-  val globalWindowInsetsManager = activityDependencies().globalWindowInsetsManager
   val dialogFactory = activityDependencies().dialogFactory
   val appResources = appDependencies().appResources
   val appSettingsRestartTracker = appDependencies().appSettingsRestartTracker
@@ -264,7 +262,6 @@ fun SettingUiElementWidget(
               settingUiElement = settingUiElement,
               navigationController = navigationController,
               dialogFactory = dialogFactory,
-              globalWindowInsetsManager = globalWindowInsetsManager,
               appSettingsRestartTracker = appSettingsRestartTracker
             )
 
@@ -433,7 +430,6 @@ private suspend fun handleSettingUiElementClick(
   settingUiElement: SettingUiElement,
   navigationController: NavigationController,
   dialogFactory: DialogFactory,
-  globalWindowInsetsManager: GlobalWindowInsetsManager,
   appSettingsRestartTracker: AppSettingsRestartTracker
 ) {
   when (settingUiElement) {
@@ -477,7 +473,6 @@ private suspend fun handleSettingUiElementClick(
     is SettingUiElement.Items<*> -> {
       showListDialog(
         context = context,
-        globalWindowInsetsManager = globalWindowInsetsManager,
         navigationController = navigationController,
         itemsSetting = settingUiElement
       )
@@ -486,7 +481,6 @@ private suspend fun handleSettingUiElementClick(
     is SettingUiElement.EnumItems<*> -> {
       showEnumListDialog(
         context = context,
-        globalWindowInsetsManager = globalWindowInsetsManager,
         navigationController = navigationController,
         enumItemsSetting = settingUiElement
       )
@@ -517,7 +511,6 @@ private suspend fun handleSettingUiElementClick(
     is SettingUiElement.Range -> {
       showRangeSettingUpdateController(
         context = context,
-        globalWindowInsetsManager = globalWindowInsetsManager,
         navigationController = navigationController,
         range = settingUiElement
       )
@@ -630,13 +623,11 @@ private fun SettingUiBadge(badge: SettingUiElement.Badge) {
 
 private suspend fun showRangeSettingUpdateController(
   context: Context,
-  globalWindowInsetsManager: GlobalWindowInsetsManager,
   navigationController: NavigationController,
   range: SettingUiElement.Range
 ) {
   val controller = RangeSettingUpdaterController(
     context = context,
-    constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
     title = range.title(),
     minValue = range.setting.min,
     maxValue = range.setting.max,
@@ -720,7 +711,6 @@ private suspend fun showInputDialog(
 
 private suspend fun <T> showListDialog(
   context: Context,
-  globalWindowInsetsManager: GlobalWindowInsetsManager,
   navigationController: NavigationController,
   itemsSetting: SettingUiElement.Items<T>
 ) {
@@ -764,7 +754,6 @@ private suspend fun <T> showListDialog(
 
 private suspend fun showEnumListDialog(
   context: Context,
-  globalWindowInsetsManager: GlobalWindowInsetsManager,
   navigationController: NavigationController,
   enumItemsSetting: SettingUiElement.EnumItems<*>
 ) {

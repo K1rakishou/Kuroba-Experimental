@@ -4,7 +4,6 @@ import android.content.Context
 import android.widget.Toast
 import androidx.annotation.StringRes
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.features.download.media.ImageSaverV2
 import com.github.k1rakishou.chan.features.download.media.ImageSaverV2OptionsController
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
@@ -26,7 +25,6 @@ import dagger.Lazy
 
 class ThumbnailLongtapOptionsHelper(
   private val kurobaSettings: KurobaSettings,
-  private val globalWindowInsetsManager: GlobalWindowInsetsManager,
   private val imageSaverV2: Lazy<ImageSaverV2>
 ) {
 

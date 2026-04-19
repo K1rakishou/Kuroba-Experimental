@@ -7,7 +7,6 @@ import android.os.Build
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.helper.AppRestarter
 import com.github.k1rakishou.chan.core.helper.DialogFactory
-import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.update.MpvLibsUpdateManager
 import com.github.k1rakishou.chan.core.mpv.MPVLib
 import com.github.k1rakishou.chan.core.usecase.InstallMpvNativeLibrariesFromLocalDirectoryUseCase
@@ -43,7 +42,6 @@ class PluginsSettingsScreenBuilder(
   private val appConstants: AppConstants,
   private val dialogFactory: DialogFactory,
   private val fileChooser: FileChooser,
-  private val globalWindowInsetsManager: GlobalWindowInsetsManager,
   private val mpvLibsUpdateManager: MpvLibsUpdateManager,
   private val mpvNativeLibrariesUseCase: MpvNativeLibrariesUseCase,
   private val installMpvNativeLibrariesFromLocalDirectoryUseCase: InstallMpvNativeLibrariesFromLocalDirectoryUseCase

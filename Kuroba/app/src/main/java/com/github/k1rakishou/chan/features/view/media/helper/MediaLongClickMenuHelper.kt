@@ -5,7 +5,6 @@ import android.view.HapticFeedbackConstants
 import android.view.View
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.concurrency.RendezvousCoroutineExecutor
-import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.site.ImageSearch
 import com.github.k1rakishou.chan.features.download.media.ImageSaverV2
 import com.github.k1rakishou.chan.features.download.media.ImageSaverV2OptionsController
@@ -29,7 +28,6 @@ import okhttp3.HttpUrl
 class MediaLongClickMenuHelper(
   private val scope: CoroutineScope,
   private val kurobaSettings: KurobaSettings,
-  private val globalWindowInsetsManager: GlobalWindowInsetsManager,
   private val imageSaverV2: ImageSaverV2,
   private val snackbarManager: SnackbarManager,
   private val getMediaViewerAdapterFunc: () -> MediaViewerAdapter?,

@@ -290,7 +290,6 @@ class MediaViewerController(
   private val mediaViewerMenuHelper by lazy(LazyThreadSafetyMode.NONE) {
     MediaViewerMenuHelper(
       kurobaSettings = kurobaSettings,
-      globalWindowInsetsManager = globalWindowInsetsManager,
       snackbarManager = snackbarManager,
       presentControllerFunc = { controller -> presentController(controller, true) }
     )
@@ -300,7 +299,6 @@ class MediaViewerController(
     MediaLongClickMenuHelper(
       scope = controllerScope,
       kurobaSettings = kurobaSettings,
-      globalWindowInsetsManager = globalWindowInsetsManager,
       imageSaverV2 = imageSaverV2,
       snackbarManager = snackbarManager,
       getMediaViewerAdapterFunc = { mediaViewerAdapter },

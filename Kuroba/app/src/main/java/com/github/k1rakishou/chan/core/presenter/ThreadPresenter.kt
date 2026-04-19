@@ -25,11 +25,9 @@ import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.CompositeCatalogManager
 import com.github.k1rakishou.chan.core.manager.CurrentFocusedControllers
 import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManager
-import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.OnDemandContentLoaderManager
 import com.github.k1rakishou.chan.core.manager.PageRequestManager
-import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.PostHideManager
 import com.github.k1rakishou.chan.core.manager.PostHighlightManager
 import com.github.k1rakishou.chan.core.manager.RevealedSpoilerImagesManager
@@ -136,14 +134,12 @@ class ThreadPresenter @Inject constructor(
   private val onDemandContentLoaderManagerLazy: Lazy<OnDemandContentLoaderManager>,
   private val seenPostsManagerLazy: Lazy<SeenPostsManager>,
   private val historyNavigationManagerLazy: Lazy<HistoryNavigationManager>,
-  private val postFilterManagerLazy: Lazy<PostFilterManager>,
   private val chanFilterManagerLazy: Lazy<ChanFilterManager>,
   private val lastViewedPostNoInfoHolderLazy: Lazy<LastViewedPostNoInfoHolder>,
   private val chanThreadViewableInfoManagerLazy: Lazy<ChanThreadViewableInfoManager>,
   private val postHideHelperLazy: Lazy<PostHideHelper>,
   private val postHideManagerLazy: Lazy<PostHideManager>,
   private val chanThreadManagerLazy: Lazy<ChanThreadManager>,
-  private val globalWindowInsetsManagerLazy: Lazy<GlobalWindowInsetsManager>,
   private val thumbnailLongtapOptionsHelperLazy: Lazy<ThumbnailLongtapOptionsHelper>,
   private val mediaViewerGoToPostHelperLazy: Lazy<MediaViewerGoToPostHelper>,
   private val themeEngineLazy: Lazy<ThemeEngine>,
@@ -179,8 +175,6 @@ class ThreadPresenter @Inject constructor(
     get() = seenPostsManagerLazy.get()
   private val historyNavigationManager: HistoryNavigationManager
     get() = historyNavigationManagerLazy.get()
-  private val postFilterManager: PostFilterManager
-    get() = postFilterManagerLazy.get()
   private val chanFilterManager: ChanFilterManager
     get() = chanFilterManagerLazy.get()
   private val lastViewedPostNoInfoHolder: LastViewedPostNoInfoHolder
@@ -193,8 +187,6 @@ class ThreadPresenter @Inject constructor(
     get() = postHideManagerLazy.get()
   private val chanThreadManager: ChanThreadManager
     get() = chanThreadManagerLazy.get()
-  private val globalWindowInsetsManager: GlobalWindowInsetsManager
-    get() = globalWindowInsetsManagerLazy.get()
   private val thumbnailLongtapOptionsHelper: ThumbnailLongtapOptionsHelper
     get() = thumbnailLongtapOptionsHelperLazy.get()
   private val themeEngine: ThemeEngine

@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.features.view.media.helper
 
 import android.content.Context
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.features.reordering.SimpleListItemsReorderingController
 import com.github.k1rakishou.chan.features.view.media.MediaViewerAdapter
 import com.github.k1rakishou.chan.features.view.media.MediaViewerGesturesSettingsController
@@ -18,7 +17,6 @@ import com.github.k1rakishou.v2.parameters.ReorderableMediaViewerActions
 
 class MediaViewerMenuHelper(
   private val kurobaSettings: KurobaSettings,
-  private val globalWindowInsetsManager: GlobalWindowInsetsManager,
   private val snackbarManager: SnackbarManager,
   private val presentControllerFunc: (Controller) -> Unit
 ) {

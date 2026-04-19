@@ -25,7 +25,6 @@ import com.github.k1rakishou.chan.core.helper.AppRestarter
 import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
 import com.github.k1rakishou.chan.core.helper.migration.app.ApplicationMigrationHelper
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
-import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
@@ -96,8 +95,6 @@ class MainController(
   @Inject
   lateinit var themeEngineLazy: Lazy<ThemeEngine>
   @Inject
-  lateinit var globalWindowInsetsManagerLazy: Lazy<GlobalWindowInsetsManager>
-  @Inject
   lateinit var settingsNotificationManagerLazy: Lazy<SettingsNotificationManager>
   @Inject
   lateinit var historyNavigationManagerLazy: Lazy<HistoryNavigationManager>
@@ -114,8 +111,6 @@ class MainController(
 
   private val themeEngine: ThemeEngine
     get() = themeEngineLazy.get()
-  private val globalWindowInsetsManager: GlobalWindowInsetsManager
-    get() = globalWindowInsetsManagerLazy.get()
   private val settingsNotificationManager: SettingsNotificationManager
     get() = settingsNotificationManagerLazy.get()
   private val historyNavigationManager: HistoryNavigationManager

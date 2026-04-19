@@ -9,7 +9,6 @@ import androidx.core.widget.doAfterTextChanged
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.controller.ControllerComponent
 import com.github.k1rakishou.chan.ui.controller.base.BaseFloatingController
-import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBias
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
@@ -19,7 +18,6 @@ import com.github.k1rakishou.chan.utils.ViewModelScope
 
 class RangeSettingUpdaterController(
   context: Context,
-  private val constraintLayoutBias: ConstraintLayoutBias,
   private val title: String,
   private val minValue: Int,
   private val maxValue: Int,
@@ -65,6 +63,8 @@ class RangeSettingUpdaterController(
 
     val cardView = view.findViewById<ColorizableCardView>(R.id.controller_range_setting_updater_card_view)
     cardView.updateLayoutParams<ConstraintLayout.LayoutParams> {
+      val constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias()
+
       horizontalBias = constraintLayoutBias.horizontalBias
       verticalBias = constraintLayoutBias.verticalBias
     }

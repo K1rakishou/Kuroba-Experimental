@@ -725,8 +725,6 @@ class ReplyLayoutView @JvmOverloads constructor(
   }
 
   companion object {
-    private const val TAG = "ReplyLayoutView"
-
     private const val ACTION_DELETE_THIS_FILE = 1
     private const val ACTION_DELETE_SELECTED_FILES = 2
     private const val ACTION_REMOVE_SELECTED_FILES_FILE_NAME = 3

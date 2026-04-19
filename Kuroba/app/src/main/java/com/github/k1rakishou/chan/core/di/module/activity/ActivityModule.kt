@@ -191,13 +191,11 @@ class ActivityModule {
   @Provides
   fun provideThumbnailLongtapOptionsHelper(
     kurobaSettings: KurobaSettings,
-    globalWindowInsetsManager: GlobalWindowInsetsManager,
     imageSaverV2: Lazy<ImageSaverV2>
   ): ThumbnailLongtapOptionsHelper {
     Logger.deps("ThumbnailLongtapOptionsHelper")
     return ThumbnailLongtapOptionsHelper(
       kurobaSettings,
-      globalWindowInsetsManager,
       imageSaverV2
     )
   }
@@ -252,7 +250,6 @@ class ActivityModule {
     cacheHandler: CacheHandler,
     chunkedMediaDownloader: ChunkedMediaDownloader,
     appConstants: AppConstants,
-    globalWindowInsetsManager: GlobalWindowInsetsManager,
     mpvLibsUpdateManager: MpvLibsUpdateManager,
     mpvNativeLibrariesUseCase: MpvNativeLibrariesUseCase,
     installMpvNativeLibrariesFromLocalDirectoryUseCase: InstallMpvNativeLibrariesFromLocalDirectoryUseCase,
@@ -320,7 +317,6 @@ class ActivityModule {
       appConstants = appConstants,
       dialogFactory = dialogFactory,
       fileChooser = fileChooser,
-      globalWindowInsetsManager = globalWindowInsetsManager,
       mpvLibsUpdateManager = mpvLibsUpdateManager,
       mpvNativeLibrariesUseCase = mpvNativeLibrariesUseCase,
       installMpvNativeLibrariesFromLocalDirectoryUseCase = installMpvNativeLibrariesFromLocalDirectoryUseCase,
