@@ -25,6 +25,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import java.util.concurrent.atomic.AtomicInteger
+import android.annotation.SuppressLint
 
 class HeadlessWebViewTaskExecutor(
   private val appContext: Context,
@@ -158,6 +159,7 @@ class HeadlessWebViewTaskExecutor(
     cookieManager.setAcceptThirdPartyCookies(webView, true)
 
     val webSettings = webView.settings
+    @SuppressLint("SetJavaScriptEnabled")
     webSettings.javaScriptEnabled = true
     webSettings.domStorageEnabled = true
     webSettings.databaseEnabled = true
