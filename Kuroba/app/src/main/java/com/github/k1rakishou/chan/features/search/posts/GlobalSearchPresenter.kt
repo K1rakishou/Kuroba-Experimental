@@ -235,8 +235,6 @@ internal class GlobalSearchPresenter(
   }
 
   companion object {
-    private const val TAG = "GlobalSearchPresenter"
-
     private var selectedSiteDescriptor: SiteDescriptor? = null
   }
 }

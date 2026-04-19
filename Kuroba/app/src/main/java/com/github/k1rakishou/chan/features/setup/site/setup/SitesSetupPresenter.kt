@@ -93,8 +93,4 @@ class SitesSetupPresenter(
     _state.value = stateSetup
   }
 
-  companion object {
-    private const val TAG = "SitesSetupPresenter"
-  }
-
 }
