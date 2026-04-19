@@ -45,7 +45,7 @@ KurobaEx is a fast Android app for browsing imageboards, such as 4chan and 8chan
 
 - Bookmark groups with ability to setup regex matchers to automatically move newly created bookmarks into them.
 
-- Automatic captcha solver for 4chan captcha (See https://github.com/K1rakishou/4chanCaptchaSolver)
+- ~~Automatic captcha solver for 4chan captcha (See https://github.com/K1rakishou/4chanCaptchaSolver)~~
 
 - Lots of other tiny improvements.
 
@@ -82,15 +82,20 @@ KurobaEx is a fast Android app for browsing imageboards, such as 4chan and 8chan
 - 4Chan
 - Dvach
 - 8Kun (thanks to @jirn073-76)
-- 420Chan (thanks to @Lolzen)
 - Lainchan
 - Sushichan
 - Wired-7 (thanks to @Wired-7)
 - 370chan.info (thanks to @alcharkov)
 - Endchan
 - Kohlchan
-- Vhschan (thanks to @MrPurple666)
-- YesHoney (thanks to @SomeGuy719)
+- Krautchan
+- 8chan.moe
+- Lefypol (thanks to @yuiopmbv)
+- Diochan (thanks to @Dashchanon)
+- ~~420Chan (thanks to @Lolzen)~~
+- ~~YesHoney (thanks to @SomeGuy719)~~
+- ~~Vhschan (thanks to @MrPurple666)~~
+- ~~Soyjak.party (thanks to @absurd-shaman)~~
 
 ##### Currently supported 4chan archives
 - ArchivedMoe
@@ -99,11 +104,11 @@ KurobaEx is a fast Android app for browsing imageboards, such as 4chan and 8chan
 - DesuArchive
 - Fireden 
 - 4Plebs 
-- Nyafuu 
-- TokyoChronos
 - Warosu
-- Wakarimasen.moe
-- RozenArcana
+- ~~Nyafuu~~
+- ~~TokyoChronos~~
+- ~~Wakarimasen.moe~~
+- ~~RozenArcana~~
 
 ## License
 [Kuroba is GPLv3](https://github.com/K1rakishou/Kuroba-Experimental/blob/develop/COPYING.txt), [licenses of the used libraries.](https://github.com/K1rakishou/Kuroba-Experimental/blob/develop/Kuroba/app/src/main/assets/html/licenses.html)
