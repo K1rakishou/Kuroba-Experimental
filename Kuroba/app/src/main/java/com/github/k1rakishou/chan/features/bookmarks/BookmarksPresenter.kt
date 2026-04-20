@@ -290,7 +290,6 @@ class BookmarksPresenter(
     Logger.d(TAG, "showBookmarks($query)")
 
     val downloadingThreadDescriptors = threadDownloadManager.getDownloadingThreadDescriptors()
-
     val threadBookmarkItemViewList = bookmarksManager
       .mapAllBookmarks<ThreadBookmarkItemView> { threadBookmarkView ->
         val title = threadBookmarkView.title
