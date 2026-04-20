@@ -205,7 +205,7 @@ private fun BuildMenuItemColumn(
       ),
   ) {
     val targetColor = remember(key1 = chanTheme) {
-      chanTheme.backColorCompose.resolveIconTintColor()
+      chanTheme.primaryColorCompose.resolveIconTintColor()
     }
 
     val colorAnimated by animateColorAsState(
