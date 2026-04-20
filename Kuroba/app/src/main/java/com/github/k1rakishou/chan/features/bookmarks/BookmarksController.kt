@@ -588,7 +588,6 @@ class BookmarksController(
   private fun onSetGridBookmarkViewWidthClicked() {
     val rangeSettingUpdaterController = RangeSettingUpdaterController(
       context = context,
-      constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
       title = getString(R.string.controller_bookmarks_set_grid_view_width_text),
       minValue = context.resources.getDimension(R.dimen.thread_grid_bookmark_view_min_width).toInt(),
       maxValue = context.resources.getDimension(R.dimen.thread_grid_bookmark_view_max_width).toInt(),
