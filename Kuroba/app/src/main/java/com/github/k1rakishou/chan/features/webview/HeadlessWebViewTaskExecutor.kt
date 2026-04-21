@@ -1,11 +1,16 @@
 package com.github.k1rakishou.chan.features.webview
 
+import android.annotation.SuppressLint
 import android.content.Context
+import android.net.http.SslError
+import android.os.Build
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.CookieManager
+import android.webkit.SslErrorHandler
 import android.webkit.WebSettings
 import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.features.webview.task.AbstractWebViewTask
 import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
@@ -25,7 +30,6 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import java.util.concurrent.atomic.AtomicInteger
-import android.annotation.SuppressLint
 
 class HeadlessWebViewTaskExecutor(
   private val appContext: Context,
@@ -114,7 +118,11 @@ class HeadlessWebViewTaskExecutor(
       }
 
       doWithWebView { webView ->
-        webView.webViewClient = webViewTask.webViewClient
+        // Wrap the task-provided WebViewClient so that SSL errors are always rejected,
+        // regardless of how individual tasks implement (or forget to implement)
+        // onReceivedSslError. This prevents a malicious or misconfigured task from
+        // silently accepting an invalid certificate (CWE-295).
+        webView.webViewClient = SecureSslWebViewClient(webViewTask.webViewClient)
         webViewTask.init(webView)
         webViewTask.start(webView)
 
@@ -159,13 +167,7 @@ class HeadlessWebViewTaskExecutor(
     cookieManager.setAcceptThirdPartyCookies(webView, true)
 
     val webSettings = webView.settings
-    @SuppressLint("SetJavaScriptEnabled")
-    webSettings.javaScriptEnabled = true
-    webSettings.domStorageEnabled = true
-    webSettings.databaseEnabled = true
-    webSettings.useWideViewPort = true
-    webSettings.loadWithOverviewMode = true
-    webSettings.cacheMode = WebSettings.LOAD_DEFAULT
+    configureWebSettings(webSettings)
 
     kurobaSettings.application.customUserAgent.read()
       .takeIf { customUserAgent -> customUserAgent.isNotBlank() }
@@ -187,12 +189,112 @@ class HeadlessWebViewTaskExecutor(
     return webView
   }
 
+  // JavaScript is required for the headless tasks (e.g. Cloudflare bypass) to work,
+  // so the lint warning is intentionally suppressed. The remaining settings explicitly
+  // disable risky capabilities that the WebView ships with by default.
+  @SuppressLint("SetJavaScriptEnabled")
+  private fun configureWebSettings(webSettings: WebSettings) {
+    webSettings.javaScriptEnabled = true
+    webSettings.domStorageEnabled = true
+    webSettings.databaseEnabled = true
+    webSettings.useWideViewPort = true
+    webSettings.loadWithOverviewMode = true
+    webSettings.cacheMode = WebSettings.LOAD_DEFAULT
+
+    // Disable filesystem and content provider access from web content. The headless
+    // tasks only ever load remote http(s) URLs, so granting them access to local
+    // resources only widens the attack surface (CWE-200, CWE-919).
+    webSettings.allowFileAccess = false
+    webSettings.allowContentAccess = false
+    @Suppress("DEPRECATION")
+    webSettings.allowFileAccessFromFileURLs = false
+    @Suppress("DEPRECATION")
+    webSettings.allowUniversalAccessFromFileURLs = false
+
+    // Block mixed content (http resources loaded from an https page). Allowing it
+    // would defeat the purpose of using TLS in the first place (CWE-319).
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+      webSettings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
+    }
+
+    // Make sure Safe Browsing stays on where it is supported (it is on by default
+    // on API 26+, but be explicit to guard against OEM customisations).
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      webSettings.safeBrowsingEnabled = true
+    }
+  }
+
   private suspend fun removeAllCookies() {
     suspendCancellableCoroutine { cont ->
       cookieManager.removeAllCookies {
         Logger.debug(TAG) { "cookieManager.removeAllCookies()" }
         cont.resumeValueSafe(Unit)
       }
+    }
+  }
+
+  /**
+   * A [WebViewClient] decorator that delegates every callback to a wrapped client
+   * but enforces a strict SSL error policy: invalid certificates are always
+   * rejected, the offending request is cancelled and the failure is logged.
+   *
+   * This guarantees that SSL validation cannot be silently bypassed by a task
+   * that overrides [WebViewClient.onReceivedSslError] and calls
+   * [SslErrorHandler.proceed] (which is a well known WebView anti-pattern,
+   * CWE-295 "Improper Certificate Validation").
+   */
+  private class SecureSslWebViewClient(
+    private val delegate: WebViewClient
+  ) : WebViewClient() {
+
+    override fun onReceivedSslError(
+      view: WebView?,
+      handler: SslErrorHandler?,
+      error: SslError?
+    ) {
+      Logger.error(TAG) {
+        "onReceivedSslError() rejecting connection to '${error?.url}', " +
+          "primaryError=${error?.primaryError}"
+      }
+      handler?.cancel()
+    }
+
+    override fun shouldOverrideUrlLoading(
+      view: WebView?,
+      request: android.webkit.WebResourceRequest?
+    ): Boolean {
+      return delegate.shouldOverrideUrlLoading(view, request)
+    }
+
+    override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
+      delegate.onPageStarted(view, url, favicon)
+    }
+
+    override fun onPageFinished(view: WebView?, url: String?) {
+      delegate.onPageFinished(view, url)
+    }
+
+    override fun onReceivedError(
+      view: WebView?,
+      request: android.webkit.WebResourceRequest?,
+      error: android.webkit.WebResourceError?
+    ) {
+      delegate.onReceivedError(view, request, error)
+    }
+
+    override fun onReceivedHttpError(
+      view: WebView?,
+      request: android.webkit.WebResourceRequest?,
+      errorResponse: android.webkit.WebResourceResponse?
+    ) {
+      delegate.onReceivedHttpError(view, request, errorResponse)
+    }
+
+    override fun shouldInterceptRequest(
+      view: WebView?,
+      request: android.webkit.WebResourceRequest?
+    ): android.webkit.WebResourceResponse? {
+      return delegate.shouldInterceptRequest(view, request)
     }
   }
 
