@@ -104,7 +104,7 @@
     <string name="update_failed_to_install">Failed to install update. Try to install it manually.</string>
     <string name="update_failed_to_install_description">Failed to install update. Reason: \'%1$s\'</string>
     <string name="update_application_update_available">Application update is available!</string>
-    <string name="update_application_update_available_description">New app version is available: </string>
+    <string name="update_application_update_available_description">New app version is available:</string>
 
     <string name="update_storage_permission_required_title">Storage permission required</string>
     <string name="update_storage_permission_required">

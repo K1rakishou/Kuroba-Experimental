@@ -139,7 +139,6 @@ sealed class KurobaSettingKey(val raw: String) {
 
   sealed class Internal(key: String) : KurobaSettingKey(key) {
     data object HasNewApkUpdate : Internal("HasNewApkUpdate")
-    data object PreviousVersion : Internal("PreviousVersion")
     data object UpdateCheckTime : Internal("UpdateCheckTime")
     data object PreviousBuildNumber : Internal("PreviousBuildNumber")
     data object ApkUpdateInfoJson : Internal("ApkUpdateInfoJson")

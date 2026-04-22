@@ -384,8 +384,6 @@ class KurobaSettingsMigrationHelper(
       migrateBooleanSetting(prefs, "dont_keep_activities_warning_shown", internal.dontKeepActivitiesWarningShown)
       migrateBooleanSetting(prefs, "new_reply_layout_tutorial_finished", internal.newReplyLayoutTutorialFinished)
 
-      migrateIntSetting(prefs, "previous_version", internal.previousVersion)
-
       migrateLongSetting(prefs, "update_check_time", internal.updateCheckTime)
       migrateLongSetting(prefs, "previous_build_number", internal.previousBuildNumber)
 

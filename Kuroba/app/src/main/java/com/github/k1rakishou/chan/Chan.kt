@@ -45,7 +45,6 @@ import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.manager.base_directory.DirectoryManager
 import com.github.k1rakishou.model.di.ModelComponentInjector
 import com.github.k1rakishou.v2.ApplicationSettingsParameters
-import com.github.k1rakishou.v2.InternalSettingsParameters
 import com.github.k1rakishou.v2.KurobaSettings
 import com.github.k1rakishou.v2.NonBackupableSettingsParameters
 import com.github.k1rakishou.v2.database.KurobaSettingsDatabase
@@ -96,10 +95,6 @@ class Chan : Application(), ActivityLifecycleCallbacks {
           getDimen(R.dimen.thread_grid_bookmark_view_min_width),
           getDimen(R.dimen.thread_grid_bookmark_view_max_width)
         )
-      ),
-      internalSettingsInfo = InternalSettingsParameters(
-        versionCode = BuildConfig.VERSION_CODE,
-        commitHash = BuildConfig.COMMIT_HASH
       ),
       nonBackupableSettingsParameters = NonBackupableSettingsParameters(
         applicationMigrationVersion = ApplicationMigrationHelper.LATEST_VERSION

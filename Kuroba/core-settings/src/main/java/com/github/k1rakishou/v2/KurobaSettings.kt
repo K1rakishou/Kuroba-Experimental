@@ -6,13 +6,12 @@ import com.github.k1rakishou.v2.database.KurobaSettingsDatabase
 open class KurobaSettings(
   val database: KurobaSettingsDatabase,
   private val applicationSettingsParameters: ApplicationSettingsParameters,
-  private val internalSettingsParameters: InternalSettingsParameters,
   private val nonBackupableSettingsParameters: NonBackupableSettingsParameters
 ) {
   val initialSettingsState by lazy { CreateKurobaInitialSettingsState.create(database) }
 
   val application by lazy { ApplicationSettings(database, applicationSettingsParameters, initialSettingsState) }
-  val internal by lazy { InternalSettings(database, internalSettingsParameters, initialSettingsState) }
+  val internal by lazy { InternalSettings(database, initialSettingsState) }
   val nonBackupable by lazy { NonBackupableSettings(database, nonBackupableSettingsParameters, initialSettingsState) }
   val mpv by lazy { MpvSettings(database, initialSettingsState) }
 
@@ -24,13 +23,11 @@ open class KurobaSettings(
     fun create(
       kurobaSettingsDatabase: KurobaSettingsDatabase,
       applicationSettingsInfo: ApplicationSettingsParameters,
-      internalSettingsInfo: InternalSettingsParameters,
       nonBackupableSettingsParameters: NonBackupableSettingsParameters
     ): KurobaSettings {
       return KurobaSettings(
         database = kurobaSettingsDatabase,
         applicationSettingsParameters = applicationSettingsInfo,
-        internalSettingsParameters = internalSettingsInfo,
         nonBackupableSettingsParameters = nonBackupableSettingsParameters
       )
     }

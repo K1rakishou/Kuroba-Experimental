@@ -1,10 +1,5 @@
 package com.github.k1rakishou.v2
 
-data class InternalSettingsParameters(
-  val versionCode: Int,
-  val commitHash: String,
-)
-
 data class NonBackupableSettingsParameters(
   val applicationMigrationVersion: Int
 )

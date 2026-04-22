@@ -206,10 +206,10 @@ class UpdateApiRequest(
   sealed interface VersionCode {
     val code: Long
 
-    fun buildNumber(): Long? {
+    fun buildNumber(): Long {
       return when (this) {
         is Beta -> buildNumber
-        is Release -> null
+        is Release -> -1L
       }
     }
 

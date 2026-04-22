@@ -13,16 +13,12 @@ import com.github.k1rakishou.v2.settings.KurobaMoshiSetting
 
 class InternalSettings(
   database: KurobaSettingsDatabase,
-  private val internalSettingsParameters: InternalSettingsParameters,
   override val initialSettingsState: KurobaInitialSettingsState
 ) : BaseSettings(database) {
   override val backupable: Boolean = true
 
   val hasNewApkUpdate by lazy {
     createBooleanSetting(KurobaSettingKey.Internal.HasNewApkUpdate, false)
-  }
-  val previousVersion by lazy {
-    createIntSetting(KurobaSettingKey.Internal.PreviousVersion, internalSettingsParameters.versionCode)
   }
   val updateCheckTime by lazy {
     createLongSetting(KurobaSettingKey.Internal.UpdateCheckTime, 0L)

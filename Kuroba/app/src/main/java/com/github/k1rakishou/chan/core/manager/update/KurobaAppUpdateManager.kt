@@ -171,13 +171,7 @@ class KurobaAppUpdateManager(
 
     val usePrereleaseBuilds = kurobaSettings.application.usePrereleaseBuilds.read()
     Logger.d(TAG, "Calling update API (usePrereleaseBuilds: ${usePrereleaseBuilds})")
-    updateApk(manual, usePrereleaseBuilds)
-  }
 
-  private suspend fun updateApk(
-    manual: Boolean,
-    usePrereleaseBuilds: Boolean
-  ) {
     val apkUpdateInfoResult = UpdateApiRequest(
       proxiedOkHttpClient = proxiedOkHttpClient,
       loadChangelogUseCase = loadChangelogUseCaseLazy.get(),
@@ -209,11 +203,6 @@ class KurobaAppUpdateManager(
     manual: Boolean,
     usePrereleaseBuilds: Boolean
   ) {
-    if (!BackgroundUtils.isInForeground()) {
-      Logger.d(TAG, "processUpdateApiResponse() not in foreground")
-      return
-    }
-
     val continueWithUpdate = run {
       if (!kurobaSettings.application.checkUpdateApkVersionCode.read()) {
         Logger.d(TAG, "processUpdateApiResponse() checkUpdateApkVersionCode is false")
@@ -257,6 +246,8 @@ class KurobaAppUpdateManager(
       return
     }
 
+    kurobaSettings.internal.hasNewApkUpdate.write(true)
+
     // Do not spam dialogs if this is not the manual update check, use the notifications
     // instead
     if (!manual) {
@@ -296,9 +287,11 @@ class KurobaAppUpdateManager(
     updateInstallRequested(
       responseRelease = apkReleaseInfo,
       onUpdateClicked = {
+        val buildNumberFromReleaseTag = apkReleaseInfo.versionCode.buildNumber()
+
         val apkUpdateInfoJson = ApkUpdateInfoJson(
           versionCode = apkReleaseInfo.versionCode.code,
-          buildNumber = apkReleaseInfo.versionCode.buildNumber() ?: 0L,
+          buildNumber = buildNumberFromReleaseTag,
           versionName = apkReleaseInfo.tagName
         )
 
@@ -307,6 +300,7 @@ class KurobaAppUpdateManager(
         }
 
         kurobaSettings.internal.apkUpdateInfoJson.writeBlocking(apkUpdateInfoJson)
+        kurobaSettings.internal.previousBuildNumber.writeBlocking(buildNumberFromReleaseTag)
       }
     )
   }
@@ -337,8 +331,9 @@ class KurobaAppUpdateManager(
 
     AppModuleAndroidUtils.showToast(context, toastMessage)
 
-    // Also set the new app version to not show this message again
-    kurobaSettings.internal.previousVersion.write(BuildConfig.VERSION_CODE)
+    // Reset previous build number
+    kurobaSettings.internal.previousBuildNumber.write(-1L)
+
     cancelApkUpdateNotification()
   }
 
@@ -351,7 +346,26 @@ class KurobaAppUpdateManager(
     }
 
     val versionCode = apkReleaseInfo.versionCode.code
-    val buildNumber = apkReleaseInfo.versionCode.buildNumber() ?: 0L
+    val buildNumber = apkReleaseInfo.versionCode.buildNumber()
+
+    val notificationContent = buildString {
+      append(appResources.string(R.string.update_application_update_available_description))
+      append(" ")
+
+      if (versionCode > 0) {
+        append("(")
+        append("v${versionCode}")
+        if (buildNumber >= 0) {
+          append(".${buildNumber}")
+        }
+        if (apkReleaseInfo.prerelease) {
+          append("-beta")
+        }
+        append(")")
+      } else {
+        append("(Unknown)")
+      }
+    }
 
     kurobaSystemNotifications.showNotification(
       notificationData = KurobaSystemNotifications.NotificationData(
@@ -363,21 +377,7 @@ class KurobaAppUpdateManager(
         autoCancel = false,
         style = KurobaSystemNotifications.NotificationData.Style.Default(
           title = appResources.string(R.string.update_application_update_available),
-          content = buildString {
-            append(appResources.string(R.string.update_application_update_available_description))
-
-            if (versionCode > 0) {
-              append("(")
-              append("v${versionCode}.${buildNumber}")
-              if (apkReleaseInfo.prerelease) {
-                append("-beta")
-              }
-
-              append(")")
-            } else {
-              append("(Unknown)")
-            }
-          }
+          content = notificationContent
         ),
       )
     )
@@ -392,7 +392,7 @@ class KurobaAppUpdateManager(
     Logger.e(TAG, "failedUpdate() manual=$manual, error: ${error.errorMessageOrClassName()}")
     val manualUpdateUrl = "https://github.com/K1rakishou/Kuroba-Experimental/releases/latest"
 
-    if (manual && BackgroundUtils.isInForeground()) {
+    if (manual) {
       dialogFactory.showDialog(
         context = context,
         params = KurobaComposeDialogController.informationDialog(
@@ -484,10 +484,6 @@ class KurobaAppUpdateManager(
     onUpdateClicked: () -> Unit
   ) {
     BackgroundUtils.ensureMainThread()
-
-    if (!BackgroundUtils.isInForeground()) {
-      return
-    }
 
     cancelApkUpdateNotification()
 
@@ -623,7 +619,7 @@ class KurobaAppUpdateManager(
     val buildNumber = apkUpdateInfoJson.buildNumber
     val versionName = apkUpdateInfoJson.versionName
 
-    if (versionCode <= 0L || buildNumber <= 0L) {
+    if (versionCode <= 0L) {
       return null
     }
 
