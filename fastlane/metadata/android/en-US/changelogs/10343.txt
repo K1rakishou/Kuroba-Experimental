@@ -1,5 +1,6 @@
 A bunch of small fixes.
 
+- Fix trying to update from a stable version to beta (only the first beta with buildNumber 0) not working because build number of stable version and first beta version being the same (zero). "continue update" check would return false in this case, thus skipping the update.
 - Correctly handle faq/signin 4chan links. FAQ url will open 4chan's FAQ page. Signin will open the settings page on "Email verification".
 - Use correct color to resolve icon tint color in drawer's bottom panel. Icons shouldn't disappear on certain themes.
 - Randomize picked files' names should be a checkbox.
