@@ -33,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -115,6 +116,7 @@ fun KurobaIconPanel(
           menuItemStateList.forEachIndexed { _, menuItemState ->
             key(menuItemState.menuItem.id) {
               BuildMenuItemColumn(
+                backgroundColor = backgroundColor,
                 navigationViewSize = navigationViewSize,
                 onMenuItemClicked = onMenuItemClicked,
                 menuItemState = menuItemState
@@ -148,6 +150,7 @@ fun KurobaIconPanel(
           menuItemStateList.forEachIndexed { _, menuItemState ->
             key(menuItemState.menuItem.id) {
               BuildMenuItemRow(
+                backgroundColor = backgroundColor,
                 navigationViewSize = navigationViewSize,
                 onMenuItemClicked = onMenuItemClicked,
                 menuItemState = menuItemState
@@ -186,12 +189,11 @@ private fun Density.calculateTargetOffset(
 
 @Composable
 private fun BuildMenuItemColumn(
+  backgroundColor: Color,
   navigationViewSize: Dp,
   onMenuItemClicked: (Int) -> Unit,
   menuItemState: KurobaIconPanelState.MenuItemState
 ) {
-  val chanTheme = LocalChanTheme.current
-
   val menuItem = menuItemState.menuItem
   val menuItemBadge by menuItemState.menuItemBadge
 
@@ -204,8 +206,8 @@ private fun BuildMenuItemColumn(
         onClick = { onMenuItemClicked(menuItem.id) }
       ),
   ) {
-    val targetColor = remember(key1 = chanTheme) {
-      chanTheme.primaryColorCompose.resolveIconTintColor()
+    val targetColor = remember(key1 = backgroundColor) {
+      backgroundColor.resolveIconTintColor()
     }
 
     val colorAnimated by animateColorAsState(
@@ -227,12 +229,11 @@ private fun BuildMenuItemColumn(
 
 @Composable
 private fun BuildMenuItemRow(
+  backgroundColor: Color,
   navigationViewSize: Dp,
   onMenuItemClicked: (Int) -> Unit,
   menuItemState: KurobaIconPanelState.MenuItemState
 ) {
-  val chanTheme = LocalChanTheme.current
-
   val menuItem = menuItemState.menuItem
   val menuItemBadge by menuItemState.menuItemBadge
 
@@ -246,8 +247,8 @@ private fun BuildMenuItemRow(
       ),
     contentAlignment = Alignment.Center
   ) {
-    val targetColor = remember(key1 = chanTheme) {
-      chanTheme.backColorCompose.resolveIconTintColor()
+    val targetColor = remember(key1 = backgroundColor) {
+      backgroundColor.resolveIconTintColor()
     }
 
     val colorAnimated by animateColorAsState(
