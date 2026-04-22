@@ -48,13 +48,15 @@ jobs:
           ./gradlew testDebugUnitTest --stacktrace -Dorg.gradle.jvmargs="-Xmx4096m"
 
   publish-beta:
-      needs: [precheck, unit-test]
-      uses: ./.github/workflows/build-setup.yml
-      with:
-        publish-type: beta
-      secrets: inherit
-  
+    if: github.event_name == 'push'
+    needs: [precheck, unit-test]
+    uses: ./.github/workflows/build-setup.yml
+    with:
+      publish-type: beta
+    secrets: inherit
+
   publish-stable:
+    if: github.event_name == 'push'
     needs: [precheck, unit-test]
     uses: ./.github/workflows/build-setup.yml
     with:
