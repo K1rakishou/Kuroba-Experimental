@@ -106,6 +106,8 @@ class ExportDownloadedThreadAsJsonUseCase(
           ByteArrayInputStream(gson.toJson(chanPosts).toByteArray())
             .use { postsJsonByteArray -> postsJsonByteArray.copyTo(zos) }
 
+          zos.closeEntry()
+
           val threadMediaDirName = ThreadDownloadingDelegate.formatDirectoryName(threadDescriptor)
           val threadMediaDir = File(appConstants.threadDownloaderCacheDir, threadMediaDirName)
           threadMediaDir.listFiles()?.forEach { mediaFile ->
@@ -117,7 +119,12 @@ class ExportDownloadedThreadAsJsonUseCase(
             mediaFile.inputStream().use { mediaFileSteam ->
               mediaFileSteam.copyTo(zos)
             }
+
+            zos.closeEntry()
           }
+
+          zos.finish()
+          zos.flush()
         }
       }
     }
