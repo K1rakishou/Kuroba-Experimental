@@ -21,6 +21,10 @@ class BadStatusResponseException(val status: Int) : IOException("Bad status: $st
     return status == 404
   }
 
+  fun isRateLimitedError(): Boolean {
+    return status == 429
+  }
+
   fun isUnsatisfiableRangeStatus(): Boolean {
     return status == 416
   }
@@ -36,6 +40,15 @@ class BadStatusResponseException(val status: Int) : IOException("Bad status: $st
 
     if (isNotFoundError()) {
       return "Not found"
+    }
+
+    if (isRateLimitedError()) {
+      // 4chan returns 429 when too many report/post requests are made from
+      // the same IP in a short window. The raw "Bad status: 429" message
+      // surfaced in places like the post report dialog (issue #1102) is
+      // confusing because it does not tell the user what to do. Show a
+      // short, actionable message instead.
+      return "Rate limited (429), try again later"
     }
 
     return "Bad status: ${status}"
