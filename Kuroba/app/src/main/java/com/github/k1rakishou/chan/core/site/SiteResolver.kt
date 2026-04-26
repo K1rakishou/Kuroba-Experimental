@@ -40,6 +40,19 @@ open class SiteResolver @Inject constructor(
       httpUrl = httpUrl.newBuilder().scheme("https").build()
     }
 
+    // Background callers like the OkHttp interceptors and the bookmark watcher
+    // may invoke this method on a worker thread before SiteManager has finished
+    // its async initialization. firstActiveSiteOrNull() would then throw
+    // IllegalStateException("SiteManager is not ready yet!"), which propagates
+    // out of the OkHttp call and surfaces as an ANR or a hard crash on app
+    // start (see issue #1046). Treat "not ready yet" the same as "no matching
+    // site": the caller already handles a null result and the next request
+    // after init completes will resolve normally.
+    if (!siteManager.isReady()) {
+      Logger.warning(TAG) { "findSiteForUrl('${url}') -> null (SiteManager is not ready yet)" }
+      return null
+    }
+
     return siteManager.firstActiveSiteOrNull { _, site ->
       val siteUrlHandler = site.urlHandler
       if (siteUrlHandler.respondsTo(httpUrl)) {
