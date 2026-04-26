@@ -80,6 +80,13 @@ class KurobaWebUrlRouter(
       fullPath.startsWith("signin") -> {
         Event.OpenEmailVerificationController
       }
+      // Issue #673: oekaki replays use a Flash based player that the
+      // Android WebView cannot run. Hand the URL to the system browser
+      // instead of opening a blank in-app WebView.
+      isOekakiReplayUrl(url, fullPath) -> {
+        Logger.debug(TAG) { "[4chan] Oekaki replay url, opening externally: ${url}" }
+        Event.OpenInExternalBrowser(url)
+      }
       else -> {
         Logger.debug(TAG) { "[4chan] Unknown url: ${url}" }
         Event.OpenUrlInWebViewController(url)
@@ -87,8 +94,23 @@ class KurobaWebUrlRouter(
     }
   }
 
+  private fun isOekakiReplayUrl(url: HttpUrl, fullPath: String): Boolean {
+    if (fullPath.contains("oekaki", ignoreCase = true)) {
+      return true
+    }
+    if (fullPath.contains("replay", ignoreCase = true)) {
+      return true
+    }
+    val host = url.host.lowercase()
+    if (host.contains("oekaki")) {
+      return true
+    }
+    return url.encodedPath.endsWith(".swf", ignoreCase = true)
+  }
+
   sealed interface Event {
     data class OpenUrlInWebViewController(val url: HttpUrl) : Event
+    data class OpenInExternalBrowser(val url: HttpUrl) : Event
     data object OpenEmailVerificationController : Event
   }
 

@@ -1258,6 +1258,12 @@ class BrowseController(
           OpenUrlInWebViewController(context, routerEvent.url)
         )
       }
+      is KurobaWebUrlRouter.Event.OpenInExternalBrowser -> {
+        // Issue #673: hand the URL to the system browser. There is no
+        // controller to await on, so just return early.
+        AppModuleAndroidUtils.openLink(routerEvent.url.toString())
+        return
+      }
     }
 
     when (result) {
