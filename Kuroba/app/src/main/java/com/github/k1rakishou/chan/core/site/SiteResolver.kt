@@ -6,11 +6,13 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
 open class SiteResolver @Inject constructor(
   private val siteManager: SiteManager
 ) {
+  private val notReadyDiagnosticLogged = AtomicBoolean(false)
 
   fun waitUntilInitialized() {
     if (siteManager.isReady()) {
@@ -40,16 +42,28 @@ open class SiteResolver @Inject constructor(
       httpUrl = httpUrl.newBuilder().scheme("https").build()
     }
 
-    // Background callers like the OkHttp interceptors and the bookmark watcher
-    // may invoke this method on a worker thread before SiteManager has finished
-    // its async initialization. firstActiveSiteOrNull() would then throw
-    // IllegalStateException("SiteManager is not ready yet!"), which propagates
-    // out of the OkHttp call and surfaces as an ANR or a hard crash on app
-    // start (see issue #1046). Treat "not ready yet" the same as "no matching
-    // site": the caller already handles a null result and the next request
-    // after init completes will resolve normally.
+    // Background callers can race SiteManager initialization (issue #1046).
+    // Returning null here keeps the app alive while we collect the diagnostic
+    // information requested in PR review. The first time the guard fires per
+    // process we dump the calling thread name and the captured stack so the
+    // next crash report identifies the actual caller. CloudFlareInterceptor
+    // already calls waitUntilInitialized() above every findSiteForUrl, so the
+    // offender lives somewhere else.
     if (!siteManager.isReady()) {
-      Logger.warning(TAG) { "findSiteForUrl('${url}') -> null (SiteManager is not ready yet)" }
+      if (notReadyDiagnosticLogged.compareAndSet(false, true)) {
+        val callerThread = Thread.currentThread().name
+        val callerStack = Throwable("findSiteForUrl called before SiteManager was ready")
+          .stackTraceToString()
+        Logger.error(TAG) {
+          "findSiteForUrl('${url}') -> null (SiteManager is not ready yet, " +
+            "thread=${callerThread}). Captured caller stack:\n${callerStack}"
+        }
+      } else {
+        Logger.warning(TAG) {
+          "findSiteForUrl('${url}') -> null (SiteManager is not ready yet, " +
+            "thread=${Thread.currentThread().name})"
+        }
+      }
       return null
     }
 

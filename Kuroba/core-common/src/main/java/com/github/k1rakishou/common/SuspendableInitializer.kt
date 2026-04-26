@@ -126,15 +126,22 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
   }
 
   fun runWhenInitialized(func: (Throwable?) -> Unit) {
-    if (isInitialized()) {
-      func(null)
-      notifyAllWaiters(null)
-      return
+    // The waiters list is @GuardedBy("itself") and notifyAllWaiters takes
+    // synchronized(waiters). The previous implementation acquired
+    // synchronized(this), which is a different monitor. That allowed a
+    // waiter added concurrently with init completion to land in the list
+    // AFTER notifyAllWaiters had already drained it, leaving the waiter
+    // never invoked and any caller blocked on a CountDownLatch forever
+    // (the ANR pattern reported in issue #1046). Use the same monitor for
+    // both add and drain, and re-check completion inside the lock.
+    synchronized(waiters) {
+      if (!value.isCompleted) {
+        waiters += func
+        return
+      }
     }
 
-    synchronized(this) {
-      waiters += func
-    }
+    func(error.get())
   }
 
   private fun notifyAllWaiters(throwable: Throwable? = null) {
