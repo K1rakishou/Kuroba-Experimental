@@ -11,8 +11,10 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
+import com.github.k1rakishou.chan.core.helper.ProxyStorage
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.ui.controller.base.BaseFloatingController
+import com.github.k1rakishou.chan.ui.controller.dialog.KurobaComposeDialogController
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.CookieBuilder
 import com.github.k1rakishou.common.resumeValueSafe
@@ -21,6 +23,7 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.HttpUrl
+import java.net.URI
 import javax.inject.Inject
 
 class OpenUrlInWebViewController(
@@ -36,6 +39,9 @@ class OpenUrlInWebViewController(
 
   @Inject
   lateinit var themeEngine: ThemeEngine
+
+  @Inject
+  lateinit var proxyStorage: ProxyStorage
 
   private lateinit var webView: WebView
   private lateinit var closeButton: ImageView
@@ -87,6 +93,51 @@ class OpenUrlInWebViewController(
 
   @SuppressLint("SetJavaScriptEnabled")
   private suspend fun onCreateInternal() {
+    // Issue #932: the Android WebView does not honor the proxies that
+    // Kuroba routes its OkHttp traffic through. If a proxy is configured
+    // for the site we are about to open, loading the URL in the WebView
+    // would bypass that proxy and reveal the device IP. Warn the user
+    // and let them choose to open it anyway or cancel.
+    val proxiesForUrl = try {
+      proxyStorage.getProxyByUri(URI(urlToOpen.toString()), ProxyStorage.ProxyActionType.SiteRequests)
+    } catch (_: Throwable) {
+      emptyList()
+    }
+    if (proxiesForUrl.isNotEmpty()) {
+      Logger.warning(TAG) {
+        "WebView for ${urlToOpen} would bypass the proxy configured for this site (issue #932)"
+      }
+      val params = KurobaComposeDialogController.confirmationDialog(
+        title = KurobaComposeDialogController.Text.Id(
+          R.string.open_url_in_webview_proxy_leak_title
+        ),
+        description = KurobaComposeDialogController.Text.Id(
+          R.string.open_url_in_webview_proxy_leak_description
+        ),
+        negativeButton = KurobaComposeDialogController.DialogButton(R.string.cancel),
+        positionButton = KurobaComposeDialogController.PositiveDialogButton(
+          buttonText = R.string.open_url_in_webview_proxy_leak_open_anyway,
+          isActionDangerous = true
+        )
+      )
+
+      val handle = dialogFactory.showDialog(
+        context = context,
+        params = params
+      )
+
+      if (handle == null) {
+        pop()
+        return
+      }
+
+      val openAnyway = params.awaitButtonClick()?.isPositive() == true
+      if (!openAnyway) {
+        pop()
+        return
+      }
+    }
+
     val webViewContainer = view.findViewById<FrameLayout>(R.id.web_view_container)
 
     themeEngine.addListener(this)
