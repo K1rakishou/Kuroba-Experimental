@@ -126,15 +126,17 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
   }
 
   fun runWhenInitialized(func: (Throwable?) -> Unit) {
-    if (isInitialized()) {
-      func(null)
-      notifyAllWaiters(null)
-      return
+    synchronized(waiters) {
+      // If not completed then add a new waiter into the list of waiters
+      if (!value.isCompleted) {
+        waiters += func
+        return
+      }
     }
 
-    synchronized(this) {
-      waiters += func
-    }
+    // If already completed then invoke the current waiter + other waiters if there are any
+    func(error.get())
+    notifyAllWaiters(error.get())
   }
 
   private fun notifyAllWaiters(throwable: Throwable? = null) {
