@@ -80,6 +80,13 @@ class KurobaWebUrlRouter(
       fullPath.startsWith("signin") -> {
         Event.OpenEmailVerificationController
       }
+      // Issue #945: the /f/ board is Flash based and the Android
+      // WebView cannot run Flash. Hand the URL to the system browser
+      // so the user gets a real browser that can download the .swf.
+      isFlashBoardUrl(url) -> {
+        Logger.debug(TAG) { "[4chan] /f/ board url, opening externally: ${url}" }
+        Event.OpenInExternalBrowser(url)
+      }
       // Issue #673: oekaki replays use a Flash based player that the
       // Android WebView cannot run. Hand the URL to the system browser
       // instead of opening a blank in-app WebView.
@@ -92,6 +99,14 @@ class KurobaWebUrlRouter(
         Event.OpenUrlInWebViewController(url)
       }
     }
+  }
+
+  private fun isFlashBoardUrl(url: HttpUrl): Boolean {
+    val firstSegment = url.pathSegments.firstOrNull()?.lowercase() ?: return false
+    if (firstSegment == "f") {
+      return true
+    }
+    return url.encodedPath.endsWith(".swf", ignoreCase = true)
   }
 
   private fun isOekakiReplayUrl(url: HttpUrl, fullPath: String): Boolean {

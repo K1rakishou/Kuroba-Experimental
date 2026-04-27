@@ -44,6 +44,7 @@ import com.github.k1rakishou.chan.ui.controller.base.Controller
 import com.github.k1rakishou.chan.ui.controller.base.ControllerKey
 import com.github.k1rakishou.chan.ui.controller.base.DeprecatedNavigationFlags
 import com.github.k1rakishou.chan.ui.controller.base.ui.NavigationControllerContainerLayout
+import com.github.k1rakishou.chan.ui.controller.dialog.KurobaComposeDialogController
 import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigationController
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper
@@ -75,6 +76,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import javax.inject.Inject
 
@@ -1259,8 +1261,17 @@ class BrowseController(
         )
       }
       is KurobaWebUrlRouter.Event.OpenInExternalBrowser -> {
-        // Issue #673: hand the URL to the system browser. There is no
-        // controller to await on, so just return early.
+        // Issues #673 / #945: Flash content (.swf and the /f/ board)
+        // is unsupported by the in-app WebView. Hand the URL to the
+        // system browser. For .swf links, show a confirmation dialog
+        // first because Flash content can play loud audio at full
+        // volume and the app cannot control its volume.
+        if (isSwfUrl(routerEvent.url)) {
+          val confirmed = confirmOpenSwfInExternalBrowser()
+          if (!confirmed) {
+            return
+          }
+        }
         AppModuleAndroidUtils.openLink(routerEvent.url.toString())
         return
       }
@@ -1272,6 +1283,27 @@ class BrowseController(
     }
 
     result.controller.awaitUntilClosed()
+  }
+
+  private fun isSwfUrl(url: HttpUrl): Boolean {
+    return url.encodedPath.endsWith(".swf", ignoreCase = true)
+  }
+
+  private suspend fun confirmOpenSwfInExternalBrowser(): Boolean {
+    val params = KurobaComposeDialogController.confirmationDialog(
+      title = KurobaComposeDialogController.Text.Id(R.string.open_swf_link_confirmation_title),
+      description = KurobaComposeDialogController.Text.Id(R.string.open_swf_link_confirmation_descriptor),
+      negativeButton = KurobaComposeDialogController.cancelButton(),
+      positionButton = KurobaComposeDialogController.okButton()
+    )
+
+    dialogFactory.showDialog(
+      context = context,
+      params = params
+    ) ?: return false
+
+    val clicked = params.awaitButtonClick()
+    return clicked?.isPositive() == true
   }
 
   private sealed interface RouterEventResult {
