@@ -1708,4 +1708,8 @@ Actual error: \'%1$s\'</string>
     <string name="api_33_android_13_notifications_permission_title">Api 33 (Android 13+) notifications permission</string>
     <string name="api_33_android_13_notifications_permission_descriptor">Api 33 (Android 13+) requires applications to request for a permission to display notifications. Without this permission some application features may not work correctly (posting, media downloading, reply notifications, thread last page notifications, etc).\n\nYou can always enable this manually in Android OS application settings.</string>
 
+    <string name="open_url_in_webview_proxy_leak_title">Open in WebView would bypass the proxy</string>
+    <string name="open_url_in_webview_proxy_leak_description">A proxy is configured for this site, but the Android WebView does not honor application proxies. Loading this URL in the built in WebView will connect directly and may reveal your real IP to the destination.\n\nOpen anyway, or cancel and use an external app.</string>
+    <string name="open_url_in_webview_proxy_leak_open_anyway">Open anyway</string>
+
 </resources>

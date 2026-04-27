@@ -11,8 +11,10 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
+import com.github.k1rakishou.chan.core.helper.ProxyStorage
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.ui.controller.base.BaseFloatingController
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.CookieBuilder
 import com.github.k1rakishou.common.resumeValueSafe
@@ -21,6 +23,7 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.HttpUrl
+import java.net.URI
 import javax.inject.Inject
 
 class OpenUrlInWebViewController(
@@ -36,6 +39,9 @@ class OpenUrlInWebViewController(
 
   @Inject
   lateinit var themeEngine: ThemeEngine
+
+  @Inject
+  lateinit var proxyStorage: ProxyStorage
 
   private lateinit var webView: WebView
   private lateinit var closeButton: ImageView
@@ -87,6 +93,49 @@ class OpenUrlInWebViewController(
 
   @SuppressLint("SetJavaScriptEnabled")
   private suspend fun onCreateInternal() {
+    // Issue #932: the Android WebView does not honor the proxies that
+    // Kuroba routes its OkHttp traffic through. If a proxy is configured
+    // for the site we are about to open, loading the URL in the WebView
+    // would bypass that proxy and reveal the device IP. Warn the user
+    // and let them choose to open it anyway or cancel.
+    val proxiesForUrl = try {
+      proxyStorage.getProxyByUri(URI(urlToOpen.toString()), ProxyStorage.ProxyActionType.SiteRequests)
+    } catch (_: Throwable) {
+      emptyList()
+    }
+    if (proxiesForUrl.isNotEmpty()) {
+      Logger.warning(TAG) {
+        "WebView for ${urlToOpen} would bypass the proxy configured for this site (issue #932)"
+      }
+      val openAnyway = suspendCancellableCoroutine<Boolean> { cont ->
+        var resumed = false
+        fun resumeOnce(value: Boolean) {
+          if (resumed) {
+            return
+          }
+          resumed = true
+          cont.resumeValueSafe(value)
+        }
+        val handle = dialogFactory.createSimpleConfirmationDialog(
+          context = context,
+          titleTextId = R.string.open_url_in_webview_proxy_leak_title,
+          descriptionTextId = R.string.open_url_in_webview_proxy_leak_description,
+          positiveButtonText = getString(R.string.open_url_in_webview_proxy_leak_open_anyway),
+          negativeButtonText = getString(R.string.cancel),
+          onPositiveButtonClickListener = { resumeOnce(true) },
+          onNegativeButtonClickListener = { resumeOnce(false) },
+          onDismissListener = { resumeOnce(false) }
+        )
+        if (handle == null) {
+          resumeOnce(false)
+        }
+      }
+      if (!openAnyway) {
+        pop()
+        return
+      }
+    }
+
     val webViewContainer = view.findViewById<FrameLayout>(R.id.web_view_container)
 
     themeEngine.addListener(this)
