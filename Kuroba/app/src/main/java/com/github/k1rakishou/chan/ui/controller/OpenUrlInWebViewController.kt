@@ -14,7 +14,7 @@ import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.ProxyStorage
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.ui.controller.base.BaseFloatingController
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
+import com.github.k1rakishou.chan.ui.controller.dialog.KurobaComposeDialogController
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.CookieBuilder
 import com.github.k1rakishou.common.resumeValueSafe
@@ -107,29 +107,31 @@ class OpenUrlInWebViewController(
       Logger.warning(TAG) {
         "WebView for ${urlToOpen} would bypass the proxy configured for this site (issue #932)"
       }
-      val openAnyway = suspendCancellableCoroutine<Boolean> { cont ->
-        var resumed = false
-        fun resumeOnce(value: Boolean) {
-          if (resumed) {
-            return
-          }
-          resumed = true
-          cont.resumeValueSafe(value)
-        }
-        val handle = dialogFactory.createSimpleConfirmationDialog(
-          context = context,
-          titleTextId = R.string.open_url_in_webview_proxy_leak_title,
-          descriptionTextId = R.string.open_url_in_webview_proxy_leak_description,
-          positiveButtonText = getString(R.string.open_url_in_webview_proxy_leak_open_anyway),
-          negativeButtonText = getString(R.string.cancel),
-          onPositiveButtonClickListener = { resumeOnce(true) },
-          onNegativeButtonClickListener = { resumeOnce(false) },
-          onDismissListener = { resumeOnce(false) }
+      val params = KurobaComposeDialogController.confirmationDialog(
+        title = KurobaComposeDialogController.Text.Id(
+          R.string.open_url_in_webview_proxy_leak_title
+        ),
+        description = KurobaComposeDialogController.Text.Id(
+          R.string.open_url_in_webview_proxy_leak_description
+        ),
+        negativeButton = KurobaComposeDialogController.DialogButton(R.string.cancel),
+        positionButton = KurobaComposeDialogController.PositiveDialogButton(
+          buttonText = R.string.open_url_in_webview_proxy_leak_open_anyway,
+          isActionDangerous = true
         )
-        if (handle == null) {
-          resumeOnce(false)
-        }
+      )
+
+      val handle = dialogFactory.showDialog(
+        context = context,
+        params = params
+      )
+
+      if (handle == null) {
+        pop()
+        return
       }
+
+      val openAnyway = params.awaitButtonClick()?.isPositive() == true
       if (!openAnyway) {
         pop()
         return
