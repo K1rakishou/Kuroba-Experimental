@@ -353,7 +353,8 @@ private fun getImageLoaderRequestProvider(
         return@withContext ImageLoaderRequest(
           data = ImageLoaderRequestData.Url(
             httpUrl = imageUrl,
-            cacheFileType = cacheFileType
+            cacheFileType = cacheFileType,
+            postDescriptor = albumItemData.postDescriptor
           ),
           transformations = emptyList()
         )
