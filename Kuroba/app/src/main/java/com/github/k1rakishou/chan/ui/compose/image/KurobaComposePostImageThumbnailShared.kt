@@ -185,6 +185,7 @@ private suspend fun ProduceStateScope<ImageLoaderResult>.loadImageInternal(
           cacheFileType = data.cacheFileType,
           imageSize = KurobaImageSize.FixedImageSize(size.width, size.height),
           scale = scale,
+          postDescriptor = data.postDescriptor,
           transformations = request.transformations
         )
       }
