@@ -34,6 +34,7 @@ import coil.size.Scale
 import coil.transform.Transformation
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheFileType
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeIcon
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.ktu
@@ -242,7 +243,8 @@ sealed class ImageLoaderRequestData {
 
   data class Url(
     val httpUrl: HttpUrl,
-    val cacheFileType: CacheFileType
+    val cacheFileType: CacheFileType,
+    val postDescriptor: PostDescriptor? = null
   ) : ImageLoaderRequestData() {
     val httpUrlString: String = httpUrl.toString()
   }
