@@ -1,0 +1,11 @@
+A bunch of fixes/improvements mostly from other contributors.
+
+- fix: secure SSL error handling in HeadlessWebViewTaskExecutor.kt (Thanks to @jim-daf)
+- fix(NetworkExceptions): friendlier short error for HTTP 429 (Thanks to @jim-daf)
+- fix(SuspendableInitializer): use waiters monitor in runWhenInitialized to prevent ANR (Thanks to @jim-daf)
+- fix: warn before opening a WebView when a site proxy is configured (Thanks to @jim-daf)
+- fix(KurobaWebUrlRouter): open oekaki replays externally instead of in the WebView (Thanks to @jim-daf)
+- fix(KurobaWebUrlRouter): open /f/ Flash board URLs externally (Thanks to @jim-daf)
+- Fix album view 404s for downloaded threads (Thanks to @dizzycrab)
+- Update 8chan.moe pow endpoint (Thanks to @nnuudev)
+- fix: add forgotten closeEntry/finish/flush to thread json exporting which made archives unopenable in some cases.
