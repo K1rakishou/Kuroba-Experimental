@@ -205,7 +205,7 @@ class Chan8MoeInterceptor(
     // First solution submission request. This will return us POW_TOKEN and POW_ID cookies which we need to apply
     // for the second submission request. It will also return a 'X-PoWBlock-Status' with the solution status.
     val firstSubmitSolutionRequest = Request.Builder()
-      .url("${chan8Moe.currentDomainString}/?pow=${solution}&t=${token}")
+      .url("${chan8Moe.currentDomainString}/?powblock=${solution}&pbchal=${token}")
       .header("Referer", chan8Moe.currentDomainString)
       .tag(RequestTag())
       .get()
