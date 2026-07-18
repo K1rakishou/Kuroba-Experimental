@@ -318,6 +318,11 @@ class ReplyManager(
     return reader(getReplyOrCreateNew(chanDescriptor))
   }
 
+  suspend fun <T : Any?> readReplySuspending(chanDescriptor: ChanDescriptor, reader: suspend (Reply) -> T): T {
+    ensureFilesLoaded()
+    return reader(getReplyOrCreateNew(chanDescriptor))
+  }
+
   fun createNewEmptyAttachFile(
     uniqueFileName: UniqueFileName,
     originalFileName: String,
