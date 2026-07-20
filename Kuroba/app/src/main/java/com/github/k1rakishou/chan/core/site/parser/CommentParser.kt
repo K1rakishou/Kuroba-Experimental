@@ -137,7 +137,11 @@ open class CommentParser(
     )
 
     addRule(StyleRule.tagRule("span").withCssClass("abbr").nullify())
-    addRule(StyleRule.tagRule("span").foregroundColorId(ChanThemeColorId.PostInlineQuoteColor))
+    addRule(
+      StyleRule.tagRule("span")
+        .foregroundColorId(ChanThemeColorId.PostInlineQuoteColor)
+        .withSpanPriority(255)
+    )
     addRule(StyleRule.tagRule("span").withoutAnyOfCssClass("quote").linkify())
 
     addRule(StyleRule.tagRule("strong").bold())

@@ -48,6 +48,7 @@ class StyleRule {
   private var blockElement = false
   private var newLine = false
   private var priority: Priority? = Priority.Normal
+  private var spanPriority = 1000
 
   fun rulePriority(): Priority? {
     return priority
@@ -69,6 +70,12 @@ class StyleRule {
 
   fun withPriority(newPriority: Priority): StyleRule {
     this.priority = newPriority
+    return this
+  }
+
+  fun withSpanPriority(newSpanPriority: Int): StyleRule {
+    require(newSpanPriority in 0..255) { "Span priority must be between 0 and 255" }
+    this.spanPriority = newSpanPriority
     return this
   }
 
@@ -332,7 +339,7 @@ class StyleRule {
           span,
           0,
           result.length,
-          (1000 shl Spanned.SPAN_PRIORITY_SHIFT) and Spanned.SPAN_PRIORITY
+          (spanPriority shl Spanned.SPAN_PRIORITY_SHIFT) and Spanned.SPAN_PRIORITY
         )
       }
     }
