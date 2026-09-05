@@ -27,6 +27,13 @@ class DvachSiteRequestModifier(
     addUserCodeCookie(requestBuilder)
   }
 
+  override fun modifyGenericRequest(site: Site, requestBuilder: Request.Builder) {
+    super.modifyGenericRequest(site, requestBuilder)
+
+    addAntiSpamCookie(requestBuilder)
+    addUserCodeCookie(requestBuilder)
+  }
+
   override fun modifyCatalogOrThreadGetRequest(
     site: Site,
     chanDescriptor: ChanDescriptor,
