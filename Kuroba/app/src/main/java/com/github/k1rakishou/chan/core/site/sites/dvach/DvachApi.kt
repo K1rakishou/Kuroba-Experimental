@@ -599,10 +599,6 @@ class DvachApi(
       boardDescriptor: BoardDescriptor,
       endpoints: SiteEndpoints
     ): ChanPostImage? {
-      if (path?.contains("/stickers/", ignoreCase = true) == true) {
-        return null
-      }
-
       var fileExt: String? = null
       var serverFileName: String? = null
 
