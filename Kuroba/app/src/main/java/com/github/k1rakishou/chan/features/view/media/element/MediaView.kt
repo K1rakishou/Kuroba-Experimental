@@ -192,6 +192,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     isLifecycleChange: Boolean
   ) {
     _shown = true
+    keepScreenOn = viewableMedia is ViewableMedia.Video
     this._mediaViewToolbar = mediaViewerToolbar
     this._mediaViewToolbar!!.attach(mediaViewContract.viewerChanDescriptor, viewableMedia, this)
 
@@ -209,6 +210,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
 
   fun onHide(isLifecycleChange: Boolean, isPausing: Boolean, isBecomingInactive: Boolean) {
     _shown = false
+    keepScreenOn = false
     this._mediaViewToolbar?.detach()
     this._mediaViewToolbar = null
 
@@ -235,6 +237,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     _shown = false
     _bound = false
     _preloadingCalled = false
+    keepScreenOn = false
     _mediaViewToolbar?.onDestroy()
     mediaViewerActionStrip?.onDestroy()
 

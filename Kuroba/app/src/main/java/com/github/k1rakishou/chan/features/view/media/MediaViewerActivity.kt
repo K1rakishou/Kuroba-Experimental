@@ -6,7 +6,6 @@ import android.content.res.Configuration
 import android.graphics.Point
 import android.os.Bundle
 import android.view.MotionEvent
-import android.view.WindowManager
 import android.webkit.URLUtil
 import androidx.core.os.bundleOf
 import androidx.lifecycle.lifecycleScope
@@ -26,7 +25,6 @@ import com.github.k1rakishou.chan.utils.FullScreenUtils.setupEdgeToEdge
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupStatusAndNavBarColors
 import com.github.k1rakishou.chan.utils.startActivitySafe
 import com.github.k1rakishou.chan.utils.viewModelByKey
-import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.fsaf.FileChooser
@@ -89,9 +87,6 @@ class MediaViewerActivity :
       .build()
 
     initView(findViewById(android.R.id.content))
-
-    AndroidUtils.getWindow(this)
-      ?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
     mediaViewerController = MediaViewerController(
       context = this,
@@ -167,9 +162,6 @@ class MediaViewerActivity :
     if (::globalWindowInsetsManager.isInitialized) {
       globalWindowInsetsManager.stopListeningForWindowInsetsChanges(window)
     }
-
-    AndroidUtils.getWindow(this)
-      ?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
   }
 
   override fun finish() {
