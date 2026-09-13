@@ -75,8 +75,8 @@ android {
         //            m -> Minor version
         //            p -> patch
         //            MmmPP
-        versionCode = 10344
-        versionName = "v1.3.44"
+        versionCode = 10345
+        versionName = "v1.3.45"
 
         configurations.configureEach {
             resolutionStrategy {
