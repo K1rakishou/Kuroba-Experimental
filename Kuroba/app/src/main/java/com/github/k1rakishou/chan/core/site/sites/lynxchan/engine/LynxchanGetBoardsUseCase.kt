@@ -120,6 +120,7 @@ class LynxchanGetBoardsUseCase(
         name = lynxchanBoardsData.boardName,
         description = lynxchanBoardsData.boardDescription ?: "",
         workSafe = workSafe,
+        spoilers = lynxchanBoardsData.supportsImageSpoilers,
         isUnlimitedCatalog = true
       )
     }
@@ -220,6 +221,8 @@ class LynxchanGetBoardsUseCase(
     @field:Json(name = "tags") val tags: List<String>?,
     @field:Json(name = "specialSettings") val specialSettings: List<String>?,
   ) {
+    internal val supportsImageSpoilers: Boolean = true
+
     val hasSfwTag: Boolean
       get() = hasTagOrSpecialSetting(value = "sfw")
 

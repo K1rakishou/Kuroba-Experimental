@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.core.site.sites.lynxchan.engine
 
+import android.graphics.Bitmap
 import android.text.TextUtils
 import android.util.Base64
 import android.webkit.MimeTypeMap
@@ -11,6 +12,7 @@ import com.github.k1rakishou.chan.features.reply.data.ReplyFile
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileMeta
 import com.github.k1rakishou.chan.ui.captcha.CaptchaSolution
 import com.github.k1rakishou.chan.utils.HashingUtil
+import com.github.k1rakishou.chan.utils.MediaUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.groupOrNull
@@ -21,6 +23,11 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.Request
@@ -28,6 +35,8 @@ import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.Response
 import java.io.IOException
+import java.io.InputStream
+import java.security.MessageDigest
 import java.util.Locale
 import java.util.Objects
 import java.util.regex.Pattern
@@ -60,7 +69,7 @@ class LynxchanReplyHttpCall(
     replyResponse.boardCode = chanDescriptor.boardCode()
     site.requestModifier.modifyHttpCall(this, requestBuilder)
 
-    replyManager.readReply(chanDescriptor) { reply ->
+    replyManager.readReplySuspending(chanDescriptor) { reply ->
       val threadNo = if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
         chanDescriptor.threadNo
       } else {
@@ -108,7 +117,7 @@ class LynxchanReplyHttpCall(
     }
   }
 
-  private fun postWithFormDataPayload(
+  private suspend fun postWithFormDataPayload(
     reply: Reply,
     chanDescriptor: ChanDescriptor,
     threadNo: Long,
@@ -140,7 +149,10 @@ class LynxchanReplyHttpCall(
     if (reply.hasFiles()) {
       val filesCount = reply.filesCount()
 
-      reply.iterateFilesOrThrowIfEmpty { fileIndex, replyFile ->
+      val replyFiles = mutableListOf<ReplyFile>()
+      reply.iterateFilesOrThrowIfEmpty { _, replyFile -> replyFiles += replyFile }
+
+      replyFiles.forEachIndexed { fileIndex, replyFile ->
         val replyFileMetaResult = replyFile.getReplyFileMeta()
         if (replyFileMetaResult is ModularResult.Error<*>) {
           throw IOException((replyFileMetaResult as ModularResult.Error<ReplyFileMeta>).error)
@@ -162,7 +174,7 @@ class LynxchanReplyHttpCall(
     return formBuilder
   }
 
-  private fun attachFile(
+  private suspend fun attachFile(
     formBuilder: MultipartBody.Builder,
     fileIndex: Int,
     totalFiles: Int,
@@ -172,6 +184,9 @@ class LynxchanReplyHttpCall(
   ) {
     val mediaType = "application/octet-stream".toMediaType()
     val fileOnDisk = replyFile.fileOnDisk
+    val (fileMime, fileSha256) = deriveFileMetadata(fileOnDisk, replyFileMeta.fileName)
+
+    addFileMetadata(formBuilder, replyFileMeta.fileName, fileMime, fileSha256, replyFileMeta.spoiler)
 
     val requestBody = if (progressListener == null) {
       replyFile.fileOnDisk.asRequestBody(mediaType)
@@ -451,5 +466,50 @@ class LynxchanReplyHttpCall(
     private const val TAG = "LynxchanReplyHttpCall"
 
     private val GENERIC_ERROR_PATTERN = Pattern.compile("<\\w+>(Error:.*?)<\\/\\w+>")
+
+    internal suspend fun deriveFileMetadata(
+      file: java.io.File,
+      finalFileName: String,
+      dispatcher: CoroutineDispatcher = Dispatchers.IO
+    ): Pair<String, String> = withContext(dispatcher) {
+      val mime = when (MediaUtils.getImageFormat(file)) {
+        Bitmap.CompressFormat.PNG -> "image/png"
+        Bitmap.CompressFormat.JPEG -> "image/jpeg"
+        Bitmap.CompressFormat.WEBP -> "image/webp"
+        else -> StringUtils.extractFileNameExtension(finalFileName)
+          ?.lowercase(Locale.ENGLISH)
+          ?.let(MimeTypeMap.getSingleton()::getMimeTypeFromExtension)
+          ?: "application/octet-stream"
+      }
+
+      mime to file.inputStream().use { input -> calculateSha256(input) }
+    }
+
+    internal suspend fun calculateSha256(input: InputStream): String {
+      val digest = MessageDigest.getInstance("SHA-256")
+      val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+
+      while (true) {
+        currentCoroutineContext().ensureActive()
+        val read = input.read(buffer)
+        if (read < 0) break
+        digest.update(buffer, 0, read)
+      }
+
+      return digest.digest().joinToString("") { byte -> "%02x".format(byte) }
+    }
+
+    internal fun addFileMetadata(
+      formBuilder: MultipartBody.Builder,
+      fileName: String,
+      fileMime: String,
+      fileSha256: String,
+      spoiler: Boolean
+    ) {
+      formBuilder.addFormDataPart("fileName", fileName)
+      formBuilder.addFormDataPart("fileMime", fileMime)
+      formBuilder.addFormDataPart("fileSha256", fileSha256)
+      formBuilder.addFormDataPart("fileSpoiler", if (spoiler) "true" else "")
+    }
   }
 }
