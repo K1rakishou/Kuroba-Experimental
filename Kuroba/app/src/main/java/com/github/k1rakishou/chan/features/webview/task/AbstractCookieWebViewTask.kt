@@ -4,6 +4,7 @@ import android.webkit.WebView
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.features.webview.WebViewTaskResult
 import com.github.k1rakishou.common.CookieBuilder
+import com.github.k1rakishou.common.StringUtils.asFormattedToken
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import kotlinx.coroutines.CompletableDeferred
@@ -50,7 +51,7 @@ abstract class AbstractCookieWebViewTask(
         Logger.debug(tag) { "waitAndHandleResult('${description}') Success. cookieParts size: '${cookieParts.size}'" }
 
         cookieParts.forEach { cookiePart ->
-          Logger.debug(tag) { "waitAndHandleResult('${description}') '${cookiePart.key}'='${cookiePart.value}'" }
+          Logger.debug(tag) { "waitAndHandleResult('${description}') '${cookiePart.key}'='${cookiePart.value.asFormattedToken()}'" }
         }
 
         val site = siteResolver.findSiteForUrl(description)

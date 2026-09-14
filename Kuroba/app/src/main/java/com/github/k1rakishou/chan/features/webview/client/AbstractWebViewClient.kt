@@ -53,7 +53,7 @@ abstract class AbstractWebViewClient(
     _pageLoadState.set(PageLoadState.Finished)
 
     val counter = _pageLoadsCounter.getAndIncrement()
-    if (counter > MAX_PAGE_LOADS_COUNT) {
+    if (counter > maxPageLoadsCount) {
       val error = WebViewTaskResult.Error(WebViewTaskException("Exceeded max page load limit"))
       finishWithResult(error)
     }

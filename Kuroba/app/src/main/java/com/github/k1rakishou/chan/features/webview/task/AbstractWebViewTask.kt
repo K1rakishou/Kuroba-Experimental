@@ -301,17 +301,21 @@ abstract class AbstractWebViewTask(
           val cookieBuilder = CookieBuilder()
           siteRequestModifier.modifyCookieBuilder(loadable.url, cookieBuilder)
 
-          val builtCookies = cookieBuilder.build()
-          if (builtCookies.isNotBlank()) {
-            cookieManager.setCookie(urlToOpenString, builtCookies)
-          }
-
-          initialCookies.set(builtCookies)
+          setCookies(urlToOpenString, cookieBuilder)
+          initialCookies.set(cookieBuilder.build())
         }
       }
       is Loadable.Html -> {
         // no-op
       }
+    }
+  }
+
+  protected fun setCookies(url: String, cookieBuilder: CookieBuilder) {
+    // CookieManager.setCookie() parses the value as a single Set-Cookie header so passing multiple cookies
+    // ("key1=value1; key2=value2") only sets the first one, the rest are treated as cookie attributes.
+    cookieBuilder.cookieParts().forEach { cookie ->
+      cookieManager.setCookie(url, "${cookie.key}=${cookie.value}")
     }
   }
 

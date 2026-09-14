@@ -5,14 +5,12 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
@@ -26,11 +24,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.controller.ControllerComponent
@@ -169,12 +169,12 @@ class KurobaComposeDialogController(
             }
           },
           footer = {
-            Row(
-              modifier = Modifier.fillMaxWidth()
+            DialogButtonsLayout(
+              modifier = Modifier.fillMaxWidth(),
+              hasNeutralButton = params.neutralButton != null
             ) {
               if (params.neutralButton != null) {
                 KurobaComposeTextBarButton(
-                  modifier = Modifier.wrapContentSize(),
                   onClick = {
                     params.onButtonClicked(Params.ClickedButton.Neutral)
                     params.neutralButton.onClick?.invoke()
@@ -182,15 +182,10 @@ class KurobaComposeDialogController(
                   },
                   text = stringResource(id = params.neutralButton.buttonText)
                 )
-
-                Spacer(modifier = Modifier.height(8.dp))
               }
-
-              Spacer(modifier = Modifier.weight(1f))
 
               if (params.negativeButton != null) {
                 KurobaComposeTextBarButton(
-                  modifier = Modifier.wrapContentSize(),
                   onClick = {
                     params.onButtonClicked(Params.ClickedButton.Negative)
                     params.negativeButton.onClick?.invoke()
@@ -198,8 +193,6 @@ class KurobaComposeDialogController(
                   },
                   text = stringResource(id = params.negativeButton.buttonText)
                 )
-
-                Spacer(modifier = Modifier.height(8.dp))
               }
 
               val buttonTextColor = if (params.positiveButton.isActionDangerous) {
@@ -209,7 +202,6 @@ class KurobaComposeDialogController(
               }
 
               KurobaComposeTextBarButton(
-                modifier = Modifier.wrapContentSize(),
                 onClick = {
                   inputValueStates.forEachIndexed { index, mutableState ->
                     val result = params.inputs[index].result
@@ -228,6 +220,77 @@ class KurobaComposeDialogController(
             }
           }
         )
+      }
+    }
+  }
+
+  /**
+   * Expects the buttons in the following order: neutral (optional), negative (optional), positive.
+   *
+   * When all buttons fit into a single row they are placed horizontally: the neutral button at the start and the
+   * rest at the end. Otherwise (e.g. when button texts are too long) they are stacked vertically, aligned to the end,
+   * with the positive button at the top.
+   * */
+  @Composable
+  private fun DialogButtonsLayout(
+    modifier: Modifier = Modifier,
+    hasNeutralButton: Boolean,
+    content: @Composable () -> Unit
+  ) {
+    Layout(
+      modifier = modifier,
+      content = content
+    ) { measurables, constraints ->
+      if (measurables.isEmpty()) {
+        return@Layout layout(constraints.minWidth, constraints.minHeight) {}
+      }
+
+      val spacing = 8.dp.roundToPx()
+      val childConstraints = constraints.copy(minWidth = 0, minHeight = 0)
+
+      val requiredWidth = measurables.sumOf { measurable -> measurable.maxIntrinsicWidth(Constraints.Infinity) } +
+        spacing * (measurables.size - 1)
+
+      val fitsInRow = !constraints.hasBoundedWidth || requiredWidth <= constraints.maxWidth
+      val placeables = measurables.map { measurable -> measurable.measure(childConstraints) }
+
+      if (fitsInRow) {
+        val width = if (constraints.hasBoundedWidth) {
+          constraints.maxWidth
+        } else {
+          placeables.sumOf { placeable -> placeable.width } + spacing * (placeables.size - 1)
+        }
+        val height = placeables.maxOf { placeable -> placeable.height }.coerceAtLeast(constraints.minHeight)
+
+        return@Layout layout(width, height) {
+          val endAlignedPlaceables = if (hasNeutralButton) placeables.drop(1) else placeables
+
+          var x = width
+          endAlignedPlaceables.asReversed().forEach { placeable ->
+            x -= placeable.width
+            placeable.placeRelative(x, (height - placeable.height) / 2)
+            x -= spacing
+          }
+
+          if (hasNeutralButton) {
+            val neutralPlaceable = placeables.first()
+            neutralPlaceable.placeRelative(0, (height - neutralPlaceable.height) / 2)
+          }
+        }
+      }
+
+      val width = constraints.maxWidth
+      val height = (placeables.sumOf { placeable -> placeable.height } + spacing * (placeables.size - 1))
+        .coerceAtLeast(constraints.minHeight)
+
+      return@Layout layout(width, height) {
+        var y = 0
+
+        // Positive button at the top
+        placeables.asReversed().forEach { placeable ->
+          placeable.placeRelative(width - placeable.width, y)
+          y += placeable.height + spacing
+        }
       }
     }
   }

@@ -18,6 +18,7 @@ import com.github.k1rakishou.chan.features.setup.boards.reorder.BoardsReorderCon
 import com.github.k1rakishou.chan.features.webview.WebViewTaskController
 import com.github.k1rakishou.chan.features.webview.WebViewTaskResult
 import com.github.k1rakishou.chan.features.webview.task.AbstractWebViewTask
+import com.github.k1rakishou.chan.features.webview.task.Chan4EmailVerificationRequestWebViewTask
 import com.github.k1rakishou.chan.features.webview.task.Chan4EmailVerificationWebViewTask
 import com.github.k1rakishou.chan.ui.controller.dialog.KurobaComposeDialogController
 import com.github.k1rakishou.chan.ui.helper.AppResources
@@ -276,6 +277,81 @@ class SiteSettingsScreenBuilder(
     context: Context,
     siteActions: SettingActions
   ) {
+    val params = KurobaComposeDialogController.confirmationDialog(
+      title = KurobaComposeDialogController.Text.Id(
+        R.string.site_settings_authentication_email_verification_choose_step_dialog_title
+      ),
+      description = KurobaComposeDialogController.Text.Id(
+        R.string.site_settings_authentication_email_verification_choose_step_dialog_description
+      ),
+      negativeButton = KurobaComposeDialogController.DialogButton(
+        buttonText = R.string.site_settings_authentication_email_verification_no_verification_url
+      ),
+      positionButton = KurobaComposeDialogController.PositiveDialogButton(
+        buttonText = R.string.site_settings_authentication_email_verification_have_verification_url
+      )
+    )
+
+    dialogFactory.showDialog(
+      context = context,
+      params = params
+    )
+
+    when (params.awaitButtonClick()) {
+      KurobaComposeDialogController.Params.ClickedButton.Negative -> {
+        requestEmailVerificationLink(context, siteActions)
+      }
+      KurobaComposeDialogController.Params.ClickedButton.Positive -> {
+        verifyEmailWithVerificationLink(context, siteActions)
+      }
+      KurobaComposeDialogController.Params.ClickedButton.Neutral,
+      null -> {
+        // Dialog dismissed
+      }
+    }
+  }
+
+  private suspend fun requestEmailVerificationLink(
+    context: Context,
+    siteActions: SettingActions
+  ) {
+    val waiter = CompletableDeferred<WebViewTaskResult>()
+
+    siteActions.presentController(
+      WebViewTaskController(
+        context = context,
+        webViewTask = Chan4EmailVerificationRequestWebViewTask(
+          headerTitleText = appResources.string(
+            R.string.site_settings_authentication_email_verification_request_webview_title
+          ),
+          invokerWaiter = waiter
+        )
+      )
+    )
+
+    val result = waiter.await()
+    if (result !is WebViewTaskResult.Result) {
+      showEmailVerificationWebViewError(context, result)
+      return
+    }
+
+    dialogFactory.showDialog(
+      context = context,
+      params = KurobaComposeDialogController.informationDialog(
+        title = KurobaComposeDialogController.Text.Id(
+          R.string.site_settings_authentication_email_verification_request_success_dialog_title
+        ),
+        description = KurobaComposeDialogController.Text.Id(
+          R.string.site_settings_authentication_email_verification_request_success_dialog_description
+        )
+      )
+    )
+  }
+
+  private suspend fun verifyEmailWithVerificationLink(
+    context: Context,
+    siteActions: SettingActions
+  ) {
     val (enteredValue, verificationUrl) = run {
       val inputParams = KurobaComposeDialogController.dialogWithInput(
         title = KurobaComposeDialogController.Text.String(
@@ -350,7 +426,24 @@ class SiteSettingsScreenBuilder(
       )
     )
 
-    when (val result = waiter.await()) {
+    val result = waiter.await()
+    if (result !is WebViewTaskResult.Result) {
+      showEmailVerificationWebViewError(context, result)
+      return
+    }
+
+    siteActions.showToast(
+      appResources.string(R.string.site_settings_authentication_email_verification_webview_success)
+    )
+  }
+
+  private fun showEmailVerificationWebViewError(
+    context: Context,
+    result: WebViewTaskResult
+  ) {
+    Logger.error(TAG) { "showEmailVerificationWebViewError() result: ${result}" }
+
+    when (result) {
       WebViewTaskResult.Canceled -> {
         dialogFactory.showDialog(
           context = context,
@@ -384,9 +477,7 @@ class SiteSettingsScreenBuilder(
       }
 
       is WebViewTaskResult.Result -> {
-        siteActions.showToast(
-          appResources.string(R.string.site_settings_authentication_email_verification_webview_success)
-        )
+        // Not an error
       }
     }
   }
