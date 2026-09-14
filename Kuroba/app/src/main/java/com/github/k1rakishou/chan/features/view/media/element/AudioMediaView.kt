@@ -16,7 +16,6 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.v2.KurobaSettings
-import com.google.android.exoplayer2.upstream.DataSource
 
 @SuppressLint("ViewConstructor", "ClickableViewAccessibility")
 class AudioMediaView(
@@ -26,9 +25,6 @@ class AudioMediaView(
   kurobaSettings: KurobaSettings,
   private val onThumbnailFullyLoadedFunc: () -> Unit,
   private val isSystemUiHidden: () -> Boolean,
-  cachedHttpDataSourceFactory: DataSource.Factory,
-  fileDataSourceFactory: DataSource.Factory,
-  contentDataSourceFactory: DataSource.Factory,
   override val viewableMedia: ViewableMedia.Audio,
   override val pagerPosition: Int,
   override val totalPageItemsCount: Int
@@ -38,9 +34,6 @@ class AudioMediaView(
   mediaViewContract = mediaViewContract,
   kurobaSettings = kurobaSettings,
   mediaViewState = initialMediaViewState,
-  cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
-  fileDataSourceFactory = fileDataSourceFactory,
-  contentDataSourceFactory = contentDataSourceFactory,
 ) {
   private val mediaViewNotSupportedMessage: TextView
   private val openInBrowserButton: ColorizableBarButton

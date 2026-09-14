@@ -379,7 +379,8 @@ data class ViewableMediaMeta(
       val url = matcher.groupOrNull(1)
         ?: return@lazy null
 
-      var unescapedUrl = URLDecoder.decode(Parser.unescapeEntities(url, false), StandardCharsets.UTF_8.name())
+      val htmlUnescapedUrl = restoreUnderscoreEscapedUrl(Parser.unescapeEntities(url, false))
+      var unescapedUrl = URLDecoder.decode(htmlUnescapedUrl, StandardCharsets.UTF_8.name())
 
       if (unescapedUrl.startsWith("https://")) {
         unescapedUrl = unescapedUrl.removePrefix("https://")
@@ -401,8 +402,8 @@ data class ViewableMediaMeta(
         return@lazy null
       }
 
-      // TODO: add support for videos
-      if (!mimeType.startsWith("audio/")) {
+      // Video files are played by the audio-only player (video tracks are ignored)
+      if (!mimeType.startsWith("audio/") && !mimeType.startsWith("video/")) {
         return@lazy null
       }
 
@@ -435,6 +436,20 @@ data class ViewableMediaMeta(
     }
   }
 
+}
+
+private val UNDERSCORE_ESCAPE_PATTERN = Regex("_([0-9A-Fa-f]{2})")
+
+internal fun restoreUnderscoreEscapedUrl(url: String): String {
+  if (url.contains('/') || url.contains('%')) {
+    return url
+  }
+
+  if (!UNDERSCORE_ESCAPE_PATTERN.containsMatchIn(url)) {
+    return url
+  }
+
+  return UNDERSCORE_ESCAPE_PATTERN.replace(url) { matchResult -> "%" + matchResult.groupValues[1] }
 }
 
 sealed class MediaLocation : Parcelable {

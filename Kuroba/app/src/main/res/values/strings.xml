@@ -249,9 +249,17 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="image_failed_video_error">Failed to load video (reason: %1$s)</string>
     <string name="image_not_found">Image not found</string>
 
-    <string name="media_viewer_loading_bg_audio">Loading external audio…</string>
-    <string name="media_viewer_error_loading_bg_audio">Failed to load image bg audio, error=\'%1$s\'</string>
-    <string name="media_viewer_error_cannot_load_bg_audio_because_of_settings">Cannot load BG audio (\'%1$s\') because current media load settings do not allow doing that</string>
+    <string name="media_viewer_error_loading_bg_audio">Failed to load sound post audio, error=\'%1$s\'</string>
+    <string name="sound_post_not_loaded">Sound is not loaded</string>
+    <string name="sound_post_loading">Loading sound…</string>
+    <string name="sound_post_loading_progress">Loading sound… %1$d%%</string>
+    <string name="sound_post_failed_to_load">Failed to load sound</string>
+    <string name="sound_post_not_loaded_tap_to_load">Sound is not loaded, tap to load</string>
+    <string name="sound_post_failed_to_load_tap_to_retry">Failed to load sound, tap to retry</string>
+    <string name="sound_post_proxy_warning_title">Sound post while using a proxy</string>
+    <string name="sound_post_proxy_warning_description">You have a proxy enabled for this site. Sound posts are loaded from third party file hosts (\'%1$s\') without the proxy and without any cookies, which means the file host will see your real IP address.\n\nThis dialog is shown once per app launch. You can always load a sound manually by pressing the play button of the sound player.</string>
+    <string name="sound_post_proxy_warning_load">Load sounds</string>
+    <string name="sound_post_proxy_warning_do_not_load">Don\'t load</string>
     <string name="media_viewer_action_not_supported">This action is not supported in media viewer</string>
 
     <string name="thread_load_failed_ssl">HTTPS error</string>

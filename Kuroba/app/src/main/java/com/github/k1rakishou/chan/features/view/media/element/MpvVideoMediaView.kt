@@ -6,6 +6,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
 import android.net.Uri
+import android.os.SystemClock
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
@@ -24,6 +25,9 @@ import com.github.k1rakishou.chan.features.view.media.MediaLocation
 import com.github.k1rakishou.chan.features.view.media.MediaViewerControllerViewModel
 import com.github.k1rakishou.chan.features.view.media.ViewableMedia
 import com.github.k1rakishou.chan.features.view.media.helper.CloseMediaActionHelper
+import com.github.k1rakishou.chan.features.view.media.helper.MediaViewerBottomContainer
+import com.github.k1rakishou.chan.features.view.media.helper.MpvPlaybackProgressTracker
+import com.github.k1rakishou.chan.features.view.media.soundpost.MpvSyncTarget
 import com.github.k1rakishou.chan.features.view.media.strip.MediaViewerActionStrip
 import com.github.k1rakishou.chan.features.view.media.strip.MediaViewerBottomActionStrip
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
@@ -37,16 +41,19 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.setEnabledFast
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.updateHeight
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.file.ExternalFile
 import com.github.k1rakishou.fsaf.file.RawFile
 import com.github.k1rakishou.v2.KurobaSettings
 import com.google.android.exoplayer2.ui.DefaultTimeBar
 import com.google.android.exoplayer2.ui.TimeBar
-import com.google.android.exoplayer2.upstream.DataSource
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.android.awaitFrame
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlin.math.ceil
 
 @SuppressLint("ViewConstructor", "ClickableViewAccessibility")
 class MpvVideoMediaView(
@@ -58,9 +65,6 @@ class MpvVideoMediaView(
   private val onThumbnailFullyLoadedFunc: () -> Unit,
   private val isSystemUiHidden: () -> Boolean,
   private val requestProperties: Map<String, String>,
-  cachedHttpDataSourceFactory: DataSource.Factory,
-  fileDataSourceFactory: DataSource.Factory,
-  contentDataSourceFactory: DataSource.Factory,
   override val viewableMedia: ViewableMedia.Video,
   override val pagerPosition: Int,
   override val totalPageItemsCount: Int,
@@ -70,9 +74,6 @@ class MpvVideoMediaView(
   mediaViewContract = mediaViewContract,
   kurobaSettings = kurobaSettings,
   mediaViewState = initialMediaViewState,
-  cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
-  fileDataSourceFactory = fileDataSourceFactory,
-  contentDataSourceFactory = contentDataSourceFactory,
 ), MPVLib.EventObserver {
 
   private val thumbnailMediaView: ThumbnailMediaView
@@ -102,8 +103,13 @@ class MpvVideoMediaView(
   private var hideShowAnimation: ValueAnimator? = null
   private var showBufferingJob: Job? = null
   private var playJob: Job? = null
+  private var playbackPosUpdateJob: Job? = null
   private var playing = false
+  private var lastDisplayedDurationSeconds = -1
 
+  private val playbackProgressTracker = MpvPlaybackProgressTracker()
+
+  override val soundPostControlledByMediaControls: Boolean = true
   override val hasContent: Boolean
     get() = _hasContent
   override val mediaViewerActionStrip: MediaViewerActionStrip?
@@ -132,6 +138,10 @@ class MpvVideoMediaView(
     mpvPlayPause = findViewById(R.id.mpv_play_pause)
     mpvControlsRoot = findViewById(R.id.mpv_controls_view_root)
     mpvControlsBottomInset = findViewById(R.id.mpv_controls_insets_view)
+
+    // Draw the controls (with their background) behind the navigation bar instead of above it
+    findViewById<MediaViewerBottomContainer>(R.id.media_view_bottom_container)
+      .setBottomInsetConsumer { bottomInset -> mpvControlsBottomInset.updateHeight(bottomInset) }
     mpvSettings = findViewById(R.id.mpv_settings)
     mpvErrorMessage = findViewById(R.id.error_message)
 
@@ -170,7 +180,7 @@ class MpvVideoMediaView(
     }
     mpvPlayPause.setOnClickListener {
       if (playJob == null && !playing) {
-        startPlayingVideo(isLifecycleChange = false)
+        startPlayingVideo(isLifecycleChange = false, isForced = true)
       } else if (playing) {
         actualVideoPlayerView.cyclePause()
       }
@@ -182,14 +192,16 @@ class MpvVideoMediaView(
       }
 
       override fun onScrubMove(timeBar: TimeBar, position: Long) {
+        mpvVideoPosition.text = MpvUtils.prettyTime((position / 1000L).toInt())
       }
 
       override fun onScrubStop(timeBar: TimeBar, position: Long, canceled: Boolean) {
         userIsOperatingSeekbar = false
 
-        if (!canceled) {
-          updatePlaybackPos(_position = position, _demuxerCacheDuration = null)
-          actualVideoPlayerView.timePos = position.toDouble()
+        if (!canceled && isMpvOwnedByThisView()) {
+          playbackProgressTracker.onSeekRequested(position, SystemClock.elapsedRealtime())
+          actualVideoPlayerView.timePos = position.toDouble() / 1000.0
+          updatePlaybackPos()
         }
       }
     })
@@ -229,7 +241,7 @@ class MpvVideoMediaView(
         mediaViewContract = mediaViewContract,
         tryPreloadingFunc = {
           if (playJob == null) {
-            startPlayingVideo(isLifecycleChange = false)
+            startPlayingVideo(isLifecycleChange = false, isForced = true)
             true
           } else {
             false
@@ -314,7 +326,7 @@ class MpvVideoMediaView(
     thumbnailMediaView.show()
 
     if (canAutoLoad(cacheFileType = CacheFileType.PostMediaFull)) {
-      startPlayingVideo(isLifecycleChange = isLifecycleChange)
+      startPlayingVideo(isLifecycleChange = isLifecycleChange, isForced = false)
     }
   }
 
@@ -363,11 +375,7 @@ class MpvVideoMediaView(
   }
 
   override fun eventProperty(property: String, value: Long) {
-    if (!shown) {
-      return
-    }
-
-    BackgroundUtils.runOnMainThread { eventPropertyUi(property, value) }
+    // no-op, there are no observed INT64 properties (the playback position is polled)
   }
 
   override fun eventProperty(property: String, value: String) {
@@ -417,6 +425,7 @@ class MpvVideoMediaView(
       return
     }
 
+    stopPlaybackPosUpdates()
     actualVideoPlayerView.destroy()
     actualVideoPlayerView.removeObserver(this)
 
@@ -427,7 +436,7 @@ class MpvVideoMediaView(
     playing = false
   }
 
-  private fun startPlayingVideo(isLifecycleChange: Boolean) {
+  private fun startPlayingVideo(isLifecycleChange: Boolean, isForced: Boolean) {
     playJob?.cancel()
     playJob = null
 
@@ -441,6 +450,14 @@ class MpvVideoMediaView(
         }
 
         if (playing && isLifecycleChange && !pauseInBg()) {
+          startPlaybackPosUpdates()
+
+          startSoundPostPlayback(
+            target = MpvSyncTarget(actualVideoPlayerView),
+            isForced = isForced,
+            isLifecycleChange = isLifecycleChange
+          )
+
           playJob = null
           return@launch
         }
@@ -487,6 +504,14 @@ class MpvVideoMediaView(
         actualVideoPlayerView.setVisibilityFast(VISIBLE)
 
         playing = true
+        startPlaybackPosUpdates()
+
+        // The target is not ready until mpv loads the file, the sound will wait for it
+        startSoundPostPlayback(
+          target = MpvSyncTarget(actualVideoPlayerView),
+          isForced = isForced,
+          isLifecycleChange = isLifecycleChange
+        )
 
         playJob = null
         return@launch
@@ -549,7 +574,8 @@ class MpvVideoMediaView(
         mpvHwSw.setEnabledFast(true)
         mpvSettings.setEnabledFast(true)
 
-        if (_hasAudio) {
+        // The mute button also controls the sound post audio
+        if (_hasAudio || hasSoundPost) {
           mpvMuteUnmute.setEnabledFast(true)
         } else {
           mpvMuteUnmute.setEnabledFast(false)
@@ -609,7 +635,7 @@ class MpvVideoMediaView(
   }
 
   private fun updateMuteUnmuteButtonState() {
-    if (_firstLoadOccurred && !_hasAudio) {
+    if (_firstLoadOccurred && !_hasAudio && !hasSoundPost) {
       mpvMuteUnmute.setImageResource(R.drawable.ic_volume_off_white_24dp)
       return
     }
@@ -621,28 +647,12 @@ class MpvVideoMediaView(
     }
   }
 
-
   private fun eventPropertyUi(property: String) {
     if (!shown) {
       return
     }
 
     // no-op
-  }
-
-  private fun eventPropertyUi(property: String, value: Long) {
-    if (!shown) {
-      return
-    }
-
-    when (property) {
-      "time-pos" -> {
-        updatePlaybackPos(_position = value, _demuxerCacheDuration = null)
-      }
-      "demuxer-cache-duration" -> {
-        updatePlaybackPos(_position = null, _demuxerCacheDuration = value)
-      }
-    }
   }
 
   private fun eventPropertyUi(property: String, value: String) {
@@ -671,7 +681,7 @@ class MpvVideoMediaView(
     }
 
     when (property) {
-      "duration/full" -> updatePlaybackDuration(value)
+      "duration/full" -> updatePlaybackDuration((value * 1000.0).toLong())
     }
   }
 
@@ -683,11 +693,14 @@ class MpvVideoMediaView(
 
     // Only pass the headers when streaming from the remote server, not when playing a local or cached file
     val remoteMediaLocation = viewableMedia.mediaLocation as? MediaLocation.Remote
-    val headers: Map<String, String> = if (remoteMediaLocation != null && filePath == remoteMediaLocation.urlRaw) {
+    val isStreaming = remoteMediaLocation != null && filePath == remoteMediaLocation.urlRaw
+    val headers: Map<String, String> = if (isStreaming) {
       requestProperties
     } else {
       emptyMap()
     }
+
+    resetPlaybackProgress(isStreaming = isStreaming)
 
     actualVideoPlayerView.playFile(
       filePath = filePath,
@@ -741,29 +754,67 @@ class MpvVideoMediaView(
     mpvPlayPause.setImageResource(imageDrawable)
   }
 
-  private fun updatePlaybackPos(_position: Long?, _demuxerCacheDuration: Long?) {
-    val position = _position
-      ?: actualVideoPlayerView.timePos?.toLong()
-      ?: 0L
-    val demuxerCacheDuration = _demuxerCacheDuration
-      ?: actualVideoPlayerView.demuxerCacheDuration
-      ?: 0L
+  private fun isMpvOwnedByThisView(): Boolean {
+    // mpv is a global instance, only touch it while our MPVView is the one using it
+    return MPVLib.librariesAreLoaded()
+      && MPVLib.isCreated()
+      && actualVideoPlayerView.initialized
+      && actualVideoPlayerView.isAttachedToWindow
+  }
 
-    mpvVideoPosition.text = MpvUtils.prettyTime(position.toInt())
+  private fun startPlaybackPosUpdates() {
+    playbackPosUpdateJob?.cancel()
+    playbackPosUpdateJob = scope.launch {
+      while (isActive) {
+        // Once per UI frame so that the seekbar handle moves smoothly
+        awaitFrame()
+
+        if (shown && mpvControlsRoot.visibility == VISIBLE) {
+          updatePlaybackPos()
+        }
+      }
+    }
+  }
+
+  private fun stopPlaybackPosUpdates() {
+    playbackPosUpdateJob?.cancel()
+    playbackPosUpdateJob = null
+  }
+
+  private fun resetPlaybackProgress(isStreaming: Boolean) {
+    playbackProgressTracker.reset(isStreaming = isStreaming)
+    lastDisplayedDurationSeconds = -1
+  }
+
+  private fun updatePlaybackPos() {
+    if (!isMpvOwnedByThisView()) {
+      return
+    }
+
+    val progress = playbackProgressTracker.update(actualVideoPlayerView, SystemClock.elapsedRealtime())
+
+    if (progress.durationMs > 0) {
+      updatePlaybackDuration(progress.durationMs)
+    }
 
     if (!userIsOperatingSeekbar) {
-      mpvVideoProgress.setPosition(position)
-      mpvVideoProgress.setBufferedPosition(position + demuxerCacheDuration.toLong() + 1)
+      mpvVideoPosition.text = MpvUtils.prettyTime((progress.positionMs / 1000L).toInt())
+      mpvVideoProgress.setPosition(progress.positionMs)
+      mpvVideoProgress.setBufferedPosition(progress.bufferedPositionMs)
     }
 
     updateDecoderButton()
   }
 
-  private fun updatePlaybackDuration(duration: Double) {
-    mpvVideoDuration.text = MpvUtils.prettyTime(duration.toInt())
+  private fun updatePlaybackDuration(durationMs: Long) {
+    val durationSeconds = ceil(durationMs.toDouble() / 1000.0).toInt()
+    if (durationSeconds != lastDisplayedDurationSeconds) {
+      lastDisplayedDurationSeconds = durationSeconds
+      mpvVideoDuration.text = MpvUtils.prettyTime(durationSeconds)
+    }
 
     if (!userIsOperatingSeekbar) {
-      mpvVideoProgress.setDuration(duration.toLong())
+      mpvVideoProgress.setDuration(durationMs)
     }
   }
 
@@ -772,10 +823,15 @@ class MpvVideoMediaView(
       return
     }
 
-    mpvHwSw.text = if (actualVideoPlayerView.hwdecActive) {
+    val text = if (actualVideoPlayerView.hwdecActive) {
       getString(R.string.mpv_hw_decoding)
     } else {
       getString(R.string.mpv_sw_decoding)
+    }
+
+    // Called once per frame, don't trigger a re-layout when nothing has changed
+    if (mpvHwSw.text != text) {
+      mpvHwSw.text = text
     }
   }
 
@@ -936,12 +992,14 @@ class MpvVideoMediaView(
 
     override fun clone(): MediaViewState {
       return VideoMediaViewState(prevPosition, prevPaused)
+        .also { newState -> newState.soundPostState.updateFrom(soundPostState) }
     }
 
     override fun updateFrom(other: MediaViewState?) {
       if (other == null) {
         prevPosition = null
         prevPaused = null
+        soundPostState.updateFrom(null)
         return
       }
 
@@ -951,6 +1009,7 @@ class MpvVideoMediaView(
 
       this.prevPosition = other.prevPosition
       this.prevPaused = other.prevPaused
+      this.soundPostState.updateFrom(other.soundPostState)
     }
   }
 

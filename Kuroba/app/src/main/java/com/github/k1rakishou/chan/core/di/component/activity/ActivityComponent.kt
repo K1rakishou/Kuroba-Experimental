@@ -76,6 +76,7 @@ import com.github.k1rakishou.chan.features.view.media.element.GifMediaView
 import com.github.k1rakishou.chan.features.view.media.element.MpvVideoMediaView
 import com.github.k1rakishou.chan.features.view.media.element.ThumbnailMediaView
 import com.github.k1rakishou.chan.features.view.media.element.UnsupportedMediaView
+import com.github.k1rakishou.chan.features.view.media.helper.MediaViewerBottomContainer
 import com.github.k1rakishou.chan.features.view.media.strip.MediaViewerBottomActionStrip
 import com.github.k1rakishou.chan.features.view.media.strip.MediaViewerLeftActionStrip
 import com.github.k1rakishou.chan.features.webview.WebViewTaskController
@@ -303,6 +304,7 @@ interface ActivityComponent : ActivityDependencies {
   fun inject(insetAwareEpoxyRecyclerView: InsetAwareEpoxyRecyclerView)
   fun inject(colorizableInsetAwareEpoxyRecyclerView: ColorizableInsetAwareEpoxyRecyclerView)
   fun inject(insetAwareLinearLayout: InsetAwareLinearLayout)
+  fun inject(mediaViewerBottomContainer: MediaViewerBottomContainer)
 
   fun inject(thumbnailView: ThumbnailView)
   fun inject(thumbnailView: PostImageThumbnailView)

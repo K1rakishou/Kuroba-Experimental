@@ -9,7 +9,6 @@ import android.view.TextureView
 import android.view.WindowManager
 import com.github.k1rakishou.chan.core.mpv.MPVLib.mpvFormat.MPV_FORMAT_DOUBLE
 import com.github.k1rakishou.chan.core.mpv.MPVLib.mpvFormat.MPV_FORMAT_FLAG
-import com.github.k1rakishou.chan.core.mpv.MPVLib.mpvFormat.MPV_FORMAT_INT64
 import com.github.k1rakishou.chan.core.mpv.MPVLib.mpvFormat.MPV_FORMAT_NONE
 import com.github.k1rakishou.chan.core.mpv.MPVLib.mpvFormat.MPV_FORMAT_STRING
 import com.github.k1rakishou.chan.core.site.SiteRequestModifier
@@ -229,9 +228,9 @@ class MPVView(
     private fun observeProperties() {
         // This observes all properties needed by MPVView or MPVActivity
         data class Property(val name: String, val format: Int)
+        // time-pos and demuxer-cache-duration are not observed on purpose. As INT64 they are truncated
+        // to seconds and as DOUBLE they would be sent on every frame. They are polled by the UI instead.
         val p = arrayOf(
-            Property("time-pos", MPV_FORMAT_INT64),
-            Property("demuxer-cache-duration", MPV_FORMAT_INT64),
             Property("duration/full", MPV_FORMAT_DOUBLE),
             Property("pause", MPV_FORMAT_FLAG),
             Property("audio", MPV_FORMAT_FLAG),
@@ -264,9 +263,21 @@ class MPVView(
     val demuxerCacheDuration: Int?
         get() = MPVLib.mpvGetPropertyInt("demuxer-cache-duration")
 
+    /** In seconds with sub-millisecond precision. */
+    val demuxerCacheDurationFull: Double?
+        get() = MPVLib.mpvGetPropertyDouble("demuxer-cache-duration")
+
+    /** In seconds with sub-millisecond precision. */
+    val durationFull: Double?
+        get() = MPVLib.mpvGetPropertyDouble("duration/full")
+
+    /**
+     * In seconds with sub-millisecond precision. Setting it performs an exact seek (keyframe seeks jump
+     * back to the previous keyframe which is very noticeable on short videos).
+     * */
     var timePos: Double?
         get() = MPVLib.mpvGetPropertyDouble("time-pos/full")
-        set(progress) = MPVLib.mpvCommand(arrayOf("seek", "$progress", "absolute+keyframes"))
+        set(progress) = MPVLib.mpvCommand(arrayOf("seek", "$progress", "absolute+exact"))
 
     val hwdecActive: Boolean
         get() = (MPVLib.mpvGetPropertyString("hwdec-current") ?: "no") != "no"

@@ -18,7 +18,6 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.v2.KurobaSettings
-import com.google.android.exoplayer2.upstream.DataSource
 
 @SuppressLint("ViewConstructor", "ClickableViewAccessibility")
 class UnsupportedMediaView(
@@ -28,9 +27,6 @@ class UnsupportedMediaView(
   kurobaSettings: KurobaSettings,
   private val onThumbnailFullyLoadedFunc: () -> Unit,
   private val isSystemUiHidden: () -> Boolean,
-  cachedHttpDataSourceFactory: DataSource.Factory,
-  fileDataSourceFactory: DataSource.Factory,
-  contentDataSourceFactory: DataSource.Factory,
   override val viewableMedia: ViewableMedia.Unsupported,
   override val pagerPosition: Int,
   override val totalPageItemsCount: Int
@@ -40,9 +36,6 @@ class UnsupportedMediaView(
   mediaViewContract = mediaViewContract,
   kurobaSettings = kurobaSettings,
   mediaViewState = initialMediaViewState,
-  cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
-  fileDataSourceFactory = fileDataSourceFactory,
-  contentDataSourceFactory = contentDataSourceFactory,
 ) {
   private val mediaViewNotSupportedMessage: TextView
   private val openInBrowserButton: ColorizableBarButton

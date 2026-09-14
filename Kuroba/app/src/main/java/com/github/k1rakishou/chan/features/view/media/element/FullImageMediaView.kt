@@ -30,7 +30,6 @@ import com.github.k1rakishou.common.isExceptionImportant
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.v2.KurobaSettings
 import com.github.k1rakishou.v2.parameters.ImageGestureActionType
-import com.google.android.exoplayer2.upstream.DataSource
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -46,9 +45,6 @@ class FullImageMediaView(
   kurobaSettings: KurobaSettings,
   private val onThumbnailFullyLoadedFunc: () -> Unit,
   private val isSystemUiHidden: () -> Boolean,
-  cachedHttpDataSourceFactory: DataSource.Factory,
-  fileDataSourceFactory: DataSource.Factory,
-  contentDataSourceFactory: DataSource.Factory,
   override val viewableMedia: ViewableMedia.Image,
   override val pagerPosition: Int,
   override val totalPageItemsCount: Int
@@ -57,9 +53,6 @@ class FullImageMediaView(
   attributeSet = null,
   mediaViewContract = mediaViewContract,
   kurobaSettings = kurobaSettings,
-  cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
-  fileDataSourceFactory = fileDataSourceFactory,
-  contentDataSourceFactory = contentDataSourceFactory,
   mediaViewState = initialMediaViewState
 ) {
   private val movableContainer: FrameLayout
@@ -257,10 +250,10 @@ class FullImageMediaView(
       if (hasContent) {
         val isForced = fullImageDeferred.awaitCatching().valueOrNull()?.isForced
         if (isForced != null) {
-          audioPlayerView?.loadAndPlaySoundPostAudioIfPossible(
-            isLifecycleChange = isLifecycleChange,
-            isForceLoad = isForced,
-            viewableMedia = viewableMedia
+          startSoundPostPlayback(
+            target = null,
+            isForced = isForced,
+            isLifecycleChange = isLifecycleChange
           )
 
           return@launch
@@ -338,7 +331,7 @@ class FullImageMediaView(
     fullImageDeferred.cancel()
     fullImageDeferred = CompletableDeferred<MediaPreloadResult>()
 
-    audioPlayerView?.pauseUnpause(isNowPaused = true)
+    stopSoundPostPlayback()
 
     thumbnailMediaView.setVisibilityFast(VISIBLE)
     actualImageView.setVisibilityFast(INVISIBLE)
@@ -425,10 +418,10 @@ class FullImageMediaView(
 
       actualImageView.setImage(imageSource)
 
-      audioPlayerView?.loadAndPlaySoundPostAudioIfPossible(
-        isLifecycleChange = isLifecycleChange,
-        isForceLoad = mediaPreloadResult.isForced,
-        viewableMedia = viewableMedia
+      startSoundPostPlayback(
+        target = null,
+        isForced = mediaPreloadResult.isForced,
+        isLifecycleChange = isLifecycleChange
       )
 
       // Trigger the SubsamplingScaleImageView to start loading the full image but don't show it yet.
@@ -487,20 +480,10 @@ class FullImageMediaView(
 
   }
 
-  class FullImageState(
-    audioPlayerViewState: AudioPlayerView.AudioPlayerViewState = AudioPlayerView.AudioPlayerViewState()
-  ) : MediaViewState(audioPlayerViewState) {
-
-    override fun resetPosition() {
-      super.resetPosition()
-
-      audioPlayerViewState!!.resetPosition()
-    }
+  class FullImageState : MediaViewState() {
 
     override fun clone(): MediaViewState {
-      return FullImageState(
-        audioPlayerViewState = audioPlayerViewState!!.clone() as AudioPlayerView.AudioPlayerViewState
-      )
+      return FullImageState().also { newState -> newState.soundPostState.updateFrom(soundPostState) }
     }
 
     override fun updateFrom(other: MediaViewState?) {
@@ -508,7 +491,7 @@ class FullImageMediaView(
         return
       }
 
-      audioPlayerViewState!!.updateFrom(other.audioPlayerViewState)
+      soundPostState.updateFrom(other.soundPostState)
     }
   }
 

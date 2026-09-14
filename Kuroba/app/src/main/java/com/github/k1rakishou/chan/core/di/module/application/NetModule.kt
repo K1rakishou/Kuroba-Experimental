@@ -20,6 +20,7 @@ import com.github.k1rakishou.chan.core.helper.ProxyStorage
 import com.github.k1rakishou.chan.core.manager.FirewallBypassManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.core.site.http.HttpCallManager
+import com.github.k1rakishou.chan.features.view.media.soundpost.SoundPostAudioDownloader
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.dns.DnsOverHttpsSelectorFactory
 import com.github.k1rakishou.common.dns.NormalDnsSelectorFactory
@@ -96,6 +97,22 @@ class NetModule {
       cacheHandler,
       downloaderOkHttpClient,
       connectivityManager
+    )
+  }
+
+  @Provides
+  @Singleton
+  fun provideSoundPostAudioDownloader(
+    appConstants: AppConstants,
+    cacheHandler: Lazy<CacheHandler>,
+    downloaderOkHttpClient: Lazy<DownloaderOkHttpClient>
+  ): SoundPostAudioDownloader {
+    deps("SoundPostAudioDownloader")
+
+    return SoundPostAudioDownloader(
+      appConstants,
+      cacheHandler,
+      downloaderOkHttpClient
     )
   }
 

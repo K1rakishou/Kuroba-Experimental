@@ -91,6 +91,16 @@ class ProxyStorage(
     }
   }
 
+  fun hasEnabledProxiesForSite(siteDescriptor: SiteDescriptor): Boolean {
+    loadProxies()
+
+    return synchronized(this) {
+      proxiesMap[siteDescriptor]
+        ?.any { proxyKey -> allProxiesMap[proxyKey]?.enabled == true }
+        ?: false
+    }
+  }
+
   suspend fun enableDisableProxy(proxyEntryView: ProxyEntryView): ModularResult<Boolean> {
     val proxyKey = ProxyKey(proxyEntryView.address, proxyEntryView.port)
 

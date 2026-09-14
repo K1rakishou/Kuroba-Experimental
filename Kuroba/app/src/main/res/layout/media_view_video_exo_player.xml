@@ -30,7 +30,8 @@
         android:layout_width="wrap_content"
         android:layout_height="match_parent" />
 
-    <com.github.k1rakishou.chan.ui.view.insets.InsetAwareLinearLayout
+    <com.github.k1rakishou.chan.features.view.media.helper.MediaViewerBottomContainer
+        android:id="@+id/media_view_bottom_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
@@ -45,11 +46,16 @@
             android:layout_width="match_parent"
             android:layout_height="8dp"/>
 
+        <com.github.k1rakishou.chan.features.view.media.element.AudioPlayerView
+            android:id="@+id/audio_player_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
         <FrameLayout
             android:id="@+id/view_player_controls_placeholder"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
-    </com.github.k1rakishou.chan.ui.view.insets.InsetAwareLinearLayout>
+    </com.github.k1rakishou.chan.features.view.media.helper.MediaViewerBottomContainer>
 
 </FrameLayout>
