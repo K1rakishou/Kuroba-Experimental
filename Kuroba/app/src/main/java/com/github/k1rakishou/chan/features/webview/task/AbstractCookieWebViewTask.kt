@@ -51,7 +51,9 @@ abstract class AbstractCookieWebViewTask(
         Logger.debug(tag) { "waitAndHandleResult('${description}') Success. cookieParts size: '${cookieParts.size}'" }
 
         cookieParts.forEach { cookiePart ->
-          Logger.debug(tag) { "waitAndHandleResult('${description}') '${cookiePart.key}'='${cookiePart.value.asFormattedToken()}'" }
+          Logger.debug(tag) {
+            "waitAndHandleResult('${description}') '${cookiePart.key}'='${cookiePart.value.asFormattedToken()}'"
+          }
         }
 
         val site = siteResolver.findSiteForUrl(description)

@@ -81,7 +81,8 @@ class Chan8MoePowBlockTask(
       get() = Int.MAX_VALUE
 
     // Called as soon as the new page starts rendering, which is much earlier than onPageFinished() on the site's main
-    // page (it waits for all the images/scripts to load) so we don't have to wait for the whole page after the redirect.
+    // page (it waits for all the images/scripts to load) so we don't have to wait for the whole page after the
+    // redirect.
     override fun onPageCommitVisible(view: WebView?, url: String?) {
       super.onPageCommitVisible(view, url)
 

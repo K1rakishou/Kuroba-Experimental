@@ -18,6 +18,8 @@ import java.util.regex.Pattern
 
 internal class FuukaSearchRequestParseCommandBufferBuilder {
 
+  private typealias CommandBuilder = KurobaParserCommandBuilder<FuukaSearchPageCollector>
+
   fun getBuilder(): KurobaHtmlParserCommandBufferBuilder<FuukaSearchPageCollector> {
     return KurobaHtmlParserCommandBufferBuilder<FuukaSearchPageCollector>()
       .start {
@@ -49,9 +51,7 @@ internal class FuukaSearchRequestParseCommandBufferBuilder {
       }
   }
 
-  private fun KurobaParserCommandBuilder<FuukaSearchPageCollector>.parseRegularPost():
-    KurobaParserCommandBuilder<FuukaSearchPageCollector> {
-
+  private fun CommandBuilder.parseRegularPost(): CommandBuilder {
     tag(
       tagName = "table",
       matchableBuilderFunc = {
@@ -133,7 +133,7 @@ internal class FuukaSearchRequestParseCommandBufferBuilder {
     return this
   }
 
-  private fun KurobaParserCommandBuilder<FuukaSearchPageCollector>.extractRegularPostPosterInfo() {
+  private fun CommandBuilder.extractRegularPostPosterInfo() {
     nest {
       span(matchableBuilderFunc = { className(KurobaMatcher.PatternMatcher.stringEquals("postername")) })
 
@@ -175,7 +175,7 @@ internal class FuukaSearchRequestParseCommandBufferBuilder {
     }
   }
 
-  private fun KurobaParserCommandBuilder<FuukaSearchPageCollector>.tryExtractRegularPostMediaLink() {
+  private fun CommandBuilder.tryExtractRegularPostMediaLink() {
     val predicate = KurobaMatcher.TagMatcher.tagPredicateMatcher { element ->
       if (!element.hasAttr("href")) {
         return@tagPredicateMatcher false

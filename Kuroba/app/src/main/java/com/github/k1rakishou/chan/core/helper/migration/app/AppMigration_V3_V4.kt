@@ -9,6 +9,7 @@ import com.github.k1rakishou.v2.settings.KurobaCookieSetting
 import kotlinx.coroutines.runBlocking
 import java.util.concurrent.CountDownLatch
 
+@Suppress("ClassNaming")
 class AppMigration_V3_V4 : ApplicationMigration {
   override val version: Int
     get() = 4

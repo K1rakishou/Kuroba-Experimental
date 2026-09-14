@@ -148,7 +148,9 @@ class Chan4EmailVerificationWebViewTask(
 
             val chan4PassCookie = cookiesBuilder.get(Chan4.POSTING_COOKIE)
             if (chan4PassCookie == null) {
-              Logger.debug(TAG) { "Failed to extract ${Chan4.POSTING_COOKIE} cookie. cookieRaw: '${cookieRaw.asFormattedToken()}'" }
+              Logger.debug(TAG) {
+                "Failed to extract ${Chan4.POSTING_COOKIE} cookie. cookieRaw: '${cookieRaw.asFormattedToken()}'"
+              }
 
               val exception = WebViewTaskException(
                 "Got session verified message, but no cookie (wtf?). Check logs for more info."

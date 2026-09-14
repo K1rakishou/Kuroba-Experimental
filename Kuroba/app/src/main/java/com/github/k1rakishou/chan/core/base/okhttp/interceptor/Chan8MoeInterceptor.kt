@@ -52,7 +52,9 @@ class Chan8MoeInterceptor(
 
     if (hasNewerPowCookies(originalRequest, chan8Moe)) {
       // POWBlock was passed (e.g. by another request) after this request was sent, just retry it with the new cookies
-      Logger.debug(TAG) { "[$okHttpType] Request '${originalRequest.url}' was sent with outdated POW cookies, retrying" }
+      Logger.debug(TAG) {
+        "[$okHttpType] Request '${originalRequest.url}' was sent with outdated POW cookies, retrying"
+      }
       return chain.proceed(updateRequest(originalRequest, chan8Moe))
     }
 

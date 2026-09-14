@@ -42,7 +42,9 @@ class Chan4EmailVerificationRequestWebViewTask(
   ) {
     when (site) {
       is Chan4 -> {
-        Logger.debug(TAG) { "persistCookies() persisting email verification request cookies: '${formatCookies(cookies)}'" }
+        Logger.debug(TAG) {
+          "persistCookies() persisting email verification request cookies: '${formatCookies(cookies)}'"
+        }
         site.chan4Settings.emailVerificationRequestCookies.write(cookies)
       }
       else -> {

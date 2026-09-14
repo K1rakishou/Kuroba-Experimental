@@ -469,7 +469,6 @@ open class BaseLynxchanReplyHttpCall(
     @Json(name = "threadId") val threadId: String?,
   )
 
-
   @JsonClass(generateAdapter = true)
   data class LynxchanReplyFile(
     @Json(name = "name") val name: String,
