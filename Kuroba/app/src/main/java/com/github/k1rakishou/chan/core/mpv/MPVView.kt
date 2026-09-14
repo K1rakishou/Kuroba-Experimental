@@ -12,6 +12,7 @@ import com.github.k1rakishou.chan.core.mpv.MPVLib.mpvFormat.MPV_FORMAT_FLAG
 import com.github.k1rakishou.chan.core.mpv.MPVLib.mpvFormat.MPV_FORMAT_INT64
 import com.github.k1rakishou.chan.core.mpv.MPVLib.mpvFormat.MPV_FORMAT_NONE
 import com.github.k1rakishou.chan.core.mpv.MPVLib.mpvFormat.MPV_FORMAT_STRING
+import com.github.k1rakishou.chan.core.site.SiteRequestModifier
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.util.ChanPostUtils
@@ -31,6 +32,7 @@ class MPVView(
     attrs: AttributeSet?
 ) : TextureView(context, attrs), TextureView.SurfaceTextureListener {
     private var filePath: String? = null
+    private var headers: Map<String, String> = emptyMap()
     private var surfaceAttached = false
     private var _initialized = false
 
@@ -152,6 +154,7 @@ class MPVView(
         Logger.d(TAG, "destroy()")
 
         this.filePath = null
+        this.headers = emptyMap()
 
         // Disable surface callbacks to avoid using unintialized mpv state
         surfaceTextureListener = null
@@ -183,7 +186,7 @@ class MPVView(
         MPVLib.mpvSetOptionString("vo", if (gpuNext) "gpu-next" else "gpu")
     }
 
-    fun playFile(filePath: String, videoAutoLoop: Boolean) {
+    fun playFile(filePath: String, headers: Map<String, String>, videoAutoLoop: Boolean) {
         if (!MPVLib.librariesAreLoaded()) {
             Logger.d(TAG, "playFile() librariesAreLoaded: false")
             return
@@ -191,9 +194,11 @@ class MPVView(
 
         if (!surfaceAttached) {
             this.filePath = filePath
+            this.headers = headers
         } else {
             this.filePath = null
-            MPVLib.mpvCommand(arrayOf("loadfile", filePath))
+            this.headers = emptyMap()
+            loadFile(filePath, headers)
         }
 
         if (videoAutoLoop) {
@@ -201,6 +206,24 @@ class MPVView(
         } else {
             MPVLib.mpvSetOptionString("loop-file", "no")
         }
+    }
+
+    private fun loadFile(filePath: String, headers: Map<String, String>) {
+        // mpv is a global instance so the headers of the previous file must always be cleared.
+        // "change-list append" adds a single item without splitting on commas, which is important
+        // because header values (Accept-Language, Cookie) may contain them.
+        MPVLib.mpvCommand(arrayOf("change-list", "http-header-fields", "clr", ""))
+
+        for ((name, value) in headers) {
+            // ffmpeg may fail to seek in gzip-encoded streams, so don't ask for it
+            if (name.equals(SiteRequestModifier.AcceptEncodingHeaderKey, ignoreCase = true)) {
+                continue
+            }
+
+            MPVLib.mpvCommand(arrayOf("change-list", "http-header-fields", "append", "$name: $value"))
+        }
+
+        MPVLib.mpvCommand(arrayOf("loadfile", filePath))
     }
 
     private fun observeProperties() {
@@ -340,9 +363,11 @@ class MPVView(
         // This forces mpv to render subs/osd/whatever into our surface even if it would ordinarily not
         MPVLib.mpvSetOptionString("force-window", "yes")
 
-        if (filePath != null) {
-            MPVLib.mpvCommand(arrayOf("loadfile", filePath as String))
+        val pendingFilePath = filePath
+        if (pendingFilePath != null) {
+            loadFile(pendingFilePath, headers)
             filePath = null
+            headers = emptyMap()
         } else {
             // We disable video output when the context disappears, enable it back
             MPVLib.mpvSetPropertyString("vo", "gpu")

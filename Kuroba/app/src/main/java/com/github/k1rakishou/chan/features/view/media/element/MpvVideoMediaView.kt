@@ -57,6 +57,7 @@ class MpvVideoMediaView(
   private val viewModel: MediaViewerControllerViewModel,
   private val onThumbnailFullyLoadedFunc: () -> Unit,
   private val isSystemUiHidden: () -> Boolean,
+  private val requestProperties: Map<String, String>,
   cachedHttpDataSourceFactory: DataSource.Factory,
   fileDataSourceFactory: DataSource.Factory,
   contentDataSourceFactory: DataSource.Factory,
@@ -680,8 +681,17 @@ class MpvVideoMediaView(
       return false
     }
 
+    // Only pass the headers when streaming from the remote server, not when playing a local or cached file
+    val remoteMediaLocation = viewableMedia.mediaLocation as? MediaLocation.Remote
+    val headers: Map<String, String> = if (remoteMediaLocation != null && filePath == remoteMediaLocation.urlRaw) {
+      requestProperties
+    } else {
+      emptyMap()
+    }
+
     actualVideoPlayerView.playFile(
       filePath = filePath,
+      headers = headers,
       videoAutoLoop = viewModel.videoAutoLoop()
     )
 

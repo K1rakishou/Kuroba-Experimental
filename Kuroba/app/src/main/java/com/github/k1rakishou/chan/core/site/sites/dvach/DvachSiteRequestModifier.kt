@@ -54,10 +54,6 @@ class DvachSiteRequestModifier(
 
     val userCookie = dvachSiteSettings.userCodeCookie.readBlocking()
     requestProperties.updateCookieHeader("${USER_CODE_COOKIE_KEY}=${userCookie}")
-
-    // For 2ch.hk we want to use our custom user-agent because when using the WebView's one the
-    // videos do not load with 403 status.
-    requestProperties[UserAgentHeaderKey] = site.dependencies.appConstants.kurobaExCustomUserAgent
   }
 
   override fun modifyPostReportRequest(site: Site, requestBuilder: Request.Builder) {

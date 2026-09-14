@@ -798,6 +798,8 @@ class MediaViewerController(
       ?.mediaLocation
       ?: return
 
+    val requestProperties = createRequestProperties(mediaViewerState.loadedMedia)
+
     val adapter = MediaViewerAdapter(
       context = context,
       appConstants = appConstants,
@@ -809,7 +811,8 @@ class MediaViewerController(
       viewableMediaList = mediaViewerState.loadedMedia,
       previewThumbnailLocation = previewThumbnailLocation,
       mediaViewerScrollerHelper = mediaViewerScrollerHelper,
-      cachedHttpDataSourceFactory = createCacheDataSourceFactory(mediaViewerState.loadedMedia),
+      requestProperties = requestProperties,
+      cachedHttpDataSourceFactory = createCacheDataSourceFactory(requestProperties),
       fileDataSourceFactory = FileDataSource.Factory(),
       contentDataSourceFactory = DataSource.Factory { ContentDataSource(context) },
       chan4CloudFlareImagePreloaderManager = chan4CloudFlareImagePreloaderManager,
@@ -834,9 +837,9 @@ class MediaViewerController(
         "initialPagerIndex=${mediaViewerState.initialPagerIndex}")
   }
 
-  private fun createCacheDataSourceFactory(viewableMedia: List<ViewableMedia>): DataSource.Factory {
+  private fun createCacheDataSourceFactory(requestProperties: Map<String, String>): DataSource.Factory {
     val defaultDataSourceFactory = DefaultHttpDataSource.Factory()
-      .setDefaultRequestProperties(createRequestProperties(viewableMedia))
+      .setDefaultRequestProperties(requestProperties)
 
     return CacheDataSource.Factory()
       .setCache(exoPlayerCache.actualCache)

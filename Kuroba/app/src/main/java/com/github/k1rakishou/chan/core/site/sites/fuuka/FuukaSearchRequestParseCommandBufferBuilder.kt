@@ -16,9 +16,10 @@ import org.joda.time.DateTime
 import org.jsoup.nodes.Element
 import java.util.regex.Pattern
 
-internal class FuukaSearchRequestParseCommandBufferBuilder {
+private typealias CommandBuilder =
+  KurobaParserCommandBuilder<FuukaSearchRequestParseCommandBufferBuilder.FuukaSearchPageCollector>
 
-  private typealias CommandBuilder = KurobaParserCommandBuilder<FuukaSearchPageCollector>
+internal class FuukaSearchRequestParseCommandBufferBuilder {
 
   fun getBuilder(): KurobaHtmlParserCommandBufferBuilder<FuukaSearchPageCollector> {
     return KurobaHtmlParserCommandBufferBuilder<FuukaSearchPageCollector>()
