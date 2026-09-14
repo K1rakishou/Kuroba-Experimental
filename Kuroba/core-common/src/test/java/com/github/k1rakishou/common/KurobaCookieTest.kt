@@ -16,7 +16,7 @@ class KurobaCookieTest {
     assertEquals("38bd34627525d66bfc2b4bb9e6cc5311d76e4311b3e53899e0704f3d903df403", kurobaCookie.value)
     kurobaCookie.expiration as KurobaCookie.Expiration.Time
 
-    val deltaSeconds = (kurobaCookie.expiration.expirationTimeMillis - now) / 60 / 1000
+    val deltaSeconds = (kurobaCookie.expiration.expirationTimeMillis - now) / 1000
     assert(deltaSeconds in 46800..47000) { "Bad deltaSeconds" }
 
     assertEquals("/", kurobaCookie.path)
@@ -34,7 +34,7 @@ class KurobaCookieTest {
     assertEquals("38bd34627525d66bfc2b4bb9e6cc5311d76e4311b3e53899e0704f3d903df403", kurobaCookie.value)
     kurobaCookie.expiration as KurobaCookie.Expiration.Time
 
-    val deltaSeconds = (kurobaCookie.expiration.expirationTimeMillis - now) / 60 / 1000
+    val deltaSeconds = (kurobaCookie.expiration.expirationTimeMillis - now) / 1000
     assert(deltaSeconds in 46800..47000) { "Bad deltaSeconds" }
 
     assertEquals("/", kurobaCookie.path)
@@ -52,7 +52,7 @@ class KurobaCookieTest {
     assertEquals("38bd34627525d66bfc2b4bb9e6cc5311d76e4311b3e53899e0704f3d903df403==", kurobaCookie.value)
     kurobaCookie.expiration as KurobaCookie.Expiration.Time
 
-    val deltaSeconds = (kurobaCookie.expiration.expirationTimeMillis - now) / 60 / 1000
+    val deltaSeconds = (kurobaCookie.expiration.expirationTimeMillis - now) / 1000
     assert(deltaSeconds in 46800..47000) { "Bad deltaSeconds" }
 
     assertEquals("/", kurobaCookie.path)
@@ -121,5 +121,30 @@ class KurobaCookieTest {
     assertEquals(kurobaCookie.expiration.expirationTimeMillis, 1770305482000L)
 
     assertEquals("/", kurobaCookie.path)
+  }
+
+  @Test
+  fun `should parse 4chan_pass Set-Cookie header with both expires and Max-Age parameters`() {
+    val now = System.currentTimeMillis()
+
+    val cookie = """
+      4chan_pass=A1f7WtKTEeucqZ5hHJ-8-8hAk6FpfnCseUZu157GZKXImcmfpnPBkoFxryyWWSzYWaxZvl8IEzf30Wh1_; expires=Mon, 13 Sep 2027 18:18:15 GMT; Max-Age=31536000; path=/; domain=.4chan.org; secure; HttpOnly
+    """.trimIndent()
+
+    val kurobaCookie = KurobaCookie.fromRawCookie(cookie, "4chan_pass")!!
+    assertEquals("A1f7WtKTEeucqZ5hHJ-8-8hAk6FpfnCseUZu157GZKXImcmfpnPBkoFxryyWWSzYWaxZvl8IEzf30Wh1_", kurobaCookie.value)
+    kurobaCookie.expiration as KurobaCookie.Expiration.Time
+
+    // Max-Age comes after expires so it takes precedence
+    val deltaSeconds = (kurobaCookie.expiration.expirationTimeMillis - now) / 1000
+    assert(deltaSeconds in 31536000..31536200) { "Bad deltaSeconds: ${deltaSeconds}" }
+
+    assertEquals("/", kurobaCookie.path)
+  }
+
+  @Test
+  fun `should return null when only the cookie value is passed without the key`() {
+    val kurobaCookie = KurobaCookie.fromRawCookie("A1f7WtKTEeucqZ5hHJ-8-8hAk6FpfnCseUZu157GZKXImcmfpnPBkoFxryyWWSzYWaxZvl8IEzf30Wh1_", "4chan_pass")
+    assertEquals(null, kurobaCookie)
   }
 }

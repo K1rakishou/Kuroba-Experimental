@@ -95,12 +95,13 @@ class Chan4SiteSettings(
     )
   }
 
-  val emailVerificationCookie by lazy {
-    KurobaCookieSetting(
+  // Whether the email verification was completed. The verified 4chan_pass cookie itself is stored in postingCookie.
+  val emailVerified by lazy {
+    KurobaBooleanSetting(
       database = dependencies.settingsDatabase,
       kurobaSettingInfo = this,
-      moshi = dependencies.moshi,
-      key = KurobaSettingKey.Site.Chan4.EmailVerificationCookie(siteDescriptor.siteName),
+      key = KurobaSettingKey.Site.Chan4.EmailVerified(siteDescriptor.siteName),
+      default = false
     )
   }
 }

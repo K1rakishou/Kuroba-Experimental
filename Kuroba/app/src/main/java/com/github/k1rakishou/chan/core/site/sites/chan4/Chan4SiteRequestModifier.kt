@@ -113,17 +113,6 @@ class Chan4SiteRequestModifier(
       return null
     }
 
-    val emailVerificationCookie = chan4SiteSettings.emailVerificationCookie.readBlocking()
-    if (
-      emailVerificationCookie != null &&
-      emailVerificationCookie.value.isNotNullNorBlank() &&
-      !emailVerificationCookie.expired(System.currentTimeMillis())
-    ) {
-      Logger.debug(TAG) { "Using email verification cookie" }
-      return emailVerificationCookie.value
-    }
-
-    Logger.debug(TAG) { "Using posting cookie" }
     return chan4SiteSettings.postingCookie.readBlocking()?.value
   }
 

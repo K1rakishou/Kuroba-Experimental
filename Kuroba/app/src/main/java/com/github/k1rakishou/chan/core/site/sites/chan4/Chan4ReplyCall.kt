@@ -222,7 +222,7 @@ class Chan4ReplyCall(
 
     if (!response.isSuccessful) {
       Logger.e(TAG, "process() Bad status code! code: '${response.code}'")
-      replyResponse.errorMessage = "Bad response status code: ${response.code}"
+      replyResponse.errorMessage = "Bad response status code: ${response.code}\nError message: ${result.take(256)}"
       return
     }
 
@@ -328,37 +328,37 @@ class Chan4ReplyCall(
       .firstOrNull { (_, value) -> value.startsWith("${Chan4.POSTING_COOKIE}=") }
       ?.second
 
-    val newCookie = wholeCookieHeader
-      ?.substringAfter("${Chan4.POSTING_COOKIE}=")
-      ?.substringBefore(';')
+    val headersDebugString = headers.joinToString(separator = "|||") { (key, value) -> "${key}=${value}" }
 
-    val headersDebugString = headers.joinToString(separator = ";") { (key, value) -> "${key}=${value}" }
+    if (wholeCookieHeader.isNullOrBlank()) {
+      Logger.debug(TAG) {
+        "setChan4CaptchaHeader() response doesn't contain '${SET_COOKIE_HEADER}' header " +
+          "or '${Chan4.POSTING_COOKIE}' cookie (headersDebugString: ${headersDebugString})"
+      }
 
-    Logger.d(TAG, "setChan4CaptchaHeader() " +
-              "newCookie='${newCookie}', " +
-              "wholeCookieHeader='${wholeCookieHeader}', " +
-              "headersDebugString='${headersDebugString}'")
-
-    val newKurobaCookie = KurobaCookie.fromRawCookie(newCookie ?: "", Chan4.POSTING_COOKIE)
-    if (newKurobaCookie == null) {
-      Logger.d(TAG, "setChan4CaptchaHeader() failed to parse 4chan_pass cookie (${newKurobaCookie})")
       return
     }
 
-    val oldEmailVerificationCookie = chan4SiteSettings.emailVerificationCookie.read()
-    if (oldEmailVerificationCookie != null) {
-      Logger.debug(TAG) {
-        "Updating emailVerificationCookie, oldEmailVerificationCookie='${oldEmailVerificationCookie}', " +
-          "newKurobaCookie='${newKurobaCookie}'"
-      }
-      chan4SiteSettings.emailVerificationCookie.write(newKurobaCookie)
-    } else {
-      val oldPostingCookie = chan4SiteSettings.postingCookie.read()
-      Logger.debug(TAG) {
-        "Updating postingCookie, oldPostingCookie='${oldPostingCookie}', newKurobaCookie='${newKurobaCookie}'"
-      }
-      chan4SiteSettings.postingCookie.write(newKurobaCookie)
+    Logger.debug(TAG) {
+      "setChan4CaptchaHeader() wholeCookieHeader='${wholeCookieHeader.asFormattedToken()}'"
     }
+
+    // fromRawCookie() expects the whole Set-Cookie header value ("4chan_pass=<value>; expires=...; path=/; ...")
+    val newKurobaCookie = KurobaCookie.fromRawCookie(wholeCookieHeader, Chan4.POSTING_COOKIE)
+    if (newKurobaCookie == null) {
+      Logger.debug(TAG) {
+        "setChan4CaptchaHeader() failed to parse 4chan_pass cookie (${newKurobaCookie}) " +
+          "(headersDebugString: ${headersDebugString})"
+      }
+
+      return
+    }
+
+    val oldPostingCookie = chan4SiteSettings.postingCookie.read()
+    Logger.debug(TAG) {
+      "Updating postingCookie, oldPostingCookie='${oldPostingCookie}', newKurobaCookie='${newKurobaCookie}'"
+    }
+    chan4SiteSettings.postingCookie.write(newKurobaCookie)
   }
 
   private fun createRateLimitInfo(rateLimitMatcher: Matcher): ReplyResponse.RateLimitInfo {
@@ -434,38 +434,18 @@ class Chan4ReplyCall(
       val rememberCaptchaCookies = chan4CaptchaSettings.rememberCaptchaCookies
 
       if (rememberCaptchaCookies) {
-        val emailVerificationCookie = chan4SiteSettings.emailVerificationCookie.read()
-        if (
-          emailVerificationCookie != null &&
-          emailVerificationCookie.value.isNotNullNorBlank() &&
-          !emailVerificationCookie.expired(System.currentTimeMillis())
-        ) {
-          val emailVerificationCookieValue = emailVerificationCookie.value
-
+        val postingCookie = chan4SiteSettings.postingCookie.read()?.value
+        if (postingCookie.isNotNullNorBlank()) {
           Logger.debug(TAG) {
             "readCookies() domainOrHost: ${domainOrHost}, " +
-              "emailVerificationCookie: ${emailVerificationCookieValue.asFormattedToken()}"
+              "postingCookie: ${postingCookie.asFormattedToken()}"
           }
 
           if (isNotEmpty()) {
             append("; ")
           }
 
-          append("${Chan4.POSTING_COOKIE}=${emailVerificationCookieValue}")
-        } else {
-          val postingCookie = chan4SiteSettings.postingCookie.read()?.value
-          if (postingCookie.isNotNullNorBlank()) {
-            Logger.debug(TAG) {
-              "readCookies() domainOrHost: ${domainOrHost}, " +
-                "postingCookie: ${postingCookie.asFormattedToken()}"
-            }
-
-            if (isNotEmpty()) {
-              append("; ")
-            }
-
-            append("${Chan4.POSTING_COOKIE}=${postingCookie}")
-          }
+          append("${Chan4.POSTING_COOKIE}=${postingCookie}")
         }
       }
     }

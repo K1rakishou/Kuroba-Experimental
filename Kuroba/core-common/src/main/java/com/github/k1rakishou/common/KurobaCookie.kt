@@ -132,9 +132,10 @@ data class KurobaCookie(
         }
 
         if (key.equals("Max-Age", ignoreCase = true)) {
-          val maxAgeMinutes = value.toIntOrNull()
-          if (maxAgeMinutes != null) {
-            val expirationTimeMillis = currentTime + (maxAgeMinutes * 60 * 1000L)
+          // Max-Age is in seconds (RFC 6265)
+          val maxAgeSeconds = value.toLongOrNull()
+          if (maxAgeSeconds != null) {
+            val expirationTimeMillis = currentTime + (maxAgeSeconds * 1000L)
             resultExpiration = Expiration.Time(expirationTimeMillis)
           }
 

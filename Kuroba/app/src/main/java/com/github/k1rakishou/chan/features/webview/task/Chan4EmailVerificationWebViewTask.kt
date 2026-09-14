@@ -43,7 +43,8 @@ class Chan4EmailVerificationWebViewTask(
           return
         }
 
-        site.chan4Settings.emailVerificationCookie.write(kurobaCookie)
+        site.chan4Settings.postingCookie.write(kurobaCookie)
+        site.chan4Settings.emailVerified.write(true)
       }
     }
   }

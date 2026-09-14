@@ -194,6 +194,7 @@ class ReplyLayoutView @JvmOverloads constructor(
   }
 
   override fun onWebUrlClick(url: HttpUrl) {
+    dialogHandle.getAndSet(null)?.dismiss()
     banDialogHandle.getAndSet(null)?.dismiss()
     kurobaWebUrlRouter.onUrlClicked(url)
   }

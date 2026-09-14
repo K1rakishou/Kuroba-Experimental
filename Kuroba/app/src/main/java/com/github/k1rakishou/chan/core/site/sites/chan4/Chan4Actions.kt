@@ -249,7 +249,9 @@ class Chan4Actions(
   }
 
   override fun clearPostingCookies() {
-    chan4Settings.postingCookie.readBlocking()
+    chan4Settings.postingCookie.resetBlocking()
+    // The email verification is bound to the 4chan_pass cookie we have just removed
+    chan4Settings.emailVerified.resetBlocking()
     chan4.commonSettings.cloudFlareClearanceCookieMap.resetBlocking()
     chan4Settings.captchaSettings.updateBlocking { captchaSettings ->
       captchaSettings.copy(captchaTicket = null)
@@ -264,7 +266,11 @@ class Chan4Actions(
   }
 
   suspend fun emailVerified(): Boolean {
-    val cookie = chan4Settings.emailVerificationCookie.read()
+    if (!chan4Settings.emailVerified.read()) {
+      return false
+    }
+
+    val cookie = chan4Settings.postingCookie.read()
     if (cookie == null) {
       return false
     }
@@ -273,7 +279,8 @@ class Chan4Actions(
   }
 
   suspend fun resetEmailVerification() {
-    chan4Settings.emailVerificationCookie.reset()
+    chan4Settings.emailVerified.reset()
+    chan4Settings.postingCookie.reset()
   }
 
   private fun HttpUrl.Builder.addBoardCodeParameter(boardCode: String?): HttpUrl.Builder {

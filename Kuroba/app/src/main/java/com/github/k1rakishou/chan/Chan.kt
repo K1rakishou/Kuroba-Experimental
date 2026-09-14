@@ -97,7 +97,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
         )
       ),
       nonBackupableSettingsParameters = NonBackupableSettingsParameters(
-        applicationMigrationVersion = ApplicationMigrationHelper.LATEST_VERSION
+        applicationMigrationVersion = ApplicationMigrationHelper.UNSET_VERSION
       )
     )
   }

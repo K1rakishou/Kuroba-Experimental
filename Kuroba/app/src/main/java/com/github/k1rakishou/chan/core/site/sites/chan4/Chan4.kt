@@ -64,12 +64,6 @@ class Chan4 : SiteBase(
       setting = chan4Settings.postingCookie
     )
 
-    settings += SiteSetting.SiteCookieSetting(
-      settingName = "Email verification cookie",
-      settingDescription = null,
-      setting = chan4Settings.emailVerificationCookie
-    )
-
     return@lazy settings
   }
 

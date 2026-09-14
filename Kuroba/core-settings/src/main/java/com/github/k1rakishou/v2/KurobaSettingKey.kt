@@ -193,7 +193,9 @@ sealed class KurobaSettingKey(val raw: String) {
       data class CaptchaType(val siteName: String) : Chan4(siteName, "CaptchaType")
       data class CaptchaSettings(val siteName: String) : Chan4(siteName, "CaptchaSettings")
       data class EmailVerification(val siteName: String) : Chan4(siteName, "EmailVerification")
+      @Deprecated("4chan_pass cookie is now only stored in PostingCookie. Only used by AppMigration_V3_V4.")
       data class EmailVerificationCookie(val siteName: String) : Chan4(siteName, "EmailVerificationCookie")
+      data class EmailVerified(val siteName: String) : Chan4(siteName, "EmailVerified")
     }
 
     sealed class Dvach(siteName: String, key: String) : Site(siteName, key) {

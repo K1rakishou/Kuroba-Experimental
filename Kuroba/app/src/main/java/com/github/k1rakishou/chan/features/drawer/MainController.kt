@@ -1044,7 +1044,7 @@ class MainController(
       appendLine("Migrated app data from version ${fromVersion} to ${toVersion}.")
       appendLine("Changelog:")
 
-      for (migrationVersion in fromVersion..toVersion) {
+      for (migrationVersion in appliedMigrations.sorted()) {
         val changelog = applicationMigrationHelper.changelog(migrationVersion)
           ?: "No changelog provided"
 
