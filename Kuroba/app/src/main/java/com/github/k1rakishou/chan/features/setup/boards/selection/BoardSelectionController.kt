@@ -138,11 +138,31 @@ class BoardSelectionController(
     }
 
     LaunchedEffect(key1 = Unit) {
-      awaitUntil { lazyGridState.readyForScrollEvents() }
+      // Wait for the actual boards to be loaded. Until then the grid only contains the "no_boards" placeholder item
+      // which already makes readyForScrollEvents() return true and restoring the last scroll position on it crashes
+      // (LazyGrid doesn't clamp the index so it tries to measure items that don't exist).
+      val ready = awaitUntil(maxWaitTimeMs = 5000L) {
+        selectableBoardElements.isNotEmpty() &&
+          lazyGridState.readyForScrollEvents() &&
+          lazyGridState.layoutInfo.visibleItemsInfo.none { itemInfo -> itemInfo.key == NO_BOARDS_ITEM_KEY }
+      }
+
+      if (!ready) {
+        return@LaunchedEffect
+      }
+
+      val lastIndex = lazyGridState.layoutInfo.totalItemsCount - 1
+      if (lastIndex < 0) {
+        return@LaunchedEffect
+      }
+
+      val lastScrollPosition = viewModel.lastScrollPosition
+      val index = lastScrollPosition.index.coerceIn(0, lastIndex)
+      val scrollOffset = if (index == lastScrollPosition.index) lastScrollPosition.offset else 0
 
       lazyGridState.scrollToItem(
-        index = viewModel.lastScrollPosition.index,
-        scrollOffset = viewModel.lastScrollPosition.offset
+        index = index,
+        scrollOffset = scrollOffset
       )
     }
 
@@ -188,7 +208,7 @@ class BoardSelectionController(
               content = {
                 if (selectableBoardElements.isEmpty()) {
                   item(
-                    key = "no_boards",
+                    key = NO_BOARDS_ITEM_KEY,
                     span = { GridItemSpan(maxLineSpan) }
                   ) {
                     KurobaComposeMessage(
@@ -492,6 +512,7 @@ class BoardSelectionController(
   }
 
   companion object {
+    private const val NO_BOARDS_ITEM_KEY = "no_boards"
     private const val MIN_SPAN_COUNT = 2
     private const val MAX_SPAN_COUNT = 10
   }

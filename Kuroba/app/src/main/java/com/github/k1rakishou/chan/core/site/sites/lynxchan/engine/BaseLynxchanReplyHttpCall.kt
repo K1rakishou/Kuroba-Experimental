@@ -32,13 +32,17 @@ import java.util.Locale
 import java.util.Objects
 import java.util.regex.Pattern
 
-class LynxchanReplyHttpCall(
+/**
+ * Posting implementation shared by all Lynxchan sites. Sites that structure the post request differently only need to
+ * override [createRequestBody] (see [com.github.k1rakishou.chan.core.site.sites.lynxchan.EndchanReplyHttpCall]).
+ * */
+open class BaseLynxchanReplyHttpCall(
   site: BaseLynxchanSite,
-  private val replyChanDescriptor: ChanDescriptor,
+  protected val replyChanDescriptor: ChanDescriptor,
   private val replyManager: ReplyManager,
-  private val moshi: Moshi
+  protected val moshi: Moshi
 ) : HttpCall(site) {
-  private val lynxchanSite: BaseLynxchanSite
+  protected val lynxchanSite: BaseLynxchanSite
     get() = site as BaseLynxchanSite
 
   val replyResponse = ReplyResponse()
@@ -79,33 +83,51 @@ class LynxchanReplyHttpCall(
       val replyUrl = requireNotNull(site.endpoints.reply(replyChanDescriptor))
       Logger.d(TAG, "setup() replyUrl=${replyUrl}")
 
-      if (lynxchanSite.postingViaFormData) {
-        val formBuilder = postWithFormDataPayload(
-          reply = reply,
-          chanDescriptor = chanDescriptor,
-          threadNo = threadNo,
-          captcha = captcha,
-          subject = subject,
-          progressListener = progressListener
-        )
+      val requestBody = createRequestBody(
+        reply = reply,
+        chanDescriptor = chanDescriptor,
+        threadNo = threadNo,
+        captcha = captcha,
+        subject = subject,
+        progressListener = progressListener
+      )
 
-        requestBuilder
-          .url(replyUrl)
-          .post(formBuilder.build())
-      } else {
-        val requestBody = postWithJsonPayload(
-          reply = reply,
-          chanDescriptor = chanDescriptor,
-          threadNo = threadNo,
-          captcha = captcha,
-          subject = subject
-        )
-
-        requestBuilder
-          .url(replyUrl)
-          .post(requestBody)
-      }
+      requestBuilder
+        .url(replyUrl)
+        .post(requestBody)
     }
+  }
+
+  /**
+   * Builds the body of the post request. By default uses either form data or json payload depending on
+   * [BaseLynxchanSite.postingViaFormData].
+   * */
+  protected open fun createRequestBody(
+    reply: Reply,
+    chanDescriptor: ChanDescriptor,
+    threadNo: Long,
+    captcha: String?,
+    subject: String?,
+    progressListener: ProgressRequestBody.ProgressRequestListener?
+  ): RequestBody {
+    if (lynxchanSite.postingViaFormData) {
+      return postWithFormDataPayload(
+        reply = reply,
+        chanDescriptor = chanDescriptor,
+        threadNo = threadNo,
+        captcha = captcha,
+        subject = subject,
+        progressListener = progressListener
+      ).build()
+    }
+
+    return postWithJsonPayload(
+      reply = reply,
+      chanDescriptor = chanDescriptor,
+      threadNo = threadNo,
+      captcha = captcha,
+      subject = subject
+    )
   }
 
   private fun postWithFormDataPayload(
@@ -194,33 +216,7 @@ class LynxchanReplyHttpCall(
     captcha: String?,
     subject: String?
   ): RequestBody {
-    val files: MutableList<LynxchanReplyFile>? = if (reply.hasFiles()) {
-      val files = mutableListOf<LynxchanReplyFile>()
-
-      reply.iterateFilesOrThrowIfEmpty { _, replyFile ->
-        val replyFileMetaResult = replyFile.getReplyFileMeta()
-        if (replyFileMetaResult is ModularResult.Error<*>) {
-          throw IOException((replyFileMetaResult as ModularResult.Error<ReplyFileMeta>).error)
-        }
-
-        val replyFileMeta = (replyFileMetaResult as ModularResult.Value).value
-
-        val content = fileToLynxchanReplyFileContent(replyFile, replyFileMeta)
-        if (content == null) {
-          throw IOException("Failed to convert reply file into base64 string")
-        }
-
-        files += LynxchanReplyFile(
-          name = replyFileMeta.fileName,
-          spoiler = replyFileMeta.spoiler,
-          content = content
-        )
-      }
-
-      files
-    } else {
-      null
-    }
+    val files = collectJsonReplyFiles(reply)
 
     val postName = if (reply.postName.isNullOrEmpty()) {
       null
@@ -256,6 +252,40 @@ class LynxchanReplyHttpCall(
       contentType = "application/json".toMediaType(),
       content = content
     )
+  }
+
+  /**
+   * Converts the reply files into [LynxchanReplyFile]s with base64 data url content, used by the json payload.
+   * Returns null when the reply has no files.
+   * */
+  protected fun collectJsonReplyFiles(reply: Reply): List<LynxchanReplyFile>? {
+    if (!reply.hasFiles()) {
+      return null
+    }
+
+    val files = mutableListOf<LynxchanReplyFile>()
+
+    reply.iterateFilesOrThrowIfEmpty { _, replyFile ->
+      val replyFileMetaResult = replyFile.getReplyFileMeta()
+      if (replyFileMetaResult is ModularResult.Error<*>) {
+        throw IOException((replyFileMetaResult as ModularResult.Error<ReplyFileMeta>).error)
+      }
+
+      val replyFileMeta = (replyFileMetaResult as ModularResult.Value).value
+
+      val content = fileToLynxchanReplyFileContent(replyFile, replyFileMeta)
+      if (content == null) {
+        throw IOException("Failed to convert reply file into base64 string")
+      }
+
+      files += LynxchanReplyFile(
+        name = replyFileMeta.fileName,
+        spoiler = replyFileMeta.spoiler,
+        content = content
+      )
+    }
+
+    return files
   }
 
   private fun fileToLynxchanReplyFileContent(replyFile: ReplyFile, replyFileMeta: ReplyFileMeta): String? {
@@ -448,7 +478,7 @@ class LynxchanReplyHttpCall(
   )
 
   companion object {
-    private const val TAG = "LynxchanReplyHttpCall"
+    private const val TAG = "BaseLynxchanReplyHttpCall"
 
     private val GENERIC_ERROR_PATTERN = Pattern.compile("<\\w+>(Error:.*?)<\\/\\w+>")
   }

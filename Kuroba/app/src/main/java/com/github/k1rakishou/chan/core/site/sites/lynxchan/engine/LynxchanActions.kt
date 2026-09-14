@@ -55,8 +55,7 @@ open class LynxchanActions(
   override fun requirePrepare(): Boolean = false
 
   override suspend fun post(replyChanDescriptor: ChanDescriptor, replyMode: ReplyMode): Flow<SiteActions.PostResult> {
-    val replyCall = LynxchanReplyHttpCall(
-      site = lynxchanSite,
+    val replyCall = lynxchanSite.createReplyHttpCall(
       replyChanDescriptor = replyChanDescriptor,
       replyManager = replyManager,
       moshi = moshi,

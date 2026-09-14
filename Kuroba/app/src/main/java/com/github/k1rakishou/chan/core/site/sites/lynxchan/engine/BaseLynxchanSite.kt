@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.core.site.sites.lynxchan.engine
 
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.site.SiteConfiguration
 import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.limitations.BoardDependantAttachablesCount
@@ -11,6 +12,7 @@ import com.github.k1rakishou.chan.core.site.settings.SiteSettingsForUi
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.model.data.board.LynxchanBoardMeta
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.squareup.moshi.Moshi
 import okhttp3.HttpUrl
 
 abstract class BaseLynxchanSite(defaultDomain: String) : CommonSite(defaultDomain) {
@@ -20,6 +22,19 @@ abstract class BaseLynxchanSite(defaultDomain: String) : CommonSite(defaultDomai
   // When false, json payload will be used.
   // When true, form data parameters will be used.
   open val postingViaFormData: Boolean = false
+
+  open fun createReplyHttpCall(
+    replyChanDescriptor: ChanDescriptor,
+    replyManager: ReplyManager,
+    moshi: Moshi
+  ): BaseLynxchanReplyHttpCall {
+    return BaseLynxchanReplyHttpCall(
+      site = this,
+      replyChanDescriptor = replyChanDescriptor,
+      replyManager = replyManager,
+      moshi = moshi
+    )
+  }
 
   override val enabled: Boolean = true
   override val siteIconUrl by lazy {

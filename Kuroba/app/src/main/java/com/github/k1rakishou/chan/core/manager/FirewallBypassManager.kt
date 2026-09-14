@@ -5,6 +5,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.concurrency.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.features.webview.WebViewTaskResult
 import com.github.k1rakishou.chan.features.webview.task.AbstractWebViewTask
+import com.github.k1rakishou.chan.features.webview.task.Chan8MoePowBlockTask
 import com.github.k1rakishou.chan.features.webview.task.CloudFlareTask
 import com.github.k1rakishou.chan.features.webview.task.DvachAntispamTask
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
@@ -127,6 +128,13 @@ class FirewallBypassManager(
           }
           FirewallType.DvachAntiSpam -> {
             DvachAntispamTask(
+              headerTitleText = getString(R.string.firewall_check_header_title, firewallType.name),
+              loadable = AbstractWebViewTask.Loadable.Url(urlToOpen),
+              invokerWaiter = resultWaiter
+            )
+          }
+          FirewallType.Chan8MoePowBlock -> {
+            Chan8MoePowBlockTask(
               headerTitleText = getString(R.string.firewall_check_header_title, firewallType.name),
               loadable = AbstractWebViewTask.Loadable.Url(urlToOpen),
               invokerWaiter = resultWaiter

@@ -125,13 +125,13 @@ class NetModule {
   @Provides
   @IntoSet
   fun provideChan8MoeInterceptor(
-    okHttpClient: OkHttpClientForInterceptors,
-    siteResolver: SiteResolver
+    siteResolver: SiteResolver,
+    firewallBypassManager: FirewallBypassManager
   ): KurobaOkHttpInterceptor {
     deps("Chan8MoeInterceptor")
     return Chan8MoeInterceptor(
-      okHttpClient = okHttpClient,
-      siteResolver = siteResolver
+      siteResolver = siteResolver,
+      firewallBypassManager = firewallBypassManager
     )
   }
 

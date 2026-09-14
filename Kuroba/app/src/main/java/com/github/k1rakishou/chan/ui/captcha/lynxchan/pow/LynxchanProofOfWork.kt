@@ -1,6 +1,8 @@
 package com.github.k1rakishou.chan.ui.captcha.lynxchan.pow
 
 import android.util.Base64
+import com.github.k1rakishou.chan.core.site.sites.lynxchan.chan8.Chan8Moe
+import com.github.k1rakishou.chan.core.site.sites.lynxchan.engine.BaseLynxchanSite
 import com.github.k1rakishou.common.StringUtils.asFormattedToken
 import com.github.k1rakishou.core_logger.Logger
 import kotlinx.coroutines.Dispatchers
@@ -16,6 +18,7 @@ import javax.crypto.spec.PBEKeySpec
 import kotlin.time.measureTime
 
 class LynxchanProofOfWork(
+  private val lynxchanSite: BaseLynxchanSite,
   private val bypass: String
 ) {
   fun find(): Flow<Event> {
@@ -37,7 +40,12 @@ class LynxchanProofOfWork(
                 async(Dispatchers.Default) {
                   val secretFactory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512")
 
-                  val length = 256 * 8
+                  val length = when (lynxchanSite) {
+                    // Must match the target hash length (64 bytes), otherwise contentEquals() never matches
+                    is Chan8Moe -> 64 * 8
+                    else -> 256 * 8
+                  }
+
                   val iter = 16384
                   val sessionArray = session.toCharArray()
                   var iteration = index

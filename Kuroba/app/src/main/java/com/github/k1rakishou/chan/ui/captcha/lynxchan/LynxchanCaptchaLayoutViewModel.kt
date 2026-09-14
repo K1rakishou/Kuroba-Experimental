@@ -16,6 +16,7 @@ import com.github.k1rakishou.chan.core.di.module.shared.ViewModelAssistedFactory
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.core.site.loader.ClientException
+import com.github.k1rakishou.chan.core.site.sites.lynxchan.Endchan
 import com.github.k1rakishou.chan.core.site.sites.lynxchan.Krautchan
 import com.github.k1rakishou.chan.core.site.sites.lynxchan.chan8.Chan8Moe
 import com.github.k1rakishou.chan.core.site.sites.lynxchan.engine.BaseLynxchanSite
@@ -45,12 +46,16 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.Headers
 import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormat
+import org.json.JSONObject
 import javax.inject.Inject
 
 class LynxchanCaptchaLayoutViewModel(
@@ -151,8 +156,16 @@ class LynxchanCaptchaLayoutViewModel(
   ): ModularResult<VerifyCaptchaResult> {
     return withContext(Dispatchers.IO) {
       return@withContext ModularResult.Try {
+        val lynxchanSite = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor()) as? BaseLynxchanSite
+        if (lynxchanSite == null) {
+          throw LynxchanCaptchaError("Site ${chanDescriptor.siteDescriptor()} is not active")
+        }
+
         val verifyCaptchaEndpoint = if (needBlockBypass) {
           lynxchanCaptcha.renewBypassEndpoint
+        } else if (lynxchanSite is Endchan) {
+          // Json payload is only accepted by the '/.api/' endpoints, '/solveCaptcha.js' returns 415 for it
+          "${lynxchanSite.currentDomainString}/.api/solveCaptcha".toHttpUrl()
         } else {
           lynxchanCaptcha.solveCaptchaEndpoint
         }
@@ -168,7 +181,20 @@ class LynxchanCaptchaLayoutViewModel(
           throw LynxchanCaptchaError("No answer provided")
         }
 
-        val requestBody = if (needBlockBypass) {
+        val requestBody = if (lynxchanSite is Endchan && !needBlockBypass) {
+          val json = JSONObject()
+            .put("captchaId", captchaId)
+            .put(
+              "parameters",
+              JSONObject()
+                .put("captchaId", captchaId)
+                .put("boardUri", chanDescriptor.boardCode())
+                .put("answer", answer)
+            )
+            .put("auth", JSONObject())
+
+          json.toString().toRequestBody("application/json".toMediaType())
+        } else if (needBlockBypass) {
           MultipartBody.Builder()
             .setType(MultipartBody.FORM)
             .addFormDataPart("captcha", answer)
@@ -184,11 +210,6 @@ class LynxchanCaptchaLayoutViewModel(
         val requestBuilder = Request.Builder()
           .url(verifyCaptchaEndpoint)
           .post(requestBody)
-
-        val lynxchanSite = siteManager.bySiteDescriptorAndActive(chanDescriptor.siteDescriptor()) as? BaseLynxchanSite
-        if (lynxchanSite == null) {
-          throw LynxchanCaptchaError("Site ${chanDescriptor.siteDescriptor()} is not active")
-        }
 
         lynxchanSite.requestModifier.modifyGenericRequest(
           site = lynxchanSite,
@@ -241,16 +262,23 @@ class LynxchanCaptchaLayoutViewModel(
             throw LynxchanCaptchaError("Error. Message: \'$errorMessage\'")
           }
 
+          if (lynxchanSite is Endchan && !needBlockBypass && blockBypassStatus.isOk) {
+            // '/.api/solveCaptcha' responds with json ({"status":"ok",...}) instead of the "Captcha solved." html page
+            extractAndStoreBypassCookie(chanDescriptor, response.headers)
+            return@Try VerifyCaptchaResult.SolvedCaptcha
+          }
+
           if (needBlockBypass && blockBypassStatus.data == null && lynxchanSite is Chan8Moe) {
             val bypass = response.headers("Set-Cookie")
               .firstOrNull { setCookie -> setCookie.startsWith("bypass=") }
               ?.let { bypassCookie -> KurobaCookie.fromRawCookie(bypassCookie, "bypass")?.value }
 
-            if (bypass != null && bypass.isBypassCookieValidForPOW()) {
+            if (bypass.isNotNullNorBlank()) {
               // Need to solve Proof Of Work
               Logger.debug(TAG) { "verifyCaptcha(needBlockBypass: ${needBlockBypass}) need to solve POW" }
 
               findProofOfWorkAndSubmit(
+                lynxchanSite = lynxchanSite,
                 captchaId = captchaId,
                 bypass = bypass,
                 chanDescriptor = chanDescriptor,
@@ -414,6 +442,12 @@ class LynxchanCaptchaLayoutViewModel(
       captchaEndpoint = captchaEndpoint.newBuilder()
         .addEncodedQueryParameter("d", Chan8MoeCaptchaTimeFormatter.print(DateTime.now()))
         .build()
+    } else if (chanDescriptor.siteDescriptor().isEndchan()) {
+      captchaEndpoint = captchaEndpoint.newBuilder()
+        .addEncodedQueryParameter("forceNew", "1")
+        .addEncodedQueryParameter("d", System.currentTimeMillis().toString())
+        .addEncodedQueryParameter("boardUri", chanDescriptor.boardDescriptor().boardCode)
+        .build()
     }
 
     val requestBuilder = Request.Builder()
@@ -493,6 +527,7 @@ class LynxchanCaptchaLayoutViewModel(
   }
 
   private suspend fun findProofOfWorkAndSubmit(
+    lynxchanSite: BaseLynxchanSite,
     captchaId: String,
     bypass: String,
     chanDescriptor: ChanDescriptor,
@@ -507,7 +542,7 @@ class LynxchanCaptchaLayoutViewModel(
 
         launch {
           try {
-            LynxchanProofOfWork(bypass)
+            LynxchanProofOfWork(lynxchanSite, bypass)
               .find()
               .onEach { event ->
                 when (event) {
@@ -614,12 +649,6 @@ class LynxchanCaptchaLayoutViewModel(
   class LynxchanCaptchaError(message: String) : ClientException(message)
   class LynxchanCaptchaPOWError : ClientException("Proof-of-work required to post")
   class FailedToDoPOW(message: String) : ClientException("Proof-of-work failed: $message")
-
-  private fun String.isBypassCookieValidForPOW(): Boolean {
-    val str = this
-    // https://gitgud.io/LynxChan/PoWSolver/-/blob/master/src/PowSolver.java?ref_type=heads#L16
-    return str.length >= 712
-  }
 
   sealed interface VerifyCaptchaResult {
     data object SolvedCaptcha : VerifyCaptchaResult
