@@ -1,0 +1,5 @@
+A couple of fixes from other contributors.
+
+- Release screen timeout for images (Thanks to @arpitagarwal1301)
+- Add missing modifyGenericRequest() which could break loading of hidden boards (Thanks to @rgbpx)
+- Display 2ch stickers as images (Thanks to @rgbpx)
