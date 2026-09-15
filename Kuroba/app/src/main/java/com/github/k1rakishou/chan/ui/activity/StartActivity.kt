@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
+import android.widget.Toast
 import androidx.compose.ui.geometry.Offset
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.OnLifecycleEvent
@@ -19,6 +20,7 @@ import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.activity.ActivityModule
 import com.github.k1rakishou.chan.core.helper.AppRestarter
 import com.github.k1rakishou.chan.core.helper.DialogFactory
+import com.github.k1rakishou.chan.core.helper.NotificationsPermissionHelper
 import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
 import com.github.k1rakishou.chan.core.helper.migration.settings.KurobaSettingsMigrationHelper
 import com.github.k1rakishou.chan.core.manager.ApplicationCrashNotifier
@@ -99,6 +101,8 @@ class StartActivity :
   lateinit var hapticFeedbackManager: HapticFeedbackManager
   @Inject
   lateinit var kurobaSettingsMigrationHelper: KurobaSettingsMigrationHelper
+  @Inject
+  lateinit var notificationsPermissionHelper: NotificationsPermissionHelper
 
   private var intentMismatchWorkaroundActive = false
   private var browseController: BrowseController? = null
@@ -504,6 +508,28 @@ class StartActivity :
 
   override fun fsafStartActivityForResult(intent: Intent, requestCode: Int) {
     startActivityForResult(intent, requestCode)
+  }
+
+  override fun onResume() {
+    super.onResume()
+
+    // Revoking a permission kills the app process so checking it every time the activity is resumed is enough to
+    // notice that the user has revoked the notifications permission in the Android settings.
+    lifecycleScope.launch {
+      val disabledSettingTitles = notificationsPermissionHelper.disableSettingsRequiringNotificationsIfPermissionMissing()
+      if (disabledSettingTitles.isEmpty()) {
+        return@launch
+      }
+
+      AppModuleAndroidUtils.showToast(
+        this@StartActivity,
+        getString(
+          R.string.notifications_permission_revoked_settings_disabled,
+          disabledSettingTitles.joinToString(separator = ", ")
+        ),
+        Toast.LENGTH_LONG
+      )
+    }
   }
 
   @OnLifecycleEvent(Lifecycle.Event.ON_START)

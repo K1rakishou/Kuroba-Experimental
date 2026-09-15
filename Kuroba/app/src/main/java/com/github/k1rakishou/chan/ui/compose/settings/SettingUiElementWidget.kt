@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.helper.DialogFactory
+import com.github.k1rakishou.chan.core.helper.NotificationsPermissionHelper
 import com.github.k1rakishou.chan.features.settings.AppSettingsGraph
 import com.github.k1rakishou.chan.features.settings.AppSettingsRestartTracker
 import com.github.k1rakishou.chan.features.settings.delegate.CookieCaptchaInputController
@@ -141,6 +142,7 @@ fun SettingUiElementWidget(
   val chanTheme = LocalChanTheme.current
 
   val dialogFactory = activityDependencies().dialogFactory
+  val notificationsPermissionHelper = activityDependencies().notificationsPermissionHelper
   val appResources = appDependencies().appResources
   val appSettingsRestartTracker = appDependencies().appSettingsRestartTracker
   val settingManipulationTask = rememberCoroutineTask(taskType = TaskType.SingleInstance)
@@ -262,6 +264,7 @@ fun SettingUiElementWidget(
               settingUiElement = settingUiElement,
               navigationController = navigationController,
               dialogFactory = dialogFactory,
+              notificationsPermissionHelper = notificationsPermissionHelper,
               appSettingsRestartTracker = appSettingsRestartTracker
             )
 
@@ -407,7 +410,7 @@ fun SettingUiElementWidget(
         checked = checkboxChecked,
         onCheckedChange = {
           settingManipulationTask.launch {
-            settingUiElement.setting.toggle()
+            toggleBoolSetting(settingUiElement, notificationsPermissionHelper)
             ++rebuildSettingKey
           }
         }
@@ -425,17 +428,40 @@ fun SettingUiElementWidget(
   }
 }
 
+/**
+ * Settings which require the notifications permission can only be enabled once the permission is granted.
+ *
+ * @return whether the setting was toggled.
+ * */
+private suspend fun toggleBoolSetting(
+  settingUiElement: SettingUiElement.Bool,
+  notificationsPermissionHelper: NotificationsPermissionHelper
+): Boolean {
+  val isBeingEnabled = !settingUiElement.setting.read()
+
+  if (isBeingEnabled && notificationsPermissionHelper.requiresNotificationsPermission(settingUiElement.setting)) {
+    if (!notificationsPermissionHelper.requestNotificationsPermissionIfNeeded()) {
+      return false
+    }
+  }
+
+  settingUiElement.setting.toggle()
+  return true
+}
+
 private suspend fun handleSettingUiElementClick(
   context: Context,
   settingUiElement: SettingUiElement,
   navigationController: NavigationController,
   dialogFactory: DialogFactory,
+  notificationsPermissionHelper: NotificationsPermissionHelper,
   appSettingsRestartTracker: AppSettingsRestartTracker
 ) {
   when (settingUiElement) {
     is SettingUiElement.Bool -> {
-      settingUiElement.setting.toggle()
-      appSettingsRestartTracker.toggleSetting(settingUiElement)
+      if (toggleBoolSetting(settingUiElement, notificationsPermissionHelper)) {
+        appSettingsRestartTracker.toggleSetting(settingUiElement)
+      }
     }
 
     is SettingUiElement.Cookie -> {

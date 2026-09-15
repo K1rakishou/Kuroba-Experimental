@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.ui.controller
 
-import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.widget.Toast
@@ -47,12 +46,10 @@ import com.github.k1rakishou.chan.ui.controller.base.ui.NavigationControllerCont
 import com.github.k1rakishou.chan.ui.controller.dialog.KurobaComposeDialogController
 import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigationController
-import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout.ThreadLayoutCallback
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.hasPostNotificationsPermission
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
@@ -97,8 +94,6 @@ class BrowseController(
   lateinit var siteResolverLazy: Lazy<SiteResolver>
   @Inject
   lateinit var webViewTaskManagerLazy: Lazy<WebViewTaskManager>
-  @Inject
-  lateinit var runtimePermissionsHelper: RuntimePermissionsHelper
   @Inject
   lateinit var kurobaWebUrlRouter: KurobaWebUrlRouter
 
@@ -228,10 +223,6 @@ class BrowseController(
             totalFound = activeSearchToolbarInfo.totalFound
           )
         }
-    }
-
-    controllerScope.launch {
-      requestApi33NotificationsPermissionOnce()
     }
   }
 
@@ -682,26 +673,6 @@ class BrowseController(
   }
 
   @SuppressLint("InlinedApi")
-  private fun requestApi33NotificationsPermissionOnce() {
-    if (hasPostNotificationsPermission(context)) {
-      return
-    }
-
-    runtimePermissionsHelper.requestPermission(
-      Manifest.permission.POST_NOTIFICATIONS
-    ) { granted ->
-      if (granted) {
-        return@requestPermission
-      }
-
-      dialogFactory.createSimpleInformationDialog(
-        context = context,
-        titleText = context.getString(R.string.api_33_android_13_notifications_permission_title),
-        descriptionText = context.getString(R.string.api_33_android_13_notifications_permission_descriptor),
-      )
-    }
-  }
-
   private fun openBoardSelectionController() {
      val boardSelectionController = BoardSelectionController(
       context = context,

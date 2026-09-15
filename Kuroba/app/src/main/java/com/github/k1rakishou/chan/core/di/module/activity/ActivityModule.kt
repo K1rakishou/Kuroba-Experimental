@@ -9,6 +9,7 @@ import com.github.k1rakishou.chan.core.di.scope.PerActivity
 import com.github.k1rakishou.chan.core.helper.AppRestarter
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.helper.KurobaSystemNotifications
+import com.github.k1rakishou.chan.core.helper.NotificationsPermissionHelper
 import com.github.k1rakishou.chan.core.helper.ProxyStorage
 import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
 import com.github.k1rakishou.chan.core.helper.ThumbnailLongtapOptionsHelper
@@ -132,6 +133,23 @@ class ActivityModule {
     return RuntimePermissionsHelper(
       activity,
       dialogFactory
+    )
+  }
+
+  @PerActivity
+  @Provides
+  fun provideNotificationsPermissionHelper(
+    activity: AppCompatActivity,
+    kurobaSettings: KurobaSettings,
+    runtimePermissionsHelper: RuntimePermissionsHelper,
+    dialogFactory: DialogFactory
+  ): NotificationsPermissionHelper {
+    Logger.deps("NotificationsPermissionHelper")
+    return NotificationsPermissionHelper(
+      context = activity,
+      kurobaSettings = kurobaSettings,
+      runtimePermissionsHelper = runtimePermissionsHelper,
+      dialogFactory = dialogFactory
     )
   }
 
