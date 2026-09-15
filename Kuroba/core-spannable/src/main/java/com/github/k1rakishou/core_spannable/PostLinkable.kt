@@ -242,9 +242,14 @@ open class PostLinkable(
           append("/")
           append(threadId)
 
-          if (postId != null) {
+          if (postId != null && postId > 0) {
             append("#")
             append(postId)
+          }
+
+          if (postSubId != null && postSubId > 0) {
+            append(",")
+            append(postSubId)
           }
 
           append(CommentParserConstants.EXTERNAL_THREAD_LINK_SUFFIX)

@@ -209,31 +209,28 @@ open class DefaultPostParser(
       return null
     }
 
-    val postNoStr = matcher.groupOrNull(3)
-    var postNo: Long? = null
-    if (postNoStr != null) {
-      postNo = postNoStr.toLongOrNull()
-    }
-
-    if (postNo == null) {
-      return null
-    }
-
     val threadNo = threadNoStr.toLongOrNull()
     if (threadNo == null || threadNo <= 0) {
       return null
     }
 
-    if (postNo <= 0) {
+    var postNo = matcher.groupOrNull(3)
+      ?.toLongOrNull()
+
+    if (postNo != null && postNo <= 0) {
       postNo = threadNo
     }
+
+    val postSubNo = matcher.groupOrNull(4)
+      ?.toLongOrNull()
+      ?: 0L
 
     val archiveThreadLink = ArchiveThreadLink(
       archiveType = archiveType,
       board = boardCode,
       threadId = threadNo,
       postId = postNo,
-      postSubId = 0L
+      postSubId = postSubNo
     )
 
     return PostLinkable(
