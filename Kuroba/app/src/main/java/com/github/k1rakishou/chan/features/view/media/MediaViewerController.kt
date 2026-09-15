@@ -81,6 +81,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.measureTime
 
 class MediaViewerController(
   context: Context,
@@ -384,7 +385,10 @@ class MediaViewerController(
     postPopupHelper.popAll()
     globalWindowInsetsManager.removeInsetsUpdatesListener(this)
 
-    mediaViewerAdapter?.onDestroy()
+    // Unbinds all media views which releases their players (mpv, ExoPlayer, sound posts)
+    val adapterDestroyDuration = measureTime { mediaViewerAdapter?.onDestroy() }
+    Logger.d(TAG, "onDestroy() mediaViewerAdapter.onDestroy() took ${adapterDestroyDuration}")
+
     mediaLongClickMenuHelper.onDestroy()
     mediaViewerToolbar.onDestroy()
 
@@ -392,7 +396,8 @@ class MediaViewerController(
     pager.removeOnPageChangeListener(this)
     pager.adapter = null
 
-    ExoPlayerWrapper.releaseAll()
+    val releaseAllDuration = measureTime { ExoPlayerWrapper.releaseAll() }
+    Logger.d(TAG, "onDestroy() ExoPlayerWrapper.releaseAll() took ${releaseAllDuration}")
   }
 
   override fun onConfigurationChanged(newConfig: Configuration) {

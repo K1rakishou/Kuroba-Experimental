@@ -17,6 +17,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.util.ChanPostUtils
 import java.io.File
 import kotlin.reflect.KProperty
+import kotlin.time.measureTime
 
 /**
  * Taken from https://github.com/mpv-android/mpv-android
@@ -159,7 +160,9 @@ class MPVView(
         // Otherwise the next playFile() thinks the surface is attached and calls loadfile before the new
         // surface is available which makes mpv fail to initialize the video output.
         surfaceAttached = false
-        MPVLib.mpvDestroy()
+
+        val duration = measureTime { MPVLib.mpvDestroy() }
+        Logger.d(TAG, "destroy() MPVLib.mpvDestroy() took ${duration}")
 
         _initialized = false
     }

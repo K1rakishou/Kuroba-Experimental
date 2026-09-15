@@ -4,8 +4,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Point
+import android.os.Build
 import android.os.Bundle
 import android.view.MotionEvent
+import android.view.WindowManager
 import android.webkit.URLUtil
 import androidx.core.os.bundleOf
 import androidx.lifecycle.lifecycleScope
@@ -38,6 +40,7 @@ import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.measureTime
 
 class MediaViewerActivity :
   ControllerHostActivity(),
@@ -136,16 +139,28 @@ class MediaViewerActivity :
   }
 
   override fun onPause() {
-    super.onPause()
+    val duration = measureTime {
+      super.onPause()
 
-    if (::mediaViewerController.isInitialized) {
-      mediaViewerController.onPause()
+      if (::mediaViewerController.isInitialized) {
+        mediaViewerController.onPause()
+      }
     }
+
+    Logger.d(TAG, "onPause() took ${duration}")
   }
 
   override fun onDestroy() {
-    super.onDestroy()
+    val duration = measureTime {
+      // Destroys the controllers (which release the players)
+      super.onDestroy()
+      onDestroyInternal()
+    }
 
+    Logger.d(TAG, "onDestroy() took ${duration}")
+  }
+
+  private fun onDestroyInternal() {
     if (::themeEngine.isInitialized) {
       themeEngine.removeRootView(this)
       themeEngine.removeListener(this)
@@ -165,9 +180,21 @@ class MediaViewerActivity :
   }
 
   override fun finish() {
+    // The media viewer is a translucent activity. After finish() its (already invisible) window stays on top until
+    // the system removes it which may take a while (vendor close animations, players being released on the main
+    // thread). Let the touches through to whatever is behind it right away.
+    window.addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+      overrideActivityTransition(OVERRIDE_TRANSITION_CLOSE, 0, 0)
+    }
+
     super.finish()
 
-    overridePendingTransition(0, 0)
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+      @Suppress("DEPRECATION")
+      overridePendingTransition(0, 0)
+    }
   }
 
   override fun onNewIntent(intent: Intent) {

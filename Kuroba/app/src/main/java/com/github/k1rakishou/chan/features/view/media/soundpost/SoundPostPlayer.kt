@@ -47,6 +47,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.math.abs
 import kotlin.math.min
+import kotlin.time.measureTime
 
 class SoundPostPlayer(
   private val context: Context,
@@ -175,7 +176,12 @@ class SoundPostPlayer(
     loadJob = null
     scope.cancelChildren()
 
-    audioPlayer?.release()
+    val player = audioPlayer
+    if (player != null) {
+      val duration = measureTime { player.release() }
+      Logger.d(TAG, "release() audio player release took ${duration}")
+    }
+
     audioPlayer = null
 
     _uiState.value = UiState.Hidden

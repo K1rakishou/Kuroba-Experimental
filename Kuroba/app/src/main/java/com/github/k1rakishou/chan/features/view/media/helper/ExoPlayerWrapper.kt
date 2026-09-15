@@ -33,6 +33,7 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeout
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
+import kotlin.time.measureTime
 
 
 class ExoPlayerWrapper(
@@ -209,9 +210,13 @@ class ExoPlayerWrapper(
   fun release() {
     _hasContent = false
 
-    synchronized(reusableExoPlayer) {
-      reusableExoPlayer.giveBack()
+    val duration = measureTime {
+      synchronized(reusableExoPlayer) {
+        reusableExoPlayer.giveBack()
+      }
     }
+
+    Logger.d(TAG, "release() giving the player back took ${duration}")
 
     timelineUpdateJob?.cancel()
     timelineUpdateJob = null
@@ -339,8 +344,8 @@ class ExoPlayerWrapper(
 
     fun releaseAll() {
       reusableExoPlayerCache.forEachIndexed { index, reusableExoPlayer ->
-        Logger.d(TAG, "releaseAll() releasing ${index + 1} / ${reusableExoPlayerCache.size} player")
-        reusableExoPlayer.releaseCompletely()
+        val duration = measureTime { reusableExoPlayer.releaseCompletely() }
+        Logger.d(TAG, "releaseAll() released ${index + 1} / ${reusableExoPlayerCache.size} player, took ${duration}")
       }
 
       reusableExoPlayerCache.clear()
