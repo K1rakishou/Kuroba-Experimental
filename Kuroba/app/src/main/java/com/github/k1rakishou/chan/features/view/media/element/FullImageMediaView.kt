@@ -202,6 +202,7 @@ class FullImageMediaView(
       ThumbnailMediaView.ThumbnailMediaViewParameters(
         isOriginalMediaPlayable = false,
         viewableMedia = viewableMedia,
+        isMainMediaLoaded = { hasContent },
       ),
       onThumbnailFullyLoaded = {
         onThumbnailFullyLoadedFunc()

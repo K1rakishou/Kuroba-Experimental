@@ -233,6 +233,7 @@ class ExoPlayerVideoMediaView(
       ThumbnailMediaView.ThumbnailMediaViewParameters(
         isOriginalMediaPlayable = true,
         viewableMedia = viewableMedia,
+        isMainMediaLoaded = { hasContent },
       ),
       onThumbnailFullyLoaded = {
         onThumbnailFullyLoadedFunc()

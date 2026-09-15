@@ -146,7 +146,7 @@ class ThumbnailMediaView @JvmOverloads constructor(
         requestDisposable = null
 
         setError(getString(R.string.image_not_found))
-        onThumbnailImageNotFoundError()
+        onThumbnailImageNotFoundError(parameters)
         onThumbnailFullyLoaded()
       }
 
@@ -154,7 +154,7 @@ class ThumbnailMediaView @JvmOverloads constructor(
         requestDisposable = null
 
         setError(error.errorMessageOrClassName())
-        onThumbnailImageError(error)
+        onThumbnailImageError(error, parameters)
         onThumbnailFullyLoaded()
       }
     }
@@ -170,18 +170,18 @@ class ThumbnailMediaView @JvmOverloads constructor(
     )
   }
 
-  private fun onThumbnailImageNotFoundError() {
+  private fun onThumbnailImageNotFoundError(parameters: ThumbnailMediaViewParameters) {
     Logger.e(TAG, "onThumbnailImageNotFoundError()")
 
-    if (currentlyVisible) {
+    if (currentlyVisible && !parameters.isMainMediaLoaded()) {
       snackbarManager.toast(messageId = R.string.image_not_found)
     }
   }
 
-  private fun onThumbnailImageError(exception: Throwable) {
+  private fun onThumbnailImageError(exception: Throwable, parameters: ThumbnailMediaViewParameters) {
     Logger.e(TAG, "onThumbnailImageError()", exception)
 
-    if (exception.isExceptionImportant() && currentlyVisible) {
+    if (exception.isExceptionImportant() && currentlyVisible && !parameters.isMainMediaLoaded()) {
       snackbarManager.toast(
         message = getString(R.string.image_image_thumbnail_load_failed, exception.errorMessageOrClassName())
       )
@@ -213,7 +213,12 @@ class ThumbnailMediaView @JvmOverloads constructor(
 
   data class ThumbnailMediaViewParameters(
     val isOriginalMediaPlayable: Boolean,
-    val viewableMedia: ViewableMedia
+    val viewableMedia: ViewableMedia,
+    /**
+     * The thumbnail is only a placeholder. Once the main media (image/gif/video) has been loaded or has started
+     * playing, a failed thumbnail doesn't matter anymore so there is no need to show an error toast.
+     * */
+    val isMainMediaLoaded: () -> Boolean
   )
 
   companion object {
