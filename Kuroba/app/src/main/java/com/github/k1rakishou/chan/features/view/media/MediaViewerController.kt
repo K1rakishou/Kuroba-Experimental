@@ -247,14 +247,8 @@ class MediaViewerController(
           currentChanDescriptor = currentChanDescriptor,
           linkable = linkable,
           onQuoteClicked = { postDescriptor ->
-            val postDescriptor = when (currentChanDescriptor) {
-              is ChanDescriptor.CompositeCatalogDescriptor -> {
-                error("Cannot use CompositeCatalogDescriptor here")
-              }
-              is ChanDescriptor.CatalogDescriptor -> postDescriptor
-              is ChanDescriptor.ThreadDescriptor -> postDescriptor
-            }
-
+            // The post descriptor is created from the thread of the post containing the quote so it works with any
+            // kind of currentChanDescriptor (including composite catalogs)
             showPost(postDescriptor)
           },
           onQuoteToHiddenOrRemovedPostClicked = { notSupported() },

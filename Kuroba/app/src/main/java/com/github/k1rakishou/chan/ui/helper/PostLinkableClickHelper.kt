@@ -46,8 +46,12 @@ class PostLinkableClickHelper(
         return
       }
 
+      // A quote always points to a post in the same thread as the post containing it. Don't use currentChanDescriptor
+      // here because the post may belong to a different thread than the one currently opened (e.g. a thread previewed
+      // from an archive: 4chan thread is opened but the post is from the desuarchive thread) which would resolve the
+      // quote to a post in the wrong thread.
       val postDescriptor = PostDescriptor.create(
-        chanDescriptor = currentChanDescriptor,
+        chanDescriptor = currentThreadDescriptor,
         postNo = postId.postNo,
         postSubNo = postId.postSubNo
       )
@@ -63,8 +67,9 @@ class PostLinkableClickHelper(
         return
       }
 
+      // Same as with regular quotes, the quoted post is in the same thread as the post containing the quote
       val postDescriptor = PostDescriptor.create(
-        chanDescriptor = currentChanDescriptor,
+        chanDescriptor = currentThreadDescriptor,
         postNo = postId.postNo,
         postSubNo = postId.postSubNo
       )
