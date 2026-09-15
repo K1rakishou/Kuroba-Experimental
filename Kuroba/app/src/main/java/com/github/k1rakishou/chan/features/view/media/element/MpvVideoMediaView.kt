@@ -107,6 +107,39 @@ class MpvVideoMediaView(
   private var playing = false
   private var lastDisplayedDurationSeconds = -1
 
+  // Between MPV_EVENT_FILE_LOADED and MPV_EVENT_END_FILE
+  private var mpvFileLoaded = false
+
+  // Between MPV_EVENT_START_FILE and MPV_EVENT_END_FILE
+  private var mpvFileStarted = false
+  private var loadFailureCheckJob: Job? = null
+
+  // Playback is stuck waiting for the network (a seek that can't read data, cache underrun)
+  private var mpvSeeking = false
+  private var mpvPausedForCache = false
+  private var stallIndicatorJob: Job? = null
+  private var stallIndicatorShown = false
+  private var lastStallCheckTimeMs = 0L
+
+  // The last error message logged by mpv since the current file was started. Written on the mpv event thread.
+  @Volatile
+  private var lastMpvErrorMessage: String? = null
+
+  private val mpvLogObserver = MPVLib.LogObserver { prefix, level, text ->
+    // mpv is global, only collect errors while this page is the one using it
+    // Only FATAL and ERROR. NONE is not a real message level (it's only used to disable logging) but skip it
+    // just in case.
+    val isError = level > MPVLib.mpvLogLevel.MPV_LOG_LEVEL_NONE && level <= MPVLib.mpvLogLevel.MPV_LOG_LEVEL_ERROR
+    if (!shown || !isError) {
+      return@LogObserver
+    }
+
+    val message = text.trim()
+    if (message.isNotEmpty()) {
+      lastMpvErrorMessage = "[${prefix}] ${message}"
+    }
+  }
+
   private val playbackProgressTracker = MpvPlaybackProgressTracker()
 
   override val soundPostControlledByMediaControls: Boolean = true
@@ -345,6 +378,8 @@ class MpvVideoMediaView(
 
   override fun unbind() {
     destroyPlayer(isPausing = false, isDestroying = true, isBecomingInactive = false)
+    // destroyPlayer() skips the cleanup when nothing is playing, MPVLib keeps observers in a static list
+    MPVLib.removeLogObserver(mpvLogObserver)
 
     thumbnailMediaView.unbind()
     closeMediaActionHelper.onDestroy()
@@ -426,8 +461,15 @@ class MpvVideoMediaView(
     }
 
     stopPlaybackPosUpdates()
+    mpvFileLoaded = false
+    mpvFileStarted = false
+    resetStallState()
+    loadFailureCheckJob?.cancel()
+    loadFailureCheckJob = null
+
     actualVideoPlayerView.destroy()
     actualVideoPlayerView.removeObserver(this)
+    MPVLib.removeLogObserver(mpvLogObserver)
 
     thumbnailMediaView.setVisibilityFast(VISIBLE)
     actualVideoPlayerView.setVisibilityFast(GONE)
@@ -453,7 +495,7 @@ class MpvVideoMediaView(
           startPlaybackPosUpdates()
 
           startSoundPostPlayback(
-            target = MpvSyncTarget(actualVideoPlayerView),
+            target = MpvSyncTarget(actualVideoPlayerView, isFileLoaded = { mpvFileLoaded }),
             isForced = isForced,
             isLifecycleChange = isLifecycleChange
           )
@@ -495,6 +537,9 @@ class MpvVideoMediaView(
           mpvUseConfigFile = viewModel.mpvUseConfigFile()
         )
         actualVideoPlayerView.addObserver(this@MpvVideoMediaView)
+        // Remove first to never register the same observer twice
+        MPVLib.removeLogObserver(mpvLogObserver)
+        MPVLib.addLogObserver(mpvLogObserver)
 
         if (!isLifecycleChange && viewModel.videoAlwaysResetToStart()) {
           mediaViewState.resetPosition()
@@ -508,7 +553,7 @@ class MpvVideoMediaView(
 
         // The target is not ready until mpv loads the file, the sound will wait for it
         startSoundPostPlayback(
-          target = MpvSyncTarget(actualVideoPlayerView),
+          target = MpvSyncTarget(actualVideoPlayerView, isFileLoaded = { mpvFileLoaded }),
           isForced = isForced,
           isLifecycleChange = isLifecycleChange
         )
@@ -601,6 +646,7 @@ class MpvVideoMediaView(
       }
       MPVLib.mpvEventId.MPV_EVENT_FILE_LOADED -> {
         Logger.d(TAG, "onEvent MPV_EVENT_FILE_LOADED")
+        mpvFileLoaded = true
 
         if (mediaViewContract.isSoundCurrentlyMuted()) {
           actualVideoPlayerView.muteUnmute(true)
@@ -610,12 +656,34 @@ class MpvVideoMediaView(
       }
       MPVLib.mpvEventId.MPV_EVENT_START_FILE -> {
         Logger.d(TAG, "onEvent MPV_EVENT_START_FILE")
+        mpvFileLoaded = false
+        mpvFileStarted = true
+        lastMpvErrorMessage = null
+        resetStallState()
+
+        loadFailureCheckJob?.cancel()
+        loadFailureCheckJob = null
       }
       MPVLib.mpvEventId.MPV_EVENT_END_FILE -> {
         Logger.d(TAG, "onEvent MPV_EVENT_END_FILE")
+
+        if (mpvFileLoaded) {
+          // One last update so that the seekbar reaches the end
+          updatePlaybackPos()
+        } else if (mpvFileStarted) {
+          // The file has ended before it was loaded: either mpv failed to open it (network error, bad file
+          // etc.) or another file has replaced it.
+          checkVideoLoadFailed()
+        }
+
+        mpvFileLoaded = false
+        mpvFileStarted = false
+        resetStallState()
       }
       MPVLib.mpvEventId.MPV_EVENT_SHUTDOWN -> {
         Logger.d(TAG, "onEvent MPV_EVENT_SHUTDOWN")
+        mpvFileLoaded = false
+        resetStallState()
       }
       MPVLib.mpvEventId.MPV_EVENT_NONE,
       MPVLib.mpvEventId.MPV_EVENT_LOG_MESSAGE,
@@ -754,6 +822,99 @@ class MpvVideoMediaView(
     mpvPlayPause.setImageResource(imageDrawable)
   }
 
+  private fun pollStallState() {
+    // "seeking" stays true until the playback restarts after a seek (e.g. a seek that can't read from the
+    // network), "paused-for-cache" is true while the playback waits for the cache to fill up.
+    mpvSeeking = MPVLib.mpvGetPropertyBoolean("seeking") == true
+    mpvPausedForCache = MPVLib.mpvGetPropertyBoolean("paused-for-cache") == true
+
+    updateStallIndicator()
+  }
+
+  private fun updateStallIndicator() {
+    // Before the file is loaded the initial loading indicator (showBufferingJob) is used instead
+    val stalled = mpvFileLoaded && (mpvSeeking || mpvPausedForCache)
+
+    if (stalled) {
+      if (stallIndicatorShown || stallIndicatorJob != null) {
+        return
+      }
+
+      stallIndicatorJob = scope.launch {
+        // Don't flicker on normal (fast) seeks
+        delay(STALL_INDICATOR_DELAY_MS)
+        stallIndicatorJob = null
+
+        if (shown && mpvFileLoaded && (mpvSeeking || mpvPausedForCache)) {
+          stallIndicatorShown = true
+          bufferingProgressView.setVisibilityFast(VISIBLE)
+        }
+      }
+
+      return
+    }
+
+    hideStallIndicator()
+  }
+
+  private fun hideStallIndicator() {
+    stallIndicatorJob?.cancel()
+    stallIndicatorJob = null
+
+    if (stallIndicatorShown) {
+      stallIndicatorShown = false
+      bufferingProgressView.setVisibilityFast(INVISIBLE)
+    }
+  }
+
+  private fun resetStallState() {
+    mpvSeeking = false
+    mpvPausedForCache = false
+    hideStallIndicator()
+  }
+
+  private fun checkVideoLoadFailed() {
+    loadFailureCheckJob?.cancel()
+    loadFailureCheckJob = scope.launch {
+      // When a file is replaced by another one (loadfile) mpv immediately starts the next file. When loading
+      // has failed there is no next file and mpv becomes idle. Give it a moment to get there.
+      delay(LOAD_FAILURE_CHECK_DELAY_MS)
+      loadFailureCheckJob = null
+
+      if (!shown || !playing || mpvFileStarted || mpvFileLoaded || !isMpvOwnedByThisView()) {
+        return@launch
+      }
+
+      if (MPVLib.mpvGetPropertyBoolean("idle-active") != true) {
+        return@launch
+      }
+
+      onVideoLoadFailed(lastMpvErrorMessage)
+    }
+  }
+
+  private fun onVideoLoadFailed(mpvErrorMessage: String?) {
+    val reason = mpvErrorMessage ?: getString(R.string.mpv_unknown_error)
+    Logger.e(TAG, "onVideoLoadFailed(${viewableMedia.mediaLocation}) reason: ${reason}")
+
+    showBufferingJob?.cancel()
+    showBufferingJob = null
+    bufferingProgressView.setVisibilityFast(INVISIBLE)
+
+    // Stop mpv so that it doesn't keep hanging around idle, the user can tap the thumbnail to retry
+    destroyPlayer(isPausing = false, isDestroying = true, isBecomingInactive = false)
+    _firstLoadOccurred = false
+
+    this.mpvErrorMessage.text = getString(R.string.mpv_failed_to_load_video, reason)
+    this.mpvErrorMessage.setVisibilityFast(VISIBLE)
+
+    // Same toast id so that repeated failures replace the snackbar instead of stacking new ones
+    snackbarManager.errorToast(
+      message = getString(R.string.image_failed_video_error, reason),
+      toastId = VIDEO_LOAD_ERROR_TOAST_ID
+    )
+  }
+
   private fun isMpvOwnedByThisView(): Boolean {
     // mpv is a global instance, only touch it while our MPVView is the one using it
     return MPVLib.librariesAreLoaded()
@@ -769,7 +930,21 @@ class MpvVideoMediaView(
         // Once per UI frame so that the seekbar handle moves smoothly
         awaitFrame()
 
-        if (shown && mpvControlsRoot.visibility == VISIBLE) {
+        // Don't poll until mpv has loaded the file, all properties are unavailable until then
+        if (!shown || !mpvFileLoaded || !isMpvOwnedByThisView()) {
+          continue
+        }
+
+        // Polled instead of observed because mpv doesn't reliably send change events for "seeking" (no event is
+        // received when a seek gets stuck reading from the network). Done even when the controls are hidden
+        // because the buffering indicator is visible regardless.
+        val nowMs = SystemClock.elapsedRealtime()
+        if (nowMs - lastStallCheckTimeMs >= STALL_CHECK_INTERVAL_MS) {
+          lastStallCheckTimeMs = nowMs
+          pollStallState()
+        }
+
+        if (mpvControlsRoot.visibility == VISIBLE) {
           updatePlaybackPos()
         }
       }
@@ -1015,6 +1190,10 @@ class MpvVideoMediaView(
 
   companion object {
     private const val TAG = "MpvVideoMediaView"
+    private const val LOAD_FAILURE_CHECK_DELAY_MS = 250L
+    private const val VIDEO_LOAD_ERROR_TOAST_ID = "mpv_video_load_error_toast"
+    private const val STALL_INDICATOR_DELAY_MS = 500L
+    private const val STALL_CHECK_INTERVAL_MS = 100L
 
     private const val ACTION_VIDEO_FAST_DECODE = 0
     private const val ACTION_USE_GPU_NEXT_VO = 1

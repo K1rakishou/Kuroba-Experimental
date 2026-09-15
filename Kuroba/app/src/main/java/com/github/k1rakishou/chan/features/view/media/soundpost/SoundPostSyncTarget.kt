@@ -77,10 +77,16 @@ class ExoPlayerSyncTarget(
 }
 
 class MpvSyncTarget(
-  private val mpvView: MPVView
+  private val mpvView: MPVView,
+  private val isFileLoaded: () -> Boolean
 ) : SoundPostSyncTarget {
 
   override fun isReady(): Boolean {
+    // All properties are unavailable until the file is loaded, don't spam mpv with requests
+    if (!isFileLoaded()) {
+      return false
+    }
+
     // mpv is a global instance. It only belongs to us while our MPVView is initialized and attached.
     if (!MPVLib.librariesAreLoaded() || !MPVLib.isCreated()) {
       return false

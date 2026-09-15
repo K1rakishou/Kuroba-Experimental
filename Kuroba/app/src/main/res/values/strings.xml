@@ -247,6 +247,8 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="image_tile_load_failed">Failed to load image tile (reason: %1$s)</string>
     <string name="image_failed_gif_error">Failed to load gif (reason: %1$s)</string>
     <string name="image_failed_video_error">Failed to load video (reason: %1$s)</string>
+    <string name="mpv_failed_to_load_video">Failed to load video\n\n%1$s\n\nTap to retry</string>
+    <string name="mpv_unknown_error">unknown error</string>
     <string name="image_not_found">Image not found</string>
 
     <string name="media_viewer_error_loading_bg_audio">Failed to load sound post audio, error=\'%1$s\'</string>

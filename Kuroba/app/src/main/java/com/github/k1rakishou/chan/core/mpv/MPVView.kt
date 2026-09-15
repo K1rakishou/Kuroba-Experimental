@@ -94,6 +94,8 @@ class MPVView(
         MPVLib.mpvSetOptionString("ao", "audiotrack,opensles")
 
         val mpvCertFile = File(appConstants.mpvCertDir, AppConstants.MPV_CERTIFICATE_FILE_NAME)
+        // The default is 60 seconds which makes the player look stuck when there is no network
+        MPVLib.mpvSetOptionString("network-timeout", "$NETWORK_TIMEOUT_SECONDS")
         MPVLib.mpvSetOptionString("tls-verify", "yes")
         MPVLib.mpvSetOptionString("tls-ca-file", mpvCertFile.path)
 
@@ -157,6 +159,10 @@ class MPVView(
 
         // Disable surface callbacks to avoid using unintialized mpv state
         surfaceTextureListener = null
+        // onSurfaceTextureDestroyed() won't be called anymore (no listener) so the flag must be reset here.
+        // Otherwise the next playFile() thinks the surface is attached and calls loadfile before the new
+        // surface is available which makes mpv fail to initialize the video output.
+        surfaceAttached = false
         MPVLib.mpvDestroy()
 
         _initialized = false
@@ -407,5 +413,6 @@ class MPVView(
 
     companion object {
         private const val TAG = "MPVView"
+        private const val NETWORK_TIMEOUT_SECONDS = 20
     }
 }
