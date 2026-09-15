@@ -121,6 +121,11 @@ class MpvVideoMediaView(
   private var stallIndicatorShown = false
   private var lastStallCheckTimeMs = 0L
 
+  // Requested HW/SW decoding while mpv is switching the decoder
+  private var requestedHardwareDecoding: Boolean? = null
+  private var requestedHardwareDecodingTimeMs = 0L
+  private var lastPlayPauseShowsPlayIcon: Boolean? = null
+
   // The last error message logged by mpv since the current file was started. Written on the mpv event thread.
   @Volatile
   private var lastMpvErrorMessage: String? = null
@@ -196,26 +201,47 @@ class MpvVideoMediaView(
       }
     }
 
-    @Suppress("ForbiddenComment")
     mpvHwSw.setOnClickListener {
       scope.launch {
-        // TODO: HW+
-        if (actualVideoPlayerView.hwdecActive) {
-          snackbarManager.toast(messageId = R.string.mpv_switching_to_sw_decoding)
-          viewModel.updateHardwareDecoding(false)
-        } else {
-          snackbarManager.toast(messageId = R.string.mpv_switching_to_hw_decoding)
-          viewModel.updateHardwareDecoding(true)
+        if (!mpvFileLoaded || !isMpvOwnedByThisView()) {
+          return@launch
         }
 
-        actualVideoPlayerView.cycleHwdec()
+        // Toggle what is currently displayed (which is the requested value while a switch is in progress)
+        // instead of hwdec-current which only changes once mpv has re-initialized the decoder.
+        val enableHardwareDecoding = !isHardwareDecodingDisplayed()
+
+        if (enableHardwareDecoding) {
+          snackbarManager.toast(messageId = R.string.mpv_switching_to_hw_decoding, toastId = HWDEC_TOAST_ID)
+        } else {
+          snackbarManager.toast(messageId = R.string.mpv_switching_to_sw_decoding, toastId = HWDEC_TOAST_ID)
+        }
+
+        viewModel.updateHardwareDecoding(enableHardwareDecoding)
+        actualVideoPlayerView.setHardwareDecoding(enableHardwareDecoding)
+
+        requestedHardwareDecoding = enableHardwareDecoding
+        requestedHardwareDecodingTimeMs = SystemClock.elapsedRealtime()
+        updateDecoderButton()
       }
     }
     mpvPlayPause.setOnClickListener {
-      if (playJob == null && !playing) {
-        startPlayingVideo(isLifecycleChange = false, isForced = true)
-      } else if (playing) {
-        actualVideoPlayerView.cyclePause()
+      when {
+        playJob == null && !playing -> {
+          startPlayingVideo(isLifecycleChange = false, isForced = true)
+        }
+        playing && mpvFileLoaded && isMpvOwnedByThisView() -> {
+          actualVideoPlayerView.cyclePause()
+          updatePlayPauseButton()
+        }
+        playing && !mpvFileStarted && isMpvOwnedByThisView() -> {
+          // The video has ended (loop disabled) and mpv is idle, "cycle pause" does nothing in this state.
+          // Load the file again to play it from the start.
+          scope.launch {
+            mediaViewState.resetPosition()
+            setFileToPlay(context)
+          }
+        }
       }
     }
 
@@ -406,7 +432,8 @@ class MpvVideoMediaView(
       return
     }
 
-    BackgroundUtils.runOnMainThread { eventPropertyUi(property, value) }
+    // The value itself is not used, the UI reads the current state from mpv (see updatePlayPauseButton())
+    BackgroundUtils.runOnMainThread { booleanPropertyChangedUi(property) }
   }
 
   override fun eventProperty(property: String, value: Long) {
@@ -476,6 +503,8 @@ class MpvVideoMediaView(
 
     actualVideoPlayerViewContainer.removeAllViews()
     playing = false
+    requestedHardwareDecoding = null
+    updatePlayPauseButton()
   }
 
   private fun startPlayingVideo(isLifecycleChange: Boolean, isForced: Boolean) {
@@ -626,12 +655,8 @@ class MpvVideoMediaView(
           mpvMuteUnmute.setEnabledFast(false)
         }
 
-        if (actualVideoPlayerView.hwdecActive) {
-          mpvHwSw.text = getString(R.string.mpv_hw_decoding)
-        } else {
-          mpvHwSw.text = getString(R.string.mpv_sw_decoding)
-        }
-
+        updateDecoderButton()
+        updatePlayPauseButton()
         updateMuteUnmuteButtonState()
 
         bufferingProgressView.setVisibilityFast(INVISIBLE)
@@ -647,6 +672,7 @@ class MpvVideoMediaView(
       MPVLib.mpvEventId.MPV_EVENT_FILE_LOADED -> {
         Logger.d(TAG, "onEvent MPV_EVENT_FILE_LOADED")
         mpvFileLoaded = true
+        updatePlayPauseButton()
 
         if (mediaViewContract.isSoundCurrentlyMuted()) {
           actualVideoPlayerView.muteUnmute(true)
@@ -679,6 +705,7 @@ class MpvVideoMediaView(
         mpvFileLoaded = false
         mpvFileStarted = false
         resetStallState()
+        updatePlayPauseButton()
       }
       MPVLib.mpvEventId.MPV_EVENT_SHUTDOWN -> {
         Logger.d(TAG, "onEvent MPV_EVENT_SHUTDOWN")
@@ -733,13 +760,13 @@ class MpvVideoMediaView(
     }
   }
 
-  private fun eventPropertyUi(property: String, value: Boolean) {
+  private fun booleanPropertyChangedUi(property: String) {
     if (!shown) {
       return
     }
 
     when (property) {
-      "pause" -> updatePlaybackStatus(value)
+      "pause" -> updatePlayPauseButton()
     }
   }
 
@@ -812,8 +839,25 @@ class MpvVideoMediaView(
     }
   }
 
-  private fun updatePlaybackStatus(paused: Boolean) {
-    val imageDrawable = if (paused) {
+  /**
+   * The icon is derived from the actual player state instead of the "pause" change events alone. Those events
+   * are dropped while the page is hidden and the initial value is sent before the observer is registered. Also
+   * when the video has ended (loop disabled) mpv is not paused but nothing is playing.
+   * */
+  private fun updatePlayPauseButton() {
+    val showPlayIcon = if (playing && mpvFileLoaded && isMpvOwnedByThisView()) {
+      actualVideoPlayerView.paused ?: true
+    } else {
+      true
+    }
+
+    if (showPlayIcon == lastPlayPauseShowsPlayIcon) {
+      return
+    }
+
+    lastPlayPauseShowsPlayIcon = showPlayIcon
+
+    val imageDrawable = if (showPlayIcon) {
       com.google.android.exoplayer2.ui.R.drawable.exo_controls_play
     } else {
       com.google.android.exoplayer2.ui.R.drawable.exo_controls_pause
@@ -942,6 +986,7 @@ class MpvVideoMediaView(
         if (nowMs - lastStallCheckTimeMs >= STALL_CHECK_INTERVAL_MS) {
           lastStallCheckTimeMs = nowMs
           pollStallState()
+          updatePlayPauseButton()
         }
 
         if (mpvControlsRoot.visibility == VISIBLE) {
@@ -993,12 +1038,38 @@ class MpvVideoMediaView(
     }
   }
 
+  /**
+   * Whether "HW" is displayed. While a switch is in progress the requested value is displayed because
+   * hwdec-current only changes once mpv has re-initialized the decoder.
+   * */
+  private fun isHardwareDecodingDisplayed(): Boolean {
+    val actualHardwareDecoding = actualVideoPlayerView.hwdecActive
+    val requested = requestedHardwareDecoding
+      ?: return actualHardwareDecoding
+
+    val switchCompleted = actualHardwareDecoding == requested
+    val switchTimedOut = SystemClock.elapsedRealtime() - requestedHardwareDecodingTimeMs > HWDEC_SWITCH_MAX_WAIT_MS
+
+    if (!switchCompleted && !switchTimedOut) {
+      return requested
+    }
+
+    requestedHardwareDecoding = null
+
+    if (!switchCompleted && requested) {
+      // mpv silently falls back to software decoding when the codec is not supported by mediacodec
+      snackbarManager.toast(messageId = R.string.mpv_hardware_decoding_not_supported, toastId = HWDEC_TOAST_ID)
+    }
+
+    return actualHardwareDecoding
+  }
+
   private fun updateDecoderButton() {
-    if (mpvHwSw.visibility != VISIBLE) {
+    if (mpvHwSw.visibility != VISIBLE || !mpvFileLoaded || !isMpvOwnedByThisView()) {
       return
     }
 
-    val text = if (actualVideoPlayerView.hwdecActive) {
+    val text = if (isHardwareDecodingDisplayed()) {
       getString(R.string.mpv_hw_decoding)
     } else {
       getString(R.string.mpv_sw_decoding)
@@ -1194,6 +1265,8 @@ class MpvVideoMediaView(
     private const val VIDEO_LOAD_ERROR_TOAST_ID = "mpv_video_load_error_toast"
     private const val STALL_INDICATOR_DELAY_MS = 500L
     private const val STALL_CHECK_INTERVAL_MS = 100L
+    private const val HWDEC_SWITCH_MAX_WAIT_MS = 2000L
+    private const val HWDEC_TOAST_ID = "mpv_hwdec_toast"
 
     private const val ACTION_VIDEO_FAST_DECODE = 0
     private const val ACTION_USE_GPU_NEXT_VO = 1

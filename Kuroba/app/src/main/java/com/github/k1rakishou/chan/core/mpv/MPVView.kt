@@ -62,11 +62,7 @@ class MPVView(
         setupMpvConf(applicationContext, mpvUseConfigFile)
 
         // hwdec
-        val hwdec = if (hardwareDecoding) {
-            "mediacodec,mediacodec-copy"
-        } else {
-            "no"
-        }
+        val hwdec = hwdecValue(hardwareDecoding)
 
         Logger.d(TAG, "initOptions() hwdec: $hwdec")
 
@@ -364,7 +360,9 @@ class MPVView(
         }
     }
 
-    fun cycleHwdec() = MPVLib.mpvCommand(arrayOf("cycle-values", "hwdec", "mediacodec-copy", "no"))
+    fun setHardwareDecoding(enabled: Boolean) {
+        MPVLib.mpvSetPropertyString("hwdec", hwdecValue(enabled))
+    }
 
     fun cycleSpeed() {
         val speeds = arrayOf(0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0)
@@ -414,5 +412,9 @@ class MPVView(
     companion object {
         private const val TAG = "MPVView"
         private const val NETWORK_TIMEOUT_SECONDS = 20
+
+        private fun hwdecValue(enabled: Boolean): String {
+            return if (enabled) "mediacodec,mediacodec-copy" else "no"
+        }
     }
 }

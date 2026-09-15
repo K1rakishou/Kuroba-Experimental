@@ -1459,6 +1459,7 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="mpv_sw_decoding">SW</string>
     <string name="mpv_switching_to_sw_decoding">Switching to software decoding</string>
     <string name="mpv_switching_to_hw_decoding">Switching to hardware decoding</string>
+    <string name="mpv_hardware_decoding_not_supported">Hardware decoding is not supported for this video, using software decoding</string>
     <string name="mpv_fast_video_decoding">Fast video decoding mode</string>
     <string name="mpv_use_gpu_next_vo">Use gpu_next video output</string>
     <string name="mpv_library_load_error">Failed to load mpv native libraries.
