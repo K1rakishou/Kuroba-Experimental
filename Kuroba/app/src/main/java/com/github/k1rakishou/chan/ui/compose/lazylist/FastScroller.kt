@@ -24,6 +24,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerEventPass
@@ -345,6 +346,45 @@ suspend fun <
   scrollbarWidth: Int,
   onScrollbarDragStateUpdated: (Float?) -> Unit
 ) {
+  // Fully qualified because the coroutineScope parameter shadows the coroutineScope {} builder
+  kotlinx.coroutines.coroutineScope {
+    processFastScrollerInputsInternal(
+      globalUiStateHolder = globalUiStateHolder,
+      lazyStateWrapper = lazyStateWrapper,
+      width = width,
+      paddingTop = paddingTop,
+      paddingBottom = paddingBottom,
+      scrollbarWidth = scrollbarWidth,
+      launchScope = coroutineScope,
+      trackerScope = this,
+      onScrollbarDragStateUpdated = onScrollbarDragStateUpdated
+    )
+  }
+}
+
+private suspend fun <
+  ItemInfo : LazyItemInfoWrapper,
+  LayoutInfo : LazyLayoutInfoWrapper<ItemInfo>
+> PointerInputScope.processFastScrollerInputsInternal(
+  globalUiStateHolder: GlobalUiStateHolder,
+  lazyStateWrapper: LazyStateWrapper<ItemInfo, LayoutInfo>,
+  width: Int,
+  paddingTop: Int,
+  paddingBottom: Int,
+  scrollbarWidth: Int,
+  launchScope: CoroutineScope,
+  trackerScope: CoroutineScope,
+  onScrollbarDragStateUpdated: (Float?) -> Unit
+) {
+  val coroutineScope = launchScope
+  val scrollbarVisibilityTracker = ScrollbarVisibilityTracker()
+
+  // Cancelled together with the pointer input block
+  trackerScope.launch {
+    snapshotFlow { lazyStateWrapper.isScrollInProgress }
+      .collect { inProgress -> scrollbarVisibilityTracker.onScrollInProgressChanged(inProgress) }
+  }
+
   awaitEachGesture {
     val downEvent = awaitPointerEvent(pass = PointerEventPass.Initial)
     if (downEvent.type != PointerEventType.Press) {
@@ -355,6 +395,11 @@ suspend fun <
       ?: return@awaitEachGesture
 
     if (down.position.x < (width - scrollbarWidth)) {
+      return@awaitEachGesture
+    }
+
+    if (!scrollbarVisibilityTracker.isScrollbarVisible()) {
+      // The scrollbar is hidden, let the gesture scroll the list normally
       return@awaitEachGesture
     }
 
@@ -431,6 +476,7 @@ suspend fun <
       job = null
 
       onScrollbarDragStateUpdated(null)
+      scrollbarVisibilityTracker.onScrollbarDragEnded()
 
       globalUiStateHolder.updateFastScrollerState {
         updateIsDraggingFastScroller(false)

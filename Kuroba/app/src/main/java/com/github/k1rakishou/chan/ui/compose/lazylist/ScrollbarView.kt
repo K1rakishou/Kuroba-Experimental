@@ -167,6 +167,19 @@ class ScrollbarView @JvmOverloads constructor(
 
     val layoutManager = attachedRecyclerView.layoutManager
 
+    val scrollbarVisibilityTracker = remember(attachedRecyclerView) { ScrollbarVisibilityTracker() }
+
+    DisposableEffect(attachedRecyclerView) {
+      val scrollListener = object : RecyclerView.OnScrollListener() {
+        override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+          scrollbarVisibilityTracker.onScrollInProgressChanged(newState != RecyclerView.SCROLL_STATE_IDLE)
+        }
+      }
+
+      attachedRecyclerView.addOnScrollListener(scrollListener)
+      onDispose { attachedRecyclerView.removeOnScrollListener(scrollListener) }
+    }
+
     Box(
       modifier = Modifier
         .fillMaxHeight()
@@ -207,6 +220,11 @@ class ScrollbarView @JvmOverloads constructor(
               paddingTop = paddingTop,
               paddingBottom = paddingBottom,
               scrollbarWidth = scrollbarWidth.roundToPx(),
+              isScrollbarVisible = {
+                // Same condition as the one used to decide whether to draw the scrollbar at all
+                val scrollbarDrawn = attachedRecyclerView.computeVerticalScrollRange() > (attachedRecyclerView.height * 1.33f)
+                scrollbarDrawn && scrollbarVisibilityTracker.isScrollbarVisible()
+              },
               onScrollbarDragStateStarted = {
                 scrollbarManualDragProgressState.value = null
                 _thumbDragListener?.onDragStarted()
@@ -216,6 +234,7 @@ class ScrollbarView @JvmOverloads constructor(
               },
               onScrollbarDragStateEnded = {
                 scrollbarManualDragProgressState.value = null
+                scrollbarVisibilityTracker.onScrollbarDragEnded()
                 _thumbDragListener?.onDragEnded()
               }
             )
@@ -280,8 +299,8 @@ class ScrollbarView @JvmOverloads constructor(
         }
 
         val isBeingScrolledOrDragged = recyclerViewScrollState == RecyclerViewScrollState.Scrolling || isScrollbarDragged
-        val duration = if (isBeingScrolledOrDragged) 150 else 500
-        val delay = if (isBeingScrolledOrDragged) 0 else 1500
+        val duration = if (isBeingScrolledOrDragged) 150 else SCROLLBAR_FADE_OUT_DURATION_MS
+        val delay = if (isBeingScrolledOrDragged) 0 else SCROLLBAR_FADE_OUT_DELAY_MS
         val scrollbarWidthPx = with(density) { if (isBeingScrolledOrDragged) scrollbarWidth.roundToPx() else 0 }
         val tempArray = remember(key1 = layoutManager) { IntArray(32) }
 
@@ -612,6 +631,7 @@ class ScrollbarView @JvmOverloads constructor(
     paddingTop: Int,
     paddingBottom: Int,
     scrollbarWidth: Int,
+    isScrollbarVisible: () -> Boolean,
     onScrollbarDragStateStarted: () -> Unit,
     onScrollbarDragStateUpdated: (Float) -> Unit,
     onScrollbarDragStateEnded: () -> Unit,
@@ -626,6 +646,11 @@ class ScrollbarView @JvmOverloads constructor(
         ?: return@awaitEachGesture
 
       if (down.position.x < (width - scrollbarWidth)) {
+        return@awaitEachGesture
+      }
+
+      if (!isScrollbarVisible()) {
+        // The scrollbar is hidden, let the gesture scroll the list normally
         return@awaitEachGesture
       }
 

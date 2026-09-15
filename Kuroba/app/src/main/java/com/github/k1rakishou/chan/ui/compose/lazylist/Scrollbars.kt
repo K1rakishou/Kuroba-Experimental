@@ -177,8 +177,8 @@ fun <ItemInfo : LazyItemInfoWrapper, LayoutInfo : LazyLayoutInfoWrapper<ItemInfo
         else -> 0f
       }
 
-      val duration = if (isScrollInProgress(lazyStateWrapper) || isScrollbarDragged) 150 else 500
-      val delay = if (isScrollInProgress(lazyStateWrapper) || isScrollbarDragged) 0 else 1500
+      val duration = if (isScrollInProgress(lazyStateWrapper) || isScrollbarDragged) 150 else SCROLLBAR_FADE_OUT_DURATION_MS
+      val delay = if (isScrollInProgress(lazyStateWrapper) || isScrollbarDragged) 0 else SCROLLBAR_FADE_OUT_DELAY_MS
 
       val thumbAlphaAnimated = animateFloatAsState(
         targetValue = targetThumbAlpha,
