@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.net.http.SslError
 import android.os.Build
+import android.os.SystemClock
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.CookieManager
@@ -12,8 +13,10 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.annotation.GuardedBy
+import com.github.k1rakishou.chan.features.webview.client.AbstractWebViewClient
 import com.github.k1rakishou.chan.features.webview.task.AbstractWebViewTask
 import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
+import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.v2.KurobaSettings
@@ -65,9 +68,12 @@ class HeadlessWebViewTaskExecutor(
     val refCount = _currentActiveWebViewRefCount.decrementAndGet()
     Logger.verbose(TAG) { "releaseWebView() currentActiveWebViewRefCount: ${refCount}" }
 
-    if (refCount != 0 || _currentActiveWebView == null) {
+    val currentActiveWebView = _currentActiveWebView
+    if (refCount != 0 || currentActiveWebView == null) {
       return
     }
+
+    resetWebViewContent(currentActiveWebView)
 
     val job = appScope.launch(start = CoroutineStart.LAZY) {
       Logger.debug(TAG) { "releaseWebView() attempt to destroy WebView started, waiting 30 seconds..." }
@@ -147,7 +153,11 @@ class HeadlessWebViewTaskExecutor(
       return@withContext _mutex.withLock {
         if (_currentActiveWebView == null) {
           Logger.debug(TAG) { "getOrCreateWebView() creating a new WebView" }
+          val startTime = SystemClock.elapsedRealtime()
           _currentActiveWebView = createWebView()
+          Logger.debug(TAG) {
+            "getOrCreateWebView() creating a new WebView... done, took ${SystemClock.elapsedRealtime() - startTime}ms"
+          }
         } else {
           Logger.verbose(TAG) {
             "getOrCreateWebView() WebView is already created, refCount: ${_currentActiveWebViewRefCount.get()}"
@@ -157,6 +167,21 @@ class HeadlessWebViewTaskExecutor(
         return@withLock _currentActiveWebView!!
       }
     }
+  }
+
+  /**
+   * Clears the page of the previous task so that the next task (which may reuse this WebView) doesn't show the old page
+   * while its own page is loading.
+   * */
+  private fun resetWebViewContent(webView: WebView) {
+    BackgroundUtils.ensureMainThread()
+
+    // Detach the previous task's client first so that it doesn't receive the callbacks for about:blank
+    webView.webViewClient = WebViewClient()
+    webView.stopLoading()
+    webView.loadUrl(AbstractWebViewClient.ABOUT_BLANK_URL)
+
+    Logger.debug(TAG) { "resetWebViewContent() loaded about:blank" }
   }
 
   private suspend fun createWebView(): WebView {
@@ -263,11 +288,19 @@ class HeadlessWebViewTaskExecutor(
       view: WebView?,
       request: android.webkit.WebResourceRequest?
     ): Boolean {
-      return delegate.shouldOverrideUrlLoading(view, request)
+      return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        delegate.shouldOverrideUrlLoading(view, request)
+      } else {
+        false
+      }
     }
 
     override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
       delegate.onPageStarted(view, url, favicon)
+    }
+
+    override fun onPageCommitVisible(view: WebView?, url: String?) {
+      delegate.onPageCommitVisible(view, url)
     }
 
     override fun onPageFinished(view: WebView?, url: String?) {

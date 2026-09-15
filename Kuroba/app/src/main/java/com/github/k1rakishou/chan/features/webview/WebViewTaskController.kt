@@ -1,7 +1,7 @@
 package com.github.k1rakishou.chan.features.webview
 
-import android.annotation.SuppressLint
 import android.content.Context
+import android.os.SystemClock
 import android.view.MotionEvent
 import android.view.ViewGroup
 import android.webkit.WebView
@@ -23,10 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.drawscope.translate
-import androidx.compose.ui.input.pointer.pointerInteropFilter
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
@@ -36,6 +33,7 @@ import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.features.webview.task.AbstractWebViewTask
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeClickableIcon
+import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeProgressIndicator
 import com.github.k1rakishou.chan.ui.compose.components.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.ktu
 import com.github.k1rakishou.chan.ui.compose.providers.LocalChanTheme
@@ -43,10 +41,14 @@ import com.github.k1rakishou.chan.ui.controller.base.BaseFloatingComposeControll
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isNotNullNorBlank
+import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.resolveTextColor
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
 
 class WebViewTaskController(
   context: Context,
@@ -59,8 +61,6 @@ class WebViewTaskController(
   lateinit var siteResolver: SiteResolver
   @Inject
   lateinit var headlessWebViewTaskExecutor: HeadlessWebViewTaskExecutor
-  @Inject
-  lateinit var webViewLastTouchPositionHolder: WebViewLastTouchPositionHolder
 
   override val currentlyInvisible: MutableState<Boolean> = mutableStateOf(webViewTask.canRunInvisibly())
 
@@ -105,6 +105,10 @@ class WebViewTaskController(
     var webViewSizeMut by remember { mutableStateOf<DpSize?>(null) }
     val webViewSize = webViewSizeMut
 
+    // The WebView content is kept transparent until the WebView has drawn the page loaded by the task (plus a small
+    // buffer) so that whatever it draws while it's initializing is never visible.
+    var webViewContentReady by remember { mutableStateOf(false) }
+
     LaunchedEffect(key1 = Unit) {
       val webView = try {
         headlessWebViewTaskExecutor.getOrCreateWebView()
@@ -130,46 +134,21 @@ class WebViewTaskController(
       }
     }
 
-    if (currentWebView == null || webViewSize == null) {
-      return
+    if (!webViewContentReady) {
+      KurobaComposeProgressIndicator(
+        modifier = Modifier.align(Alignment.Center)
+      )
     }
 
-    var touchPositionMut by remember { mutableStateOf<WebViewLastTouchPositionHolder.TouchPosition?>(null) }
-    val touchPosition = touchPositionMut
-
-    LaunchedEffect(key1 = Unit) {
-      val siteName = webViewTask.extractSiteNameFromLoadable()
-      if (siteName.isNullOrBlank()) {
-        return@LaunchedEffect
-      }
-
-      touchPositionMut = webViewLastTouchPositionHolder.get(webViewTask.taskId, siteName)
+    if (currentWebView == null || webViewSize == null) {
+      return
     }
 
     Column(
       modifier = Modifier
         .size(webViewSize)
-        .pointerInteropFilter(
-          onTouchEvent = {
-            if (!webViewTask.performingAutoClick && currentlyInvisible.value) {
-              currentlyInvisible.value = false
-            }
-
-            return@pointerInteropFilter false
-          }
-        )
+        .graphicsLayer { alpha = if (webViewContentReady) 1f else 0f }
         .padding(horizontal = 16.dp, vertical = 8.dp)
-        .drawWithContent {
-          drawContent()
-
-          if (touchPosition != null) {
-            translate(left = -(size.width / 2f), top = -(size.height / 2f)) {
-              translate(left = touchPosition.x, top = touchPosition.y) {
-                drawCircle(color = Color.Magenta.copy(alpha = 0.75f), radius = 16f)
-              }
-            }
-          }
-        }
     ) {
       Row(
         modifier = Modifier
@@ -203,19 +182,7 @@ class WebViewTaskController(
         modifier = Modifier
           .fillMaxWidth()
           .weight(1f),
-        factory = { currentWebView },
-        update = { webView ->
-          @SuppressLint("ClickableViewAccessibility")
-          webView.setOnTouchListener { _, event ->
-            if (!webViewTask.performingAutoClick && currentlyInvisible.value) {
-              currentlyInvisible.value = false
-              return@setOnTouchListener false
-            }
-
-            webViewTask.onWebViewTouchAction(event)
-            return@setOnTouchListener false
-          }
-        }
+        factory = { currentWebView }
       )
     }
 
@@ -223,27 +190,31 @@ class WebViewTaskController(
       try {
         webViewTask.init(currentWebView)
         webViewTask.start(currentWebView)
-
-        val id = -1234L
-        currentWebView.postVisualStateCallback(id, object : WebView.VisualStateCallback() {
-          override fun onComplete(requestId: Long) {
-            if (id == requestId) {
-              webViewTask.webViewAttachedToViewAndDrawn()
-            }
-          }
-        })
-
         webViewTask.waitForResult(currentWebView)
       } finally {
         pop()
       }
     }
 
+    LaunchedEffect(key1 = Unit) {
+      // The page may never load, don't keep the content hidden forever
+      withTimeoutOrNull(WEBVIEW_CONTENT_REVEAL_MAX_WAIT_MS.milliseconds) {
+        // A visual state callback posted before the page is committed would be called for the previous content of the
+        // WebView (e.g. about:blank)
+        webViewTask.webViewClient.awaitPageCommitVisible()
+        awaitVisualState(currentWebView)
+
+        delay(WEBVIEW_CONTENT_REVEAL_BUFFER_MS.milliseconds)
+      }
+
+      webViewContentReady = true
+    }
+
     if (webViewTask.canRunInvisibly()) {
       LaunchedEffect(key1 = Unit) {
         try {
           Logger.debug(TAG) { "Starting WebView in invisible mode..." }
-          delay(webViewTask.invisibleMaxTime)
+          delay(webViewTask.invisibleMaxTime.milliseconds)
         } finally {
           currentlyInvisible.value = false
           Logger.debug(TAG) { "Starting WebView in invisible mode... done, switched to visible mode" }
@@ -252,7 +223,24 @@ class WebViewTaskController(
     }
   }
 
+  private suspend fun awaitVisualState(webView: WebView) {
+    val requestId = SystemClock.elapsedRealtime()
+
+    suspendCancellableCoroutine { continuation ->
+      webView.postVisualStateCallback(requestId, object : WebView.VisualStateCallback() {
+        override fun onComplete(id: Long) {
+          if (id == requestId) {
+            continuation.resumeValueSafe(Unit)
+          }
+        }
+      })
+    }
+  }
+
   companion object {
     private const val TAG = "WebViewTaskController"
+
+    private const val WEBVIEW_CONTENT_REVEAL_BUFFER_MS = 300L
+    private const val WEBVIEW_CONTENT_REVEAL_MAX_WAIT_MS = 5_000L
   }
 }

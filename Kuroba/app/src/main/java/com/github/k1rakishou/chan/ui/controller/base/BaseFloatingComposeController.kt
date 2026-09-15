@@ -1,6 +1,8 @@
 package com.github.k1rakishou.chan.ui.controller.base
 
 import android.content.Context
+import android.view.MotionEvent
+import android.widget.FrameLayout
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
@@ -18,7 +20,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.dp
@@ -51,7 +52,7 @@ abstract class BaseFloatingComposeController(
     super.onCreate()
     presenting = true
 
-    view = ComposeView(context).apply {
+    val composeView = ComposeView(context).apply {
       setContent {
         ComposeEntrypoint {
           val windowInsets = LocalWindowInsets.current
@@ -60,10 +61,10 @@ abstract class BaseFloatingComposeController(
           val invisible by currentlyInvisible
 
           val additionalModifier = if (invisible) {
+            // Touches are passed through by TouchPassThroughFrameLayout while invisible. It can't be done with a
+            // pointer input modifier because AndroidComposeView consumes a touch event once it reaches any pointer
+            // input modifier (even the ones that don't handle it).
             Modifier
-              .pointerInteropFilter(
-                onTouchEvent = { _ -> false }
-              )
               .graphicsLayer {
                 alpha = 0f
               }
@@ -130,6 +131,16 @@ abstract class BaseFloatingComposeController(
         }
       }
     }
+
+    view = TouchPassThroughFrameLayout(
+      context = context,
+      passTouchesThrough = { currentlyInvisible.value }
+    ).apply {
+      addView(
+        composeView,
+        FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT)
+      )
+    }
   }
 
   override fun onDestroy() {
@@ -172,6 +183,23 @@ abstract class BaseFloatingComposeController(
 
   @Composable
   abstract fun BoxScope.BuildContent()
+
+  /**
+   * Lets touches reach whatever is behind the controller while it's invisible (e.g. a WebView task running invisibly).
+   * */
+  private class TouchPassThroughFrameLayout(
+    context: Context,
+    private val passTouchesThrough: () -> Boolean
+  ) : FrameLayout(context) {
+
+    override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
+      if (passTouchesThrough()) {
+        return false
+      }
+
+      return super.dispatchTouchEvent(ev)
+    }
+  }
 
   companion object {
     val HPADDING_COMPOSE = 12.dp

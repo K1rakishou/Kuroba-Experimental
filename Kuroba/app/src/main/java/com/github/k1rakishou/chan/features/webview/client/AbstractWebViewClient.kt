@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.features.webview.client
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import androidx.annotation.CallSuper
 import com.github.k1rakishou.chan.features.webview.WebViewTaskException
 import com.github.k1rakishou.chan.features.webview.WebViewTaskResult
 import com.github.k1rakishou.common.isNotNullNorBlank
@@ -27,6 +28,17 @@ abstract class AbstractWebViewClient(
 
   private val tag = this::class.java.simpleName
 
+  private val _pageCommitVisibleWaiter = CompletableDeferred<Unit>()
+
+  /**
+   * Suspends until the content of the page loaded by the task is committed to be drawn (see [onPageCommitVisible]).
+   * Unlike WebView.postVisualStateCallback() posted right after starting to load a page, this doesn't complete for the
+   * content that was in the WebView before (e.g. about:blank or a previous task's page when the WebView is reused).
+   * */
+  suspend fun awaitPageCommitVisible() {
+    _pageCommitVisibleWaiter.await()
+  }
+
   protected fun finishWithResult(taskResult: WebViewTaskResult) {
     if (!webViewClientResultWaiter.isCompleted) {
       Logger.debug(tag) { "finishWithResult: ${taskResult::class.java.simpleName}" }
@@ -46,6 +58,15 @@ abstract class AbstractWebViewClient(
   override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
     _pageLoadState.set(PageLoadState.Started)
     return super.shouldOverrideUrlLoading(view, url)
+  }
+
+  @CallSuper
+  override fun onPageCommitVisible(view: WebView?, url: String?) {
+    super.onPageCommitVisible(view, url)
+
+    if (url != ABOUT_BLANK_URL) {
+      _pageCommitVisibleWaiter.complete(Unit)
+    }
   }
 
   override fun onPageFinished(view: WebView?, url: String?) {
@@ -95,5 +116,6 @@ abstract class AbstractWebViewClient(
 
   companion object {
     private const val MAX_PAGE_LOADS_COUNT = 10
+    const val ABOUT_BLANK_URL = "about:blank"
   }
 }

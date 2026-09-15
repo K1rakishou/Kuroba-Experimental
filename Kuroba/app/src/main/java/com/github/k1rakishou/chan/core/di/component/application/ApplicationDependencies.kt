@@ -12,7 +12,6 @@ import com.github.k1rakishou.chan.core.manager.ThirdEyeManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.features.settings.AppSettingsRestartTracker
 import com.github.k1rakishou.chan.features.toolbar.KurobaToolbarStateManager
-import com.github.k1rakishou.chan.features.webview.WebViewLastTouchPositionHolder
 import com.github.k1rakishou.chan.ui.compose.snackbar.manager.SnackbarManagerFactory
 import com.github.k1rakishou.chan.ui.globalstate.GlobalUiStateHolder
 import com.github.k1rakishou.chan.ui.helper.AppResources
@@ -39,7 +38,6 @@ interface ApplicationDependencies {
   val downloadedImagesManager: DownloadedImagesManager
   val cacheHandler: CacheHandler
   val revealedSpoilerImagesManager: RevealedSpoilerImagesManager
-  val webViewLastTouchPositionHolder: WebViewLastTouchPositionHolder
   val kurobaToolbarStateManager: KurobaToolbarStateManager
   val appSettingsRestartTracker: AppSettingsRestartTracker
 }
