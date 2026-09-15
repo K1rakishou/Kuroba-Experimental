@@ -52,7 +52,14 @@ android {
         applicationId = "com.github.k1rakishou.chan"
         applicationIdSuffix = ""
         buildConfigField("String", "BUILD_TYPE", "\"${kurobaBuildType.name}\"")
-        buildConfigField("String", "COMMIT_HASH", "\"${gitHashProvider.get()}\"")
+        // The commit hash changes with every commit which regenerates BuildConfig (and recompiles everything that uses
+        // it) and invalidates the configuration cache. Only use the real hash for builds that are published.
+        val commitHash = when (kurobaBuildType) {
+            KurobaBuildType.Stable,
+            KurobaBuildType.Beta -> gitHashProvider.get()
+            KurobaBuildType.Dev -> "dev-build"
+        }
+        buildConfigField("String", "COMMIT_HASH", "\"${commitHash}\"")
         manifestPlaceholders["fileProviderAuthority"] = "${defaultConfig.applicationId}.fileprovider"
         manifestPlaceholders["appTheme"] = "@style/Chan.DefaultTheme"
 
@@ -123,7 +130,14 @@ android {
 
     splits {
         abi {
-            isEnable = true
+            // Building a separate apk for every ABI (+ the universal one) is only needed for releases. When only debug
+            // tasks are requested (assembleDebug, installDebug, etc) build just the universal apk.
+            // Android Studio's "Run" only builds the ABI of the target device either way.
+            val requestedTaskNames = gradle.startParameter.taskNames
+            val onlyDebugTasksRequested = requestedTaskNames.isNotEmpty() &&
+                requestedTaskNames.all { taskName -> taskName.contains("debug", ignoreCase = true) }
+
+            isEnable = !onlyDebugTasksRequested
             reset()
             include("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
             isUniversalApk = true
@@ -278,7 +292,14 @@ dependencies {
     implementation(libs.okhttp.logging.interceptor)
     implementation(libs.jsoup)
     implementation(libs.gif.drawable)
-    implementation(libs.subsampling.scale.image.view)
+    // Depends on the legacy com.android.support:exifinterface. It must stay because without Jetifier the library still
+    // references the legacy classes (the package is different so it doesn't conflict with the AndroidX one). The legacy
+    // support-annotations are compile-time only annotations and are not needed.
+    implementation(libs.subsampling.scale.image.view) {
+        exclude(group = "com.android.support", module = "support-annotations")
+    }
+    // Used to be available only because Jetifier rewrote the legacy exifinterface of subsampling-scale-image-view
+    implementation(libs.exifinterface)
     implementation(libs.autolink)
     implementation(libs.gson)
     implementation(libs.kotlin.stdlib)
@@ -294,9 +315,7 @@ dependencies {
     implementation(libs.voyager.navigator)
     implementation(libs.voyager.transitions)
     implementation(libs.fsaf)
-
     implementation(libs.room.runtime)
-    ksp(libs.room.compiler)
 
     implementation(libs.dagger)
     ksp(libs.dagger.compiler)
