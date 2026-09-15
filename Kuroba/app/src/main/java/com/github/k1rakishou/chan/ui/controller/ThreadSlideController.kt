@@ -14,6 +14,7 @@ import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.features.toolbar.BackArrowMenuItem
 import com.github.k1rakishou.chan.features.toolbar.HamburgMenuItem
 import com.github.k1rakishou.chan.features.toolbar.KurobaToolbarState
+import com.github.k1rakishou.chan.features.toolbar.KurobaToolbarTransition
 import com.github.k1rakishou.chan.ui.controller.base.Controller
 import com.github.k1rakishou.chan.ui.controller.base.DeprecatedNavigationFlags
 import com.github.k1rakishou.chan.ui.controller.base.transition.ControllerTransition
@@ -24,6 +25,7 @@ import com.github.k1rakishou.chan.ui.layout.ThreadSlidingPaneLayout
 import com.github.k1rakishou.chan.ui.view.widget.SlidingPaneLayoutEx
 import com.github.k1rakishou.chan.ui.viewstate.ReplyLayoutVisibilityStates
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.core_themes.ThemeEngine.ThemeChangesListener
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -59,6 +61,12 @@ class ThreadSlideController(
   private var slidingPaneLayout: ThreadSlidingPaneLayout? = null
   private var slidingPaneLayoutOpenState = SlidingPaneLayoutOpenState.LeftOpened
   private var isSlidingInProgress = false
+
+  // The toolbar state the current slide transition was started on. containerToolbarState can't be used to finish the
+  // transition because it may be swapped before the slide ends (slideStateChanged() in onPanelOpened()/onPanelClosed()
+  // or by other controllers sharing the same toolbar navigation controller) which would leave a dangling transition
+  // on the original toolbar state and crash the next time a transition is started on it.
+  private var toolbarTransitionOwner: KurobaToolbarState? = null
 
   private val emptyCatalogToolbar by lazy(LazyThreadSafetyMode.NONE) {
     val kurobaToolbarState = KurobaToolbarState(
@@ -460,22 +468,38 @@ class ThreadSlideController(
   }
 
   private fun startToolbarTransition() {
+    // Should never happen but if the previous transition wasn't finished for some reason then finish it now
+    toolbarTransitionOwner?.let { prevOwner ->
+      Logger.e(TAG, "startToolbarTransition() previous transition wasn't finished, finishing it now")
+      prevOwner.onTransitionProgressFinished()
+    }
+    toolbarTransitionOwner = null
+
     val transitionMode = if (slidingPaneLayoutOpenState.rightOpenedOrOpening) {
       TransitionMode.In
     } else {
       TransitionMode.Out
     }
 
+    val owner = containerToolbarState
+    if (owner.transitionToolbarState.value is KurobaToolbarTransition.Progress) {
+      // A dangling transition left by someone else, it would crash onTransitionProgressStart()
+      Logger.e(TAG, "startToolbarTransition() toolbar state already has a progress transition, finishing it first")
+      owner.onTransitionProgressFinished()
+    }
+
     val kurobaToolbarState = getToolbarState(slidingPaneLayoutOpenState.invert())
 
-    containerToolbarState.onTransitionProgressStart(
+    owner.onTransitionProgressStart(
       other = kurobaToolbarState,
       transitionMode = transitionMode
     )
+
+    toolbarTransitionOwner = owner
   }
 
   private fun updateToolbarTransition(slideOffset: Float) {
-    containerToolbarState.onTransitionProgress(
+    toolbarTransitionOwner?.onTransitionProgress(
       progress = slideOffset
     )
   }
@@ -485,9 +509,12 @@ class ThreadSlideController(
       return
     }
 
-    val prevToolbarState = containerToolbarState
     containerToolbarState = getToolbarState(slidingPaneLayoutOpenState)
-    prevToolbarState.onTransitionProgressFinished()
+
+    // Finish the transition on the toolbar state it was started on, not on the (possibly already swapped)
+    // containerToolbarState
+    toolbarTransitionOwner?.onTransitionProgressFinished()
+    toolbarTransitionOwner = null
 
     isSlidingInProgress = false
   }
