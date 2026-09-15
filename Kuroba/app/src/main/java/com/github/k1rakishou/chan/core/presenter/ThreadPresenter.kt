@@ -985,7 +985,17 @@ class ThreadPresenter @Inject constructor(
       return true
     }
 
-    if (!isBound) {
+    return createBookmarkIfNotExists(threadDescriptor)
+  }
+
+  private suspend fun createBookmarkIfNotExists(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor
+  ): Boolean {
+    if (bookmarksManager.contains(threadDescriptor)) {
+      return true
+    }
+
+    if (!bookmarksManager.isReady() || !isBound) {
       return false
     }
 
@@ -2581,11 +2591,16 @@ class ThreadPresenter @Inject constructor(
   }
 
   private suspend fun saveUnsavePost(post: ChanPost) {
-    if (savedReplyManager.isSaved(post.postDescriptor)) {
-      savedReplyManager.unsavePost(post.postDescriptor)
-    } else {
-      savedReplyManager.savePost(post.postDescriptor)
-    }
+    val isSaving = !savedReplyManager.isSaved(post.postDescriptor)
+
+    saveUnsavePostAndBookmarkThread(
+      postDescriptor = post.postDescriptor,
+      isSaving = isSaving,
+      savePost = savedReplyManager::savePost,
+      unsavePost = savedReplyManager::unsavePost,
+      shouldCreateBookmark = { kurobaSettings.application.postPinThread.read() },
+      createBookmarkIfNotExists = this::createBookmarkIfNotExists
+    )
 
     // Trigger onDemandContentLoaderManager for this post again
     onDemandContentLoaderManager.onPostUnbind(post.postDescriptor, isActuallyRecycling = true)
@@ -3160,4 +3175,26 @@ class ThreadPresenter @Inject constructor(
     const val SCROLL_TO_POST_DELAY_MS = 125L
   }
 
+}
+
+internal suspend fun saveUnsavePostAndBookmarkThread(
+  postDescriptor: PostDescriptor,
+  isSaving: Boolean,
+  savePost: suspend (PostDescriptor) -> Boolean,
+  unsavePost: suspend (PostDescriptor) -> Unit,
+  shouldCreateBookmark: suspend () -> Boolean,
+  createBookmarkIfNotExists: suspend (ChanDescriptor.ThreadDescriptor) -> Boolean
+) {
+  if (!isSaving) {
+    unsavePost(postDescriptor)
+    return
+  }
+
+  if (!savePost(postDescriptor)) {
+    return
+  }
+
+  if (shouldCreateBookmark()) {
+    createBookmarkIfNotExists(postDescriptor.threadDescriptor())
+  }
 }
