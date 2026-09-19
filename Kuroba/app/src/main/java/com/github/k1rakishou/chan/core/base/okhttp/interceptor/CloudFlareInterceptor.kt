@@ -1,12 +1,17 @@
 package com.github.k1rakishou.chan.core.base.okhttp.interceptor
 
+import com.github.k1rakishou.chan.core.base.okhttp.interceptor.CloudFlareInterceptor.Companion.COOKIE_CF_BM
+import com.github.k1rakishou.chan.core.base.okhttp.interceptor.CloudFlareInterceptor.Companion.COOKIE_TCS
 import com.github.k1rakishou.chan.core.manager.FirewallBypassManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.utils.containsPattern
 import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.common.COOKIE_HEADER_NAME
+import com.github.k1rakishou.common.CookieBuilder
 import com.github.k1rakishou.common.FirewallDetectedException
 import com.github.k1rakishou.common.FirewallType
-import com.github.k1rakishou.common.domainOrHost
+import com.github.k1rakishou.common.SET_COOKIE_HEADER_NAME
+import com.github.k1rakishou.common.StringUtils.asFormattedToken
 import com.github.k1rakishou.core_logger.Logger
 import okhttp3.Interceptor
 import okhttp3.Request
@@ -40,6 +45,8 @@ class CloudFlareInterceptor(
     }
 
     val response = chain.proceed(request)
+
+    storeRefreshedCloudFlareCookies(response)
 
     if ((response.code == 503 || response.code == 403) && !ignoreCloudFlareBotDetectionErrors(request)) {
       val newResponse = processCloudflareRejectedRequest(
@@ -76,6 +83,8 @@ class CloudFlareInterceptor(
     Logger.verbose(TAG) {
       "[$okHttpType] Found CloudFlare needle in the page's body for endpoint '${request.url}'"
     }
+
+    logRejectedRequest(response, request)
 
     if (canShowCloudFlareBypassScreen(retrying, request)) {
       siteResolver.waitUntilInitialized()
@@ -154,6 +163,81 @@ class CloudFlareInterceptor(
     )
   }
 
+  /**
+   * CloudFlare refreshes the cookies it gave us through `Set-Cookie` of ordinary responses. Keeping them is what makes
+   * a clearance last: the one the check produced is only honored for a while (see [SiteRequestModifier.storeCloudFlareCookies]).
+   *
+   * `cf_clearance` is only taken from a successful response — the challenge response sets one of its own, which would
+   * overwrite the one that still works. The rest ([COOKIE_CF_BM], [COOKIE_TCS]) are taken from any response: they are
+   * session cookies rather than a clearance, and CloudFlare hands them out on the challenge itself
+   * (`https://sys.4chan.org/captcha`, the one 4chan endpoint that is behind the check, answers 403 *and* sets
+   * `__cf_bm`), so dropping them means every request looks like a brand new session.
+   * */
+  private fun storeRefreshedCloudFlareCookies(response: Response) {
+    val setCookieHeaders = response.headers(SET_COOKIE_HEADER_NAME)
+    if (setCookieHeaders.isEmpty() || !siteResolver.isInitialized()) {
+      return
+    }
+
+    val refreshedCookies = CookieBuilder()
+
+    setCookieHeaders.forEach { setCookieHeader ->
+      // "cf_clearance=<value>; path=/; expires=...; domain=.archived.moe; HttpOnly; Secure; SameSite=None"
+      val nameAndValue = setCookieHeader.substringBefore(';')
+      val name = nameAndValue.substringBefore('=').trim()
+
+      if (name !in EXPECTED_CLOUDFLARE_COOKIES) {
+        return@forEach
+      }
+
+      if (name == COOKIE_CF_CLEARANCE && !response.isSuccessful) {
+        return@forEach
+      }
+
+      val value = nameAndValue.substringAfter('=', missingDelimiterValue = "").trim()
+      if (value.isBlank() || value in DELETED_COOKIE_VALUES) {
+        return@forEach
+      }
+
+      refreshedCookies.addOrReplace(name, value)
+    }
+
+    if (refreshedCookies.isEmpty()) {
+      return
+    }
+
+    // Not the url of the request we sent: okhttp follows redirects internally and a cookie belongs to the domain that
+    // actually set it (2ch.hk redirects to 2ch.su, and the two are different domains as far as CloudFlare is concerned)
+    val url = response.request.url
+    val site = siteResolver.findSiteForUrl(url.toString())
+    if (site == null) {
+      return
+    }
+
+    Logger.debug(TAG) {
+      val cookieNames = refreshedCookies.cookieParts().map { cookie -> cookie.key }
+      "[$okHttpType] storeRefreshedCloudFlareCookies() ${url} sent new CloudFlare cookies: ${cookieNames}"
+    }
+
+    site.requestModifier.storeCloudFlareCookies(url, refreshedCookies.build())
+  }
+
+  /**
+   * Whether the request that CloudFlare rejected was carrying our stored cf_clearance cookie or not is the only thing
+   * that tells apart "the cookie never reached the request" from "CloudFlare rejected the cookie we have".
+   * */
+  private fun logRejectedRequest(response: Response, request: Request) {
+    Logger.debug(TAG) {
+      val cfClearance = request.header(COOKIE_HEADER_NAME)
+        ?.let { cookies -> CookieBuilder(cookies).get(COOKIE_CF_CLEARANCE)?.value }
+        .asFormattedToken()
+
+      "[$okHttpType] CloudFlare rejected '${request.url}'. code: ${response.code}, " +
+        "request ${COOKIE_CF_CLEARANCE}: ${cfClearance}, " +
+        "cf-mitigated: '${response.header("cf-mitigated")}', cf-ray: '${response.header("cf-ray")}'"
+    }
+  }
+
   private fun addCloudFlareCookie(prevRequest: Request): Request? {
     siteResolver.waitUntilInitialized()
 
@@ -164,15 +248,26 @@ class CloudFlareInterceptor(
       return null
     }
 
-    val cookieValue = site.commonSettings.cloudFlareClearanceCookieMap.readBlocking().get(url.domainOrHost())
+    // The same lookup the request modifier does when it adds the cookie to the request, it logs what was found
+    val cookieValue = site.requestModifier.getCloudFlareCookies(url)
     if (cookieValue.isNullOrEmpty()) {
-      Logger.warning(TAG) { "[$okHttpType] addCloudFlareCookie() cookieValue is null or empty" }
+      Logger.verbose(TAG) { "[$okHttpType] addCloudFlareCookie() no CloudFlare cookies for ${url}" }
       return null
     }
 
     val newBuilder = prevRequest.newBuilder()
     site.requestModifier.modifyGenericRequest(site, newBuilder)
-    return newBuilder.build()
+
+    val newRequest = newBuilder.build()
+    Logger.verbose(TAG) {
+      val cfClearance = newRequest.header(COOKIE_HEADER_NAME)
+        ?.let { cookies -> CookieBuilder(cookies).get(COOKIE_CF_CLEARANCE)?.value }
+        .asFormattedToken()
+
+      "[$okHttpType] addCloudFlareCookie() ${url} now carries ${COOKIE_CF_CLEARANCE}: ${cfClearance}"
+    }
+
+    return newRequest
   }
 
   private fun tryDetectCloudFlareNeedle(response: Response): Boolean {
@@ -236,6 +331,9 @@ class CloudFlareInterceptor(
     const val COOKIE_CF_CLEARANCE = "cf_clearance"
     const val COOKIE_TCS = "_tcs"
     const val COOKIE_CF_BM = "__cf_bm"
+
+    // What CloudFlare sends to remove a cookie instead of refreshing it
+    private val DELETED_COOKIE_VALUES = setOf("deleted", "\"\"")
 
     val EXPECTED_CLOUDFLARE_COOKIES = listOf(
       COOKIE_CF_CLEARANCE,

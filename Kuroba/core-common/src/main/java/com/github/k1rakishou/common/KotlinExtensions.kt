@@ -84,6 +84,7 @@ import kotlin.coroutines.resumeWithException
 private const val TAG = "KotlinExntesions"
 val ELLIPSIS_SYMBOL: CharSequence = "…"
 const val COOKIE_HEADER_NAME = "Cookie"
+const val SET_COOKIE_HEADER_NAME = "Set-Cookie"
 
 suspend fun OkHttpClient.suspendCall(request: Request): Response {
   return suspendCancellableCoroutine { continuation ->

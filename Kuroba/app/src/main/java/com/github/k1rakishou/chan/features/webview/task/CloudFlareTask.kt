@@ -8,7 +8,9 @@ import com.github.k1rakishou.chan.features.webview.WebViewTaskResult
 import com.github.k1rakishou.chan.features.webview.client.AbstractCookieWebViewClient
 import com.github.k1rakishou.chan.features.webview.client.AbstractWebViewClient
 import com.github.k1rakishou.common.CookieBuilder
+import com.github.k1rakishou.common.StringUtils.asFormattedToken
 import com.github.k1rakishou.common.domainOrHost
+import com.github.k1rakishou.core_logger.Logger
 import kotlinx.coroutines.CompletableDeferred
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
@@ -43,10 +45,17 @@ class CloudFlareTask(
     val urlToOpen = (loadable as Loadable.Url).url
     val key = urlToOpen.domainOrHost()
 
+    Logger.debug(TAG) {
+      "persistCookies() site: ${site.name}, key: '${key}', cookies: '${cookies.asFormattedToken()}'"
+    }
+
     cloudFlareClearanceCookieSetting.put(
       key = key,
       value = cookies
     )
+
+    val storedKeys = cloudFlareClearanceCookieSetting.read().keys
+    Logger.debug(TAG) { "persistCookies() done, stored keys: ${storedKeys}" }
   }
 
   private class CloudFlareTaskWebViewClient(
