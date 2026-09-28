@@ -1,0 +1,18 @@
+A bunch of fixes and improvements (mostly vibe-coded + human reviewed).
+
+- Preserve nested quote and link colors (Thanks to @arpitagarwal1301)
+- Sound posts reimplementation. Audio is now played by a separate player (in sync with the video/image) and it also works with mpv.
+- Pass request headers into video requests. Should fix mpv not being able to play files on sites that require them.
+- Smoother seekbar, display loading indicator when buffering, display errors in a toast, fix player controls sometimes being in incorrect state.
+- Full email verification flow support.
+- Fix 4chan cookie not being refreshed after posting which could make it expire and stay stale forever. Email and posting cookies are now merged into a single setting. Fix posting cookie not being reset by the "Clear cookies" button.
+- Fix app migrations not being run at all (yikes).
+- Fix some posting error dialogs not being dismissed when clicking a link inside of them.
+- Lynxchan fixes: re-implement 8chan.moe's POWBlock bypass, fix posting on 8chan.moe, endchan.net and kohlchan.net, fix a random crash when opening board selection screen.
+- Do not display "Failed to load thumbnail" toast when the main media was successfully loaded.
+- Potentially fix not being able to click content behind the media viewer for 2-3 seconds after closing it on some phones.
+- Fix toolbar transition crashes.
+- Fix real dynamic scrollbar being displayed incorrectly in some cases. Fast scroller can now only be dragged when it's visible.
+- Fix a crash when clicking quotes in previewed archive threads.
+- Notifications permission is no longer requested on every app start, only when enabling a setting that needs it. Such settings are disabled if the permission gets revoked.
+- WebView fixes: headless/invisible WebViews no longer block touches, no more white screen flash when opening a WebView, removed the Cloudflare auto-click (didn't work).
