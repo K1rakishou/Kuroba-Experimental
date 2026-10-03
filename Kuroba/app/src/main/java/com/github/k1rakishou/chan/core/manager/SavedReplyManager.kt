@@ -158,7 +158,7 @@ class SavedReplyManager(
     _savedRepliesUpdateFlow.tryEmit(Unit)
   }
 
-  suspend fun savePost(postDescriptor: PostDescriptor) {
+  suspend fun savePost(postDescriptor: PostDescriptor): Boolean {
     val post = chanThreadsCache.getThreadPostFromCache(postDescriptor)
 
     val comment = post?.postComment?.originalComment()?.toString()
@@ -172,16 +172,16 @@ class SavedReplyManager(
       subject = subject
     )
 
-    saveReply(savedReply)
+    return saveReply(savedReply)
   }
 
-  suspend fun saveReply(savedReply: ChanSavedReply) {
+  suspend fun saveReply(savedReply: ChanSavedReply): Boolean {
     val postDescriptor = savedReply.postDescriptor
 
     savedReplyRepository.savePost(savedReply)
       .safeUnwrap { error ->
         Logger.e(TAG, "savePost($postDescriptor) error", error)
-        return
+        return false
       }
 
     val updated = lock.write {
@@ -199,6 +199,8 @@ class SavedReplyManager(
     if (updated) {
       _savedRepliesUpdateFlow.tryEmit(Unit)
     }
+
+    return true
   }
 
   fun retainSavedPostNoMap(
